@@ -1,0 +1,52 @@
+# ============================================================================
+# STOCK IL-2 CAMPAIGNS LIBRARY
+# ============================================================================
+# Known official IL-2 Great Battles campaigns with their countries
+# Format: "Campaign Name": "Country"
+#
+# This is used for automatic country detection - no user validation needed!
+# 
+# Detection method: Reads &name="Campaign Name" from info.locale=eng.txt
+#                   This means folder names can be anything - we use the
+#                   official campaign name from the info file!
+#
+# You can add new stock campaigns or community campaigns here.
+# The country must match one of: Germany, Soviet Union, USA, Britain
+#
+# Note: The campaign name must match EXACTLY what's in &name="..." 
+#       (case-insensitive matching)
+# ============================================================================
+
+stock_campaigns:
+  "Blazing Steppe": "Soviet Union"
+  "Ten Days of Autumn": "Germany"
+  "Fortress on the Volga": "Germany"
+  "Ice Ring": "Soviet Union"
+  "Downfall": "Germany"
+  "His Majesty's Griffons": "Britain"
+  "Havoc Over the Kuban": "Soviet Union"
+  "Hell Hawks Over the Bulge": "USA"
+  "Hornet's Nest": "Germany"
+  "Gestapo Hunters": "Britain"
+  "Battle of the Hürtgenwald": "USA"
+  "Iron Wind": "Soviet Union"
+  "Lightning Strikes": "USA"
+  "Overlord": "USA"
+  "Sea Dragons": "Soviet Union"
+  "Sky Nomads": "Soviet Union"
+  "Achtung Spitfire!": "Soviet Union"
+  "Spring Offensive": "Britain"
+  "Steel Birds": "Germany"
+  "Wild Mustangs": "USA"
+  "Wind of Fury": "Britain"
+  "Wings Over Caen": "Britain"
+  "The Beginning": "Soviet Union"
+  "Breakpoint": "Germany"
+  "Last Chance": "Germany"
+  "Kerch–Eltigen Operation": "Germany"
+  
+  # ============================================
+  # ADD YOUR OWN STOCK/COMMUNITY CAMPAIGNS HERE
+  # ============================================
+  # Example:
+  # "My Campaign Name": "Germany"
