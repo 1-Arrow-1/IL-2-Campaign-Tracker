@@ -1,19 +1,21 @@
 # Building IL-2 Campaign Tracker
 
-This guide covers building a standalone executable from the Python source code.
+This guide covers building a standalone executable using the provided build script.
 
-## Important Note
+## Important Notes
 
 **To BUILD the EXE:** You need Python 3.8+ and all dependencies installed.
 
-**To RUN the EXE:** End users do NOT need Python - the EXE is standalone.
+**To RUN the EXE:** End users do NOT need Python - the EXE is standalone (~40 MB).
+
+**Pre-built EXE:** NOT provided in GitHub releases. You must build your own.
 
 ## Prerequisites
 
-### Required Software (For Building)
-- **Python 3.8 or higher** - Required to run PyInstaller
-- **PyInstaller 5.0 or higher** - Packages Python code into EXE
-- **All project dependencies** - Must be installed in your Python environment
+### Required Software
+- **Python 3.8 or higher**
+- **PyInstaller 5.0 or higher**
+- **All project dependencies**
 
 ### Install Dependencies
 ```bash
@@ -21,83 +23,91 @@ pip install -r requirements.txt
 pip install pyinstaller
 ```
 
-**Clarification:**
-- **Developers/Builders:** Need Python to create the EXE
-- **End Users:** Don't need Python to run the EXE you distribute
+**Required packages:**
+- `pillow` - Image processing
+- `pyyaml` - Configuration parsing
+- `psutil` - Process monitoring
+- `pdfkit` - PDF generation
+- `pyinstaller` - EXE builder
 
-## Build Methods
+### Optional (but recommended): wkhtmltopdf
+For PDF generation:
+- Download: https://wkhtmltopdf.org/downloads.html
+- Install to: `C:\Program Files\wkhtmltopdf\`
+- Build script will automatically bundle it
 
-### Method 1: Automated Build Script (Recommended)
+## Build Instructions
 
-The easiest way to build is using the provided batch script:
+### Simple Method: Run the Build Script
 
+Execute:
 ```bash
 build_exe.bat
 ```
 
-**What it does:**
-1. Checks for PyInstaller installation
-2. Verifies all dependencies
-3. Runs PyInstaller with the spec file
-4. Copies configuration files to dist/
-5. Bundles wkhtmltopdf if available
-6. Creates a ready-to-distribute package
+### What the Script Does
 
-**Output location:**
+**[1/5] Checks for PyInstaller**
+- Verifies PyInstaller is installed
+- Exits if missing
+
+**[2/5] Validates Python Files**
+- Syntax check on all `.py` files
+- Does NOT execute code - only validates
+- Files checked:
+  - `il2_tracker_launcher.py`
+  - `monitor_campaigns.py`
+  - `step1_extract_mission_dates.py`
+  - `step3_generate_events.py`
+  - `decode_campaing_usersave1.py`
+  - `step4_process_mission_logs.py`
+  - `il2_mission_debrief.py`
+  - `mlg2txt.py`
+  - `country_validator_gui.py`
+
+**[3/5] Cleans Build Artifacts**
+- Removes `build/` directory
+- Removes `dist/` directory
+- Removes old EXE
+
+**[4/5] Runs PyInstaller**
+- Executes: `pyinstaller IL2_CampaignTracker.spec`
+- Uses spec file to bundle everything
+- Takes 2-5 minutes
+
+**[5/5] Creates Distribution Package**
+- Creates: `IL2_Campaign_Tracker_v1.5\` folder
+- Copies EXE from `dist/`
+- Copies configuration YAML files
+- Copies `mlg2txt.py` (required at runtime)
+- Generates `QUICK_START.txt`
+
+### Build Output
+
 ```
-IL2_Campaign_Tracker_v1.5/
+IL2_Campaign_Tracker_v1.5\
+├── IL2_CampaignTracker.exe          # Standalone executable (~40 MB)
+├── campaign_progress_config.yaml    # Awards & ranks config
+├── object_categories.yaml           # Aircraft classifications
+├── stock_campaigns.yaml             # Known campaigns
+├── mlg2txt.py                       # Mission log converter
+├── QUICK_START.txt                  # User instructions
+└── README.txt                       # Optional
 ```
 
-### Method 2: Manual PyInstaller
+**This folder is ready for distribution!**
 
-If you prefer manual control:
+## The Spec File
 
-```bash
-pyinstaller IL2_CampaignTracker.spec
-```
-### Method 3: Custom Build
+`IL2_CampaignTracker.spec` defines the build:
 
-For advanced users who want to modify the build:
-
-1. Edit `IL2_CampaignTracker.spec`
-2. Modify paths, exclusions, or bundled files
-3. Run: `pyinstaller IL2_CampaignTracker.spec`
-
-## Understanding the Spec File
-
-The spec file (`IL2_CampaignTracker.spec`) contains:
-
-### Analysis Section
+### Entry Point
 ```python
-a = Analysis(
-    ['il2_campaign_tracker.py'],  # Entry point
-    pathex=[],
-    binaries=binaries,            # wkhtmltopdf and DLLs
-    datas=datas,                  # YAML configs
-    hiddenimports=[...],          # Required imports
-    hookspath=[],
-    hooksconfig={},
-    runtime_hooks=[],
-    excludes=['tkinter'],         # Excluded modules
-    noarchive=False,
-)
+['il2_tracker_launcher.py']  # Main launch script
 ```
 
-### Key Components
-
-**Entry Point:**
-- `il2_campaign_tracker.py` - Main GUI application
-
-**Bundled Data Files:**
-- `campaign_progress_config.yaml` - Awards and ranks
-- `object_categories.yaml` - Aircraft classifications
-- `stock_campaigns.yaml` - Known campaigns
-
-**Bundled Binaries:**
-- `wkhtmltopdf.exe` - PDF generation (if found)
-
-**Hidden Imports:**
-All Python modules that PyInstaller might miss:
+### Hidden Imports
+Modules PyInstaller might miss:
 - `decode_campaing_usersave1`
 - `step1_extract_mission_dates`
 - `step3_generate_events`
@@ -105,170 +115,158 @@ All Python modules that PyInstaller might miss:
 - `il2_mission_debrief`
 - `monitor_campaigns`
 - `country_validator_gui`
+- `mlg2txt`
 
-## Build Configuration
+### Bundled Data
+Configuration files:
+- `campaign_progress_config.yaml`
+- `object_categories.yaml`
+- `stock_campaigns.yaml`
 
-### Including wkhtmltopdf
-
-The spec file automatically searches for wkhtmltopdf in:
-- `C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe`
-- `C:\Program Files (x86)\wkhtmltopdf\bin\wkhtmltopdf.exe`
-
-If found, it's bundled into the executable. If not, users will be prompted to install it separately.
-
-### One-File vs One-Folder
-
-Current configuration: **One-Folder**
-- Creates `IL2_Campaign_Tracker_v1.5/` directory
-- Faster startup time
-- Easier to debug
-- Users can modify YAML configs
-
-To switch to **One-File** (single EXE):
-
-Edit spec file:
+### One-File Build
 ```python
-exe = EXE(
-    # ... existing parameters ...
-    onefile=True,  # Change to True
-)
+onefile=True  # Single 40 MB executable
 ```
-
-**Trade-offs:**
-- One-File: Single EXE, slower startup, harder to modify configs
-- One-Folder: Multiple files, faster startup, easier config access
-
-## Build Output
-
-After successful build:
-
-```
-IL2_Campaign_Trackerv1.5/
-    ├── IL2_CampaignTracker.exe          # Main executable
-    ├── campaign_progress_config.yaml
-    ├── object_categories.yaml
-    ├── stock_campaigns.yaml
-    ├── mlg2txt.py
-    ├── QUICK_START.txt
-  
-```
-## Testing the Build
-
-### Basic Test
-1. Navigate to `IL2_Campaign_Trackerv1.5/`
-2. Double-click `IL2_CampaignTracker.exe`
-3. GUI should open without errors
-
-### Full Test
-1. Run the EXE
-2. Select IL-2 installation directory
-3. Validate a campaign
-4. Start monitoring
-5. Generate a PDF report
-6. Check that all features work
 
 ## Distribution
 
-### Creating a Release Package
-
-**Option 1: ZIP Archive**
-```bash
-cd dist
-zip -r IL2_CampaignTracker_v1.5.zip IL2_CampaignTracker/
-```
-
-**Option 2: Installer (Advanced)**
-Use tools like:
-- Inno Setup (Windows)
-- NSIS
-- WiX Toolset
-
-### What to Include
+### What to Package
 
 **Essential:**
-- `IL2_CampaignTracker.exe`
-- `_internal/` directory (entire folder)
-- `*.yaml` config files
-- `README.md` (or README.txt)
+1. The entire `IL2_Campaign_Tracker_v1.5\` folder
+2. `CampaignRanksAwards.zip` (from repository)
 
-**Optional:**
-- `wkhtmltopdf.exe` (if bundled)
-- License file
-- Example screenshots
-- User guide
+### Distribution Structure
+```
+YourDistribution\
+├── IL2_Campaign_Tracker_v1.5\
+│   ├── IL2_CampaignTracker.exe
+│   ├── *.yaml configs
+│   ├── mlg2txt.py
+│   └── QUICK_START.txt
+└── CampaignRanksAwards.zip
+```
 
-### What NOT to Include
+### User Instructions
 
-**Never distribute:**
-- `build/` directory (build artifacts)
-- `*.pyc` files (Python bytecode)
-- `__pycache__/` directories
-- User-specific files:
-  - `campaignsstates.txt`
-  - `campaigns_decoded.json`
-  - `campaign_events.json`
-  - `reports/*.pdf`
+**Installation Steps:**
+1. Extract `CampaignRanksAwards.zip`
+2. Copy `CampaignRanksAwards\` folder to: `<IL-2>\data\swf\`
+3. Run `IL2_CampaignTracker.exe`
+4. Select IL-2 installation when prompted
 
-## Troubleshooting Build Issues
+**Requirements:**
+- IL-2 Sturmovik: Great Battles
+- Windows OS
+- NO Python needed
 
-### PyInstaller Fails to Start
+### Creating a ZIP
+
+```bash
+cd IL2_Campaign_Tracker_v1.5
+# Optionally add CampaignRanksAwards.zip here
+cd ..
+powershell Compress-Archive -Path IL2_Campaign_Tracker_v1.5 -DestinationPath IL2_Tracker_v1.5.zip
+```
+
+## Troubleshooting
+
+### PyInstaller Not Found
 
 **Error:** `pyinstaller: command not found`
 
 **Solution:**
 ```bash
-pip install --upgrade pyinstaller
-# or
-python -m pip install pyinstaller
+pip install pyinstaller
 ```
 
-### Missing Module Errors
+### Syntax Errors
 
-**Error:** `ModuleNotFoundError: No module named 'X'`
-
-**Solution:**
-Add to spec file's `hiddenimports`:
-```python
-hiddenimports=[
-    'existing_imports',
-    'X',  # Add missing module here
-],
-```
-
-### DLL Load Failed
-
-**Error:** `ImportError: DLL load failed`
+**Error:** `SyntaxError` or `IndentationError` during validation
 
 **Solution:**
-1. Install Visual C++ Redistributable
-2. Ensure all Python packages are properly installed
-3. Try rebuilding in a clean environment
+- Fix the reported Python file
+- Common issues: mixed tabs/spaces, missing colons
+- Test manually: `python -m py_compile filename.py`
 
-### wkhtmltopdf Not Found
+### Missing Files
 
-**Error:** PDF generation fails in built EXE
+**Error:** `ERROR: filename.py not found!`
 
 **Solution:**
-1. Install wkhtmltopdf: https://wkhtmltopdf.org/downloads.html
-2. Rebuild to include it in bundle
-3. Or instruct users to install separately
+- Ensure all required `.py` files are present
+- Check file names match exactly
 
-**Current size:** ~39 MB (includes wkhtmltopdf)
+### Build Fails
 
-### Antivirus False Positives
-
-PyInstaller executables may trigger antivirus warnings.
+**Error:** PyInstaller errors
 
 **Solutions:**
-1. Submit to antivirus vendors as false positive
-2. Code-sign the executable (requires certificate)
-3. Distribute source code as alternative
+
+1. Clean and retry:
+   ```bash
+   rmdir /s /q build dist
+   build_exe.bat
+   ```
+
+2. Update PyInstaller:
+   ```bash
+   pip install --upgrade pyinstaller
+   ```
+
+3. Reinstall dependencies:
+   ```bash
+   pip install --force-reinstall -r requirements.txt
+   ```
+
+### EXE Won't Start
+
+**Solution:**
+
+1. Run from command line to see errors:
+   ```bash
+   cd IL2_Campaign_Tracker_v1.5
+   IL2_CampaignTracker.exe
+   ```
+
+2. Check YAML files are present
+
+3. Disable antivirus temporarily
+
+4. Verify wkhtmltopdf was bundled
+
+### wkhtmltopdf Not Bundled
+
+**Symptom:** PDF generation fails
+
+**Solution:**
+1. Install: https://wkhtmltopdf.org/downloads.html
+2. Use default path: `C:\Program Files\wkhtmltopdf\`
+3. Rebuild
+
+### Size Issues
+
+**Expected size:** ~40 MB
 
 ## Advanced Customization
 
-### Custom Icon
+### Modifying the Build
 
-Add to spec file:
+1. Edit `IL2_CampaignTracker.spec`
+2. Common changes:
+   - Executable name
+   - Bundled files
+   - Excluded modules
+   - Custom icon
+
+3. Rebuild with:
+   ```bash
+   build_exe.bat
+   ```
+
+### Adding Custom Icon
+
+In spec file:
 ```python
 exe = EXE(
     # ...
@@ -276,105 +274,15 @@ exe = EXE(
 )
 ```
 
-### Version Information
-
-Add to spec file:
-```python
-exe = EXE(
-    # ...
-    version='version_info.txt',  # Create this file
-)
-```
-
-Example `version_info.txt`:
-```
-VSVersionInfo(
-  ffi=FixedFileInfo(
-    filevers=(1, 5, 0, 0),
-    prodvers=(1, 5, 0, 0),
-    # ...
-  ),
-  kids=[
-    StringFileInfo([
-      StringTable(u'040904B0', [
-        StringStruct(u'CompanyName', u'Your Name'),
-        StringStruct(u'FileDescription', u'IL-2 Campaign Tracker'),
-        StringStruct(u'FileVersion', u'1.5.0.0'),
-        StringStruct(u'ProductName', u'IL-2 Campaign Tracker'),
-        StringStruct(u'ProductVersion', u'1.5.0.0'),
-      ])
-    ])
-  ]
-)
-```
-
-### Build for Different Python Versions
-
-To ensure compatibility:
-```bash
-# Use a specific Python version
-py -3.8 -m PyInstaller IL2_CampaignTracker_WITH_WKHTML.spec
-```
-
-### Clean Build
-
-Remove old build artifacts:
-```bash
-rmdir /s /q build dist
-pyinstaller IL2_CampaignTracker_WITH_WKHTML.spec
-```
-
-Or on Linux/Mac:
-```bash
-rm -rf build dist
-pyinstaller IL2_CampaignTracker_WITH_WKHTML.spec
-```
-
-## Continuous Integration
-
-### GitHub Actions Example
-
-Create `.github/workflows/build.yml`:
-```yaml
-name: Build EXE
-
-on:
-  push:
-    tags:
-      - 'v*'
-
-jobs:
-  build:
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.8'
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-        pip install pyinstaller
-    - name: Build EXE
-      run: pyinstaller IL2_CampaignTracker_WITH_WKHTML.spec
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: IL2_CampaignTracker
-        path: dist/IL2_CampaignTracker/
-```
+**Recommendation:** Use `build_exe.bat` - it's automated and reliable.
 
 ## Support
 
-For build issues:
-1. Check this guide
-2. Review PyInstaller documentation: https://pyinstaller.org/
-3. Open an issue on GitHub with:
-   - Python version
-   - PyInstaller version
-   - Full error message
-   - Build command used
+For build issues, open a GitHub issue with:
+- Full error output
+- Python version: `python --version`
+- PyInstaller version: `pyinstaller --version`
+- Operating system
 
 ---
 
