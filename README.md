@@ -40,73 +40,163 @@ A comprehensive campaign progress tracker for IL-2 Sturmovik: Great Battles that
 
 ## 🚀 Installation
 
-### Two Ways to Use This Tracker
-
-**Option 1: Run from Python (For Developers)**
-- Requires Python 3.8+ installed
-- Can modify and customize the code
-- See instructions below
-
-**Option 2: Use Pre-built EXE (For End Users)**
-- No Python required
-- Download from Releases page
-- Extract and run `IL2_CampaignTracker.exe`
-
----
-
-### Option 1: Running from Python Source
-
-#### Prerequisites
+### Prerequisites
 - Python 3.8 or higher
 - IL-2 Sturmovik: Great Battles (any version)
 - Windows OS
 
-#### Required Python Packages
+### Step 1: Install Python Dependencies
 ```bash
-pip install pillow pyyaml psutil pdfkit
+pip install -r requirements.txt
 ```
 
-#### Optional: wkhtmltopdf (for PDF export)
+Required packages:
+- `pillow` - Image processing (DDS to PNG conversion)
+- `pyyaml` - Configuration file parsing
+- `psutil` - Process monitoring
+- `pdfkit` - PDF generation
+
+### Step 2: Install wkhtmltopdf (for PDF export)
 Download and install from: https://wkhtmltopdf.org/downloads.html
 
-Or the tracker will guide you through installation on first run.
+The tracker will guide you through installation if not found.
 
-#### Setup
+### Step 3: Download Campaign Ranks & Awards Images
+
+**IMPORTANT:** The tracker requires medal and rank images to display in-game and in PDFs.
+
+1. Download `CampaignRanksAwards.zip` from this repository
+2. Extract the ZIP file
+3. Copy the `CampaignRanksAwards` folder to: `<IL-2 Installation>\data\swf\`
+
+**Final structure:**
+```
+<IL-2 Installation>\
+└── data\
+    └── swf\
+        └── CampaignRanksAwards\
+            ├── Germany\
+            │   ├── unteroffizier.png
+            │   ├── feldwebel.png
+            │   └── ...
+            ├── Britain\
+            ├── US\
+            └── USSR\
+                ├── early\
+                └── late\
+```
+
+### Step 4: Clone and Run
+
 1. Clone this repository:
 ```bash
 git clone https://github.com/yourusername/il2-campaign-tracker.git
 cd il2-campaign-tracker
 ```
 
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-3. Run the tracker:
+2. Run the tracker:
 ```bash
 python il2_campaign_tracker.py
 ```
 
-4. Select your IL-2 installation directory when prompted
+3. Select your IL-2 installation directory when prompted
 
 ---
 
-### Option 2: Using Pre-built EXE
+## 🔨 Building Standalone EXE
 
-1. Download the latest release from the [Releases](https://github.com/yourusername/il2-campaign-tracker/releases) page
-2. Extract the ZIP file
-3. Run `IL2_CampaignTracker.exe`
-4. No Python installation needed!
+**Note:** Pre-built EXE files are NOT provided in releases. You must build your own executable.
 
-**Note:** The EXE is only available if a release has been published. To build your own, see the [Building Standalone EXE](#-building-standalone-exe) section below.
+### Why Build Your Own?
+
+Building allows you to:
+- Customize the configuration
+- Verify the source code
+- Ensure compatibility with your Python environment
+- Include the exact versions of dependencies you want
+
+### Build Requirements
+
+**To BUILD the EXE, you need:**
+- Python 3.8 or higher installed
+- PyInstaller: `pip install pyinstaller`
+- All dependencies: `pip install -r requirements.txt`
+
+**To RUN the built EXE:**
+- End users do NOT need Python
+- The EXE is standalone
+
+### Build Instructions
+
+**Simply run the build script:**
+```bash
+build_exe.bat
+```
+
+**What the script does:**
+1. Checks for PyInstaller and all dependencies
+2. Validates all Python files (syntax check)
+3. Cleans old build artifacts
+4. Runs PyInstaller with the spec file
+5. Creates `IL2_Campaign_Tracker_v1.5\` folder with:
+   - `IL2_CampaignTracker.exe`
+   - Configuration files (YAML)
+   - Quick start guide
+
+**Output location:**
+```
+IL2_Campaign_Tracker_v1.5\
+├── IL2_CampaignTracker.exe          # Standalone executable (~40 MB)
+├── campaign_progress_config.yaml    # Awards & ranks config
+├── object_categories.yaml           # Aircraft classifications
+├── stock_campaigns.yaml             # Known campaigns
+├── mlg2txt.py                       # Mission log converter
+├── QUICK_START.txt                  # User instructions
+└── README.txt                       # This file (optional)
+```
+
+### Distribution
+
+To share the tracker with others:
+
+1. Build the EXE using `build_exe.bat`
+2. Copy the entire `IL2_Campaign_Tracker_v1.5\` folder
+3. Include `CampaignRanksAwards.zip` in your distribution
+4. Provide instructions to copy `CampaignRanksAwards\` to IL-2's `data\swf\` folder
+
+**No Python required for end users!**
+
+### Build Troubleshooting
+
+**PyInstaller not found:**
+```bash
+pip install pyinstaller
+```
+
+**Missing dependencies:**
+```bash
+pip install -r requirements.txt
+```
+
+**Build fails:**
+- Check that all `.py` files exist in the project directory
+- Verify Python syntax: `python -m py_compile filename.py`
+- Review error messages in the console
+
+**EXE won't start:**
+- Run from command line to see error messages
+- Ensure all YAML files are present
+- Check antivirus isn't blocking the executable
+
+For detailed build information, see [BUILD.md](BUILD.md).
 
 ## 📖 Usage
 
 ### First Time Setup
-1. Run `python il2_campaign_tracker.py`
+1. Run `python il2_campaign_tracker.py` (or `IL2_CampaignTracker.exe` if you built it)
 2. Point the tracker to your IL-2 installation directory
 3. The tracker will scan your existing campaigns and validate country assignments
+4. Ensure `CampaignRanksAwards\` folder is in `<IL-2>\data\swf\` for images to display
 
 ### Automatic Monitoring
 The tracker runs in the background and automatically:
@@ -134,93 +224,12 @@ python step3_generate_events.py
 python step4_process_mission_logs.py
 ```
 
-## 🔨 Building Standalone EXE
-
-You can build a standalone executable that **end users can run without Python installed**. However, **you need Python to build the EXE**.
-
-### Prerequisites for Building
-```bash
-pip install pyinstaller
-```
-
-**Note:** Python 3.8+ is required to **build** the EXE. Once built, the EXE can be distributed to users who don't have Python installed.
-
-### Build Steps
-
-**Option 1: Using the build script (Recommended)**
-```bash
-build_exe.bat
-```
-
-This will:
-1. Install PyInstaller if needed
-2. Build the EXE using the spec file
-3. Copy required configuration files
-4. Create a `dist/` directory with the complete package
-
-**Option 2: Manual build**
-```bash
-pyinstaller IL2_CampaignTracker_WITH_WKHTML.spec
-```
-
-Then manually copy these files to the `dist/IL2_CampaignTracker/` directory:
-- `campaign_progress_config.yaml`
-- `object_categories.yaml`
-- `stock_campaigns.yaml`
-- `wkhtmltopdf.exe` (if you have it installed)
-
-### What's Included in the EXE
-
-The spec file (`IL2_CampaignTracker_WITH_WKHTML.spec`) bundles:
-- All Python scripts and dependencies
-- YAML configuration files
-- wkhtmltopdf binary (for PDF generation)
-- Required DLLs and resources
-
-### Distribution
-
-After building, the `dist/IL2_CampaignTracker/` folder contains everything needed:
-```
-dist/IL2_CampaignTracker/
-├── IL2_CampaignTracker.exe          # Main executable
-├── campaign_progress_config.yaml
-├── object_categories.yaml
-├── stock_campaigns.yaml
-├── wkhtmltopdf.exe
-└── [Various DLLs and dependencies]
-```
-
-**For Distribution:** Simply copy this entire folder to share with others - **no Python installation required for end users!**
-
-**For Developers:** You need Python 3.8+ and PyInstaller to build the EXE. See [BUILD.md](BUILD.md) for detailed build instructions.
-
-### Build Troubleshooting
-
-**PyInstaller not found:**
-```bash
-pip install --upgrade pyinstaller
-```
-
-**Missing dependencies:**
-```bash
-pip install pillow pyyaml psutil pdfkit
-```
-
-**wkhtmltopdf not bundled:**
-- Download from https://wkhtmltopdf.org/downloads.html
-- Install to default location (`C:\Program Files\wkhtmltopdf\`)
-- The build script will automatically find and include it
-
-**EXE won't start:**
-- Run from command line to see error messages
-- Check that all YAML files are in the same directory as the EXE
-- Ensure antivirus isn't blocking the executable
-
 ## 📂 File Structure
 
 ```
 IL2_CampaignTracker/
 ├── il2_campaign_tracker.py          # Main GUI application
+├── il2_tracker_launcher.py          # Launcher script
 ├── monitor_campaigns.py             # Background monitoring service
 ├── step1_extract_mission_dates.py   # Mission date extraction
 ├── step3_generate_events.py         # Career event generation
@@ -237,6 +246,7 @@ IL2_CampaignTracker/
 ├── requirements.txt                 # Python dependencies
 ├── README.md                        # This file
 ├── BUILD.md                         # Detailed build instructions
+├── CampaignRanksAwards.zip          # Medal & rank images (download separately)
 └── reports/                         # Generated PDF reports
 ```
 
@@ -280,13 +290,12 @@ Pre-configured:
 - Order of Lenin
 - Medals for Bravery and Combat Merit
 - Separate early (collar tabs) and late (shoulder boards) periods
-- And more...
-- 
+
 ### Britain
 - Distinguished Flying Cross (DFC)
 - Distinguished Flying Medal (DFM)
 - Distinguished Service Order (DSO)
-- And more...
+- Air Force Cross (AFC)
 
 ### USA
 - Distinguished Flying Cross
@@ -294,8 +303,7 @@ Pre-configured:
 - Silver Star
 - Distinguished Service Cross
 - Purple Heart
-- And more...
-  
+
 ## 🔧 Advanced Features
 
 ### Rank Scaling
@@ -394,4 +402,3 @@ For bugs, feature requests, or questions:
 ---
 
 **Happy Flying! 🛩️**
-
