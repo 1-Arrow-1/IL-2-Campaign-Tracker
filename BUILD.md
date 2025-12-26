@@ -45,7 +45,7 @@ build_exe.bat
 
 **Output location:**
 ```
-dist/IL2_CampaignTracker/
+IL2_Campaign_Tracker_v1.5/
 ```
 
 ### Method 2: Manual PyInstaller
@@ -53,25 +53,19 @@ dist/IL2_CampaignTracker/
 If you prefer manual control:
 
 ```bash
-pyinstaller IL2_CampaignTracker_WITH_WKHTML.spec
+pyinstaller IL2_CampaignTracker.spec
 ```
-
-Then manually copy these files to `dist/IL2_CampaignTracker/`:
-- `campaign_progress_config.yaml`
-- `object_categories.yaml`
-- `stock_campaigns.yaml`
-
 ### Method 3: Custom Build
 
 For advanced users who want to modify the build:
 
-1. Edit `IL2_CampaignTracker_WITH_WKHTML.spec`
+1. Edit `IL2_CampaignTracker.spec`
 2. Modify paths, exclusions, or bundled files
-3. Run: `pyinstaller IL2_CampaignTracker_WITH_WKHTML.spec`
+3. Run: `pyinstaller IL2_CampaignTracker.spec`
 
 ## Understanding the Spec File
 
-The spec file (`IL2_CampaignTracker_WITH_WKHTML.spec`) contains:
+The spec file (`IL2_CampaignTracker.spec`) contains:
 
 ### Analysis Section
 ```python
@@ -101,7 +95,6 @@ a = Analysis(
 
 **Bundled Binaries:**
 - `wkhtmltopdf.exe` - PDF generation (if found)
-- `wkhtmltox.dll` - Required DLL (if found)
 
 **Hidden Imports:**
 All Python modules that PyInstaller might miss:
@@ -112,10 +105,6 @@ All Python modules that PyInstaller might miss:
 - `il2_mission_debrief`
 - `monitor_campaigns`
 - `country_validator_gui`
-- `mlg2txt`
-
-**Excluded Modules:**
-- `tkinter` - Not used, saves space
 
 ## Build Configuration
 
@@ -130,7 +119,7 @@ If found, it's bundled into the executable. If not, users will be prompted to in
 ### One-File vs One-Folder
 
 Current configuration: **One-Folder**
-- Creates `dist/IL2_CampaignTracker/` directory
+- Creates `IL2_Campaign_Tracker_v1.5/` directory
 - Faster startup time
 - Easier to debug
 - Users can modify YAML configs
@@ -154,25 +143,19 @@ exe = EXE(
 After successful build:
 
 ```
-dist/
-└── IL2_CampaignTracker/
+IL2_Campaign_Trackerv1.5/
     ├── IL2_CampaignTracker.exe          # Main executable
-    ├── _internal/                       # PyInstaller runtime files
-    │   ├── Python DLLs
-    │   ├── Libraries
-    │   └── Dependencies
     ├── campaign_progress_config.yaml
     ├── object_categories.yaml
     ├── stock_campaigns.yaml
-    └── wkhtmltopdf.exe                  # If bundled
+    ├── mlg2txt.py
+    ├── QUICK_START.txt
+  
 ```
-
-**Important:** The `_internal/` directory must stay with the EXE!
-
 ## Testing the Build
 
 ### Basic Test
-1. Navigate to `dist/IL2_CampaignTracker/`
+1. Navigate to `IL2_Campaign_Trackerv1.5/`
 2. Double-click `IL2_CampaignTracker.exe`
 3. GUI should open without errors
 
@@ -183,14 +166,6 @@ dist/
 4. Start monitoring
 5. Generate a PDF report
 6. Check that all features work
-
-### Command Line Test
-```bash
-cd dist/IL2_CampaignTracker
-IL2_CampaignTracker.exe
-```
-
-Watch for error messages in the console.
 
 ## Distribution
 
@@ -278,21 +253,7 @@ hiddenimports=[
 2. Rebuild to include it in bundle
 3. Or instruct users to install separately
 
-### EXE Too Large
-
-**Current size:** ~150-200 MB (includes wkhtmltopdf)
-
-**To reduce:**
-1. Exclude wkhtmltopdf (save ~50 MB)
-2. Use UPX compression:
-   ```python
-   exe = EXE(
-       # ...
-       upx=True,
-       upx_exclude=[],
-   )
-   ```
-3. Exclude unused libraries in spec file
+**Current size:** ~39 MB (includes wkhtmltopdf)
 
 ### Antivirus False Positives
 
