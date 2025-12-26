@@ -1,6 +1,6 @@
 # IL-2 Campaign Tracker
 
-A comprehensive campaign progress tracker for IL-2 Sturmovik: Great Battles that automatically monitors your campaigns, tracks achievements, generates detailed mission debriefings, and exports professional PDF reports.
+A comprehensive campaign progress tracker for IL-2 Sturmovik: Great Battles that automatically monitors your career campaigns, tracks achievements, generates detailed mission debriefings, and exports professional PDF reports.
 
 ![IL-2 Campaign Tracker](https://img.shields.io/badge/IL--2-Campaign%20Tracker-blue)
 ![Python](https://img.shields.io/badge/Python-3.8%2B-green)
@@ -40,34 +40,66 @@ A comprehensive campaign progress tracker for IL-2 Sturmovik: Great Battles that
 
 ## 🚀 Installation
 
-### Prerequisites
+### Two Ways to Use This Tracker
+
+**Option 1: Run from Python (For Developers)**
+- Requires Python 3.8+ installed
+- Can modify and customize the code
+- See instructions below
+
+**Option 2: Use Pre-built EXE (For End Users)**
+- No Python required
+- Download from Releases page
+- Extract and run `IL2_CampaignTracker.exe`
+
+---
+
+### Option 1: Running from Python Source
+
+#### Prerequisites
 - Python 3.8 or higher
 - IL-2 Sturmovik: Great Battles (any version)
 - Windows OS
 
-### Required Python Packages
+#### Required Python Packages
 ```bash
 pip install pillow pyyaml psutil pdfkit
 ```
 
-### Optional: wkhtmltopdf (for PDF export)
+#### Optional: wkhtmltopdf (for PDF export)
 Download and install from: https://wkhtmltopdf.org/downloads.html
 
 Or the tracker will guide you through installation on first run.
 
-### Setup
+#### Setup
 1. Clone this repository:
 ```bash
 git clone https://github.com/yourusername/il2-campaign-tracker.git
 cd il2-campaign-tracker
 ```
 
-2. Run the initial setup:
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+3. Run the tracker:
 ```bash
 python il2_campaign_tracker.py
 ```
 
-3. Select your IL-2 installation directory when prompted
+4. Select your IL-2 installation directory when prompted
+
+---
+
+### Option 2: Using Pre-built EXE
+
+1. Download the latest release from the [Releases](https://github.com/yourusername/il2-campaign-tracker/releases) page
+2. Extract the ZIP file
+3. Run `IL2_CampaignTracker.exe`
+4. No Python installation needed!
+
+**Note:** The EXE is only available if a release has been published. To build your own, see the [Building Standalone EXE](#-building-standalone-exe) section below.
 
 ## 📖 Usage
 
@@ -102,6 +134,88 @@ python step3_generate_events.py
 python step4_process_mission_logs.py
 ```
 
+## 🔨 Building Standalone EXE
+
+You can build a standalone executable that **end users can run without Python installed**. However, **you need Python to build the EXE**.
+
+### Prerequisites for Building
+```bash
+pip install pyinstaller
+```
+
+**Note:** Python 3.8+ is required to **build** the EXE. Once built, the EXE can be distributed to users who don't have Python installed.
+
+### Build Steps
+
+**Option 1: Using the build script (Recommended)**
+```bash
+build_exe.bat
+```
+
+This will:
+1. Install PyInstaller if needed
+2. Build the EXE using the spec file
+3. Copy required configuration files
+4. Create a `dist/` directory with the complete package
+
+**Option 2: Manual build**
+```bash
+pyinstaller IL2_CampaignTracker_WITH_WKHTML.spec
+```
+
+Then manually copy these files to the `dist/IL2_CampaignTracker/` directory:
+- `campaign_progress_config.yaml`
+- `object_categories.yaml`
+- `stock_campaigns.yaml`
+- `wkhtmltopdf.exe` (if you have it installed)
+
+### What's Included in the EXE
+
+The spec file (`IL2_CampaignTracker_WITH_WKHTML.spec`) bundles:
+- All Python scripts and dependencies
+- YAML configuration files
+- wkhtmltopdf binary (for PDF generation)
+- Required DLLs and resources
+
+### Distribution
+
+After building, the `dist/IL2_CampaignTracker/` folder contains everything needed:
+```
+dist/IL2_CampaignTracker/
+├── IL2_CampaignTracker.exe          # Main executable
+├── campaign_progress_config.yaml
+├── object_categories.yaml
+├── stock_campaigns.yaml
+├── wkhtmltopdf.exe
+└── [Various DLLs and dependencies]
+```
+
+**For Distribution:** Simply copy this entire folder to share with others - **no Python installation required for end users!**
+
+**For Developers:** You need Python 3.8+ and PyInstaller to build the EXE. See [BUILD.md](BUILD.md) for detailed build instructions.
+
+### Build Troubleshooting
+
+**PyInstaller not found:**
+```bash
+pip install --upgrade pyinstaller
+```
+
+**Missing dependencies:**
+```bash
+pip install pillow pyyaml psutil pdfkit
+```
+
+**wkhtmltopdf not bundled:**
+- Download from https://wkhtmltopdf.org/downloads.html
+- Install to default location (`C:\Program Files\wkhtmltopdf\`)
+- The build script will automatically find and include it
+
+**EXE won't start:**
+- Run from command line to see error messages
+- Check that all YAML files are in the same directory as the EXE
+- Ensure antivirus isn't blocking the executable
+
 ## 📂 File Structure
 
 ```
@@ -118,8 +232,11 @@ IL2_CampaignTracker/
 ├── campaign_progress_config.yaml    # Awards & ranks configuration
 ├── object_categories.yaml           # Aircraft/vehicle classifications
 ├── stock_campaigns.yaml             # Known campaign definitions
-├── IL2_CampaignTracker.spec         # SPEC file for building an EXE
-├── build_exe.bat                    # BAT file for creating an EXE
+├── IL2_CampaignTracker.spec         # PyInstaller build spec
+├── build_exe.bat                    # Automated build script
+├── requirements.txt                 # Python dependencies
+├── README.md                        # This file
+├── BUILD.md                         # Detailed build instructions
 └── reports/                         # Generated PDF reports
 ```
 
@@ -163,23 +280,22 @@ Pre-configured:
 - Order of Lenin
 - Medals for Bravery and Combat Merit
 - Separate early (collar tabs) and late (shoulder boards) periods
-- And more..
-
+- And more...
+- 
 ### Britain
 - Distinguished Flying Cross (DFC)
 - Distinguished Flying Medal (DFM)
 - Distinguished Service Order (DSO)
-- Air Force Cross (AFC)
-- And more..
-  
+- And more...
+
 ### USA
 - Distinguished Flying Cross
 - Air Medal
 - Silver Star
 - Distinguished Service Cross
 - Purple Heart
-- And more..
-
+- And more...
+  
 ## 🔧 Advanced Features
 
 ### Rank Scaling
@@ -204,7 +320,7 @@ Four-criteria system:
 ### DDS Image Support
 Automatically converts IL-2's DDS texture files to PNG for PDF embedding.
 
-### Image Rotation for PDFs
+### Image Rotation
 Properly displays rank insignia:
 - German: All ranks rotated 90° counter-clockwise
 - British: Selected officer ranks rotated
@@ -278,3 +394,4 @@ For bugs, feature requests, or questions:
 ---
 
 **Happy Flying! 🛩️**
+
