@@ -278,46 +278,47 @@ class MissionLogProcessor:
             if self.verbose:
                 print(f"    Converting .mlg to .txt...")
             
-            # Find mlg2txt.py
-            # When running as EXE, __file__ points to temp directory inside bundle
-            # mlg2txt.py should be in the same directory as the EXE (not bundled)
+            # Find mlg2txt executable
             import sys
             
             if getattr(sys, 'frozen', False):
                 # Running as compiled EXE
-                # sys.executable is the EXE path
-                # mlg2txt.py should be in same directory as EXE
+                # mlg2txt.exe should be in same directory as the EXE
                 exe_dir = Path(sys.executable).parent
-                mlg2txt_script = exe_dir / 'mlg2txt.py'
+                mlg2txt_executable = exe_dir / 'mlg2txt.exe'
+                
+                if not mlg2txt_executable.exists():
+                    print(f"    Error: mlg2txt.exe not found at {mlg2txt_executable}")
+                    print(f"    Please ensure mlg2txt.exe is in the same folder as IL2_CampaignTracker.exe")
+                    return None
             else:
                 # Running as Python script
-                # mlg2txt.py should be in same directory as this script
-                mlg2txt_script = Path(__file__).parent / 'mlg2txt.py'
+                # Use mlg2txt.py with Python
+                mlg2txt_executable = Path(__file__).parent / 'mlg2txt.py'
+                
+                if not mlg2txt_executable.exists():
+                    print(f"    Error: mlg2txt.py not found at {mlg2txt_executable}")
+                    return None
             
-            if not mlg2txt_script.exists():
-                print(f"    Error: mlg2txt.py not found at {mlg2txt_script}")
-                return None
-            
-            # Use subprocess to avoid argparse conflicts
+            # Use subprocess to run mlg2txt
             import subprocess
             import sys
             
-            # Determine which Python to use
+            # Determine command based on whether we're running as EXE or script
             if getattr(sys, 'frozen', False):
-                # Running as EXE - need to use system Python, not sys.executable (the EXE)
-                # Try 'python' command - should work if Python is in PATH
-                python_exe = 'python'
+                # Running as EXE - call mlg2txt.exe directly
+                cmd = [str(mlg2txt_executable), '--output', str(mlg_file.parent), str(mlg_file)]
             else:
-                # Running as script - use same Python interpreter
-                python_exe = sys.executable
+                # Running as script - call mlg2txt.py with Python
+                cmd = [sys.executable, str(mlg2txt_executable), '--output', str(mlg_file.parent), str(mlg_file)]
             
-            # Run mlg2txt conversion
+            # Run conversion
             result = subprocess.run(
-                [python_exe, str(mlg2txt_script), 
-                 '--output', str(mlg_file.parent), str(mlg_file)],
+                cmd,
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
             )
             
             if result.returncode != 0:
