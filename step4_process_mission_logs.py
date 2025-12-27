@@ -127,7 +127,7 @@ class MissionLogProcessor:
         
         # Process pipeline: .mlg → .txt → .json
         try:
-            # Step 1: Convert .mlg to .txt
+            # Step 1: Convert .mlg to .txt (creates ONE complete file without --split)
             txt_file = self._mlg_to_txt(mlg_file)
             if not txt_file or not txt_file.exists():
                 if self.verbose:
@@ -244,22 +244,36 @@ class MissionLogProcessor:
         """
         Convert .mlg to .txt using mlg2txt module via subprocess
         
+        Note: mlg2txt ALWAYS creates files with [N] suffix in the filename.
+        Without --split: Creates ONE file named [0].txt with all events.
+        With --split: Creates MULTIPLE files [0].txt, [1].txt, [2].txt with fragmented events.
+        
         Args:
             mlg_file: Path to .mlg file
         
         Returns:
-            Path to generated .txt file (e.g., "missionReport(...)[0].txt")
+            Path to generated .txt file or None
         """
         try:
-            # Expected output: missionReport(...).[0].txt in same directory
             base_name = mlg_file.stem  # Without .mlg
+            # mlg2txt ALWAYS creates [0].txt, even without --split flag
             txt_file = mlg_file.parent / f"{base_name}[0].txt"
             
-            # Check if already converted
+            # Check if already converted AND if .txt is newer than .mlg
             if txt_file.exists():
-                if self.verbose:
-                    print(f"    Using existing .txt: {txt_file.name}")
-                return txt_file
+                # Compare modification times
+                mlg_mtime = mlg_file.stat().st_mtime
+                txt_mtime = txt_file.stat().st_mtime
+                
+                if txt_mtime >= mlg_mtime:
+                    # TXT is up-to-date
+                    if self.verbose:
+                        print(f"    Using existing .txt: {txt_file.name}")
+                    return txt_file
+                else:
+                    # MLG is newer - need to reconvert
+                    if self.verbose:
+                        print(f"    .mlg is newer than .txt, reconverting...")
             
             if self.verbose:
                 print(f"    Converting .mlg to .txt...")
@@ -276,10 +290,12 @@ class MissionLogProcessor:
             import sys
             
             # Use sys.executable to ensure we use the correct Python interpreter
-            # 'python' command can be unreliable on Windows (may not exist or wrong version)
+            # IMPORTANT: Do NOT use --split! 
+            # Without --split, mlg2txt creates ONE file [0].txt with ALL events (not fragmented).
+            # With --split, it creates MULTIPLE files [0].txt, [1].txt, etc with fragmented events.
             result = subprocess.run(
                 [sys.executable, str(mlg2txt_script), 
-                 '--split', '--output', str(mlg_file.parent), str(mlg_file)],
+                 '--output', str(mlg_file.parent), str(mlg_file)],
                 capture_output=True,
                 text=True,
                 timeout=30
