@@ -278,8 +278,21 @@ class MissionLogProcessor:
             if self.verbose:
                 print(f"    Converting .mlg to .txt...")
             
-            # Find mlg2txt.py (should be in same directory as this script)
-            mlg2txt_script = Path(__file__).parent / 'mlg2txt.py'
+            # Find mlg2txt.py
+            # When running as EXE, __file__ points to temp directory inside bundle
+            # mlg2txt.py should be in the same directory as the EXE (not bundled)
+            import sys
+            
+            if getattr(sys, 'frozen', False):
+                # Running as compiled EXE
+                # sys.executable is the EXE path
+                # mlg2txt.py should be in same directory as EXE
+                exe_dir = Path(sys.executable).parent
+                mlg2txt_script = exe_dir / 'mlg2txt.py'
+            else:
+                # Running as Python script
+                # mlg2txt.py should be in same directory as this script
+                mlg2txt_script = Path(__file__).parent / 'mlg2txt.py'
             
             if not mlg2txt_script.exists():
                 print(f"    Error: mlg2txt.py not found at {mlg2txt_script}")
