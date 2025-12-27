@@ -85,13 +85,33 @@ class EventGenerator:
             with open(config_path, 'r', encoding='iso-8859-1') as f:
                 self.config = yaml.safe_load(f)
         
-        # Load mission dates
-        with open('campaign_mission_dates.json', 'r', encoding='utf-8') as f:
-            self.mission_dates = json.load(f)
+        # Load mission dates with explicit error handling
+        try:
+            with open('campaign_mission_dates.json', 'r', encoding='utf-8') as f:
+                self.mission_dates = json.load(f)
+        except FileNotFoundError:
+            print(f"ERROR: Required file 'campaign_mission_dates.json' not found!")
+            print(f"Please run step1_extract_mission_dates.py first.")
+            raise
+        except json.JSONDecodeError as e:
+            print(f"ERROR: Invalid JSON in 'campaign_mission_dates.json'")
+            print(f"  Line {e.lineno}, Column {e.colno}: {e.msg}")
+            print(f"  The file may be corrupted. Try regenerating it.")
+            raise
         
-        # Load decoded save data
-        with open('campaigns_decoded.json', 'r', encoding='utf-8') as f:
-            self.save_data = json.load(f)
+        # Load decoded save data with explicit error handling
+        try:
+            with open('campaigns_decoded.json', 'r', encoding='utf-8') as f:
+                self.save_data = json.load(f)
+        except FileNotFoundError:
+            print(f"ERROR: Required file 'campaigns_decoded.json' not found!")
+            print(f"Please run decode_campaing_usersave1.py first.")
+            raise
+        except json.JSONDecodeError as e:
+            print(f"ERROR: Invalid JSON in 'campaigns_decoded.json'")
+            print(f"  Line {e.lineno}, Column {e.colno}: {e.msg}")
+            print(f"  The file may be corrupted. Try re-decoding the save file.")
+            raise
         
         # Extract game directory from mission dates JSON
         self.game_directory = self.mission_dates.get('game_directory', '')
@@ -1556,13 +1576,16 @@ class EventGenerator:
                 shutil.copy(info_file, backup_file)
                 print(f"  Created backup: {backup_file.name}")
             
-            # Read existing content
+            # Read existing content and detect encoding
             # Try different encodings
             content = None
+            detected_encoding = None
             for encoding in ['utf-8', 'utf-16-le', 'utf-16-be', 'latin-1']:
                 try:
                     with open(info_file, 'r', encoding=encoding) as f:
                         content = f.read()
+                    detected_encoding = encoding
+                    print(f"  Detected encoding: {encoding}")
                     break
                 except UnicodeDecodeError:
                     continue
@@ -1572,40 +1595,79 @@ class EventGenerator:
                 return False
             
             # Check if Events section already exists
-            # Remove old Mission Debriefings section (if exists)
+            # We need to be careful to preserve any content AFTER Events section
+            # (could be modded campaigns with custom sections)
+            
+            # Strategy: Find and extract content in three parts:
+            # 1. Before Mission Debriefings/Events
+            # 2. Mission Debriefings + Events (we'll replace this)
+            # 3. After Events (we'll preserve this)
+            
+            before_content = content
+            after_events_content = ""
+            
+            # Step 1: Check for and remove Mission Debriefings section
             if '<u>Mission Debriefings</u>' in content:
-                content = re.sub(
-                    r"<u>Mission Debriefings</u>.*?(?=<u>Events</u>|$)",
-                    "",
-                    content,
-                    flags=re.DOTALL
-                )
-                print(f"  Removed old Mission Debriefings section")
-
-            # Remove old Events section (if exists)
-            if '<u>Events</u>' in content:
-                content = re.sub(
-                    r"<u>Events</u>.*?$",
-                    "",
-                    content,
-                    flags=re.DOTALL
-                )
+                # Find where Mission Debriefings starts
+                match = re.search(r'<u>Mission Debriefings</u>', content)
+                if match:
+                    before_content = content[:match.start()]
+                    content_after_debriefings = content[match.start():]
+                    
+                    # Check if there's an Events section after Debriefings
+                    if '<u>Events</u>' in content_after_debriefings:
+                        # Find Events section
+                        events_match = re.search(r'<u>Events</u>', content_after_debriefings)
+                        if events_match:
+                            # Check if there's content after Events that's NOT part of Events
+                            content_after_events = content_after_debriefings[events_match.end():]
+                            
+                            # Look for next section marker (starts with <u>)
+                            next_section = re.search(r'<br><br><u>[^<]+</u>', content_after_events)
+                            if next_section:
+                                after_events_content = content_after_events[next_section.start():]
+                    else:
+                        # No Events section, check for content after Debriefings
+                        next_section = re.search(r'<br><br><u>[^<]+</u>', content_after_debriefings)
+                        if next_section:
+                            after_events_content = content_after_debriefings[next_section.start():]
+                    
+                    print(f"  Removed old Mission Debriefings section")
+            
+            # Step 2: Check for Events section (if no Debriefings section)
+            elif '<u>Events</u>' in content:
+                # Find where Events starts
+                match = re.search(r'<u>Events</u>', content)
+                if match:
+                    before_content = content[:match.start()]
+                    content_after_events = content[match.end():]
+                    
+                    # Look for next section marker
+                    next_section = re.search(r'<br><br><u>[^<]+</u>', content_after_events)
+                    if next_section:
+                        after_events_content = content_after_events[next_section.start():]
+                
                 print(f"  Removed old Events section")
 
-            # Cleanup trailing whitespace and <br> tags
-            content = content.rstrip()
-            while content.endswith('<br>'):
-                content = content[:-4].rstrip()
+            # Cleanup trailing whitespace and <br> tags from before_content
+            before_content = before_content.rstrip()
+            while before_content.endswith('<br>'):
+                before_content = before_content[:-4].rstrip()
             
-            # Append new Events section
-            # Add separator before Events
-            updated_content = content + '<br><br>' + events_html
+            # Build new content: before + new events + after (if any)
+            updated_content = before_content + '<br><br>' + events_html
             
-            # Write updated content (use same encoding as original)
-            with open(info_file, 'w', encoding='utf-8') as f:
+            if after_events_content:
+                # Preserve content that came after Events section
+                updated_content += after_events_content
+                print(f"  ✓ Preserved content after Events section")
+            
+            # Write updated content using SAME encoding as original
+            # This prevents corruption of UTF-16 LE files (common in IL-2)
+            with open(info_file, 'w', encoding=detected_encoding) as f:
                 f.write(updated_content)
             
-            print(f"  ✓ Updated: {info_file}")
+            print(f"  ✓ Updated: {info_file} (encoding: {detected_encoding})")
             return True
             
         except Exception as e:

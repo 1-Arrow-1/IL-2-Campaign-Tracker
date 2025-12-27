@@ -273,8 +273,12 @@ class MissionLogProcessor:
             
             # Use subprocess to avoid argparse conflicts
             import subprocess
+            import sys
+            
+            # Use sys.executable to ensure we use the correct Python interpreter
+            # 'python' command can be unreliable on Windows (may not exist or wrong version)
             result = subprocess.run(
-                ['python', str(mlg2txt_script), 
+                [sys.executable, str(mlg2txt_script), 
                  '--split', '--output', str(mlg_file.parent), str(mlg_file)],
                 capture_output=True,
                 text=True,

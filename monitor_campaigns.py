@@ -53,7 +53,14 @@ class CampaignMonitor:
             with open('campaign_mission_dates.json', 'r') as f:
                 config = json.load(f)
                 self.game_directory = config.get('game_directory')
-        except:
+        except FileNotFoundError:
+            self.log("Warning: campaign_mission_dates.json not found, game directory unknown")
+            self.game_directory = None
+        except json.JSONDecodeError as e:
+            self.log(f"Error: Invalid JSON in campaign_mission_dates.json: {e}")
+            self.game_directory = None
+        except Exception as e:
+            self.log(f"Error reading campaign_mission_dates.json: {e}")
             self.game_directory = None
         
         # Build path to save file
@@ -111,7 +118,14 @@ class CampaignMonitor:
                 with open('campaign_mission_dates.json', 'r') as f:
                     config = json.load(f)
                     known_campaigns = {k: v for k, v in config.items() if k != 'game_directory'}
-            except:
+            except FileNotFoundError:
+                self.log("Warning: campaign_mission_dates.json not found, cannot detect removed campaigns")
+                known_campaigns = {}
+            except json.JSONDecodeError as e:
+                self.log(f"Error: Invalid JSON in campaign_mission_dates.json: {e}")
+                known_campaigns = {}
+            except Exception as e:
+                self.log(f"Error loading known campaigns: {e}")
                 known_campaigns = {}
             
             # Detect removed campaigns and missions
@@ -429,7 +443,14 @@ class CampaignMonitor:
                 for chunk in iter(lambda: f.read(4194304), b""):
                     md5.update(chunk)
             return md5.hexdigest()
-        except:
+        except PermissionError:
+            self.log(f"Warning: Permission denied reading {filepath.name}")
+            return None
+        except IOError as e:
+            self.log(f"Warning: I/O error reading {filepath.name}: {e}")
+            return None
+        except Exception as e:
+            self.log(f"Error hashing file {filepath.name}: {e}")
             return None
     
     def wait_for_file_stable(self, filepath: Path, timeout: int = 5) -> bool:
