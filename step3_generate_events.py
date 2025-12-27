@@ -1358,7 +1358,7 @@ class EventGenerator:
         return result
     
     
-    def generate_debriefings_html(self, campaign_name: str, completed_missions: List[str]) -> str:
+    def generate_debriefings_html(self, campaign_name: str, completed_missions: List[str]) -> tuple:
         """
         Generate Mission Debriefings HTML section
         
@@ -1367,16 +1367,16 @@ class EventGenerator:
             completed_missions: List of completed mission IDs
             
         Returns:
-            HTML string for debriefings section
+            Tuple of (html_string, debriefings_dict)
         """
         if not self.log_processor:
-            return ""
+            return ("", {})
         
         # Get debriefing data for all missions
         debriefings = self.log_processor.get_all_debriefings(campaign_name, completed_missions)
         
         if not debriefings:
-            return ""
+            return ("", {})
         
         html_lines = ["<u>Mission Debriefings</u><br>", "<br>"]
         
@@ -1522,7 +1522,7 @@ class EventGenerator:
             html_lines.append("</div>")  # Close mission-box
             html_lines.append("<br>")  # Spacing between missions
         
-        return "\n".join(html_lines)
+        return ("\n".join(html_lines), debriefings)
     
     def generate_events_html(self, events: List[Dict], country: str, for_pdf: bool = False) -> str:
         """Generate complete Events HTML section
@@ -1714,6 +1714,265 @@ class EventGenerator:
         
         return campaign_name
     
+    def generate_campaign_summary_html(self, campaign_name: str, events: List[Dict], 
+                                       debriefings: Dict, country: str) -> str:
+        """
+        Generate campaign summary statistics for PDF
+        
+        Args:
+            campaign_name: Campaign folder name
+            events: List of events (awards, promotions)
+            debriefings: Dict of mission debriefings
+            country: Country code
+            
+        Returns:
+            HTML string for campaign summary
+        """
+        if not debriefings:
+            return ""
+        
+        # Collect statistics
+        total_air = 0
+        total_ground = 0
+        total_naval = 0
+        total_flight_time_seconds = 0
+        aircraft_usage = {}
+        target_counts = {'air': {}, 'ground': {}, 'naval': {}}
+        mission_count = len(debriefings)
+        safe_landings = 0
+        hard_landings = 0
+        wounded_landings = 0
+        bailouts = 0
+        kia_mia = 0
+        
+        # Analyze all missions
+        for mission_id, data in debriefings.items():
+            summary = data.get('summary', {})
+            player = data.get('player', {})
+            
+            # Combat stats (from summary)
+            total_air += summary.get('air_kills', 0)
+            total_ground += summary.get('ground_kills', 0)
+            total_naval += summary.get('naval_kills', 0)
+            
+            # Flight time (from summary)
+            duration = summary.get('flight_duration', '')
+            if duration and duration != 'N/A':
+                try:
+                    parts = duration.split(':')
+                    if len(parts) == 3:
+                        hours, minutes, seconds = map(int, parts)
+                        total_flight_time_seconds += hours * 3600 + minutes * 60 + seconds
+                except:
+                    pass
+            
+            # Aircraft usage (from player)
+            aircraft = player.get('aircraft', 'Unknown')
+            if aircraft not in aircraft_usage:
+                aircraft_usage[aircraft] = {'missions': 0, 'kills': 0}
+            aircraft_usage[aircraft]['missions'] += 1
+            aircraft_usage[aircraft]['kills'] += summary.get('air_kills', 0) + summary.get('ground_kills', 0) + summary.get('naval_kills', 0)
+            
+            # Landing status (from summary)
+            status = summary.get('final_state', '').lower()
+            # Priority: wounded > bailout > KIA/MIA > hard/crash > safe
+            if 'wounded' in status:
+                wounded_landings += 1
+            elif 'bail' in status or 'bailed' in status:
+                bailouts += 1
+            elif 'kia' in status or 'mia' in status or 'killed' in status:
+                kia_mia += 1
+            elif 'hard' in status or 'crash' in status:
+                hard_landings += 1
+            elif 'landed' in status:
+                safe_landings += 1
+            
+            # Target breakdown (from events)
+            events_list = data.get('events', [])
+            for event in events_list:
+                # Get event type (try 'type' first, then 'event' as fallback)
+                event_type = event.get('type', event.get('event', ''))
+                
+                if event_type == "Kill":
+                    target = event.get('target', '')
+                    # Categorize by target name patterns
+                    target_lower = target.lower()
+                    
+                    # Naval targets
+                    if any(naval in target_lower for naval in ['boat', 'ship', 'vessel', 'torpedo']):
+                        category = 'naval'
+                    # Ground targets  
+                    elif any(ground in target_lower for ground in ['aa', 'gun', 'ml-20', 'dshk', '52-k', 'flak', 'tank', 'truck', 'artillery']):
+                        category = 'ground'
+                    # Air targets (default)
+                    else:
+                        category = 'air'
+                    
+                    if category == 'air':
+                        target_counts['air'][target] = target_counts['air'].get(target, 0) + 1
+                    elif category == 'ground':
+                        target_counts['ground'][target] = target_counts['ground'].get(target, 0) + 1
+                    elif category == 'naval':
+                        target_counts['naval'][target] = target_counts['naval'].get(target, 0) + 1
+        
+        # Format flight time
+        total_hours = total_flight_time_seconds // 3600
+        total_minutes = (total_flight_time_seconds % 3600) // 60
+        avg_seconds = total_flight_time_seconds // mission_count if mission_count > 0 else 0
+        avg_minutes = avg_seconds // 60
+        
+        # Get campaign dates
+        first_mission_date = None
+        last_mission_date = None
+        if campaign_name in self.mission_dates:
+            mission_dates_dict = self.mission_dates[campaign_name]
+            mission_ids = sorted(debriefings.keys(), key=smart_mission_sort_key)
+            if mission_ids:
+                first_mission_id = mission_ids[0]
+                last_mission_id = mission_ids[-1]
+                first_mission_date = mission_dates_dict.get(first_mission_id, {}).get('date')
+                last_mission_date = mission_dates_dict.get(last_mission_id, {}).get('date')
+        
+        # Calculate campaign duration
+        campaign_duration_days = None
+        if first_mission_date and last_mission_date:
+            try:
+                from datetime import datetime
+                fmt = '%Y.%m.%d'
+                start = datetime.strptime(first_mission_date.replace('.', '-'), '%Y-%m-%d')
+                end = datetime.strptime(last_mission_date.replace('.', '-'), '%Y-%m-%d')
+                campaign_duration_days = (end - start).days
+            except:
+                pass
+        
+        # Get career progression
+        promotions = [e for e in events if e.get('type') == 'promotion']
+        awards = [e for e in events if e.get('type') == 'award']
+        
+        starting_rank = promotions[0]['rank'] if promotions else 'Unknown'
+        final_rank = promotions[-1]['rank'] if promotions else starting_rank
+        
+        # Generate HTML
+        html = []
+        html.append('<div style="page-break-before: always;"></div>')
+        html.append('<div style="text-align: center; margin: 40px 0 30px 0;">')
+        html.append('<div style="border-top: 3px double #333; border-bottom: 3px double #333; padding: 20px 0; margin: 0 50px;">')
+        html.append('<h1 style="margin: 0; font-size: 24pt;">CAMPAIGN SUMMARY</h1>')
+        
+        campaign_display_name = self.get_campaign_display_name(campaign_name)
+        html.append(f'<p style="margin: 10px 0 0 0; font-size: 14pt; font-style: italic;">{campaign_display_name}</p>')
+        html.append('</div>')
+        html.append('</div>')
+        
+        # Combat Results
+        html.append('<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">COMBAT RESULTS</h2>')
+        html.append(f'<table style="width: 100%; margin: 10px 0;">')
+        html.append(f'<tr><td style="padding: 5px 0;"><b>Air Victories:</b></td><td style="text-align: right;">{total_air}</td></tr>')
+        html.append(f'<tr><td style="padding: 5px 0;"><b>Ground Targets:</b></td><td style="text-align: right;">{total_ground}</td></tr>')
+        html.append(f'<tr><td style="padding: 5px 0;"><b>Naval Targets:</b></td><td style="text-align: right;">{total_naval}</td></tr>')
+        html.append(f'<tr><td colspan="2" style="border-top: 1px solid #333; padding: 5px 0;"></td></tr>')
+        html.append(f'<tr><td style="padding: 5px 0;"><b>Total Kills:</b></td><td style="text-align: right;"><b>{total_air + total_ground + total_naval}</b></td></tr>')
+        html.append('</table>')
+        
+        # Missions Flown
+        html.append('<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">MISSIONS FLOWN</h2>')
+        html.append(f'<table style="width: 100%; margin: 10px 0;">')
+        html.append(f'<tr><td style="padding: 5px 0;"><b>Completed:</b></td><td style="text-align: right;">{mission_count} missions</td></tr>')
+        html.append(f'<tr><td style="padding: 5px 0;"><b>Total Flight Time:</b></td><td style="text-align: right;">{total_hours}h {total_minutes}m</td></tr>')
+        html.append(f'<tr><td style="padding: 5px 0;"><b>Average Duration:</b></td><td style="text-align: right;">{avg_minutes}m</td></tr>')
+        html.append(f'<tr><td colspan="2" style="padding: 10px 0 5px 0;"></td></tr>')
+        
+        total_outcomes = safe_landings + hard_landings + wounded_landings + bailouts + kia_mia
+        if total_outcomes > 0:
+            safe_pct = int(safe_landings / total_outcomes * 100)
+            html.append(f'<tr><td style="padding: 5px 0;"><b>Safe Landings:</b></td><td style="text-align: right;">{safe_landings} ({safe_pct}%)</td></tr>')
+            
+            if hard_landings > 0:
+                hard_pct = int(hard_landings / total_outcomes * 100)
+                html.append(f'<tr><td style="padding: 5px 0;"><b>Hard Landings / Crashes:</b></td><td style="text-align: right;">{hard_landings} ({hard_pct}%)</td></tr>')
+            
+            if wounded_landings > 0:
+                wounded_pct = int(wounded_landings / total_outcomes * 100)
+                html.append(f'<tr><td style="padding: 5px 0;"><b>Wounded Landings:</b></td><td style="text-align: right;">{wounded_landings} ({wounded_pct}%)</td></tr>')
+            
+            if bailouts > 0:
+                bailout_pct = int(bailouts / total_outcomes * 100)
+                html.append(f'<tr><td style="padding: 5px 0;"><b>Bailouts:</b></td><td style="text-align: right;">{bailouts} ({bailout_pct}%)</td></tr>')
+            
+            if kia_mia > 0:
+                kia_pct = int(kia_mia / total_outcomes * 100)
+                html.append(f'<tr><td style="padding: 5px 0;"><b>KIA / MIA:</b></td><td style="text-align: right;">{kia_mia} ({kia_pct}%)</td></tr>')
+        
+        html.append('</table>')
+        
+        # Aircraft Flown
+        if aircraft_usage:
+            html.append('<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">AIRCRAFT FLOWN</h2>')
+            html.append(f'<table style="width: 100%; margin: 10px 0;">')
+            for aircraft, stats in sorted(aircraft_usage.items(), key=lambda x: x[1]['missions'], reverse=True):
+                html.append(f'<tr><td style="padding: 5px 0;"><b>{aircraft}:</b></td><td style="text-align: right;">{stats["missions"]} missions ({stats["kills"]} kills)</td></tr>')
+            html.append('</table>')
+        
+        # Career Progression
+        html.append('<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">CAREER PROGRESSION</h2>')
+        html.append(f'<table style="width: 100%; margin: 10px 0;">')
+        html.append(f'<tr><td style="padding: 5px 0;"><b>Starting Rank:</b></td><td style="text-align: right;">{starting_rank}</td></tr>')
+        html.append(f'<tr><td style="padding: 5px 0;"><b>Final Rank:</b></td><td style="text-align: right;">{final_rank}</td></tr>')
+        html.append(f'<tr><td style="padding: 5px 0;"><b>Promotions:</b></td><td style="text-align: right;">{len(promotions)}</td></tr>')
+        html.append(f'<tr><td colspan="2" style="padding: 10px 0 5px 0;"></td></tr>')
+        html.append(f'<tr><td style="padding: 5px 0;"><b>Awards Received:</b></td><td style="text-align: right;">{len(awards)}</td></tr>')
+        html.append('</table>')
+        
+        if awards:
+            html.append('<ul style="margin: 5px 0; padding-left: 20px;">')
+            for award in awards:
+                html.append(f'<li>{award["name"]}</li>')
+            html.append('</ul>')
+        
+        # Top Targets
+        html.append('<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">TOP TARGETS DESTROYED</h2>')
+        
+        # Air targets
+        if target_counts['air']:
+            html.append('<p style="margin: 10px 0 5px 0;"><b>Air Targets:</b></p>')
+            html.append('<ol style="margin: 0; padding-left: 25px;">')
+            for target, count in sorted(target_counts['air'].items(), key=lambda x: x[1], reverse=True)[:5]:
+                html.append(f'<li>{target} (× {count})</li>')
+            html.append('</ol>')
+        
+        # Ground targets
+        if target_counts['ground']:
+            html.append('<p style="margin: 15px 0 5px 0;"><b>Ground Targets:</b></p>')
+            html.append('<ol style="margin: 0; padding-left: 25px;">')
+            for target, count in sorted(target_counts['ground'].items(), key=lambda x: x[1], reverse=True)[:5]:
+                html.append(f'<li>{target} (× {count})</li>')
+            html.append('</ol>')
+        
+        # Naval targets
+        if target_counts['naval']:
+            html.append('<p style="margin: 15px 0 5px 0;"><b>Naval Targets:</b></p>')
+            html.append('<ol style="margin: 0; padding-left: 25px;">')
+            for target, count in sorted(target_counts['naval'].items(), key=lambda x: x[1], reverse=True)[:5]:
+                html.append(f'<li>{target} (× {count})</li>')
+            html.append('</ol>')
+        
+        # Campaign Timeline
+        if first_mission_date and last_mission_date:
+            html.append('<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">CAMPAIGN TIMELINE</h2>')
+            html.append(f'<table style="width: 100%; margin: 10px 0;">')
+            
+            # Format dates nicely
+            start_date_formatted = self.format_date(first_mission_date)
+            end_date_formatted = self.format_date(last_mission_date)
+            
+            html.append(f'<tr><td style="padding: 5px 0;"><b>Start Date:</b></td><td style="text-align: right;">{start_date_formatted}</td></tr>')
+            html.append(f'<tr><td style="padding: 5px 0;"><b>End Date:</b></td><td style="text-align: right;">{end_date_formatted}</td></tr>')
+            if campaign_duration_days is not None:
+                html.append(f'<tr><td style="padding: 5px 0;"><b>Campaign Duration:</b></td><td style="text-align: right;">{campaign_duration_days} days</td></tr>')
+            html.append('</table>')
+        
+        return '\n'.join(html)
+    
     def export_campaign_to_pdf(self, campaign_name: str, html_content: str) -> bool:
         """
         Export campaign report as PDF
@@ -1858,10 +2117,11 @@ class EventGenerator:
                 # Generate Debriefings HTML (if available)
                 completed_missions = list(self.save_data[campaign_name].get('completedMissionsByFileName', {}).keys())
                 debriefings_html = ""
+                debriefings = {}
                 
                 if self.log_processor and completed_missions:
                     print(f"  Generating debriefings for {len(completed_missions)} mission(s)...")
-                    debriefings_html = self.generate_debriefings_html(campaign_name, completed_missions)
+                    debriefings_html, debriefings = self.generate_debriefings_html(campaign_name, completed_missions)
                 
                 # Combine: Debriefings BEFORE Events
                 if debriefings_html:
@@ -1886,10 +2146,19 @@ class EventGenerator:
                     # Generate PDF-specific HTML with base64-embedded images
                     events_html_pdf = self.generate_events_html(events, country, for_pdf=True)
                     
+                    # Combine debriefings + events
                     if debriefings_html:
                         combined_html_pdf = debriefings_html + "\n" + events_html_pdf
                     else:
                         combined_html_pdf = events_html_pdf
+                    
+                    # Generate campaign summary (PDF only!)
+                    # Use the debriefings we already loaded earlier
+                    summary_html = self.generate_campaign_summary_html(campaign_name, events, debriefings, country)
+                    
+                    # Add summary at the end
+                    if summary_html:
+                        combined_html_pdf += "\n" + summary_html
                     
                     self.export_campaign_to_pdf(campaign_name, combined_html_pdf)
         
