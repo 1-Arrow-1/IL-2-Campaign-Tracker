@@ -302,12 +302,18 @@ class MissionLogProcessor:
             import subprocess
             import sys
             
-            # Use sys.executable to ensure we use the correct Python interpreter
-            # IMPORTANT: Do NOT use --split! 
-            # Without --split, mlg2txt creates ONE file [0].txt with ALL events (not fragmented).
-            # With --split, it creates MULTIPLE files [0].txt, [1].txt, etc with fragmented events.
+            # Determine which Python to use
+            if getattr(sys, 'frozen', False):
+                # Running as EXE - need to use system Python, not sys.executable (the EXE)
+                # Try 'python' command - should work if Python is in PATH
+                python_exe = 'python'
+            else:
+                # Running as script - use same Python interpreter
+                python_exe = sys.executable
+            
+            # Run mlg2txt conversion
             result = subprocess.run(
-                [sys.executable, str(mlg2txt_script), 
+                [python_exe, str(mlg2txt_script), 
                  '--output', str(mlg_file.parent), str(mlg_file)],
                 capture_output=True,
                 text=True,
