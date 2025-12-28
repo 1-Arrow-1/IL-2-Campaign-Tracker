@@ -22,9 +22,19 @@ class GameObject:
     def __init__(self, gid, name, type_, country):
         self.id = gid
         self.name = name
-        self.type = type_
+        
+        # Detect and clean static planes
+        self.is_static = False
+        if type_ and type_.lower().startswith('static_'):
+            self.is_static = True
+            # Clean name: "static_il2[9337,0]" → "il2"
+            clean_type = type_.replace('static_', '', 1).split('[')[0]
+            self.type = clean_type
+        else:
+            self.type = type_
+        
         self.country = country
-        self.category = self.classify_type(type_)
+        self.category = self.classify_type(type_)  # Use original type_ for categorization
         self.state = "Alive"
         self.time_of_kill = None
         self.altitude = None  # Altitude when destroyed
@@ -59,17 +69,24 @@ class GameObject:
 
     @classmethod
     def classify_type(cls, type_):
-        """Classify an object using YAML configuration."""
+        """Classify an object using YAML configuration with EXACT matching."""
         cls._load_config()
-        s = (type_ or "").lower()
+        s = (type_ or "").lower().strip()
         
-        # Exclude unwanted object types
+        # For static planes, remove coordinates for matching but keep static_ prefix
+        # e.g., "static_il2[9337,0]" → "static_il2"
+        if s.startswith('static_') and '[' in s:
+            s = s.split('[')[0]
+        
+        # Exclude unwanted object types (still using substring for exclude)
         if any(x in s for x in getattr(cls, "_exclude_config", [])):
             return "Excluded"
-            
+        
+        # EXACT match: Check if the object name exactly matches any category entry
         for cat, keywords in cls._category_config.items():
-            if any(k.lower() in s for k in keywords):
+            if s in [k.lower() for k in keywords]:
                 return cat
+        
         return "Unknown"
 
 
@@ -81,14 +98,19 @@ class MissionStats:
         self.player_id = None
         self.player_name = None
         self.player_aircraft = None
+        self.player_pid = None  # Player pilot ID
+        self.player_plid = None  # Player aircraft ID
         self.objects = {}
         self.hits = []      # {attacker,target,damage,time}
         self.kills = []     # GameObject list
         self.events = []
         self.wounded = False
-        self.total_damage_taken = 0.0  # Cumulative damage to player
+        self.total_damage_taken = 0.0  # DEPRECATED - kept for compatibility
+        self.total_aircraft_damage = 0.0  # Cumulative damage to aircraft
+        self.total_pilot_damage = 0.0     # Cumulative damage to pilot (for wounded status)
         self.landed = False
         self.crashed = False
+        self.pilot_separation_time = None  # Time (ticks) when pilot separated from aircraft (bailout)
         self.final_state = "Alive"
         self.takeoff_time = None
         self.landing_time = None
@@ -110,11 +132,16 @@ class MissionStats:
 # === MissionDebriefParser ================================
 # ==========================================================
 class MissionDebriefParser:
-    def __init__(self, path): self.path, self.stats = path, MissionStats()
+    def __init__(self, path, verbose=False):
+        self.path = path
+        self.stats = MissionStats()
+        self.verbose = verbose
 
     @staticmethod
     def mission_time_to_hhmmss(t):
-        sec = t / 16.67
+        # IL-2 uses 50 ticks per second (20ms per tick)
+        # NOTE: This is GAME TIME (includes time compression!)
+        sec = t / 50.0
         h, m, s = int(sec // 3600), int((sec % 3600) // 60), int(sec % 60)
         return f"{h:02}:{m:02}:{s:02}"
 
@@ -176,7 +203,7 @@ class MissionDebriefParser:
                 if tgt == self.stats.player_plid and dmg > 0:
                     # Aircraft took damage
                     damage_target_type = "Aircraft"
-                    self.stats.total_damage_taken += dmg
+                    self.stats.total_aircraft_damage += dmg
                     
                     # Add aircraft damage event
                     altitude = int(float(pos_match.group(2))) if pos_match else None
@@ -194,7 +221,7 @@ class MissionDebriefParser:
                     
                 if tgt in (self.stats.player_pid, self.stats.player_id) and dmg > 0:
                     # Pilot took damage (separate event!)
-                    self.stats.total_damage_taken += dmg
+                    self.stats.total_pilot_damage += dmg
                     
                     # Add pilot damage event
                     altitude = int(float(pos_match.group(2))) if pos_match else None
@@ -210,8 +237,9 @@ class MissionDebriefParser:
                         "time_raw": t
                     })
                 
-                # Wounded threshold: cumulative damage > 0.2
-                if self.stats.total_damage_taken > 0.2:
+                # Wounded status: ONLY based on PILOT damage (not aircraft!)
+                # Threshold: > 0.01 (1%) pilot damage
+                if self.stats.total_pilot_damage > 0.01:
                     self.stats.wounded = True
 
             elif "AType:3" in ln:
@@ -245,15 +273,64 @@ class MissionDebriefParser:
                         "altitude": altitude,
                         "time_raw": t
                     })
+            
+            elif "AType:18" in ln:  # ✅ Pilot Separation (Bailout indicator)
+                # BOTID = pilot that separated, PARENTID = aircraft they left
+                botid = self._i(ln, r"BOTID:(-?\d+)")
+                parentid = self._i(ln, r"PARENTID:(-?\d+)")
+                
+                # Check if player pilot separated from player aircraft
+                # (only if player IDs are known)
+                if (self.stats.player_pid and self.stats.player_plid and 
+                    botid == self.stats.player_pid and parentid == self.stats.player_plid):
+                    self.stats.pilot_separation_time = t  # Store time (ticks)
+                    if self.verbose:
+                        print(f"  Pilot separation detected at {ts} (T:{t})")
 
-            elif "AType:6" in ln or "AType:7" in ln:  # ✅ Landing / Crash
+            elif "AType:6" in ln or "AType:7" in ln:  # ✅ Landing / Crash / Bailout
                 pid = self._i(ln, r"PID:(-?\d+)")
                 pos_match = re.search(r"POS\(([\d.]+),([\d.]+),([\d.]+)\)", ln)
+                
                 if pid in (self.stats.player_pid, self.stats.player_plid) and not self.stats.landing_time:
                     self.stats.landing_time = t
                     altitude = int(float(pos_match.group(2))) if pos_match else None
                     
-                    if "AType:7" in ln:
+                    # BAILOUT vs CRASH: Check if pilot separated AND time difference
+                    # If pilot separated > 40 seconds before landing → Bailout
+                    # If pilot separated < 40 seconds before landing → Crash/Hard Landing
+                    # Threshold: 2000 ticks (40 seconds at 50 ticks/second)
+                    # NOTE: Lowered from 60s to account for time compression effects
+                    if self.stats.pilot_separation_time:
+                        time_since_separation = t - self.stats.pilot_separation_time
+                        
+                        if time_since_separation > 2000:
+                            # Long time → Player bailed out and descended with parachute
+                            self.stats.crashed = False
+                            self.stats.landed = False
+                            if self.stats.wounded:
+                                self.stats.final_state = "Bailout (Wounded)"
+                            else:
+                                self.stats.final_state = "Bailout"
+                            event_type = "Bailout"
+                        else:
+                            # Short time → Crash separated pilot from aircraft
+                            if "AType:7" in ln:
+                                self.stats.crashed = True
+                                if self.stats.wounded:
+                                    self.stats.final_state = "Crashed (Wounded)"
+                                else:
+                                    self.stats.final_state = "Crashed"
+                                event_type = "Crash"
+                            else:
+                                # AType:6 with quick separation = Hard Landing
+                                self.stats.landed = True
+                                if self.stats.wounded:
+                                    self.stats.final_state = "Landed (Wounded)"
+                                else:
+                                    self.stats.final_state = "Landed"
+                                event_type = "Landing"
+                    
+                    elif "AType:7" in ln:
                         self.stats.crashed = True
                         # Wounded status combines with crash
                         if self.stats.wounded:
@@ -313,7 +390,9 @@ class MissionDebriefParser:
             
             if end_time:
                 duration = end_time - self.stats.takeoff_time
-                sec = duration / 16.67
+                # IL-2 uses 50 ticks per second (20ms per tick)
+                # NOTE: This is GAME TIME (includes time compression!)
+                sec = duration / 50.0
                 h, m, s = int(sec // 3600), int((sec % 3600) // 60), int(sec % 60)
                 self.stats.flight_duration = f"{h:02}:{m:02}:{s:02}"
 
@@ -463,7 +542,9 @@ class MissionDebriefParser:
         # Filter out BotPilot/BotGunner from kills
         def valid(k): return not any(x in k.type.lower() for x in ["botpilot", "botgunner"])
         kills = [k for k in self.stats.kills if valid(k)]
-
+        
+        # Note: static plane name cleaning and is_static flag are now set in GameObject __init__
+        
         # Calculate total damage to aircraft and pilot separately
         aircraft_damage = 0.0
         pilot_damage = 0.0
@@ -473,6 +554,11 @@ class MissionDebriefParser:
                 aircraft_damage += hit["damage"]
             elif hit["target"] in (self.stats.player_pid, self.stats.player_id):
                 pilot_damage += hit["damage"]
+        
+        # Count air kills separately (flying vs parked)
+        air_kills_all = [k for k in kills if k.category == "Air"]
+        air_kills_flying = sum(1 for k in air_kills_all if not getattr(k, 'is_static', False))
+        air_kills_parked = sum(1 for k in air_kills_all if getattr(k, 'is_static', False))
 
         data = {
             "player": {
@@ -481,8 +567,10 @@ class MissionDebriefParser:
                 "aircraft": self.stats.player_aircraft
             },
             "summary": {
-                "air_kills": sum(1 for k in kills if k.category == "Air"),
-                "ground_kills": sum(1 for k in kills if k.category == "Ground"),
+                "air_kills": len(air_kills_all),
+                "air_kills_flying": air_kills_flying,
+                "air_kills_parked": air_kills_parked,
+                "ground_kills": sum(1 for k in kills if k.category in ["Ground", "Building"]),
                 "naval_kills": sum(1 for k in kills if k.category == "Naval"),
                 "flight_duration": self.stats.flight_duration or "N/A",
                 "wounded": self.stats.wounded,

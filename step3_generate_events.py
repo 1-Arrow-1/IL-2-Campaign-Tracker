@@ -237,8 +237,8 @@ class EventGenerator:
             'total_air_kills': 0,
             'fighter_kills': 0,  # killLightPlane + killMediumPlane
             'bomber_kills': 0,   # killHeavyPlane
-            'transport_kills': 0, # killStaticPlane
-            'air_combat_score': 0,  # fighters + transports + (bombers*2)
+            'static_plane_kills': 0,  # killStaticPlane (parked aircraft)
+            'air_combat_score': 0,  # fighters + static_planes*0.5 + (bombers*2)
             'ground_kills': 0,
             'tank_kills': 0,
             'ship_kills': 0,
@@ -265,7 +265,7 @@ class EventGenerator:
             
             cumulative['fighter_kills'] += light + medium
             cumulative['bomber_kills'] += heavy
-            cumulative['transport_kills'] += static
+            cumulative['static_plane_kills'] += static
             cumulative['total_air_kills'] += light + medium + heavy + (static * 0.5)
             
             # Air combat score (weighted: bombers count double, static count 0.5)
@@ -393,7 +393,16 @@ class EventGenerator:
         # Add starting rank (before first mission)
         ranks = self.config['ranks'].get(country, [])
         if ranks:
-            starting_rank = ranks[0]  # RankID = 0
+            # Get starting rank offset from campaign_mission_dates.json
+            starting_rank_offset = 0
+            # New JSON structure: campaigns are at root level (no 'campaigns' wrapper)
+            if campaign_name in self.mission_dates and campaign_name != 'game_directory':
+                campaign_data = self.mission_dates[campaign_name]
+                starting_rank_offset = campaign_data.get('starting_rank_offset', 0)
+                # Clamp to valid range
+                starting_rank_offset = max(0, min(starting_rank_offset, len(ranks) - 1))
+            
+            starting_rank = ranks[starting_rank_offset]  # Use configured offset
             # Get date of first mission or use placeholder
             first_mission = sorted(completed_missions, key=smart_mission_sort_key)[0]
             first_mission_date = self.get_mission_date(campaign_name, first_mission)
@@ -1002,7 +1011,17 @@ class EventGenerator:
         ranks = self.config['ranks'][country]
         promotions = []
         running_score = 0
-        current_rank_index = 0
+        
+        # Get starting rank offset from campaign_mission_dates.json
+        starting_rank_offset = 0
+        # New JSON structure: campaigns are at root level (no 'campaigns' wrapper)
+        if hasattr(self, 'mission_dates') and campaign_name in self.mission_dates and campaign_name != 'game_directory':
+            campaign_data = self.mission_dates[campaign_name]
+            starting_rank_offset = campaign_data.get('starting_rank_offset', 0)
+            # Clamp to valid range
+            starting_rank_offset = max(0, min(starting_rank_offset, len(ranks) - 1))
+        
+        current_rank_index = starting_rank_offset  # Start at configured rank
         
         # Get rank scaling factor based on campaign length
         scale_factor = self.get_rank_scaling_factor(campaign_name)
@@ -1017,7 +1036,7 @@ class EventGenerator:
             # Check if we've reached next rank (only ONE promotion per mission)
             if current_rank_index < len(ranks) - 1:
                 next_rank = ranks[current_rank_index + 1]
-                # Apply scaling factor to rank requirement
+                # Apply scaling factor to FULL rank requirement (not reduced by starting rank)
                 required_score = int(next_rank['score'] * scale_factor)
                 
                 if running_score >= required_score:
@@ -1386,23 +1405,18 @@ class EventGenerator:
         for mission_id in sorted_missions:
             data = debriefings[mission_id]
             
+            # DEBUG: Show which mission we're processing
+            print(f"  Processing debriefing for Mission {mission_id}...")
+            
             # Extract mission date and start time from .eng file
             mission_date, mission_start_time = self.extract_mission_datetime(campaign_name, mission_id)
             
-            # Use mission date from .eng if available, otherwise fall back to timestamp
+            # Use mission date from .eng if available, otherwise show "No date"
             if mission_date:
                 date_str = mission_date
             else:
-                # Fallback: Use timestamp from log file
-                timestamp = data.get('timestamp', '')
-                if timestamp:
-                    try:
-                        dt = datetime.strptime(timestamp.split('_')[0], '%Y-%m-%d')
-                        date_str = dt.strftime('%d %B, %Y')
-                    except:
-                        date_str = timestamp
-                else:
-                    date_str = "Unknown date"
+                # No date in mission file - don't use timestamp!
+                date_str = None  # Will skip date in header
             
             # Summary data
             aircraft = data['player']['aircraft']
@@ -1413,13 +1427,19 @@ class EventGenerator:
             
             # Kills summary
             air_kills = data['summary']['air_kills']
+            air_kills_flying = data['summary'].get('air_kills_flying', air_kills)
+            air_kills_parked = data['summary'].get('air_kills_parked', 0)
             ground_kills = data['summary']['ground_kills']
             naval_kills = data['summary']['naval_kills']
             
             # Mission header with box (wrapped in div to prevent page breaks)
             html_lines.append(f'<div class="mission-box">')
             html_lines.append(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>")
-            html_lines.append(f"<b>MISSION {mission_id} | {date_str}</b><br>")
+            # Only show date if available (from mission file)
+            if date_str:
+                html_lines.append(f"<b>MISSION {mission_id} | {date_str}</b><br>")
+            else:
+                html_lines.append(f"<b>MISSION {mission_id}</b><br>")
             html_lines.append(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>")
             
             # Summary line with status and damage
@@ -1431,13 +1451,20 @@ class EventGenerator:
             html_lines.append(f"{' | '.join(summary_parts)}<br>")
             html_lines.append(f"<br>")
             
-            # Combat results
+            # Combat results - show parked separately if present
             html_lines.append(f"<b>COMBAT RESULTS</b><br>")
-            html_lines.append(f"Air: {air_kills}  |  Ground: {ground_kills}  |  Naval: {naval_kills}<br>")
+            if air_kills_parked > 0:
+                html_lines.append(f"Air: {air_kills} ({air_kills_flying} flying, {air_kills_parked} parked)  |  Ground: {ground_kills}  |  Naval: {naval_kills}<br>")
+            else:
+                html_lines.append(f"Air: {air_kills}  |  Ground: {ground_kills}  |  Naval: {naval_kills}<br>")
             html_lines.append(f"<br>")
             
             # Flight log with detailed events
             html_lines.append(f"<b>FLIGHT LOG</b><br>")
+            
+            # Check if player bailed out - suppress damage events after bailout
+            # Use final_state from summary instead of tracking during loop
+            mission_ended_in_bailout = "Bailout" in status
             
             for event in data.get('events', [])[:25]:  # Max 25 events
                 time = event.get('time', '')
@@ -1482,6 +1509,10 @@ class EventGenerator:
                     html_lines.append(f"  {display_time}  {target} destroyed{detail_str}<br>")
                 
                 elif event_type == "Damage Taken":
+                    # Skip ALL damage events if mission ended in bailout
+                    if mission_ended_in_bailout:
+                        continue
+                    
                     # Normal damage event
                     details = []
                     
@@ -1505,8 +1536,8 @@ class EventGenerator:
                     detail_str = f" ({', '.join(details)})" if details else ""
                     html_lines.append(f"  {display_time}  Landing damage{detail_str}<br>")
                 
-                elif event_type in ["Takeoff", "Landing", "Crash"]:
-                    # Takeoff/Landing/Crash with altitude
+                elif event_type in ["Takeoff", "Landing", "Crash", "Bailout"]:
+                    # Takeoff/Landing/Crash/Bailout with altitude
                     # Check if it's a hard landing
                     hard_landing = event.get('hard_landing', False)
                     event_label = f"{event_type} (Hard)" if hard_landing and event_type == "Landing" else event_type
@@ -1715,7 +1746,7 @@ class EventGenerator:
         return campaign_name
     
     def generate_campaign_summary_html(self, campaign_name: str, events: List[Dict], 
-                                       debriefings: Dict, country: str) -> str:
+                                       debriefings: Dict, country: str, cumulative_stats: Dict = None) -> str:
         """
         Generate campaign summary statistics for PDF
         
@@ -1724,6 +1755,7 @@ class EventGenerator:
             events: List of events (awards, promotions)
             debriefings: Dict of mission debriefings
             country: Country code
+            cumulative_stats: Cumulative statistics from campaigns_decoded.json (optional)
             
         Returns:
             HTML string for campaign summary
@@ -1745,6 +1777,14 @@ class EventGenerator:
         bailouts = 0
         kia_mia = 0
         
+        # Initialize parked kills counter
+        total_air_parked = 0
+        
+        # Get parked kills from cumulative stats (campaigns_decoded.json)
+        # These are kills that happened outside of debriefed missions
+        if cumulative_stats:
+            total_air_parked += cumulative_stats.get('static_plane_kills', 0)
+        
         # Analyze all missions
         for mission_id, data in debriefings.items():
             summary = data.get('summary', {})
@@ -1754,6 +1794,9 @@ class EventGenerator:
             total_air += summary.get('air_kills', 0)
             total_ground += summary.get('ground_kills', 0)
             total_naval += summary.get('naval_kills', 0)
+            
+            # Add parked kills from this mission's debriefing
+            total_air_parked += summary.get('air_kills_parked', 0)
             
             # Flight time (from summary)
             duration = summary.get('flight_duration', '')
@@ -1867,11 +1910,23 @@ class EventGenerator:
         # Combat Results
         html.append('<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">COMBAT RESULTS</h2>')
         html.append(f'<table style="width: 100%; margin: 10px 0;">')
-        html.append(f'<tr><td style="padding: 5px 0;"><b>Air Victories:</b></td><td style="text-align: right;">{total_air}</td></tr>')
+        
+        # total_air already INCLUDES parked kills (it's air_kills from summary which = flying + parked)
+        # So total_air_with_parked is just total_air
+        total_air_with_parked = total_air
+        total_air_flying = total_air - total_air_parked
+        
+        html.append(f'<tr><td style="padding: 5px 0;"><b>Air Victories:</b></td><td style="text-align: right;">{total_air_with_parked}</td></tr>')
+        
+        # Show breakdown if there are parked kills
+        if total_air_parked > 0:
+            html.append(f'<tr><td style="padding: 5px 0 5px 20px; font-size: 10pt; color: #666;">Flying:</td><td style="text-align: right; font-size: 10pt; color: #666;">{total_air_flying}</td></tr>')
+            html.append(f'<tr><td style="padding: 5px 0 5px 20px; font-size: 10pt; color: #666;">Parked:</td><td style="text-align: right; font-size: 10pt; color: #666;">{total_air_parked}</td></tr>')
+        
         html.append(f'<tr><td style="padding: 5px 0;"><b>Ground Targets:</b></td><td style="text-align: right;">{total_ground}</td></tr>')
         html.append(f'<tr><td style="padding: 5px 0;"><b>Naval Targets:</b></td><td style="text-align: right;">{total_naval}</td></tr>')
         html.append(f'<tr><td colspan="2" style="border-top: 1px solid #333; padding: 5px 0;"></td></tr>')
-        html.append(f'<tr><td style="padding: 5px 0;"><b>Total Kills:</b></td><td style="text-align: right;"><b>{total_air + total_ground + total_naval}</b></td></tr>')
+        html.append(f'<tr><td style="padding: 5px 0;"><b>Total Kills:</b></td><td style="text-align: right;"><b>{total_air_with_parked + total_ground + total_naval}</b></td></tr>')
         html.append('</table>')
         
         # Missions Flown
@@ -2143,6 +2198,20 @@ class EventGenerator:
                 
                 # Export to PDF (only if campaign has completed missions)
                 if completed_missions and not self.dry_run:
+                    # Calculate cumulative stats from campaigns_decoded.json
+                    cumulative_stats = None
+                    try:
+                        with open('campaigns_decoded.json', 'r', encoding='utf-8') as f:
+                            decoded_data = json.load(f)
+                            if campaign_name in decoded_data:
+                                stats = decoded_data[campaign_name].get('characterStatisticsByFileName', {})
+                                # Get the latest mission stats (highest mission number)
+                                if stats:
+                                    latest_mission = max(stats.keys(), key=lambda x: int(x) if x.isdigit() else 0)
+                                    cumulative_stats = stats.get(latest_mission, {})
+                    except (FileNotFoundError, json.JSONDecodeError, KeyError):
+                        cumulative_stats = None
+                    
                     # Generate PDF-specific HTML with base64-embedded images
                     events_html_pdf = self.generate_events_html(events, country, for_pdf=True)
                     
@@ -2154,7 +2223,7 @@ class EventGenerator:
                     
                     # Generate campaign summary (PDF only!)
                     # Use the debriefings we already loaded earlier
-                    summary_html = self.generate_campaign_summary_html(campaign_name, events, debriefings, country)
+                    summary_html = self.generate_campaign_summary_html(campaign_name, events, debriefings, country, cumulative_stats)
                     
                     # Add summary at the end
                     if summary_html:

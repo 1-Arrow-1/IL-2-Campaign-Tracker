@@ -91,11 +91,15 @@ class MissionLogProcessor:
         
         for mission_id in completed_missions:
             try:
+                print(f"  Looking for debriefing: {campaign_name}/{mission_id}")
                 debriefing = self.get_mission_debriefing(campaign_name, mission_id)
                 if debriefing:
                     debriefings[mission_id] = debriefing
+                    print(f"    ✓ Debriefing loaded for Mission {mission_id}")
+                else:
+                    print(f"    ⚠️  No debriefing data returned for Mission {mission_id}")
             except Exception as e:
-                print(f"Error processing mission {campaign_name}/{mission_id}: {e}")
+                print(f"    ❌ Error processing mission {campaign_name}/{mission_id}: {e}")
                 if self.verbose:
                     import traceback
                     traceback.print_exc()

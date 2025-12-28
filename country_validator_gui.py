@@ -293,22 +293,110 @@ def validate_countries(json_file_path: str) -> bool:
     
     # Apply corrections
     changes_made = False
+    validated_campaigns = {}  # Track validated campaigns to add to stock_campaigns.yaml
+    
     for campaign_name, new_country in result.items():
         old_country = data[campaign_name].get('country')
         if old_country != new_country:
             data[campaign_name]['country'] = new_country
+            data[campaign_name]['is_stock'] = True  # Mark as validated (treated like stock)
             changes_made = True
+            validated_campaigns[campaign_name] = new_country
             print(f"  Updated {campaign_name}: {old_country} → {new_country}")
+        else:
+            # Even if country didn't change, mark as validated
+            if not data[campaign_name].get('is_stock'):
+                data[campaign_name]['is_stock'] = True
+                changes_made = True
+                validated_campaigns[campaign_name] = new_country
+                print(f"  Validated {campaign_name}: {new_country}")
     
     # Save updated data
     if changes_made:
         with open(json_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
         print(f"✓ Saved corrections to {json_file_path}")
+        
+        # Add validated campaigns to stock_campaigns.yaml
+        if validated_campaigns:
+            _add_to_stock_campaigns(validated_campaigns)
     else:
         print("No changes made")
     
     return True
+
+
+def _add_to_stock_campaigns(campaigns: Dict[str, str]):
+    """
+    Add manually validated campaigns to stock_campaigns.yaml
+    Uses OFFICIAL campaign name from &name="..." in info.locale=eng.txt
+    
+    Args:
+        campaigns: Dict of campaign_folder_name -> country
+    """
+    import yaml
+    import re
+    
+    stock_file = Path('stock_campaigns.yaml')
+    
+    # Load existing stock campaigns
+    if stock_file.exists():
+        with open(stock_file, 'r', encoding='utf-8') as f:
+            stock_data = yaml.safe_load(f) or {}
+    else:
+        stock_data = {}
+    
+    if 'stock_campaigns' not in stock_data:
+        stock_data['stock_campaigns'] = {}
+    
+    # Load campaign_mission_dates.json to get game directory
+    game_directory = None
+    try:
+        with open('campaign_mission_dates.json', 'r', encoding='utf-8') as f:
+            mission_data = json.load(f)
+            game_directory = mission_data.get('game_directory')
+    except:
+        pass
+    
+    if not game_directory:
+        print("  ⚠️ Warning: Could not find game directory, using folder names instead of official names")
+    
+    # Add new validated campaigns
+    added_count = 0
+    for campaign_folder, country in campaigns.items():
+        # Try to get official campaign name from info.locale=eng.txt
+        official_name = campaign_folder  # Fallback to folder name
+        
+        if game_directory:
+            info_file = Path(game_directory) / 'data' / 'Campaigns' / campaign_folder / 'info.locale=eng.txt'
+            if info_file.exists():
+                try:
+                    with open(info_file, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        # Extract &name="Campaign Name" or &name=Campaign Name
+                        name_match = re.search(r'&name\s*=\s*"?([^"\n\r]+)"?', content, re.IGNORECASE)
+                        if name_match:
+                            official_name = name_match.group(1).strip()
+                            print(f"  📝 Official name: '{official_name}' (folder: '{campaign_folder}')")
+                except Exception as e:
+                    print(f"  ⚠️ Could not read info file for {campaign_folder}: {e}")
+        
+        # Check if already exists (by official name)
+        if official_name not in stock_data['stock_campaigns']:
+            stock_data['stock_campaigns'][official_name] = country
+            added_count += 1
+            if official_name != campaign_folder:
+                print(f"  ✓ Added to stock library: '{official_name}' ({country})")
+            else:
+                print(f"  ✓ Added to stock library: {official_name} ({country})")
+        else:
+            print(f"  ℹ️ Already in stock library: '{official_name}'")
+    
+    # Save updated stock campaigns
+    if added_count > 0:
+        with open(stock_file, 'w', encoding='utf-8') as f:
+            yaml.dump(stock_data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+        print(f"✓ Added {added_count} campaign(s) to stock_campaigns.yaml")
 
 
 def validate_new_campaigns(json_file_path: str, new_campaign_names: List[str]) -> bool:
@@ -361,18 +449,33 @@ def validate_new_campaigns(json_file_path: str, new_campaign_names: List[str]) -
     
     # Apply corrections
     changes_made = False
+    validated_campaigns = {}  # Track validated campaigns to add to stock_campaigns.yaml
+    
     for campaign_name, new_country in result.items():
         old_country = data[campaign_name].get('country')
         if old_country != new_country:
             data[campaign_name]['country'] = new_country
+            data[campaign_name]['is_stock'] = True  # Mark as validated
             changes_made = True
+            validated_campaigns[campaign_name] = new_country
             print(f"  Updated {campaign_name}: {old_country} → {new_country}")
+        else:
+            # Even if country didn't change, mark as validated
+            if not data[campaign_name].get('is_stock'):
+                data[campaign_name]['is_stock'] = True
+                changes_made = True
+                validated_campaigns[campaign_name] = new_country
+                print(f"  Validated {campaign_name}: {new_country}")
     
     # Save updated data
     if changes_made:
         with open(json_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
         print(f"✓ Saved corrections to {json_file_path}")
+        
+        # Add validated campaigns to stock_campaigns.yaml
+        if validated_campaigns:
+            _add_to_stock_campaigns(validated_campaigns)
     
     return True
 

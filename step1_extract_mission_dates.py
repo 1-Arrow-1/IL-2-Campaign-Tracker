@@ -778,13 +778,21 @@ class CampaignDateExtractor:
             mission_id = msnbin_file.stem
             
             # Find matching language files (same base name, different extension)
+            # PREFER .eng (English) files - if .eng exists, use it exclusively
             lang_extensions = ['.eng', '.ger', '.fra', '.rus', '.spa', '.pol', '.chs']
             lang_files = []
             
-            for ext in lang_extensions:
-                lang_file = campaign_path / f"{mission_id}{ext}"
-                if lang_file.exists():
-                    lang_files.append(lang_file)
+            # Check if .eng file exists first
+            eng_file = campaign_path / f"{mission_id}.eng"
+            if eng_file.exists():
+                # Use .eng file only (preferred language)
+                lang_files.append(eng_file)
+            else:
+                # No .eng file - check other languages in order
+                for ext in lang_extensions[1:]:  # Skip .eng since we already checked
+                    lang_file = campaign_path / f"{mission_id}{ext}"
+                    if lang_file.exists():
+                        lang_files.append(lang_file)
             
             # Store mission (even if no language files found - we know it exists from .msnbin)
             mission_files[mission_id] = lang_files
@@ -838,24 +846,33 @@ class CampaignDateExtractor:
             # Handle various formats:
             # "Date: September 3rd 1942"
             # "<b>Date:</b>Sept 18th, 1942"
+            # "<b>Date: </b>20.10.1940"  (tags around "Date: ")
             # "Date: 4 November, 1943<br>"
             
-            # First try to find with HTML tags (handle </b> between Date: and date)
+            # First try: <b>Date:</b> (colon inside tags)
             date_match = re.search(
-                r'<b>Date:</b>\s*(?:</?\w+>)*\s*([^<\n\r]+)',
+                r'<b>Date:</b>\s*(?:</?[\w\s]+>)*\s*([^<\n\r]+)',
                 content,
                 re.IGNORECASE
             )
             
-            # If not found, try "Date:" with possible tags after
+            # Second try: <b>Date: </b> (colon outside closing tag)
             if not date_match:
                 date_match = re.search(
-                    r'Date:\s*(?:</?\w+>)*\s*([^<\n\r]+)',
+                    r'<b>Date:\s*</b>\s*(?:</?[\w\s]+>)*\s*([^<\n\r]+)',
                     content,
                     re.IGNORECASE
                 )
             
-            # If still not found, try within <u>Date</u> tags
+            # Third try: Date: with possible tags after
+            if not date_match:
+                date_match = re.search(
+                    r'Date:\s*(?:</?[\w\s]+>)*\s*([^<\n\r]+)',
+                    content,
+                    re.IGNORECASE
+                )
+            
+            # Fourth try: within <u>Date</u> tags
             if not date_match:
                 date_match = re.search(
                     r'<u>Date</u>\s*(?:<br>)*\s*([^<\n\r]+)',
@@ -958,6 +975,7 @@ class CampaignDateExtractor:
             'campaign_name': campaign_name,
             'country': country,
             'is_stock': is_stock,  # NEW: Add is_stock flag
+            'starting_rank_offset': 0,  # Default starting rank (lowest rank)
             'mission_count': len(mission_files_dict),
             'missions': {}
         }
@@ -1083,9 +1101,34 @@ class CampaignDateExtractor:
         """
         merged = existing_campaign.copy()
         
-        # Update top-level fields (country, mission_count, etc.)
+        # Update campaign name
         merged['campaign_name'] = new_campaign.get('campaign_name', existing_campaign.get('campaign_name'))
-        merged['country'] = new_campaign.get('country', existing_campaign.get('country'))
+        
+        # PRESERVE manually validated country (is_stock or existing country)
+        # Priority: existing country (if is_stock or manually set) > new detected country
+        if existing_campaign.get('is_stock') or existing_campaign.get('country'):
+            # Campaign was manually validated or is stock - PRESERVE country!
+            merged['country'] = existing_campaign.get('country')
+            merged['is_stock'] = existing_campaign.get('is_stock', False)
+            if self.verbose:
+                stock_label = " (stock)" if existing_campaign.get('is_stock') else " (manual)"
+                print(f"  ✓ Preserving country{stock_label}: {merged['country']}")
+        else:
+            # No existing country - use new detection
+            merged['country'] = new_campaign.get('country')
+            merged['is_stock'] = new_campaign.get('is_stock', False)
+        
+        # PRESERVE starting_rank_offset (user may have manually set it)
+        # Priority: existing value > new default (0)
+        if 'starting_rank_offset' in existing_campaign:
+            merged['starting_rank_offset'] = existing_campaign['starting_rank_offset']
+            if self.verbose and existing_campaign['starting_rank_offset'] != 0:
+                print(f"  ✓ Preserving starting rank offset: {existing_campaign['starting_rank_offset']}")
+        else:
+            # No existing value - use new default
+            merged['starting_rank_offset'] = new_campaign.get('starting_rank_offset', 0)
+        
+        # Update excluded status
         merged['excluded'] = new_campaign.get('excluded', existing_campaign.get('excluded'))
         merged['exclusion_reason'] = new_campaign.get('exclusion_reason', existing_campaign.get('exclusion_reason'))
         
