@@ -80,7 +80,7 @@ build_exe.bat
 - Creates distribution folder (e.g., `IL2_Campaign_Tracker_v1.1\`)
 - Copies EXE from `dist/`
 - Copies all configuration YAML files
-- Copies `mlg2txt.exe` (required at runtime for log conversion)
+- Copies `mlg2txt.py` (required at runtime for log conversion)
 - Generates `QUICK_START.txt` with usage instructions
 
 ### Build Output
@@ -92,8 +92,10 @@ dist\IL2_CampaignTracker\
 ├── object_categories.yaml           # Aircraft classifications
 ├── stock_campaigns.yaml             # Known campaigns
 ├── weapons_mappings.yaml            # Weapon classifications (NEW in v1.1)
-└── mlg2txt.exe                       # Mission log converter (if needed)
+└── mlg2txt.exe                      # Mission log converter (optional standalone)
 ```
+
+**Note:** If you build `mlg2txt.py` separately using `pyinstaller mlg2txt.spec`, you'll get a standalone `mlg2txt.exe`. This is useful for users who want to convert mission logs independently of the tracker.
 
 **This folder is ready for distribution!**
 
@@ -149,7 +151,7 @@ YourDistribution\
 │   ├── object_categories.yaml
 │   ├── stock_campaigns.yaml
 │   ├── weapons_mappings.yaml
-│   ├── mlg2txt.exe 
+│   ├── mlg2txt.py (optional)
 │   └── QUICK_START.txt
 └── CampaignRanksAwards.zip
 ```
@@ -409,6 +411,30 @@ build_exe.bat
 - Copy `wkhtmltopdf.exe` manually to distribution folder
 - Users place it next to tracker EXE
 
+### Building mlg2txt Separately (Optional)
+
+The `mlg2txt.py` tool can be built as a standalone executable for users who want to convert mission logs independently:
+
+**Build command:**
+```bash
+pyinstaller mlg2txt.spec
+```
+
+**Output:**
+- `dist\mlg2txt\mlg2txt.exe` - Standalone log converter (~8 MB)
+
+**Usage:**
+```bash
+mlg2txt.exe input.mlg output.txt
+```
+
+**Distribution:**
+- Can be included with main tracker
+- Or distributed separately as utility tool
+- Useful for users analyzing logs outside the tracker
+
+**Note:** The main tracker (`IL2_CampaignTracker.exe`) includes log conversion internally, so `mlg2txt.exe` is optional.
+
 ## Testing the Build
 
 ### Basic Functionality Test
@@ -496,6 +522,11 @@ For build issues, open a GitHub issue with:
 build_exe.bat
 ```
 
+**Build mlg2txt separately:**
+```bash
+pyinstaller mlg2txt.spec
+```
+
 **Clean Build:**
 ```bash
 rmdir /s /q build dist
@@ -511,7 +542,8 @@ IL2_CampaignTracker.exe
 **Required Files:**
 - All `.py` files listed in script
 - All `.yaml` config files
-- `IL2_CampaignTracker.spec`
+- `IL2_CampaignTracker.spec` (main tracker build)
+- `mlg2txt.spec` (optional - for standalone log converter)
 - `build_exe.bat`
 
 **Output:**
@@ -522,3 +554,4 @@ IL2_CampaignTracker.exe
 **Happy Building! 🔨**
 
 **Recommendation:** Always use `build_exe.bat` for automated, reliable builds. Manual PyInstaller commands may miss dependencies.
+
