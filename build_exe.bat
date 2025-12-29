@@ -61,6 +61,11 @@ if not exist "stock_campaigns.yaml" (
     pause
     exit /b 1
 )
+if not exist "cleanup_failed_missions.py" (
+    echo ERROR: cleanup_failed_missions.py not found!
+    pause
+    exit /b 1
+)
 if not exist "mlg2txt.py" (
     echo ERROR: mlg2txt.py not found!
     pause
@@ -92,6 +97,7 @@ for %%F in (
 		"il2_mission_debrief.py"
 		"mlg2txt.py"
 		"country_validator_gui.py"
+		"cleanup_failed_missions.py"
 ) do (
     if exist %%F (
         echo Testing %%F ...

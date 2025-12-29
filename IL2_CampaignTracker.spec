@@ -23,6 +23,7 @@ a = Analysis(
         'decode_campaing_usersave1',
         'monitor_campaigns',
         'il2_mission_debrief',
+		'cleanup_failed_missions',
 		'PIL',
 		'PIL.Image',
 		'PIL.DdsImagePlugin',

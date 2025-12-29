@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """
 IL-2 Campaign Progress Tracker - Unified Launcher
-Version: 1.0
+Version: 1.1
 
 Single executable that:
 1. First run: GUI to select game directory
 2. Extracts mission dates
 3. Decodes save file
-4. Generates events
-5. Monitors for changes
-6. Auto-exits when IL-2 closes (optional)
+4. Mission cleanup check (new in v1.1)
+5. Generates events
+6. Monitors for changes
+7. Auto-exits when IL-2 closes (optional)
 
 For EXE packaging with external campaign_progress_config.yaml
 """
@@ -31,7 +32,7 @@ else:
 sys.path.insert(0, str(SCRIPT_DIR))
 
 print("="*70)
-print("IL-2 CAMPAIGN PROGRESS TRACKER v1.0")
+print("IL-2 CAMPAIGN PROGRESS TRACKER v1.1")
 print("="*70)
 print()
 
@@ -108,6 +109,10 @@ try:
             traceback.print_exc()
             print()
             input("Press Enter to continue...")
+    
+    # ========================================================================
+    # INITIAL PROCESSING
+    # ========================================================================
     
     # Initial processing (only if save file exists)
     campaignsstates = SCRIPT_DIR / "campaignsstates.txt"
@@ -198,7 +203,44 @@ try:
         print(f"  Copy campaignsstates.txt to: {SCRIPT_DIR}")
         print(f"  Then restart this program.")
     
-    # Start monitoring
+    # ========================================================================
+    # MISSION CLEANUP CHECK (New in v1.1)
+    # ========================================================================
+    # Now we run cleanup AFTER initial processing so campaigns_decoded.json exists
+    
+    print()
+    print("="*70)
+    print("CHECKING FOR UNSUCCESSFUL MISSIONS")
+    print("="*70)
+    print()
+    
+    try:
+        from cleanup_failed_missions import startup_cleanup_check
+        
+        # This will:
+        # 1. Scan all campaigns
+        # 2. Find campaigns where LAST mission has takeOffStatus=1
+        # 3. Show GUI ONLY if cleanup opportunities found
+        # 4. Let user decide what to delete
+        # 5. Create automatic backup before deletion
+        
+        startup_cleanup_check()
+        
+    except ImportError:
+        print("Note: cleanup_failed_missions.py not found")
+        print("      Mission cleanup feature not available")
+        print()
+    except Exception as e:
+        print(f"Warning: Cleanup check failed: {e}")
+        print("         Continuing with normal operations...")
+        print()
+        import traceback
+        traceback.print_exc()
+    
+    # ========================================================================
+    # START MONITORING
+    # ========================================================================
+    
     print()
     print("="*70)
     print("MONITORING ACTIVE")
