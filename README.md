@@ -22,6 +22,13 @@ A comprehensive campaign progress tracker for IL-2 Sturmovik: Great Battles that
 - **Landing Analysis**: Four-criteria system to detect hard landings vs. safe landings
 - **Combat Statistics**: Air, ground, and naval kills with comprehensive breakdowns
 
+### 📄 **Professional PDF Reports**
+- **One PDF per Campaign**: Automatically generated reports with complete mission history
+- **Embedded Images**: All medals, ranks, and awards displayed with proper rotation
+- **Clean Layout**: Professional formatting with proper page breaks and alignment
+- **Historical Accuracy**: Uses actual mission dates and campaign names from game files
+- **Automatic Export**: PDFs generated in campaign folder after mission completion
+
 ### 🔄 **Live Monitoring**
 - **Automatic Detection**: Monitors IL-2 game process and campaign save file changes
 - **Real-time Updates**: Processes new missions immediately after completion
@@ -58,10 +65,16 @@ Required packages:
 - `pillow` - Image processing (DDS to PNG conversion)
 - `pyyaml` - Configuration file parsing
 - `psutil` - Process monitoring
+- `pdfkit` - PDF generation
 
-### Step 2: Download Campaign Ranks & Awards Images
+### Step 2: Install wkhtmltopdf (for PDF export)
+Download and install from: https://wkhtmltopdf.org/downloads.html
 
-**IMPORTANT:** The tracker requires medal and rank images to display in-game.
+The tracker will guide you through installation if not found.
+
+### Step 3: Download Campaign Ranks & Awards Images
+
+**IMPORTANT:** The tracker requires medal and rank images to display in-game and in PDFs.
 
 1. Download `CampaignRanksAwards.zip` from this repository
 2. Extract the ZIP file
@@ -84,7 +97,7 @@ Required packages:
                 └── late\
 ```
 
-### Step 3: Clone and Run
+### Step 4: Clone and Run
 
 1. Clone this repository:
 ```bash
@@ -208,6 +221,7 @@ The tracker runs in the background and automatically:
 - Generates career events (ranks, awards) immediately
 - Creates mission debriefings from `.mlg` log files
 - Updates campaign `.info` files for in-game display
+- Exports PDF reports to campaign folders
 - Shows Country Validation GUI when new campaigns detected
 
 ### Failed Mission Management
@@ -449,6 +463,12 @@ Properly displays rank insignia:
 - Use the Country Validator GUI to manually assign countries
 - Add your custom campaigns to `stock_campaigns.yaml`
 - Countries detected based on aircraft types in missions
+
+### PDF export fails
+- Install wkhtmltopdf: https://wkhtmltopdf.org/downloads.html
+- Ensure it's added to system PATH
+- For EXE: copy wkhtmltopdf.exe to same directory as tracker
+- Check write permissions in campaign folder
 
 ### Tracker not detecting changes
 - Ensure `campaignsstates.txt` path is correct
