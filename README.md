@@ -387,20 +387,23 @@ Defines:
 - Order of Lenin
 - Medals for Bravery and Combat Merit
 - Separate early (collar tabs, pre-1943) and late (shoulder boards, 1943+) periods
+- And more...
 
 ### Britain
 - Distinguished Flying Cross (DFC)
 - Distinguished Flying Medal (DFM)
 - Distinguished Service Order (DSO)
 - Air Force Cross (AFC)
-
+- And more...
+- 
 ### USA
 - Distinguished Flying Cross
 - Air Medal
 - Silver Star
 - Distinguished Service Cross
 - Purple Heart
-
+- And more...
+- 
 ## 🔧 Advanced Features
 
 ### Rank Scaling
@@ -416,7 +419,6 @@ This ensures meaningful progression regardless of campaign duration.
 ### Kill Attribution System
 - **Direct kills**: You destroyed the target
 - **Indirect kills**: You dealt 80%+ damage before target was destroyed by someone else
-- **Shared kills**: Proper credit distribution in multi-player scenarios
 - **Per-minute aggregation**: Damage events grouped by minute for cleaner debriefings
 
 ### Landing Detection
