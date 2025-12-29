@@ -80,7 +80,7 @@ build_exe.bat
 - Creates distribution folder (e.g., `IL2_Campaign_Tracker_v1.1\`)
 - Copies EXE from `dist/`
 - Copies all configuration YAML files
-- Copies `mlg2txt.py` (required at runtime for log conversion)
+- Copies `mlg2txt.exe` (required at runtime for log conversion)
 - Generates `QUICK_START.txt` with usage instructions
 
 ### Build Output
@@ -92,7 +92,7 @@ dist\IL2_CampaignTracker\
 ├── object_categories.yaml           # Aircraft classifications
 ├── stock_campaigns.yaml             # Known campaigns
 ├── weapons_mappings.yaml            # Weapon classifications (NEW in v1.1)
-└── mlg2txt.py                       # Mission log converter (if needed)
+└── mlg2txt.exe                       # Mission log converter (if needed)
 ```
 
 **This folder is ready for distribution!**
@@ -149,7 +149,7 @@ YourDistribution\
 │   ├── object_categories.yaml
 │   ├── stock_campaigns.yaml
 │   ├── weapons_mappings.yaml
-│   ├── mlg2txt.py (optional)
+│   ├── mlg2txt.exe 
 │   └── QUICK_START.txt
 └── CampaignRanksAwards.zip
 ```
