@@ -19,6 +19,9 @@ import sys
 import os
 import time
 from pathlib import Path
+import json
+import shutil
+
 
 # Determine script directory (works for both script and EXE)
 if getattr(sys, 'frozen', False):
@@ -32,7 +35,7 @@ else:
 sys.path.insert(0, str(SCRIPT_DIR))
 
 print("="*70)
-print("IL-2 CAMPAIGN PROGRESS TRACKER v1.1")
+print("IL-2 CAMPAIGN PROGRESS TRACKER v1.5")
 print("="*70)
 print()
 
@@ -117,32 +120,36 @@ try:
     # Initial processing (only if save file exists)
     campaignsstates = SCRIPT_DIR / "campaignsstates.txt"
     
-    # Try to find save file in IL-2 directory if not local
-    if not campaignsstates.exists():
-        print()
-        print("Looking for campaignsstates.txt...")
-        
-        # Load game directory from mission dates
-        import json
-        try:
-            with open(MISSION_DATES_FILE, 'r') as f:
-                data = json.load(f)
-                game_dir = Path(data.get('game_directory', ''))
-                
-            if game_dir:
-                save_base = game_dir / "data" / "swf" / "il2" / "usersave"
-                if save_base.exists():
-                    uuid_folders = [f for f in save_base.iterdir() if f.is_dir()]
-                    if uuid_folders:
-                        save_file = uuid_folders[0] / "campaign" / "campaignsstates.txt"
-                        if save_file.exists():
-                            print(f"Found: {save_file}")
-                            # Copy to local directory
-                            import shutil
-                            shutil.copy(save_file, campaignsstates)
-                            print(f"Copied to: {campaignsstates}")
-        except:
-            pass
+    # ========================================================================
+    # ALWAYS COPY LATEST CAMPAIGN STATES FILE FROM IL-2 AT STARTUP
+    # ========================================================================
+    print()
+    print("=" * 70)
+    print("SYNCHRONIZING WITH IL-2 SAVE FILES")
+    print("=" * 70)
+    print()
+
+    try:
+        with open(MISSION_DATES_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            game_dir = Path(data.get('game_directory', '')).expanduser().resolve()
+
+        usersave_dir = game_dir / 'data' / 'swf' / 'il2' / 'usersave'
+        if usersave_dir.exists():
+            found = False
+            for user_dir in usersave_dir.iterdir():
+                potential = user_dir / 'campaign' / 'campaignsstates.txt'
+                if potential.exists():
+                    shutil.copy2(potential, SCRIPT_DIR / 'campaignsstates.txt')
+                    print(f"✓ Copied latest campaignsstates.txt from: {potential}")
+                    found = True
+                    break
+            if not found:
+                print(f"⚠️ No campaignsstates.txt found under {usersave_dir}")
+        else:
+            print(f"⚠️ usersave directory not found: {usersave_dir}")
+    except Exception as e:
+        print(f"❌ Could not synchronize campaignsstates.txt: {e}")
     
     if campaignsstates.exists():
         print()
@@ -157,10 +164,10 @@ try:
                 print(f"Removing old decoded file...")
                 old_decoded.unlink()
             
-            import decode_campaing_usersave1
+            import decode_campaign_usersave1
             print("Decoding save file...")
-            if hasattr(decode_campaing_usersave1, 'main'):
-                decode_campaing_usersave1.main()
+            if hasattr(decode_campaign_usersave1, 'main'):
+                decode_campaign_usersave1.main()
                 
                 # DEBUG: Check what was created
                 import json
@@ -184,6 +191,50 @@ try:
             print(f"Warning: Decoder error: {e}")
             import traceback
             traceback.print_exc()
+            
+        # ========================================================================
+        # MISSION CLEANUP CHECK (New in v1.1)
+        # ========================================================================
+        # Now we run cleanup AFTER initial processing so campaigns_decoded.json exists
+        
+        print()
+        print("="*70)
+        print("CHECKING FOR UNSUCCESSFUL MISSIONS")
+        print("="*70)
+        print()
+        
+        try:
+            from cleanup_failed_missions import startup_cleanup_check
+            
+            # This will:
+            # 1. Scan all campaigns
+            # 2. Find campaigns where LAST mission has takeOffStatus=1
+            # 3. Show GUI ONLY if cleanup opportunities found
+            # 4. Let user decide what to delete
+            # 5. Create automatic backup before deletion
+            
+            startup_cleanup_check()
+            
+        except ImportError:
+            print("Note: cleanup_failed_missions.py not found")
+            print("      Mission cleanup feature not available")
+            print()
+        except Exception as e:
+            print(f"Warning: Cleanup check failed: {e}")
+            print("         Continuing with normal operations...")
+            print()
+            import traceback
+            traceback.print_exc()
+
+        # Just to be absolutely sure we have the newest campaigns_decoded.json
+        try:
+            print("\nEnsuring campaigns_decoded.json is refreshed before event generation...")
+            import decode_campaign_usersave1
+            if hasattr(decode_campaign_usersave1, 'main'):
+                decode_campaign_usersave1.main()
+                print("✓ campaigns_decoded.json confirmed up-to-date.")
+        except Exception as e:
+            print(f"⚠️ Could not re-decode before events: {e}")
         
         # Generate events  
         try:
@@ -203,39 +254,7 @@ try:
         print(f"  Copy campaignsstates.txt to: {SCRIPT_DIR}")
         print(f"  Then restart this program.")
     
-    # ========================================================================
-    # MISSION CLEANUP CHECK (New in v1.1)
-    # ========================================================================
-    # Now we run cleanup AFTER initial processing so campaigns_decoded.json exists
-    
-    print()
-    print("="*70)
-    print("CHECKING FOR UNSUCCESSFUL MISSIONS")
-    print("="*70)
-    print()
-    
-    try:
-        from cleanup_failed_missions import startup_cleanup_check
-        
-        # This will:
-        # 1. Scan all campaigns
-        # 2. Find campaigns where LAST mission has takeOffStatus=1
-        # 3. Show GUI ONLY if cleanup opportunities found
-        # 4. Let user decide what to delete
-        # 5. Create automatic backup before deletion
-        
-        startup_cleanup_check()
-        
-    except ImportError:
-        print("Note: cleanup_failed_missions.py not found")
-        print("      Mission cleanup feature not available")
-        print()
-    except Exception as e:
-        print(f"Warning: Cleanup check failed: {e}")
-        print("         Continuing with normal operations...")
-        print()
-        import traceback
-        traceback.print_exc()
+
     
     # ========================================================================
     # START MONITORING

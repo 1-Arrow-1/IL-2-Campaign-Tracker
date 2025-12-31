@@ -24,7 +24,7 @@ import shutil
 
 
 class MissionLogProcessor:
-    def __init__(self, game_directory: str, verbose: bool = False):
+    def __init__(self, game_directory: str, verbose: bool = False, snapshot_dt=None):
         """
         Initialize mission log processor
         
@@ -35,6 +35,7 @@ class MissionLogProcessor:
         self.game_directory = Path(game_directory)
         self.flight_logs_dir = self.game_directory / "data" / "FlightLogs"
         self.verbose = verbose
+        self.snapshot_dt = snapshot_dt
         
         # Working directory for temporary files
         self.work_dir = Path.cwd()
@@ -203,33 +204,48 @@ class MissionLogProcessor:
         for mlg_file in self.flight_logs_dir.glob("*.mlg"):
             try:
                 # Read file and search for campaign mission pattern
-                with open(mlg_file, 'rb') as f:
+                with open(mlg_file, "rb") as f:
                     content = f.read()
-                
+
                 # Check if this .mlg contains our mission
                 if any(pattern in content for pattern in patterns):
-                    # Extract timestamp from filename
+                    # Extract timestamp from filename (string like "2025-12-22_15-47-53")
                     timestamp = self._extract_timestamp(mlg_file.name)
                     if timestamp:
-                        matching_files.append((mlg_file, timestamp))
+                        # NEW: parse to datetime for correct comparisons/sorting
+                        try:
+                            ts_dt = datetime.strptime(timestamp, "%Y-%m-%d_%H-%M-%S")
+                        except ValueError:
+                            if self.verbose:
+                                print(f"    Skipping {mlg_file.name}: invalid timestamp format '{timestamp}'")
+                            continue
+
+                        matching_files.append((mlg_file, ts_dt))
                         if self.verbose:
                             print(f"    Found: {mlg_file.name} ({timestamp})")
-            
+
             except Exception as e:
                 if self.verbose:
                     print(f"    Error reading {mlg_file.name}: {e}")
                 continue
-        
+
         if not matching_files:
             return None
-        
-        # Return newest (sort by timestamp, descending)
+
+        # NEW: if snapshot_dt is provided, prefer newest file <= snapshot
+        if self.snapshot_dt is not None:
+            eligible = [x for x in matching_files if x[1] <= self.snapshot_dt]
+            if eligible:
+                eligible.sort(key=lambda x: x[1], reverse=True)
+                return eligible[0][0]
+
+        # Fallback: existing behavior (newest overall)
         matching_files.sort(key=lambda x: x[1], reverse=True)
         newest = matching_files[0][0]
-        
+
         if self.verbose and len(matching_files) > 1:
             print(f"    Multiple versions found, using newest: {newest.name}")
-        
+
         return newest
     
     def _extract_timestamp(self, filename: str) -> Optional[str]:

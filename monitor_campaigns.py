@@ -488,7 +488,17 @@ class CampaignMonitor:
             local_copy = Path("campaignsstates.txt")
             shutil.copy(self.save_file, local_copy)
             self.log(f"Copied save file to: {local_copy}")
+            
+            # NEW: copy hash index if present (same folder as the save file)
+            try:
+                index_src = self.save_file.parent / "campaignsstates_hash_index.json"
+                if index_src.exists():
+                    shutil.copy(index_src, Path("campaignsstates_hash_index.json"))
+                    self.log("Copied hash index to working directory: campaignsstates_hash_index.json")
+            except Exception as e:
+                self.log(f"Warning: could not copy hash index: {e}")
             return True
+            
         except Exception as e:
             self.log(f"Error copying save file: {e}")
             return False
@@ -501,7 +511,7 @@ class CampaignMonitor:
             # If running as EXE, call the module directly (no external python process).
             if getattr(sys, "frozen", False):
                 try:
-                    import decode_campaing_usersave1
+                    import decode_campaign_usersave1
                 except Exception as e:
                     self.log(f"✗ Decoder import failed inside EXE: {e}")
                     return False
@@ -509,10 +519,10 @@ class CampaignMonitor:
                 buf = io.StringIO()
                 try:
                     with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
-                        if hasattr(decode_campaing_usersave1, "main"):
-                            decode_campaing_usersave1.main()
+                        if hasattr(decode_campaign_usersave1, "main"):
+                            decode_campaign_usersave1.main()
                         else:
-                            raise RuntimeError("decode_campaing_usersave1.main() not found")
+                            raise RuntimeError("decode_campaign_usersave1.main() not found")
                 except Exception as e:
                     self.log(f"✗ Decoder failed inside EXE: {e}")
                     out = buf.getvalue().strip()
@@ -529,7 +539,7 @@ class CampaignMonitor:
 
             # Running as script: use the current interpreter, not "python"
             result = subprocess.run(
-                [sys.executable, "decode_campaing_usersave1.py"],
+                [sys.executable, "decode_campaign_usersave1.py"],
                 capture_output=True,
                 text=True,
                 timeout=30
@@ -556,7 +566,7 @@ class CampaignMonitor:
             self.log(f"✗ Decoder error: {e}")
             return False
     
-    def run_event_generator(self) -> bool:
+    def run_event_generator(self, show_popups: bool = False) -> bool:
         """Run the event generator (works both as .py and as PyInstaller EXE)."""
         try:
             self.log("Running event generator...")
@@ -573,7 +583,15 @@ class CampaignMonitor:
                 try:
                     with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
                         if hasattr(step3_generate_events, "main"):
-                            step3_generate_events.main()
+                            old_argv = sys.argv
+                            try:
+                                sys.argv = ["step3_generate_events.py"]
+                                if show_popups:
+                                    sys.argv.append("--show-popups")
+                                step3_generate_events.main()
+                            finally:
+                                sys.argv = old_argv
+                            #step3_generate_events.main()
                         else:
                             raise RuntimeError("step3_generate_events.main() not found")
                 except Exception as e:
@@ -596,8 +614,11 @@ class CampaignMonitor:
                 return True
 
             # Running as script: use the current interpreter, not "python"
+            cmd = [sys.executable, "step3_generate_events.py"]
+            if show_popups:
+                cmd.append("--show-popups")
             result = subprocess.run(
-                [sys.executable, "step3_generate_events.py"],
+                cmd,
                 capture_output=True,
                 text=True,
                 timeout=60
@@ -663,7 +684,8 @@ class CampaignMonitor:
                 return
             
             # Step 3: Run event generator
-            if not self.run_event_generator():
+            self.log(f"[popups] show_popups = {self.game_running} (IL-2 running)")
+            if not self.run_event_generator(show_popups=self.game_running):
                 self.log("✗ Processing failed at event generator stage")
                 return
             

@@ -10,7 +10,7 @@ Usage:
     python step3_generate_events.py
     
 Files needed:
-    - campaigns_decoded.json (from decode_campaing_usersave1.py)
+    - campaigns_decoded.json (from decode_campaign_usersave1.py)
     - campaign_mission_dates.json (from step1_extract_mission_dates.py)
     - campaign_progress_config.yaml (ranks & awards configuration)
     - mlg2txt.py (for mission log conversion)
@@ -22,13 +22,81 @@ import json
 import yaml
 import shutil
 import sys
+import subprocess
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 import re
 import argparse
 
+POPUP_SEEN_FILE = Path("campaign_popups_seen.json")
 
+
+def load_popup_seen() -> dict:
+    """Load already-shown popup event keys. Returns dict: {campaign_name: [keys...]}."""
+    if not POPUP_SEEN_FILE.exists():
+        return {}
+    try:
+        with open(POPUP_SEEN_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def save_popup_seen(data: dict) -> None:
+    """Save already-shown popup event keys."""
+    try:
+        with open(POPUP_SEEN_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, sort_keys=True)
+    except Exception as e:
+        print(f"[popups] Warning: could not save {POPUP_SEEN_FILE}: {e}")
+
+def is_il2_running() -> bool:
+    """
+    True if IL-2 is running (Windows: checks tasklist).
+    Keeps Step3 independent of extra dependencies (no psutil needed).
+    """
+    try:
+        # Windows only (your tracker is Windows-focused)
+        out = subprocess.check_output(["tasklist"], text=True, errors="ignore")
+        out_l = out.lower()
+        return ("il-2.exe" in out_l) or ("il2.exe" in out_l)
+    except Exception:
+        # If detection fails, be conservative: treat as "not running"
+        return False
+        
+def make_event_key(ev: dict) -> str:
+    """
+    Build a stable key for an event so we can detect if it was already shown as a popup.
+    Expected fields (from campaign_events.json structure): type, rank/name, mission, date
+    """
+    ev_type = str(ev.get("type", "")).strip().lower()
+    mission = str(ev.get("mission", "")).strip()
+    date = str(ev.get("date", "")).strip()
+
+    if ev_type == "promotion":
+        rank = str(ev.get("rank", "")).strip()
+        return f"promotion|{rank}|{mission}|{date}"
+
+    if ev_type == "award":
+        name = str(ev.get("name", "")).strip()
+        return f"award|{name}|{mission}|{date}"
+
+    # fallback for unknown event types
+    return f"{ev_type}|{mission}|{date}"
+
+
+def is_file_locked(path: Path) -> bool:
+    """True if the file exists and is locked for writing (e.g., open in a PDF viewer on Windows)."""
+    if not path.exists():
+        return False
+    try:
+        with open(path, "ab"):
+            return False
+    except (PermissionError, OSError):
+        return True
+        
 def smart_mission_sort_key(mission_id: str):
     """
     Smart sorting for mission IDs
@@ -51,7 +119,7 @@ def smart_mission_sort_key(mission_id: str):
 
 
 class EventGenerator:
-    def __init__(self, config_file: str = "campaign_progress_config.yaml", dry_run: bool = False):
+    def __init__(self, config_file: str = "campaign_progress_config.yaml", dry_run: bool = False, show_popups=False):
         """Initialize event generator with configuration
         
         Args:
@@ -60,6 +128,7 @@ class EventGenerator:
         """
         
         self.dry_run = dry_run
+        self.show_popups = show_popups
         
         # Load configuration
         # Try external file first (for user editing), then embedded
@@ -84,6 +153,20 @@ class EventGenerator:
         except UnicodeDecodeError:
             with open(config_path, 'r', encoding='iso-8859-1') as f:
                 self.config = yaml.safe_load(f)
+                
+        # --- NEW: default handling for popup setting ---
+        if not isinstance(self.config, dict):
+            self.config = {}
+
+        self.enable_popups = bool(self.config.get("enable_popups", True))
+        print(f"[popups] enabled = {self.enable_popups}")
+        # ✅ FIX: make sure popups are actually shown if enabled in config
+        if self.enable_popups:
+            self.show_popups = True
+        # 🧩 Debug line to confirm popup activation
+        print(f"[DEBUG] Popups aktiviert: {self.show_popups}")
+        self.popup_seen = load_popup_seen()
+        print(f"[popups] seen campaigns = {len(self.popup_seen)}")
         
         # Load mission dates with explicit error handling
         try:
@@ -105,7 +188,7 @@ class EventGenerator:
                 self.save_data = json.load(f)
         except FileNotFoundError:
             print(f"ERROR: Required file 'campaigns_decoded.json' not found!")
-            print(f"Please run decode_campaing_usersave1.py first.")
+            print(f"Please run decode_campaign_usersave1.py first.")
             raise
         except json.JSONDecodeError as e:
             print(f"ERROR: Invalid JSON in 'campaigns_decoded.json'")
@@ -121,7 +204,32 @@ class EventGenerator:
         if self.game_directory:
             try:
                 from step4_process_mission_logs import MissionLogProcessor
-                self.log_processor = MissionLogProcessor(self.game_directory, verbose=False)
+                snapshot_dt = None
+                try:
+                    states_path = Path("campaignsstates.txt")
+                    index_path = Path("campaignsstates_hash_index.json")
+
+                    if states_path.exists() and index_path.exists():
+                        import hashlib
+                        h = hashlib.md5(states_path.read_bytes()).hexdigest()
+                        with open(index_path, "r", encoding="utf-8") as f:
+                            idx = json.load(f) or {}
+                        
+                        print(f"[snapshot] hash={h} → {'FOUND' if h in idx else 'NOT FOUND'} in index")
+
+                        ts = idx.get(h)
+                        if ts:
+                            snapshot_dt = datetime.strptime(ts, "%Y%m%d_%H%M%S")
+                except Exception:
+                    snapshot_dt = None
+                    
+                # ✅ ADD LOGGING RIGHT HERE
+                if snapshot_dt:
+                    print(f"[snapshot] Using snapshot timestamp: {snapshot_dt}")
+                else:
+                    print("[snapshot] No snapshot match found – using newest mission logs")
+                    
+                self.log_processor = MissionLogProcessor(self.game_directory, verbose=False, snapshot_dt=snapshot_dt)
                 print(f"  - Mission log processor initialized")
             except Exception as e:
                 print(f"  - Warning: Could not initialize mission log processor: {e}")
@@ -1608,22 +1716,17 @@ class EventGenerator:
                 print(f"  Created backup: {backup_file.name}")
             
             # Read existing content and detect encoding
-            # Try different encodings
-            content = None
-            detected_encoding = None
-            for encoding in ['utf-8', 'utf-16-le', 'utf-16-be', 'latin-1']:
-                try:
-                    with open(info_file, 'r', encoding=encoding) as f:
-                        content = f.read()
-                    detected_encoding = encoding
-                    print(f"  Detected encoding: {encoding}")
-                    break
-                except UnicodeDecodeError:
-                    continue
-            
-            if content is None:
-                print(f"  Error: Could not decode file with any encoding")
-                return False
+            # Read raw bytes to detect encoding safely
+            raw = info_file.read_bytes()
+
+            if raw.startswith(b"\xef\xbb\xbf"):
+                detected_encoding = "utf-8-sig"
+            elif raw.startswith(b"\xff\xfe") or raw.startswith(b"\xfe\xff"):
+                detected_encoding = "utf-16"
+            else:
+                detected_encoding = "utf-8"
+
+            content = raw.decode(detected_encoding)
             
             # Check if Events section already exists
             # We need to be careful to preserve any content AFTER Events section
@@ -1695,7 +1798,7 @@ class EventGenerator:
             
             # Write updated content using SAME encoding as original
             # This prevents corruption of UTF-16 LE files (common in IL-2)
-            with open(info_file, 'w', encoding=detected_encoding) as f:
+            with open(info_file, "w", encoding=detected_encoding, newline="") as f:
                 f.write(updated_content)
             
             print(f"  ✓ Updated: {info_file} (encoding: {detected_encoding})")
@@ -2080,6 +2183,13 @@ class EventGenerator:
         # Clean campaign name for filename (remove special chars)
         safe_name = re.sub(r'[^\w\s-]', '', campaign_name).strip().replace(' ', '_')
         pdf_filename = reports_dir / f"{safe_name}_Report.pdf"
+
+        # If the target PDF is open/locked, write a fallback instead of failing
+        if is_file_locked(pdf_filename):
+            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+            fallback = reports_dir / f"{safe_name}_Report_LOCKED_{ts}.pdf"
+            print(f"  ⚠️  PDF is open/locked. Writing fallback: {fallback.name}")
+            pdf_filename = fallback
         
         try:
             # Create complete HTML document
@@ -2157,6 +2267,44 @@ class EventGenerator:
                     continue
             
             events = self.generate_events_for_campaign(campaign_name)
+            
+            # ============================================================
+            # Popups: detect, defer, or show
+            # ============================================================
+            if self.enable_popups and events:
+                keys_now = [make_event_key(ev) for ev in events]
+                keys_now_set = set(keys_now)
+
+                # First-ever run for this campaign → baseline only
+                if campaign_name not in self.popup_seen:
+                    self.popup_seen[campaign_name] = sorted(keys_now_set)
+                    save_popup_seen(self.popup_seen)
+                    print(f"[popups] {campaign_name}: initial sync ({len(keys_now_set)} events)")
+                else:
+                    campaign_seen = set(self.popup_seen.get(campaign_name, []))
+                    new_keys = keys_now_set - campaign_seen
+
+                    if new_keys:
+                        if self.show_popups and is_il2_running():
+                            # show popups
+                            new_events = [ev for ev in events if make_event_key(ev) in new_keys]
+                            print(f"[popups] {campaign_name}: {len(new_events)} new event(s)")
+
+                            self._new_popup_events = getattr(self, "_new_popup_events", [])
+                            self._new_popup_events.extend(
+                                [(campaign_name, ev) for ev in new_events]
+                            )
+
+                            # mark as seen ONLY AFTER popup
+                            self.popup_seen[campaign_name] = sorted(campaign_seen | new_keys)
+                            save_popup_seen(self.popup_seen)
+                        else:
+                            print(
+                                f"[popups] deferred ({len(new_keys)}) "
+                                f"(show_popups={self.show_popups}, il2_running={is_il2_running()})"
+                            )
+
+
             
             if events:
                 # Get country (case-insensitive)
@@ -2249,6 +2397,28 @@ class EventGenerator:
             print("SAMPLE OUTPUT (kerch):")
             print(f"{'='*70}")
             print(results['kerch']['html'])
+            
+        # --- NEW: show popups at the very end (only if explicitly allowed) ---
+        if self.enable_popups and self.show_popups and getattr(self, "_new_popup_events", None):
+            # Build map campaign -> country (needed to locate the image folder)
+            campaign_country_map = {}
+            for cname, meta in self.mission_dates.items():
+                if isinstance(meta, dict):
+                    ctry = meta.get("country")
+                else:
+                    ctry = meta  # legacy: already a country string
+                if ctry:
+                    campaign_country_map[cname] = ctry
+
+
+            from popups_min import show_event_popups
+            show_event_popups(
+                self._new_popup_events,
+                game_directory=self.game_directory,
+                campaign_country_map=campaign_country_map,
+                duration_seconds=5
+            )
+
         
         return results
 
@@ -2268,8 +2438,21 @@ def main():
         type=str,
         help='Only process specific campaign (e.g., kerch)'
     )
-    
+    parser.add_argument(
+        '--show-popups',
+        action='store_true',
+        help='Show promotion/award popups (only used when called by monitor while IL-2 is running)'
+    )
+    parser.add_argument(
+    '--test-popups',
+    action='store_true',
+    help='Show a test popup sequence (does not modify seen state)'
+    )
+
     args = parser.parse_args()
+    
+    print(f"[popups] args.show_popups = {args.show_popups}")
+
     
     if args.dry_run:
         print("="*70)
@@ -2277,7 +2460,50 @@ def main():
         print("="*70)
         print()
     
-    generator = EventGenerator(dry_run=args.dry_run)
+    generator = EventGenerator(dry_run=args.dry_run, show_popups=args.show_popups)
+    
+    # Test popups (no mission flight needed)
+    if args.test_popups:
+        from popups_min import show_event_popups
+
+        # Minimal country map; only needed for image folder resolution
+        campaign_country_map = {}
+        for cname, meta in generator.mission_dates.items():
+            if isinstance(meta, dict):
+                ctry = meta.get("country")
+            else:
+                ctry = meta
+            if ctry:
+                campaign_country_map[cname] = ctry
+
+        # Build a small fake event list (uses real images if they exist)
+        test_campaign = next(iter(campaign_country_map.keys()), "kerch")
+        test_events = [
+            (test_campaign, {
+                "type": "promotion",
+                "rank": "Feldwebel",
+                "image": "feldwebel.png",
+                "mission": "TEST",
+                "date": "1943-11-06"
+            }),
+            (test_campaign, {
+                "type": "award",
+                "name": "Iron Cross 2nd Class",
+                "image": "iron_cross_2nd.dds",
+                "mission": "TEST",
+                "date": "1943-11-06"
+            }),
+        ]
+
+        print("[popups] TEST MODE: showing 2 popups...")
+        show_event_popups(
+            test_events,
+            game_directory=generator.game_directory,
+            campaign_country_map=campaign_country_map,
+            duration_seconds=5
+        )
+        return
+
     
     if args.campaign:
         # Process single campaign

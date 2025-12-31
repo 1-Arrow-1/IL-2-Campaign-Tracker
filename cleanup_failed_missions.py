@@ -10,6 +10,7 @@ import json
 import re
 import shutil
 import urllib.parse
+import hashlib
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional, Set
@@ -87,6 +88,22 @@ def is_ignored(campaign_name: str, mission_id: str) -> bool:
     ignored = load_ignored_missions()
     key = f"{campaign_name}::{mission_id}"
     return key in ignored
+    
+def _md5_file(path: Path) -> str:
+    h = hashlib.md5()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+def _load_hash_index(index_path: Path) -> dict:
+    if not index_path.exists():
+        return {}
+    try:
+        with open(index_path, "r", encoding="utf-8") as f:
+            return json.load(f) or {}
+    except Exception:
+        return {}
 
 
 class MissionCleanup:
@@ -112,53 +129,58 @@ class MissionCleanup:
         else:
             self.states_path = Path(campaignstates_path)
         
-        self.max_backups = 10
+        self.max_backups = 50
         
         print(f"Using campaignsstates.txt: {self.states_path}")
     
     def _find_campaignstates_file(self) -> Path:
         """
-        Find campaignsstates.txt in IL-2 game directory
-        
-        Returns:
-            Path to campaignsstates.txt
+        Find campaignsstates.txt in IL-2 game directory (new structure supported)
         """
-        # Try to get game directory from campaign_mission_dates.json
         if self.dates_path.exists():
             try:
                 with open(self.dates_path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     game_dir = data.get('game_directory', '')
-                    
                     if game_dir:
                         game_path = Path(game_dir).expanduser().resolve()
-                        states_file = game_path / 'data' / 'campaignsstates.txt'
-                        
-                        if states_file.exists():
-                            print(f"✓ Found campaignsstates.txt in game directory: {game_dir}")
-                            return states_file
-                        else:
-                            print(f"⚠️  campaignsstates.txt not found at: {states_file}")
+
+                        # ✅ Try new user-specific path
+                        usersave_dir = game_path / 'data' / 'swf' / 'il2' / 'usersave'
+                        if usersave_dir.exists():
+                            for subdir in usersave_dir.iterdir():
+                                potential = subdir / 'campaign' / 'campaignsstates.txt'
+                                if potential.exists():
+                                    print(f"✓ Found campaignsstates.txt in {potential}")
+                                    return potential
+
+                        # Legacy fallback (old versions)
+                        legacy_path = game_path / 'data' / 'campaignsstates.txt'
+                        if legacy_path.exists():
+                            print(f"✓ Found legacy campaignsstates.txt: {legacy_path}")
+                            return legacy_path
+
+                        print(f"⚠️  campaignsstates.txt not found in either path")
             except Exception as e:
                 print(f"⚠️  Could not read game directory: {e}")
-        
-        # Fallback: try current directory
+
+        # Fallback to current working directory
         fallback = Path('campaignsstates.txt')
         if fallback.exists():
             print(f"⚠️  Using campaignsstates.txt from current directory (fallback)")
             return fallback
-        
-        # If not found anywhere
-        print(f"❌ campaignsstates.txt not found!")
-        print(f"   Please ensure campaign_mission_dates.json has correct game_directory")
-        raise FileNotFoundError("campaignsstates.txt not found in game directory or current directory")
+
+        print("❌ campaignsstates.txt not found! Please verify your IL-2 user save path.")
+        raise FileNotFoundError("campaignsstates.txt not found in expected IL-2 user directory structure")
+
     
     def find_cleanup_opportunities(self) -> Dict:
         """
-        Find campaigns where LAST mission has takeOffStatus = 1
+        Find ALL missions with takeOffStatus = 1 (unsuccessful)
         
         Returns:
             Dict of campaigns needing cleanup with their details
+            Format: {campaign_name: {mission_id: details, ...}}
             (excludes missions marked as "don't ask again")
         """
         if not self.decoded_path.exists():
@@ -203,58 +225,68 @@ class MissionCleanup:
                 mission_order = sorted(stats.keys(),
                                      key=lambda x: int(x) if x.isdigit() else 0)
             
-            # Find which missions have been flown
-            flown_missions = [m for m in mission_order if m in stats]
+            # *** NEW: Check ALL flown missions, not just last ***
+            campaign_opportunities = {}
             
-            if not flown_missions:
-                continue
-            
-            # Get LAST flown mission
-            last_mission_id = flown_missions[-1]
-            
-            # *** CHECK IF IGNORED ***
-            if is_ignored(campaign_name, last_mission_id):
-                continue  # Skip this one - user chose "don't ask again"
-            
-            last_mission_stats = stats[last_mission_id]
-            
-            # Check takeOffStatus
-            takeoff_status = last_mission_stats.get('takeOffStatus', 2)
-            
-            if takeoff_status == 1:
-                # This campaign needs cleanup!
+            for mission_id in mission_order:
+                # Skip missions not in stats
+                if mission_id not in stats:
+                    continue
                 
-                # Calculate kills
-                air_kills = (last_mission_stats.get('killLightPlane', 0) + 
-                           last_mission_stats.get('killMediumPlane', 0) +
-                           last_mission_stats.get('killHeavyPlane', 0))
+                # Check if ignored
+                if is_ignored(campaign_name, mission_id):
+                    continue
                 
-                ground_kills = (last_mission_stats.get('killLightArmoredVehicle', 0) +
-                              last_mission_stats.get('killMediumArmoredVehicle', 0) +
-                              last_mission_stats.get('killHeavyArmoredVehicle', 0) +
-                              last_mission_stats.get('killCannon', 0) +
-                              last_mission_stats.get('killAAAGun', 0) +
-                              last_mission_stats.get('killMachinegun', 0))
+                mission_stats = stats[mission_id]
                 
-                naval_kills = (last_mission_stats.get('killLightShip', 0) +
-                             last_mission_stats.get('killDestroyerShip', 0) +
-                             last_mission_stats.get('killLargeCargoShip', 0))
+                # Check takeOffStatus
+                takeoff_status = mission_stats.get('takeOffStatus', 2)
                 
-                # Format flight time
-                flight_time_seconds = last_mission_stats.get('totalFlightTime', 0)
-                minutes = int(flight_time_seconds / 60)
-                seconds = int(flight_time_seconds % 60)
-                flight_time_str = f"{minutes:02d}:{seconds:02d}"
-                
-                opportunities[campaign_name] = {
-                    'mission_id': last_mission_id,
-                    'mission_number': f"{len(flown_missions)} of {len(mission_order)}",
-                    'air_kills': air_kills,
-                    'ground_kills': ground_kills,
-                    'naval_kills': naval_kills,
-                    'flight_time': flight_time_str,
-                    'raw_stats': last_mission_stats
-                }
+                # Mission is considered "locked" only if it both failed (takeOffStatus=1)
+                # AND still exists in completedMissionsByFileName
+                completed_missions = campaign_data.get('completedMissionsByFileName', {})
+                if takeoff_status == 1 and mission_id in completed_missions:
+                    # This mission needs cleanup!
+                    
+                    # Calculate kills
+                    air_kills = (mission_stats.get('killLightPlane', 0) + 
+                               mission_stats.get('killMediumPlane', 0) +
+                               mission_stats.get('killHeavyPlane', 0))
+                    
+                    ground_kills = (mission_stats.get('killLightArmoredVehicle', 0) +
+                                  mission_stats.get('killMediumArmoredVehicle', 0) +
+                                  mission_stats.get('killHeavyArmoredVehicle', 0) +
+                                  mission_stats.get('killCannon', 0) +
+                                  mission_stats.get('killAAAGun', 0) +
+                                  mission_stats.get('killMachinegun', 0))
+                    
+                    naval_kills = (mission_stats.get('killLightShip', 0) +
+                                 mission_stats.get('killDestroyerShip', 0) +
+                                 mission_stats.get('killLargeCargoShip', 0))
+                    
+                    # Format flight time
+                    flight_time_seconds = mission_stats.get('totalFlightTime', 0)
+                    minutes = int(flight_time_seconds / 60)
+                    seconds = int(flight_time_seconds % 60)
+                    flight_time_str = f"{minutes:02d}:{seconds:02d}"
+                    
+                    # Get mission position in campaign
+                    flown_missions = [m for m in mission_order if m in stats]
+                    mission_position = flown_missions.index(mission_id) + 1 if mission_id in flown_missions else 0
+                    
+                    campaign_opportunities[mission_id] = {
+                        'mission_id': mission_id,
+                        'mission_number': f"{mission_position} of {len(mission_order)}",
+                        'air_kills': air_kills,
+                        'ground_kills': ground_kills,
+                        'naval_kills': naval_kills,
+                        'flight_time': flight_time_str,
+                        'raw_stats': mission_stats
+                    }
+            
+            # Only add campaign if it has opportunities
+            if campaign_opportunities:
+                opportunities[campaign_name] = campaign_opportunities
         
         return opportunities
     
@@ -273,11 +305,19 @@ class MissionCleanup:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         backup_filename = f'campaignsstates_{timestamp}.backup'
         backup_path = self.states_path.parent / backup_filename
+        index_path = self.states_path.parent / "campaignsstates_hash_index.json"
         
         try:
             shutil.copy(self.states_path, backup_path)
             print(f"✓ Backup created: {backup_path}")
             
+            # NEW: update hash index
+            backup_hash = _md5_file(self.states_path)
+            index = _load_hash_index(index_path)
+            index[backup_hash] = timestamp
+            with open(index_path, "w", encoding="utf-8") as f:
+                json.dump(index, f, indent=2, sort_keys=True)
+                
             # Cleanup old backups (keep only last 10)
             self.cleanup_old_backups()
             
@@ -286,6 +326,7 @@ class MissionCleanup:
         except Exception as e:
             print(f"❌ Failed to create backup: {e}")
             return None
+            
     
     def cleanup_old_backups(self):
         """Keep only the last N backups in game directory"""
@@ -305,211 +346,175 @@ class MissionCleanup:
     
     def delete_mission_entry(self, campaign_name: str, mission_id: str) -> bool:
         """
-        Delete mission entry from campaignsstates.txt by removing specific patterns
+        Delete mission from completedMissionsByFileName in campaignsstates.txt
+        
+        SIMPLIFIED: Only removes mission from completedMissionsByFileName,
+        leaving characterStatisticsByFileName intact. IL-2 will overwrite
+        those stats when you replay the mission.
         
         Args:
             campaign_name: Campaign folder name
-            mission_id: Mission number (e.g., "11")
+            mission_id: Mission identifier (e.g., "04")
             
         Returns:
             True if successful, False otherwise
         """
-        # Create backup first
+        if not self.states_path.exists():
+            print(f"❌ {self.states_path} not found")
+            return False
+        
+        print(f"\n{'='*70}")
+        print(f"DELETING: {campaign_name} - Mission {mission_id}")
+        print(f"{'='*70}")
+        print(f"Target: completedMissionsByFileName entry only")
+        
+        # Create backup FIRST
         backup_path = self.create_backup()
         if not backup_path:
+            print("❌ Cannot proceed without backup!")
             return False
         
         try:
             # Read file
-            with open(self.states_path, 'r', encoding='utf-8') as f:
-                content = f.read()
+            with open(self.states_path, 'rb') as f:
+                content = f.read().decode('utf-8', errors='ignore')
             
-            print(f"\nDeleting Mission {mission_id} from {campaign_name}...")
-            print(f"Original file size: {len(content)} chars")
+            print(f"✓ Loaded {self.states_path.name} ({len(content)} chars)")
             
-            # Find the campaign entry
-            campaign_pattern = f'campaigns/{campaign_name}='
-            if campaign_pattern not in content:
-                print(f"❌ Campaign {campaign_name} not found in file")
+            # Find campaign section (between =kampagne= tags)
+            campaign_start_tag = f'{campaign_name}='
+            campaign_start = content.find(campaign_start_tag)
+            
+            if campaign_start == -1:
+                print(f"❌ Campaign '{campaign_name}' not found in file")
                 return False
             
-            # Find campaign start
-            campaign_start = content.index(campaign_pattern)
-            print(f"Campaign starts at position: {campaign_start}")
-            
-            # Find campaign end (next campaign or end of file)
-            next_campaign = content.find('&campaigns/', campaign_start + 1)
-            if next_campaign == -1:
+            # Find end of campaign (next =kampagne= or end of file)
+            next_campaign_start = content.find('=', campaign_start + len(campaign_start_tag))
+            if next_campaign_start == -1:
                 campaign_end = len(content)
-                print(f"Campaign ends at: EOF (last campaign)")
             else:
-                campaign_end = next_campaign
-                next_campaign_name = content[next_campaign:next_campaign+50]
-                print(f"Campaign ends at: {campaign_end} (next: {next_campaign_name[:30]}...)")
+                # Search for next campaign start tag
+                temp_pos = campaign_start + len(campaign_start_tag)
+                while temp_pos < len(content):
+                    next_eq = content.find('=', temp_pos)
+                    if next_eq == -1:
+                        campaign_end = len(content)
+                        break
+                    # Check if this is a campaign tag (has another = after it)
+                    if next_eq + 1 < len(content) and content[next_eq + 1] != '=':
+                        # Check if this looks like start of campaign name
+                        potential_end = content.find('=', next_eq + 1)
+                        if potential_end != -1 and potential_end - next_eq < 50:
+                            campaign_end = next_eq
+                            break
+                    temp_pos = next_eq + 1
+                else:
+                    campaign_end = len(content)
             
-            # Extract campaign section - WE ONLY WORK WITHIN THIS SECTION
-            before_campaign = content[:campaign_start]
+            # Extract campaign section
             campaign_section = content[campaign_start:campaign_end]
+            before_campaign = content[:campaign_start]
             after_campaign = content[campaign_end:]
             
-            print(f"\n{'='*70}")
-            print(f"ISOLATED CAMPAIGN SECTION FOR: {campaign_name}")
-            print(f"{'='*70}")
-            print(f"Section size: {len(campaign_section)} chars")
-            print(f"Section preview: {campaign_section[:100]}...")
-            print(f"{'='*70}\n")
+            print(f"✓ Found campaign section ({len(campaign_section)} chars)")
             
-            # CRITICAL: All deletions happen ONLY within campaign_section
-            # This ensures we never touch other campaigns!
+            # Find and delete from completedMissionsByFileName
+            # Format: completedMissionsByFileName%3D05%253D1%252604%253D1%252607%253D1...
+            #                                     ↑ first    ↑ second   ↑ third
+            # - First mission: %3D{mission_id}%253D1
+            # - Following missions: %2526{mission_id}%253D1
+            patterns_to_try = [
+                (f'%3D{mission_id}%253D1', 'first mission (starts with %3D)'),
+                (f'%2526{mission_id}%253D1', 'following mission (starts with %2526)'),
+            ]
             
-            # Pattern 1: Delete mission stats
-            # From: %2526{mission_id}%253D  to: %252526killSubmarine%25253D{value}
-            # Example: %252611%253Dsorties%253D...%252526killSubmarine%25253D0
+            deleted = False
+            for pattern, description in patterns_to_try:
+                if pattern in campaign_section:
+                    old_length = len(campaign_section)
+                    campaign_section = campaign_section.replace(pattern, '', 1)  # Only first occurrence
+                    new_length = len(campaign_section)
+                    print(f"✓ Deleted mission {mission_id} from completedMissionsByFileName")
+                    print(f"  Pattern: {pattern} ({description})")
+                    print(f"  Removed: {old_length - new_length} chars")
+                    deleted = True
+                    break
             
-            pattern1_start = f'%2526{mission_id}%253D'
-            pattern1_end = '%252526killSubmarine%25253D'
-            
-            # Find the pattern
-            start_idx = campaign_section.find(pattern1_start)
-            if start_idx == -1:
-                print(f"⚠️  Pattern 1 not found: {pattern1_start}")
-                print(f"   Searching for mission {mission_id} in different encoding...")
-                
-                # Try alternative patterns
-                alt_patterns = [
-                    f'%26{mission_id}%3D',     # Less encoded
-                    f'&{mission_id}=',          # Not encoded
-                ]
-                
-                for alt_pattern in alt_patterns:
-                    start_idx = campaign_section.find(alt_pattern)
-                    if start_idx != -1:
-                        print(f"   ✓ Found alternative pattern: {alt_pattern}")
-                        pattern1_start = alt_pattern
-                        # Adjust end pattern accordingly
-                        if '%26' in alt_pattern:
-                            pattern1_end = '%26killSubmarine%3D'
-                        else:
-                            pattern1_end = '&killSubmarine='
-                        break
-                
-                if start_idx == -1:
-                    print(f"❌ Could not find mission {mission_id} in any encoding")
-                    print(f"   This mission may not exist in {campaign_name}")
-                    return False
-            
-            # VALIDATION: Ensure we found it WITHIN our campaign section
-            if start_idx < 0 or start_idx >= len(campaign_section):
-                print(f"❌ ERROR: Pattern found outside campaign section!")
-                print(f"   This should be impossible - aborting for safety")
+            if not deleted:
+                print(f"⚠️  Mission {mission_id} not found in completedMissionsByFileName")
+                print(f"   Searched for patterns:")
+                for p, desc in patterns_to_try:
+                    print(f"     - {p} ({desc})")
+                print(f"\n   This might mean:")
+                print(f"   - Mission was never completed (not in completedMissionsByFileName)")
+                print(f"   - Mission has different ID encoding")
                 return False
-            
-            print(f"✓ Found pattern at position {start_idx} (within campaign section)")
-            
-            # Find the end of this mission's stats (start of next field or next mission)
-            end_idx = campaign_section.find(pattern1_end, start_idx)
-            if end_idx == -1:
-                print(f"❌ Could not find end pattern: {pattern1_end}")
-                return False
-            
-            # Find where killSubmarine value ends (next field or mission starts)
-            # killSubmarine value is followed by either another mission (%2526{next_mission}) or next section
-            end_search_start = end_idx + len(pattern1_end)
-            
-            # Find the next delimiter (start of next mission or next section)
-            next_mission_start = campaign_section.find('%2526', end_search_start)
-            if next_mission_start == -1:
-                # Maybe it's the last mission, look for next section
-                next_mission_start = campaign_section.find('%26', end_search_start)
-            
-            if next_mission_start == -1:
-                print(f"⚠️  Could not find end of killSubmarine value, using end of stats")
-                # Find the digit(s) after killSubmarine%25253D
-                import re
-                remaining = campaign_section[end_search_start:end_search_start+20]
-                match = re.match(r'\d+', remaining)
-                if match:
-                    next_mission_start = end_search_start + len(match.group())
-                else:
-                    print(f"❌ Could not determine where to end deletion")
-                    return False
-            
-            # Delete from start_idx to next_mission_start
-            mission_data = campaign_section[start_idx:next_mission_start]
-            print(f"\n✓ Found mission stats to delete:")
-            print(f"  Position: {start_idx} to {next_mission_start}")
-            print(f"  Length: {len(mission_data)} chars")
-            print(f"  Preview: {mission_data[:100]}...")
-            
-            campaign_section = campaign_section[:start_idx] + campaign_section[next_mission_start:]
-            print(f"✓ Deleted mission stats")
-            
-            # Pattern 2: Delete from completedMissionsByFileName
-            # Pattern: %252611%253D1  or  %2526{mission_id}%253D1
-            pattern2 = f'%2526{mission_id}%253D1'
-            
-            if pattern2 in campaign_section:
-                campaign_section = campaign_section.replace(pattern2, '')
-                print(f"✓ Deleted mission from completedMissionsByFileName")
-            else:
-                # Try alternative patterns
-                alt_pattern2 = f'%26{mission_id}%3D1'
-                if alt_pattern2 in campaign_section:
-                    campaign_section = campaign_section.replace(alt_pattern2, '')
-                    print(f"✓ Deleted mission from completedMissionsByFileName (alt pattern)")
-                else:
-                    print(f"⚠️  completedMissionsByFileName entry not found (might not exist)")
             
             # Reconstruct file
             new_content = before_campaign + campaign_section + after_campaign
             
             print(f"\n{'='*70}")
-            print(f"RECONSTRUCTION COMPLETE")
+            print(f"WRITING CHANGES")
             print(f"{'='*70}")
             print(f"Original file size: {len(content)} chars")
             print(f"New file size: {len(new_content)} chars")
-            print(f"Difference: {len(content) - len(new_content)} chars removed")
-            
-            # VALIDATION: Ensure we didn't touch other campaigns
-            # Count how many times campaigns/ appears
-            orig_campaign_count = content.count('&campaigns/')
-            new_campaign_count = new_content.count('&campaigns/')
-            
-            if orig_campaign_count != new_campaign_count:
-                print(f"\n❌ ERROR: Campaign count changed!")
-                print(f"   Original: {orig_campaign_count} campaigns")
-                print(f"   New: {new_campaign_count} campaigns")
-                print(f"   This should never happen - aborting!")
-                return False
-            
-            print(f"✓ Campaign count unchanged: {orig_campaign_count} campaigns")
-            print(f"✓ Only modified {campaign_name}, other campaigns untouched")
-            print(f"{'='*70}\n")
+            print(f"Difference: {len(content) - len(new_content)} chars")
             
             # Write back
-            with open(self.states_path, 'w', encoding='utf-8') as f:
-                f.write(new_content)
+            with open(self.states_path, 'wb') as f:
+                f.write(new_content.encode('utf-8'))
             
-            print(f"✓ Deleted Mission {mission_id} from {campaign_name}")
+            print(f"✓ Saved {self.states_path.name}")
+            
+            # Cleanup old backups
+            self.cleanup_old_backups()
             
             # Verify deletion
-            if self.verify_deletion(campaign_name, mission_id):
-                print(f"✓ Deletion verified")
-                return True
-            else:
-                print(f"⚠️  Verification failed - restoring backup")
-                shutil.copy(backup_path, self.states_path)
-                return False
-                
+            print(f"\n{'='*70}")
+            print(f"VERIFICATION")
+            print(f"{'='*70}")
+            
+            # Re-read and check
+            with open(self.states_path, 'rb') as f:
+                verify_content = f.read().decode('utf-8', errors='ignore')
+            
+            verification_failed = False
+            for pattern, desc in patterns_to_try:
+                if pattern in verify_content[campaign_start:campaign_start + len(campaign_section) + 1000]:
+                    print(f"⚠️  WARNING: Pattern still found: {pattern}")
+                    verification_failed = True
+            
+            if not verification_failed:
+                print(f"✓ Verification passed - mission entry removed")
+            
+            print(f"\n{'='*70}")
+            print(f"SUCCESS!")
+            print(f"{'='*70}")
+            print(f"Mission {mission_id} removed from completedMissionsByFileName")
+            print(f"characterStatisticsByFileName remains intact")
+            print(f"\nWhen you replay the mission:")
+            print(f"  - IL-2 will let you fly it again")
+            print(f"  - New stats will overwrite old stats")
+            print(f"  - Mission will be re-added to completedMissionsByFileName on success")
+            
+            return True
+            
         except Exception as e:
-            print(f"❌ Error during deletion: {e}")
-            import traceback
-            traceback.print_exc()
-            print("Restoring backup...")
-            if backup_path:
-                shutil.copy(backup_path, self.states_path)
+            print(f"\n❌ ERROR during deletion: {e}")
+            print(f"   Restoring from backup...")
+            
+            # Restore backup
+            try:
+                shutil.copy2(backup_path, self.states_path)
+                print(f"✓ Restored from backup: {backup_path.name}")
+            except Exception as restore_error:
+                print(f"❌ CRITICAL: Could not restore backup: {restore_error}")
+                print(f"   Backup location: {backup_path}")
+                print(f"   You may need to manually restore this file!")
+            
             return False
-    
+            
     def verify_deletion(self, campaign_name: str, mission_id: str) -> bool:
         """
         Verify mission was actually deleted
@@ -584,16 +589,17 @@ class CleanupGUI:
         Initialize GUI
         
         Args:
-            opportunities: Dict of campaigns needing cleanup
+            opportunities: Dict of campaigns with missions needing cleanup
+                          Format: {campaign_name: {mission_id: details, ...}}
         """
         self.opportunities = opportunities
-        self.selected = {}  # campaign_name -> selected (bool)
-        self.ignore_flags = {}  # campaign_name -> ignore flag (bool)
+        self.selected = {}  # "campaign_name::mission_id" -> selected (bool)
+        self.ignore_flags = {}  # "campaign_name::mission_id" -> ignore flag (bool)
         self.cleanup_tool = MissionCleanup()
         
         self.root = tk.Tk()
         self.root.title("IL-2 Campaign Mission Cleanup")
-        self.root.geometry("800x550")
+        self.root.geometry("800x600")
         
         self.create_widgets()
     
@@ -608,7 +614,7 @@ class CleanupGUI:
                  font=('Arial', 14, 'bold')).pack()
         
         ttk.Label(title_frame, 
-                 text="Found unsuccessful last missions that can be replayed:",
+                 text="Found unsuccessful missions that can be replayed:",
                  font=('Arial', 10)).pack()
         
         # Scrollable frame for campaigns
@@ -630,9 +636,15 @@ class CleanupGUI:
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
-        # Create campaign cards
-        for campaign_name, data in self.opportunities.items():
-            self.create_campaign_card(scrollable_frame, campaign_name, data)
+        # Create campaign cards - now handling multiple missions per campaign
+        for campaign_name, missions in self.opportunities.items():
+            # If missions is a dict (new format), iterate over it
+            if isinstance(missions, dict):
+                for mission_id, data in missions.items():
+                    self.create_mission_card(scrollable_frame, campaign_name, mission_id, data)
+            else:
+                # Old format compatibility (single mission)
+                self.create_mission_card(scrollable_frame, campaign_name, missions['mission_id'], missions)
         
         # Buttons
         button_frame = ttk.Frame(self.root, padding="10")
@@ -653,14 +665,15 @@ class CleanupGUI:
                  font=('Arial', 9, 'italic'),
                  foreground='gray').pack()
     
-    def create_campaign_card(self, parent, campaign_name: str, data: Dict):
-        """Create a card for one campaign"""
+    
+    def create_mission_card(self, parent, campaign_name: str, mission_id: str, data: Dict):
+        """Create a card for one mission"""
         
-        card = ttk.LabelFrame(parent, text=campaign_name.upper(), padding="10")
+        card = ttk.LabelFrame(parent, text=f"{campaign_name.upper()} - Mission {mission_id}", padding="10")
         card.pack(fill=tk.X, padx=5, pady=5)
         
         # Mission info
-        info_text = f"Last Mission: {data['mission_number']}"
+        info_text = f"Mission Position: {data['mission_number']}"
         ttk.Label(card, text=info_text, font=('Arial', 10, 'bold')).pack(anchor=tk.W)
         
         ttk.Label(card, text="Status: ⚠️  Unsuccessful (takeOffStatus = 1)",
@@ -687,17 +700,20 @@ class CleanupGUI:
         action_frame = ttk.Frame(card)
         action_frame.pack(fill=tk.X, anchor=tk.W)
         
+        # Unique key for this mission
+        mission_key = f"{campaign_name}::{mission_id}"
+        
         # Delete checkbox
         delete_var = tk.BooleanVar(value=False)
-        self.selected[campaign_name] = delete_var
+        self.selected[mission_key] = delete_var
         
         ttk.Checkbutton(action_frame, 
-                       text=f"Delete Mission {data['mission_id']} entry",
+                       text=f"Delete Mission {mission_id} entry",
                        variable=delete_var).pack(anchor=tk.W)
         
         # Ignore checkbox (with distinctive styling)
         ignore_var = tk.BooleanVar(value=False)
-        self.ignore_flags[campaign_name] = ignore_var
+        self.ignore_flags[mission_key] = ignore_var
         
         ignore_frame = ttk.Frame(action_frame)
         ignore_frame.pack(anchor=tk.W, pady=(5, 0))
@@ -722,13 +738,32 @@ class CleanupGUI:
     def on_apply(self):
         """Handle Apply button"""
         
-        # Get selected campaigns for deletion
-        to_delete = [(name, data) for name, data in self.opportunities.items() 
-                    if self.selected[name].get()]
+        # Get selected missions for deletion and ignoring
+        to_delete = []
+        to_ignore = []
         
-        # Get campaigns to ignore
-        to_ignore = [(name, data) for name, data in self.opportunities.items()
-                    if self.ignore_flags[name].get()]
+        for mission_key, delete_var in self.selected.items():
+            if delete_var.get():
+                # Parse "campaign_name::mission_id"
+                campaign_name, mission_id = mission_key.split('::', 1)
+                # Find mission data
+                if campaign_name in self.opportunities:
+                    missions = self.opportunities[campaign_name]
+                    if isinstance(missions, dict) and mission_id in missions:
+                        to_delete.append((campaign_name, mission_id, missions[mission_id]))
+                    elif not isinstance(missions, dict):
+                        # Old format compatibility
+                        to_delete.append((campaign_name, mission_id, missions))
+        
+        for mission_key, ignore_var in self.ignore_flags.items():
+            if ignore_var.get():
+                campaign_name, mission_id = mission_key.split('::', 1)
+                if campaign_name in self.opportunities:
+                    missions = self.opportunities[campaign_name]
+                    if isinstance(missions, dict) and mission_id in missions:
+                        to_ignore.append((campaign_name, mission_id, missions[mission_id]))
+                    elif not isinstance(missions, dict):
+                        to_ignore.append((campaign_name, mission_id, missions))
         
         if not to_delete and not to_ignore:
             messagebox.showinfo("No Changes", "No missions selected for cleanup or ignore")
@@ -739,14 +774,14 @@ class CleanupGUI:
         
         if to_delete:
             msg_parts.append(f"Delete {len(to_delete)} mission entr{'y' if len(to_delete) == 1 else 'ies'}:")
-            for name, data in to_delete:
-                msg_parts.append(f"  • {name} - Mission {data['mission_id']}")
+            for campaign_name, mission_id, data in to_delete:
+                msg_parts.append(f"  • {campaign_name} - Mission {mission_id}")
         
         if to_ignore:
             msg_parts.append("")
             msg_parts.append(f"Hide {len(to_ignore)} mission{'s' if len(to_ignore) > 1 else ''} from future checks:")
-            for name, data in to_ignore:
-                msg_parts.append(f"  • {name} - Mission {data['mission_id']}")
+            for campaign_name, mission_id, data in to_ignore:
+                msg_parts.append(f"  • {campaign_name} - Mission {mission_id}")
         
         if to_delete:
             msg_parts.append("")
@@ -758,15 +793,13 @@ class CleanupGUI:
             return
         
         # Process ignore flags FIRST (before any deletion)
-        for campaign_name, data in to_ignore:
-            mission_id = data['mission_id']
+        for campaign_name, mission_id, data in to_ignore:
             add_to_ignored(campaign_name, mission_id)
         
         # Perform deletions
         success_count = 0
         if to_delete:
-            for campaign_name, data in to_delete:
-                mission_id = data['mission_id']
+            for campaign_name, mission_id, data in to_delete:
                 if self.cleanup_tool.delete_mission_entry(campaign_name, mission_id):
                     success_count += 1
         
@@ -793,6 +826,30 @@ class CleanupGUI:
         else:
             messagebox.showwarning("Partial Success", result_msg)
         
+        # ✅ Automatically re-decode campaignsstates.txt after all deletions
+        if success_count > 0:
+            print("\nRe-decoding campaignsstates.txt to update campaigns_decoded.json...")
+            try:
+                # Copy the in-game campaignsstates.txt to local working directory
+                source_file = self.cleanup_tool.states_path
+                local_copy = Path.cwd() / "campaignsstates.txt"
+
+                if source_file.exists():
+                    shutil.copy2(source_file, local_copy)
+                    print(f"✓ Copied {source_file} → {local_copy}")
+                else:
+                    print(f"⚠️ Source file not found at {source_file}, skipping copy")
+                    
+                # Decode using local file    
+                from decode_campaign_usersave1 import main as decode_campaignsstates
+                success = decode_campaignsstates()
+                if success:
+                    print("✓ campaigns_decoded.json successfully regenerated.")
+                else:
+                    print("⚠️ Decoder reported failure; campaigns_decoded.json may be outdated.")
+            except Exception as e:
+                print(f"⚠️ Could not re-decode campaigns_decoded.json: {e}")
+                
         self.root.destroy()
     
     def on_cancel(self):
@@ -812,7 +869,7 @@ def startup_cleanup_check():
         True if cleanup was performed, False otherwise
     """
     print("\n" + "="*70)
-    print("SCANNING FOR UNSUCCESSFUL LAST MISSIONS...")
+    print("SCANNING FOR UNSUCCESSFUL MISSIONS...")
     print("="*70)
     
     cleanup = MissionCleanup()
@@ -826,12 +883,21 @@ def startup_cleanup_check():
         print()
     
     if not opportunities:
-        print("✓ All campaigns clean - no unsuccessful last missions found")
+        print("✓ All campaigns clean - no unsuccessful missions found")
         return False
     
-    print(f"\n⚠️  Found {len(opportunities)} campaign(s) with unsuccessful last mission:")
-    for name, data in opportunities.items():
-        print(f"  • {name} - Mission {data['mission_id']}")
+    # Count total missions across all campaigns
+    total_missions = sum(len(missions) if isinstance(missions, dict) else 1 
+                        for missions in opportunities.values())
+    
+    print(f"\n⚠️  Found {total_missions} unsuccessful mission(s) across {len(opportunities)} campaign(s):")
+    for campaign_name, missions in opportunities.items():
+        if isinstance(missions, dict):
+            for mission_id in missions.keys():
+                print(f"  • {campaign_name} - Mission {mission_id}")
+        else:
+            # Old format compatibility
+            print(f"  • {campaign_name} - Mission {missions['mission_id']}")
     
     # Show GUI
     gui = CleanupGUI(opportunities)

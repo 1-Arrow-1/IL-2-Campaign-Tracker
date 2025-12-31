@@ -31,7 +31,7 @@ if not exist "step1_extract_mission_dates.py" (
     pause
     exit /b 1
 )
-if not exist "decode_campaing_usersave1.py" (
+if not exist "decode_campaign_usersave1.py" (
     echo ERROR: decode_campaing_usersave1.py not found!
     pause
     exit /b 1
@@ -43,6 +43,11 @@ if not exist "step3_generate_events.py" (
 )
 if not exist "monitor_campaigns.py" (
     echo ERROR: monitor_campaigns.py not found!
+    pause
+    exit /b 1
+)
+if not exist "step4_process_mission_logs.py" (
+    echo ERROR: step4_process_mission_logs.py not found!
     pause
     exit /b 1
 )
@@ -81,6 +86,11 @@ if not exist "mlg2txt.spec" (
     pause
     exit /b 1
 )
+if not exist "popups_min.py" (
+    echo ERROR: popups_min.py!
+    pause
+    exit /b 1
+)
 echo OK
 echo.
 
@@ -92,12 +102,13 @@ for %%F in (
 		"step1_extract_mission_dates.py"
 		"monitor_campaigns.py"
 		"step3_generate_events.py"
-		"decode_campaing_usersave1.py"
+		"decode_campaign_usersave1.py"
 		"step4_process_mission_logs.py"
 		"il2_mission_debrief.py"
 		"mlg2txt.py"
 		"country_validator_gui.py"
 		"cleanup_failed_missions.py"
+		"popups_min.py"
 ) do (
     if exist %%F (
         echo Testing %%F ...
@@ -164,10 +175,10 @@ echo OK
 echo.
 
 echo [5/5] Creating distribution package...
-if not exist "IL2_Campaign_Tracker_v1.5" mkdir "IL2_Campaign_Tracker_v1.5"
+if not exist "IL2_Campaign_Tracker_v2.0" mkdir "IL2_Campaign_Tracker_v2.0"
 
 REM Copy main EXE
-copy "dist\IL2_CampaignTracker.exe" "IL2_Campaign_Tracker_v1.5\" >NUL
+copy "dist\IL2_CampaignTracker_v2.0.exe" "IL2_Campaign_Tracker_v2.0\" >NUL
 if errorlevel 1 (
     echo ERROR: Could not copy IL2_CampaignTracker.exe!
     pause
@@ -175,7 +186,7 @@ if errorlevel 1 (
 )
 
 REM Copy mlg2txt EXE
-copy "dist\mlg2txt.exe" "IL2_Campaign_Tracker_v1.5\" >NUL
+copy "dist\mlg2txt.exe" "IL2_Campaign_Tracker_v2.0\" >NUL
 if errorlevel 1 (
     echo ERROR: Could not copy mlg2txt.exe!
     pause
@@ -183,32 +194,32 @@ if errorlevel 1 (
 )
 
 REM Copy config/objects (REQUIRED - external)
-copy "campaign_progress_config.yaml" "IL2_Campaign_Tracker_v1.5\" >NUL
-copy "object_categories.yaml" "IL2_Campaign_Tracker_v1.5\" >NUL
-copy "stock_campaigns.yaml" "IL2_Campaign_Tracker_v1.5\" >NUL
+copy "campaign_progress_config.yaml" "IL2_Campaign_Tracker_v2.0\" >NUL
+copy "object_categories.yaml" "IL2_Campaign_Tracker_v2.0\" >NUL
+copy "stock_campaigns.yaml" "IL2_Campaign_Tracker_v2.0\" >NUL
 
 REM Copy README if exists
-if exist "README.md" copy "README.md" "IL2_Campaign_Tracker_v1.5\README.txt" >NUL
+if exist "README.md" copy "README.md" "IL2_Campaign_Tracker_v2.0\README.txt" >NUL
 
 REM Create quick start guide
-echo IL-2 CAMPAIGN PROGRESS TRACKER v1.5 > "IL2_Campaign_Tracker_v1.5\QUICK_START.txt"
-echo. >> "IL2_Campaign_Tracker_v1.5\QUICK_START.txt"
-echo QUICK START: >> "IL2_Campaign_Tracker_v1.5\QUICK_START.txt"
-echo. >> "IL2_Campaign_Tracker_v1.5\QUICK_START.txt"
-echo 1. Double-click IL2_CampaignTracker.exe >> "IL2_Campaign_Tracker_v1.5\QUICK_START.txt"
-echo 2. Select your IL-2 installation folder >> "IL2_Campaign_Tracker_v1.5\QUICK_START.txt"
-echo 3. Minimize the window and play IL-2! >> "IL2_Campaign_Tracker_v1.5\QUICK_START.txt"
-echo. >> "IL2_Campaign_Tracker_v1.5\QUICK_START.txt"
-echo The tracker will automatically update your campaigns. >> "IL2_Campaign_Tracker_v1.5\QUICK_START.txt"
-echo. >> "IL2_Campaign_Tracker_v1.5\QUICK_START.txt"
-echo REQUIREMENTS: >> "IL2_Campaign_Tracker_v1.5\QUICK_START.txt"
-echo - IL-2 Sturmovik Great Battles series >> "IL2_Campaign_Tracker_v1.5\QUICK_START.txt"
-echo - Rank/award images in IL-2\data\swf\CampaignRanksAwards\ >> "IL2_Campaign_Tracker_v1.5\QUICK_START.txt"
-echo. >> "IL2_Campaign_Tracker_v1.5\QUICK_START.txt"
-echo Download CampaignRanksAwards.zip from the GitHub repository >> "IL2_Campaign_Tracker_v1.5\QUICK_START.txt"
-echo and extract to your IL-2 installation folder. >> "IL2_Campaign_Tracker_v1.5\QUICK_START.txt"
-echo. >> "IL2_Campaign_Tracker_v1.5\QUICK_START.txt"
-echo For detailed instructions, see README.txt >> "IL2_Campaign_Tracker_v1.5\QUICK_START.txt"
+echo IL-2 CAMPAIGN PROGRESS TRACKER v2.0 > "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
+echo. >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
+echo QUICK START: >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
+echo. >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
+echo 1. Double-click IL2_CampaignTracker.exe >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
+echo 2. Select your IL-2 installation folder >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
+echo 3. Minimize the window and play IL-2! >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
+echo. >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
+echo The tracker will automatically update your campaigns. >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
+echo. >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
+echo REQUIREMENTS: >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
+echo - IL-2 Sturmovik Great Battles series >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
+echo - Rank/award images in IL-2\data\swf\CampaignRanksAwards\ >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
+echo. >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
+echo Download CampaignRanksAwards.zip from the GitHub repository >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
+echo and extract to your IL-2 installation folder. >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
+echo. >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
+echo For detailed instructions, see README.txt >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
 echo.
 echo OK
 echo.
@@ -217,7 +228,7 @@ echo ====================================================================
 echo BUILD COMPLETE!
 echo ====================================================================
 echo.
-echo Distribution package created in: IL2_Campaign_Tracker_v1.5\
+echo Distribution package created in: IL2_Campaign_Tracker_v2.0\
 echo.
 echo Contents:
 echo   - IL2_CampaignTracker.exe (~40 MB)

@@ -22,6 +22,7 @@
 #
 # The system automatically finds the matching bracket for each campaign!
 # ============================================================================
+enable_popups: true 
 
 rank_scaling:
   enabled: true  # Set to false to use base scores without scaling
