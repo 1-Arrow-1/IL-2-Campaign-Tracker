@@ -46,7 +46,7 @@ def check_config() -> bool:
         print("ERROR: campaign_progress_config.yaml not found!")
         print(f"Expected location: {config_file}")
         print()
-        print("Please place campaign_progress_config. yaml in the same folder")
+        print("Please place campaign_progress_config.yaml in the same folder")
         print("as this executable.")
         return False
     return True
@@ -59,7 +59,7 @@ def run_first_time_setup() -> bool:
     Returns:
         True if setup completed successfully (or not needed), False on error
     """
-    mission_dates_file = SCRIPT_DIR / "campaign_mission_dates. json"
+    mission_dates_file = SCRIPT_DIR / "campaign_mission_dates.json"
     
     if mission_dates_file. exists():
         return True  # No setup needed
@@ -95,7 +95,7 @@ def run_first_time_setup() -> bool:
             input("Press Enter to continue anyway...")
     except Exception as e: 
         print(f"Warning: Could not show country validation GUI: {e}")
-        print("You can manually edit campaign_mission_dates. json")
+        print("You can manually edit campaign_mission_dates.json")
         print()
         input("Press Enter to continue...")
     
