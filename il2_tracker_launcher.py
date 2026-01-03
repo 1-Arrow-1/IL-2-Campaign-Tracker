@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
 IL-2 Campaign Progress Tracker - Unified Launcher
-Version:  1.6 (Refactored with explicit returns)
+Version:  1.7 (Added Backup Restore GUI)
 """
 
 import sys
 import os
-import time
+import argparse
 from pathlib import Path
 import json
 import shutil
@@ -14,18 +14,18 @@ import shutil
 # Determine script directory (works for both script and EXE)
 if getattr(sys, 'frozen', False):
     # Running as EXE
-    SCRIPT_DIR = Path(sys. executable).parent
+    SCRIPT_DIR = Path(sys.executable).parent
 else:
     # Running as script
     SCRIPT_DIR = Path(__file__).parent
 
 # Add to path for imports
-sys. path.insert(0, str(SCRIPT_DIR))
+sys.path.insert(0, str(SCRIPT_DIR))
 
 os.environ. setdefault("FORCE_REGENERATE", "0")
 
 
-def print_header(title:  str):
+def print_header(title: str):
     """Print a formatted section header."""
     print()
     print("=" * 70)
@@ -86,10 +86,10 @@ def run_first_time_setup() -> bool:
         from country_validator_gui import validate_countries
         result = validate_countries(str(mission_dates_file))
         
-        if not result: 
+        if not result:
             print()
             print("Country validation was cancelled.")
-            print("You can manually edit campaign_mission_dates.json")
+            print("You can manually edit campaign_mission_dates. json")
             print("or restart the tracker to validate again.")
             print()
             input("Press Enter to continue anyway...")
@@ -120,7 +120,7 @@ def find_il2_states_path() -> Path | None:
         if usersave_dir.exists():
             for user_dir in usersave_dir.iterdir():
                 potential = user_dir / 'campaign' / 'campaignsstates.txt'
-                if potential. exists():
+                if potential.exists():
                     print(f"✓ Found campaign save:  {potential}")
                     return potential
             
@@ -167,14 +167,14 @@ def decode_campaign_save(il2_states_path: Path) -> bool:
         return False
 
 
-def restore_popup_backup(il2_states_path: Path) -> bool:
+def restore_popup_backup(il2_states_path:  Path) -> bool:
     """
     Check and restore popup backup if hash matches.
     
     Args:
         il2_states_path: Path to campaignsstates.txt
         
-    Returns: 
+    Returns:
         True if backup was restored, False otherwise
     """
     try:
@@ -182,7 +182,7 @@ def restore_popup_backup(il2_states_path: Path) -> bool:
         
         cleanup_manager = MissionCleanup(campaignstates_path=il2_states_path)
         if cleanup_manager.restore_matching_popups():
-            os.environ["FORCE_REGENERATE"] = "1"
+            os. environ["FORCE_REGENERATE"] = "1"
             print("⚡ Backup restore detected — forcing event regeneration...")
             return True
         else:
@@ -221,7 +221,7 @@ def generate_initial_events() -> bool:
     
     try:
         import step3_generate_events
-        # ✅ Direkte Parameterübergabe statt sys.argv Manipulation
+        # Direkte Parameterübergabe statt sys.argv Manipulation
         step3_generate_events.main(show_popups=False)
         
         if popup_path.exists() and popup_path. stat().st_size > 0:
@@ -241,7 +241,7 @@ def generate_initial_events() -> bool:
         traceback.print_exc()
         
         # Create empty state as fallback
-        if not popup_path. exists():
+        if not popup_path.exists():
             with open(popup_path, 'w', encoding='utf-8') as f:
                 json.dump({}, f, indent=2)
             print("✅ Created empty popup state after error")
@@ -263,11 +263,11 @@ def run_cleanup_check(il2_states_path: Path) -> bool:
         return startup_cleanup_check(states_path=il2_states_path)
         
     except ImportError:
-        print("Note: cleanup_failed_missions.py not found")
+        print("Note: cleanup_failed_missions. py not found")
         print("      Mission cleanup feature not available")
         return False
-    except Exception as e: 
-        print(f"Warning: Cleanup check failed: {e}")
+    except Exception as e:
+        print(f"Warning:  Cleanup check failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -277,14 +277,14 @@ def run_popup_reset_cleanup() -> bool:
     """
     Clean up popups for reset campaigns.
     
-    Returns: 
+    Returns:
         True if changes were made, False otherwise
     """
     try:
         from campaign_reset_checker import cleanup_popups_for_reset_campaigns
         return cleanup_popups_for_reset_campaigns()
     except Exception as e: 
-        print(f"⚠️ Popup cleanup check failed:  {e}")
+        print(f"⚠️ Popup cleanup check failed: {e}")
         return False
 
 
@@ -304,7 +304,7 @@ def show_campaign_not_found_message(game_dir: Path = None):
     print("  2. IL-2 installation path incorrect in campaign_mission_dates.json")
     if game_dir: 
         print(f"     → Current path: {game_dir}")
-    print("     → Re-run setup (delete campaign_mission_dates.json and restart)")
+    print("     → Re-run setup (delete campaign_mission_dates. json and restart)")
     print()
     print("  3. Permission issues accessing IL-2 directory")
     print("     → Try running tracker as Administrator")
@@ -341,7 +341,7 @@ def start_monitoring(il2_states_path: Path = None) -> int:
         return 0
         
     except Exception as e:
-        print(f"❌ Monitor error: {e}")
+        print(f"❌ Monitor error:  {e}")
         import traceback
         traceback.print_exc()
         return 1
@@ -349,13 +349,27 @@ def start_monitoring(il2_states_path: Path = None) -> int:
 
 def run_tracker() -> int:
     """
-    Main tracker execution.
-    
-    Returns:
-        Exit code: 0 = success, 1 = error, 2 = user cancelled
+    Main tracker execution. 
     """
+    # ================================================================
+    # DEBUG: Show command line arguments
+    # ================================================================
+    print()
+    print(f"[DEBUG] sys.argv = {sys.argv}")
+    print(f"[DEBUG] Working directory = {os. getcwd()}")
+    print()
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('--skip-backup-gui', action='store_true',
+                       help='Skip backup GUI (used only for automatic restart after restore)')
+    args, unknown = parser.parse_known_args()
+    
+    print(f"[DEBUG] --skip-backup-gui = {args.skip_backup_gui}")
+    print(f"[DEBUG] Unknown args = {unknown}")
+    print()
     print("=" * 70)
-    print("IL-2 CAMPAIGN PROGRESS TRACKER v1.6")
+    print("IL-2 CAMPAIGN PROGRESS TRACKER v1.7")
     print("=" * 70)
     print()
     
@@ -377,11 +391,54 @@ def run_tracker() -> int:
     il2_states_path = find_il2_states_path()
     
     if il2_states_path and il2_states_path.exists():
+        
+        # ================================================================
+        # Step 2. 5: Show backup restore GUI
+        # Only skip if this is an automatic restart after restore
+        # On manual starts, the GUI will always appear (if backups exist)
+        # ================================================================
+        if args.skip_backup_gui:
+            print()
+            print("ℹ️ Backup GUI skipped (automatic restart after restore)")
+        else:
+            try:
+                from backup_restore_gui import check_and_show_backup_gui, restart_tracker
+                
+                print_header("CHECKING FOR AVAILABLE BACKUPS")
+                backup_result = check_and_show_backup_gui(il2_states_path)
+                
+                if backup_result == 'restored':
+                    # Don't print anything here - restart_tracker handles output
+                    restart_tracker()  # This calls sys. exit(0)
+                    # Code below will never be reached
+                    
+                elif backup_result == 'cancelled': 
+                    print()
+                    print("❌ Cancelled by user")
+                    input("Press Enter to exit...")
+                    return 2
+                    
+                elif backup_result == 'skipped':
+                    print("ℹ️ Backup restore skipped - continuing normally...")
+                    
+                elif backup_result == 'no_backups':
+                    print("ℹ️ No backups available yet")
+                    
+            except ImportError as e:
+                print(f"ℹ️ Backup restore GUI not available: {e}")
+            except Exception as e: 
+                print(f"⚠️ Backup GUI error: {e}")
+                import traceback
+                traceback.print_exc()
+                print()
+                print("Continuing without backup restore option...")
+                input("Press Enter to continue...")
+        
         # Step 3: Decode campaign save
         print_header("DECODING CAMPAIGN SAVE")
         decode_campaign_save(il2_states_path)
         
-        # Step 4: Popup restore check
+        # Step 4: Popup restore check (automatic hash-based restore)
         print_header("CHECKING FOR MATCHING POPUP BACKUP (STATE RESTORE)")
         restore_popup_backup(il2_states_path)
         
@@ -411,7 +468,7 @@ def main() -> int:
     Returns:
         Exit code for sys.exit()
     """
-    try:
+    try: 
         return run_tracker()
         
     except KeyboardInterrupt:
@@ -435,4 +492,13 @@ def main() -> int:
 
 if __name__ == "__main__":
     exit_code = main()
+    
+    # ================================================================
+    # DEBUG:  Always wait before closing (remove this later!)
+    # ================================================================
+    if exit_code != 0:
+        print()
+        print(f"[DEBUG] Exiting with code {exit_code}.  Press Enter to close...")
+        input()
+    
     sys.exit(exit_code)

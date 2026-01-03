@@ -96,6 +96,11 @@ if not exist "campaign_reset_checker.py" (
     pause
     exit /b 1
 )
+if not exist "backup_restore_gui.py" (
+    echo ERROR: backup_restore_gui.py!
+    pause
+    exit /b 1
+)
 if not exist "IBMPlexSans-Light.ttf" (
     echo ERROR: IBMPlexSans-Light.ttf!
     pause
@@ -120,6 +125,7 @@ for %%F in (
 		"cleanup_failed_missions.py"
 		"popups_min.py"
 		"campaign_reset_checker.py"
+		"backup_restore_gui.py"
 ) do (
     if exist %%F (
         echo Testing %%F ...
