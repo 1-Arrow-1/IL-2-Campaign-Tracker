@@ -37,7 +37,7 @@ try:
     _ = regex.sub
 except Exception:
     import re as regex
-    
+ 
 # =======================================================================
 #  GLOBAL KILL MAPPING  (used by mission & campaign summary tables)
 # =======================================================================
@@ -3048,8 +3048,19 @@ class EventGenerator:
         return results
 
 
-def main():
-    """Main entry point"""
+def main(dry_run:  bool = None, campaign:  str = None, show_popups: bool = None, test_popups: bool = False):
+    """
+    Main entry point
+    
+    Args: 
+        dry_run: If True, don't modify files (overrides CLI arg)
+        campaign: Process only this campaign (overrides CLI arg)
+        show_popups: Show promotion/award popups (overrides CLI arg)
+        test_popups:  Show test popup sequence
+        
+    Note: If parameters are None, CLI arguments are used. 
+          If parameters are provided, they override CLI arguments.
+    """
     parser = argparse.ArgumentParser(
         description='IL-2 Campaign Progress Tracker - Event Generator'
     )
@@ -3069,23 +3080,42 @@ def main():
         help='Show promotion/award popups (only used when called by monitor while IL-2 is running)'
     )
     parser.add_argument(
-    '--test-popups',
-    action='store_true',
-    help='Show a test popup sequence (does not modify seen state)'
+        '--test-popups',
+        action='store_true',
+        help='Show a test popup sequence (does not modify seen state)'
     )
 
-    args = parser.parse_args()
+    # Parse CLI args, but allow function parameters to override
+    try:
+        args = parser.parse_args()
+    except SystemExit:
+        # If called programmatically without CLI args, use defaults
+        args = argparse.Namespace(
+            dry_run=False,
+            campaign=None,
+            show_popups=False,
+            test_popups=False
+        )
     
-    print(f"[popups] args.show_popups = {args.show_popups}")
+    # Override with function parameters if provided
+    if dry_run is not None: 
+        args.dry_run = dry_run
+    if campaign is not None: 
+        args.campaign = campaign
+    if show_popups is not None:
+        args.show_popups = show_popups
+    if test_popups: 
+        args.test_popups = test_popups
+    
+    print(f"[popups] show_popups = {args.show_popups}")
 
-    
     if args.dry_run:
         print("="*70)
         print("DRY RUN MODE - No files will be modified")
         print("="*70)
         print()
     
-    generator = EventGenerator(dry_run=args.dry_run, show_popups=args.show_popups)
+    generator = EventGenerator(dry_run=args. dry_run, show_popups=args.show_popups)
     
     # Test popups (no mission flight needed)
     if args.test_popups:
@@ -3098,44 +3128,43 @@ def main():
                 ctry = meta.get("country")
             else:
                 ctry = meta
-            if ctry:
+            if ctry: 
                 campaign_country_map[cname] = ctry
 
         # Build a small fake event list (uses real images if they exist)
         test_campaign = next(iter(campaign_country_map.keys()), "kerch")
         test_events = [
             (test_campaign, {
-                "type": "promotion",
+                "type":  "promotion",
                 "rank": "Feldwebel",
-                "image": "feldwebel.png",
+                "image": "feldwebel. png",
                 "mission": "TEST",
                 "date": "1943-11-06"
             }),
             (test_campaign, {
                 "type": "award",
                 "name": "Iron Cross 2nd Class",
-                "image": "iron_cross_2nd.dds",
+                "image": "iron_cross_2nd. dds",
                 "mission": "TEST",
-                "date": "1943-11-06"
+                "date":  "1943-11-06"
             }),
         ]
 
-        print("[popups] TEST MODE: showing 2 popups...")
+        print("[popups] TEST MODE:  showing 2 popups...")
         show_event_popups(
             test_events,
             game_directory=generator.game_directory,
             campaign_country_map=campaign_country_map,
             duration_seconds=5
         )
-        return
+        return True  # ✅ Expliziter Rückgabewert
 
-    
     if args.campaign:
         # Process single campaign
-        print(f"Processing single campaign: {args.campaign}")
+        print(f"Processing single campaign: {args. campaign}")
         events = generator.generate_events_for_campaign(args.campaign)
         if events:
-            country = generator.mission_dates[args.campaign].get('country')
+            country = generator.mission_dates[args. campaign].get('country')
             html = generator.generate_events_html(events, country)
             print(f"\n{'='*70}")
             print(f"Generated HTML:")
@@ -3144,9 +3173,11 @@ def main():
             
             if not args.dry_run:
                 generator.update_campaign_info_file(args.campaign, html)
+        return True  # ✅ Expliziter Rückgabewert
     else:
         # Process all campaigns
         results = generator.process_all_campaigns()
+        return len(results) > 0  # ✅ Expliziter Rückgabewert
 
 
 if __name__ == "__main__":

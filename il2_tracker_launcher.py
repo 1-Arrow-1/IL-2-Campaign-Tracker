@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 IL-2 Campaign Progress Tracker - Unified Launcher
-Version: 1.5 (Refactored - No Copy)
+Version:  1.6 (Refactored with explicit returns)
 """
 
 import sys
@@ -14,95 +14,105 @@ import shutil
 # Determine script directory (works for both script and EXE)
 if getattr(sys, 'frozen', False):
     # Running as EXE
-    SCRIPT_DIR = Path(sys.executable).parent
+    SCRIPT_DIR = Path(sys. executable).parent
 else:
     # Running as script
     SCRIPT_DIR = Path(__file__).parent
 
 # Add to path for imports
-sys.path.insert(0, str(SCRIPT_DIR))
+sys. path.insert(0, str(SCRIPT_DIR))
 
-os.environ.setdefault("FORCE_REGENERATE", "0")
+os.environ. setdefault("FORCE_REGENERATE", "0")
 
-print("="*70)
-print("IL-2 CAMPAIGN PROGRESS TRACKER v1.5")
-print("="*70)
-print()
 
-# Check for required config file
-CONFIG_FILE = SCRIPT_DIR / "campaign_progress_config.yaml"
-if not CONFIG_FILE.exists():
-    print("ERROR: campaign_progress_config.yaml not found!")
-    print(f"Expected location: {CONFIG_FILE}")
-    print()
-    print("Please place campaign_progress_config.yaml in the same folder")
-    print("as this executable.")
-    print()
-    input("Press Enter to exit...")
-    sys.exit(1)
-
-# Import modules
-try:
-    # Change to script directory
-    os.chdir(SCRIPT_DIR)
-    
-    # Run step 1 if first time
-    MISSION_DATES_FILE = SCRIPT_DIR / "campaign_mission_dates.json"
-    
-    if not MISSION_DATES_FILE.exists():
-        print("FIRST RUN SETUP")
-        print("="*70)
-        print()
-        
-        # Import and run step 1
-        import step1_extract_mission_dates
-        step1_extract_mission_dates.main()
-        
-        if not MISSION_DATES_FILE.exists():
-            print()
-            print("ERROR: Setup incomplete. Mission dates not created.")
-            input("Press Enter to exit...")
-            sys.exit(1)
-        
-        # Show country validation GUI
-        print()
-        print("="*70)
-        print("COUNTRY VALIDATION")
-        print("="*70)
-        print()
-        print("Please verify the automatically detected countries...")
-        print()
-        
-        try:
-            from country_validator_gui import validate_countries
-            result = validate_countries(str(MISSION_DATES_FILE))
-            
-            if not result:
-                print()
-                print("Country validation was cancelled.")
-                print("You can manually edit campaign_mission_dates.json")
-                print("or restart the tracker to validate again.")
-                print()
-                input("Press Enter to continue anyway...")
-        except Exception as e:
-            print(f"Warning: Could not show country validation GUI: {e}")
-            print("You can manually edit campaign_mission_dates.json")
-            print()
-            input("Press Enter to continue...")
-    
-    # ========================================================================
-    # STEP 1: FIND IL-2 CAMPAIGN SAVE FILE
-    # ========================================================================
+def print_header(title:  str):
+    """Print a formatted section header."""
     print()
     print("=" * 70)
-    print("LOCATING IL-2 CAMPAIGN SAVE FILE")
+    print(title)
     print("=" * 70)
     print()
 
-    IL2_STATES_PATH = None
+
+def check_config() -> bool:
+    """
+    Check for required config file. 
+    
+    Returns:
+        True if config exists, False otherwise
+    """
+    config_file = SCRIPT_DIR / "campaign_progress_config.yaml"
+    if not config_file. exists():
+        print("ERROR: campaign_progress_config.yaml not found!")
+        print(f"Expected location: {config_file}")
+        print()
+        print("Please place campaign_progress_config. yaml in the same folder")
+        print("as this executable.")
+        return False
+    return True
+
+
+def run_first_time_setup() -> bool:
+    """
+    Run first-time setup if needed.
+    
+    Returns:
+        True if setup completed successfully (or not needed), False on error
+    """
+    mission_dates_file = SCRIPT_DIR / "campaign_mission_dates. json"
+    
+    if mission_dates_file. exists():
+        return True  # No setup needed
+    
+    print("FIRST RUN SETUP")
+    print("=" * 70)
+    print()
+    
+    # Import and run step 1
+    import step1_extract_mission_dates
+    step1_extract_mission_dates.main()
+    
+    if not mission_dates_file.exists():
+        print()
+        print("ERROR: Setup incomplete.  Mission dates not created.")
+        return False
+    
+    # Show country validation GUI
+    print_header("COUNTRY VALIDATION")
+    print("Please verify the automatically detected countries...")
+    print()
     
     try:
-        with open(MISSION_DATES_FILE, 'r', encoding='utf-8') as f:
+        from country_validator_gui import validate_countries
+        result = validate_countries(str(mission_dates_file))
+        
+        if not result: 
+            print()
+            print("Country validation was cancelled.")
+            print("You can manually edit campaign_mission_dates.json")
+            print("or restart the tracker to validate again.")
+            print()
+            input("Press Enter to continue anyway...")
+    except Exception as e: 
+        print(f"Warning: Could not show country validation GUI: {e}")
+        print("You can manually edit campaign_mission_dates. json")
+        print()
+        input("Press Enter to continue...")
+    
+    return True
+
+
+def find_il2_states_path() -> Path | None:
+    """
+    Find IL-2 campaign save file.
+    
+    Returns:
+        Path to campaignsstates.txt, or None if not found
+    """
+    mission_dates_file = SCRIPT_DIR / "campaign_mission_dates.json"
+    
+    try:
+        with open(mission_dates_file, 'r', encoding='utf-8') as f:
             data = json.load(f)
             game_dir = Path(data.get('game_directory', '')).expanduser().resolve()
 
@@ -110,181 +120,208 @@ try:
         if usersave_dir.exists():
             for user_dir in usersave_dir.iterdir():
                 potential = user_dir / 'campaign' / 'campaignsstates.txt'
-                if potential.exists():
-                    IL2_STATES_PATH = potential
-                    print(f"✓ Found campaign save: {IL2_STATES_PATH}")
-                    break
+                if potential. exists():
+                    print(f"✓ Found campaign save:  {potential}")
+                    return potential
             
-            if not IL2_STATES_PATH:
-                print(f"⚠️ No campaignsstates.txt found under {usersave_dir}")
+            print(f"⚠️ No campaignsstates.txt found under {usersave_dir}")
         else:
-            print(f"⚠️ usersave directory not found: {usersave_dir}")
+            print(f"⚠️ usersave directory not found:  {usersave_dir}")
+            
     except Exception as e:
-        print(f"❌ Could not locate campaign save: {e}")
+        print(f"❌ Could not locate campaign save:  {e}")
         import traceback
         traceback.print_exc()
     
-    # ========================================================================
-    # CHECK IF WE FOUND THE FILE
-    # ========================================================================
+    return None
+
+
+def decode_campaign_save(il2_states_path: Path) -> bool:
+    """
+    Decode campaign save file. 
     
-    if IL2_STATES_PATH and IL2_STATES_PATH.exists():
+    Args:
+        il2_states_path:  Path to campaignsstates.txt
         
-        # ====================================================================
-        # STEP 2: DECODE CAMPAIGN SAVE
-        # ====================================================================
-        print()
-        print("=" * 70)
-        print("DECODING CAMPAIGN SAVE")
-        print("=" * 70)
-        print()
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        # Delete old decoded file if it exists
+        old_decoded = SCRIPT_DIR / "campaigns_decoded.json"
+        if old_decoded.exists():
+            print("Removing old decoded file...")
+            old_decoded. unlink()
         
-        try:
-            # Delete old decoded file if it exists
-            old_decoded = SCRIPT_DIR / "campaigns_decoded.json"
-            if old_decoded.exists():
-                print(f"Removing old decoded file...")
-                old_decoded.unlink()
-            
-            import decode_campaign_usersave1
-            print(f"Decoding: {IL2_STATES_PATH}")
-            
-            # Pass the IL-2 path to decoder
-            decode_campaign_usersave1.main(states_path=str(IL2_STATES_PATH))
-        except Exception as e:
-            print(f"Warning: Decoder error: {e}")
-            import traceback
-            traceback.print_exc()
+        import decode_campaign_usersave1
+        print(f"Decoding:  {il2_states_path}")
         
-        # ====================================================================
-        # STEP 3: POPUP-RESTORE (if backup hash matches)
-        # ====================================================================
-        try:
-            from cleanup_failed_missions import MissionCleanup
-            print()
-            print("="*70)
-            print("CHECKING FOR MATCHING POPUP BACKUP (STATE RESTORE)")
-            print("="*70)
-            
-            # Pass IL-2 path to cleanup manager
-            cleanup_manager = MissionCleanup(campaignstates_path=IL2_STATES_PATH)
-            if cleanup_manager.restore_matching_popups():  # Rückgabe bool
-                os.environ["FORCE_REGENERATE"] = "1"
-                print("⚡ Backup restore detected — forcing event regeneration...")
-        except Exception as e:
-            print(f"⚠️ Popup restore check failed: {e}")
+        # Pass the IL-2 path to decoder
+        result = decode_campaign_usersave1.main(states_path=str(il2_states_path))
+        return result if result is not None else True
         
-        # ====================================================================
-        # STEP 4: EVENT-GENERATION (only on first start)
-        # ====================================================================
-        print()
-        print("="*70)
-        print("EVENT GENERATION CHECK")
-        print("="*70)
-        print()
+    except Exception as e: 
+        print(f"Warning:  Decoder error: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
+def restore_popup_backup(il2_states_path: Path) -> bool:
+    """
+    Check and restore popup backup if hash matches.
+    
+    Args:
+        il2_states_path: Path to campaignsstates.txt
         
-        popup_path = SCRIPT_DIR / "campaign_popups_seen.json"
-        force_regenerate = os.environ.get("FORCE_REGENERATE", "0") == "1"
-        # Check if this is first run (popup file doesn't exist or is empty)
-        is_first_run = (not popup_path.exists()) or (popup_path.stat().st_size == 0)
+    Returns: 
+        True if backup was restored, False otherwise
+    """
+    try:
+        from cleanup_failed_missions import MissionCleanup
         
-        if is_first_run or force_regenerate:
-            if force_regenerate:
-                print("⚡ Regenerating events after backup restore...")
-            else:    
-                print("🎯 First run detected - generating initial events...")
-                print("   (This fills campaign_popups_seen.json with baseline)")
-                print()
-            
-            try:
-                import step3_generate_events
-                step3_generate_events.main()
-                
-                if popup_path.exists() and popup_path.stat().st_size > 0:
-                    print(f"✅ Events generated, popup state initialized ({popup_path.stat().st_size} bytes)")
-                else:
-                    print("⚠️ Warning: Event generation completed but popup state empty")
-                    # Create empty state as fallback
-                    with open(popup_path, 'w', encoding='utf-8') as f:
-                        json.dump({}, f, indent=2)
-                    print("✅ Created empty popup state as fallback")
-            except Exception as e:
-                print(f"❌ Error during event generation: {e}")
-                import traceback
-                traceback.print_exc()
-                # Create empty state as fallback
-                if not popup_path.exists():
-                    with open(popup_path, 'w', encoding='utf-8') as f:
-                        json.dump({}, f, indent=2)
-                    print("✅ Created empty popup state after error")
+        cleanup_manager = MissionCleanup(campaignstates_path=il2_states_path)
+        if cleanup_manager.restore_matching_popups():
+            os.environ["FORCE_REGENERATE"] = "1"
+            print("⚡ Backup restore detected — forcing event regeneration...")
+            return True
         else:
-            print("✅ Popup state exists - skipping initial event generation")
-            print(f"   (File size: {popup_path.stat().st_size} bytes)")
-        
-        # ====================================================================
-        # STEP 5: CLEANUP-SCAN (with user confirmation)
-        # ====================================================================
-        print()
-        print("="*70)
-        print("CHECKING FOR UNSUCCESSFUL MISSIONS")
-        print("="*70)
-        print()
-        
-        try:
-            from cleanup_failed_missions import startup_cleanup_check
+            print("ℹ️ No backup restore needed")
+            return False
             
-            # Pass IL-2 path to cleanup
-            startup_cleanup_check(states_path=IL2_STATES_PATH)
-            
-        except ImportError:
-            print("Note: cleanup_failed_missions.py not found")
-            print("      Mission cleanup feature not available")
-        except Exception as e:
-            print(f"Warning: Cleanup check failed: {e}")
-            import traceback
-            traceback.print_exc()
-        
-        # ====================================================================
-        # STEP 6: POPUP-RESET-CLEANUP (reset campaigns)
-        # ====================================================================
-        try:
-            from campaign_reset_checker import cleanup_popups_for_reset_campaigns
-            print()
-            print("="*70)
-            print("CHECKING FOR RESET CAMPAIGNS (POPUP CLEANUP)")
-            print("="*70)
-            cleanup_popups_for_reset_campaigns()
-        except Exception as e:
-            print(f"⚠️ Popup cleanup check failed: {e}")
+    except Exception as e: 
+        print(f"⚠️ Popup restore check failed: {e}")
+        return False
 
+
+def generate_initial_events() -> bool:
+    """
+    Generate events on first run or after backup restore.
+    
+    Returns:
+        True if events were generated, False if skipped or error
+    """
+    popup_path = SCRIPT_DIR / "campaign_popups_seen.json"
+    force_regenerate = os.environ.get("FORCE_REGENERATE", "0") == "1"
+    
+    # Check if this is first run (popup file doesn't exist or is empty)
+    is_first_run = (not popup_path. exists()) or (popup_path.stat().st_size == 0)
+    
+    if not is_first_run and not force_regenerate: 
+        print("✅ Popup state exists - skipping initial event generation")
+        print(f"   (File size: {popup_path.stat().st_size} bytes)")
+        return False
+    
+    if force_regenerate: 
+        print("⚡ Regenerating events after backup restore...")
     else:
+        print("🎯 First run detected - generating initial events...")
+        print("   (This fills campaign_popups_seen.json with baseline)")
         print()
-        print("=" * 70)
-        print("CAMPAIGN FILE NOT FOUND")
-        print("=" * 70)
-        print()
-        print("⚠️  Could not locate campaignsstates.txt in IL-2 installation.")
-        print()
-        print("Possible reasons:")
-        print("  1. No campaign started in IL-2 yet")
-        print("     → Start a career campaign in IL-2, fly at least one mission")
-        print()
-        print("  2. IL-2 installation path incorrect in campaign_mission_dates.json")
-        if 'game_dir' in locals():
-            print(f"     → Current path: {game_dir}")
-        print("     → Re-run setup (delete campaign_mission_dates.json and restart)")
-        print()
-        print("  3. Permission issues accessing IL-2 directory")
-        print("     → Try running tracker as Administrator")
-        print()
+    
+    try:
+        import step3_generate_events
+        # ✅ Direkte Parameterübergabe statt sys.argv Manipulation
+        step3_generate_events.main(show_popups=False)
+        
+        if popup_path.exists() and popup_path. stat().st_size > 0:
+            print(f"✅ Events generated, popup state initialized ({popup_path.stat().st_size} bytes)")
+            return True
+        else: 
+            print("⚠️ Warning: Event generation completed but popup state empty")
+            # Create empty state as fallback
+            with open(popup_path, 'w', encoding='utf-8') as f:
+                json.dump({}, f, indent=2)
+            print("✅ Created empty popup state as fallback")
+            return True
+            
+    except Exception as e: 
+        print(f"❌ Error during event generation: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Create empty state as fallback
+        if not popup_path. exists():
+            with open(popup_path, 'w', encoding='utf-8') as f:
+                json.dump({}, f, indent=2)
+            print("✅ Created empty popup state after error")
+        return False
 
-    # ========================================================================
-    # STEP 7: START MONITORING
-    # ========================================================================
+
+def run_cleanup_check(il2_states_path: Path) -> bool:
+    """
+    Check for unsuccessful missions and show cleanup GUI.
+    
+    Args:
+        il2_states_path: Path to campaignsstates.txt
+        
+    Returns: 
+        True if cleanup was performed, False otherwise
+    """
+    try: 
+        from cleanup_failed_missions import startup_cleanup_check
+        return startup_cleanup_check(states_path=il2_states_path)
+        
+    except ImportError:
+        print("Note: cleanup_failed_missions.py not found")
+        print("      Mission cleanup feature not available")
+        return False
+    except Exception as e: 
+        print(f"Warning: Cleanup check failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
+def run_popup_reset_cleanup() -> bool:
+    """
+    Clean up popups for reset campaigns.
+    
+    Returns: 
+        True if changes were made, False otherwise
+    """
+    try:
+        from campaign_reset_checker import cleanup_popups_for_reset_campaigns
+        return cleanup_popups_for_reset_campaigns()
+    except Exception as e: 
+        print(f"⚠️ Popup cleanup check failed:  {e}")
+        return False
+
+
+def show_campaign_not_found_message(game_dir: Path = None):
+    """Display helpful message when campaign file is not found."""
     print()
-    print("="*70)
-    print("MONITORING ACTIVE")
-    print("="*70)
+    print("=" * 70)
+    print("CAMPAIGN FILE NOT FOUND")
+    print("=" * 70)
+    print()
+    print("⚠️  Could not locate campaignsstates.txt in IL-2 installation.")
+    print()
+    print("Possible reasons:")
+    print("  1. No campaign started in IL-2 yet")
+    print("     → Start a career campaign in IL-2, fly at least one mission")
+    print()
+    print("  2. IL-2 installation path incorrect in campaign_mission_dates.json")
+    if game_dir: 
+        print(f"     → Current path: {game_dir}")
+    print("     → Re-run setup (delete campaign_mission_dates.json and restart)")
+    print()
+    print("  3. Permission issues accessing IL-2 directory")
+    print("     → Try running tracker as Administrator")
+    print()
+
+
+def start_monitoring(il2_states_path: Path = None) -> int:
+    """
+    Start the campaign monitor. 
+    
+    Args:
+        il2_states_path:  Path to campaignsstates.txt (optional)
+        
+    Returns:
+        Exit code:  0 = normal exit, 1 = error
+    """
+    print_header("MONITORING ACTIVE")
     print("Checking for changes every second...")
     print()
     print("This window will stay open - you can minimize it.")
@@ -293,28 +330,109 @@ try:
     print("Press Ctrl+C to stop.")
     print()
     
-    import monitor_campaigns
-    monitor = monitor_campaigns.CampaignMonitor(
-        check_interval=1,
-        use_file_watcher=True,
-        il2_states_path=IL2_STATES_PATH  # Pass IL-2 path to monitor!
-    )
-    monitor.run()
+    try:
+        import monitor_campaigns
+        monitor = monitor_campaigns.CampaignMonitor(
+            check_interval=1,
+            use_file_watcher=True,
+            il2_states_path=il2_states_path
+        )
+        monitor.run()
+        return 0
+        
+    except Exception as e:
+        print(f"❌ Monitor error: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
+
+
+def run_tracker() -> int:
+    """
+    Main tracker execution.
     
-except KeyboardInterrupt:
+    Returns:
+        Exit code: 0 = success, 1 = error, 2 = user cancelled
+    """
+    print("=" * 70)
+    print("IL-2 CAMPAIGN PROGRESS TRACKER v1.6")
+    print("=" * 70)
     print()
-    print("="*70)
-    print("TRACKER STOPPED BY USER")
-    print("="*70)
-    sys.exit(0)
     
-except Exception as e:
-    print()
-    print("="*70)
-    print(f"ERROR: {e}")
-    print("="*70)
-    import traceback
-    traceback.print_exc()
-    print()
-    input("Press Enter to exit...")
-    sys.exit(1)
+    # Change to script directory
+    os.chdir(SCRIPT_DIR)
+    
+    # Step 0: Check config
+    if not check_config():
+        input("Press Enter to exit...")
+        return 1
+    
+    # Step 1: First-time setup
+    if not run_first_time_setup():
+        input("Press Enter to exit...")
+        return 1
+    
+    # Step 2: Find IL-2 states path
+    print_header("LOCATING IL-2 CAMPAIGN SAVE FILE")
+    il2_states_path = find_il2_states_path()
+    
+    if il2_states_path and il2_states_path.exists():
+        # Step 3: Decode campaign save
+        print_header("DECODING CAMPAIGN SAVE")
+        decode_campaign_save(il2_states_path)
+        
+        # Step 4: Popup restore check
+        print_header("CHECKING FOR MATCHING POPUP BACKUP (STATE RESTORE)")
+        restore_popup_backup(il2_states_path)
+        
+        # Step 5: Event generation
+        print_header("EVENT GENERATION CHECK")
+        generate_initial_events()
+        
+        # Step 6: Cleanup check
+        print_header("CHECKING FOR UNSUCCESSFUL MISSIONS")
+        run_cleanup_check(il2_states_path)
+        
+        # Step 7: Popup reset cleanup
+        print_header("CHECKING FOR RESET CAMPAIGNS (POPUP CLEANUP)")
+        run_popup_reset_cleanup()
+        
+    else:
+        show_campaign_not_found_message()
+    
+    # Step 8: Start monitoring
+    return start_monitoring(il2_states_path)
+
+
+def main() -> int:
+    """
+    Entry point with exception handling.
+    
+    Returns:
+        Exit code for sys.exit()
+    """
+    try:
+        return run_tracker()
+        
+    except KeyboardInterrupt:
+        print()
+        print("=" * 70)
+        print("TRACKER STOPPED BY USER")
+        print("=" * 70)
+        return 0
+        
+    except Exception as e:
+        print()
+        print("=" * 70)
+        print(f"ERROR: {e}")
+        print("=" * 70)
+        import traceback
+        traceback.print_exc()
+        print()
+        input("Press Enter to exit...")
+        return 1
+
+
+if __name__ == "__main__":
+    exit_code = main()
+    sys.exit(exit_code)

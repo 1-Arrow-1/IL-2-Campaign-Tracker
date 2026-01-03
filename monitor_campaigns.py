@@ -288,16 +288,7 @@ class CampaignMonitor:
             try:
                 import step3_generate_events
                 
-                # Call with --show-popups to enable popup display
-                import sys
-                old_argv = sys.argv.copy()
-                sys.argv = ['step3_generate_events.py', '--show-popups']
-                
-                try:
-                    step3_generate_events.main()
-                    self.log("✅ Events processed!")
-                finally:
-                    sys.argv = old_argv
+                step3_generate_events.main(show_popups=True)
                     
             except Exception as e:
                 self.log(f"Event generator error: {e}")

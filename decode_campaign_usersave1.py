@@ -207,7 +207,7 @@ def parse_campaignsstates(filename):
     return campaigns
 
 
-def main(states_path=None):
+def main(states_path=None) -> bool:
     """
     Main decoder function
     
