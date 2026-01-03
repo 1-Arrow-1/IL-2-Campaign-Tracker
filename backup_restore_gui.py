@@ -488,25 +488,33 @@ class BackupRestoreGUI:
         return self.result or 'cancelled'
 
 
-def check_and_show_backup_gui(il2_states_path: Path) -> str:
+def check_and_show_backup_gui(il2_states_path:  Path) -> str:
     """
-    Check for backups and show restore GUI if available
+    Check for backups and show restore GUI if available AND useful. 
     
-    Args: 
-        il2_states_path: Path to campaignsstates. txt
+    The GUI is shown when:
+    - Multiple backups exist, OR
+    - Only one backup exists AND it's not currently active
+    
+    The GUI is NOT shown when:
+    - No backups exist
+    - Only one backup exists AND it's already the current state
+    
+    Args:  
+        il2_states_path:  Path to campaignsstates.txt
         
-    Returns: 
+    Returns:  
         'restored', 'skipped', 'cancelled', or 'no_backups'
     """
     if not il2_states_path or not il2_states_path.exists():
         return 'no_backups'
     
-    index_path = il2_states_path. parent / "campaignsstates_hash_index.json"
+    index_path = il2_states_path.parent / "campaignsstates_hash_index.json"
     
     if not index_path. exists():
         return 'no_backups'
     
-    # Check if we have any backups
+    # Load backup index
     try:
         with open(index_path, 'r', encoding='utf-8') as f:
             index = json.load(f)
@@ -514,26 +522,62 @@ def check_and_show_backup_gui(il2_states_path: Path) -> str:
         if not index or len(index) == 0:
             return 'no_backups'
         
-        # Check if at least one backup file actually exists
-        backup_dir = il2_states_path.parent
-        has_valid_backup = False
-        
-        for hash_key, entry in index. items():
-            if isinstance(entry, dict):
-                backup_file = entry. get('campaignsstates_backup', '')
-            else:
-                backup_file = f"campaignsstates_{entry}.backup"
-            
-            if (backup_dir / backup_file).exists():
-                has_valid_backup = True
-                break
-        
-        if not has_valid_backup: 
-            return 'no_backups'
-            
-    except Exception as e: 
+    except Exception as e:
         print(f"⚠️ Could not check backups: {e}")
         return 'no_backups'
+    
+    # Get current hash
+    current_hash = None
+    try: 
+        with open(il2_states_path, 'rb') as f:
+            current_hash = hashlib.md5(f.read()).hexdigest()
+    except Exception: 
+        pass
+    
+    # Count valid backups (backup file must exist)
+    backup_dir = il2_states_path.parent
+    valid_backups = []
+    
+    for hash_key, entry in index.items():
+        if isinstance(entry, dict):
+            backup_file = entry.get('campaignsstates_backup', '')
+        else:
+            backup_file = f"campaignsstates_{entry}. backup"
+        
+        if (backup_dir / backup_file).exists():
+            valid_backups.append({
+                'hash':  hash_key,
+                'file': backup_file
+            })
+    
+    if not valid_backups:
+        return 'no_backups'
+    
+    # ================================================================
+    # Decision logic:  Should we show the GUI? 
+    # ================================================================
+    num_backups = len(valid_backups)
+    
+    if num_backups == 0:
+        # No valid backups
+        print("ℹ️ No valid backups found")
+        return 'no_backups'
+    
+    elif num_backups == 1:
+        # Only one backup - check if it's already active
+        only_backup = valid_backups[0]
+        
+        if only_backup['hash'] == current_hash: 
+            # The only backup IS the current state - no point showing GUI
+            print(f"ℹ️ Only one backup exists and it's already active - skipping GUI")
+            return 'skipped'
+        else: 
+            # One backup exists but it's different - show GUI
+            print(f"ℹ️ One backup available (not current state) - showing GUI")
+    
+    else: 
+        # Multiple backups - always show GUI
+        print(f"ℹ️ {num_backups} backups available - showing GUI")
     
     # Show GUI
     gui = BackupRestoreGUI(il2_states_path, index_path)
