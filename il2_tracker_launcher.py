@@ -168,9 +168,9 @@ try:
             
             # Pass IL-2 path to cleanup manager
             cleanup_manager = MissionCleanup(campaignstates_path=IL2_STATES_PATH)
-            cleanup_manager.restore_matching_popups()
-            os.environ["FORCE_REGENERATE"] = "1"
-            print("⚡ Backup restore detected — forcing event regeneration...")
+            if cleanup_manager.restore_matching_popups():  # Rückgabe bool
+                os.environ["FORCE_REGENERATE"] = "1"
+                print("⚡ Backup restore detected — forcing event regeneration...")
         except Exception as e:
             print(f"⚠️ Popup restore check failed: {e}")
         
