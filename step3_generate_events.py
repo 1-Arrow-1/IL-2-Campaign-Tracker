@@ -3048,7 +3048,7 @@ class EventGenerator:
         return results
 
 
-def main(dry_run:  bool = None, campaign:  str = None, show_popups: bool = None, test_popups: bool = False):
+def main(dry_run: bool = None, campaign: str = None, show_popups:  bool = None, test_popups:  bool = False) -> bool:
     """
     Main entry point
     
@@ -3057,6 +3057,9 @@ def main(dry_run:  bool = None, campaign:  str = None, show_popups: bool = None,
         campaign: Process only this campaign (overrides CLI arg)
         show_popups: Show promotion/award popups (overrides CLI arg)
         test_popups:  Show test popup sequence
+        
+    Returns: 
+        True if successful, False otherwise
         
     Note: If parameters are None, CLI arguments are used. 
           If parameters are provided, they override CLI arguments.
@@ -3097,12 +3100,12 @@ def main(dry_run:  bool = None, campaign:  str = None, show_popups: bool = None,
             test_popups=False
         )
     
-    # Override with function parameters if provided
-    if dry_run is not None: 
+    # ✅ Override with function parameters if provided
+    if dry_run is not None:
         args.dry_run = dry_run
-    if campaign is not None: 
+    if campaign is not None:
         args.campaign = campaign
-    if show_popups is not None:
+    if show_popups is not None: 
         args.show_popups = show_popups
     if test_popups: 
         args.test_popups = test_popups
@@ -3115,7 +3118,7 @@ def main(dry_run:  bool = None, campaign:  str = None, show_popups: bool = None,
         print("="*70)
         print()
     
-    generator = EventGenerator(dry_run=args. dry_run, show_popups=args.show_popups)
+    generator = EventGenerator(dry_run=args.dry_run, show_popups=args.show_popups)
     
     # Test popups (no mission flight needed)
     if args.test_popups:
@@ -3123,34 +3126,34 @@ def main(dry_run:  bool = None, campaign:  str = None, show_popups: bool = None,
 
         # Minimal country map; only needed for image folder resolution
         campaign_country_map = {}
-        for cname, meta in generator.mission_dates.items():
+        for cname, meta in generator. mission_dates.items():
             if isinstance(meta, dict):
                 ctry = meta.get("country")
             else:
                 ctry = meta
-            if ctry: 
+            if ctry:
                 campaign_country_map[cname] = ctry
 
         # Build a small fake event list (uses real images if they exist)
         test_campaign = next(iter(campaign_country_map.keys()), "kerch")
         test_events = [
             (test_campaign, {
-                "type":  "promotion",
+                "type": "promotion",
                 "rank": "Feldwebel",
-                "image": "feldwebel. png",
+                "image":  "feldwebel. png",
                 "mission": "TEST",
-                "date": "1943-11-06"
+                "date":  "1943-11-06"
             }),
             (test_campaign, {
                 "type": "award",
                 "name": "Iron Cross 2nd Class",
-                "image": "iron_cross_2nd. dds",
+                "image":  "iron_cross_2nd.dds",
                 "mission": "TEST",
-                "date":  "1943-11-06"
+                "date": "1943-11-06"
             }),
         ]
 
-        print("[popups] TEST MODE:  showing 2 popups...")
+        print("[popups] TEST MODE: showing 2 popups...")
         show_event_popups(
             test_events,
             game_directory=generator.game_directory,
@@ -3161,7 +3164,7 @@ def main(dry_run:  bool = None, campaign:  str = None, show_popups: bool = None,
 
     if args.campaign:
         # Process single campaign
-        print(f"Processing single campaign: {args. campaign}")
+        print(f"Processing single campaign:  {args.campaign}")
         events = generator.generate_events_for_campaign(args.campaign)
         if events:
             country = generator.mission_dates[args. campaign].get('country')
