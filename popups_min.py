@@ -68,8 +68,13 @@ def _resolve_image_path(game_directory: Path, country: str, ev: Dict[str, Any]) 
     Awards: prefer *_big.dds
     """
 
-    # 1️⃣ Pfad aus JSON sicherstellen (für EXE + Testmodus)
-    if not game_directory or not Path(game_directory).exists():
+    # 1️⃣ Pfad aus JSON sicherstellen (für EXE + Testmodus)   
+    game_dir_path = Path(game_directory) if game_directory else None
+    if (
+        not game_dir_path
+        or str(game_dir_path).strip() in {"", "."}
+        or not game_dir_path.exists()
+    ):
         json_dir = _get_game_dir_from_json()
         if json_dir and json_dir.exists():
             game_directory = json_dir
@@ -77,7 +82,9 @@ def _resolve_image_path(game_directory: Path, country: str, ev: Dict[str, Any]) 
         else:
             print("[popups] ⚠️ Kein gültiger game_directory gefunden.")
             return Path()
-
+    else:
+        game_directory = game_dir_path
+    
     # 2️⃣ Bildname aus Event
     image_name = str(ev.get("image", "")).strip()
     if not image_name:
@@ -210,7 +217,24 @@ def _make_popup(
     if image_path and PIL_OK and image_path.exists():
         try:
             im = Image.open(image_path)
-            im.thumbnail(image_max)
+            
+            # Calculate scaling to fit within image_max while maintaining aspect ratio
+            # Unlike thumbnail(), this WILL upscale small images
+            original_width, original_height = im.size
+            max_width, max_height = image_max
+            
+            # Calculate scale factor
+            scale_w = max_width / original_width
+            scale_h = max_height / original_height
+            scale = min(scale_w, scale_h)  # Use smaller scale to fit within bounds
+            
+            # Calculate new size
+            new_width = int(original_width * scale)
+            new_height = int(original_height * scale)
+            
+            # Resize (this will upscale if needed!)
+            im = im.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            
             img_ref = ImageTk.PhotoImage(im)
             img_label = tk.Label(frame, image=img_ref, bg=bg)
             img_label.image = img_ref  # keep reference
@@ -218,7 +242,6 @@ def _make_popup(
         except Exception as e:
             print(f"[popups] ⚠️ Fehler beim Laden des Bildes {image_path}: {e}")
             # text-only popup is still useful
-            pass
 
     # Subtitle (optional)
     if subtitle:
@@ -292,7 +315,11 @@ def show_event_popups(
 
     for campaign_name, ev in popup_events:
         ev_type = str(ev.get("type", "")).strip().lower()
-        country = campaign_country_map.get(campaign_name, "").strip()
+        country = (
+            campaign_country_map.get(campaign_name)
+            or campaign_country_map.get(campaign_name.lower())
+            or ""
+        ).strip()
 
         print(f"[popups][TRACE] processing event '{ev_type}' for campaign '{campaign_name}' (country='{country}')")
 
@@ -316,7 +343,7 @@ def show_event_popups(
             rank = str(ev.get("rank", "")).strip()
             line1 = f"You have been promoted to {rank}" if rank else "You have been promoted!"
             title = "Promotion"
-            img_max = (256, 256)
+            img_max = (308, 308)  # 20% larger for promotions
         elif ev_type == "award":
             name = str(ev.get("name", "")).strip()
             line1 = f"You have been awarded with {name}" if name else "You have received an award!"
@@ -363,15 +390,4 @@ def show_event_popups(
         root.after(duration_ms + 500, _next)
 
     _next()
-    root.mainloop()
-
-
-    def show_next(i: int = 0):
-        if i >= len(queue):
-            root.after(200, root.destroy)
-            return
-        queue[i]()
-        root.after(duration_ms + 250, lambda: show_next(i + 1))
-
-    show_next(0)
     root.mainloop()

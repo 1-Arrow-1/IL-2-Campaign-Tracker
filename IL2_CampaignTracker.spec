@@ -10,6 +10,7 @@ a = Analysis(
         ('campaign_progress_config.yaml', '.'),
         ('stock_campaigns.yaml', '.'),
         ('object_categories.yaml', '.'),
+        ('IBMPlexSans-Light.ttf', '.'),  # ← FONT HINZUGEFÜGT!
     ],
     hiddenimports=[
         'tkinter',
@@ -24,7 +25,8 @@ a = Analysis(
         'monitor_campaigns',
         'il2_mission_debrief',
 		'cleanup_failed_missions',
-		'popups_min'
+		'popups_min',
+		'campaign_reset_checker',
 		'PIL',
 		'PIL.Image',
 		'PIL.DdsImagePlugin',
@@ -58,4 +60,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+	icon='il2_tracker_icon.ico',
 )

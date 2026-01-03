@@ -10,9 +10,10 @@ IL-2 Mission Debrief Parser — refined kill attribution
 ✅ Tracker-ready JSON output
 """
 
-import re, json, yaml
+import os, re, json, yaml
 from collections import defaultdict
 from pathlib import Path
+
 
 # ==========================================================
 # === GameObject ==========================================
@@ -238,8 +239,8 @@ class MissionDebriefParser:
                     })
                 
                 # Wounded status: ONLY based on PILOT damage (not aircraft!)
-                # Threshold: > 0.01 (1%) pilot damage
-                if self.stats.total_pilot_damage > 0.01:
+                # Threshold: >= 0.20 (20%) pilot damage
+                if self.stats.total_pilot_damage >= 0.20:
                     self.stats.wounded = True
 
             elif "AType:3" in ln:
@@ -315,12 +316,15 @@ class MissionDebriefParser:
                         else:
                             # Short time → Crash separated pilot from aircraft
                             if "AType:7" in ln:
-                                self.stats.crashed = True
+                                # Crash ejected pilot - treat as emergency bailout
+                                # (deaths flag from campaign save will override to KIA/MIA if fatal)
+                                self.stats.crashed = False
+                                self.stats.landed = False
                                 if self.stats.wounded:
-                                    self.stats.final_state = "Crashed (Wounded)"
+                                    self.stats.final_state = "Bailout (Wounded)"
                                 else:
-                                    self.stats.final_state = "Crashed"
-                                event_type = "Crash"
+                                    self.stats.final_state = "Bailout"
+                                event_type = "Bailout"
                             else:
                                 # AType:6 with quick separation = Hard Landing
                                 self.stats.landed = True
@@ -331,13 +335,16 @@ class MissionDebriefParser:
                                 event_type = "Landing"
                     
                     elif "AType:7" in ln:
-                        self.stats.crashed = True
-                        # Wounded status combines with crash
+                        # AType:7 without bailout separation
+                        # This will almost always be deaths=1 (KIA/MIA)
+                        # But we set a placeholder status (will be overridden by campaign save)
+                        self.stats.crashed = False
+                        self.stats.landed = False
                         if self.stats.wounded:
-                            self.stats.final_state = "Crashed (Wounded)"
+                            self.stats.final_state = "Bailout (Wounded)"
                         else:
-                            self.stats.final_state = "Crashed"
-                        event_type = "Crash"
+                            self.stats.final_state = "Bailout"
+                        event_type = "Crash"  # Keep event type for logging
                     else:
                         self.stats.landed = True
                         # Wounded status combines with landing
@@ -368,13 +375,9 @@ class MissionDebriefParser:
                     self.stats.add_kill(tid, hits[-1]["time"])
                     
         # --- detect bail-out ---
-        parachute_found = any("AType:13" in l and "Paratrooper" in l for l in lines)
-        if parachute_found and not self.stats.crashed and not self.stats.landed:
-            # Bailout combines with wounded status
-            if self.stats.wounded:
-                self.stats.final_state = "Bailed Out (Wounded)"
-            else:
-                self.stats.final_state = "Bailed Out"
+        # REMOVED: Redundant parachute detection
+        # Time-based bailout detection (lines 307-315) is more reliable
+        # and avoids conflicts with "Bailed Out" vs "Bailout" strings
 
         # --- compute flight duration ---
         if self.stats.takeoff_time:
@@ -385,7 +388,7 @@ class MissionDebriefParser:
                 end_time = max((e.get('time_raw', 0) for e in self.stats.events), default=self.stats.takeoff_time)
                 # Add Mission End event if no landing
                 if end_time > self.stats.takeoff_time:
-                    last_ts = self._format_time(end_time)
+                    last_ts = self.mission_time_to_hhmmss(end_time)
                     self.stats.events.append({"time": last_ts, "type": "Mission End", "time_raw": end_time})
             
             if end_time:
@@ -395,6 +398,46 @@ class MissionDebriefParser:
                 sec = duration / 50.0
                 h, m, s = int(sec // 3600), int((sec % 3600) // 60), int(sec % 60)
                 self.stats.flight_duration = f"{h:02}:{m:02}:{s:02}"
+
+        # --- final status cleanup ---
+        # If status is still "Alive", set a fallback based on what we know
+        if self.stats.final_state == "Alive":
+            if self.stats.pilot_separation_time:
+                # Pilot separated (bailout) but mission ended before landing
+                # This happens when player ends mission mid-bailout
+                
+                # Check for heavy aircraft damage before separation (crash-eject detection)
+                separation_time = self.stats.pilot_separation_time
+                recent_heavy_damage = False
+                
+                for evt in self.stats.events:
+                    if evt.get('type') == 'Damage Taken' and 'aircraft' in evt.get('damage', ''):
+                        evt_time = evt.get('time_raw', 0)
+                        # Check damage within 5 seconds (250 ticks) before separation
+                        if 0 < (separation_time - evt_time) < 250:
+                            damage_str = evt.get('damage', '0%')
+                            try:
+                                damage_val = float(damage_str.split('%')[0]) / 100.0
+                                if damage_val > 0.80:  # > 80% aircraft damage
+                                    recent_heavy_damage = True
+                                    break
+                            except:
+                                pass
+                
+                if recent_heavy_damage:
+                    # Heavy damage before separation → likely crash-eject
+                    if self.stats.wounded:
+                        self.stats.final_state = "Crashed (Wounded)"
+                    else:
+                        self.stats.final_state = "Crashed"
+                    print(f"[CRASH-EJECT] Heavy aircraft damage before separation - status set to Crashed")
+                else:
+                    # No heavy damage → normal bailout
+                    if self.stats.wounded:
+                        self.stats.final_state = "Bailout (Wounded)"
+                    else:
+                        self.stats.final_state = "Bailout"
+                    print(f"[BAILOUT] Mission ended mid-bailout - status set to Bailout")
 
         return self.stats
 
@@ -514,8 +557,12 @@ class MissionDebriefParser:
                     modified_events.append(evt)
         
         # Update final state if hard landing detected
-        if has_hard_landing and data['summary']['final_state'] == 'Landed':
-            data['summary']['final_state'] = 'Landed (Hard Landing)'
+        if has_hard_landing:
+            current_state = data['summary']['final_state']
+            if current_state == 'Landed':
+                data['summary']['final_state'] = 'Landed (Hard Landing)'
+            elif current_state == 'Landed (Wounded)':
+                data['summary']['final_state'] = 'Landed (Hard Landing, Wounded)'
         
         return modified_events
     
@@ -712,6 +759,7 @@ class MissionDebriefParser:
     def _f(t, p): m = re.search(p, t); return float(m.group(1)) if m else 0.0
     @staticmethod
     def _s(t, p): m = re.search(p, t); return m.group(1).strip() if m else ""
+
 
 
 # ==========================================================

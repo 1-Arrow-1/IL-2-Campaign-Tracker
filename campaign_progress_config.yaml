@@ -67,8 +67,17 @@ ranks:
   - name: Oberstleutnant
     score: 1200
     image: oberstleutnant.png
-
-  Britain:
+  - name: Oberst
+    score: 1600
+    image: oberst.png
+  - name: Generalmajor
+    score: 2050
+    image: generalmajor.png
+  - name: Generalleutnant
+    score: 2550
+    image: generalleutnant.png
+  
+    Britain:
   - name: Sergeant
     score: 0
     image: sergeant_raf.png
@@ -93,6 +102,15 @@ ranks:
   - name: Wing Commander
     score: 1200
     image: wing_commander.png
+  - name: Group Captain
+    score: 1600
+    image: group_captain.png
+  - name: Air Commodore
+    score: 2050
+    image: air_commodore.png
+  - name: Air Vice Marshal
+    score: 2550
+    image: air_vice_marshal.png
 
   USA:
   - name: First Sergeant
@@ -119,6 +137,15 @@ ranks:
   - name: Lt. Colonel
     score: 1200
     image: lt_colonel.png
+  - name: Colonel
+    score: 1600
+    image: colonel.png
+  - name: Brigadier General
+    score: 2050
+    image: brigadier_general.png
+  - name: Major General
+    score: 2550
+    image: major_general.png
 
   Soviet Union:
   - name: Sergeant
@@ -145,6 +172,15 @@ ranks:
   - name: Sub-Colonel
     score: 1200
     image: sub_colonel.png
+  - name: Colonel
+    score: 1600
+    image: colonel.png
+  - name: Major General
+    score: 2050
+    image: major_general.png
+  - name: Lieutenant General
+    score: 2550
+    image: lt_general.png
 
 awards:
   Germany:

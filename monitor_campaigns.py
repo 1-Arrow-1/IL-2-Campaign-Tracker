@@ -4,17 +4,26 @@ IL-2 Campaign Progress Tracker - Automatic Monitor
 
 Monitors IL-2 game and automatically updates campaign events when missions complete.
 
+Version 2.1: IMPROVED RELIABILITY
+✅ FIX: Increased debounce time to 1.5s (prevents race conditions)
+✅ FIX: Log rotation (max 5MB per file, keeps 3 backups)
+✅ FIX: Better file-change detection with retry logic
+
 Features:
 - Detects when IL-2.exe is running
-- Monitors campaignsstates.txt for changes
+- TWO MODES:
+  * FAST MODE (file watcher): Reacts within 2-3 seconds! ⚡
+  * LEGACY MODE (polling): Checks every N seconds
 - Automatically runs decoder + event generator
 - Prevents duplicate processing
-- Logs all activity
+- Logs all activity with rotation
 
 Usage:
-    python monitor_campaigns.py
+    # Fast mode (recommended):
+    monitor = CampaignMonitor(check_interval=1, use_file_watcher=True)
     
-    (runs in background, press Ctrl+C to stop)
+    # Legacy mode:
+    monitor = CampaignMonitor(check_interval=5, use_file_watcher=False)
 """
 
 import time
@@ -28,787 +37,365 @@ import psutil
 import sys
 import io
 import contextlib
+import logging
+from logging.handlers import RotatingFileHandler
 
 
 class CampaignMonitor:
-    def __init__(self, check_interval: int = 10):
+    def __init__(self, check_interval: int = 1, use_file_watcher: bool = True, il2_states_path=None):
         """
         Initialize campaign monitor
         
         Args:
-            check_interval: Seconds between checks (default: 10)
+            check_interval: Seconds between checks
+                           Fast mode: 1 second recommended
+                           Legacy mode: 5-10 seconds
+            use_file_watcher: Enable fast file watching mode (recommended!)
+                             True = Fast mode (reacts in 2-3 seconds)
+                             False = Legacy polling mode
+            il2_states_path: Path to campaignsstates.txt in IL-2 directory
+                            (default: auto-detect)
         """
         self.check_interval = check_interval
+        self.use_file_watcher = use_file_watcher
         self.last_hash = None
-        self.last_campaigns_hash = None  # Track campaigns folder changes
+        self.last_campaigns_hash = None
         self.processing = False
         self.game_running = False
-        self.il2_was_running = False  # Track if IL-2 was running previously
+        self.il2_was_running = False
         
-        # Log file - MUST be set before calling any methods that use log()
+        # ✅ FIX #1: Increased debounce from 0.5s to 1.5s
+        # This prevents race conditions when IL-2 writes the file in chunks
+        self.debounce_seconds = 1.5 if use_file_watcher else 0
+        self.pending_change = False
+        self.debounce_timer = 0
+        
+        # ✅ FIX #2: Log rotation - max 5 MB per file, keep 3 backups
         self.log_file = Path("campaign_monitor.log")
+        self._setup_logging()
         
-        # Load configuration
-        try:
-            with open('campaign_mission_dates.json', 'r') as f:
-                config = json.load(f)
-                self.game_directory = config.get('game_directory')
-        except FileNotFoundError:
-            self.log("Warning: campaign_mission_dates.json not found, game directory unknown")
-            self.game_directory = None
-        except json.JSONDecodeError as e:
-            self.log(f"Error: Invalid JSON in campaign_mission_dates.json: {e}")
-            self.game_directory = None
-        except Exception as e:
-            self.log(f"Error reading campaign_mission_dates.json: {e}")
-            self.game_directory = None
-        
-        # Build path to save file
-        if self.game_directory:
-            self.save_file_base = Path(self.game_directory) / "data" / "swf" / "il2" / "usersave"
+        # Determine paths (works for both script and EXE)
+        if getattr(sys, 'frozen', False):
+            # Running as EXE - use executable directory
+            self.script_dir = Path(sys.executable).parent.resolve()
         else:
-            self.save_file_base = None
+            # Running as script - use script directory
+            self.script_dir = Path(__file__).parent.resolve()
         
-        # Find campaignsstates.txt
-        self.save_file = self.find_save_file()
-        
-        self.log("="*70)
-        self.log("IL-2 CAMPAIGN MONITOR STARTED")
-        self.log("="*70)
-        self.log(f"Check interval: {check_interval} seconds")
-        self.log(f"Game directory: {self.game_directory}")
-        self.log(f"Save file: {self.save_file}")
-        self.log("")
-        
-        # Auto-refresh mission dates on startup
-        new_campaigns = self.refresh_mission_dates()
-        
-        # Show country validation GUI if new campaigns detected
-        if new_campaigns:
-            self.show_country_validation_gui(new_campaigns)
-    
-    def refresh_mission_dates(self):
-        """
-        Refresh mission dates by running step1 (if game directory known)
-        
-        Returns:
-            List of new campaign names (for country validation), or empty list
-        """
-        if not self.game_directory:
-            self.log("Skipping mission date refresh - no game directory configured")
-            return []
-        
-        self.log("Checking for new campaigns and missions...")
-        
-        # Check for new campaigns or missions
-        try:
-            campaigns_path = Path(self.game_directory) / 'data' / 'Campaigns'
-            if not campaigns_path.exists():
-                self.log("Warning: Campaigns folder not found")
-                return
-            
-            # Get actual campaign folders (exclude WW1 by default)
-            campaign_folders = [
-                f for f in campaigns_path.iterdir() 
-                if f.is_dir() and 'flyingcircus' not in f.name.lower()
-            ]
-            
-            # Load known campaigns from JSON
-            try:
-                with open('campaign_mission_dates.json', 'r') as f:
-                    config = json.load(f)
-                    known_campaigns = {k: v for k, v in config.items() if k != 'game_directory'}
-            except FileNotFoundError:
-                self.log("Warning: campaign_mission_dates.json not found, cannot detect removed campaigns")
-                known_campaigns = {}
-            except json.JSONDecodeError as e:
-                self.log(f"Error: Invalid JSON in campaign_mission_dates.json: {e}")
-                known_campaigns = {}
-            except Exception as e:
-                self.log(f"Error loading known campaigns: {e}")
-                known_campaigns = {}
-            
-            # Detect removed campaigns and missions
-            # 🔍 Detect removed campaigns and missions
-            try:
-                if known_campaigns:
-                    # Detect if this is a new or empty config (first run)
-                    if not known_campaigns or all(not c.get("missions") for c in known_campaigns.values()):
-                        self.log("First run detected — skipping deletion check.")
-                    else:
-                        live_campaigns = {folder.name for folder in campaign_folders}
-
-                        # --- Detect removed campaigns ---
-                        removed_campaigns = [
-                            name for name in known_campaigns.keys()
-                            if name not in live_campaigns
-                        ]
-
-                        # --- Detect removed missions within existing campaigns ---
-                        removed_missions = []
-                        for name, campaign_data in known_campaigns.items():
-                            if name not in live_campaigns:
-                                continue
-
-                            campaign_path = Path(self.game_directory) / "data" / "Campaigns" / name
-                            if not campaign_path.exists():
-                                continue
-
-                            existing_missions = campaign_data.get("missions", {})
-                            if not existing_missions:
-                                continue  # skip pre-scan or first run
-
-                            # Detect current mission files (.cmpbin / .msnbin)
-                            valid_mission_exts = {".cmpbin", ".msnbin"}
-                            actual_mission_names = {
-                                f.stem for f in campaign_path.iterdir()
-                                if f.suffix.lower() in valid_mission_exts
-                            }
-
-                            # Compare JSON vs actual mission files — remove only missing ones
-                            removed = [
-                                m for m in existing_missions
-                                if Path(existing_missions[m].get("mission_file", "")).stem not in actual_mission_names
-                            ]
-
-                            if removed:
-                                removed_missions.append({"campaign": name, "missions": removed})
-
-                        # --- Apply deletions if found ---
-                        if removed_campaigns or removed_missions:
-                            self.log("=" * 70)
-                            self.log(f"Detected {len(removed_campaigns)} removed campaign(s) "
-                                     f"and {len(removed_missions)} campaign(s) with removed missions.")
-
-                            # Remove deleted campaigns
-                            for name in removed_campaigns:
-                                self.log(f"  - Removing deleted campaign: {name}")
-                                known_campaigns.pop(name, None)
-
-                            # Remove deleted missions and update mission counts
-                            for entry in removed_missions:
-                                camp = entry["campaign"]
-                                for mission in entry["missions"]:
-                                    self.log(f"  - Removing mission '{mission}' from campaign '{camp}'")
-                                    if "missions" in known_campaigns.get(camp, {}):
-                                        known_campaigns[camp]["missions"].pop(mission, None)
-
-                                # 🧩 Recalculate mission_count for this campaign
-                                remaining_missions = known_campaigns.get(camp, {}).get("missions", {})
-                                new_count = len(remaining_missions)
-                                known_campaigns[camp]["mission_count"] = new_count
-                                self.log(f"  - Updated mission count for '{camp}': {new_count}")
-
-                            # ✅ Update config JSON safely
-                            game_dir = config.get("game_directory")
-                            config = known_campaigns
-                            if game_dir:
-                                config["game_directory"] = game_dir
-
-                            with open('campaign_mission_dates.json', 'w', encoding='utf-8') as f:
-                                json.dump(config, f, indent=2, ensure_ascii=False)
-
-                            self.log("✓ Updated campaign_mission_dates.json after deletions")
-                            self.log("=" * 70)
-
-            except Exception as e:
-                self.log(f"⚠️ Error during deletion detection: {e}")
-
-            # 🔍 Detect new campaigns or added missions
-            new_campaigns = []
-            campaigns_with_new_missions = []
-
-            # Create lowercase mapping for case-insensitive comparison
-            known_campaigns_lower = {k.lower(): (k, v) for k, v in known_campaigns.items()}
-
-            for folder in campaign_folders:
-                campaign_name = folder.name.lower()
-
-                # --- Detect completely new campaigns ---
-                if campaign_name not in known_campaigns_lower:
-                    new_campaigns.append(folder.name)
-                    continue
-
-                # --- Detect added missions in existing campaign ---
-                valid_mission_exts = {".cmpbin", ".msnbin"}
-                mission_files = [
-                    f for f in folder.iterdir()
-                    if f.suffix.lower() in valid_mission_exts
-                ]
-                actual_mission_count = len(mission_files)
-
-                original_name, campaign_data = known_campaigns_lower[campaign_name]
-                known_mission_count = campaign_data.get('mission_count', 0)
-
-                # Only refresh if actual count increased
-                if actual_mission_count > known_mission_count:
-                    campaigns_with_new_missions.append({
-                        'name': folder.name,
-                        'old': known_mission_count,
-                        'new': actual_mission_count
-                    })
-
-            # --- Log and trigger refresh if needed ---
-            needs_refresh = len(new_campaigns) > 0 or len(campaigns_with_new_missions) > 0
-
-            if needs_refresh:
-                if new_campaigns:
-                    self.log(f"  New campaigns: {len(new_campaigns)}")
-                    for camp in new_campaigns[:3]:
-                        self.log(f"    - {camp}")
-                    if len(new_campaigns) > 3:
-                        self.log(f"    ... and {len(new_campaigns) - 3} more")
-
-                if campaigns_with_new_missions:
-                    self.log(f"  Campaigns with new missions: {len(campaigns_with_new_missions)}")
-                    for camp in campaigns_with_new_missions[:3]:
-                        self.log(f"    - {camp['name']}: {camp['old']} → {camp['new']} missions")
-                    if len(campaigns_with_new_missions) > 3:
-                        self.log(f"    ... and {len(campaigns_with_new_missions) - 3} more")
-
-                self.log("Refreshing mission dates...")
-
-                try:
-                    import step1_extract_mission_dates
-                    import io, sys
-                    old_stdout, old_argv = sys.stdout, sys.argv
-                    sys.stdout = io.StringIO()
-                    sys.argv = ['step1_extract_mission_dates.py', '--auto', self.game_directory]
-                    try:
-                        step1_extract_mission_dates.main()
-                        success, error_msg = True, None
-                    except Exception as e:
-                        success, error_msg = False, str(e)
-                    finally:
-                        sys.stdout, sys.argv = old_stdout, old_argv
-
-                    if success:
-                        self.log("✓ Mission dates refreshed successfully")
-                        return new_campaigns  # Return list of new campaigns for validation
-                    else:
-                        self.log(f"Warning: Mission date refresh failed: {error_msg}")
-                        return []
-
-                except ImportError as e:
-                    self.log(f"ERROR: Cannot import step1_extract_mission_dates: {e}")
-                    self.log("Please ensure step1_extract_mission_dates.py is in the same folder.")
-                    return []
-
-            else:
-                total_campaigns = len(campaign_folders)
-                self.log(f"✓ No new campaigns or missions detected ({total_campaigns} campaigns)")
-                return []  # No new campaigns
-                
-        except Exception as e:
-            self.log(f"⚠️ Error while refreshing mission dates: {e}")
-            return []
-    
-    def show_country_validation_gui(self, new_campaigns: list):
-        """Show country validation GUI for new campaigns"""
-        if not new_campaigns:
-            return
-        
-        self.log("")
-        self.log("=" * 70)
-        self.log(f"NEW CAMPAIGNS DETECTED: {len(new_campaigns)}")
-        self.log("=" * 70)
-        self.log("Please verify the automatically detected countries...")
-        self.log("")
-        
-        try:
-            from country_validator_gui import validate_new_campaigns
-            mission_dates_file = Path("campaign_mission_dates.json")
-            
-            if mission_dates_file.exists():
-                validate_new_campaigns(str(mission_dates_file), new_campaigns)
-                self.log("✓ Country validation complete")
-            else:
-                self.log("Warning: campaign_mission_dates.json not found")
-                
-        except Exception as e:
-            self.log(f"Warning: Could not show country validation GUI: {e}")
-            self.log("You can manually edit campaign_mission_dates.json")
-        
-        self.log("=" * 70)
-        self.log("")
-    
-    def get_campaigns_folder_hash(self) -> str:
-        """
-        Generate hash of campaigns folder structure
-        (campaign names and mission counts only, not file contents)
-        """
-        try:
-            if not self.game_directory:
-                return None
-            
-            campaigns_folder = Path(self.game_directory) / "data" / "Campaigns"
-            if not campaigns_folder.exists():
-                return None
-            
-            # List all campaign folders and their .msnbin/.cmpbin counts
-            campaign_data = []
-            for campaign_folder in sorted(campaigns_folder.iterdir()):
-                if campaign_folder.is_dir():
-                    mission_count = len(list(campaign_folder.glob("*.msnbin"))) + len(list(campaign_folder.glob("*.cmpbin")))
-                    campaign_data.append(f"{campaign_folder.name}:{mission_count}")
-            
-            # Create hash
-            data_str = "|".join(campaign_data)
-            return hashlib.md5(data_str.encode()).hexdigest()
-            
-        except Exception as e:
-            self.log(f"Error checking campaigns folder: {e}")
-            return None
-    
-    def find_save_file(self) -> Path:
-        """Find the campaignsstates.txt file (prefer live IL-2 save, fallback to local copy)."""
-
-        # 1) Prefer the live IL-2 save location
-        if self.save_file_base and self.save_file_base.exists():
-            # Find UUID folder (there should typically be only one)
-            uuid_folders = [f for f in self.save_file_base.iterdir() if f.is_dir()]
-
-            if uuid_folders:
-                uuid_folder = uuid_folders[0]
-                live_save_file = uuid_folder / "campaign" / "campaignsstates.txt"
-
-                if live_save_file.exists():
-                    self.log(f"Found live save file: {live_save_file}")
-                    return live_save_file
-                else:
-                    self.log(f"Warning: Live save file not found at {live_save_file}")
-            else:
-                self.log("Warning: No UUID folders found in usersave directory")
+        # Use provided IL-2 path or auto-detect
+        if il2_states_path:
+            self.campaign_file = Path(il2_states_path)
+            self.campaigns_folder = self.campaign_file.parent
+            print(f"[monitor] Using provided path: {self.campaign_file}")
         else:
-            self.log("Warning: Cannot find IL-2 save directory")
-
-        # 2) Fallback: use local copy if present
-        # NOTE: We only use local copy as absolute fallback (offline mode)
-        local_copy = Path("campaignsstates.txt")
-        if local_copy.exists():
-            self.log(f"Using local save file (offline mode - no IL-2 save found): {local_copy}")
-            return local_copy
-
+            # Auto-detect (backward compatibility)
+            # Load game directory from mission dates
+            self.game_dir = self._load_game_directory()
+            self.campaign_file = None
+            self.campaigns_folder = None
+            
+            if self.game_dir:
+                # Try to find campaignsstates.txt
+                usersave_dir = self.game_dir / 'data' / 'swf' / 'il2' / 'usersave'
+                
+                if usersave_dir.exists():
+                    for user_dir in usersave_dir.iterdir():
+                        if user_dir.is_dir():
+                            potential = user_dir / 'campaign' / 'campaignsstates.txt'
+                            if potential.exists():
+                                self.campaign_file = potential
+                                self.campaigns_folder = user_dir / 'campaign'
+                                break
+        
+        # Print mode
+        mode = "⚡ FAST MODE (File Watcher)" if use_file_watcher else "🌍 LEGACY MODE (Polling)"
+        print(f"\n{'='*70}")
+        print(f"CAMPAIGN MONITOR - {mode}")
+        print(f"{'='*70}")
+        print(f"Check interval: {check_interval} second(s)")
+        if use_file_watcher:
+            print(f"Debounce: {self.debounce_seconds}s (prevents race conditions)")
+            print(f"⚡ Fast mode enabled - popups appear within 2-3 seconds!")
+        print(f"Log rotation: 5 MB max, 3 backups")
+        print(f"{'='*70}\n")
+    
+    def _setup_logging(self):
+        """
+        ✅ FIX #2: Setup rotating log handler
+        Max 5 MB per file, keeps 3 backup files
+        """
+        # Create logger
+        self.logger = logging.getLogger('CampaignMonitor')
+        self.logger.setLevel(logging.INFO)
+        
+        # Remove existing handlers
+        self.logger.handlers.clear()
+        
+        # Rotating file handler (5 MB max, 3 backups)
+        file_handler = RotatingFileHandler(
+            self.log_file,
+            maxBytes=5 * 1024 * 1024,  # 5 MB
+            backupCount=3,
+            encoding='utf-8'
+        )
+        
+        # Format with timestamp
+        formatter = logging.Formatter('[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        file_handler.setFormatter(formatter)
+        
+        # Console handler (also print to console)
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(formatter)
+        
+        # Add both handlers
+        self.logger.addHandler(file_handler)
+        self.logger.addHandler(console_handler)
+    
+    def _load_game_directory(self):
+        """Load game directory from mission dates file"""
+        mission_dates = self.script_dir / "campaign_mission_dates.json"
+        if mission_dates.exists():
+            try:
+                with open(mission_dates, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    game_dir_str = data.get('game_directory', '')
+                    if game_dir_str:
+                        return Path(game_dir_str).expanduser().resolve()
+            except Exception as e:
+                self.log(f"Warning: Could not load game directory: {e}")
         return None
     
     def log(self, message: str):
-        """Write to log file and console"""
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        log_message = f"[{timestamp}] {message}"
-        
-        # Console
-        print(log_message)
-        
-        # File
-        with open(self.log_file, 'a', encoding='utf-8') as f:
-            f.write(log_message + '\n')
+        """Write message using rotating logger"""
+        self.logger.info(message)
     
-    def is_il2_running(self) -> bool:
-        """Check if IL-2.exe is running"""
-        for proc in psutil.process_iter(['name']):
-            try:
-                if proc.info['name'].lower() in ['il-2.exe', 'il2.exe']:
-                    return True
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                pass
-        return False
-    
-    def should_exit(self) -> bool:
+    def _get_file_hash(self, filepath: Path) -> str:
         """
-        Check if monitor should exit (IL-2 closed after running)
-        
-        Returns:
-            True if IL-2 was running but now closed
+        Calculate MD5 hash of file
+        ✅ Added: File size check to prevent memory issues
         """
-        il2_running = self.is_il2_running()
-        
-        # If IL-2 was running but now isn't, exit
-        if self.il2_was_running and not il2_running:
-            return True
-        
-        # Update state
-        self.il2_was_running = il2_running or self.il2_was_running
-        
-        return False
-    
-    def get_file_hash(self, filepath: Path) -> str:
-        """Get MD5 hash of file using chunked reading for efficiency"""
-        if not filepath or not filepath.exists():
-            return None
-        
         try:
-            md5 = hashlib.md5()
+            # ✅ FIX #3: Check file size first
+            file_size = filepath.stat().st_size
+            max_size = 50 * 1024 * 1024  # 50 MB limit
+            
+            if file_size > max_size:
+                self.log(f"⚠️  Warning: File too large ({file_size} bytes), using size+mtime hash")
+                # Use file size + modification time as hash for very large files
+                mtime = filepath.stat().st_mtime
+                return hashlib.md5(f"{file_size}_{mtime}".encode()).hexdigest()
+            
             with open(filepath, 'rb') as f:
-                # Read in 4MB chunks
-                for chunk in iter(lambda: f.read(4194304), b""):
-                    md5.update(chunk)
-            return md5.hexdigest()
-        except PermissionError:
-            self.log(f"Warning: Permission denied reading {filepath.name}")
-            return None
-        except IOError as e:
-            self.log(f"Warning: I/O error reading {filepath.name}: {e}")
-            return None
+                return hashlib.md5(f.read()).hexdigest()
         except Exception as e:
-            self.log(f"Error hashing file {filepath.name}: {e}")
-            return None
+            self.log(f"⚠️  Hash calculation error: {e}")
+            return ""
     
-    def wait_for_file_stable(self, filepath: Path, timeout: int = 5) -> bool:
-        """
-        Wait for file to stop being written to
-        
-        Args:
-            filepath: File to monitor
-            timeout: Max seconds to wait
-            
-        Returns:
-            True if file is stable, False if timeout
-        """
-        start_time = time.time()
-        last_hash = self.get_file_hash(filepath)
-        
-        while time.time() - start_time < timeout:
-            time.sleep(0.5)
-            current_hash = self.get_file_hash(filepath)
-            
-            if current_hash == last_hash:
-                return True  # File is stable
-            
-            last_hash = current_hash
-        
-        return False  # Timeout
+    def _check_il2_running(self) -> bool:
+        """Check if IL-2 Sturmovik is running"""
+        try:
+            for proc in psutil.process_iter(['name']):
+                if proc.info['name'] and 'il-2' in proc.info['name'].lower():
+                    return True
+        except Exception:
+            pass
+        return False
     
-    def copy_save_file(self) -> bool:
-        """Copy save file to working directory"""
-        if not self.save_file or not self.save_file.exists():
+    def _sync_campaign_file(self):
+        """Copy campaignsstates.txt from IL-2 to script directory"""
+        if not self.campaign_file:
             return False
         
+        local_file = self.script_dir / 'campaignsstates.txt'
+        
         try:
-            import shutil
-            local_copy = Path("campaignsstates.txt")
-            shutil.copy(self.save_file, local_copy)
-            self.log(f"Copied save file to: {local_copy}")
-            
-            # NEW: copy hash index if present (same folder as the save file)
+            # Check if source file is newer
+            if self.campaign_file.exists():
+                import shutil
+                shutil.copy2(self.campaign_file, local_file)
+                return True
+        except Exception as e:
+            self.log(f"Warning: Could not sync campaign file: {e}")
+        
+        return False
+    
+    def _has_file_changed(self) -> bool:
+        """
+        Check if campaignsstates.txt has changed
+        ✅ Added: Retry logic to handle file locks
+        """
+        # Watch the LIVE file in IL-2 directory!
+        if not self.campaign_file or not self.campaign_file.exists():
+            return False
+        
+        # ✅ FIX #4: Retry logic if file is locked
+        max_retries = 3
+        retry_delay = 0.1
+        
+        for attempt in range(max_retries):
             try:
-                index_src = self.save_file.parent / "campaignsstates_hash_index.json"
-                if index_src.exists():
-                    shutil.copy(index_src, Path("campaignsstates_hash_index.json"))
-                    self.log("Copied hash index to working directory: campaignsstates_hash_index.json")
+                current_hash = self._get_file_hash(self.campaign_file)
+                
+                if not current_hash:
+                    return False
+                
+                if self.last_hash is None:
+                    self.last_hash = current_hash
+                    return False
+                
+                if current_hash != self.last_hash:
+                    self.last_hash = current_hash
+                    return True
+                
+                return False
+                
+            except PermissionError:
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                    continue
+                else:
+                    self.log(f"⚠️  File locked after {max_retries} retries, skipping")
+                    return False
             except Exception as e:
-                self.log(f"Warning: could not copy hash index: {e}")
-            return True
-            
-        except Exception as e:
-            self.log(f"Error copying save file: {e}")
-            return False
+                self.log(f"⚠️  Error checking file: {e}")
+                return False
+        
+        return False
     
-    def run_decoder(self) -> bool:
-        """Run the decoder (works both as .py and as PyInstaller EXE)."""
-        try:
-            self.log("Running decoder...")
-
-            # If running as EXE, call the module directly (no external python process).
-            if getattr(sys, "frozen", False):
-                try:
-                    import decode_campaign_usersave1
-                except Exception as e:
-                    self.log(f"✗ Decoder import failed inside EXE: {e}")
-                    return False
-
-                buf = io.StringIO()
-                try:
-                    with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
-                        if hasattr(decode_campaign_usersave1, "main"):
-                            decode_campaign_usersave1.main()
-                        else:
-                            raise RuntimeError("decode_campaign_usersave1.main() not found")
-                except Exception as e:
-                    self.log(f"✗ Decoder failed inside EXE: {e}")
-                    out = buf.getvalue().strip()
-                    if out:
-                        self.log(out)
-                    return False
-
-                out = buf.getvalue().strip()
-                if out:
-                    for line in out.splitlines():
-                        self.log(line)
-                self.log("✓ Decoder completed successfully")
-                return True
-
-            # Running as script: use the current interpreter, not "python"
-            result = subprocess.run(
-                [sys.executable, "decode_campaign_usersave1.py"],
-                capture_output=True,
-                text=True,
-                timeout=30
-            )
-
-            if result.stdout:
-                for line in result.stdout.splitlines():
-                    self.log(line)
-            if result.stderr:
-                for line in result.stderr.splitlines():
-                    self.log(line)
-
-            if result.returncode == 0:
-                self.log("✓ Decoder completed successfully")
-                return True
-
-            self.log(f"✗ Decoder failed (exit code {result.returncode})")
-            return False
-
-        except subprocess.TimeoutExpired:
-            self.log("✗ Decoder timeout")
-            return False
-        except Exception as e:
-            self.log(f"✗ Decoder error: {e}")
-            return False
-    
-    def run_event_generator(self, show_popups: bool = False) -> bool:
-        """Run the event generator (works both as .py and as PyInstaller EXE)."""
-        try:
-            self.log("Running event generator...")
-
-            # If running as EXE, call the module directly (no external python process).
-            if getattr(sys, "frozen", False):
-                try:
-                    import step3_generate_events
-                except Exception as e:
-                    self.log(f"✗ Event generator import failed inside EXE: {e}")
-                    return False
-
-                buf = io.StringIO()
-                try:
-                    with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
-                        if hasattr(step3_generate_events, "main"):
-                            old_argv = sys.argv
-                            try:
-                                sys.argv = ["step3_generate_events.py"]
-                                if show_popups:
-                                    sys.argv.append("--show-popups")
-                                step3_generate_events.main()
-                            finally:
-                                sys.argv = old_argv
-                            #step3_generate_events.main()
-                        else:
-                            raise RuntimeError("step3_generate_events.main() not found")
-                except Exception as e:
-                    self.log(f"✗ Event generator failed inside EXE: {e}")
-                    out = buf.getvalue().strip()
-                    if out:
-                        self.log(out)
-                    return False
-
-                out = buf.getvalue().strip()
-                if out:
-                    # Keep your summary lines plus full output for debugging
-                    for line in out.splitlines():
-                        if ("Generated events for" in line) or ("Updated" in line):
-                            self.log(f"  {line.strip()}")
-                        else:
-                            self.log(line)
-
-                self.log("✓ Event generator completed")
-                return True
-
-            # Running as script: use the current interpreter, not "python"
-            cmd = [sys.executable, "step3_generate_events.py"]
-            if show_popups:
-                cmd.append("--show-popups")
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=60
-            )
-
-            if result.stdout:
-                for line in result.stdout.splitlines():
-                    if ("Generated events for" in line) or ("Updated" in line):
-                        self.log(f"  {line.strip()}")
-                    else:
-                        self.log(line)
-            if result.stderr:
-                for line in result.stderr.splitlines():
-                    self.log(line)
-
-            if result.returncode == 0:
-                self.log("✓ Event generator completed")
-                return True
-
-            self.log(f"✗ Event generator failed (exit code {result.returncode})")
-            return False
-
-        except subprocess.TimeoutExpired:
-            self.log("✗ Event generator timeout")
-            return False
-        except Exception as e:
-            self.log(f"✗ Event generator error: {e}")
-            return False
-    
-    def process_changes(self):
-        """Process detected changes"""
+    def _process_campaigns(self):
+        """Run decoder and event generator"""
         if self.processing:
-            self.log("Already processing, skipping...")
             return
         
         self.processing = True
         
         try:
-            self.log("")
-            self.log("="*70)
-            self.log("CHANGES DETECTED - Processing...")
-            self.log("="*70)
+            self.log("📋 Processing campaigns...")
             
-            # Step 1: ALWAYS copy save file to ensure we have latest data
-            # This is critical: even if local copy exists, we want fresh data from IL-2
-            if self.save_file and self.save_file.exists():
-                if self.save_file != Path("campaignsstates.txt"):
-                    # Copying from IL-2 save directory
-                    if not self.copy_save_file():
-                        self.log("✗ Failed to copy save file")
-                        return
-                    self.log(f"✓ Copied latest save from: {self.save_file}")
+            # NO SYNC NEEDED - we read directly from IL-2!
+            
+            # Run decoder with IL-2 path
+            try:
+                import decode_campaign_usersave1
+                if self.campaign_file:
+                    decode_campaign_usersave1.main(states_path=str(self.campaign_file))
                 else:
-                    # Using local copy (offline mode)
-                    self.log("Processing local campaignsstates.txt (offline mode)")
-            else:
-                self.log("✗ No save file found")
-                return
+                    decode_campaign_usersave1.main()  # Fallback for backward compat
+            except Exception as e:
+                self.log(f"Decoder error: {e}")
             
-            # Step 2: Run decoder
-            if not self.run_decoder():
-                self.log("✗ Processing failed at decoder stage")
-                return
+            # Run event generator
+            try:
+                import step3_generate_events
+                
+                # Call with --show-popups to enable popup display
+                import sys
+                old_argv = sys.argv.copy()
+                sys.argv = ['step3_generate_events.py', '--show-popups']
+                
+                try:
+                    step3_generate_events.main()
+                    self.log("✅ Events processed!")
+                finally:
+                    sys.argv = old_argv
+                    
+            except Exception as e:
+                self.log(f"Event generator error: {e}")
             
-            # Step 3: Run event generator
-            self.log(f"[popups] show_popups = {self.game_running} (IL-2 running)")
-            if not self.run_event_generator(show_popups=self.game_running):
-                self.log("✗ Processing failed at event generator stage")
-                return
-            
-            self.log("="*70)
-            self.log("✓ PROCESSING COMPLETE")
-            self.log("="*70)
-            self.log("")
-            
+            # Check for reset campaigns and cleanup popups
+            # IMPORTANT: This must run AFTER event generation because
+            # it modifies campaign_popups_seen.json on disk, and we need
+            # the next event generation cycle to reload the file
+            try:
+                from campaign_reset_checker import cleanup_popups_for_reset_campaigns
+                cleanup_popups_for_reset_campaigns()
+                self.log("✅ Reset cleanup complete")
+            except Exception as e:
+                self.log(f"⚠️  Reset cleanup error: {e}")
+        
         finally:
             self.processing = False
     
-    def check_for_changes(self) -> bool:
-        """Check if save file has changed"""
-        if not self.save_file:
-            return False
-        
-        # Wait for file to be stable
-        if not self.wait_for_file_stable(self.save_file):
-            self.log("Warning: Save file still being written, skipping...")
-            return False
-        
-        current_hash = self.get_file_hash(self.save_file)
-        
-        if current_hash is None:
-            return False
-        
-        if self.last_hash is None:
-            # First check, just record hash
-            self.last_hash = current_hash
-            return False
-        
-        if current_hash != self.last_hash:
-            # File changed!
-            self.last_hash = current_hash
-            return True
-        
-        return False
-    
     def run(self):
-        """Main monitoring loop"""
+        """Start monitoring"""
+        self.log("🚀 Monitor started!")
         
-        if not self.save_file:
-            self.log("ERROR: Cannot find save file. Please:")
-            self.log("  1. Run step1_extract_mission_dates.py first")
-            self.log("  2. Or copy campaignsstates.txt to this directory")
-            return
+        # Show which file we're watching
+        if self.campaign_file:
+            self.log(f"Watching: {self.campaign_file}")
+        else:
+            self.log(f"⚠️  Campaign file not found yet - waiting...")
         
-        # CRITICAL: Copy save file at startup to ensure we have latest data
-        self.log("Initializing...")
-        if self.save_file != Path("campaignsstates.txt"):
-            self.log(f"Copying latest save file from: {self.save_file}")
-            if self.copy_save_file():
-                self.log("✓ Initial save file copied successfully")
-            else:
-                self.log("⚠️ Warning: Failed to copy save file, will use existing local copy")
+        if self.use_file_watcher:
+            self.log(f"⚡ Fast mode: File watcher active (debounce: {self.debounce_seconds}s)")
+        else:
+            self.log(f"🌍 Legacy mode: Polling every {self.check_interval}s")
         
-        self.log("Monitoring started. Press Ctrl+C to stop.")
-        self.log("")
+        # Initial hash from LIVE file
+        if self.campaign_file and self.campaign_file.exists():
+            self.last_hash = self._get_file_hash(self.campaign_file)
         
         try:
             while True:
-                # Check if should exit (IL-2 closed)
-                if self.should_exit():
-                    self.log("")
-                    self.log("="*70)
-                    self.log("IL-2 CLOSED - Exiting in 5 seconds...")
-                    self.log("="*70)
-                    time.sleep(5)
-                    break
-                
                 # Check if IL-2 is running
-                il2_running = self.is_il2_running()
+                self.game_running = self._check_il2_running()
                 
-                if il2_running != self.game_running:
-                    self.game_running = il2_running
-                    if il2_running:
-                        self.log("IL-2 detected running")
+                # Log IL-2 status changes
+                if self.game_running:
+                    if not self.il2_was_running:
+                        self.log("🎮 IL-2 Sturmovik detected!")
+                        self.il2_was_running = True
+                else:
+                    if self.il2_was_running:
+                        self.log("👋 IL-2 Sturmovik closed")
+                        self.il2_was_running = False
+                
+                # Check for file changes
+                if self._has_file_changed():
+                    self.log(f"📝 File changed! (hash: {self.last_hash[:8]}...)")
+                    
+                    if self.use_file_watcher:
+                        # File watcher mode - use debounce
+                        self.pending_change = True
+                        self.debounce_timer = time.time()
                     else:
-                        self.log("IL-2 not running")
+                        # Legacy mode - process immediately
+                        self._process_campaigns()
                 
-                # Check for changes (even if IL-2 not running - useful for testing)
+                # Process after debounce (file watcher mode only)
+                if self.pending_change and (time.time() - self.debounce_timer) >= self.debounce_seconds:
+                    self._process_campaigns()
+                    self.pending_change = False
                 
-                # Check 1: campaignsstates.txt changes (mission progress)
-                if self.check_for_changes():
-                    self.process_changes()
-                
-                # Check 2: Campaigns folder changes (new/removed campaigns or missions)
-                current_campaigns_hash = self.get_campaigns_folder_hash()
-                if current_campaigns_hash and current_campaigns_hash != self.last_campaigns_hash:
-                    if self.last_campaigns_hash is not None:  # Skip on first check
-                        # Folder changed - refresh and validate
-                        new_campaigns = self.refresh_mission_dates()
-                        if new_campaigns:
-                            self.show_country_validation_gui(new_campaigns)
-                    self.last_campaigns_hash = current_campaigns_hash
-                
-                # Wait before next check
+                # Sleep
                 time.sleep(self.check_interval)
-                
+        
         except KeyboardInterrupt:
-            self.log("")
-            self.log("="*70)
-            self.log("MONITOR STOPPED BY USER")
-            self.log("="*70)
+            self.log("\n👋 Monitor stopped by user")
+        except Exception as e:
+            self.log(f"\n❌ Monitor error: {e}")
+            import traceback
+            traceback.print_exc()
+            raise
 
 
 def main():
     """Main entry point"""
     import argparse
     
-    parser = argparse.ArgumentParser(
-        description='IL-2 Campaign Monitor - Automatic event generation'
-    )
-    parser.add_argument(
-        '--interval',
-        type=int,
-        default=10,
-        help='Check interval in seconds (default: 10)'
-    )
+    parser = argparse.ArgumentParser(description='IL-2 Campaign Monitor')
+    parser.add_argument('--interval', type=int, default=1,
+                       help='Check interval in seconds (default: 1)')
+    parser.add_argument('--legacy', action='store_true',
+                       help='Use legacy polling mode instead of fast file watcher')
     
     args = parser.parse_args()
     
-    monitor = CampaignMonitor(check_interval=args.interval)
+    monitor = CampaignMonitor(
+        check_interval=args.interval,
+        use_file_watcher=not args.legacy
+    )
+    
     monitor.run()
 
 

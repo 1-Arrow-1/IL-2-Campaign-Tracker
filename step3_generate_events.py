@@ -18,7 +18,8 @@ Files needed:
     - object_categories.yaml (for object classification)
 """
 
-import json
+import json, os
+from collections import defaultdict
 import yaml
 import shutil
 import sys
@@ -26,31 +27,276 @@ import subprocess
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
-import re
+import re as regex
 import argparse
 
 POPUP_SEEN_FILE = Path("campaign_popups_seen.json")
 
+# Safety guard: ensure regex module alias is valid
+try:
+    _ = regex.sub
+except Exception:
+    import re as regex
+    
+# =======================================================================
+#  GLOBAL KILL MAPPING  (used by mission & campaign summary tables)
+# =======================================================================
+KILL_MAPPING = {
+    "Aircraft": {
+        "Light": "killLightPlane",
+        "Medium": "killMediumPlane",
+        "Heavy": "killHeavyPlane",
+        "Parked": "killStaticPlane",
+        "Balloons": "killMediumAerostat",
+    },
+    "Vehicles": {
+        "Transport": "killTransportVehicle",
+        "Armored (Light)": "killLightArmoredVehicle",
+        "Armored (Medium)": "killMediumArmoredVehicle",
+        "Armored (Heavy)": "killHeavyArmoredVehicle",
+    },
+    "Railroad": {
+        "Locomotives": "killLocomotive",
+        "Railroad Cars": "killRailroadCarriage",
+        "Station Facilities": "killRailroadStation",
+    },
+    "Armaments": {
+        "Machine Guns": "killMachinegun",
+        "Cannons": "killCannon",
+        "AAA Guns": "killAAAGun",
+        "Rocket Launchers": "killRocketLauncher",
+        "Searchlights": "killSearchlight",
+        "Radars": "killRadar",
+    },
+    "Buildings": {
+        "Residential<br>Buildings": "killResidentalBuilding",
+        "Facilities": "killFacility",
+        "Bridges": "killBridge",
+    },
+    "Marine": {
+        "Light": "killLightShip",
+        "Cargo": "killLargeCargoShip",
+        "Submarines": "killSubmarine",
+        "Destroyers": "killDestroyerShip",
+    },
+}
+
+def _load_decoded_campaign(decoded_path: str) -> dict:
+    if not os.path.exists(decoded_path):
+        print(f"⚠️  campaigns_decoded.json not found at {decoded_path}")
+        return {}
+    try:
+        with open(decoded_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"❌ Error reading decoded campaign file: {e}")
+        return {}
+
+def generate_mission_combat_results_html(mission_id: str, decoded_data: dict, game_directory: str = None) -> str:
+    """
+    Creates Combat-Results table for a specific mission (for PDF debrief).
+    Matches the in-game layout with icons and shows ALL categories (even 0 kills).
+    """
+    stats = decoded_data.get("characterStatisticsByFileName", {}).get(mission_id, {})
+    if not stats:
+        return "<p>Combat data not available for this mission.</p>"
+    
+    # Calculate totals per category
+    category_totals = {}
+    for category, subcats in KILL_MAPPING.items():
+        total = sum(stats.get(key, 0) for key in subcats.values())
+        category_totals[category] = total
+    
+    # Build HTML matching screenshot layout
+    html = []
+    html.append('<div class="combat-results-grid">')
+    
+    # Category headers with icons and totals
+    html.append('<div class="category-headers">')
+    for category in KILL_MAPPING.keys():
+        icon_file = f"icon_{category.lower()}.png"
+        if game_directory:
+            icon_path = "file:///" + game_directory.replace("\\", "/") + "/data/swf/CampaignRanksAwards/Misc/" + icon_file
+        else:
+            icon_path = f"data/swf/CampaignRanksAwards/Misc/{icon_file}"
+        
+        total = category_totals[category]
+        html.append(f'<div class="category-col">')
+        html.append(f'  <div class="category-icon"><img src="{icon_path}" width="48" height="48"/></div>')
+        html.append(f'  <div class="category-total">{total}</div>')
+        html.append(f'  <div class="category-name">{category}</div>')
+        html.append(f'</div>')
+    html.append('</div>')
+    
+    # Subcategories - BUILD COLUMNS, NOT ROWS!
+    html.append('<div class="subcategory-columns">')
+    
+    for category, subcats in KILL_MAPPING.items():
+        html.append('<div class="subcat-column">')
+        for subcat, key in subcats.items():
+            count = stats.get(key, 0)
+            html.append(f'<div class="subcat-row">')
+            html.append(f'  <span class="subcat-name">{subcat}</span>')
+            html.append(f'  <span class="subcat-value">{count}</span>')
+            html.append(f'</div>')
+        html.append('</div>')
+    
+    html.append('</div>')
+    html.append('</div>')
+    
+    return "\n".join(html)
+
+def generate_campaign_summary_combat_results_html(decoded_campaign_data: dict, game_directory: str = None) -> str:
+    """
+    Generate cumulative combat results for entire campaign.
+    decoded_campaign_data should be the campaign data from campaigns_decoded.json[campaign_name]
+    """
+    from collections import defaultdict
+    
+    stats_by_mission = decoded_campaign_data.get("characterStatisticsByFileName", {})
+    
+    if not stats_by_mission:
+        return "<p>No combat data available.</p>"
+    
+    # Aggregate ALL missions
+    totals = defaultdict(lambda: defaultdict(int))
+    for mission_id, mission_stats in stats_by_mission.items():
+        for category, subcats in KILL_MAPPING.items():
+            for subcat, key in subcats.items():
+                totals[category][subcat] += mission_stats.get(key, 0)
+    
+    # Calculate category totals
+    category_totals = {}
+    for category, subcats in KILL_MAPPING.items():
+        total = sum(totals[category].get(subcat, 0) for subcat in subcats.keys())
+        category_totals[category] = total
+    
+    # Build HTML (same layout as mission combat results)
+    html = []
+    html.append('<div class="combat-results-grid">')
+    
+    # Category headers with icons and totals
+    html.append('<div class="category-headers">')
+    for category in KILL_MAPPING.keys():
+        icon_file = f"icon_{category.lower()}.png"
+        if game_directory:
+            icon_path = "file:///" + game_directory.replace("\\", "/") + "/data/swf/CampaignRanksAwards/Misc/" + icon_file
+        else:
+            icon_path = f"data/swf/CampaignRanksAwards/Misc/{icon_file}"
+        
+        total = category_totals.get(category, 0)
+        html.append(f'<div class="category-col">')
+        html.append(f'  <div class="category-icon"><img src="{icon_path}" width="48" height="48"/></div>')
+        html.append(f'  <div class="category-total">{total}</div>')
+        html.append(f'  <div class="category-name">{category}</div>')
+        html.append(f'</div>')
+    html.append('</div>')
+    
+    # Subcategories - BUILD COLUMNS, NOT ROWS!
+    html.append('<div class="subcategory-columns">')
+    
+    for category, subcats in KILL_MAPPING.items():
+        html.append('<div class="subcat-column">')
+        for subcat, key in subcats.items():
+            count = totals[category].get(subcat, 0)
+            html.append(f'<div class="subcat-row">')
+            html.append(f'  <span class="subcat-name">{subcat}</span>')
+            html.append(f'  <span class="subcat-value">{count}</span>')
+            html.append(f'</div>')
+        html.append('</div>')
+    
+    html.append('</div>')
+    html.append('</div>')
+    
+    return "\n".join(html)
+
 
 def load_popup_seen() -> dict:
-    """Load already-shown popup event keys. Returns dict: {campaign_name: [keys...]}."""
+    """
+    Load already-shown popup event keys. Returns dict: {campaign_name: [keys...]}.
+    
+    ✅ IMPROVED: Better error handling and validation
+    """
     if not POPUP_SEEN_FILE.exists():
         return {}
+    
     try:
         with open(POPUP_SEEN_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
-        return data if isinstance(data, dict) else {}
-    except Exception:
+        
+        # ✅ Validate structure
+        if not isinstance(data, dict):
+            print(f"[popups] Warning: Invalid popup state structure, resetting")
+            return {}
+        
+        # ✅ Validate each campaign's data
+        validated_data = {}
+        for campaign_name, events in data.items():
+            if isinstance(events, list):
+                validated_data[campaign_name] = events
+            else:
+                print(f"[popups] Warning: Invalid events for '{campaign_name}', skipping")
+        
+        return validated_data
+        
+    except json.JSONDecodeError as e:
+        print(f"[popups] ERROR: Corrupted popup state file: {e}")
+        print(f"[popups] Creating backup and resetting...")
+        
+        # ✅ Backup corrupted file
+        backup_path = POPUP_SEEN_FILE.with_suffix('.corrupted')
+        try:
+            shutil.copy2(POPUP_SEEN_FILE, backup_path)
+            print(f"[popups] Corrupted file backed up to: {backup_path}")
+        except Exception:
+            pass
+        
+        return {}
+    
+    except Exception as e:
+        print(f"[popups] Warning: Could not load popup state: {e}")
         return {}
 
 
 def save_popup_seen(data: dict) -> None:
-    """Save already-shown popup event keys."""
+    """
+    Save already-shown popup event keys.
+    
+    ✅ IMPROVED: Uses atomic write to prevent corruption
+    
+    How atomic write works:
+    1. Write to temporary file
+    2. If successful, replace original file in one operation
+    3. If crash happens during write, original file stays intact
+    """
     try:
-        with open(POPUP_SEEN_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, sort_keys=True)
+        # ✅ Validate input
+        if not isinstance(data, dict):
+            print(f"[popups] ERROR: Invalid data type for popup state (expected dict, got {type(data).__name__})")
+            return
+        
+        # ✅ FIX: Write to temporary file first (atomic write pattern)
+        tmp_file = POPUP_SEEN_FILE.with_suffix('.tmp')
+        
+        with open(tmp_file, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, sort_keys=True, ensure_ascii=False)
+        
+        # ✅ Atomic replace: if we got here, the write was successful
+        # This is atomic on most filesystems (POSIX rename, Windows MoveFileEx)
+        tmp_file.replace(POPUP_SEEN_FILE)
+        
+        # Success - no print needed (too verbose)
+        
     except Exception as e:
-        print(f"[popups] Warning: could not save {POPUP_SEEN_FILE}: {e}")
+        print(f"[popups] ERROR: Could not save popup state: {e}")
+        
+        # ✅ Cleanup temp file if it exists
+        try:
+            tmp_file = POPUP_SEEN_FILE.with_suffix('.tmp')
+            if tmp_file.exists():
+                tmp_file.unlink()
+        except Exception:
+            pass
 
 def is_il2_running() -> bool:
     """
@@ -109,7 +355,7 @@ def smart_mission_sort_key(mission_id: str):
         return (int(mission_id), "")
     
     # Try to extract leading digits (handles "01a", "02b", "1943-07-04a", etc.)
-    match = re.match(r'^(\d+)(.*)$', mission_id)
+    match = regex.match(r'^(\d+)(.*)$', mission_id)
     if match:
         return (int(match.group(1)), match.group(2))
     
@@ -128,7 +374,11 @@ class EventGenerator:
         """
         
         self.dry_run = dry_run
-        self.show_popups = show_popups
+        self.show_popups = bool(show_popups)
+        
+        # --- NEW: default output mode (ingame or pdf)
+        # Controls whether Combat Results or Flight Log is rendered
+        self.mode = "ingame"  # Default: used when running in tracker/monitor mode
         
         # Load configuration
         # Try external file first (for user editing), then embedded
@@ -160,9 +410,8 @@ class EventGenerator:
 
         self.enable_popups = bool(self.config.get("enable_popups", True))
         print(f"[popups] enabled = {self.enable_popups}")
-        # ✅ FIX: make sure popups are actually shown if enabled in config
-        if self.enable_popups:
-            self.show_popups = True
+        if not self.enable_popups:
+            self.show_popups = False
         # 🧩 Debug line to confirm popup activation
         print(f"[DEBUG] Popups aktiviert: {self.show_popups}")
         self.popup_seen = load_popup_seen()
@@ -206,10 +455,15 @@ class EventGenerator:
                 from step4_process_mission_logs import MissionLogProcessor
                 snapshot_dt = None
                 try:
-                    states_path = Path("campaignsstates.txt")
-                    index_path = Path("campaignsstates_hash_index.json")
+                    # Try to find states file in IL-2 directory
+                    states_path, index_path = self._find_il2_states_path()
+                    
+                    # Fallback: try CWD (backward compatibility)
+                    if not states_path:
+                        states_path = Path("campaignsstates.txt")
+                        index_path = Path("campaignsstates_hash_index.json")
 
-                    if states_path.exists() and index_path.exists():
+                    if states_path and states_path.exists() and index_path and index_path.exists():
                         import hashlib
                         h = hashlib.md5(states_path.read_bytes()).hexdigest()
                         with open(index_path, "r", encoding="utf-8") as f:
@@ -217,10 +471,19 @@ class EventGenerator:
                         
                         print(f"[snapshot] hash={h} → {'FOUND' if h in idx else 'NOT FOUND'} in index")
 
-                        ts = idx.get(h)
-                        if ts:
-                            snapshot_dt = datetime.strptime(ts, "%Y%m%d_%H%M%S")
-                except Exception:
+                        entry = idx.get(h)
+                        if entry:
+                            # New format: entry is dict with timestamp
+                            if isinstance(entry, dict):
+                                ts = entry.get("timestamp")
+                            else:
+                                # Old format: entry is timestamp string
+                                ts = entry
+                            
+                            if ts:
+                                snapshot_dt = datetime.strptime(ts, "%Y%m%d_%H%M%S")
+                except Exception as e:
+                    print(f"[snapshot] Error during snapshot lookup: {e}")
                     snapshot_dt = None
                     
                 # ✅ ADD LOGGING RIGHT HERE
@@ -244,6 +507,99 @@ class EventGenerator:
         self.mission_dates_lower = {
             k.lower(): (k, v) for k, v in self.mission_dates.items() if k != 'game_directory'
         }
+        
+    def _find_il2_states_path(self):
+        """
+        Find campaignsstates.txt and hash index in IL-2 directory
+        
+        Returns:
+            (states_path, index_path) tuple, or (None, None) if not found
+        """
+        if not self.game_directory:
+            return None, None
+        
+        game_dir = Path(self.game_directory)
+        usersave_dir = game_dir / 'data' / 'swf' / 'il2' / 'usersave'
+        
+        if not usersave_dir.exists():
+            return None, None
+        
+        for user_dir in usersave_dir.iterdir():
+            if not user_dir.is_dir():
+                continue
+            
+            potential = user_dir / 'campaign' / 'campaignsstates.txt'
+            if potential.exists():
+                index_path = potential.parent / "campaignsstates_hash_index.json"
+                return potential, index_path
+        
+        return None, None
+    
+    def set_mode(self, mode: str):
+        """
+        Set the output mode for HTML generation.
+        mode can be:
+          - "ingame":  for on-screen IL-2 tracker (Flight Log visible)
+          - "pdf":     for PDF export (Combat Results visible)
+        """
+        if mode not in ["ingame", "pdf"]:
+            raise ValueError(f"Invalid mode: {mode}")
+        self.mode = mode
+        print(f"[EventGenerator] Mode set to: {self.mode}")
+    
+    def _save_campaign_completion_state(self):
+        """Save current completion state of all campaigns for next run comparison"""
+        state = {}
+        for campaign_name, data in self.save_data.items():
+            completed = list(data.get('completedMissionsByFileName', {}).keys())
+            state[campaign_name] = sorted(completed)
+        
+        try:
+            with open('campaign_completion_state.json', 'w', encoding='utf-8') as f:
+                json.dump(state, f, indent=2)
+            print(f"[state] Saved completion state for {len(state)} campaigns")
+        except Exception as e:
+            print(f"[state] Warning: Could not save completion state: {e}")
+    
+    def _load_campaign_completion_state(self) -> dict:
+        """Load previous completion state to detect which campaigns changed"""
+        try:
+            with open('campaign_completion_state.json', 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except FileNotFoundError:
+            print(f"[state] No previous state found - first run or state file missing")
+            return {}
+        except Exception as e:
+            print(f"[state] Warning: Could not load completion state: {e}")
+            return {}
+    
+    def _get_campaigns_with_new_missions(self) -> set:
+        """
+        Return set of campaign names that have new completions since last run.
+        This is used to filter popups - only show popups for campaigns that actually changed.
+        """
+        prev_state = self._load_campaign_completion_state()
+        changed = set()
+        
+        for campaign_name, data in self.save_data.items():
+            current_missions = set(data.get('completedMissionsByFileName', {}).keys())
+            prev_missions = set(prev_state.get(campaign_name, []))
+            
+            # Campaign changed if mission list is different
+            if current_missions != prev_missions:
+                changed.add(campaign_name)
+                new_count = len(current_missions - prev_missions)
+                removed_count = len(prev_missions - current_missions)
+                
+                if new_count > 0:
+                    print(f"[state] {campaign_name}: +{new_count} new mission(s)")
+                if removed_count > 0:
+                    print(f"[state] {campaign_name}: -{removed_count} removed mission(s)")
+        
+        if not changed:
+            print(f"[state] No campaign changes detected")
+        
+        return changed    
     
     def extract_mission_datetime(self, campaign_name: str, mission_id: str) -> tuple[Optional[str], Optional[str]]:
         """
@@ -296,13 +652,13 @@ class EventGenerator:
                 
                 # Look for: Date: 4 November, 1943<br>
                 date_str = None
-                date_match = re.search(r'Date:\s*([^<\r\n]+)', content, re.IGNORECASE)
+                date_match = regex.search(r'Date:\s*([^<\r\n]+)', content, regex.IGNORECASE)
                 if date_match:
                     date_str = date_match.group(1).strip()
                 
                 # Look for: Time: 9:45<br> or Time: 09:45<br>
                 time_str = None
-                time_match = re.search(r'Time:\s*(\d{1,2}:\d{2})', content, re.IGNORECASE)
+                time_match = regex.search(r'Time:\s*(\d{1,2}:\d{2})', content, regex.IGNORECASE)
                 if time_match:
                     time_raw = time_match.group(1)
                     # Ensure HH:MM format
@@ -1325,11 +1681,9 @@ class EventGenerator:
                 'generalleutnant.png',
                 'generalmajor.png',
                 'generalfeldmarschall.png',
-                'generaloberst.png',
                 'oberst.png',
-                'stabsfeldwebel.png',
-                'gefreiter.png',
             ],
+            
             'Britain': [
                 # Only these 5 British ranks
                 'flight_lieutenant.png',
@@ -1337,7 +1691,11 @@ class EventGenerator:
                 'pilot_officer.png',
                 'squadron_leader.png',
                 'wing_commander.png',
+                'group_captain.png',
+                'air_commodore.png',
+                'air_vice_marshal.png',
             ],
+            
             'US': [  # NOTE: Changed from 'USA' to 'US' to match country_folder!
                 # All US ranks EXCEPT first_sergeant.png
                 'second_lieutenant.png',
@@ -1351,12 +1709,8 @@ class EventGenerator:
                 'brigadier_general.png',
                 'colonel.png',
                 'major_general.png',
-                'lieutenant_general.png',
-                'general.png',
-                'master_sergeant.png',
-                'technical_sergeant.png',
-                'staff_sergeant.png',
             ],
+            
             'USSR/late': [
                 # ALL USSR/late ranks need rotation
                 'sub_colonel.png',
@@ -1367,11 +1721,9 @@ class EventGenerator:
                 'lieutenant_vvs.png',
                 'junior_lieutenant.png',
                 'captain_vvs.png',
-                'colonel_vvs.png',
-                'major_general_vvs.png',
-                'lieutenant_general_vvs.png',
-                'general_vvs.png',
-                'marshal_vvs.png',
+                'colonel.png',
+                'major_general.png',
+                'lt_general.png',
             ],
             # USSR/early: NONE - not in dictionary, so will return False
         }
@@ -1505,7 +1857,36 @@ class EventGenerator:
         if not debriefings:
             return ("", {})
         
-        html_lines = ["<u>Mission Debriefings</u><br>", "<br>"]
+        # Load decoded campaign data ONCE if in PDF mode (performance optimization)
+        decoded_data = None
+        if self.mode == "pdf":
+            # Look for campaigns_decoded.json in the tracker root directory
+            # (not in reports/ subdirectory where PDFs are saved)
+            import os
+            decoded_path = os.path.abspath("campaigns_decoded.json")
+            all_decoded = _load_decoded_campaign(decoded_path)
+            
+            if all_decoded:
+                # Try exact match first
+                if campaign_name in all_decoded:
+                    decoded_data = all_decoded[campaign_name]
+                    print(f"  ✓ Loaded combat data for '{campaign_name}'")
+                else:
+                    # Try case-insensitive match
+                    campaign_name_lower = campaign_name.lower()
+                    for key, value in all_decoded.items():
+                        if key.lower() == campaign_name_lower:
+                            decoded_data = value
+                            print(f"  ✓ Loaded combat data for '{campaign_name}' (matched as '{key}')")
+                            break
+                    
+                    if not decoded_data:
+                        print(f"  ⚠️  Warning: No decoded data found for campaign '{campaign_name}'")
+                        print(f"      Available campaigns in decoded file: {', '.join(all_decoded.keys())}")
+            else:
+                print(f"  ⚠️  Warning: campaigns_decoded.json not found at: {decoded_path}")
+        
+        html_lines = ["<b>Mission Debriefings</b><br>", "<br>"]
         
         # Sort missions in order
         sorted_missions = sorted(debriefings.keys(), key=smart_mission_sort_key)
@@ -1513,18 +1894,11 @@ class EventGenerator:
         for mission_id in sorted_missions:
             data = debriefings[mission_id]
             
-            # DEBUG: Show which mission we're processing
             print(f"  Processing debriefing for Mission {mission_id}...")
             
-            # Extract mission date and start time from .eng file
+            # Extract mission date and start time
             mission_date, mission_start_time = self.extract_mission_datetime(campaign_name, mission_id)
-            
-            # Use mission date from .eng if available, otherwise show "No date"
-            if mission_date:
-                date_str = mission_date
-            else:
-                # No date in mission file - don't use timestamp!
-                date_str = None  # Will skip date in header
+            date_str = mission_date if mission_date else None
             
             # Summary data
             aircraft = data['player']['aircraft']
@@ -1533,24 +1907,15 @@ class EventGenerator:
             aircraft_dmg = data['summary'].get('aircraft_damage', 0)
             pilot_dmg = data['summary'].get('pilot_damage', 0)
             
-            # Kills summary
-            air_kills = data['summary']['air_kills']
-            air_kills_flying = data['summary'].get('air_kills_flying', air_kills)
-            air_kills_parked = data['summary'].get('air_kills_parked', 0)
-            ground_kills = data['summary']['ground_kills']
-            naval_kills = data['summary']['naval_kills']
-            
-            # Mission header with box (wrapped in div to prevent page breaks)
+            # Mission header
             html_lines.append(f'<div class="mission-box">')
             html_lines.append(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>")
-            # Only show date if available (from mission file)
             if date_str:
                 html_lines.append(f"<b>MISSION {mission_id} | {date_str}</b><br>")
             else:
                 html_lines.append(f"<b>MISSION {mission_id}</b><br>")
             html_lines.append(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>")
             
-            # Summary line with status and damage
             summary_parts = [f"Aircraft: {aircraft}", f"Duration: {duration}", f"Status: {status}"]
             if aircraft_dmg > 0:
                 summary_parts.append(f"Aircraft Dmg: {aircraft_dmg}%")
@@ -1559,122 +1924,58 @@ class EventGenerator:
             html_lines.append(f"{' | '.join(summary_parts)}<br>")
             html_lines.append(f"<br>")
             
-            # Combat results - show parked separately if present
-            html_lines.append(f"<b>COMBAT RESULTS</b><br>")
-            if air_kills_parked > 0:
-                html_lines.append(f"Air: {air_kills} ({air_kills_flying} flying, {air_kills_parked} parked)  |  Ground: {ground_kills}  |  Naval: {naval_kills}<br>")
-            else:
-                html_lines.append(f"Air: {air_kills}  |  Ground: {ground_kills}  |  Naval: {naval_kills}<br>")
-            html_lines.append(f"<br>")
-            
-            # Flight log with detailed events
-            html_lines.append(f"<b>FLIGHT LOG</b><br>")
-            
-            # Check if player bailed out - suppress damage events after bailout
-            # Use final_state from summary instead of tracking during loop
-            mission_ended_in_bailout = "Bailout" in status
-            
-            for event in data.get('events', [])[:25]:  # Max 25 events
-                time = event.get('time', '')
-                event_type = event.get('type', event.get('event', ''))
-                target = event.get('target', '')
-                altitude = event.get('altitude')
-                distance = event.get('distance')
-                damage = event.get('damage')
-                
-                # Convert mission time to real time if we have start time
-                display_time = time
-                if mission_start_time and time:
-                    try:
-                        # Parse mission time (e.g., "00:23:45")
-                        time_parts = time.split(':')
-                        if len(time_parts) == 3:
-                            hours, minutes, seconds = map(int, time_parts)
-                            mission_duration = timedelta(hours=hours, minutes=minutes, seconds=seconds)
-                            
-                            # Parse start time (e.g., "09:45")
-                            start_parts = mission_start_time.split(':')
-                            if len(start_parts) == 2:
-                                start_hour, start_min = map(int, start_parts)
-                                start_dt = datetime(2000, 1, 1, start_hour, start_min)
-                                
-                                # Add mission duration to start time
-                                real_time = start_dt + mission_duration
-                                display_time = real_time.strftime('%H:%M:%S')  # Include seconds
-                    except Exception:
-                        # Fallback to mission time if conversion fails
-                        pass
-                
-                # Format event based on type
-                if event_type == "Kill":
-                    # Kill event with altitude
-                    details = []
-                    if altitude is not None:
-                        details.append(f"Alt: {altitude}m")
-                    
-                    detail_str = f" ({', '.join(details)})" if details else ""
-                    # Don't truncate target name - show full type
-                    html_lines.append(f"  {display_time}  {target} destroyed{detail_str}<br>")
-                
-                elif event_type == "Damage Taken":
-                    # Skip ALL damage events if mission ended in bailout
-                    if mission_ended_in_bailout:
-                        continue
-                    
-                    # Normal damage event
-                    details = []
-                    
-                    if damage:
-                        details.append(damage)
-                    if altitude is not None:
-                        details.append(f"Alt: {altitude}m")
-                    
-                    detail_str = f" ({', '.join(details)})" if details else ""
-                    html_lines.append(f"  {display_time}  Hit by {target}{detail_str}<br>")
-                
-                elif event_type == "Landing Damage":
-                    # Landing damage (hard landing)
-                    details = []
-                    
-                    if damage:
-                        details.append(damage)
-                    if altitude is not None:
-                        details.append(f"Alt: {altitude}m")
-                    
-                    detail_str = f" ({', '.join(details)})" if details else ""
-                    html_lines.append(f"  {display_time}  Landing damage{detail_str}<br>")
-                
-                elif event_type in ["Takeoff", "Landing", "Crash", "Bailout"]:
-                    # Takeoff/Landing/Crash/Bailout with altitude
-                    # Check if it's a hard landing
-                    hard_landing = event.get('hard_landing', False)
-                    event_label = f"{event_type} (Hard)" if hard_landing and event_type == "Landing" else event_type
-                    
-                    detail_str = f" ({altitude}m)" if altitude is not None else ""
-                    html_lines.append(f"  {display_time}  {event_label}{detail_str}<br>")
-                
+            # ======================================================================
+            # Conditional Rendering: PDF vs In-Game
+            # ======================================================================
+            if self.mode == "pdf":
+                # PDF mode → show Combat Results from campaigns_decoded.json
+                if decoded_data:
+                    html_lines.append(generate_mission_combat_results_html(mission_id, decoded_data, self.game_directory))
                 else:
-                    # Other events
-                    html_lines.append(f"  {display_time}  {event_type}<br>")
+                    html_lines.append(f"<p><i>Combat data not available for Mission {mission_id}</i></p>")
+            else:
+                # In-Game mode → show Flight Log instead of Combat Results
+                html_lines.append(f"<b>FLIGHT LOG</b><br>")
+                mission_ended_in_bailout = "Bailout" in status
+
+                for event in data.get('events', [])[:25]:  # Max 25 events
+                    time = event.get('time', '')
+                    event_type = event.get('type', event.get('event', ''))
+                    target = event.get('target', '')
+                    altitude = event.get('altitude')
+                    damage = event.get('damage')
+
+                    if event_type == "Kill":
+                        details = f" (Alt: {altitude}m)" if altitude else ""
+                        html_lines.append(f"{time}  {target} destroyed{details}<br>")
+                    elif event_type == "Damage Taken":
+                        if mission_ended_in_bailout:
+                            continue
+                        html_lines.append(f"{time}  Hit by {target}<br>")
+                    elif event_type in ["Takeoff", "Landing", "Crash", "Bailout"]:
+                        html_lines.append(f"{time}  {event_type}<br>")
+                    else:
+                        html_lines.append(f"{time}  {event_type}<br>")
             
-            html_lines.append(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>")
-            html_lines.append("</div>")  # Close mission-box
-            html_lines.append("<br>")  # Spacing between missions
+            # ======================================================================
+            # End of mission box
+            # ======================================================================
+            #html_lines.append(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>")
+            html_lines.append("</div>")
+            html_lines.append("<br>")
         
         return ("\n".join(html_lines), debriefings)
+
     
     def generate_events_html(self, events: List[Dict], country: str, for_pdf: bool = False) -> str:
-        """Generate complete Events HTML section
-        
-        Args:
-            events: List of event dictionaries
-            country: Country name
-            for_pdf: If True, use base64-embedded images for PDF compatibility
-        """
         if not events:
             return ""
         
-        html_lines = ["<u>Events</u><br>"]
+        # Page break before events in PDF mode
+        if for_pdf:
+            html_lines = ['<div style="page-break-before: always;"></div>', "<b>Events</b><br>"]
+        else:
+            html_lines = ["<b>Events</b><br>"]
         
         for event in events:
             html_lines.append(self.format_event_html(event, country, for_pdf=for_pdf))
@@ -1684,19 +1985,12 @@ class EventGenerator:
     def update_campaign_info_file(self, campaign_name: str, events_html: str) -> bool:
         """
         Update campaign info.locale=eng.txt with Events section
-        
-        Args:
-            campaign_name: Campaign folder name (e.g., 'kerch')
-            events_html: Generated HTML for Events section
-            
-        Returns:
-            True if successful, False otherwise
+        Uses regex.sub for robust removal of ALL tracker content (including duplicates)
         """
         if not self.game_directory:
             print(f"  Error: No game directory configured")
             return False
         
-        # Build path to info file
         info_file = Path(self.game_directory) / "data" / "Campaigns" / campaign_name / "info.locale=eng.txt"
         
         if not info_file.exists():
@@ -1709,104 +2003,96 @@ class EventGenerator:
             return True
         
         try:
-            # Create backup
+            # Backup once
             backup_file = info_file.with_suffix('.txt.backup')
-            if not backup_file.exists():  # Only create backup if it doesn't exist
+            if not backup_file.exists():
                 shutil.copy(info_file, backup_file)
                 print(f"  Created backup: {backup_file.name}")
             
-            # Read existing content and detect encoding
-            # Read raw bytes to detect encoding safely
+            # Encoding detection
             raw = info_file.read_bytes()
-
             if raw.startswith(b"\xef\xbb\xbf"):
                 detected_encoding = "utf-8-sig"
-            elif raw.startswith(b"\xff\xfe") or raw.startswith(b"\xfe\xff"):
+            elif raw.startswith((b"\xff\xfe", b"\xfe\xff")):
                 detected_encoding = "utf-16"
             else:
                 detected_encoding = "utf-8"
-
+            
             content = raw.decode(detected_encoding)
+            old_len = len(content)
             
-            # Check if Events section already exists
-            # We need to be careful to preserve any content AFTER Events section
-            # (could be modded campaigns with custom sections)
+            # ====================================================================
+            # ROBUST CLEANUP: Remove ALL tracker content in ONE regex operation
+            # ====================================================================
+            # Pattern: ANY tracker section header + everything after it
+            # Handles: Mission Debriefings<br>, <u>...</u>, <b>...</b>
+            # [\s\S]*$ = match everything (including newlines) to end of string
             
-            # Strategy: Find and extract content in three parts:
-            # 1. Before Mission Debriefings/Events
-            # 2. Mission Debriefings + Events (we'll replace this)
-            # 3. After Events (we'll preserve this)
+            tracker_pattern = r'(?:Mission Debriefings<br>|<[ub]>Mission Debriefings</[ub]>|<[ub]>Events</[ub]>)[\s\S]*$'
             
-            before_content = content
-            after_events_content = ""
+            cleaned = regex.sub(
+                tracker_pattern,
+                '',
+                content,
+                flags=regex.IGNORECASE
+            )
             
-            # Step 1: Check for and remove Mission Debriefings section
-            if '<u>Mission Debriefings</u>' in content:
-                # Find where Mission Debriefings starts
-                match = re.search(r'<u>Mission Debriefings</u>', content)
-                if match:
-                    before_content = content[:match.start()]
-                    content_after_debriefings = content[match.start():]
-                    
-                    # Check if there's an Events section after Debriefings
-                    if '<u>Events</u>' in content_after_debriefings:
-                        # Find Events section
-                        events_match = re.search(r'<u>Events</u>', content_after_debriefings)
-                        if events_match:
-                            # Check if there's content after Events that's NOT part of Events
-                            content_after_events = content_after_debriefings[events_match.end():]
-                            
-                            # Look for next section marker (starts with <u>)
-                            next_section = re.search(r'<br><br><u>[^<]+</u>', content_after_events)
-                            if next_section:
-                                after_events_content = content_after_events[next_section.start():]
-                    else:
-                        # No Events section, check for content after Debriefings
-                        next_section = re.search(r'<br><br><u>[^<]+</u>', content_after_debriefings)
-                        if next_section:
-                            after_events_content = content_after_debriefings[next_section.start():]
-                    
-                    print(f"  Removed old Mission Debriefings section")
+            removed = old_len - len(cleaned)
+            if removed > 0:
+                print(f"  ✂️  Removed {removed} chars of old tracker content")
+            else:
+                print(f"  ℹ️  No old tracker sections (first run)")
             
-            # Step 2: Check for Events section (if no Debriefings section)
-            elif '<u>Events</u>' in content:
-                # Find where Events starts
-                match = re.search(r'<u>Events</u>', content)
-                if match:
-                    before_content = content[:match.start()]
-                    content_after_events = content[match.end():]
-                    
-                    # Look for next section marker
-                    next_section = re.search(r'<br><br><u>[^<]+</u>', content_after_events)
-                    if next_section:
-                        after_events_content = content_after_events[next_section.start():]
-                
-                print(f"  Removed old Events section")
-
-            # Cleanup trailing whitespace and <br> tags from before_content
-            before_content = before_content.rstrip()
-            while before_content.endswith('<br>'):
-                before_content = before_content[:-4].rstrip()
+            # Cleanup trailing whitespace/<br>
+            cleaned = cleaned.rstrip()
+            while cleaned.endswith('<br>'):
+                cleaned = cleaned[:-4].rstrip()
             
-            # Build new content: before + new events + after (if any)
-            updated_content = before_content + '<br><br>' + events_html
+            # Remove excessive <u> tags from description
+            u_count = cleaned.count('<u>')
+            if u_count > 3:
+                print(f"  🧹 Cleaning {u_count} <u> tags from description...")
+                # Find section headers: <u>text</u><br>
+                headers = regex.findall(r'<u>([^<]+)</u><br>', cleaned)
+                # Remove all <u> tags
+                cleaned = cleaned.replace('<u>', '').replace('</u>', '')
+                # Re-add as <b> for headers
+                for h in headers:
+                    cleaned = cleaned.replace(f'{h}<br>', f'<b>{h}</b><br>', 1)
+                print(f"  ✓ Converted headers to bold")
             
-            if after_events_content:
-                # Preserve content that came after Events section
-                updated_content += after_events_content
-                print(f"  ✓ Preserved content after Events section")
+            # Build final content
+            updated = cleaned + '<br><br>' + events_html
             
-            # Write updated content using SAME encoding as original
-            # This prevents corruption of UTF-16 LE files (common in IL-2)
+            # ====================================================================
+            # VERIFICATION: Count sections in final content
+            # ====================================================================
+            verify_pattern = r'(?:Mission Debriefings<br>|<[ub]>Mission Debriefings</[ub]>|<[ub]>Events</[ub]>)'
+            matches = list(regex.finditer(verify_pattern, updated, regex.IGNORECASE))
+            
+            if len(matches) > 2:
+                print(f"  ⚠️  WARNING: {len(matches)} sections in final content (expected 2)!")
+                print(f"     Positions: {[m.start() for m in matches]}")
+                print(f"     Found: {[m.group() for m in matches]}")
+            elif len(matches) == 2:
+                print(f"  ✓ Verified: 2 sections (Debriefings + Events)")
+            else:
+                print(f"  ℹ️  {len(matches)} section(s) found")
+            
+            # Write with original encoding
             with open(info_file, "w", encoding=detected_encoding, newline="") as f:
-                f.write(updated_content)
+                f.write(updated)
             
-            print(f"  ✓ Updated: {info_file} (encoding: {detected_encoding})")
+            print(f"  ✅ Updated: {info_file.name} ({len(updated)} chars, {detected_encoding})")
             return True
             
         except Exception as e:
-            print(f"  Error updating file: {e}")
+            print(f"  ❌ Error: {e}")
+            import traceback
+            traceback.print_exc()
             return False
+
+
     
     def get_campaign_display_name(self, campaign_name: str) -> str:
         """
@@ -1834,12 +2120,12 @@ class EventGenerator:
             
             # Look for &name="Campaign Display Name"
             # Can be with or without quotes
-            match = re.search(r'&name\s*=\s*"([^"]+)"', content)
+            match = regex.search(r'&name\s*=\s*"([^"]+)"', content)
             if match:
                 return match.group(1)
             
             # Try without quotes
-            match = re.search(r'&name\s*=\s*([^\n&]+)', content)
+            match = regex.search(r'&name\s*=\s*([^\n&]+)', content)
             if match:
                 return match.group(1).strip()
             
@@ -1848,8 +2134,8 @@ class EventGenerator:
         
         return campaign_name
     
-    def generate_campaign_summary_html(self, campaign_name: str, events: List[Dict], 
-                                       debriefings: Dict, country: str, cumulative_stats: Dict = None) -> str:
+    def generate_campaign_summary_html(self, campaign_name: str, events: List[Dict], debriefings: Dict, 
+                                        country: str, cumulative_stats: Dict, decoded_data: dict = None) -> str:
         """
         Generate campaign summary statistics for PDF
         
@@ -2012,26 +2298,11 @@ class EventGenerator:
         
         # Combat Results
         html.append('<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">COMBAT RESULTS</h2>')
-        html.append(f'<table style="width: 100%; margin: 10px 0;">')
-        
-        # total_air already INCLUDES parked kills (it's air_kills from summary which = flying + parked)
-        # So total_air_with_parked is just total_air
-        total_air_with_parked = total_air
-        total_air_flying = total_air - total_air_parked
-        
-        html.append(f'<tr><td style="padding: 5px 0;"><b>Air Victories:</b></td><td style="text-align: right;">{total_air_with_parked}</td></tr>')
-        
-        # Show breakdown if there are parked kills
-        if total_air_parked > 0:
-            html.append(f'<tr><td style="padding: 5px 0 5px 20px; font-size: 10pt; color: #666;">Flying:</td><td style="text-align: right; font-size: 10pt; color: #666;">{total_air_flying}</td></tr>')
-            html.append(f'<tr><td style="padding: 5px 0 5px 20px; font-size: 10pt; color: #666;">Parked:</td><td style="text-align: right; font-size: 10pt; color: #666;">{total_air_parked}</td></tr>')
-        
-        html.append(f'<tr><td style="padding: 5px 0;"><b>Ground Targets:</b></td><td style="text-align: right;">{total_ground}</td></tr>')
-        html.append(f'<tr><td style="padding: 5px 0;"><b>Naval Targets:</b></td><td style="text-align: right;">{total_naval}</td></tr>')
-        html.append(f'<tr><td colspan="2" style="border-top: 1px solid #333; padding: 5px 0;"></td></tr>')
-        html.append(f'<tr><td style="padding: 5px 0;"><b>Total Kills:</b></td><td style="text-align: right;"><b>{total_air_with_parked + total_ground + total_naval}</b></td></tr>')
-        html.append('</table>')
-        
+        if decoded_data:
+            html.append(generate_campaign_summary_combat_results_html(decoded_data, self.game_directory))
+        else:
+            html.append('<p>No combat data available.</p>')
+                
         # Missions Flown
         html.append('<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">MISSIONS FLOWN</h2>')
         html.append(f'<table style="width: 100%; margin: 10px 0;">')
@@ -2087,32 +2358,7 @@ class EventGenerator:
                 html.append(f'<li>{award["name"]}</li>')
             html.append('</ul>')
         
-        # Top Targets
-        html.append('<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">TOP TARGETS DESTROYED</h2>')
         
-        # Air targets
-        if target_counts['air']:
-            html.append('<p style="margin: 10px 0 5px 0;"><b>Air Targets:</b></p>')
-            html.append('<ol style="margin: 0; padding-left: 25px;">')
-            for target, count in sorted(target_counts['air'].items(), key=lambda x: x[1], reverse=True)[:5]:
-                html.append(f'<li>{target} (× {count})</li>')
-            html.append('</ol>')
-        
-        # Ground targets
-        if target_counts['ground']:
-            html.append('<p style="margin: 15px 0 5px 0;"><b>Ground Targets:</b></p>')
-            html.append('<ol style="margin: 0; padding-left: 25px;">')
-            for target, count in sorted(target_counts['ground'].items(), key=lambda x: x[1], reverse=True)[:5]:
-                html.append(f'<li>{target} (× {count})</li>')
-            html.append('</ol>')
-        
-        # Naval targets
-        if target_counts['naval']:
-            html.append('<p style="margin: 15px 0 5px 0;"><b>Naval Targets:</b></p>')
-            html.append('<ol style="margin: 0; padding-left: 25px;">')
-            for target, count in sorted(target_counts['naval'].items(), key=lambda x: x[1], reverse=True)[:5]:
-                html.append(f'<li>{target} (× {count})</li>')
-            html.append('</ol>')
         
         # Campaign Timeline
         if first_mission_date and last_mission_date:
@@ -2130,10 +2376,15 @@ class EventGenerator:
             html.append('</table>')
         
         return '\n'.join(html)
-    
     def export_campaign_to_pdf(self, campaign_name: str, html_content: str) -> bool:
         """
         Export campaign report as PDF
+        
+        ✅ IMPROVED:
+        - Better error handling with specific error messages
+        - Atomic write using temporary file
+        - HTML fallback when PDF fails
+        - Graceful degradation (continues even if PDF fails)
         
         Args:
             campaign_name: Campaign folder name
@@ -2173,15 +2424,19 @@ class EventGenerator:
             print(f"      Download from: https://wkhtmltopdf.org/downloads.html")
             return False
         
-        # Create reports directory if it doesn't exist
+        # ✅ Create reports directory if it doesn't exist
         reports_dir = Path('reports')
-        reports_dir.mkdir(exist_ok=True)
+        try:
+            reports_dir.mkdir(exist_ok=True)
+        except Exception as e:
+            print(f"  ⚠️  Could not create reports directory: {e}")
+            return False
         
         # Get campaign display name from info file
         campaign_display_name = self.get_campaign_display_name(campaign_name)
         
         # Clean campaign name for filename (remove special chars)
-        safe_name = re.sub(r'[^\w\s-]', '', campaign_name).strip().replace(' ', '_')
+        safe_name = regex.sub(r'[^\w\s-]', '', campaign_name).strip().replace(' ', '_')
         pdf_filename = reports_dir / f"{safe_name}_Report.pdf"
 
         # If the target PDF is open/locked, write a fallback instead of failing
@@ -2201,9 +2456,10 @@ class EventGenerator:
     <title>{campaign_display_name} - Campaign Report</title>
     <style>
         body {{
-            font-family: Arial, sans-serif;
+            font-family: 'SpecialElite', monospace, Arial, sans-serif;
             margin: 20px;
             font-size: 10pt;
+        }}
         }}
         h1 {{
             text-align: center;
@@ -2213,6 +2469,96 @@ class EventGenerator:
         .mission-box {{
             page-break-inside: avoid;
             margin-bottom: 10px;
+        }}
+        /* Combat Results Grid Layout */
+        .combat-results-grid {{
+            width: 100%;
+            margin: 20px 0;
+            font-family: 'SpecialElite', monospace;
+        }}
+
+        /* CATEGORY HEADERS */
+        .category-headers {{
+            display: table;
+            width: 100%;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }}
+
+        .category-col {{
+            display: table-cell;
+            width: 16.66%;
+            text-align: center;
+            vertical-align: top;
+            padding: 0 5px;
+        }}
+
+        .category-icon img {{
+            display: block;
+            margin: 0 auto 5px auto;
+        }}
+
+        .category-total {{
+            font-size: 20px;
+            font-weight: bold;
+            margin: 5px 0;
+        }}
+
+        .category-name {{
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }}
+
+        /* SUBCATEGORIES */
+        .subcategory-columns {{
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }}
+
+        .subcat-column {{
+            display: table-cell;
+            width: 16.66%;
+            vertical-align: top;
+            padding: 0 5px;
+            border-right: 1px solid #ddd;
+        }}
+
+        .subcat-column:last-child {{
+            border-right: none;
+        }}
+
+        /* SUBCATEGORY ROWS */
+        .subcat-row {{
+            padding: 3px 5px;
+            min-height: 18px;
+            overflow: hidden;
+        }}
+
+        .subcat-row:last-child {{
+            border-bottom: none;
+        }}
+
+        .subcat-row::after {{
+            content: "";
+            display: table;
+            clear: both;
+        }}
+
+        .subcat-name {{
+            font-size: 9px;
+            color: #666;
+            float: left;
+            max-width: 70%;
+            line-height: 1.2;
+        }}
+
+        .subcat-value {{
+            font-size: 10px;
+            font-weight: bold;
+            float: right;
         }}
     </style>
 </head>
@@ -2238,21 +2584,287 @@ class EventGenerator:
                 'quiet': ''  # Suppress wkhtmltopdf warnings
             }
             
-            # Convert HTML to PDF
-            pdfkit.from_string(full_html, str(pdf_filename), options=options, configuration=config)
+            # ✅ Replace font path placeholder with actual game directory
+            full_html = full_html.replace('GAME_DIR_PLACEHOLDER', self.game_directory.replace('\\', '/'))
             
-            print(f"  ✓ PDF exported: {pdf_filename}")
-            return True
+            # ✅ IMPROVED: Use temporary file for atomic write
+            tmp_pdf = pdf_filename.with_suffix('.tmp.pdf')
+            
+            try:
+                # Convert HTML to PDF (write to temp file first)
+                pdfkit.from_string(full_html, str(tmp_pdf), options=options, configuration=config)
+                
+                # ✅ Atomic replace: if we got here, PDF generation succeeded
+                tmp_pdf.replace(pdf_filename)
+                
+                print(f"  ✓ PDF exported: {pdf_filename}")
+                return True
+                
+            except Exception as pdf_error:
+                # ✅ IMPROVED: More specific error handling
+                print(f"  ⚠️  PDF conversion failed: {pdf_error}")
+                print(f"      Campaign data is still saved in JSON/HTML format")
+                
+                # ✅ Clean up temp file if it exists
+                try:
+                    if tmp_pdf.exists():
+                        tmp_pdf.unlink()
+                except Exception:
+                    pass
+                
+                # ✅ IMPROVED: Save HTML fallback
+                try:
+                    html_fallback = pdf_filename.with_suffix('.html')
+                    with open(html_fallback, 'w', encoding='utf-8') as f:
+                        f.write(full_html)
+                    print(f"  ℹ️  HTML fallback saved: {html_fallback}")
+                except Exception as html_error:
+                    print(f"  ⚠️  Could not save HTML fallback: {html_error}")
+                
+                return False
             
         except Exception as e:
-            print(f"  ⚠️  PDF export failed: {e}")
+            # ✅ IMPROVED: Catch any other errors gracefully
+            print(f"  ❌ PDF export error: {e}")
+            print(f"      This is not critical - campaign data is still processed")
+            
+            # ✅ Try to save debug info
+            try:
+                import traceback
+                error_log = reports_dir / f"{safe_name}_PDF_ERROR.log"
+                with open(error_log, 'w', encoding='utf-8') as f:
+                    f.write(f"PDF Export Error for {campaign_name}\n")
+                    f.write(f"Time: {datetime.now()}\n\n")
+                    f.write(traceback.format_exc())
+                print(f"  ℹ️  Error details saved to: {error_log}")
+            except Exception:
+                pass
+            
             return False
+
+    
+    # def export_campaign_to_pdf(self, campaign_name: str, html_content: str) -> bool:
+        # """
+        # Export campaign report as PDF
+        
+        # Args:
+            # campaign_name: Campaign folder name
+            # html_content: Complete HTML content to export
+            
+        # Returns:
+            # True if successful, False otherwise
+        # """
+        # try:
+            # import pdfkit
+        # except ImportError:
+            # print(f"  ℹ️  PDF export skipped: pdfkit not installed")
+            # print(f"      Install with: pip install pdfkit")
+            # return False
+        
+        # # Check if wkhtmltopdf is available
+        # config = None
+        # try:
+            # # First, check if we're running as PyInstaller bundle with embedded wkhtmltopdf
+            # if getattr(sys, 'frozen', False):
+                # # Running as compiled EXE
+                # bundle_dir = Path(sys._MEIPASS)
+                # wkhtmltopdf_path = bundle_dir / 'wkhtmltopdf.exe'
+                
+                # if wkhtmltopdf_path.exists():
+                    # # Use bundled wkhtmltopdf
+                    # config = pdfkit.configuration(wkhtmltopdf=str(wkhtmltopdf_path))
+                # else:
+                    # # Try system-installed wkhtmltopdf
+                    # config = pdfkit.configuration()
+            # else:
+                # # Running as Python script - use system wkhtmltopdf
+                # config = pdfkit.configuration()
+                
+        # except OSError:
+            # print(f"  ℹ️  PDF export skipped: wkhtmltopdf not found")
+            # print(f"      Download from: https://wkhtmltopdf.org/downloads.html")
+            # return False
+        
+        # # Create reports directory if it doesn't exist
+        # reports_dir = Path('reports')
+        # reports_dir.mkdir(exist_ok=True)
+        
+        # # Get campaign display name from info file
+        # campaign_display_name = self.get_campaign_display_name(campaign_name)
+        
+        # # Clean campaign name for filename (remove special chars)
+        # safe_name = regex.sub(r'[^\w\s-]', '', campaign_name).strip().replace(' ', '_')
+        # pdf_filename = reports_dir / f"{safe_name}_Report.pdf"
+
+        # # If the target PDF is open/locked, write a fallback instead of failing
+        # if is_file_locked(pdf_filename):
+            # ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+            # fallback = reports_dir / f"{safe_name}_Report_LOCKED_{ts}.pdf"
+            # print(f"  ⚠️  PDF is open/locked. Writing fallback: {fallback.name}")
+            # pdf_filename = fallback
+        
+        # try:
+            # # Create complete HTML document
+            # full_html = f"""
+# <!DOCTYPE html>
+# <html>
+# <head>
+    # <meta charset="UTF-8">
+    # <title>{campaign_display_name} - Campaign Report</title>
+    # <style>
+        # body {{
+            # font-family: 'SpecialElite', monospace, Arial, sans-serif;
+            # margin: 20px;
+            # font-size: 10pt;
+        # }}
+        # }}
+        # h1 {{
+            # text-align: center;
+            # border-bottom: 2px solid #333;
+            # padding-bottom: 10px;
+        # }}
+        # .mission-box {{
+            # page-break-inside: avoid;
+            # margin-bottom: 10px;
+        # }}
+        # /* Combat Results Grid Layout */
+        # .combat-results-grid {{
+            # width: 100%;
+            # margin: 20px 0;
+            # font-family: 'SpecialElite', monospace;
+        # }}
+
+        # /* CATEGORY HEADERS */
+        # .category-headers {{
+            # display: table;
+            # width: 100%;
+            # margin-bottom: 10px;
+            # border-bottom: 2px solid #000;
+            # padding-bottom: 10px;
+        # }}
+
+        # .category-col {{
+            # display: table-cell;
+            # width: 16.66%;
+            # text-align: center;
+            # vertical-align: top;
+            # padding: 0 5px;
+        # }}
+
+        # .category-icon img {{
+            # display: block;
+            # margin: 0 auto 5px auto;
+        # }}
+
+        # .category-total {{
+            # font-size: 20px;
+            # font-weight: bold;
+            # margin: 5px 0;
+        # }}
+
+        # .category-name {{
+            # font-size: 10px;
+            # font-weight: bold;
+            # text-transform: uppercase;
+        # }}
+
+        # /* SUBCATEGORIES */
+        # .subcategory-columns {{
+            # display: table;
+            # width: 100%;
+            # table-layout: fixed;
+        # }}
+
+        # .subcat-column {{
+            # display: table-cell;
+            # width: 16.66%;
+            # vertical-align: top;
+            # padding: 0 5px;
+            # border-right: 1px solid #ddd;
+        # }}
+
+        # .subcat-column:last-child {{
+            # border-right: none;
+        # }}
+
+        # /* SUBCATEGORY ROWS */
+        # .subcat-row {{
+            # padding: 3px 5px;
+            # min-height: 18px;
+            # overflow: hidden;
+        # }}
+
+        # .subcat-row:last-child {{
+            # border-bottom: none;
+        # }}
+
+        # .subcat-row::after {{
+            # content: "";
+            # display: table;
+            # clear: both;
+        # }}
+
+        # .subcat-name {{
+            # font-size: 9px;
+            # color: #666;
+            # float: left;
+            # max-width: 70%;
+            # line-height: 1.2;
+        # }}
+
+        # .subcat-value {{
+            # font-size: 10px;
+            # font-weight: bold;
+            # float: right;
+        # }}
+    # </style>
+# </head>
+# <body>
+    # <h1>{campaign_display_name}</h1>
+    # <p><i>Campaign Report - Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</i></p>
+    # <hr>
+    # {html_content}
+# </body>
+# </html>
+# """
+            
+            # # PDF options
+            # options = {
+                # 'page-size': 'A4',
+                # 'margin-top': '15mm',
+                # 'margin-right': '15mm',
+                # 'margin-bottom': '15mm',
+                # 'margin-left': '15mm',
+                # 'encoding': 'UTF-8',
+                # 'no-outline': None,
+                # 'enable-local-file-access': None,
+                # 'quiet': ''  # Suppress wkhtmltopdf warnings
+            # }
+            
+            # # Convert HTML to PDF
+            # # Replace font path placeholder with actual game directory
+            # full_html = full_html.replace('GAME_DIR_PLACEHOLDER', self.game_directory.replace('\\', '/'))
+            # pdfkit.from_string(full_html, str(pdf_filename), options=options, configuration=config)
+            
+            # print(f"  ✓ PDF exported: {pdf_filename}")
+            # return True
+            
+        # except Exception as e:
+            # print(f"  ⚠️  PDF export failed: {e}")
+            # return False
     
     def process_all_campaigns(self):
         """Process all campaigns and generate events"""
         print("="*70)
         print("IL-2 CAMPAIGN EVENTS GENERATOR")
         print("="*70)
+        
+        # Reload popup state from disk (in case it was modified by reset checker)
+        self.popup_seen = load_popup_seen()
+        print(f"[popups] Reloaded state: {len(self.popup_seen)} campaigns")
+        
+        # Detect which campaigns have new missions since last run
+        campaigns_with_changes = self._get_campaigns_with_new_missions()
         
         results = {}
         files_updated = 0
@@ -2270,8 +2882,9 @@ class EventGenerator:
             
             # ============================================================
             # Popups: detect, defer, or show
+            # CRITICAL: Only process popups for campaigns that changed THIS run
             # ============================================================
-            if self.enable_popups and events:
+            if self.enable_popups and events and campaign_name in campaigns_with_changes:
                 keys_now = [make_event_key(ev) for ev in events]
                 keys_now_set = set(keys_now)
 
@@ -2285,25 +2898,42 @@ class EventGenerator:
                     new_keys = keys_now_set - campaign_seen
 
                     if new_keys:
-                        if self.show_popups and is_il2_running():
-                            # show popups
+                        if self.show_popups: # and is_il2_running():
+                            # show popups IMMEDIATELY!
                             new_events = [ev for ev in events if make_event_key(ev) in new_keys]
-                            print(f"[popups] {campaign_name}: {len(new_events)} new event(s)")
+                            print(f"[popups] {campaign_name}: {len(new_events)} new event(s) - SHOWING NOW!")
 
-                            self._new_popup_events = getattr(self, "_new_popup_events", [])
-                            self._new_popup_events.extend(
-                                [(campaign_name, ev) for ev in new_events]
+                            # Build country map for this popup
+                            campaign_country_map = {}
+                            campaign_name_lower = campaign_name.lower()
+                            if campaign_name_lower in self.mission_dates_lower:
+                                _, mission_data = self.mission_dates_lower[campaign_name_lower]
+                                country = mission_data.get('country')
+                                if country:
+                                    campaign_country_map[campaign_name] = country
+                                    campaign_country_map[campaign_name_lower] = country
+                            
+                            # Show popups RIGHT NOW (before any file writing!)
+                            from popups_min import show_event_popups
+                            popup_list = [(campaign_name, ev) for ev in new_events]
+                            show_event_popups(
+                                popup_list,
+                                game_directory=self.game_directory,
+                                campaign_country_map=campaign_country_map,
+                                duration_seconds=5
                             )
 
-                            # mark as seen ONLY AFTER popup
+                            # mark as seen AFTER popup
                             self.popup_seen[campaign_name] = sorted(campaign_seen | new_keys)
                             save_popup_seen(self.popup_seen)
                         else:
                             print(
                                 f"[popups] deferred ({len(new_keys)}) "
-                                f"(show_popups={self.show_popups}, il2_running={is_il2_running()})"
+                                f"(show_popups={self.show_popups})" #, il2_running={is_il2_running()})"
                             )
-
+            elif self.enable_popups and events and campaign_name not in campaigns_with_changes:
+                # Campaign has events but didn't change - skip popup processing
+                print(f"[popups] {campaign_name}: skipped (no changes detected)")
 
             
             if events:
@@ -2360,28 +2990,42 @@ class EventGenerator:
                     except (FileNotFoundError, json.JSONDecodeError, KeyError):
                         cumulative_stats = None
                     
+                    # *** CRITICAL: Switch to PDF mode before regenerating debriefings ***
+                    self.set_mode("pdf")
+                    
+                    # Regenerate debriefings in PDF mode (with Combat Results instead of Flight Log)
+                    print(f"  Regenerating debriefings in PDF mode...")
+                    debriefings_html_pdf, debriefings_pdf = self.generate_debriefings_html(campaign_name, completed_missions)
+                    
                     # Generate PDF-specific HTML with base64-embedded images
                     events_html_pdf = self.generate_events_html(events, country, for_pdf=True)
                     
-                    # Combine debriefings + events
-                    if debriefings_html:
-                        combined_html_pdf = debriefings_html + "\n" + events_html_pdf
+                    # Combine debriefings + events for PDF
+                    if debriefings_html_pdf:
+                        combined_html_pdf = debriefings_html_pdf + "\n" + events_html_pdf
                     else:
                         combined_html_pdf = events_html_pdf
                     
                     # Generate campaign summary (PDF only!)
-                    # Use the debriefings we already loaded earlier
-                    summary_html = self.generate_campaign_summary_html(campaign_name, events, debriefings, country, cumulative_stats)
+                    # Use the PDF debriefings we just generated
+                    summary_html = self.generate_campaign_summary_html(campaign_name, events, debriefings_pdf, country, cumulative_stats, decoded_data.get(campaign_name) if decoded_data else None)
                     
                     # Add summary at the end
                     if summary_html:
                         combined_html_pdf += "\n" + summary_html
                     
                     self.export_campaign_to_pdf(campaign_name, combined_html_pdf)
+                    
+                    # *** CRITICAL: Switch back to ingame mode for subsequent campaigns ***
+                    self.set_mode("ingame")
         
         # Save results
         with open('campaign_events.json', 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
+        
+        # Save current campaign completion state for next run
+        # This enables filtering popups to only changed campaigns
+        self._save_campaign_completion_state()
         
         print(f"\n{'='*70}")
         print(f"COMPLETE!")
@@ -2397,28 +3041,9 @@ class EventGenerator:
             print("SAMPLE OUTPUT (kerch):")
             print(f"{'='*70}")
             print(results['kerch']['html'])
-            
-        # --- NEW: show popups at the very end (only if explicitly allowed) ---
-        if self.enable_popups and self.show_popups and getattr(self, "_new_popup_events", None):
-            # Build map campaign -> country (needed to locate the image folder)
-            campaign_country_map = {}
-            for cname, meta in self.mission_dates.items():
-                if isinstance(meta, dict):
-                    ctry = meta.get("country")
-                else:
-                    ctry = meta  # legacy: already a country string
-                if ctry:
-                    campaign_country_map[cname] = ctry
-
-
-            from popups_min import show_event_popups
-            show_event_popups(
-                self._new_popup_events,
-                game_directory=self.game_directory,
-                campaign_country_map=campaign_country_map,
-                duration_seconds=5
-            )
-
+        
+        # NOTE: Popups are now shown IMMEDIATELY when events are detected
+        # (see loop above - no longer deferred to end of processing)
         
         return results
 

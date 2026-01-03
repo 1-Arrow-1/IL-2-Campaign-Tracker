@@ -91,6 +91,16 @@ if not exist "popups_min.py" (
     pause
     exit /b 1
 )
+if not exist "campaign_reset_checker.py" (
+    echo ERROR: campaign_reset_checker.py!
+    pause
+    exit /b 1
+)
+if not exist "IBMPlexSans-Light.ttf" (
+    echo ERROR: IBMPlexSans-Light.ttf!
+    pause
+    exit /b 1
+)
 echo OK
 echo.
 
@@ -109,6 +119,7 @@ for %%F in (
 		"country_validator_gui.py"
 		"cleanup_failed_missions.py"
 		"popups_min.py"
+		"campaign_reset_checker.py"
 ) do (
     if exist %%F (
         echo Testing %%F ...
