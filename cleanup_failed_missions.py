@@ -154,12 +154,12 @@ class MissionCleanup:
             # Check if we're in a subdirectory (e.g., running from src/)
             if (script_dir / "step3_generate_events.py").exists():
                 tracker_dir = script_dir
-            elif (script_dir. parent / "step3_generate_events. py").exists():
+            elif (script_dir. parent / "step3_generate_events.py").exists():
                 tracker_dir = script_dir.parent
             else: 
                 tracker_dir = script_dir
         
-        return tracker_dir / "campaign_popups_seen. json"    
+        return tracker_dir / "campaign_popups_seen.json"    
     
     def _find_campaignstates_file(self) -> Path:
         """
