@@ -16,7 +16,7 @@ a = Analysis(
     ],
     hiddenimports=[
         'tkinter',
-        'tkinter. ttk',
+        'tkinter.ttk',
         '_tkinter',
         'pdfkit',
         'country_validator_gui',

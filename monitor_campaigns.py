@@ -295,18 +295,42 @@ class CampaignMonitor:
             # Run decoder with IL-2 path
             try:
                 import decode_campaign_usersave1
-                if self.campaign_file:
-                    decode_campaign_usersave1.main(states_path=str(self.campaign_file))
-                else:
-                    decode_campaign_usersave1.main()  # Fallback for backward compat
+                import io
+                import contextlib
+                
+                # Capture stdout to log
+                output_buffer = io.StringIO()
+                with contextlib.redirect_stdout(output_buffer):
+                    if self.campaign_file:
+                        decode_campaign_usersave1.main(states_path=str(self.campaign_file))
+                    else:
+                        decode_campaign_usersave1.main()
+                
+                # Log captured output (only important lines)
+                captured = output_buffer.getvalue()
+                for line in captured.strip().split('\n'):
+                    if line and any(x in line for x in ['✅', '❌', '⚠️', 'Decoded', 'campaigns']):
+                        self.log(f"  [decode] {line.strip()}")
+                        
             except Exception as e:
                 self.log(f"Decoder error: {e}")
             
             # Run event generator
             try:
                 import step3_generate_events
+                import io
+                import contextlib
                 
-                step3_generate_events.main(show_popups=True)
+                # Capture stdout to log
+                output_buffer = io.StringIO()
+                with contextlib.redirect_stdout(output_buffer):
+                    step3_generate_events.main(show_popups=True)
+                
+                # Log captured output (all popup-related lines)
+                captured = output_buffer.getvalue()
+                for line in captured.strip().split('\n'):
+                    if line and any(x in line for x in ['[popups]', '[DEBUG]', 'new event', 'initial sync', 'SHOWING NOW', 'deferred']):
+                        self.log(f"  [events] {line.strip()}")
                     
             except Exception as e:
                 self.log(f"Event generator error: {e}")
