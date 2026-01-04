@@ -33,13 +33,28 @@ import json
 import hashlib
 from pathlib import Path
 from datetime import datetime
-import psutil
 import sys
 import io
 import contextlib
 import logging
 from logging.handlers import RotatingFileHandler
+# ================================================================
+# DEBUG: psutil import test
+# ================================================================
+print(f"[DEBUG] sys.executable: {sys.executable}")
+print(f"[DEBUG] sys.frozen: {getattr(sys, 'frozen', False)}")
 
+try:
+    import psutil
+    print(f"[DEBUG] psutil imported successfully:  {psutil.__file__}")
+    PSUTIL_AVAILABLE = True
+except ImportError as e: 
+    print(f"[DEBUG] psutil import FAILED: {e}")
+    PSUTIL_AVAILABLE = False
+except Exception as e: 
+    print(f"[DEBUG] psutil unexpected error: {type(e).__name__}: {e}")
+    PSUTIL_AVAILABLE = False
+# ================================================================
 
 class CampaignMonitor:
     def __init__(self, check_interval: int = 1, use_file_watcher: bool = True, il2_states_path=None):
@@ -193,6 +208,9 @@ class CampaignMonitor:
     
     def _check_il2_running(self) -> bool:
         """Check if IL-2 Sturmovik is running"""
+        # Fallback wenn psutil nicht verfügbar
+        if not PSUTIL_AVAILABLE:
+            return True  # Annehmen, dass IL-2 läuft
         try:
             for proc in psutil.process_iter(['name']):
                 if proc.info['name'] and 'il-2' in proc.info['name'].lower():

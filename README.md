@@ -1,557 +1,605 @@
-# Building IL-2 Campaign Tracker
+# IL-2 Campaign Progress Tracker
 
-This guide covers building a standalone executable using the provided build script.
+A comprehensive tracking tool for IL-2 Sturmovik Great Battles career campaigns.  Automatically monitors your campaign progress, calculates promotions and awards based on historical criteria, generates detailed mission debriefings, and creates PDF reports of your pilot's career.
 
-## Important Notes
+![Version](https://img.shields.io/badge/version-1.7-blue)
+![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
+![Game](https://img.shields.io/badge/game-IL--2%20Great%20Battles-orange)
 
-**To BUILD the EXE:** You need Python 3.8+ and all dependencies installed.
+---
 
-**To RUN the EXE:** End users do NOT need Python - the EXE is standalone (~40 MB).
+## 📋 Table of Contents
 
-**Pre-built EXE:** NOT provided in GitHub releases. You must build your own.
+- [Features](#-features)
+- [Supported Nations](#-supported-nations)
+- [Installation](#-installation)
+- [First Run Setup](#-first-run-setup)
+- [How It Works](#-how-it-works)
+- [Promotions & Awards System](#-promotions--awards-system)
+- [Mission Debriefings](#-mission-debriefings)
+- [Backup & Restore System](#-backup--restore-system)
+- [Mission Cleanup](#-mission-cleanup)
+- [File Reference](#-file-reference)
+- [Troubleshooting](#-troubleshooting)
+- [FAQ](#-faq)
 
-## Prerequisites
+---
 
-### Required Software
-- **Python 3.8 or higher**
-- **PyInstaller 5.0 or higher**
-- **All project dependencies**
+## ✨ Features
 
-### Install Dependencies
-```bash
-pip install -r requirements.txt
-pip install pyinstaller
-```
+| Feature | Description |
+|---------|-------------|
+| **Automatic Monitoring** | Watches your campaign save file and updates in real-time |
+| **Promotions** | Calculates rank promotions based on accumulated score |
+| **Awards & Decorations** | Grants medals based on kills, missions flown, and other criteria |
+| **Real-time Popups** | Shows promotion and award notifications while playing |
+| **Mission Debriefings** | Parses mission logs to generate detailed flight reports |
+| **PDF Reports** | Creates printable career summaries with combat statistics |
+| **Backup System** | Creates backups when removing incomplete missions via cleanup tool |
+| **Restore Function** | Easy GUI to restore previous campaign states |
+| **Mission Cleanup** | Removes incomplete missions that weren't properly finished |
+| **Multi-Campaign Support** | Tracks multiple campaigns simultaneously |
 
-**Required packages:**
-- `pillow` - Image processing (DDS to PNG conversion)
-- `pyyaml` - Configuration parsing
-- `psutil` - Process monitoring
-- `pdfkit` - PDF generation
-- `pyinstaller` - EXE builder
+---
 
-### Optional (but recommended): wkhtmltopdf
-For PDF generation:
-- Download: https://wkhtmltopdf.org/downloads.html
-- Install to: `C:\Program Files\wkhtmltopdf\`
-- Build script will automatically bundle it if found
+## 🌍 Supported Nations
 
-## Build Instructions
+The tracker includes historically accurate ranks and awards for: 
 
-### Simple Method: Run the Build Script
+| Nation | Ranks | Awards |
+|--------|-------|--------|
+| 🇩🇪 **Germany** | Unteroffizier → Generalfeldmarschall | Iron Cross, Knight's Cross, etc. |
+| 🇷🇺 **Soviet Union** | Сержант → Генерал-лейтенант | Order of the Red Banner, Hero of the Soviet Union, etc. |
+| 🇺🇸 **USA** | Flight Officer → Major General | Distinguished Flying Cross, Medal of Honor, etc.  |
+| 🇬🇧 **Britain** | Pilot Officer → Air Vice Marshal | Distinguished Flying Cross, Victoria Cross, etc. |
 
-Execute:
-```bash
-build_exe.bat
-```
+> **Note:** Soviet ranks automatically switch between early (pre-1943) and late (post-January 6, 1943) insignia based on mission dates.
 
-### What the Script Does
+---
 
-**[1/5] Checks for PyInstaller**
-- Verifies PyInstaller is installed
-- Exits if missing
+## 📥 Installation
 
-**[2/5] Validates Python Files**
-- Syntax check on all `.py` files
-- Does NOT execute code - only validates
-- Files checked:
-  - `il2_tracker_launcher.py` (main entry point)
-  - `monitor_campaigns.py` (background monitoring)
-  - `step1_extract_mission_dates.py` (mission extraction + GUI)
-  - `step3_generate_events.py` (rank/award calculation)
-  - `decode_campaing_usersave1.py` (save file decoder)
-  - `step4_process_mission_logs.py` (mission log parser)
-  - `il2_mission_debrief.py` (debriefing generator)
-  - `mlg2txt.py` (mission log converter)
-  - `country_validator_gui.py` (country validation GUI)
-  - `cleanup_failed_missions.py` (mission cleanup tool - NEW in v1.1)
+1. **Download** the latest release (`IL2_Campaign_Tracker. zip`)
+2. **Extract** to a folder of your choice (e.g., `C:\IL2_Tracker`)
+3. **Run** `IL2_Campaign_Tracker.exe`
 
-**[3/5] Cleans Build Artifacts**
-- Removes `build/` directory
-- Removes `dist/` directory
-- Removes old EXE
+### Required Files
 
-**[4/5] Runs PyInstaller**
-- Executes: `pyinstaller IL2_CampaignTracker.spec`
-- Uses spec file to bundle everything
-- Takes 2-5 minutes depending on system
-
-**[5/5] Creates Distribution Package**
-- Creates distribution folder (e.g., `IL2_Campaign_Tracker_v1.1\`)
-- Copies EXE from `dist/`
-- Copies all configuration YAML files
-- Copies `mlg2txt.py` (required at runtime for log conversion)
-- Generates `QUICK_START.txt` with usage instructions
-
-### Build Output
+Ensure these files are in the same folder as the executable:
 
 ```
-dist\IL2_CampaignTracker\
-├── IL2_CampaignTracker.exe          # Standalone executable (~40 MB)
-├── campaign_progress_config.yaml    # Awards & ranks config
-├── object_categories.yaml           # Aircraft classifications
-├── stock_campaigns.yaml             # Known campaigns
-├── weapons_mappings.yaml            # Weapon classifications (NEW in v1.1)
-└── mlg2txt.exe                      # Mission log converter (optional standalone)
+IL2_Campaign_Tracker/
+├── IL2_Campaign_Tracker.exe        # Main executable
+├── campaign_progress_config.yaml   # Ranks & awards configuration
+└── (other files created automatically on first run)
 ```
 
-**Note:** If you build `mlg2txt.py` separately using `pyinstaller mlg2txt.spec`, you'll get a standalone `mlg2txt.exe`. This is useful for users who want to convert mission logs independently of the tracker.
+---
 
-**This folder is ready for distribution!**
+## 🚀 First Run Setup
 
-## The Spec File
+When you start the tracker for the first time, a setup wizard guides you through the configuration:
 
-`IL2_CampaignTracker.spec` defines the build:
+### Step 1: Select Game Directory
 
-### Entry Point
-```python
-['il2_tracker_launcher.py']  # Main unified launcher
+A folder browser opens.  Navigate to your IL-2 installation folder: 
+
+```
+Example: C:\Program Files (x86)\Steam\steamapps\common\IL-2 Sturmovik Battle of Stalingrad
 ```
 
-### Hidden Imports
-Modules PyInstaller might miss:
-- `decode_campaing_usersave1` - Save file decoder
-- `step1_extract_mission_dates` - Mission extraction
-- `step3_generate_events` - Event generator
-- `step4_process_mission_logs` - Log processor
-- `il2_mission_debrief` - Debriefing parser
-- `monitor_campaigns` - Background monitor
-- `country_validator_gui` - Country validation
-- `cleanup_failed_missions` - Mission cleanup (NEW)
-- `mlg2txt` - Log converter
+> **Important:** Select the main game folder, NOT the `data\Campaigns` subfolder. 
 
-### Bundled Data
-Configuration files (must be in same directory as EXE):
-- `campaign_progress_config.yaml` - Ranks, awards, scaling factors
-- `object_categories.yaml` - Aircraft/vehicle classifications
-- `stock_campaigns.yaml` - Known campaign definitions
-- `weapons_mappings.yaml` - Weapon type definitions
+### Step 2: Country Validation
 
-### One-File Build
-```python
-onefile=True  # Single ~40 MB executable
+The tracker scans all installed campaigns and attempts to detect the correct country for each.  A validation GUI appears where you can:
+
+- ✅ Confirm automatically detected countries
+- ✏️ Correct any misidentified campaigns
+- 🚫 Exclude campaigns (e.g., WWI Flying Circus campaigns)
+
+This is important because promotions and awards are nation-specific.
+
+### Step 3: Ready to Track
+
+After setup, the tracker: 
+1. Decodes your current campaign save file
+2. Generates initial events (existing promotions/awards)
+3. Starts monitoring for changes
+
+---
+
+## ⚙️ How It Works
+
+### Monitoring Loop
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    TRACKER RUNNING                       │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│   1. Watch campaignsstates.txt for changes               │
+│                          ↓                               │
+│   2.  Detect file modification (mission completed)        │
+│                          ↓                               │
+│   3. Decode campaign save file                           │
+│                          ↓                               │
+│   4. Calculate new promotions/awards                     │
+│                          ↓                               │
+│   5. Parse mission log for debriefing                    │
+│                          ↓                               │
+│   6. Show popups for new events                          │
+│                          ↓                               │
+│   7. Update campaign info file                           │
+│                          ↓                               │
+│   8. Generate PDF report                                 │
+│                          ↓                               │
+│   9. Return to monitoring                                │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
 ```
 
-All dependencies are bundled into a single EXE file.
+### Real-time Popups
 
-## Distribution
+When you earn a promotion or award, a popup notification appears on screen:
 
-### What to Package
+- 🎖️ Shows the rank insignia or medal image
+- 📅 Displays the date earned
+- ⏱️ Auto-dismisses after 5 seconds (click to dismiss immediately)
 
-**Essential:**
-1. The entire distribution folder (e.g., `IL2_Campaign_Tracker_v1.1\`)
-2. `CampaignRanksAwards.zip` (from repository - medal/rank images)
+> **Note:** Popups only appear while IL-2 is running to avoid interruptions during other activities.
 
-### Distribution Structure
+---
+
+## 🎖️ Promotions & Awards System
+
+### How Promotions Work
+
+Promotions are based on **accumulated score** across all completed missions:
+
 ```
-YourDistribution\
-├── IL2_Campaign_Tracker_v1.1\
-│   ├── IL2_CampaignTracker.exe
-│   ├── campaign_progress_config.yaml
-│   ├── object_categories.yaml
-│   ├── stock_campaigns.yaml
-│   ├── weapons_mappings.yaml
-│   ├── mlg2txt.py (optional)
-│   └── QUICK_START.txt
-└── CampaignRanksAwards.zip
+Score Earned = Mission Score × Rank Scaling Factor
 ```
 
-### User Instructions
+**Rank Scaling Factor** adjusts requirements based on campaign length:
+- Short campaigns (1-10 missions): 1.0x (normal)
+- Medium campaigns (11-30 missions): 1.5x (higher requirements)
+- Long campaigns (31+ missions): 2.0x (highest requirements)
 
-**Installation Steps:**
-1. Extract `CampaignRanksAwards.zip`
-2. Copy `CampaignRanksAwards\` folder to: `<IL-2>\data\swf\`
-3. Run `IL2_CampaignTracker.exe`
-4. On first run:
-   - Select IL-2 installation directory via GUI
-   - Validate auto-detected country assignments
-   - Review any unsuccessful missions (if applicable)
+This prevents rapid promotions in long campaigns while ensuring fair progression in short ones.
 
-**Requirements:**
-- IL-2 Sturmovik: Great Battles (any version)
-- Windows OS
-- NO Python needed by end users
+### How Awards Work
 
-### Creating a ZIP
+Awards are granted based on various criteria defined in `campaign_progress_config.yaml`:
 
-```bash
-# After successful build
-cd dist
-powershell Compress-Archive -Path IL2_CampaignTracker -DestinationPath IL2_Tracker_v1.1.zip
+| Criteria Type | Example |
+|---------------|---------|
+| **Cumulative Kills** | 10+ air victories → Iron Cross 2nd Class |
+| **Single Mission** | 5 kills in one sortie → Knight's Cross |
+| **Flight Time** | 50+ hours → Long Service Medal |
+| **Missions Completed** | 30 missions → Campaign Medal |
+| **Wounded in Action** | Pilot damage > 20% → Wound Badge |
+| **Random + Threshold** | High kills + luck factor → Rare decorations |
+
+Some awards have **prerequisites** (e.g., must have Iron Cross 2nd Class before 1st Class) and **mutual exclusivity** (e.g., cannot earn both wound stripe variants on same mission).
+
+### Starting Rank Offset
+
+Some campaigns start with higher ranks.  This is configured per-campaign in `campaign_mission_dates.json`:
+
+```json
+"kerch": {
+  "country": "Germany",
+  "starting_rank_offset": 2,
+  "missions": { ...  }
+}
 ```
 
-Or manually zip the `IL2_CampaignTracker\` folder.
+---
 
-## Troubleshooting
+## 📊 Mission Debriefings
 
-### PyInstaller Not Found
+### Data Source
 
-**Error:** `pyinstaller: command not found`
+Debriefing data is extracted from IL-2's **mission log files** (`.mlg` files):
 
-**Solution:**
-```bash
-pip install pyinstaller
+```
+Location: [IL-2 Directory]\data\mlg\[username]\[mission]. mlg
 ```
 
-### Syntax Errors
+These binary files contain detailed records of everything that happened during the mission. 
 
-**Error:** `SyntaxError` or `IndentationError` during validation
+### What's Tracked
 
-**Solution:**
-- Fix the reported Python file
-- Common issues: mixed tabs/spaces, missing colons, incorrect indentation
-- Test manually: `python -m py_compile filename.py`
+| Category | Details |
+|----------|---------|
+| **Flight Time** | Takeoff to landing duration |
+| **Kills** | Air, ground, and naval targets with timestamps |
+| **Damage Taken** | Hits received, from whom, damage percentage |
+| **Pilot Status** | Healthy, wounded, killed, captured |
+| **Aircraft Status** | Landed safely, crash landed, destroyed |
+| **Ammunition** | Rounds fired, bombs dropped, rockets launched |
 
-### Missing Files
+### Debriefing Output
 
-**Error:** `ERROR: filename.py not found!`
+Each mission generates detailed output in two formats:
 
-**Solution:**
-- Ensure all required `.py` files are present in the project directory
-- Check file names match exactly (case-sensitive)
-- Required files listed in "What the Script Does" section
+1. **In-Game (Flight Log)** - Chronological list of events written to the campaign's `info.locale=eng. txt`
+2. **PDF Report** - Detailed kill breakdown by category matching the in-game results screen
 
-### Build Fails
+---
 
-**Error:** PyInstaller errors during build
+## 💾 Backup & Restore System
 
-**Solutions:**
+### When Backups Are Created
 
-1. **Clean and retry:**
-   ```bash
-   rmdir /s /q build dist
-   build_exe.bat
-   ```
+Backups are **only** created when you remove incomplete missions via the Mission Cleanup tool.  They are **not** created automatically after every mission.
 
-2. **Update PyInstaller:**
-   ```bash
-   pip install --upgrade pyinstaller
-   ```
+This ensures you can restore your campaign to the state **before** you removed any missions.
 
-3. **Reinstall dependencies:**
-   ```bash
-   pip install --force-reinstall -r requirements.txt
-   ```
+### What is takeoffStatus?
 
-4. **Check for import errors:**
-   - Review PyInstaller output for missing modules
-   - Add missing modules to `hiddenimports` in spec file
+IL-2 tracks mission completion with a `takeoffStatus` flag:
 
-### EXE Won't Start
+| Value | Meaning |
+|-------|---------|
+| `takeoffStatus=1` | Mission started but not completed properly |
+| `takeoffStatus=2` | Mission completed successfully |
 
-**Solution:**
+### What Triggers the Cleanup Tool
 
-1. **Run from command line to see errors:**
-   ```bash
-   cd dist\IL2_CampaignTracker
-   IL2_CampaignTracker.exe
-   ```
+The Mission Cleanup GUI appears when missions with `takeoffStatus=1` are detected. This status indicates something went wrong: 
 
-2. **Common issues:**
-   - YAML files missing from EXE directory
-   - Antivirus blocking the executable
-   - Missing Visual C++ Redistributables (install from Microsoft)
+| Situation | Result |
+|-----------|--------|
+| Mission objective not completed | `takeoffStatus=1` |
+| Pilot bailed out | `takeoffStatus=1` |
+| Pilot killed in action (KIA) | `takeoffStatus=1` |
+| Pilot missing in action (MIA) | `takeoffStatus=1` |
+| IL-2 crashed during mission | `takeoffStatus=1` |
+| Force quit (Alt+F4, Task Manager) | `takeoffStatus=1` |
 
-3. **Verify file structure:**
-   ```
-   IL2_CampaignTracker.exe
-   campaign_progress_config.yaml  ✓
-   object_categories.yaml         ✓
-   stock_campaigns.yaml           ✓
-   weapons_mappings.yaml          ✓
-   ```
+> **Note:** There may be other situations that result in `takeoffStatus=1`. The common factor is that the mission was not completed successfully.
 
-4. **Temporarily disable antivirus and retry**
+### Backup Location
 
-### YAML Configuration Errors
+```
+[IL-2 Directory]\data\swf\il2\usersave\[username]\campaign\
 
-**Error:** `FileNotFoundError: campaign_progress_config.yaml`
-
-**Solution:**
-- YAML files MUST be in the same directory as the EXE
-- These files are NOT embedded in the EXE (intentionally - for user editing)
-- Copy YAML files from source to EXE directory if missing
-
-### Mission Cleanup GUI Not Showing
-
-**Symptom:** Cleanup GUI doesn't appear on startup
-
-**Solution:**
-- Ensure `cleanup_failed_missions.py` is included in build
-- Check that `campaigns_decoded.json` exists (created after first mission)
-- GUI only shows if unsuccessful missions are found
-
-### PDF Export Fails
-
-**Error:** PDF generation errors or missing PDFs
-
-**Solutions:**
-
-1. **Install wkhtmltopdf:**
-   - Download: https://wkhtmltopdf.org/downloads.html
-   - Use default path: `C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe`
-
-2. **For standalone EXE:**
-   - Copy `wkhtmltopdf.exe` to same directory as tracker EXE
-   - Or bundle during build (see Advanced Customization)
-
-3. **Install pdfkit:**
-   ```bash
-   pip install pdfkit
-   ```
-
-4. **Check PDF output directory:**
-   - Default: `<IL-2>\data\Campaigns\<CampaignName>\reports\`
-   - Verify write permissions
-
-### Size Issues
-
-**Expected size:** ~40 MB for the EXE
-
-**If larger:**
-- Normal variation depending on Python version and dependencies
-- 35-45 MB is typical range
-
-**If smaller (<20 MB):**
-- May indicate missing dependencies
-- Run and test thoroughly
-
-## Advanced Customization
-
-### Modifying the Build
-
-1. **Edit `IL2_CampaignTracker.spec`**
-
-2. **Common changes:**
-   - **Executable name:** Change `name='IL2_CampaignTracker'`
-   - **Version info:** Add `version` parameter
-   - **Bundled files:** Modify `datas` list
-   - **Excluded modules:** Add to `excludes` list
-   - **Custom icon:** Set `icon='path/to/icon.ico'`
-
-3. **Rebuild:**
-   ```bash
-   build_exe.bat
-   ```
-
-### Adding Custom Icon
-
-In `IL2_CampaignTracker.spec`:
-```python
-exe = EXE(
-    pyz,
-    a.scripts,
-    a.binaries,
-    # ...
-    icon='resources/icon.ico',  # Add this line
-    # ...
-)
+Files Created (when removing missions):
+├── campaignsstates_20240115_143022.backup     # Save file backup
+├── popups_20240115_143022.backup               # Popup state backup
+└── campaignsstates_hash_index. json             # Backup index
 ```
 
-Requires `.ico` file (Windows icon format).
+### What's Backed Up
 
-### Bundling Additional Files
+| File | Content |
+|------|---------|
+| `campaignsstates_*. backup` | Complete campaign save state before mission removal |
+| `popups_*.backup` | Popup state backup (prevents duplicate popups after restore) |
+| `campaignsstates_hash_index.json` | Index linking file hashes to backup timestamps |
 
-In `IL2_CampaignTracker.spec`:
-```python
-datas=[
-    ('campaign_progress_config.yaml', '.'),
-    ('object_categories.yaml', '.'),
-    ('stock_campaigns.yaml', '.'),
-    ('weapons_mappings.yaml', '.'),
-    ('your_new_file.txt', '.'),  # Add your file here
-],
+### Restore GUI
+
+When the tracker starts and backups are available, a restore GUI may appear:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│           🔄 Restore Campaign Backup                    │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  Select a backup to restore:                              │
+│                                                          │
+│  ┌────────────────────────────────────────────────────┐ │
+│  │ Date & Time          │ Status           │ Popups   │ │
+│  ├──────────────────────┼──────────────────┼──────────┤ │
+│  │ 2024-01-15 14:30:22  │ ✅ Currently Active │ ✓ Yes  │ │
+│  │ 2024-01-15 12:15:03  │                  │ ✓ Yes    │ │
+│  │ 2024-01-14 20:45:11  │                  │ ✗ No     │ │
+│  └────────────────────────────────────────────────────┘ │
+│                                                          │
+│  [🔄 Restore Selected]  [▶ Continue]  [✕ Exit]          │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
 ```
 
-### Optimizing Build Size
+**When the GUI appears:**
+- Multiple backups exist, OR
+- One backup exists that is **not** the current state
 
-1. **Exclude unused modules:**
-```python
-excludes=['tkinter.test', 'unittest', 'pydoc']
+**When the GUI does NOT appear:**
+- No backups exist
+- Only one backup exists and it's already the active state
+
+### Restore Process
+
+1. Select a backup from the list
+2. Click "Restore Selected Backup"
+3. Confirm the action
+4. Tracker automatically: 
+   - Creates a copy of the backup file (original backup preserved)
+   - Deletes current `campaignsstates. txt`
+   - Renames backup copy to `campaignsstates.txt`
+   - Restarts to process the restored state
+   - Restores matching popup state (prevents duplicate popups)
+
+### Use Case Example
+
+```
+1. You fly Mission 05 in "kerch" campaign
+2. IL-2 crashes mid-mission → takeoffStatus=1
+3. Next tracker start: Cleanup GUI appears
+4. You select Mission 05 and click "Remove"
+5. Tracker creates backup BEFORE removing the mission
+6. Mission 05 is removed from save file
+7. You can now replay Mission 05
+
+Later, if needed: 
+8. Start tracker → Restore GUI appears
+9. Select the backup from before removal
+10. Campaign restored to state WITH Mission 05 (incomplete)
 ```
 
-2. **Use UPX compression** (optional):
-```python
-upx=True,
-upx_exclude=[],
+---
+
+## 🧹 Mission Cleanup
+
+### What is takeoffStatus?
+
+IL-2 tracks mission completion with a `takeoffStatus` flag:
+
+| Value | Meaning |
+|-------|---------|
+| `takeoffStatus=1` | Mission started but not completed properly |
+| `takeoffStatus=2` | Mission completed successfully |
+
+### When Cleanup GUI Appears
+
+The Mission Cleanup GUI appears at tracker startup when missions with `takeoffStatus=1` are detected. 
+
+**Common causes for `takeoffStatus=1`:**
+- ❌ Mission objective not completed
+- 🪂 Pilot bailed out
+- 💀 Pilot killed in action (KIA)
+- ❓ Pilot missing in action (MIA)
+- 💥 IL-2 crashed during mission
+- 🚫 Force quit (Alt+F4, Task Manager)
+- 🔌 Power outage / system crash
+
+> **Note:** Not all `takeoffStatus=1` missions are "failed" in the traditional sense.  Bailing out or being KIA may be intentional gameplay.  The cleanup tool gives you the **choice** whether to remove these missions.
+
+### Cleanup GUI
+
+```
+┌─────────────────────────────────────────────────────────┐
+│        ⚠️ Incomplete Missions Detected                  │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  The following missions were not completed properly:     │
+│                                                          │
+│  ☐ kerch - Mission 05 (November 14, 1943)               │
+│  ☐ blazingsteppe - Mission 12 (September 9, 1942)       │
+│                                                          │
+│  Select missions to remove from your campaign save.      │
+│                                                          │
+│  [🗑️ Remove Selected]  [▶ Keep All]                     │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
 ```
 
-Note: UPX may trigger some antivirus software.
+### What Happens When You Remove a Mission
 
-### Bundling wkhtmltopdf (for standalone PDF generation)
+1. **Backup created** - Current state saved before any changes
+2. **Mission removed** - Entry deleted from `campaignsstates.txt`
+3. **Popup state cleared** - Associated events removed from `campaign_popups_seen. json`
+4. **Ready to replay** - You can fly the mission again
 
-To include wkhtmltopdf in your EXE distribution:
+### What Happens When You Keep a Mission
 
-1. **Install wkhtmltopdf:**
-   - Download from: https://wkhtmltopdf.org/downloads.html
-   - Note installation path (e.g., `C:\Program Files\wkhtmltopdf\bin\`)
+If you click "Keep All" or don't select a mission: 
+- No backup is created
+- No changes are made
+- The mission remains in your save file
+- Cleanup GUI will appear again next time (for remaining incomplete missions)
 
-2. **Modify spec file to bundle it:**
-```python
-# In IL2_CampaignTracker.spec
-import os
+---
 
-# Add wkhtmltopdf binary to bundle
-wkhtmltopdf_path = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
-if os.path.exists(wkhtmltopdf_path):
-    a.binaries += [('wkhtmltopdf.exe', wkhtmltopdf_path, 'BINARY')]
-```
+## 📁 File Reference
 
-3. **Rebuild:**
-```bash
-build_exe.bat
-```
+### Configuration Files
 
-4. **Result:**
-   - wkhtmltopdf.exe bundled in EXE
-   - No separate installation needed by end users
-   - PDF generation works out of the box
+| File | Purpose | User Editable |
+|------|---------|---------------|
+| `campaign_progress_config. yaml` | Ranks, awards, criteria, and settings | ✅ Yes |
+| `campaign_mission_dates.json` | Campaign metadata, mission dates, countries | ⚠️ Careful |
 
-**Alternative (simpler):**
-- Copy `wkhtmltopdf.exe` manually to distribution folder
-- Users place it next to tracker EXE
+### Configuration Details
 
-### Building mlg2txt Separately (Optional)
+#### campaign_progress_config. yaml
 
-The `mlg2txt.py` tool can be built as a standalone executable for users who want to convert mission logs independently:
-
-**Build command:**
-```bash
-pyinstaller mlg2txt.spec
-```
-
-**Output:**
-- `dist\mlg2txt\mlg2txt.exe` - Standalone log converter (~8 MB)
-
-**Usage:**
-```bash
-mlg2txt.exe input.mlg output.txt
-```
-
-**Distribution:**
-- Can be included with main tracker
-- Or distributed separately as utility tool
-- Useful for users analyzing logs outside the tracker
-
-**Note:** The main tracker (`IL2_CampaignTracker.exe`) includes log conversion internally, so `mlg2txt.exe` is optional.
-
-## Testing the Build
-
-### Basic Functionality Test
-
-1. **First Run:**
-   ```bash
-   cd dist\IL2_CampaignTracker
-   IL2_CampaignTracker.exe
-   ```
-
-2. **Test GUI:**
-   - Folder selection dialog should appear
-   - Select a valid IL-2 directory
-   - Country validation should show
-
-3. **Test Monitoring:**
-   - Tracker should continue running
-   - Check `campaign_monitor.log` is created
-   - Press Ctrl+C to exit cleanly
-
-4. **Test with Real Data:**
-   - Copy a real `campaignsstates.txt` to tracker directory
-   - Run tracker
-   - Verify events are generated
-
-### Distribution Test
-
-1. Copy distribution folder to clean test environment
-2. Run without Python installed
-3. Verify all features work
-4. Test with actual IL-2 installation
-
-## Version Management
-
-### Updating Version Number
-
-When releasing a new version:
-
-1. **Update version in code:**
-   - `il2_tracker_launcher.py` - Update version string
-   - `build_exe.bat` - Update folder name
-
-2. **Update documentation:**
-   - `README.md` - Version history section
-   - `BUILD.md` - Version references
-   - `QUICK_START.txt` template
-
-3. **Rebuild:**
-   ```bash
-   build_exe.bat
-   ```
-
-4. **Test thoroughly before distribution**
-
-## Continuous Integration (Optional)
-
-For automated builds, you can integrate into CI/CD:
+This is the main configuration file containing:
 
 ```yaml
-# Example GitHub Actions workflow
-- name: Build EXE
-  run: |
-    pip install -r requirements.txt
-    pip install pyinstaller
-    python -m PyInstaller IL2_CampaignTracker.spec
+# Rank definitions per nation
+ranks: 
+  Germany:
+    - name: "Unteroffizier"
+      score_threshold: 0
+      image:  "ranks/germany/unteroffizier.png"
+    - name: "Feldwebel"
+      score_threshold: 500
+      image: "ranks/germany/feldwebel.png"
+    # ... more ranks
+
+# Award definitions per nation
+awards: 
+  Germany:
+    - name: "Iron Cross 2nd Class"
+      criteria:
+        type: "cumulative_kills"
+        threshold: 10
+      image: "awards/germany/ek2.png"
+    # ... more awards
+
+# General settings
+settings:
+  enable_popups: true
+  popup_duration: 5
+  generate_pdf:  true
 ```
 
-## Support
+#### campaign_mission_dates.json
 
-For build issues, open a GitHub issue with:
-- **Full error output** (copy entire console output)
-- **Python version:** `python --version`
-- **PyInstaller version:** `pyinstaller --version`
-- **Operating system** and version
-- **Steps to reproduce**
+Auto-generated during first run, contains:
 
-**Tip:** Run `build_exe.bat` from a command prompt (not double-click) to see full output.
+```json
+{
+  "game_directory": "C:\\Games\\IL-2 Sturmovik",
+  "kerch": {
+    "country": "Germany",
+    "starting_rank_offset":  0,
+    "excluded":  false,
+    "missions": {
+      "0": "1943-11-01",
+      "1":  "1943-11-03",
+      "2": "1943-11-05"
+    }
+  }
+}
+```
+
+### Data Files (Auto-Generated)
+
+| File | Purpose | Location |
+|------|---------|----------|
+| `campaigns_decoded.json` | Decoded campaign save data | Tracker folder |
+| `campaign_popups_seen.json` | Tracks shown popups per campaign | Tracker folder |
+| `campaign_events.json` | Generated events (promotions/awards) | Tracker folder |
+| `campaign_completion_state.json` | Tracks mission completion between runs | Tracker folder |
+
+### Backup Files
+
+| File | Purpose | Location |
+|------|---------|----------|
+| `campaignsstates_[timestamp].backup` | Campaign save backup | IL-2 usersave folder |
+| `popups_[timestamp].backup` | Popup state backup | IL-2 usersave folder |
+| `campaignsstates_hash_index.json` | Backup index with hashes | IL-2 usersave folder |
+
+### Output Files
+
+| File | Purpose | Location |
+|------|---------|----------|
+| `[Campaign]_Report. pdf` | Career PDF report | `reports/` subfolder |
 
 ---
 
-## Quick Reference
+## 🔧 Troubleshooting
 
-**Build Command:**
-```bash
-build_exe.bat
-```
+### Tracker Won't Start
 
-**Build mlg2txt separately:**
-```bash
-pyinstaller mlg2txt.spec
-```
+| Problem | Solution |
+|---------|----------|
+| Missing `campaign_progress_config.yaml` | Ensure file is in same folder as EXE |
+| Antivirus blocking | Add exception for tracker folder |
+| Missing Visual C++ Runtime | Install [VC++ Redistributable](https://aka.ms/vs/17/release/vc_redist. x64. exe) |
 
-**Clean Build:**
-```bash
-rmdir /s /q build dist
-build_exe.bat
-```
+### No Campaigns Detected
 
-**Test Build:**
-```bash
-cd dist\IL2_CampaignTracker
-IL2_CampaignTracker.exe
-```
+| Problem | Solution |
+|---------|----------|
+| Wrong folder selected | Re-run setup (delete `campaign_mission_dates.json`) |
+| No missions flown yet | Start a campaign in IL-2, fly at least one mission |
+| Permission issues | Run tracker as Administrator |
 
-**Required Files:**
-- All `.py` files listed in script
-- All `.yaml` config files
-- `IL2_CampaignTracker.spec` (main tracker build)
-- `mlg2txt.spec` (optional - for standalone log converter)
-- `build_exe.bat`
+### Popups Not Appearing
 
-**Output:**
-- `dist\IL2_CampaignTracker\` folder with EXE and configs
+| Problem | Solution |
+|---------|----------|
+| IL-2 not running | Popups only show while IL-2 is active |
+| Already seen | Check `campaign_popups_seen.json` |
+| Popups disabled | Check `enable_popups:  true` in config |
+
+### PDF Generation Fails
+
+| Problem | Solution |
+|---------|----------|
+| Missing dependencies | Ensure all required DLLs are present |
+| PDF locked | Close the PDF if open in a viewer |
+| Path too long | Move tracker to shorter path |
+
+### Events Not Appearing In-Game
+
+| Problem | Solution |
+|---------|----------|
+| IL-2 caches description | Restart IL-2 to see updated campaign description |
+| Events written to wrong file | Check campaign country assignment |
 
 ---
 
-**Happy Building! 🔨**
+## ❓ FAQ
 
-**Recommendation:** Always use `build_exe.bat` for automated, reliable builds. Manual PyInstaller commands may miss dependencies.
+### Q: Can I run multiple instances of the tracker?
 
+**A:** No.  Only one instance should monitor your campaigns at a time.
+
+### Q: Does the tracker modify my IL-2 installation?
+
+**A:** The tracker only modifies: 
+- Campaign `info.locale=eng.txt` files (adds Events section)
+- Creates backup files in the usersave folder
+
+It does **not** modify any game executables or core files.
+
+### Q:  Will this work with mods?
+
+**A:** Yes, as long as the mod uses standard campaign structure.  Custom campaigns are automatically detected during first-run setup.
+
+### Q:  Can I manually edit the configuration? 
+
+**A:** Yes!  `campaign_progress_config.yaml` can be edited to: 
+- Adjust promotion score thresholds
+- Modify award criteria
+- Add custom awards
+- Change rank scaling factors
+
+### Q: How do I reset everything?
+
+**A:** Delete these files and restart the tracker:
+- `campaign_mission_dates.json`
+- `campaign_popups_seen.json`
+- `campaigns_decoded.json`
+- `campaign_events.json`
+
+### Q: Is multiplayer supported?
+
+**A:** The tracker is designed for single-player career campaigns.  Multiplayer missions don't generate the same save data structure.
+
+### Q:  Why do I need to restart IL-2 to see new events?
+
+**A:** IL-2 loads the campaign description (`info.locale=eng.txt`) when the game starts and caches it in memory. Changes made by the tracker are written to the file but won't appear in-game until you restart IL-2. However, you'll still see **popups immediately** when you earn promotions or awards. 
+
+### Q: What happens if I delete a backup file manually?
+
+**A:** The backup index (`campaignsstates_hash_index.json`) will still reference it, but the Restore GUI will skip any backups where the actual backup file is missing.
+
+### Q: Can I use the tracker with Flying Circus (WWI)?
+
+**A:** Flying Circus campaigns can be excluded during first-run setup. The tracker is designed for WWII campaigns and does not include WWI-era ranks or awards.
+
+---
+
+## 📜 License
+
+This project is provided as-is for personal use with IL-2 Sturmovik Great Battles. 
+
+---
+
+## 🙏 Acknowledgments
+
+- **1C Game Studios / 777 Studios** - For creating IL-2 Great Battles
+- **The IL-2 Community** - For inspiration and feedback
+
+---
+
+*Happy flying!  ✈️🎖️*

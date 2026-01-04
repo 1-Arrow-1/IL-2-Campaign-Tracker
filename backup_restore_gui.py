@@ -449,8 +449,15 @@ class BackupRestoreGUI:
             print(f"  Restored from: {backup_info['display_date']}")
             print(f"  Original backup is still available for future restores.")
             print()
+            print("  The tracker will now re-process the restored state...")
+            print()
             
+            # ✅ NO RESTART NEEDED! Just set result and let launcher continue
             self.result = 'restored'
+            
+            # Wait so user can read the message
+            import time
+            time.sleep(2)
             
         except Exception as e:
             print()
@@ -586,105 +593,25 @@ def check_and_show_backup_gui(il2_states_path:  Path) -> str:
 
 def restart_tracker():
     """
-    Restart the tracker after backup restore.
+    NO-OP: Restart disabled due to PyInstaller + Python 3.13 DLL issues.
+    
+    Instead, the launcher will continue running and re-process the restored state.
+    This is actually BETTER because:
+    1. No process restart needed
+    2. Faster
+    3. No DLL extraction issues
+    4. User sees continuous flow
     """
-    import time
-    
     print()
     print("=" * 70)
-    print("🔄 RESTARTING TRACKER")
+    print("ℹ️  CONTINUING WITHOUT RESTART")
     print("=" * 70)
     print()
-    
-    try:
-        # Determine how we were started
-        if getattr(sys, 'frozen', False):
-            # Running as EXE
-            executable = sys.executable
-            exe_dir = Path(executable).parent
-            
-            print(f"  Mode: EXE")
-            print(f"  Executable: {executable}")
-            print(f"  Directory: {exe_dir}")
-            
-            cmd = [executable, '--skip-backup-gui']
-            working_dir = exe_dir
-            
-        else:
-            # Running as script
-            script_dir = Path(__file__).parent.resolve()
-            launcher = script_dir / "il2_tracker_launcher.py"
-            
-            print(f"  Mode:  Python Script")
-            print(f"  Script dir: {script_dir}")
-            print(f"  Launcher: {launcher}")
-            
-            if not launcher.exists():
-                print(f"  ❌ ERROR: Launcher not found at:  {launcher}")
-                input("Press Enter to exit...")
-                sys.exit(1)
-            
-            cmd = [sys.executable, str(launcher), '--skip-backup-gui']
-            working_dir = script_dir
-        
-        print()
-        print(f"  Command:  {' '.join(cmd)}")
-        print(f"  Working dir: {working_dir}")
-        print()
-        
-        # ================================================================
-        # Start new process
-        # ================================================================
-        if sys.platform == 'win32':
-            # Windows: CREATE_NEW_CONSOLE so window stays open
-            CREATE_NEW_CONSOLE = 0x00000010
-            
-            print("  Starting new process (Windows)...")
-            process = subprocess.Popen(
-                cmd,
-                creationflags=CREATE_NEW_CONSOLE,
-                cwd=str(working_dir)
-            )
-        else:
-            # Linux/Mac
-            print("  Starting new process (Unix)...")
-            process = subprocess.Popen(
-                cmd,
-                start_new_session=True,
-                cwd=str(working_dir)
-            )
-        
-        print(f"  ✓ Process started with PID: {process.pid}")
-        print()
-        
-        # Wait a moment to ensure process started
-        time.sleep(1.0)
-        
-        # Check if still running
-        poll_result = process. poll()
-        if poll_result is None:
-            print("  ✓ New process is running")
-        else: 
-            print(f"  ⚠️ Process exited with code: {poll_result}")
-        
-        print()
-        print("  This window will close in 3 seconds...")
-        print("  The tracker should continue in the new window.")
-        print()
-        
-        time.sleep(3)
-        
-        # Exit this process
-        sys.exit(0)
-        
-    except Exception as e: 
-        print()
-        print(f"❌ ERROR during restart: {e}")
-        import traceback
-        traceback. print_exc()
-        print()
-        input("Press Enter to exit...")
-        sys.exit(1)
+    print("  The tracker will re-decode and re-process the restored backup.")
+    print("  This is faster and more reliable than restarting!")
+    print()
+    # Just return - let the launcher continue
+    return
 
 
 # =============================================================================

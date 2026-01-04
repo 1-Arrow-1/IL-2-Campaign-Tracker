@@ -408,9 +408,28 @@ def run_tracker() -> int:
                 backup_result = check_and_show_backup_gui(il2_states_path)
                 
                 if backup_result == 'restored':
-                    # Don't print anything here - restart_tracker handles output
-                    restart_tracker()  # This calls sys. exit(0)
-                    # Code below will never be reached
+                    # ✅ NO RESTART! Just continue processing
+                    # The backup has been restored, now we just need to:
+                    # 1. Re-decode the campaigns
+                    # 2. Regenerate events
+                    # 3. Continue monitoring
+                    print()
+                    print("=" * 70)
+                    print("ℹ️  CONTINUING WITH RESTORED BACKUP")
+                    print("=" * 70)
+                    print()
+                    print("  The tracker will now re-process the restored state...")
+                    print("  (This is faster than restarting!)")
+                    print()
+                    
+                    # ✅ CRITICAL: Set flag to force event regeneration
+                    # This ensures that PDFs, events, and all derived files
+                    # are regenerated from the restored campaignsstates.txt
+                    os.environ["FORCE_REGENERATE"] = "1"
+                    print("  ⚡ Force regeneration enabled")
+                    print()
+                    
+                    # DON'T call restart_tracker()! Just continue to next step!
                     
                 elif backup_result == 'cancelled': 
                     print()

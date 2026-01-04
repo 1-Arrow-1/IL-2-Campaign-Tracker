@@ -1,22 +1,24 @@
-# -*- mode: python ; coding: utf-8 -*-
+# -*- mode: python ; coding:  utf-8 -*-
+
+from PyInstaller.utils. hooks import collect_dynamic_libs
+
+# psutil binaries (. pyd Dateien)
+psutil_binaries = collect_dynamic_libs('psutil')
 
 a = Analysis(
     ['il2_tracker_launcher.py'],
     pathex=[],
     binaries=[
         (r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe', '.'),
-    ],
+    ] + psutil_binaries,
     datas=[
-        ('campaign_progress_config.yaml', '.'),
-        ('stock_campaigns.yaml', '.'),
-        ('object_categories.yaml', '.'),
-        ('IBMPlexSans-Light.ttf', '.'),  # ← FONT HINZUGEFÜGT!
+        ('IBMPlexSans-Light.ttf', '.'),
     ],
     hiddenimports=[
         'tkinter',
-        'tkinter.ttk',
+        'tkinter. ttk',
         '_tkinter',
-		'pdfkit',
+        'pdfkit',
         'country_validator_gui',
         'step1_extract_mission_dates',
         'step3_generate_events',
@@ -24,15 +26,19 @@ a = Analysis(
         'decode_campaign_usersave1',
         'monitor_campaigns',
         'il2_mission_debrief',
-		'cleanup_failed_missions',
-		'backup_restore_gui',
-		'popups_min',
-		'campaign_reset_checker',
-		'PIL',
-		'PIL.Image',
-		'PIL.DdsImagePlugin',
-		'psutil',
-		'psutil._psutil_windows',
+        'cleanup_failed_missions',
+        'backup_restore_gui',
+        'popups_min',
+        'campaign_reset_checker',
+        'PIL',
+        'PIL.Image',
+        'PIL.DdsImagePlugin',
+        'psutil',
+        'psutil._common',
+        'psutil._compat',
+        'psutil._psplatform',
+        'psutil._psutil_windows',
+        'psutil._pswindows',
     ],
     hookspath=[],
     hooksconfig={},
@@ -42,7 +48,7 @@ a = Analysis(
     optimize=0,
 )
 
-pyz = PYZ(a.pure)
+pyz = PYZ(a. pure)
 
 exe = EXE(
     pyz,
@@ -63,5 +69,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-	icon='il2_tracker_icon.ico',
+    icon='il2_tracker_icon.ico',
 )
