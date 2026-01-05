@@ -38,6 +38,8 @@ import io
 import contextlib
 import logging
 from logging.handlers import RotatingFileHandler
+
+from utils.pathing import get_base_path
 # ================================================================
 # DEBUG: psutil import test
 # ================================================================
@@ -96,12 +98,7 @@ class CampaignMonitor:
         self.debounce_timer = 0
         
         # Determine paths (works for both script and EXE)
-        if getattr(sys, 'frozen', False):
-            # Running as EXE - use executable directory
-            self.script_dir = Path(sys.executable).parent.resolve()
-        else:
-            # Running as script - use script directory
-            self.script_dir = Path(__file__).parent.resolve()
+        self.script_dir = get_base_path(__file__)
             
         # ✅ FIX #2: Log rotation - max 5 MB per file, keep 3 backups
         self.log_file = Path(log_path).resolve() if log_path else self.script_dir / "campaign_monitor.log"
