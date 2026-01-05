@@ -14,6 +14,7 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player cam
 - [Supported Nations](#-supported-nations)
 - [Installation](#-installation)
 - [First Run Setup](#-first-run-setup)
+- [WW1 Detection & Exclusion](#-ww1-detection--exclusion)
 - [How It Works](#-how-it-works)
 - [Promotions & Awards System](#-promotions--awards-system)
 - [Mission Debriefings](#-mission-debriefings)
@@ -39,6 +40,7 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player cam
 | **Restore Function** | Easy GUI to restore previous campaign states |
 | **Mission Cleanup** | Removes incomplete missions that weren't properly finished |
 | **Multi-Campaign Support** | Tracks multiple campaigns simultaneously |
+| **WW1 Detection & Exclusion** | Detects Flying Circus (WW1) campaigns and skips them by default |
 
 ---
 
@@ -108,8 +110,13 @@ The tracker scans all installed campaigns and attempts to detect the correct cou
 
 - ✅ Confirm automatically detected countries
 - ✏️ Correct any misidentified campaigns
+- 🚫 Exclude WW1 (Flying Circus) campaigns
 
 This is important because promotions and awards are nation-specific.
+
+### WW1 (Flying Circus) Detection
+
+If the tracker detects Flying Circus campaigns, you can - or better should - mark them as **WW1 (ignore)** in this screen so they are excluded from tracking.
 
 ### Step 3: Ready to Track
 
@@ -117,6 +124,22 @@ After setup, the tracker:
 1. Decodes your current campaign save file
 2. Generates initial events (existing promotions/awards)
 3. Starts monitoring for changes
+
+---
+
+## 🪖 WW1 Detection & Exclusion
+
+Flying Circus (WW1) campaigns are detected and excluded by default because the tracker only includes WWII ranks, awards, and debriefing logic.
+
+**Detection signals include:**
+- Mission dates in the 1914–1918 range
+- WW1 aircraft keywords in campaign data
+- “Flying Circus”/WW1 keywords in campaign descriptions
+
+**How exclusion works:**
+- Excluded campaigns are skipped during decoding and event generation.
+- The exclusion reason is stored in `campaign_mission_dates.json` so the tracker consistently ignores them.
+- You can review or change exclusions by re-running setup (delete `campaign_mission_dates.json`) and using the **WW1 (ignore)** checkbox in the country validation GUI.
 
 ---
 
@@ -440,7 +463,7 @@ Auto-generated during first run, contains:
   "kerch": {
     "campaign_name": "kerch",
     "country": "Germany",
-    "is_stock": true, --> Standard IL-2 BoS campaign
+    "is_stock": true, --> Standard IL-2 BoS campaign        
     "starting_rank_offset": 0,
     "mission_count": 12,
     "missions": {
@@ -573,7 +596,7 @@ It does **not** modify any game executables or core files.
 
 ### Q: Can I use the tracker with Flying Circus (WWI)?
 
-**A:** Flying Circus campaigns are currently not supported. The tracker is designed for WWII single player campaigns and does not include WWI-era ranks or awards.
+**A:** Flying Circus campaigns are detected and excluded by default. The tracker is designed for WWII campaigns and does not include WWI-era ranks or awards. You can control exclusions during the country validation step (WW1 “ignore” checkbox), but WW1 campaigns won’t have historically accurate ranks or awards.
 
 ### Q: Can I use the tracker Pat Wilson's Campaing Generator (PWCG)?
 
