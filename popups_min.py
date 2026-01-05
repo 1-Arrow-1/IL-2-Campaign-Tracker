@@ -3,10 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import List, Tuple, Dict, Any
 import tkinter as tk
-import sys
 import json
 import logging
 import os
+
+from utils.pathing import get_base_path
 
 logger = logging.getLogger(__name__)
 
@@ -45,12 +46,8 @@ def _get_game_dir_from_json() -> Path | None:
 
     try:
         # Pfad zur JSON bestimmen – hängt davon ab, ob wir als Script oder als EXE laufen
-        if getattr(sys, "frozen", False):
-            # Wenn als EXE kompiliert (PyInstaller)
-            config_file = Path(sys.executable).resolve().parent / "campaign_mission_dates.json"
-        else:
-            # Normaler Python-Skriptmodus
-            config_file = Path(__file__).resolve().parent / "campaign_mission_dates.json"
+        base_path = get_base_path(__file__)
+        config_file = base_path / "campaign_mission_dates.json"
 
         logger.debug("Lade campaign_mission_dates.json: %s", config_file)
 
@@ -419,3 +416,4 @@ def show_event_popups(
 
     _next()
     root.mainloop()
+
