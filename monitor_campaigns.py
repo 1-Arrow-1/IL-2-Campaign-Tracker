@@ -59,7 +59,8 @@ except Exception as e:
 
 class CampaignMonitor:
     def __init__(self, check_interval: int = 1, use_file_watcher: bool = True,
-                 il2_states_path=None, debug: bool | None = None):
+                 il2_states_path=None, debug: bool | None = None,
+                 log_path: str | None = None):
         """
         Initialize campaign monitor
         
@@ -73,7 +74,8 @@ class CampaignMonitor:
                              False = Legacy polling mode (no campaign watcher)
             il2_states_path: Path to campaignsstates.txt in IL-2 directory
                             (default: auto-detect)
-            debug: Enable debug logging output (default: from IL2_TRACKER_DEBUG env)               
+            debug: Enable debug logging output (default: from IL2_TRACKER_DEBUG env)
+            log_path: Optional log file path (default: campaign_monitor.log in script dir)             
         """
         self.check_interval = check_interval
         self.use_file_watcher = use_file_watcher

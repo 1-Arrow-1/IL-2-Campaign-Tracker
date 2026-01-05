@@ -11,11 +11,35 @@ import re
 import shutil
 import urllib.parse
 import hashlib
+import logging
+import os
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional, Set
 import tkinter as tk
 from tkinter import ttk, messagebox
+
+logger = logging.getLogger(__name__)
+
+
+def _is_debug_enabled() -> bool:
+    env_value = os.environ.get("IL2_TRACKER_DEBUG", "")
+    return env_value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _configure_logging():
+    if not _is_debug_enabled():
+        return
+
+    logger.setLevel(logging.DEBUG)
+    if not logging.getLogger().handlers and not logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("[%(levelname)s] %(message)s"))
+        logger.addHandler(handler)
+        logger.propagate = False
+
+
+_configure_logging()
 
 
 # File to store "don't ask again" preferences
@@ -154,7 +178,7 @@ class MissionCleanup:
             # Check if we're in a subdirectory (e.g., running from src/)
             if (script_dir / "step3_generate_events.py").exists():
                 tracker_dir = script_dir
-            elif (script_dir. parent / "step3_generate_events.py").exists():
+            elif (script_dir.parent / "step3_generate_events.py").exists():
                 tracker_dir = script_dir.parent
             else: 
                 tracker_dir = script_dir
@@ -332,7 +356,7 @@ class MissionCleanup:
             return None
 
         # --- Check for recent backup (last 60 seconds)
-        index_path = self. states_path.parent / "campaignsstates_hash_index.json"
+        index_path = self.states_path.parent / "campaignsstates_hash_index.json"
         import time
         if index_path.exists():
             try:
@@ -356,20 +380,23 @@ class MissionCleanup:
 
         # ✅ FIX: Verwende zentrale Helper-Methode für Tracker-Pfad
         tracker_popups_path = self._get_tracker_popups_path()
-        print(f"[DEBUG] Looking for popups at: {tracker_popups_path}")
+        logger.debug("Looking for popups at: %s", tracker_popups_path)
         if tracker_popups_path.exists():
-            print(f"[DEBUG] File size: {tracker_popups_path.stat().st_size} bytes")
+            logger.debug(
+                "File size: %s bytes",
+                tracker_popups_path.stat().st_size,
+            )
 
         try:
             # 1️⃣ Backup campaignsstates.txt
             shutil.copy2(self.states_path, backup_path)
-            print(f"✓ Backup created:  {backup_path. name}")
+            print(f"✓ Backup created:  {backup_path.name}")
 
             # 2️⃣ Backup popups file if available
             backup_popups_path = None
-            if tracker_popups_path. exists():
+            if tracker_popups_path.exists():
                 backup_popups_filename = f'campaign_popups_seen_{timestamp}.backup'
-                backup_popups_path = self. states_path.parent / backup_popups_filename
+                backup_popups_path = self.states_path.parent / backup_popups_filename
                 shutil.copy2(tracker_popups_path, backup_popups_path)
                 print(f"✓ Popup backup created: {backup_popups_path.name}")
             else:
@@ -380,14 +407,14 @@ class MissionCleanup:
             index = _load_hash_index(index_path)
             index[backup_hash] = {
                 "timestamp": timestamp,
-                "campaignsstates_backup": backup_path. name,
-                "popups_backup": backup_popups_path. name if backup_popups_path else None
+                "campaignsstates_backup": backup_path.name,
+                "popups_backup": backup_popups_path.name if backup_popups_path else None
             }
             with open(index_path, "w", encoding="utf-8") as f:
                 json.dump(index, f, indent=2, sort_keys=True)
 
             # 4️⃣ Cleanup old backups
-            self. cleanup_old_backups()
+            self.cleanup_old_backups()
 
             print(f"✅ Backup set completed with hash {backup_hash}")
             return backup_path
@@ -409,15 +436,15 @@ class MissionCleanup:
         Returns:
             True if popups were restored, False otherwise
         """
-        index_path = self. states_path. parent / "campaignsstates_hash_index.json"
+        index_path = self.states_path.parent / "campaignsstates_hash_index.json"
         
         # ✅ FIX: Popup-Datei liegt im TRACKER-Verzeichnis! 
         popups_path = self._get_tracker_popups_path()
         
-        print(f"  [DEBUG] Tracker popups path: {popups_path}")
-        print(f"  [DEBUG] IL-2 states path: {self. states_path}")
+        logger.debug("Tracker popups path: %s", popups_path)
+        logger.debug("IL-2 states path: %s", self.states_path)
         
-        if not self.states_path. exists():
+        if not self.states_path.exists():
             print("⚠️ Cannot restore popups — states file missing.")
             return False
         
@@ -434,7 +461,7 @@ class MissionCleanup:
             print("ℹ️ No matching hash entry found in index.")
             return False
         
-        popups_backup_name = entry. get("popups_backup")
+        popups_backup_name = entry.get("popups_backup")
         
         # Handle legacy backups that were created before popup initialization
         if not popups_backup_name:
@@ -445,7 +472,7 @@ class MissionCleanup:
         # Backup file is in IL-2 directory (next to campaignsstates.txt)
         src = self.states_path.parent / popups_backup_name
         
-        if not src. exists():
+        if not src.exists():
             print(f"⚠️ Popup backup missing: {src}")
             return False
         
@@ -474,7 +501,7 @@ class MissionCleanup:
         # ✅ FIX: Popup-Datei liegt im TRACKER-Verzeichnis, nicht im IL-2-Verzeichnis! 
         popups_path = self._get_tracker_popups_path()
         
-        print(f"  [DEBUG] Looking for popups at: {popups_path}")
+        logger.debug("Looking for popups at: %s", popups_path)
         
         if not popups_path.exists():
             print("  ℹ️ No popup file found - nothing to clean")

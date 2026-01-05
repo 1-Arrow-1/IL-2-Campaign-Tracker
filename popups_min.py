@@ -5,6 +5,30 @@ from typing import List, Tuple, Dict, Any
 import tkinter as tk
 import sys
 import json
+import logging
+import os
+
+logger = logging.getLogger(__name__)
+
+
+def _is_debug_enabled() -> bool:
+    env_value = os.environ.get("IL2_TRACKER_DEBUG", "")
+    return env_value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _configure_logging():
+    if not _is_debug_enabled():
+        return
+
+    logger.setLevel(logging.DEBUG)
+    if not logging.getLogger().handlers and not logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("[%(levelname)s] %(message)s"))
+        logger.addHandler(handler)
+        logger.propagate = False
+
+
+_configure_logging()
 
 # Pillow is optional; if missing, we show text-only popups
 try:
@@ -28,7 +52,7 @@ def _get_game_dir_from_json() -> Path | None:
             # Normaler Python-Skriptmodus
             config_file = Path(__file__).resolve().parent / "campaign_mission_dates.json"
 
-        print(f"[popups][DEBUG] Lade campaign_mission_dates.json: {config_file}")
+        logger.debug("Lade campaign_mission_dates.json: %s", config_file)
 
         if not config_file.exists():
             print(f"[popups] ⚠️ JSON-Datei nicht gefunden: {config_file}")
@@ -142,15 +166,19 @@ def _resolve_image_path(game_directory: Path, country: str, ev: Dict[str, Any]) 
             big_path = image_path.with_name(f"{image_path.stem}_big{image_path.suffix}")
             candidates.append(big_path)
             candidates.append(image_path)
-            print(f"[popups][DEBUG] Added award candidates: {big_path}, {image_path}")
+            logger.debug(
+                "Added award candidates: %s, %s",
+                big_path,
+                image_path,
+            )
         else:
             candidates.append(image_path)
-            print(f"[popups][DEBUG] Added rank candidate: {image_path}")
+            logger.debug("Added rank candidate: %s", image_path)
 
     # 7️⃣ Existenzprüfung
     for p in candidates:
         exists = p.exists()
-        print(f"[popups][DEBUG] Trying: {p} -> exists={exists}")
+        logger.debug("Trying: %s -> exists=%s", p, exists)
         if exists:
             print(f"[popups] ✅ Using image: {p}")
             return p
