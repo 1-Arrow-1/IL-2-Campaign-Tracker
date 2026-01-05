@@ -13,8 +13,8 @@ import os
 import re
 
 from utils.info_locale import decode_and_clean_info_locale
+from utils.formatting import safe_campaign_filename
 from utils.pathing import get_base_path
-
 
 def cleanup_popups_for_reset_campaigns() -> bool:
     """
@@ -96,7 +96,7 @@ def cleanup_popups_for_reset_campaigns() -> bool:
     if os.path.exists(reports_dir):
         for campaign_name in reset_campaigns:
             # Clean campaign name for filename (same logic as in step3)
-            safe_name = re.sub(r'[^\w\s-]', '', campaign_name).strip().replace(' ', '_')
+            safe_name = safe_campaign_filename(campaign_name)
             pdf_path = os.path.join(reports_dir, f"{safe_name}_Report.pdf")
             
             if os.path.exists(pdf_path):
