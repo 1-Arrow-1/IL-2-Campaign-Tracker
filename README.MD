@@ -55,8 +55,8 @@ The tracker includes historically accurate ranks and awards for:
 | 🇺🇸 **USA** | First Sergeant → Major General | Distinguished Flying Cross, Medal of Honor, etc.  |
 | 🇬🇧 **Britain** | Sergeant → Air Vice Marshal | Distinguished Flying Cross, Victoria Cross, etc. |
 
-> **Note 1:** Soviet ranks automatically switch between early (pre-1943) and late (post-January 6, 1943) insignia based on mission dates.
-> **Note 2:** The German awards shown are based on the official 1957 reissue versions. If you wish to customize their appearance, you can replace the images located in `CampaignRanksAwards\Germany`.
+> **Note 1:** Soviet ranks automatically switch between early (pre-1943) and late (post-January 6, 1943) insignia based on mission dates.  
+> **Note 2:** The German awards shown are based on the official 1957 reissue versions. If you wish to customize their appearance, you can replace the images located in `CampaignRanksAwards\Germany`.  
 ⚠️ Important: Keep the original filenames when replacing images — for example,
 `iron_cross_2nd.dds` and `iron_cross_2nd_big.dds` must retain the exact same names after replacement.
             
