@@ -319,7 +319,21 @@ def validate_countries(json_file_path: str) -> bool:
         # Speichere WW1-Flag
         data[campaign_name]["is_ww1"] = is_ww1
         if is_ww1:
-            print(f"  ⚠️ Marked {campaign_name} as WW1 (ignored from tracking)")
+            if data[campaign_name].get("excluded") is not True:
+                changes_made = True
+            data[campaign_name]["excluded"] = True
+            if data[campaign_name].get("exclusion_reason") != "WW1 (user-marked)":
+                changes_made = True
+            data[campaign_name]["exclusion_reason"] = "WW1 (user-marked)"
+            print(f"  ⚠️ Marked {campaign_name} as WW1 (excluded from tracking)")
+        else:
+            if data[campaign_name].get("excluded"):
+                changes_made = True
+            if "excluded" in data[campaign_name]:
+                data[campaign_name]["excluded"] = False
+            if "exclusion_reason" in data[campaign_name]:
+                del data[campaign_name]["exclusion_reason"]
+                changes_made = True
 
         old_country = data[campaign_name].get('country')
         if old_country != new_country:
