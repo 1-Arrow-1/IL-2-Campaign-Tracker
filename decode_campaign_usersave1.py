@@ -243,13 +243,25 @@ def main(states_path=None) -> bool:
         # ✅ Filter existing campaigns only
         mission_dates_file = Path("campaign_mission_dates.json")
         game_directory = None
-
-        # Read IL-2 game directory from mission dates file
+        mission_dates_data = {}
+        ww1_campaigns = set()
+        
+        # Read IL-2 game directory + WW1 exclusions from mission dates file
         if mission_dates_file.exists():
             try:
                 with open(mission_dates_file, "r", encoding="utf-8") as f:
-                    meta = json.load(f)
-                    game_directory = Path(meta.get("game_directory", "")).expanduser().resolve()
+                    mission_dates_data = json.load(f)
+                if not isinstance(mission_dates_data, dict):
+                    print(f"⚠️  Invalid mission dates format in {mission_dates_file}")
+                    mission_dates_data = {}
+                game_directory_str = mission_dates_data.get("game_directory", "")
+                if game_directory_str:
+                    game_directory = Path(game_directory_str).expanduser().resolve()
+                ww1_campaigns = {
+                    name.lower()
+                    for name, data in mission_dates_data.items()
+                    if isinstance(data, dict) and data.get("is_ww1", False)
+                }
             except Exception as e:
                 print(f"⚠️  Could not read game directory from {mission_dates_file}: {e}")
 
@@ -272,7 +284,7 @@ def main(states_path=None) -> bool:
             for key, campaign in data.items():
                 campaign_name = key.lower()
                 # 🟡 NEU: WW1-Erkennung – Kampagne überspringen, falls markiert
-                if campaign.get("is_ww1", False):
+                if campaign_name in ww1_campaigns or campaign.get("is_ww1", False):
                     print(f"  ⚠️  Skipping WW1 campaign: {campaign_name}")
                     continue
                 if campaign_name in existing_campaigns:
