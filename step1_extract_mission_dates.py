@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 from datetime import datetime
 
+from utils.pathing import get_base_path
 
 class CampaignDateExtractor:
     def __init__(self, campaigns_folder: str, verbose: bool = False, exclude_ww1: bool = True):
@@ -203,16 +204,10 @@ class CampaignDateExtractor:
         # Load stock campaigns library
         # Try external file first (for user editing), then embedded
         import sys
-        if getattr(sys, 'frozen', False):
-            # Running as EXE - check directory next to EXE first
-            exe_dir = Path(sys.executable).parent
-            stock_file = exe_dir / 'stock_campaigns.yaml'
-            if not stock_file.exists():
-                # Fallback to embedded
-                stock_file = Path(sys._MEIPASS) / 'stock_campaigns.yaml'
-        else:
-            # Running as script
-            stock_file = Path(__file__).parent / 'stock_campaigns.yaml'
+        stock_file = get_base_path(__file__) / 'stock_campaigns.yaml'
+        if getattr(sys, 'frozen', False) and not stock_file.exists():
+            # Fallback to embedded
+            stock_file = Path(sys._MEIPASS) / 'stock_campaigns.yaml'
         
         try:
             import yaml
