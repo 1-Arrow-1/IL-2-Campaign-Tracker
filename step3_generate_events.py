@@ -507,6 +507,34 @@ class EventGenerator:
         self.mission_dates_lower = {
             k.lower(): (k, v) for k, v in self.mission_dates.items() if k != 'game_directory'
         }
+
+    def reload_mission_dates(self) -> bool:
+        """Reload mission dates to refresh WW1 exclusions and campaign metadata."""
+        try:
+            with open('campaign_mission_dates.json', 'r', encoding='utf-8') as f:
+                mission_dates = json.load(f)
+        except FileNotFoundError:
+            print("ERROR: Required file 'campaign_mission_dates.json' not found!")
+            return False
+        except json.JSONDecodeError as e:
+            print(f"ERROR: Invalid JSON in 'campaign_mission_dates.json'")
+            print(f"  Line {e.lineno}, Column {e.colno}: {e.msg}")
+            return False
+        except Exception as e:
+            print(f"ERROR: Could not read 'campaign_mission_dates.json': {e}")
+            return False
+
+        if not isinstance(mission_dates, dict):
+            print("ERROR: Mission dates JSON is not a dictionary.")
+            return False
+
+        self.mission_dates = mission_dates
+        self.game_directory = self.mission_dates.get('game_directory', '')
+        self.mission_dates_lower = {
+            k.lower(): (k, v) for k, v in self.mission_dates.items() if k != 'game_directory'
+        }
+        print(f"[missions] Reloaded mission dates ({len(self.mission_dates_lower)} campaigns)")
+        return True
         
     def _find_il2_states_path(self):
         """
@@ -2931,6 +2959,8 @@ class EventGenerator:
         print("="*70)
         print("IL-2 CAMPAIGN EVENTS GENERATOR")
         print("="*70)
+
+        self.reload_mission_dates()
         
         # Reload popup state from disk (in case it was modified by reset checker)
         self.popup_seen = load_popup_seen()
