@@ -1,6 +1,6 @@
 # IL-2 Campaign Progress Tracker
 
-A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player campaigns.  Automatically monitors your campaign progress, calculates promotions and awards based on historical criteria, generates detailed mission debriefings, and creates PDF reports of your pilot's career.
+A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **WW2 campaigns**.  Automatically monitors your campaign progress, calculates promotions and awards based on historical criteria, generates detailed mission debriefings, and creates PDF reports of your pilot's career.
 
 ![Version](https://img.shields.io/badge/version-1.7-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
