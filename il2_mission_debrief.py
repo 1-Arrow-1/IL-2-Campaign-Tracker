@@ -14,6 +14,7 @@ import os, re, json, yaml
 from collections import defaultdict
 from pathlib import Path
 
+from utils.pathing import get_base_path
 
 # ==========================================================
 # === GameObject ==========================================
@@ -46,18 +47,11 @@ class GameObject:
         if cls._category_config is None:
             # Try external file first (for user editing), then embedded
             import sys
-            cfg_path = None
+            cfg_path = get_base_path(__file__) / "object_categories.yaml"
             
-            if getattr(sys, 'frozen', False):
-                # Running as EXE - check directory next to EXE first
-                exe_dir = Path(sys.executable).parent
-                cfg_path = exe_dir / "object_categories.yaml"
-                if not cfg_path.exists():
-                    # Fallback to embedded
-                    cfg_path = Path(sys._MEIPASS) / "object_categories.yaml"
-            else:
-                # Running as script
-                cfg_path = Path(__file__).with_name("object_categories.yaml")
+            if getattr(sys, 'frozen', False) and not cfg_path.exists():
+                # Fallback to embedded
+                cfg_path = Path(sys._MEIPASS) / "object_categories.yaml"
             
             try:
                 with open(cfg_path, encoding="utf-8") as f:
