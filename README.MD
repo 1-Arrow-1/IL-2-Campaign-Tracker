@@ -2,9 +2,9 @@
 
 A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **WW2 campaigns**.  Automatically monitors your campaign progress, calculates promotions and awards based on historical criteria, generates detailed mission debriefings, and creates PDF reports of your pilot's career.
 
-![Version](https://img.shields.io/badge/version-1.7-blue)
+![Version](https://img.shields.io/badge/version-2.0-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
-![Game](https://img.shields.io/badge/game-IL--2%20Great%20Battles-orange)
+![Game](https://img.shields.io/badge/game-IL--2%20Battle%20of%20Stalingrad-orange)
 
 ---
 
@@ -36,9 +36,9 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **W
 | **Real-time Popups** | Shows promotion and award notifications while playing |
 | **Mission Debriefings** | Parses mission logs to generate detailed flight reports |
 | **PDF Reports** | Creates printable career summaries with combat statistics |
+| **Mission Cleanup** | Removes incomplete missions that weren't properly finished |
 | **Backup System** | Creates backups when removing incomplete missions via cleanup tool |
 | **Restore Function** | Easy GUI to restore previous campaign states |
-| **Mission Cleanup** | Removes incomplete missions that weren't properly finished |
 | **Multi-Campaign Support** | Tracks multiple campaigns simultaneously |
 | **WW1 Detection & Exclusion** | Detects Flying Circus (WW1) campaigns and skips them by default |
 
@@ -71,7 +71,8 @@ The tracker includes historically accurate ranks and awards for:
 
 2. **Extract** to a folder of your choice (e.g., `C:IL2_Campaign_Tracker_v2.0`)
 
-3. **Copy** the extracted `CampaignRanksAwards` folder to <path to game>\data\swf
+3. **Copy** the extracted `CampaignRanksAwards` folder to `<Path to IL-2 BoS>\data\swf`<br>
+ 
 Before proceeding to step 4:  
 
 ⚠️ **IMPORTANT** 
@@ -81,8 +82,8 @@ The tracker can monitor **only** campaigns located in `<Path to Il-2 BoS>\data\c
 If you have modified missions belonging to a standard campaign, proceed with extreme caution when copying extracted files from `campaigns.gtp` into the `<Path to Il-2 BoS>\data\campaigns` folder. Existing files will be **overwritten**, and any custom mission modifications will be replaced by the original out-of-the-box versions.  
 
 4. **OPTIONAL:**  
-            - **Extract** Campaigns.gtp (standard IL-2 BoS campaigns) from `<Path to Il-2 BoS>\data` with the help of unGTP-IL2 (download it here https://www.mediafire.com/file/caxpalaudz1hd47/unGTP-IL2.zip).   
-            - **Move** the `unGTP-IL2.exe` to `<Path to Il-2 BoS>\data`.  
+            - **Extract** Campaigns.gtp (standard IL-2 BoS campaigns) from `<Path to Il-2 BoS>\data` with the help of unGTP-IL2 (download it here: https://www.mediafire.com/file/caxpalaudz1hd47/unGTP-IL2.zip).   
+            - **Unzip & Move** the `unGTP-IL2.exe` to `<Path to Il-2 BoS>\data`.  
             - **Drag** `Campaigns.gtp` onto `unGTP-IL2.exe`. Ignore the error warning in the cmd-window (don't worry - everything has beed extracted).  
             - **Goto** `<Path to Il-2 BoS>\data\(null)\campaigns`.  
             - **Copy** the subfolders of `<Path to Il-2 BoS>\data\(null)\campaigns` to `<Path to Il-2 BoS>\data\campaigns`  
@@ -217,13 +218,13 @@ Promotions are based on **accumulated score** across all completed missions (the
 Score Earned = Mission Score × Rank Scaling Factor
 ```
 
-**Rank Scaling Factor** adjusts requirements based on campaign length (can be editited in `campaign_progress_config.yaml`) :
-"1-10":    1.00   # Short campaigns (stock campaigns)
+**Rank Scaling Factor** adjusts requirements based on campaign length (can be editited in `campaign_progress_config.yaml`) :  
+"1-10":    1.00   # Short campaigns (stock campaigns)  
 "11-20":   1.15   # Medium-short campaigns  
-"21-30":   1.30   # Medium campaigns
-"31-40":   1.50   # Medium-long campaigns
-"41-50":   1.75   # Long campaigns
-"51-70":   2.00   # Very long campaigns
+"21-30":   1.30   # Medium campaigns  
+"31-40":   1.50   # Medium-long campaigns  
+"41-50":   1.75   # Long campaigns  
+"51-70":   2.00   # Very long campaigns  
 "71+":     2.50   # Epic campaigns (70+ missions)
 
 This prevents rapid promotions in long campaigns while ensuring fair progression in short ones.
@@ -245,7 +246,7 @@ Some awards have **prerequisites** (e.g., must have Iron Cross 2nd Class before 
 
 ### Starting Rank Offset
 
-Some campaigns can start with higher ranks.  This is configurable per-campaign in `campaign_mission_dates.json`:
+Campaigns can start with higher ranks (if you want to).  This is configurable per-campaign in `campaign_mission_dates.json`:
 
 ```json
 "kerch": {
@@ -268,7 +269,7 @@ Location: [IL-2 Directory]\data\FlightLogs\[mission].mlg
 ```
 
 These binary files contain detailed records of everything that happened during the mission. 
-These binary files are "translated" by `mlg2txt.exe into` a *.txt file and is then further processed.
+These binary files are "translated" by `mlg2txt.exe` into a *.txt file and is then further processed.
 
 ### What's Tracked
 
@@ -277,7 +278,7 @@ These binary files are "translated" by `mlg2txt.exe into` a *.txt file and is th
 | **Flight Time** | Takeoff to landing duration |
 | **Kills** | Air, ground, and naval targets with timestamps |
 | **Damage Taken** | Hits received, from whom, damage percentage |
-| **Pilot Status** | Healthy, wounded, killed, captured |
+| **Pilot Status** | "Damage" % |
 | **Status** | Landed, Landed (wounded), Hard Landing, Hard Landing (wounded), Bailout, Bailout (wounded), KIA/MIA |
 
 ### Debriefing Output
