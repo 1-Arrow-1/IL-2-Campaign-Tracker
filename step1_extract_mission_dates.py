@@ -18,6 +18,7 @@ Command line options:
 import os
 import re
 import json
+import yaml
 from pathlib import Path
 from typing import Dict, List, Optional
 from datetime import datetime
@@ -1055,6 +1056,12 @@ class CampaignDateExtractor:
         for campaign_name in campaigns:
             try:
                 campaign_data = self.scan_campaign(campaign_name)
+                # 🟡 NEU: Skip WW1 campaigns completely if excluded
+                if self.exclude_ww1 and campaign_data.get('excluded') and \
+                   campaign_data.get('exclusion_reason', '').startswith('WW1'):
+                    print(f"⚠️  Skipping WW1 campaign (excluded): {campaign_name}")
+                    continue
+                    
                 if campaign_data:
                     all_data[campaign_name] = campaign_data
             except Exception as e:
@@ -1166,10 +1173,96 @@ class CampaignDateExtractor:
         
         # If existing data provided, merge instead of overwrite
         if existing_data:
-            print(f"\n{'='*70}")
-            print("MERGING WITH EXISTING DATA")
-            print(f"{'='*70}")
-            
+            # Ensure campaigns_folder points to real game directory
+            if not hasattr(self, "campaigns_folder") or not self.campaigns_folder.exists():
+                # Try fallback: derive from game_directory in JSON
+                game_dir_str = existing_data.get("game_directory", "")
+                if game_dir_str:
+                    self.campaigns_folder = Path(game_dir_str) / "data" / "Campaigns"
+
+            # Now perform cleanup
+            if self.campaigns_folder.exists():
+                existing_campaigns_on_disk = {
+                    name for name in os.listdir(self.campaigns_folder)
+                    if os.path.isdir(os.path.join(self.campaigns_folder, name))
+                }
+
+                removed = []
+                for cname in list(existing_data.keys()):
+                    if cname == "game_directory":
+                        continue
+                    if cname not in existing_campaigns_on_disk:
+                        removed.append(cname)
+                        del existing_data[cname]
+
+                if removed:
+                    print(f"⚠️ Removed deleted campaigns from JSON: {removed}")
+                    # ✅ log this to campaign_monitor.log if running in monitor context
+                    try:
+                        from datetime import datetime
+                        log_path = Path("campaign_monitor.log")
+                        timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
+                        with open(log_path, "a", encoding="utf-8") as f:
+                            f.write(f"{timestamp} ⚠️ Removed deleted campaigns from JSON: {removed}\n")
+                    except Exception as e:
+                        print(f"⚠️ Logging failed: {e}")
+                        
+                    # 🟡 ALSO: Remove same campaigns from stock_campaigns.yaml
+                    try:
+                        # Determine correct stock_campaigns.yaml path
+                        if hasattr(self, "script_dir"):
+                            stock_yaml = self.script_dir / "stock_campaigns.yaml"
+                        else:
+                            stock_yaml = Path.cwd() / "stock_campaigns.yaml"
+
+                        if stock_yaml.exists():
+                            with open(stock_yaml, "r", encoding="utf-8") as f:
+                                stock_data = yaml.safe_load(f) or {}
+
+                            modified = False
+
+                            # Wir erwarten eine Struktur: { "stock_campaigns": { "Name": "Country" } }
+                            if isinstance(stock_data, dict) and "stock_campaigns" in stock_data:
+                                campaigns_dict = stock_data["stock_campaigns"]
+
+                                # Entferne alle gelöschten Kampagnen
+                                for cname in removed:
+                                    for key in list(campaigns_dict.keys()):
+                                        if key.strip().lower() == cname.strip().lower():
+                                            del campaigns_dict[key]
+                                            modified = True
+                                            print(f"  ⚠️ Removed '{key}' from stock_campaigns.yaml")
+
+                                # Falls keine Kampagnen mehr übrig → optional Key löschen
+                                if not campaigns_dict:
+                                    del stock_data["stock_campaigns"]
+
+                            # Backup für den Fall, dass YAML anders strukturiert ist
+                            elif isinstance(stock_data, dict):
+                                for cname in removed:
+                                    if cname in stock_data:
+                                        del stock_data[cname]
+                                        modified = True
+                                        print(f"  ⚠️ Removed '{cname}' from root-level YAML")
+
+                            if modified:
+                                with open(stock_yaml, "w", encoding="utf-8") as f:
+                                    yaml.dump(stock_data, f, allow_unicode=True, sort_keys=False)
+                                print(f"⚠️ Also removed from stock_campaigns.yaml: {removed}")
+
+                                # Log it
+                                from datetime import datetime
+                                log_path = Path("campaign_monitor.log")
+                                timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
+                                with open(log_path, "a", encoding="utf-8") as f:
+                                    f.write(f"{timestamp} [Monitor] ⚠️ Also removed from stock_campaigns.yaml: {removed}\n")
+                            else:
+                                print("ℹ️ No matching campaign names found in stock_campaigns.yaml")
+
+                    except Exception as e:
+                        print(f"⚠️ Could not update stock_campaigns.yaml: {e}")
+
+    
             final_data = {}
             new_campaigns = []
             updated_campaigns = []
@@ -1195,7 +1288,40 @@ class CampaignDateExtractor:
                 else:
                     # Only in existing (campaign was removed from game?)
                     final_data[campaign_name] = existing_data[campaign_name]
-            
+                    
+                # 🟡 Sync: remove missions that no longer exist on disk
+                if (
+                    campaign_name in existing_data
+                    and campaign_name in new_data
+                    and "missions" in existing_data.get(campaign_name, {})
+                ):
+                    old_missions = existing_data[campaign_name].get("missions", {})
+                    current_missions = set(new_data[campaign_name].get("missions", {}).keys())
+
+                    removed_missions = [
+                        m for m in list(old_missions.keys()) if m not in current_missions
+                    ]
+                    for m in removed_missions:
+                        # Remove from both sources
+                        old_missions.pop(m, None)
+                        if (
+                            campaign_name in final_data
+                            and "missions" in final_data[campaign_name]
+                            and m in final_data[campaign_name]["missions"]
+                        ):
+                            del final_data[campaign_name]["missions"][m]
+                        print(f"  ⚠️ Removed missing mission '{m}' from {campaign_name}")
+
+                    if removed_missions:
+                        try:
+                            from datetime import datetime
+                            log_path = Path("campaign_monitor.log")
+                            timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
+                            with open(log_path, "a", encoding="utf-8") as f:
+                                f.write(f"{timestamp} ⚠️ Removed missions from {campaign_name}: {removed_missions}\n")
+                        except Exception:
+                            pass
+
             # Add game directory
             final_data['game_directory'] = self.game_directory
             
@@ -1277,7 +1403,7 @@ class CampaignDateExtractor:
         return data
 
 
-def main():
+def main(args=None):
     """Main entry point"""
     import sys
     from pathlib import Path
@@ -1286,14 +1412,16 @@ def main():
     print("IL-2 CAMPAIGN PROGRESS TRACKER - Date Extractor")
     print("="*70)
     
+    if args is None:
+        args = sys.argv[1:]
     # Output file
     output_file = "campaign_mission_dates.json"
     
     # Check for command line arguments
-    force_new = '--force-new' in sys.argv
-    verbose = '--verbose' in sys.argv or '-v' in sys.argv
-    include_ww1 = '--include-ww1' in sys.argv
-    auto_mode = '--auto' in sys.argv  # Silent mode with provided path
+    force_new = '--force-new' in args
+    verbose = '--verbose' in args or '-v' in args
+    include_ww1 = '--include-ww1' in args
+    auto_mode = '--auto' in args  # Silent mode with provided path
     
     # Try to load existing data
     existing_data = {}

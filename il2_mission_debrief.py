@@ -763,12 +763,28 @@ class MissionDebriefParser:
 
 
 # ==========================================================
-if __name__ == "__main__":
+def main(args=None):
+    """
+    Main entry point for IL-2 Mission Debrief Parser.
+
+    Args:
+        args: Optional list of CLI-style arguments (e.g., ['missionReport.txt'])
+    """
     import sys
-    if len(sys.argv) < 2:
-        print("Usage: python il2_mission_debrief_v2_2.py <missionReport.txt>")
-        sys.exit(1)
-    f = sys.argv[1]
+    if args is None:
+        args = sys.argv[1:]
+
+    if len(args) < 1:
+        print("Usage: python il2_mission_debrief.py <missionReport.txt>")
+        return False
+
+    f = args[0]
     p = MissionDebriefParser(f)
     s = p.parse()
     p.to_json(f.replace(".txt", ".events.json"))
+    return True
+
+
+if __name__ == "__main__":
+    import sys
+    main(sys.argv[1:])

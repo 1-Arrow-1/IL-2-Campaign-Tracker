@@ -40,6 +40,7 @@ class CountryValidatorGUI:
         self.campaigns = campaigns
         self.result = None
         self.dropdowns = {}  # Store dropdown references
+        self.ww1_flags = {}  # Store WW1 ignore checkbox states
         
         # Create main window
         self.root = tk.Tk()
@@ -193,6 +194,17 @@ class CountryValidatorGUI:
         )
         country_dropdown.pack(side='left')
         
+        # WW1 checkbox - allow user to exclude Flying Circus campaigns
+        is_ww1 = campaign_data.get('is_ww1', False)
+        ww1_var = tk.BooleanVar(value=is_ww1)
+        ww1_checkbox = tk.Checkbutton(
+            campaign_frame,
+            text="WW1 Campaign (ignore)",
+            variable=ww1_var,
+            bg=bg_color
+        )
+        ww1_checkbox.grid(row=1, column=2, padx=(10, 0))
+        self.ww1_flags[campaign_name] = ww1_var
         # Store reference for later retrieval
         self.dropdowns[campaign_name] = country_var
         
@@ -216,7 +228,11 @@ class CountryValidatorGUI:
         
         for campaign_name, country_var in self.dropdowns.items():
             selected_country = country_var.get()
-            self.result[campaign_name] = selected_country
+            is_ww1 = self.ww1_flags[campaign_name].get()
+            self.result[campaign_name] = {
+                "country": selected_country,
+                "is_ww1": is_ww1
+            }
         
         self.root.quit()
         self.root.destroy()
@@ -295,7 +311,16 @@ def validate_countries(json_file_path: str) -> bool:
     changes_made = False
     validated_campaigns = {}  # Track validated campaigns to add to stock_campaigns.yaml
     
-    for campaign_name, new_country in result.items():
+    for campaign_name, result_data in result.items():
+        # Ergebnisdaten enthalten jetzt sowohl country als auch is_ww1
+        new_country = result_data["country"]
+        is_ww1 = result_data.get("is_ww1", False)
+
+        # Speichere WW1-Flag
+        data[campaign_name]["is_ww1"] = is_ww1
+        if is_ww1:
+            print(f"  ⚠️ Marked {campaign_name} as WW1 (ignored from tracking)")
+
         old_country = data[campaign_name].get('country')
         if old_country != new_country:
             data[campaign_name]['country'] = new_country
@@ -480,12 +505,19 @@ def validate_new_campaigns(json_file_path: str, new_campaign_names: List[str]) -
     return True
 
 
-# Test function
-if __name__ == "__main__":
+def main(args=None):
     import sys
+    if args is None:
+        args = sys.argv[1:]
     
-    if len(sys.argv) < 2:
+    if len(args) < 1:
         print("Usage: python country_validator_gui.py <campaign_mission_dates.json>")
-        sys.exit(1)
-    
-    validate_countries(sys.argv[1])
+        return False
+
+    json_file = args[0]
+    validate_countries(json_file)
+    return True
+
+
+if __name__ == "__main__":
+    main()

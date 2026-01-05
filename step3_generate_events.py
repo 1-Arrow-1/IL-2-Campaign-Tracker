@@ -3048,7 +3048,7 @@ class EventGenerator:
         return results
 
 
-def main(dry_run: bool = None, campaign: str = None, show_popups:  bool = None, test_popups:  bool = False) -> bool:
+def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bool = None, test_popups:  bool = False) -> bool:
     """
     Main entry point
     
@@ -3067,61 +3067,46 @@ def main(dry_run: bool = None, campaign: str = None, show_popups:  bool = None, 
     parser = argparse.ArgumentParser(
         description='IL-2 Campaign Progress Tracker - Event Generator'
     )
-    parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help='Show what would be done without actually modifying files'
-    )
-    parser.add_argument(
-        '--campaign',
-        type=str,
-        help='Only process specific campaign (e.g., kerch)'
-    )
-    parser.add_argument(
-        '--show-popups',
-        action='store_true',
-        help='Show promotion/award popups (only used when called by monitor while IL-2 is running)'
-    )
-    parser.add_argument(
-        '--test-popups',
-        action='store_true',
-        help='Show a test popup sequence (does not modify seen state)'
-    )
+    parser.add_argument('--dry-run', action='store_true', help='Show what would be done without actually modifying files')
+    parser.add_argument('--campaign', type=str, help='Only process specific campaign (e.g., kerch)')
+    parser.add_argument('--show-popups', action='store_true', help='Show promotion/award popups (when IL-2 is running)')
+    parser.add_argument('--test-popups', action='store_true', help='Show test popup sequence (does not modify seen state)')
+    parser.add_argument('--auto', action='store_true', help='Run in auto mode (no user input)')
 
-    # Parse CLI args, but allow function parameters to override
+    # ✅ Parse CLI args OR provided args list
     try:
-        args = parser.parse_args()
+        parsed_args = parser.parse_args(args if args is not None else None)
     except SystemExit:
-        # If called programmatically without CLI args, use defaults
-        args = argparse.Namespace(
+        parsed_args = argparse.Namespace(
             dry_run=False,
             campaign=None,
             show_popups=False,
-            test_popups=False
+            test_popups=False,
+            auto=False
         )
     
-    # ✅ Override with function parameters if provided
+    # ✅ Override with function parameters if explicitly set
     if dry_run is not None:
-        args.dry_run = dry_run
+        parsed_args.dry_run = dry_run
     if campaign is not None:
-        args.campaign = campaign
-    if show_popups is not None: 
-        args.show_popups = show_popups
-    if test_popups: 
-        args.test_popups = test_popups
-    
-    print(f"[popups] show_popups = {args.show_popups}")
+        parsed_args.campaign = campaign
+    if show_popups is not None:
+        parsed_args.show_popups = show_popups
+    if test_popups:
+        parsed_args.test_popups = test_popups
 
-    if args.dry_run:
-        print("="*70)
-        print("DRY RUN MODE - No files will be modified")
-        print("="*70)
-        print()
+    # --- Logging & Debug Info ---
+    print(f"[step3] AUTO mode     = {parsed_args.auto}")
+    print(f"[step3] SHOW_POPUPS   = {parsed_args.show_popups}")
+    print(f"[step3] DRY_RUN       = {parsed_args.dry_run}")
+
+    if parsed_args.auto:
+        print("⚙️ Running in AUTO mode (no user interaction).")
     
     generator = EventGenerator(dry_run=args.dry_run, show_popups=args.show_popups)
     
     # Test popups (no mission flight needed)
-    if args.test_popups:
+    if parsed_args.test_popups:
         from popups_min import show_event_popups
 
         # Minimal country map; only needed for image folder resolution
@@ -3162,21 +3147,17 @@ def main(dry_run: bool = None, campaign: str = None, show_popups:  bool = None, 
         )
         return True  # ✅ Expliziter Rückgabewert
 
-    if args.campaign:
-        # Process single campaign
-        print(f"Processing single campaign:  {args.campaign}")
-        events = generator.generate_events_for_campaign(args.campaign)
+    if parsed_args.campaign:
+        print(f"Processing single campaign: {parsed_args.campaign}")
+        events = generator.generate_events_for_campaign(parsed_args.campaign)
         if events:
-            country = generator.mission_dates[args. campaign].get('country')
+            country = generator.mission_dates[parsed_args.campaign].get('country')
             html = generator.generate_events_html(events, country)
-            print(f"\n{'='*70}")
-            print(f"Generated HTML:")
-            print(f"{'='*70}")
-            print(html)
+            print(f"\n{'='*70}\nGenerated HTML:\n{'='*70}\n{html}")
             
-            if not args.dry_run:
-                generator.update_campaign_info_file(args.campaign, html)
-        return True  # ✅ Expliziter Rückgabewert
+            if not parsed_args.dry_run:
+                generator.update_campaign_info_file(parsed_args.campaign, html)
+        return True
     else:
         # Process all campaigns
         results = generator.process_all_campaigns()

@@ -271,6 +271,10 @@ def main(states_path=None) -> bool:
             
             for key, campaign in data.items():
                 campaign_name = key.lower()
+                # 🟡 NEU: WW1-Erkennung – Kampagne überspringen, falls markiert
+                if campaign.get("is_ww1", False):
+                    print(f"  ⚠️  Skipping WW1 campaign: {campaign_name}")
+                    continue
                 if campaign_name in existing_campaigns:
                     filtered_data[key] = campaign
                 else:

@@ -120,8 +120,26 @@ class CampaignMonitor:
                             if potential.exists():
                                 self.campaign_file = potential
                                 self.campaigns_folder = user_dir / 'campaign'
-                                break
-        
+                                break 
+        # Starte verzögert den Watcher (nach 5 Sekunden)
+        import threading, time
+
+        if not hasattr(self, "campaign_watcher_running"):
+            self.campaign_watcher_running = False
+
+        def delayed_start():
+            if self.campaign_watcher_running:
+                print("[Monitor] ⚙️ Campaign watcher already active, skipping duplicate launch.")
+                return
+            self.campaign_watcher_running = True
+            print("[DEBUG] delayed_start() thread launched")
+            time.sleep(5)
+            print("[DEBUG] launching watcher...")
+            self._start_campaign_watcher()
+
+        threading.Thread(target=delayed_start, daemon=True).start()
+                                    
+
         # Print mode
         mode = "⚡ FAST MODE (File Watcher)" if use_file_watcher else "🌍 LEGACY MODE (Polling)"
         print(f"\n{'='*70}")
@@ -133,7 +151,193 @@ class CampaignMonitor:
             print(f"⚡ Fast mode enabled - popups appear within 2-3 seconds!")
         print(f"Log rotation: 5 MB max, 3 backups")
         print(f"{'='*70}\n")
-    
+        
+        
+        # 🟡 WW1 Filter - Skip user-marked campaigns
+        mission_dates_path = self.script_dir / "campaign_mission_dates.json"
+        if mission_dates_path.exists():
+            try:
+                with open(mission_dates_path, "r", encoding="utf-8") as f:
+                    mission_dates = json.load(f)
+
+                if isinstance(mission_dates, dict):
+                    for cname, cdata in list(mission_dates.items()):
+                        if isinstance(cdata, dict) and cdata.get("is_ww1", False):
+                            print(f"[Monitor] ⚠️ Skipping user-marked WW1 campaign: {cname}")
+                            mission_dates.pop(cname, None)
+            except Exception as e:
+                self.log(f"⚠️  Could not filter WW1 campaigns: {e}")
+                
+    def _restart_file_monitor(self):
+        """Restart the main campaignsstates.txt file watcher."""
+        try:
+            print("[Monitor] 🔁 Restarting main file watcher after campaign rescan...")
+            self.last_hash = None
+            self.last_campaigns_hash = None
+            self.processing = False
+            self.pending_change = False
+            self.debounce_timer = 0
+            self.il2_was_running = False
+
+            # Optional: kleine Pause für Stabilität
+            time.sleep(2)
+            print("[Monitor] ✅ File watcher re-initialized, monitoring resumed.")
+        except Exception as e:
+            self.log(f"⚠️ Could not restart file watcher: {e}")
+            
+    def _start_campaign_watcher(self):
+        """Background watcher for detecting new/changed campaigns"""
+        import time, json, subprocess, sys
+        import step1_extract_mission_dates
+
+        print("[DEBUG] _start_campaign_watcher() entered")
+
+        # 🔹 Load game_directory directly from campaign_mission_dates.json
+        mission_dates_path = self.script_dir / "campaign_mission_dates.json"
+        if mission_dates_path.exists():
+            try:
+                with open(mission_dates_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    game_dir_str = data.get("game_directory", "")
+                    if game_dir_str:
+                        self.game_dir = Path(game_dir_str).expanduser().resolve()
+                        print(f"[Monitor] ✅ Loaded game_directory from JSON: {self.game_dir}")
+                    else:
+                        print("[Monitor] ⚠️ game_directory key not found in JSON")
+            except Exception as e:
+                print(f"[Monitor] ⚠️ Failed to read campaign_mission_dates.json: {e}")
+
+        # 🟡 Build correct campaigns path <game_dir>\data\Campaigns
+        if getattr(self, "game_dir", None):
+            campaign_root = self.game_dir / "data" / "Campaigns"
+            if campaign_root.exists():
+                self.campaigns_folder = campaign_root
+            else:
+                print(f"[Monitor] ⚠️ Campaigns folder not found: {campaign_root}")
+                return
+        else:
+            print("[Monitor] ⚠️ No game_dir set - watcher aborted.")
+            return
+
+        print(f"[Monitor] 🟢 Watching {self.campaigns_folder} for new campaigns...")
+        print("[DEBUG] entering monitoring loop...")
+
+        # 🟢 Local helper to snapshot campaign structure
+        def snapshot():
+            snapshot_data = {}
+            for folder in self.campaigns_folder.iterdir():
+                if not folder.is_dir():
+                    continue
+                missions = []
+                for pattern in ("*.Mission*", "*.mission*", "*.msnbin", "*.MSNBIN"):
+                    for p in folder.glob(pattern):
+                        try:
+                            stat = p.stat()
+                            missions.append((p.name, stat.st_mtime, stat.st_size))
+                        except FileNotFoundError:
+                            continue
+                snapshot_data[folder.name] = tuple(sorted(missions))
+            return snapshot_data
+
+        prev_snapshot = snapshot()
+
+        # 🔁 Continuous watcher loop
+        while True:
+            time.sleep(10)
+            current_snapshot = snapshot()
+            added = set(current_snapshot.keys()) - set(prev_snapshot.keys())
+            removed = set(prev_snapshot.keys()) - set(current_snapshot.keys())
+            changed = {
+                name for name in current_snapshot.keys() & prev_snapshot.keys()
+                if current_snapshot[name] != prev_snapshot[name]
+            }
+
+            if added or removed or changed:
+                print(f"[Monitor] 🔄 Added: {added} | Removed: {removed} | Changed: {changed} - rescanning...")
+                self.log(f"[Monitor] 🔄 Added: {added} | Removed: {removed} | Changed: {changed} - rescanning...")
+                prev_snapshot = current_snapshot
+
+                try:
+                    import sys, subprocess, os
+
+                    # 🔹 Pfad zur Script-Datei
+                    step1_path = self.script_dir / "step1_extract_mission_dates.py"
+
+                    # 🔹 Wenn die Datei existiert (z. B. im Dev-Modus) → starte sie als externen Prozess
+                    if step1_path.exists():
+                        if getattr(sys, "frozen", False):
+                            python_exe = "python"
+                        else:
+                            python_exe = sys.executable
+
+                        print(f"[DEBUG] Launching external step1_extract_mission_dates.py")
+                        print(f"[DEBUG] Using interpreter: {python_exe}")
+                        subprocess.run(
+                            [python_exe, str(step1_path), "--auto"],
+                            cwd=self.script_dir,
+                            check=True
+                        )
+
+                    # 🔹 Wenn die Datei nicht existiert (EXE-Modus) → direkt importieren und aufrufen
+                    else:
+                        print("[DEBUG] step1_extract_mission_dates.py not found on disk – running internal import")
+                        import step1_extract_mission_dates
+                        step1_extract_mission_dates.main(args=["--auto"])
+
+                    print("[Monitor] ✅ Extraction completed, resuming monitoring.")
+
+                    # 🟢 Restart main file watcher (campaignsstates.txt watcher)
+                    self._restart_file_monitor()
+                    try:
+                        import yaml
+                        from country_validator_gui import validate_countries
+
+                        # Pfade
+                        mission_json = self.script_dir / "campaign_mission_dates.json"
+                        stock_yaml = self.script_dir / "stock_campaigns.yaml"
+
+                        # Lade aktuelle Kampagnendaten
+                        with open(mission_json, "r", encoding="utf-8") as f:
+                            campaign_data = json.load(f)
+
+                        # Lade Stock-Kampagnen (wenn vorhanden)
+                        stock_campaigns = set()
+                        if stock_yaml.exists():
+                            with open(stock_yaml, "r", encoding="utf-8") as f:
+                                try:
+                                    data = yaml.safe_load(f)
+                                    if isinstance(data, dict):
+                                        stock_campaigns = set(data.keys())
+                                    elif isinstance(data, list):
+                                        stock_campaigns = set(data)
+                                except Exception as e:
+                                    self.log(f"⚠️ Could not read stock_campaigns.yaml: {e}")
+
+                        # Prüfe, ob Added-Kampagnen nicht stock sind
+                        custom_to_validate = [c for c in added if c not in stock_campaigns]
+
+                        if custom_to_validate:
+                            print(f"[Monitor] 🟡 New custom campaigns detected: {custom_to_validate}")
+                            #self.log(f"[Monitor] 🟡 New custom campaigns detected: {custom_to_validate}")
+                            print("[Monitor] 🪶 Launching country validator GUI for user verification...")
+
+                            validate_countries(str(mission_json))
+                            print("[Monitor] ✅ Validation complete.")
+
+                        else:
+                            print("[Monitor] 💤 No custom campaigns needing validation found.")
+
+                    except Exception as e:
+                        print(f"⚠️ Could not perform validation check: {e}")
+
+                    # 🟢 Restart main file watcher (campaignsstates.txt watcher)
+                    self._restart_file_monitor()
+                except subprocess.CalledProcessError as e:
+                    print(f"⚠️ step1_extract_mission_dates exited with error: {e}")
+                except Exception as e:
+                    print(f"⚠️ Could not rescan campaigns: {e}")
+     
+                
     def _setup_logging(self):
         """
         ✅ FIX #2: Setup rotating log handler
@@ -302,9 +506,9 @@ class CampaignMonitor:
                 output_buffer = io.StringIO()
                 with contextlib.redirect_stdout(output_buffer):
                     if self.campaign_file:
-                        decode_campaign_usersave1.main(states_path=str(self.campaign_file))
+                        decode_campaign_usersave1.main(states_path=str(self.campaign_file), args=["--auto"])
                     else:
-                        decode_campaign_usersave1.main()
+                        decode_campaign_usersave1.main(args=["--auto"])
                 
                 # Log captured output (only important lines)
                 captured = output_buffer.getvalue()
@@ -324,7 +528,7 @@ class CampaignMonitor:
                 # Capture stdout to log
                 output_buffer = io.StringIO()
                 with contextlib.redirect_stdout(output_buffer):
-                    step3_generate_events.main(show_popups=True)
+                    step3_generate_events.main(args=["--auto"], show_popups=True)
                 
                 # Log captured output (all popup-related lines)
                 captured = output_buffer.getvalue()

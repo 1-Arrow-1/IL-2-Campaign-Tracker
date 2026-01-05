@@ -70,7 +70,7 @@ def run_first_time_setup() -> bool:
     
     # Import and run step 1
     import step1_extract_mission_dates
-    step1_extract_mission_dates.main()
+    step1_extract_mission_dates.main(args=["--auto"])
     
     if not mission_dates_file.exists():
         print()
@@ -222,7 +222,7 @@ def generate_initial_events() -> bool:
     try:
         import step3_generate_events
         # Direkte Parameterübergabe statt sys.argv Manipulation
-        step3_generate_events.main(show_popups=False)
+        step3_generate_events.main(args=["--auto"], show_popups=False)
         
         if popup_path.exists() and popup_path. stat().st_size > 0:
             print(f"✅ Events generated, popup state initialized ({popup_path.stat().st_size} bytes)")
