@@ -27,7 +27,7 @@ import subprocess
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
-import re as regex
+import re
 import argparse
 
 from utils.info_locale import (
@@ -35,15 +35,10 @@ from utils.info_locale import (
     decode_and_clean_info_locale,
 )
 from utils.pathing import get_base_path
+from utils.formatting import safe_campaign_filename
 
 POPUP_SEEN_FILE = Path("campaign_popups_seen.json")
 
-# Safety guard: ensure regex module alias is valid
-try:
-    _ = regex.sub
-except Exception:
-    import re as regex
- 
 # =======================================================================
 #  GLOBAL KILL MAPPING  (used by mission & campaign summary tables)
 # =======================================================================
@@ -361,7 +356,7 @@ def smart_mission_sort_key(mission_id: str):
         return (int(mission_id), "")
     
     # Try to extract leading digits (handles "01a", "02b", "1943-07-04a", etc.)
-    match = regex.match(r'^(\d+)(.*)$', mission_id)
+    match = re.match(r'^(\d+)(.*)$', mission_id)
     if match:
         return (int(match.group(1)), match.group(2))
     
@@ -657,13 +652,13 @@ class EventGenerator:
                 
                 # Look for: Date: 4 November, 1943<br>
                 date_str = None
-                date_match = regex.search(r'Date:\s*([^<\r\n]+)', content, regex.IGNORECASE)
+                date_match = re.search(r'Date:\s*([^<\r\n]+)', content, re.IGNORECASE)
                 if date_match:
                     date_str = date_match.group(1).strip()
                 
                 # Look for: Time: 9:45<br> or Time: 09:45<br>
                 time_str = None
-                time_match = regex.search(r'Time:\s*(\d{1,2}:\d{2})', content, regex.IGNORECASE)
+                time_match = re.search(r'Time:\s*(\d{1,2}:\d{2})', content, re.IGNORECASE)
                 if time_match:
                     time_raw = time_match.group(1)
                     # Ensure HH:MM format
@@ -2095,7 +2090,7 @@ class EventGenerator:
     def update_campaign_info_file(self, campaign_name: str, events_html: str) -> bool:
         """
         Update campaign info.locale=eng.txt with Events section
-        Uses regex.sub for robust removal of ALL tracker content (including duplicates)
+        Uses re.sub for robust removal of ALL tracker content (including duplicates)
         """
         if not self.game_directory:
             print(f"  Error: No game directory configured")
@@ -2132,7 +2127,7 @@ class EventGenerator:
             if u_count > 3:
                 print(f"  🧹 Cleaning {u_count} <u> tags from description...")
                 # Find section headers: <u>text</u><br>
-                headers = regex.findall(r'<u>([^<]+)</u><br>', cleaned)
+                headers = re.findall(r'<u>([^<]+)</u><br>', cleaned)
                 # Remove all <u> tags
                 cleaned = cleaned.replace('<u>', '').replace('</u>', '')
                 # Re-add as <b> for headers
@@ -2146,7 +2141,7 @@ class EventGenerator:
             # ====================================================================
             # VERIFICATION: Count sections in final content
             # ====================================================================
-            matches = list(regex.finditer(TRACKER_SECTION_HEADER_PATTERN, updated, regex.IGNORECASE))
+            matches = list(re.finditer(TRACKER_SECTION_HEADER_PATTERN, updated, re.IGNORECASE))
             
             if len(matches) > 2:
                 print(f"  ⚠️  WARNING: {len(matches)} sections in final content (expected 2)!")
@@ -2198,12 +2193,12 @@ class EventGenerator:
             
             # Look for &name="Campaign Display Name"
             # Can be with or without quotes
-            match = regex.search(r'&name\s*=\s*"([^"]+)"', content)
+            match = re.search(r'&name\s*=\s*"([^"]+)"', content)
             if match:
                 return match.group(1)
             
             # Try without quotes
-            match = regex.search(r'&name\s*=\s*([^\n&]+)', content)
+            match = re.search(r'&name\s*=\s*([^\n&]+)', content)
             if match:
                 return match.group(1).strip()
             
@@ -2514,7 +2509,7 @@ class EventGenerator:
         campaign_display_name = self.get_campaign_display_name(campaign_name)
         
         # Clean campaign name for filename (remove special chars)
-        safe_name = regex.sub(r'[^\w\s-]', '', campaign_name).strip().replace(' ', '_')
+        safe_name = safe_campaign_filename(campaign_name)
         pdf_filename = reports_dir / f"{safe_name}_Report.pdf"
 
         # If the target PDF is open/locked, write a fallback instead of failing
@@ -2771,7 +2766,7 @@ class EventGenerator:
         # campaign_display_name = self.get_campaign_display_name(campaign_name)
         
         # # Clean campaign name for filename (remove special chars)
-        # safe_name = regex.sub(r'[^\w\s-]', '', campaign_name).strip().replace(' ', '_')
+        # safe_name = safe_campaign_filename(campaign_name)
         # pdf_filename = reports_dir / f"{safe_name}_Report.pdf"
 
         # # If the target PDF is open/locked, write a fallback instead of failing
