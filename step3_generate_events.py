@@ -1213,14 +1213,21 @@ class EventGenerator:
                         if 'deaths' in condition or 'wounded_in_sortie' in condition:
                             required_wounds = condition.get('deaths') or condition.get('wounded_in_sortie')
                             if cumulative_wounds >= required_wounds and award['name'] not in already_earned:
-                                last_mission = sorted(completed_missions, key=smart_mission_sort_key)[-1]
-                                mission_date = self.get_mission_date(campaign_name, last_mission)
+                                mission_info = self.find_mission_for_award(
+                                    campaign_name,
+                                    award,
+                                    completed_missions,
+                                    per_mission_stats,
+                                    debriefing_wounds
+                                )
+                                mission_num = mission_info['mission'] if mission_info else None
+                                mission_date = mission_info['date'] if mission_info else None
 
                                 earned_awards.append({
                                     'type': 'award',
                                     'name': award['name'],
                                     'image': award['image'],
-                                    'mission': last_mission,
+                                    'mission': mission_num,
                                     'date': mission_date
                                 })
                                 already_earned.append(award['name'])
@@ -1255,11 +1262,109 @@ class EventGenerator:
         return False
     
     def find_mission_for_award(self, campaign_name: str, award: Dict,
-                               missions: List[str], per_mission_stats: Dict) -> Optional[Dict]:
+                               missions: List[str], per_mission_stats: Dict,
+                               debriefing_wounds: Dict = None) -> Optional[Dict]:
         """Find which mission an award was earned on"""
-        # Simplified: Use last mission for now
-        # TODO: Implement proper tracking of when conditions were met
-        last_mission = sorted(missions, key=smart_mission_sort_key)[-1]
+        if not missions:
+            return None
+
+        if debriefing_wounds is None:
+            debriefing_wounds = {}
+
+        sorted_missions = sorted(missions, key=smart_mission_sort_key)
+        running_stats = {
+            'air_combat_score': 0,
+            'total_air_kills': 0,
+            'missions_completed': 0,
+            'flight_time_hours': 0,
+            'deaths': 0,
+            'total_score': 0,
+            'ground_kills': 0,
+            'tank_kills': 0,
+            'ship_kills': 0,
+            'total_kills': 0  # air + ground + ship
+        }
+        wounds_to_date = {}
+        previously_met = False
+
+        for mission_num in sorted_missions:
+            mission_stats = per_mission_stats.get(mission_num)
+            if not isinstance(mission_stats, dict):
+                continue
+
+            running_stats['missions_completed'] += 1
+
+            light = int(mission_stats.get('killLightPlane', 0))
+            medium = int(mission_stats.get('killMediumPlane', 0))
+            heavy = int(mission_stats.get('killHeavyPlane', 0))
+            static = int(mission_stats.get('killStaticPlane', 0))
+
+            running_stats['air_combat_score'] += light + medium + (static * 0.5) + (heavy * 2)
+            running_stats['total_air_kills'] += light + medium + heavy + (static * 0.5)
+            running_stats['flight_time_hours'] += int(mission_stats.get('totalFlightTime', 0)) / 3600
+            running_stats['deaths'] += int(mission_stats.get('deaths', 0))
+            running_stats['total_score'] += int(mission_stats.get('score', 0))
+
+            ground = (
+                int(mission_stats.get('killTransportVehicle', 0)) +
+                int(mission_stats.get('killLightArmoredVehicle', 0)) +
+                int(mission_stats.get('killMediumArmoredVehicle', 0)) +
+                int(mission_stats.get('killHeavyArmoredVehicle', 0)) +
+                int(mission_stats.get('killCannon', 0)) +
+                int(mission_stats.get('killAAAGun', 0)) +
+                int(mission_stats.get('killMachinegun', 0)) +
+                int(mission_stats.get('killRocketLauncher', 0)) +
+                int(mission_stats.get('killRailroadCarriage', 0)) +
+                int(mission_stats.get('killLocomotive', 0)) +
+                int(mission_stats.get('killRailroadStation', 0)) +
+                int(mission_stats.get('killBridge', 0)) +
+                int(mission_stats.get('killFacility', 0)) +
+                int(mission_stats.get('killRadar', 0)) +
+                int(mission_stats.get('killSearchlight', 0)) +
+                int(mission_stats.get('killResidentalBuilding', 0))
+            )
+            running_stats['ground_kills'] += ground
+
+            tanks = (
+                int(mission_stats.get('killLightArmoredVehicle', 0)) +
+                int(mission_stats.get('killMediumArmoredVehicle', 0)) +
+                int(mission_stats.get('killHeavyArmoredVehicle', 0))
+            )
+            running_stats['tank_kills'] += tanks
+
+            ships = (
+                int(mission_stats.get('killLightShip', 0)) +
+                int(mission_stats.get('killLargeCargoShip', 0)) +
+                int(mission_stats.get('killDestroyerShip', 0)) +
+                int(mission_stats.get('killSubmarine', 0))
+            )
+            running_stats['ship_kills'] += ships
+
+            running_stats['total_kills'] = (
+                running_stats['total_air_kills'] +
+                running_stats['ground_kills'] +
+                running_stats['ship_kills']
+            )
+
+            if mission_num in debriefing_wounds:
+                wounds_to_date[mission_num] = debriefing_wounds.get(mission_num)
+
+            currently_met = self.check_award_conditions_with_stats(
+                award,
+                running_stats,
+                wounds_to_date if wounds_to_date else None
+            )
+
+            if currently_met and not previously_met:
+                mission_date = self.get_mission_date(campaign_name, mission_num)
+                return {
+                    'mission': mission_num,
+                    'date': mission_date
+                }
+
+            previously_met = currently_met
+
+        last_mission = sorted_missions[-1]
         mission_date = self.get_mission_date(campaign_name, last_mission)
         
         return {
@@ -3103,7 +3208,10 @@ def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bo
     if parsed_args.auto:
         print("⚙️ Running in AUTO mode (no user interaction).")
     
-    generator = EventGenerator(dry_run=args.dry_run, show_popups=args.show_popups)
+    generator = EventGenerator(
+        dry_run=parsed_args.dry_run,
+        show_popups=parsed_args.show_popups,
+    )
     
     # Test popups (no mission flight needed)
     if parsed_args.test_popups:

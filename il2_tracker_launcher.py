@@ -10,6 +10,7 @@ import argparse
 from pathlib import Path
 import json
 import shutil
+import logging
 
 # Determine script directory (works for both script and EXE)
 if getattr(sys, 'frozen', False):
@@ -22,7 +23,16 @@ else:
 # Add to path for imports
 sys.path.insert(0, str(SCRIPT_DIR))
 
-os.environ. setdefault("FORCE_REGENERATE", "0")
+os.environ.setdefault("FORCE_REGENERATE", "0")
+
+DEBUG_ENABLED = False
+
+
+def is_debug_enabled(args_debug: bool = False) -> bool:
+    """Determine whether debug logging is enabled."""
+    env_value = os.environ.get("IL2_TRACKER_DEBUG", "")
+    env_enabled = env_value.strip().lower() in {"1", "true", "yes", "on"}
+    return args_debug or env_enabled
 
 
 def print_header(title: str):
@@ -336,6 +346,7 @@ def start_monitoring(il2_states_path: Path = None) -> int:
             check_interval=1,
             use_file_watcher=True,
             il2_states_path=il2_states_path
+            debug=DEBUG_ENABLED
         )
         monitor.run()
         return 0
@@ -350,24 +361,28 @@ def start_monitoring(il2_states_path: Path = None) -> int:
 def run_tracker() -> int:
     """
     Main tracker execution. 
-    """
-    # ================================================================
-    # DEBUG: Show command line arguments
-    # ================================================================
-    print()
-    print(f"[DEBUG] sys.argv = {sys.argv}")
-    print(f"[DEBUG] Working directory = {os. getcwd()}")
-    print()
-    
+    """   
     # Parse command line arguments
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument('--skip-backup-gui', action='store_true',
                        help='Skip backup GUI (used only for automatic restart after restore)')
+    parser.add_argument('--debug', action='store_true',
+                        help='Enable debug logging output')                   
     args, unknown = parser.parse_known_args()
     
-    print(f"[DEBUG] --skip-backup-gui = {args.skip_backup_gui}")
-    print(f"[DEBUG] Unknown args = {unknown}")
-    print()
+    global DEBUG_ENABLED
+    DEBUG_ENABLED = is_debug_enabled(args.debug)
+    logging.basicConfig(level=logging.DEBUG if DEBUG_ENABLED else logging.INFO,
+                        format='[%(levelname)s] %(message)s')
+    logger = logging.getLogger(__name__)
+
+    # ================================================================
+    # DEBUG: Show command line arguments
+    # ================================================================
+    logger.debug("sys.argv = %s", sys.argv)
+    logger.debug("Working directory = %s", os.getcwd())
+    logger.debug("--skip-backup-gui = %s", args.skip_backup_gui)
+    logger.debug("Unknown args = %s", unknown)
     print("=" * 70)
     print("IL-2 CAMPAIGN PROGRESS TRACKER v1.7")
     print("=" * 70)
@@ -505,7 +520,8 @@ def main() -> int:
         import traceback
         traceback.print_exc()
         print()
-        input("Press Enter to exit...")
+        if sys.stdin.isatty() or DEBUG_ENABLED:
+            input("Press Enter to exit...")
         return 1
 
 
@@ -518,6 +534,7 @@ if __name__ == "__main__":
     if exit_code != 0:
         print()
         print(f"[DEBUG] Exiting with code {exit_code}.  Press Enter to close...")
-        input()
+        if sys.stdin.isatty() or DEBUG_ENABLED:
+            input()
     
     sys.exit(exit_code)

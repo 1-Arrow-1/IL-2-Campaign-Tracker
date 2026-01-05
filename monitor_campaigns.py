@@ -41,23 +41,25 @@ from logging.handlers import RotatingFileHandler
 # ================================================================
 # DEBUG: psutil import test
 # ================================================================
-print(f"[DEBUG] sys.executable: {sys.executable}")
-print(f"[DEBUG] sys.frozen: {getattr(sys, 'frozen', False)}")
+logger = logging.getLogger(__name__)
+logger.debug("sys.executable: %s", sys.executable)
+logger.debug("sys.frozen: %s", getattr(sys, 'frozen', False))
 
 try:
     import psutil
-    print(f"[DEBUG] psutil imported successfully:  {psutil.__file__}")
+    logger.debug("psutil imported successfully: %s", psutil.__file__)
     PSUTIL_AVAILABLE = True
 except ImportError as e: 
-    print(f"[DEBUG] psutil import FAILED: {e}")
+    logger.debug("psutil import FAILED: %s", e)
     PSUTIL_AVAILABLE = False
 except Exception as e: 
-    print(f"[DEBUG] psutil unexpected error: {type(e).__name__}: {e}")
+    logger.debug("psutil unexpected error: %s: %s", type(e).__name__, e)
     PSUTIL_AVAILABLE = False
 # ================================================================
 
 class CampaignMonitor:
-    def __init__(self, check_interval: int = 1, use_file_watcher: bool = True, il2_states_path=None):
+    def __init__(self, check_interval: int = 1, use_file_watcher: bool = True,
+                 il2_states_path=None, debug: bool | None = None):
         """
         Initialize campaign monitor
         
@@ -66,13 +68,19 @@ class CampaignMonitor:
                            Fast mode: 1 second recommended
                            Legacy mode: 5-10 seconds
             use_file_watcher: Enable fast file watching mode (recommended!)
-                             True = Fast mode (reacts in 2-3 seconds)
-                             False = Legacy polling mode
+                             True = Fast mode (reacts in 2-3 seconds) and
+                             runs the campaign watcher for new/changed campaigns
+                             False = Legacy polling mode (no campaign watcher)
             il2_states_path: Path to campaignsstates.txt in IL-2 directory
                             (default: auto-detect)
+            debug: Enable debug logging output (default: from IL2_TRACKER_DEBUG env)               
         """
         self.check_interval = check_interval
         self.use_file_watcher = use_file_watcher
+        if debug is None:
+            env_value = os.environ.get("IL2_TRACKER_DEBUG", "")
+            debug = env_value.strip().lower() in {"1", "true", "yes", "on"}
+        self.debug = debug
         self.last_hash = None
         self.last_campaigns_hash = None
         self.processing = False
@@ -85,10 +93,6 @@ class CampaignMonitor:
         self.pending_change = False
         self.debounce_timer = 0
         
-        # ✅ FIX #2: Log rotation - max 5 MB per file, keep 3 backups
-        self.log_file = Path("campaign_monitor.log")
-        self._setup_logging()
-        
         # Determine paths (works for both script and EXE)
         if getattr(sys, 'frozen', False):
             # Running as EXE - use executable directory
@@ -96,6 +100,10 @@ class CampaignMonitor:
         else:
             # Running as script - use script directory
             self.script_dir = Path(__file__).parent.resolve()
+            
+        # ✅ FIX #2: Log rotation - max 5 MB per file, keep 3 backups
+        self.log_file = Path(log_path).resolve() if log_path else self.script_dir / "campaign_monitor.log"
+        self._setup_logging()
         
         # Use provided IL-2 path or auto-detect
         if il2_states_path:
@@ -121,27 +129,32 @@ class CampaignMonitor:
                                 self.campaign_file = potential
                                 self.campaigns_folder = user_dir / 'campaign'
                                 break 
-        # Starte verzögert den Watcher (nach 5 Sekunden)
-        import threading, time
+        if self.use_file_watcher:
+            # Starte verzögert den Watcher (nach 5 Sekunden)
+            import threading, time
 
-        if not hasattr(self, "campaign_watcher_running"):
-            self.campaign_watcher_running = False
+            if not hasattr(self, "campaign_watcher_running"):
+                self.campaign_watcher_running = False
 
-        def delayed_start():
-            if self.campaign_watcher_running:
-                print("[Monitor] ⚙️ Campaign watcher already active, skipping duplicate launch.")
-                return
-            self.campaign_watcher_running = True
-            print("[DEBUG] delayed_start() thread launched")
-            time.sleep(5)
-            print("[DEBUG] launching watcher...")
-            self._start_campaign_watcher()
+            def delayed_start():
+                if self.campaign_watcher_running:
+                    self.logger.debug("Campaign watcher already active, skipping duplicate launch.")
+                    return
+                self.campaign_watcher_running = True
+                self.logger.debug("delayed_start() thread launched")
+                time.sleep(5)
+                self.logger.debug("launching watcher...")
+                self._start_campaign_watcher()
 
-        threading.Thread(target=delayed_start, daemon=True).start()
+            threading.Thread(target=delayed_start, daemon=True).start()
                                     
 
         # Print mode
-        mode = "⚡ FAST MODE (File Watcher)" if use_file_watcher else "🌍 LEGACY MODE (Polling)"
+        mode = (
+            "⚡ FAST MODE (File Watcher + Campaign Watcher)"
+            if use_file_watcher
+            else "🌍 LEGACY MODE (Polling, no Campaign Watcher)"
+        )
         print(f"\n{'='*70}")
         print(f"CAMPAIGN MONITOR - {mode}")
         print(f"{'='*70}")
@@ -190,7 +203,7 @@ class CampaignMonitor:
         import time, json, subprocess, sys
         import step1_extract_mission_dates
 
-        print("[DEBUG] _start_campaign_watcher() entered")
+        self.logger.debug("_start_campaign_watcher() entered")
 
         # 🔹 Load game_directory directly from campaign_mission_dates.json
         mission_dates_path = self.script_dir / "campaign_mission_dates.json"
@@ -220,7 +233,7 @@ class CampaignMonitor:
             return
 
         print(f"[Monitor] 🟢 Watching {self.campaigns_folder} for new campaigns...")
-        print("[DEBUG] entering monitoring loop...")
+        self.logger.debug("entering monitoring loop...")
 
         # 🟢 Local helper to snapshot campaign structure
         def snapshot():
@@ -270,8 +283,8 @@ class CampaignMonitor:
                         else:
                             python_exe = sys.executable
 
-                        print(f"[DEBUG] Launching external step1_extract_mission_dates.py")
-                        print(f"[DEBUG] Using interpreter: {python_exe}")
+                        self.logger.debug("Launching external step1_extract_mission_dates.py")
+                        self.logger.debug("Using interpreter: %s", python_exe)
                         subprocess.run(
                             [python_exe, str(step1_path), "--auto"],
                             cwd=self.script_dir,
@@ -280,7 +293,9 @@ class CampaignMonitor:
 
                     # 🔹 Wenn die Datei nicht existiert (EXE-Modus) → direkt importieren und aufrufen
                     else:
-                        print("[DEBUG] step1_extract_mission_dates.py not found on disk – running internal import")
+                        self.logger.debug(
+                            "step1_extract_mission_dates.py not found on disk – running internal import"
+                        )
                         import step1_extract_mission_dates
                         step1_extract_mission_dates.main(args=["--auto"])
 
@@ -345,7 +360,7 @@ class CampaignMonitor:
         """
         # Create logger
         self.logger = logging.getLogger('CampaignMonitor')
-        self.logger.setLevel(logging.INFO)
+        self.logger.setLevel(logging.DEBUG if self.debug else logging.INFO)
         
         # Remove existing handlers
         self.logger.handlers.clear()
@@ -506,9 +521,9 @@ class CampaignMonitor:
                 output_buffer = io.StringIO()
                 with contextlib.redirect_stdout(output_buffer):
                     if self.campaign_file:
-                        decode_campaign_usersave1.main(states_path=str(self.campaign_file), args=["--auto"])
+                        decode_campaign_usersave1.main(states_path=str(self.campaign_file))
                     else:
-                        decode_campaign_usersave1.main(args=["--auto"])
+                        decode_campaign_usersave1.main()
                 
                 # Log captured output (only important lines)
                 captured = output_buffer.getvalue()
