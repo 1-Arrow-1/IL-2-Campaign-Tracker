@@ -10,16 +10,9 @@
 
 import json
 import os
-import sys
 import re
 
-
-def _get_base_path():
-    """Detects correct working directory (EXE or script)."""
-    if getattr(sys, 'frozen', False):  # EXE mode
-        return os.path.dirname(sys.executable)
-    else:  # Python script mode
-        return os.path.dirname(os.path.abspath(__file__))
+from utils.pathing import get_base_path
 
 
 def cleanup_popups_for_reset_campaigns() -> bool:
@@ -34,7 +27,7 @@ def cleanup_popups_for_reset_campaigns() -> bool:
     Returns:
         True if changes were made, False otherwise
     """
-    base_path = _get_base_path()
+    base_path = get_base_path(__file__)
 
     decoded_path = os.path.join(base_path, "campaigns_decoded.json")
     popups_path = os.path.join(base_path, "campaign_popups_seen.json")
