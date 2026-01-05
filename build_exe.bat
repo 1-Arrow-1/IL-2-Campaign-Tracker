@@ -106,6 +106,31 @@ if not exist "IBMPlexSans-Light.ttf" (
     pause
     exit /b 1
 )
+if not exist "utils" (
+    echo ERROR: utils folder not found!
+    pause
+    exit /b 1
+)
+if not exist "utils\__init__.py" (
+    echo ERROR: utils\__init__.py not found!
+    pause
+    exit /b 1
+)
+if not exist "utils\formatting.py" (
+    echo ERROR: utils\formatting.py not found!
+    pause
+    exit /b 1
+)
+if not exist "utils\info_locale.py" (
+    echo ERROR: utils\info_locale.py not found!
+    pause
+    exit /b 1
+)
+if not exist "utils\pathing.py" (
+    echo ERROR: utils\pathing.py not found!
+    pause
+    exit /b 1
+)
 echo OK
 echo.
 
@@ -126,6 +151,10 @@ for %%F in (
 		"popups_min.py"
 		"campaign_reset_checker.py"
 		"backup_restore_gui.py"
+		"utils\__init__.py"
+		"utils\formatting.py"
+		"utils\info_locale.py"
+		"utils\pathing.py"
 ) do (
     if exist %%F (
         echo Testing %%F ...
