@@ -52,7 +52,7 @@ def check_config() -> bool:
         True if config exists, False otherwise
     """
     config_file = SCRIPT_DIR / "campaign_progress_config.yaml"
-    if not config_file. exists():
+    if not config_file.exists():
         print("ERROR: campaign_progress_config.yaml not found!")
         print(f"Expected location: {config_file}")
         print()
@@ -71,7 +71,7 @@ def run_first_time_setup() -> bool:
     """
     mission_dates_file = SCRIPT_DIR / "campaign_mission_dates.json"
     
-    if mission_dates_file. exists():
+    if mission_dates_file.exists():
         return True  # No setup needed
     
     print("FIRST RUN SETUP")
@@ -161,7 +161,7 @@ def decode_campaign_save(il2_states_path: Path) -> bool:
         old_decoded = SCRIPT_DIR / "campaigns_decoded.json"
         if old_decoded.exists():
             print("Removing old decoded file...")
-            old_decoded. unlink()
+            old_decoded.unlink()
         
         import decode_campaign_usersave1
         print(f"Decoding:  {il2_states_path}")
@@ -192,7 +192,7 @@ def restore_popup_backup(il2_states_path:  Path) -> bool:
         
         cleanup_manager = MissionCleanup(campaignstates_path=il2_states_path)
         if cleanup_manager.restore_matching_popups():
-            os. environ["FORCE_REGENERATE"] = "1"
+            os.environ["FORCE_REGENERATE"] = "1"
             print("⚡ Backup restore detected — forcing event regeneration...")
             return True
         else:
@@ -215,7 +215,7 @@ def generate_initial_events() -> bool:
     force_regenerate = os.environ.get("FORCE_REGENERATE", "0") == "1"
     
     # Check if this is first run (popup file doesn't exist or is empty)
-    is_first_run = (not popup_path. exists()) or (popup_path.stat().st_size == 0)
+    is_first_run = (not popup_path.exists()) or (popup_path.stat().st_size == 0)
     
     if not is_first_run and not force_regenerate: 
         print("✅ Popup state exists - skipping initial event generation")
@@ -234,7 +234,7 @@ def generate_initial_events() -> bool:
         # Direkte Parameterübergabe statt sys.argv Manipulation
         step3_generate_events.main(args=["--auto"], show_popups=False)
         
-        if popup_path.exists() and popup_path. stat().st_size > 0:
+        if popup_path.exists() and popup_path.stat().st_size > 0:
             print(f"✅ Events generated, popup state initialized ({popup_path.stat().st_size} bytes)")
             return True
         else: 
@@ -345,7 +345,7 @@ def start_monitoring(il2_states_path: Path = None) -> int:
         monitor = monitor_campaigns.CampaignMonitor(
             check_interval=1,
             use_file_watcher=True,
-            il2_states_path=il2_states_path
+            il2_states_path=il2_states_path,
             debug=DEBUG_ENABLED
         )
         monitor.run()
