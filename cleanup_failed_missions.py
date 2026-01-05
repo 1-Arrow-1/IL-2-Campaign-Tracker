@@ -19,6 +19,8 @@ from typing import Dict, List, Optional, Set
 import tkinter as tk
 from tkinter import ttk, messagebox
 
+from utils.pathing import get_base_path
+
 logger = logging.getLogger(__name__)
 
 
@@ -171,10 +173,10 @@ class MissionCleanup:
         
         if getattr(sys, 'frozen', False):
             # EXE-Modus:  Verzeichnis der . exe
-            tracker_dir = Path(sys.executable).parent
+            tracker_dir = get_base_path(__file__)
         else:
             # Skript-Modus: Verzeichnis des Skripts
-            script_dir = Path(__file__).parent.resolve()
+            script_dir = get_base_path(__file__)
             # Check if we're in a subdirectory (e.g., running from src/)
             if (script_dir / "step3_generate_events.py").exists():
                 tracker_dir = script_dir
