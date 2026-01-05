@@ -22,6 +22,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 import shutil
 
+from utils.pathing import get_base_path
 
 class MissionLogProcessor:
     def __init__(self, game_directory: str, verbose: bool = False, snapshot_dt=None):
@@ -304,7 +305,7 @@ class MissionLogProcessor:
             if getattr(sys, 'frozen', False):
                 # Running as compiled EXE
                 # mlg2txt.exe should be in same directory as the EXE
-                exe_dir = Path(sys.executable).parent
+                exe_dir = get_base_path(__file__)
                 mlg2txt_executable = exe_dir / 'mlg2txt.exe'
                 
                 if not mlg2txt_executable.exists():
@@ -314,7 +315,7 @@ class MissionLogProcessor:
             else:
                 # Running as Python script
                 # Use mlg2txt.py with Python
-                mlg2txt_executable = Path(__file__).parent / 'mlg2txt.py'
+                mlg2txt_executable = get_base_path(__file__) / 'mlg2txt.py'
                 
                 if not mlg2txt_executable.exists():
                     print(f"    Error: mlg2txt.py not found at {mlg2txt_executable}")
