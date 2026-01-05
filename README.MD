@@ -160,7 +160,7 @@ Flying Circus (WW1) campaigns are detected and excluded by default because the t
 **How exclusion works:**
 - Excluded campaigns are skipped during decoding and event generation.
 - The exclusion reason is stored in `campaign_mission_dates.json` so the tracker consistently ignores them.
-- You can review or change exclusions by re-running setup (delete `campaign_mission_dates.json`) and using the **WW1 (ignore)** checkbox in the country validation GUI.
+- You can review or change exclusions by re-running setup (delete `campaign_mission_dates.json` and the respective entry in the `stock_campaigns.yaml`) and using the **WW1 (ignore)** checkbox in the country validation GUI.
 
 ---
 
