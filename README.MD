@@ -68,21 +68,21 @@ The tracker includes historically accurate ranks and awards for:
 ## 📥 Installation
 
 1. **Download** the latest release (`IL2_Campaign_Tracker_v2.0.zip`)
+
 2. **Extract** to a folder of your choice (e.g., `C:IL2_Campaign_Tracker_v2.0`)
+
 3. **Copy** the extracted `CampaignRanksAwards` folder to <path to game>\data\swf
 Before proceeding to step 4:  
 
 ⚠️ **IMPORTANT** 
-The tracker can monitor **only** campaigns located in `<Path to Il-2 BoS>\data\campaigns`. Standard IL-2 campaigns are not stored directly in this folder; instead, they are run internally from `<Path to Il-2 BoS>\data\campaigns`. As a result, these campaigns must be extracted before they can be tracked (see **Step 4**). 
+The tracker can monitor **only** campaigns located in `<Path to Il-2 BoS>\data\campaigns`. Standard IL-2 campaigns are not stored directly in this folder; instead, they are run internally from `campaigns.gtp`. As a result, these campaigns must be extracted before they can be tracked (see **Step 4**). 
 
 🚨 **IMPORTANT** 
 If you have modified missions belonging to a standard campaign, proceed with extreme caution when copying extracted files from `campaigns.gtp` into the `<Path to Il-2 BoS>\data\campaigns` folder. Existing files will be **overwritten**, and any custom mission modifications will be replaced by the original out-of-the-box versions.  
 
 4. **OPTIONAL: Extract** Campaigns.gtp (standard IL-2 BoS campaigns) from `<Path to Il-2 BoS>\data` with the help of unGTP-IL2 (download it here https://www.mediafire.com/file/caxpalaudz1hd47/unGTP-IL2.zip). Put the `unGTP-IL2.exe` in `<Path to Il-2 BoS>\data`.
    Drag `Campaigns.gtp` onto `unGTP-IL2.exe`. Ignore the error warning in the cmd-window (don't worry - everything has beed extracted). Goto `<Path to Il-2 BoS>\data\(null)\campaigns`. 
-   **Copy** the campaigns folder to `<Path to Il-2 BoS>\data`.   
-   **WARNING** **IMPORTANT** Only campaigns in `<Path to Il-2 BoS>\data\campaigns` can be monitored by the tracker. Standard IL-2 campaigns aren't explicitly in the `<Path to Il-2 BoS>\data\campaigns` folder (the game runs them internally from the campaigns.gtp) and therefore need to be extracted (see step 4). 
-**DANGER** **IMPORTANT** If you modified a mission of a standard campaign file, be careful when copying the extracted files from the campaigns.gtp to the `<Path to Il-2 BoS>\data\campaigns` folder. They will be overwritten and your modified mission(s) will be replaced by the out-of-the-box mission.
+
 5. **Run** `IL2_Campaign_Tracker_v2.0.exe`
 
 ### PDF Requirements
