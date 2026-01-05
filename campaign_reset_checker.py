@@ -12,6 +12,7 @@ import json
 import os
 import re
 
+from utils.info_locale import decode_and_clean_info_locale
 from utils.pathing import get_base_path
 
 
@@ -123,31 +124,11 @@ def cleanup_popups_for_reset_campaigns() -> bool:
                     
                     if os.path.exists(info_file):
                         try:
-                            # Read file with encoding detection
+                            # Read file with encoding detection and tracker cleanup
                             with open(info_file, 'rb') as f:
                                 raw = f.read()
                             
-                            # Detect encoding (same logic as step3_generate_events)
-                            if raw.startswith(b"\xef\xbb\xbf"):
-                                encoding = "utf-8-sig"
-                            elif raw.startswith((b"\xff\xfe", b"\xfe\xff")):
-                                encoding = "utf-16"
-                            else:
-                                encoding = "utf-8"
-                            
-                            content = raw.decode(encoding)
-                            
-                            # Remove ALL tracker content using regex
-                            # Pattern matches: Mission Debriefings<br> OR <u>Mission Debriefings</u> OR <b>Events</b>
-                            # And everything after it to end of string
-                            tracker_pattern = r'(?:Mission Debriefings<br>|<[ub]>Mission Debriefings</[ub]>|<[ub]>Events</[ub]>)[\s\S]*$'
-                            cleaned = re.sub(tracker_pattern, '', content, flags=re.IGNORECASE)
-                            
-                            # Remove trailing whitespace and <br> tags
-                            cleaned = cleaned.rstrip()
-                            while cleaned.endswith('<br>'):
-                                cleaned = cleaned[:-4].rstrip()
-                            
+                            cleaned, encoding, _ = decode_and_clean_info_locale(raw)
                             # Write back only if content changed
                             if cleaned != content:
                                 with open(info_file, "w", encoding=encoding, newline="") as f:
