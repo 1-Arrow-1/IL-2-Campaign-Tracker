@@ -76,6 +76,12 @@ The tracker includes historically accurate ranks and awards for:
    **IMPORTANT** Only campaigns in `<Path to Il-2 BoS>\data\campaigns` can be monitored by the tracker.
 5. **Run** `IL2_Campaign_Tracker_v2.0.exe`
 
+### PDF Requirements
+
+PDF export uses `pdfkit`, which requires `wkhtmltopdf` to be installed or bundled. If `wkhtmltopdf` is missing, PDF export is skipped (see `step3_generate_events.py`) and the tracker continues without generating PDFs. You can install `wkhtmltopdf` from the official site: https://wkhtmltopdf.org/downloads.html.
+
+**Packaged EXE:** The PyInstaller build is configured to bundle `wkhtmltopdf.exe` when available during the build. If it is not bundled, the tracker expects `wkhtmltopdf` to be available on your system `PATH`.
+
 ### Required Files
 
 Ensure these files are in the same folder as the executable:
@@ -265,7 +271,7 @@ These binary files are "translated" by `mlg2txt.exe into` a *.txt file and is th
 
 Each mission generates detailed output in two formats:
 
-1. **In-Game (Flight Log)** - Chronological list of events written to the campaign's `info.locale=eng. txt`
+1. **In-Game (Flight Log)** - Chronological list of events written to the campaign's `info.locale=eng.txt`
 2. **PDF Report** - Detailed kill breakdown by category matching the in-game results screen
 
 ---
@@ -327,7 +333,7 @@ The Mission Cleanup GUI appears at tracker startup when missions with `takeoffSt
 
 1. **Backup created** - Current state saved before any changes
 2. **Mission removed** - Entry deleted from `campaignsstates.txt`
-3. **Popup state cleared** - Associated events removed from `campaign_popups_seen. json`
+3. **Popup state cleared** - Associated events removed from `campaign_popups_seen.json`
 4. **Ready to replay** - You can fly the mission again
 
 ### What Happens When You Keep a Mission
@@ -380,7 +386,7 @@ When the tracker starts and backups are available, a restore GUI may appear:
 3. Confirm the action
 4. Tracker automatically: 
    - Creates a copy of the backup file (original backup preserved)
-   - Deletes current `campaignsstates. txt`
+   - Deletes current `campaignsstates.txt`
    - Renames backup copy to `campaignsstates.txt`
    - Regenerates all events
    - Restores matching popup state (prevents duplicate popups)
@@ -411,12 +417,12 @@ Later, if needed:
 
 | File | Purpose | User Editable |
 |------|---------|---------------|
-| `campaign_progress_config. yaml` | Ranks, awards, criteria, and settings | ✅ Yes |
+| `campaign_progress_config.yaml` | Ranks, awards, criteria, and settings | ✅ Yes |
 | `campaign_mission_dates.json` | Campaign metadata, mission dates, countries | ⚠️ Careful |
 
 ### Configuration Details
 
-#### campaign_progress_config. yaml
+#### campaign_progress_config.yaml
 
 This is the main configuration file containing:
 
@@ -503,7 +509,7 @@ Auto-generated during first run, contains:
 
 | File | Purpose | Location |
 |------|---------|----------|
-| `[Campaign]_Report. pdf` | Career PDF report | `reports/` subfolder |
+| `[Campaign]_Report.pdf` | Career PDF report | `reports/` subfolder |
 
 ---
 
@@ -515,7 +521,7 @@ Auto-generated during first run, contains:
 |---------|----------|
 | Missing `campaign_progress_config.yaml` | Ensure file is in same folder as EXE |
 | Antivirus blocking | Add exception for tracker folder |
-| Missing Visual C++ Runtime | Install [VC++ Redistributable](https://aka.ms/vs/17/release/vc_redist. x64. exe) |
+| Missing Visual C++ Runtime | Install [VC++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe) |
 
 ### No Campaigns Detected
 
