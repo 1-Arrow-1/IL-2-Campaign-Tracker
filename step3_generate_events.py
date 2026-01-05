@@ -30,6 +30,10 @@ from typing import Dict, List, Optional, Tuple
 import re as regex
 import argparse
 
+from utils.info_locale import (
+    TRACKER_SECTION_HEADER_PATTERN,
+    decode_and_clean_info_locale,
+)
 from utils.pathing import get_base_path
 
 POPUP_SEEN_FILE = Path("campaign_popups_seen.json")
@@ -2115,44 +2119,13 @@ class EventGenerator:
                 shutil.copy(info_file, backup_file)
                 print(f"  Created backup: {backup_file.name}")
             
-            # Encoding detection
             raw = info_file.read_bytes()
-            if raw.startswith(b"\xef\xbb\xbf"):
-                detected_encoding = "utf-8-sig"
-            elif raw.startswith((b"\xff\xfe", b"\xfe\xff")):
-                detected_encoding = "utf-16"
-            else:
-                detected_encoding = "utf-8"
-            
-            content = raw.decode(detected_encoding)
-            old_len = len(content)
-            
-            # ====================================================================
-            # ROBUST CLEANUP: Remove ALL tracker content in ONE regex operation
-            # ====================================================================
-            # Pattern: ANY tracker section header + everything after it
-            # Handles: Mission Debriefings<br>, <u>...</u>, <b>...</b>
-            # [\s\S]*$ = match everything (including newlines) to end of string
-            
-            tracker_pattern = r'(?:Mission Debriefings<br>|<[ub]>Mission Debriefings</[ub]>|<[ub]>Events</[ub]>)[\s\S]*$'
-            
-            cleaned = regex.sub(
-                tracker_pattern,
-                '',
-                content,
-                flags=regex.IGNORECASE
-            )
-            
+            cleaned, detected_encoding, old_len = decode_and_clean_info_locale(raw) 
             removed = old_len - len(cleaned)
             if removed > 0:
                 print(f"  ✂️  Removed {removed} chars of old tracker content")
             else:
                 print(f"  ℹ️  No old tracker sections (first run)")
-            
-            # Cleanup trailing whitespace/<br>
-            cleaned = cleaned.rstrip()
-            while cleaned.endswith('<br>'):
-                cleaned = cleaned[:-4].rstrip()
             
             # Remove excessive <u> tags from description
             u_count = cleaned.count('<u>')
@@ -2173,8 +2146,7 @@ class EventGenerator:
             # ====================================================================
             # VERIFICATION: Count sections in final content
             # ====================================================================
-            verify_pattern = r'(?:Mission Debriefings<br>|<[ub]>Mission Debriefings</[ub]>|<[ub]>Events</[ub]>)'
-            matches = list(regex.finditer(verify_pattern, updated, regex.IGNORECASE))
+            matches = list(regex.finditer(TRACKER_SECTION_HEADER_PATTERN, updated, regex.IGNORECASE))
             
             if len(matches) > 2:
                 print(f"  ⚠️  WARNING: {len(matches)} sections in final content (expected 2)!")
