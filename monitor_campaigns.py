@@ -99,7 +99,11 @@ class CampaignMonitor:
         
         # Determine paths (works for both script and EXE)
         self.script_dir = get_base_path(__file__)
-            
+        self.mission_dates_path = self.script_dir / "campaign_mission_dates.json"
+        self.mission_dates_mtime = None
+        self.ww1_excluded = set()
+        self.mission_dates = {}    
+                  
         # ✅ FIX #2: Log rotation - max 5 MB per file, keep 3 backups
         self.log_file = Path(log_path).resolve() if log_path else self.script_dir / "campaign_monitor.log"
         self._setup_logging()
@@ -166,19 +170,7 @@ class CampaignMonitor:
         
         
         # 🟡 WW1 Filter - Skip user-marked campaigns
-        mission_dates_path = self.script_dir / "campaign_mission_dates.json"
-        if mission_dates_path.exists():
-            try:
-                with open(mission_dates_path, "r", encoding="utf-8") as f:
-                    mission_dates = json.load(f)
-
-                if isinstance(mission_dates, dict):
-                    for cname, cdata in list(mission_dates.items()):
-                        if isinstance(cdata, dict) and cdata.get("is_ww1", False):
-                            print(f"[Monitor] ⚠️ Skipping user-marked WW1 campaign: {cname}")
-                            mission_dates.pop(cname, None)
-            except Exception as e:
-                self.log(f"⚠️  Could not filter WW1 campaigns: {e}")
+        self._load_mission_dates()
                 
     def _restart_file_monitor(self):
         """Restart the main campaignsstates.txt file watcher."""
@@ -397,7 +389,56 @@ class CampaignMonitor:
             except Exception as e:
                 self.log(f"Warning: Could not load game directory: {e}")
         return None
-    
+     
+    def _load_mission_dates(self) -> bool:
+        """Load mission dates and refresh WW1 exclusion list if changed."""
+        if not self.mission_dates_path.exists():
+            return False
+
+        try:
+            current_mtime = self.mission_dates_path.stat().st_mtime
+        except Exception as e:
+            self.log(f"⚠️  Could not stat mission dates file: {e}")
+            return False
+
+        if self.mission_dates_mtime == current_mtime:
+            return False
+
+        try:
+            with open(self.mission_dates_path, "r", encoding="utf-8") as f:
+                mission_dates = json.load(f)
+        except Exception as e:
+            self.log(f"⚠️  Could not read mission dates: {e}")
+            return False
+
+        if not isinstance(mission_dates, dict):
+            self.log("⚠️  Mission dates JSON is not a dictionary, skipping reload.")
+            return False
+
+        new_exclusions = {
+            cname.lower()
+            for cname, cdata in mission_dates.items()
+            if isinstance(cdata, dict) and cdata.get("is_ww1", False)
+        }
+
+        if new_exclusions != self.ww1_excluded:
+            added = sorted(new_exclusions - self.ww1_excluded)
+            removed = sorted(self.ww1_excluded - new_exclusions)
+            self.log(
+                "[Monitor] 🟡 WW1 exclusions updated "
+                f"(added={len(added)}, removed={len(removed)})"
+            )
+
+        self.ww1_excluded = new_exclusions
+        self.mission_dates = mission_dates
+        self.mission_dates_mtime = current_mtime
+
+        game_dir_str = mission_dates.get("game_directory", "")
+        if game_dir_str:
+            self.game_dir = Path(game_dir_str).expanduser().resolve()
+
+        return True
+     
     def log(self, message: str):
         """Write message using rotating logger"""
         self.logger.info(message)
@@ -506,6 +547,7 @@ class CampaignMonitor:
         self.processing = True
         
         try:
+            self._load_mission_dates()
             self.log("📋 Processing campaigns...")
             
             # NO SYNC NEEDED - we read directly from IL-2!
@@ -588,6 +630,7 @@ class CampaignMonitor:
         
         try:
             while True:
+                self._load_mission_dates()
                 # Check if IL-2 is running
                 self.game_running = self._check_il2_running()
                 
