@@ -30,6 +30,8 @@ from typing import Dict, List, Optional, Tuple
 import re as regex
 import argparse
 
+from utils.pathing import get_base_path
+
 POPUP_SEEN_FILE = Path("campaign_popups_seen.json")
 
 # Safety guard: ensure regex module alias is valid
@@ -390,8 +392,7 @@ class EventGenerator:
             # Relative path - check multiple locations
             if getattr(sys, 'frozen', False):
                 # Running as EXE - check directory next to EXE first
-                exe_dir = Path(sys.executable).parent
-                config_path = exe_dir / config_file
+                config_path = get_base_path(__file__) / config_file
                 if not config_path.exists():
                     # Fallback to embedded
                     config_path = Path(sys._MEIPASS) / config_file
@@ -3273,4 +3274,5 @@ def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bo
 
 
 if __name__ == "__main__":
+    
     main()
