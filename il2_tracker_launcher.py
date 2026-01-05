@@ -12,13 +12,10 @@ import json
 import shutil
 import logging
 
+from utils.pathing import get_base_path
+
 # Determine script directory (works for both script and EXE)
-if getattr(sys, 'frozen', False):
-    # Running as EXE
-    SCRIPT_DIR = Path(sys.executable).parent
-else:
-    # Running as script
-    SCRIPT_DIR = Path(__file__).parent
+SCRIPT_DIR = get_base_path(__file__)
 
 # Add to path for imports
 sys.path.insert(0, str(SCRIPT_DIR))
