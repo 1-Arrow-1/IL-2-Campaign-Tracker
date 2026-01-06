@@ -132,6 +132,94 @@ def _load_hash_index(index_path: Path) -> dict:
         return {}
 
 
+def _load_json_file(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, dict):
+            return data
+        print(f"⚠️  Expected JSON object in {path}, got {type(data).__name__}")
+        return {}
+    except Exception as e:
+        print(f"⚠️  Could not read {path}: {e}")
+        return {}
+
+
+def resync_campaign_events_for_campaign(
+    campaign_name: str,
+    generator,
+    decoded_path: Path = Path("campaigns_decoded.json"),
+    events_path: Path = Path("campaign_events.json"),
+) -> dict:
+    decoded_data = _load_json_file(decoded_path)
+    campaign_data = decoded_data.get(campaign_name)
+    if not campaign_data:
+        print(f"    ⚠️  Campaign '{campaign_name}' not found in {decoded_path}")
+        return {
+            "events": [],
+            "campaign_data": {},
+            "completed_missions": [],
+            "country": None,
+            "combined_html": "",
+        }
+
+    completed_missions = list(
+        campaign_data.get("completedMissionsByFileName", {}).keys()
+    )
+
+    events = generator.generate_events_for_campaign(campaign_name)
+    events_data = _load_json_file(events_path)
+
+    country = generator.mission_dates.get(campaign_name, {}).get("country")
+    combined_html = ""
+
+    if events:
+        events_html = generator.generate_events_html(events, country)
+        debriefings_html = ""
+        if generator.log_processor and completed_missions:
+            debriefings_html, _ = generator.generate_debriefings_html(
+                campaign_name, completed_missions
+            )
+        combined_html = (
+            f"{debriefings_html}\n{events_html}" if debriefings_html else events_html
+        )
+        events_data[campaign_name] = {
+            "country": country,
+            "events": events,
+            "debriefings_html": debriefings_html,
+            "events_html": events_html,
+            "html": combined_html,
+        }
+        print(f"    ✓ Resynced campaign_events.json")
+    else:
+        if completed_missions:
+            print(
+                f"    ⚠️  No events generated for '{campaign_name}' despite completed missions; "
+                "clearing stale campaign_events.json entry"
+            )
+        else:
+            print(
+                f"    ℹ️  No completed missions for '{campaign_name}'; clearing campaign_events.json entry"
+            )
+        events_data[campaign_name] = []
+
+    try:
+        with open(events_path, "w", encoding="utf-8") as f:
+            json.dump(events_data, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"    ⚠️  Could not update {events_path}: {e}")
+
+    return {
+        "events": events,
+        "campaign_data": campaign_data,
+        "completed_missions": completed_missions,
+        "country": country,
+        "combined_html": combined_html,
+    }
+
+
 class MissionCleanup:
     """Handle cleanup of failed campaign missions"""
     
@@ -1161,40 +1249,20 @@ class CleanupGUI:
                     print(f"\n  Processing: {campaign_name}")
                     
                     try:
-                        # Generate events for this campaign
-                        events = generator.generate_events_for_campaign(campaign_name)
+                        resync_result = resync_campaign_events_for_campaign(
+                            campaign_name, generator
+                        )
+                        events = resync_result["events"]
+                        campaign_data = resync_result["campaign_data"]
+                        completed_missions = resync_result["completed_missions"]
+                        country = resync_result["country"]
                         
                         if events:
-                            # Get campaign metadata
-                            country = generator.mission_dates.get(campaign_name, {}).get('country')
-                            
-                            if country:
-                                # Generate HTML for in-game display
-                                events_html = generator.generate_events_html(events, country)
-                                
-                                # Get completed missions for debriefings
-                                decoded_data = generator._load_decoded_campaign('campaigns_decoded.json')
-                                campaign_data = decoded_data.get(campaign_name, {})
-                                completed_missions = list(
-                                    campaign_data.get('completedMissionsByFileName', {}).keys()
-                                )
-                                
-                                # Generate debriefings
-                                debriefings_html = ""
-                                if generator.log_processor and completed_missions:
-                                    debriefings_html, debriefings = generator.generate_debriefings_html(
-                                        campaign_name, 
-                                        completed_missions
-                                    )
-                                
-                                # Combine for in-game display
-                                if debriefings_html:
-                                    combined_html = debriefings_html + "\n" + events_html
-                                else:
-                                    combined_html = events_html
-                                
+                           
                                 # Update campaign info file
-                                generator.update_campaign_info_file(campaign_name, combined_html)
+                                generator.update_campaign_info_file(
+                                    campaign_name, resync_result["combined_html"]
+                                )
                                 
                                 # *** REGENERATE PDF ***
                                 if completed_missions and len(completed_missions) > 0:
@@ -1267,59 +1335,29 @@ class CleanupGUI:
                             
                             # ✅ CRITICAL: Even with no events, cleanup PDF and info file if no missions left
                             try:
-                                # Load campaigns_decoded.json directly
-                                import json
-                                decoded_path = Path('campaigns_decoded.json')
-                                if decoded_path.exists():
-                                    with open(decoded_path, 'r', encoding='utf-8') as f:
-                                        decoded_data = json.load(f)
+                               # If no missions left, cleanup everything
+                                if not completed_missions or len(completed_missions) == 0:
+                                    print(f"    ℹ️  No missions left - cleaning up")
                                     
-                                    campaign_data = decoded_data.get(campaign_name, {})
-                                    completed_missions = list(
-                                        campaign_data.get('completedMissionsByFileName', {}).keys()
-                                    )
+                                    # Delete PDF if exists
+                                    import os
+                                    pdf_path = Path('reports') / f"{campaign_name}_Report.pdf"
+                                    if pdf_path.exists():
+                                        try:
+                                            os.remove(pdf_path)
+                                            print(f"    ✓ Removed PDF: {pdf_path.name}")
+                                        except Exception as e:
+                                            print(f"    ⚠️  Could not remove PDF: {e}")
                                     
-                                    # If no missions left, cleanup everything
-                                    if not completed_missions or len(completed_missions) == 0:
-                                        print(f"    ℹ️  No missions left - cleaning up")
-                                        
-                                        # Delete PDF if exists
-                                        import os
-                                        pdf_path = Path('reports') / f"{campaign_name}_Report.pdf"
-                                        if pdf_path.exists():
-                                            try:
-                                                os.remove(pdf_path)
-                                                print(f"    ✓ Removed PDF: {pdf_path.name}")
-                                            except Exception as e:
-                                                print(f"    ⚠️  Could not remove PDF: {e}")
-                                        
-                                        # Update info file with empty content
-                                        try:
-                                            country = generator.mission_dates.get(campaign_name, {}).get('country')
-                                            if country:
-                                                empty_html = ""
-                                                generator.update_campaign_info_file(campaign_name, empty_html)
-                                                print(f"    ✓ Cleared campaign info file")
-                                        except Exception as e:
-                                            print(f"    ⚠️  Could not update info file: {e}")
-                                        
-                                        # Update campaign_events.json
-                                        try:
-                                            events_json_path = Path('campaign_events.json')
-                                            if events_json_path.exists():
-                                                with open(events_json_path, 'r', encoding='utf-8') as f:
-                                                    events_data = json.load(f)
-                                                
-                                                if campaign_name in events_data:
-                                                    events_data[campaign_name] = []
-                                                    
-                                                    with open(events_json_path, 'w', encoding='utf-8') as f:
-                                                        json.dump(events_data, f, indent=2, ensure_ascii=False)
-                                                    
-                                                    print(f"    ✓ Cleared campaign_events.json")
-                                        except Exception as e:
-                                            print(f"    ⚠️  Could not update campaign_events.json: {e}")
-                                            
+                                    # Update info file with empty content
+                                    try:
+                                        if country:
+                                            empty_html = ""
+                                            generator.update_campaign_info_file(campaign_name, empty_html)
+                                            print(f"    ✓ Cleared campaign info file")
+                                    except Exception as e:
+                                        print(f"    ⚠️  Could not update info file: {e}")
+                                                                       
                             except Exception as e:
                                 print(f"    ⚠️  Error during cleanup: {e}")
                             
