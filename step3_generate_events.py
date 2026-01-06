@@ -2964,6 +2964,7 @@ class EventGenerator:
         
         # Reload popup state from disk (in case it was modified by reset checker)
         self.popup_seen = load_popup_seen()
+        popup_state_missing = (not POPUP_SEEN_FILE.exists()) or (not self.popup_seen)
         print(f"[popups] Reloaded state: {len(self.popup_seen)} campaigns")
         
         # Detect which campaigns have new missions since last run
@@ -2985,56 +2986,69 @@ class EventGenerator:
             
             # ============================================================
             # Popups: detect, defer, or show
-            # CRITICAL: Only process popups for campaigns that changed THIS run
             # ============================================================
-            if self.enable_popups and events and campaign_name in campaigns_with_changes:
+            baseline_synced = False
+            if self.enable_popups and events and popup_state_missing and campaign_name not in self.popup_seen:
+                keys_now = [make_event_key(ev) for ev in events]
+                keys_now_set = set(keys_now)
+                self.popup_seen[campaign_name] = sorted(keys_now_set)
+                save_popup_seen(self.popup_seen)
+                print(f"[popups] {campaign_name}: initial sync ({len(keys_now_set)} events)")
+                baseline_synced = True
+
+            # CRITICAL: Only process popups for campaigns that changed THIS run
+            if (
+                self.enable_popups
+                and events
+                and campaign_name in campaigns_with_changes
+                and not baseline_synced
+            ):
                 keys_now = [make_event_key(ev) for ev in events]
                 keys_now_set = set(keys_now)
 
-                # First-ever run for this campaign → baseline only
-                if campaign_name not in self.popup_seen:
-                    self.popup_seen[campaign_name] = sorted(keys_now_set)
-                    save_popup_seen(self.popup_seen)
-                    print(f"[popups] {campaign_name}: initial sync ({len(keys_now_set)} events)")
-                else:
-                    campaign_seen = set(self.popup_seen.get(campaign_name, []))
-                    new_keys = keys_now_set - campaign_seen
+                campaign_seen = set(self.popup_seen.get(campaign_name, []))
+                new_keys = keys_now_set - campaign_seen
 
-                    if new_keys:
-                        if self.show_popups: # and is_il2_running():
-                            # show popups IMMEDIATELY!
-                            new_events = [ev for ev in events if make_event_key(ev) in new_keys]
-                            print(f"[popups] {campaign_name}: {len(new_events)} new event(s) - SHOWING NOW!")
+                if new_keys:
+                    if self.show_popups: # and is_il2_running():
+                        # show popups IMMEDIATELY!
+                        new_events = [ev for ev in events if make_event_key(ev) in new_keys]
+                        print(f"[popups] {campaign_name}: {len(new_events)} new event(s) - SHOWING NOW!")
 
-                            # Build country map for this popup
-                            campaign_country_map = {}
-                            campaign_name_lower = campaign_name.lower()
-                            if campaign_name_lower in self.mission_dates_lower:
-                                _, mission_data = self.mission_dates_lower[campaign_name_lower]
-                                country = mission_data.get('country')
-                                if country:
-                                    campaign_country_map[campaign_name] = country
-                                    campaign_country_map[campaign_name_lower] = country
-                            
-                            # Show popups RIGHT NOW (before any file writing!)
-                            from popups_min import show_event_popups
-                            popup_list = [(campaign_name, ev) for ev in new_events]
-                            show_event_popups(
-                                popup_list,
-                                game_directory=self.game_directory,
-                                campaign_country_map=campaign_country_map,
-                                duration_seconds=5
-                            )
+                        # Build country map for this popup
+                        campaign_country_map = {}
+                        campaign_name_lower = campaign_name.lower()
+                        if campaign_name_lower in self.mission_dates_lower:
+                            _, mission_data = self.mission_dates_lower[campaign_name_lower]
+                            country = mission_data.get('country')
+                            if country:
+                                campaign_country_map[campaign_name] = country
+                                campaign_country_map[campaign_name_lower] = country
+                        
+                        # Show popups RIGHT NOW (before any file writing!)
+                        from popups_min import show_event_popups
+                        popup_list = [(campaign_name, ev) for ev in new_events]
+                        show_event_popups(
+                            popup_list,
+                            game_directory=self.game_directory,
+                            campaign_country_map=campaign_country_map,
+                            duration_seconds=5
+                        )
 
-                            # mark as seen AFTER popup
-                            self.popup_seen[campaign_name] = sorted(campaign_seen | new_keys)
-                            save_popup_seen(self.popup_seen)
-                        else:
-                            print(
-                                f"[popups] deferred ({len(new_keys)}) "
-                                f"(show_popups={self.show_popups})" #, il2_running={is_il2_running()})"
-                            )
-            elif self.enable_popups and events and campaign_name not in campaigns_with_changes:
+                        # mark as seen AFTER popup
+                        self.popup_seen[campaign_name] = sorted(campaign_seen | new_keys)
+                        save_popup_seen(self.popup_seen)
+                    else:
+                        print(
+                            f"[popups] deferred ({len(new_keys)}) "
+                            f"(show_popups={self.show_popups})" #, il2_running={is_il2_running()})"
+                        )
+            elif (
+                self.enable_popups
+                and events
+                and campaign_name not in campaigns_with_changes
+                and not baseline_synced
+            ):    
                 # Campaign has events but didn't change - skip popup processing
                 print(f"[popups] {campaign_name}: skipped (no changes detected)")
 
