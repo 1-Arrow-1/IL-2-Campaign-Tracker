@@ -12,6 +12,7 @@ import json
 import shutil
 import logging
 
+from utils.il2_paths import resolve_il2_paths
 from utils.pathing import get_base_path
 
 # Determine script directory (works for both script and EXE)
@@ -116,24 +117,19 @@ def find_il2_states_path() -> Path | None:
     Returns:
         Path to campaignsstates.txt, or None if not found
     """
-    mission_dates_file = SCRIPT_DIR / "campaign_mission_dates.json"
-    
     try:
-        with open(mission_dates_file, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            game_dir = Path(data.get('game_directory', '')).expanduser().resolve()
-
-        usersave_dir = game_dir / 'data' / 'swf' / 'il2' / 'usersave'
-        if usersave_dir.exists():
-            for user_dir in usersave_dir.iterdir():
-                potential = user_dir / 'campaign' / 'campaignsstates.txt'
-                if potential.exists():
-                    print(f"✓ Found campaign save:  {potential}")
-                    return potential
-            
-            print(f"⚠️ No campaignsstates.txt found under {usersave_dir}")
+        paths = resolve_il2_paths(SCRIPT_DIR)
+        if paths.campaignsstates_path:
+            print(f"✓ Found campaign save:  {paths.campaignsstates_path}")
+            return paths.campaignsstates_path
+        if paths.game_directory:
+            usersave_dir = paths.game_directory / "data" / "swf" / "il2" / "usersave"
+            if usersave_dir.exists():
+                print(f"⚠️ No campaignsstates.txt found under {usersave_dir}")
+            else:
+                print(f"⚠️ usersave directory not found:  {usersave_dir}")
         else:
-            print(f"⚠️ usersave directory not found:  {usersave_dir}")
+            print("⚠️ Game directory not found in campaign_mission_dates.json")
             
     except Exception as e:
         print(f"❌ Could not locate campaign save:  {e}")
