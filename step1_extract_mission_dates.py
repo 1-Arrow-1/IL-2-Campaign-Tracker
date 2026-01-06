@@ -25,6 +25,49 @@ from datetime import datetime
 
 from utils.pathing import get_base_path
 
+def _load_json_dict(path: Path) -> Optional[Dict]:
+    if not path.exists():
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, dict):
+            return data
+        print(f"⚠️ Expected JSON object in {path}, got {type(data).__name__}")
+        return None
+    except json.JSONDecodeError:
+        print(f"⚠️ Invalid JSON in {path} - skipping cleanup")
+        return None
+
+
+def _cleanup_deleted_campaign_entries(removed: List[str], base_dir: Path) -> None:
+    if not removed:
+        return
+
+    cleanup_targets = [
+        (base_dir / "campaign_popups_seen.json", True, "campaign_popups_seen.json"),
+        (base_dir / "campaign_events.json", False, "campaign_events.json"),
+    ]
+
+    for path, sort_keys, label in cleanup_targets:
+        data = _load_json_dict(path)
+        if data is None:
+            continue
+
+        removed_keys = [name for name in removed if name in data]
+        if not removed_keys:
+            continue
+
+        for name in removed_keys:
+            del data[name]
+
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, sort_keys=sort_keys, ensure_ascii=False)
+            print(f"⚠️ Removed deleted campaigns from {label}: {removed_keys}")
+        except Exception as e:
+            print(f"⚠️ Could not update {label}: {e}")
+            
 class CampaignDateExtractor:
     def __init__(self, campaigns_folder: str, verbose: bool = False, exclude_ww1: bool = True):
         """
