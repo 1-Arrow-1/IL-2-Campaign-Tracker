@@ -3,10 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import List, Tuple, Dict, Any
 import tkinter as tk
-import json
 import logging
-import os
+import os, json
 
+from utils.il2_paths import read_game_directory
 from utils.pathing import get_base_path
 
 logger = logging.getLogger(__name__)
@@ -45,37 +45,24 @@ def _get_game_dir_from_json() -> Path | None:
     """
 
     try:
-        # Pfad zur JSON bestimmen – hängt davon ab, ob wir als Script oder als EXE laufen
         base_path = get_base_path(__file__)
-        config_file = base_path / "campaign_mission_dates.json"
+        game_dir = read_game_directory(base_path)
 
-        logger.debug("Lade campaign_mission_dates.json: %s", config_file)
-
-        if not config_file.exists():
-            print(f"[popups] ⚠️ JSON-Datei nicht gefunden: {config_file}")
+        if not game_dir:
+            config_file = base_path / "campaign_mission_dates.json"
+            print(f"[popups] ⚠️ Kein 'game_directory' in {config_file} gefunden.")
             return None
 
-        with open(config_file, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        gd_str = data.get("game_directory", "").strip()
-        if not gd_str:
-            print("[popups] ⚠️ Kein 'game_directory' in JSON gefunden.")
-            return None
-
-        game_dir = Path(gd_str).expanduser().resolve()
         if game_dir.exists():
             print(f"[popups] ✅ game_directory aus JSON geladen: {game_dir}")
             return game_dir
 
         print(f"[popups] ⚠️ Ungültiger game_directory-Pfad: {game_dir}")
         return None
-
+    
     except Exception as e:
         print(f"[popups] ⚠️ Fehler beim Lesen von campaign_mission_dates.json: {e}")
         return None
-
-
 
 def _resolve_image_path(game_directory: Path, country: str, ev: Dict[str, Any]) -> Path:
     """
@@ -416,4 +403,5 @@ def show_event_popups(
 
     _next()
     root.mainloop()
+
 
