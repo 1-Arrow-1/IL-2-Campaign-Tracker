@@ -19,11 +19,13 @@ import os
 import re
 import json
 import yaml
+import shutil
 from pathlib import Path
 from typing import Dict, List, Optional
 from datetime import datetime
 
 from utils.pathing import get_base_path
+from utils.il2_paths import resolve_il2_paths
 
 def _load_json_dict(path: Path) -> Optional[Dict]:
     if not path.exists():
@@ -68,6 +70,18 @@ def _cleanup_deleted_campaign_entries(removed: List[str], base_dir: Path) -> Non
         except Exception as e:
             print(f"⚠️ Could not update {label}: {e}")
             
+    reports_dir = base_dir / "reports"
+    if reports_dir.exists():
+        for name in removed:
+            safe_name = safe_campaign_filename(name)
+            pdf_path = reports_dir / f"{safe_name}_Report.pdf"
+            if pdf_path.exists():
+                try:
+                    pdf_path.unlink()
+                    print(f"⚠️ Removed report PDF for deleted campaign: {name}")
+                except Exception as e:
+                    print(f"⚠️ Could not remove report PDF for {name}: {e}")        
+                    
 class CampaignDateExtractor:
     def __init__(self, campaigns_folder: str, verbose: bool = False, exclude_ww1: bool = True):
         """
