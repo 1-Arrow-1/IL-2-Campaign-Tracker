@@ -34,6 +34,8 @@ a = Analysis(
         'utils.formatting',
         'utils.info_locale',
         'utils.pathing',
+		'utils.il2_paths',
+		'regex',
         'PIL',
         'PIL.Image',
         'PIL.DdsImagePlugin',

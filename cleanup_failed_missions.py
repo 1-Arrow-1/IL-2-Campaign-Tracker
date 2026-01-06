@@ -1242,7 +1242,7 @@ class CleanupGUI:
                         country = resync_result["country"]
                         
                         if events:
-                           if country:
+                            if country:
                                 # Update campaign info file
                                 generator.update_campaign_info_file(
                                     campaign_name, resync_result["combined_html"]

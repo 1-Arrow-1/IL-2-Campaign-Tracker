@@ -131,6 +131,11 @@ if not exist "utils\pathing.py" (
     pause
     exit /b 1
 )
+if not exist "utils\il2_paths.py" (
+    echo ERROR: utils\il2_paths.py not found!
+    pause
+    exit /b 1
+)
 echo OK
 echo.
 
@@ -155,6 +160,7 @@ for %%F in (
 		"utils\formatting.py"
 		"utils\info_locale.py"
 		"utils\pathing.py"
+		"utils\il2_paths.py"
 ) do (
     if exist %%F (
         echo Testing %%F ...
