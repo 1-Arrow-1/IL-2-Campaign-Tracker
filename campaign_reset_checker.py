@@ -72,7 +72,37 @@ def cleanup_popups_for_reset_campaigns() -> bool:
 
     print(f"[INFO] Found {len(reset_campaigns)} reset campaign(s): {', '.join(reset_campaigns)}")
     modified = False
-    
+
+    # ================================================================
+    # Step 0: Clear campaign_events.json entries
+    # ================================================================
+    events_path = os.path.join(base_path, "campaign_events.json")
+    if os.path.exists(events_path):
+        try:
+            with open(events_path, "r", encoding="utf-8") as f:
+                events_data = json.load(f)
+        except json.JSONDecodeError:
+            print("[WARN] campaign_events.json invalid JSON – skipping cleanup")
+            events_data = None
+
+        if isinstance(events_data, dict):
+            events_modified = False
+            for campaign_name in reset_campaigns:
+                if events_data.get(campaign_name) != []:
+                    events_data[campaign_name] = []
+                    print(f"  🧹 Cleared events: '{campaign_name}'")
+                    events_modified = True
+
+            if events_modified:
+                tmp_path = events_path + ".tmp"
+                with open(tmp_path, "w", encoding="utf-8") as f:
+                    json.dump(events_data, f, indent=4)
+                os.replace(tmp_path, events_path)
+                print("[INFO] campaign_events.json updated")
+                modified = True
+    else:
+        print("[INFO] campaign_events.json not found – skipping cleanup")
+        
     # ================================================================
     # Step 1: Remove popup entries
     # ================================================================
