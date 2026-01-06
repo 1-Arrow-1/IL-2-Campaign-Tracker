@@ -1405,7 +1405,6 @@ class CampaignDateExtractor:
 def main(args=None):
     """Main entry point"""
     import sys
-    from pathlib import Path
     
     print("="*70)
     print("IL-2 CAMPAIGN PROGRESS TRACKER - Date Extractor")
@@ -1414,7 +1413,7 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
     # Output file
-    output_file = "campaign_mission_dates.json"
+    output_file = get_base_path(__file__) / "campaign_mission_dates.json"
     
     # Check for command line arguments
     force_new = '--force-new' in args
@@ -1426,7 +1425,7 @@ def main(args=None):
     existing_data = {}
     campaigns_folder = None
     
-    if Path(output_file).exists() and not force_new:
+    if output_file.exists() and not force_new:
         print(f"\n✓ Found existing {output_file}")
         
         try:
