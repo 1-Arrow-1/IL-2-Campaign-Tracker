@@ -21,10 +21,13 @@ import json
 import os
 from pathlib import Path
 
+from utils.pathing import get_base_path
+
 # ✅ Configuration constants
 MAX_FILE_SIZE_MB = 50  # Klar definiert in MB
 MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024  # Konvertierung zu Bytes
 MAX_DECODE_ITERATIONS = 10  # Prevent infinite loops in URL decoding
+BASE_DIR = get_base_path(__file__)
 
 
 def deep_urldecode(s, max_iterations=MAX_DECODE_ITERATIONS):
@@ -220,12 +223,12 @@ def main(states_path=None) -> bool:
         bool: True if successful, False otherwise
     """
     if states_path is None:
-        # Backward compatibility: look in current directory
-        input_file = Path('campaignsstates.txt')
+        # Backward compatibility: look in tracker base directory
+        input_file = BASE_DIR / 'campaignsstates.txt'
     else:
         input_file = Path(states_path)
     
-    output_file = Path('campaigns_decoded.json')
+    output_file = BASE_DIR / 'campaigns_decoded.json'
     
     # ✅ Better error messages
     if not input_file.exists():
@@ -241,7 +244,7 @@ def main(states_path=None) -> bool:
         data = parse_campaignsstates(str(input_file))
         
         # ✅ Filter existing campaigns only
-        mission_dates_file = Path("campaign_mission_dates.json")
+        mission_dates_file = BASE_DIR / "campaign_mission_dates.json"
         game_directory = None
         mission_dates_data = {}
         ww1_campaigns = set()
