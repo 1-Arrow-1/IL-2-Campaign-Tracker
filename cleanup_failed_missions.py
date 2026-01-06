@@ -19,6 +19,7 @@ from typing import Dict, List, Optional, Set
 import tkinter as tk
 from tkinter import ttk, messagebox
 
+from utils.il2_paths import find_campaignsstates_path, read_game_directory
 from utils.pathing import get_base_path
 
 logger = logging.getLogger(__name__)
@@ -279,32 +280,15 @@ class MissionCleanup:
         """
         Find campaignsstates.txt in IL-2 game directory (new structure supported)
         """
-        if self.dates_path.exists():
-            try:
-                with open(self.dates_path, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    game_dir = data.get('game_directory', '')
-                    if game_dir:
-                        game_path = Path(game_dir).expanduser().resolve()
-
-                        # ✅ Try new user-specific path
-                        usersave_dir = game_path / 'data' / 'swf' / 'il2' / 'usersave'
-                        if usersave_dir.exists():
-                            for subdir in usersave_dir.iterdir():
-                                potential = subdir / 'campaign' / 'campaignsstates.txt'
-                                if potential.exists():
-                                    print(f"✓ Found campaignsstates.txt in {potential}")
-                                    return potential
-
-                        # Legacy fallback (old versions)
-                        legacy_path = game_path / 'data' / 'campaignsstates.txt'
-                        if legacy_path.exists():
-                            print(f"✓ Found legacy campaignsstates.txt: {legacy_path}")
-                            return legacy_path
-
-                        print(f"⚠️  campaignsstates.txt not found in either path")
-            except Exception as e:
-                print(f"⚠️  Could not read game directory: {e}")
+        game_path = read_game_directory(self.dates_path.parent)
+        if game_path:
+            states_path = find_campaignsstates_path(game_path)
+            if states_path:
+                print(f"✓ Found campaignsstates.txt in {states_path}")
+                return states_path
+            print("⚠️  campaignsstates.txt not found in expected IL-2 directories")
+        else:
+            print("⚠️  Could not read game directory from mission dates")
 
         # Fallback to current working directory
         fallback = Path('campaignsstates.txt')
