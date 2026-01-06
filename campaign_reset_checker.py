@@ -14,6 +14,7 @@ import re
 
 from utils.info_locale import decode_and_clean_info_locale
 from utils.formatting import safe_campaign_filename
+from utils.il2_paths import resolve_il2_paths
 from utils.pathing import get_base_path
 
 def cleanup_popups_for_reset_campaigns() -> bool:
@@ -141,40 +142,31 @@ def cleanup_popups_for_reset_campaigns() -> bool:
     # Step 3: Clear info.locale=eng.txt
     # ================================================================
     # Load mission dates to get game directory
-    mission_dates_path = os.path.join(base_path, "campaign_mission_dates.json")
-    if os.path.exists(mission_dates_path):
-        try:
-            with open(mission_dates_path, "r", encoding="utf-8") as f:
-                mission_dates = json.load(f)
-                game_dir = mission_dates.get("game_directory", "")
-                
-            if game_dir and os.path.exists(game_dir):
-                for campaign_name in reset_campaigns:
-                    info_file = os.path.join(game_dir, "data", "Campaigns", campaign_name, "info.locale=eng.txt")
-                    
-                    if os.path.exists(info_file):
-                        try:
-                            # Read file with encoding detection and tracker cleanup
-                            with open(info_file, 'rb') as f:
-                                raw = f.read()
-                            
-                            cleaned, encoding, _ = decode_and_clean_info_locale(raw)
-                            # Write back only if content changed
-                            if cleaned != content:
-                                with open(info_file, "w", encoding=encoding, newline="") as f:
-                                    f.write(cleaned)
-                                print(f"  ✂️  Cleared info file: {campaign_name}")
-                                modified = True
-                                
-                        except Exception as e:
-                            print(f"[WARN] Could not clear info file for '{campaign_name}': {e}")
-            else:
-                print(f"[WARN] Game directory not found: {game_dir}")
-        
-        except Exception as e:
-            print(f"[WARN] Could not load mission dates: {e}")
+    paths = resolve_il2_paths(base_path)
+    if paths.game_directory and paths.game_directory.exists():
+        if not paths.campaigns_dir:
+            print(f"[WARN] Campaigns directory not resolved under {paths.game_directory}")
+        else:
+            for campaign_name in reset_campaigns:
+                info_file = paths.campaigns_dir / campaign_name / "info.locale=eng.txt"
+
+                if info_file.exists():
+                    try:
+                        # Read file with encoding detection and tracker cleanup
+                        raw = info_file.read_bytes()
+
+                        cleaned, encoding, original = decode_and_clean_info_locale(raw)
+                        # Write back only if content changed
+                        if cleaned != original:
+                            info_file.write_text(cleaned, encoding=encoding, newline="")
+                            print(f"  ✂️  Cleared info file: {campaign_name}")
+                            modified = True
+
+                    except Exception as e:
+                        print(f"[WARN] Could not clear info file for '{campaign_name}': {e}")
     else:
-        print(f"[WARN] mission_dates file not found: {mission_dates_path}")
+        mission_dates_path = os.path.join(base_path, "campaign_mission_dates.json")
+        print(f"[WARN] Game directory not found via {mission_dates_path}")
 
     # ================================================================
     # Summary
