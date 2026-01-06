@@ -1308,6 +1308,10 @@ class CampaignDateExtractor:
                         print(f"  ⚠️ Removed missing mission '{m}' from {campaign_name}")
 
                     if removed_missions:
+                        if campaign_name in final_data:
+                            final_data[campaign_name]["mission_count"] = len(
+                                final_data[campaign_name].get("missions", {})
+                            )
                         try:
                             from datetime import datetime
                             log_path = Path("campaign_monitor.log")
