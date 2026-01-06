@@ -25,7 +25,7 @@ from typing import Dict, List, Optional
 from datetime import datetime
 
 from utils.pathing import get_base_path
-from utils.il2_paths import resolve_il2_paths
+from utils.formatting import safe_campaign_filename
 
 def _load_json_dict(path: Path) -> Optional[Dict]:
     if not path.exists():
