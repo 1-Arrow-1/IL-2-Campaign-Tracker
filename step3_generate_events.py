@@ -37,7 +37,12 @@ from utils.info_locale import (
 from utils.pathing import get_base_path
 from utils.formatting import safe_campaign_filename
 
-POPUP_SEEN_FILE = Path("campaign_popups_seen.json")
+BASE_DIR = get_base_path(__file__)
+POPUP_SEEN_FILE = BASE_DIR / "campaign_popups_seen.json"
+CAMPAIGN_EVENTS_FILE = BASE_DIR / "campaign_events.json"
+CAMPAIGN_MISSION_DATES_FILE = BASE_DIR / "campaign_mission_dates.json"
+CAMPAIGNS_DECODED_FILE = BASE_DIR / "campaigns_decoded.json"
+CAMPAIGN_COMPLETION_STATE_FILE = BASE_DIR / "campaign_completion_state.json"
 
 # =======================================================================
 #  GLOBAL KILL MAPPING  (used by mission & campaign summary tables)
@@ -419,28 +424,28 @@ class EventGenerator:
         
         # Load mission dates with explicit error handling
         try:
-            with open('campaign_mission_dates.json', 'r', encoding='utf-8') as f:
+            with open(CAMPAIGN_MISSION_DATES_FILE, 'r', encoding='utf-8') as f:
                 self.mission_dates = json.load(f)
         except FileNotFoundError:
-            print(f"ERROR: Required file 'campaign_mission_dates.json' not found!")
+            print(f"ERROR: Required file '{CAMPAIGN_MISSION_DATES_FILE.name}' not found!")
             print(f"Please run step1_extract_mission_dates.py first.")
             raise
         except json.JSONDecodeError as e:
-            print(f"ERROR: Invalid JSON in 'campaign_mission_dates.json'")
+            print(f"ERROR: Invalid JSON in '{CAMPAIGN_MISSION_DATES_FILE.name}'")
             print(f"  Line {e.lineno}, Column {e.colno}: {e.msg}")
             print(f"  The file may be corrupted. Try regenerating it.")
             raise
         
         # Load decoded save data with explicit error handling
         try:
-            with open('campaigns_decoded.json', 'r', encoding='utf-8') as f:
+            with open(CAMPAIGNS_DECODED_FILE, 'r', encoding='utf-8') as f:
                 self.save_data = json.load(f)
         except FileNotFoundError:
-            print(f"ERROR: Required file 'campaigns_decoded.json' not found!")
+            print(f"ERROR: Required file '{CAMPAIGNS_DECODED_FILE.name}' not found!")
             print(f"Please run decode_campaign_usersave1.py first.")
             raise
         except json.JSONDecodeError as e:
-            print(f"ERROR: Invalid JSON in 'campaigns_decoded.json'")
+            print(f"ERROR: Invalid JSON in '{CAMPAIGNS_DECODED_FILE.name}'")
             print(f"  Line {e.lineno}, Column {e.colno}: {e.msg}")
             print(f"  The file may be corrupted. Try re-decoding the save file.")
             raise
@@ -511,17 +516,17 @@ class EventGenerator:
     def reload_mission_dates(self) -> bool:
         """Reload mission dates to refresh WW1 exclusions and campaign metadata."""
         try:
-            with open('campaign_mission_dates.json', 'r', encoding='utf-8') as f:
+            with open(CAMPAIGN_MISSION_DATES_FILE, 'r', encoding='utf-8') as f:
                 mission_dates = json.load(f)
         except FileNotFoundError:
-            print("ERROR: Required file 'campaign_mission_dates.json' not found!")
+            print(f"ERROR: Required file '{CAMPAIGN_MISSION_DATES_FILE.name}' not found!")
             return False
         except json.JSONDecodeError as e:
-            print(f"ERROR: Invalid JSON in 'campaign_mission_dates.json'")
+            print(f"ERROR: Invalid JSON in '{CAMPAIGN_MISSION_DATES_FILE.name}'")
             print(f"  Line {e.lineno}, Column {e.colno}: {e.msg}")
             return False
         except Exception as e:
-            print(f"ERROR: Could not read 'campaign_mission_dates.json': {e}")
+            print(f"ERROR: Could not read '{CAMPAIGN_MISSION_DATES_FILE.name}': {e}")
             return False
 
         if not isinstance(mission_dates, dict):
@@ -583,7 +588,7 @@ class EventGenerator:
             state[campaign_name] = sorted(completed)
         
         try:
-            with open('campaign_completion_state.json', 'w', encoding='utf-8') as f:
+            with open(CAMPAIGN_COMPLETION_STATE_FILE, 'w', encoding='utf-8') as f:
                 json.dump(state, f, indent=2)
             print(f"[state] Saved completion state for {len(state)} campaigns")
         except Exception as e:
@@ -592,7 +597,7 @@ class EventGenerator:
     def _load_campaign_completion_state(self) -> dict:
         """Load previous completion state to detect which campaigns changed"""
         try:
-            with open('campaign_completion_state.json', 'r', encoding='utf-8') as f:
+            with open(CAMPAIGN_COMPLETION_STATE_FILE, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except FileNotFoundError:
             print(f"[state] No previous state found - first run or state file missing")
@@ -1995,8 +2000,7 @@ class EventGenerator:
         if self.mode == "pdf":
             # Look for campaigns_decoded.json in the tracker root directory
             # (not in reports/ subdirectory where PDFs are saved)
-            import os
-            decoded_path = os.path.abspath("campaigns_decoded.json")
+            decoded_path = CAMPAIGNS_DECODED_FILE
             all_decoded = _load_decoded_campaign(decoded_path)
             
             if all_decoded:
@@ -2526,7 +2530,7 @@ class EventGenerator:
             return False
         
         # ✅ Create reports directory if it doesn't exist
-        reports_dir = Path('reports')
+        reports_dir = BASE_DIR / 'reports'
         try:
             reports_dir.mkdir(exist_ok=True)
         except Exception as e:
@@ -3096,7 +3100,7 @@ class EventGenerator:
                     # Calculate cumulative stats from campaigns_decoded.json
                     cumulative_stats = None
                     try:
-                        with open('campaigns_decoded.json', 'r', encoding='utf-8') as f:
+                        with open(CAMPAIGNS_DECODED_FILE, 'r', encoding='utf-8') as f:
                             decoded_data = json.load(f)
                             if campaign_name in decoded_data:
                                 stats = decoded_data[campaign_name].get('characterStatisticsByFileName', {})
@@ -3137,7 +3141,7 @@ class EventGenerator:
                     self.set_mode("ingame")
         
         # Save results
-        with open('campaign_events.json', 'w', encoding='utf-8') as f:
+        with open(CAMPAIGN_EVENTS_FILE, 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
         
         # Save current campaign completion state for next run
@@ -3149,8 +3153,8 @@ class EventGenerator:
         print(f"{'='*70}")
         print(f"Generated events for {len(results)} campaigns")
         print(f"Updated {files_updated} campaign info files")
-        print(f"Results saved to: campaign_events.json")
-        print(f"PDF reports saved to: reports/ directory")
+        print(f"Results saved to: {CAMPAIGN_EVENTS_FILE}")
+        print(f"PDF reports saved to: {BASE_DIR / 'reports'}")
         
         # Show sample for kerch if available
         if 'kerch' in results:
