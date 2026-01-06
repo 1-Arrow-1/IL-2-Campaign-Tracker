@@ -2143,8 +2143,8 @@ class EventGenerator:
                 print(f"  Created backup: {backup_file.name}")
             
             raw = info_file.read_bytes()
-            cleaned, detected_encoding, old_len = decode_and_clean_info_locale(raw) 
-            removed = old_len - len(cleaned)
+            cleaned, detected_encoding, original = decode_and_clean_info_locale(raw)
+            removed = len(original) - len(cleaned)
             if removed > 0:
                 print(f"  ✂️  Removed {removed} chars of old tracker content")
             else:
@@ -3010,7 +3010,7 @@ class EventGenerator:
                 new_keys = keys_now_set - campaign_seen
 
                 if new_keys:
-                    if self.show_popups: # and is_il2_running():
+                    if self.show_popups and is_il2_running():
                         # show popups IMMEDIATELY!
                         new_events = [ev for ev in events if make_event_key(ev) in new_keys]
                         print(f"[popups] {campaign_name}: {len(new_events)} new event(s) - SHOWING NOW!")
@@ -3041,7 +3041,7 @@ class EventGenerator:
                     else:
                         print(
                             f"[popups] deferred ({len(new_keys)}) "
-                            f"(show_popups={self.show_popups})" #, il2_running={is_il2_running()})"
+                            f"(show_popups={self.show_popups}), il2_running={is_il2_running()})"
                         )
             elif (
                 self.enable_popups
