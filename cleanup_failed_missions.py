@@ -1258,66 +1258,68 @@ class CleanupGUI:
                         country = resync_result["country"]
                         
                         if events:
-                           
+                           if country:
                                 # Update campaign info file
                                 generator.update_campaign_info_file(
                                     campaign_name, resync_result["combined_html"]
                                 )
-                                
+
                                 # *** REGENERATE PDF ***
                                 if completed_missions and len(completed_missions) > 0:
                                     print(f"    Regenerating PDF...")
-                                    
+
                                     # Switch to PDF mode
                                     generator.set_mode("pdf")
-                                    
+
                                     # Regenerate debriefings in PDF mode
                                     debriefings_html_pdf, debriefings_pdf = generator.generate_debriefings_html(
                                         campaign_name, 
                                         completed_missions
                                     )
-                                    
+
                                     # Generate PDF-specific HTML with base64 images
                                     events_html_pdf = generator.generate_events_html(events, country, for_pdf=True)
-                                    
+
                                     # Combine for PDF
                                     if debriefings_html_pdf:
                                         combined_html_pdf = debriefings_html_pdf + "\n" + events_html_pdf
                                     else:
                                         combined_html_pdf = events_html_pdf
-                                    
+
                                     # Generate campaign summary
                                     cumulative_stats = None
                                     try:
                                         stats = campaign_data.get('characterStatisticsByFileName', {})
                                         if stats:
-                                            latest_mission = max(stats.keys(), key=lambda x: int(x) if x.isdigit() else 0)
+                                            latest_mission = max(
+                                                stats.keys(), key=lambda x: int(x) if x.isdigit() else 0
+                                            )
                                             cumulative_stats = stats.get(latest_mission, {})
                                     except Exception:
                                         pass
-                                    
+
                                     summary_html = generator.generate_campaign_summary_html(
-                                        campaign_name, 
-                                        events, 
-                                        debriefings_pdf, 
-                                        country, 
+                                        campaign_name,
+                                        events,
+                                        debriefings_pdf,
+                                        country,
                                         cumulative_stats,
                                         campaign_data
                                     )
-                                    
+
                                     if summary_html:
                                         combined_html_pdf += "\n" + summary_html
-                                    
+
                                     # Export to PDF
                                     generator.export_campaign_to_pdf(campaign_name, combined_html_pdf)
-                                    
+
                                     # Switch back to ingame mode
                                     generator.set_mode("ingame")
-                                    
+
                                     print(f"    ✓ PDF regenerated")
                                 else:
                                     print(f"    ℹ️  No completed missions - skipping PDF")
-                                    
+
                                     # ✅ Delete existing PDF if it exists
                                     import os
                                     pdf_path = Path('reports') / f"{campaign_name}_Report.pdf"
@@ -1327,12 +1329,11 @@ class CleanupGUI:
                                             print(f"    ✓ Removed outdated PDF: {pdf_path.name}")
                                         except Exception as e:
                                             print(f"    ⚠️  Could not remove PDF: {e}")
-
                             else:
                                 print(f"    ⚠️  No country metadata found")
                         else:
                             print(f"    ℹ️  No events generated")
-                            
+
                             # ✅ CRITICAL: Even with no events, cleanup PDF and info file if no missions left
                             try:
                                # If no missions left, cleanup everything
@@ -1348,7 +1349,7 @@ class CleanupGUI:
                                             print(f"    ✓ Removed PDF: {pdf_path.name}")
                                         except Exception as e:
                                             print(f"    ⚠️  Could not remove PDF: {e}")
-                                    
+
                                     # Update info file with empty content
                                     try:
                                         if country:
