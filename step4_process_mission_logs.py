@@ -25,7 +25,13 @@ import shutil
 from utils.pathing import get_base_path
 
 class MissionLogProcessor:
-    def __init__(self, game_directory: str, verbose: bool = False, snapshot_dt=None):
+    def __init__(
+        self,
+        game_directory: str,
+        verbose: bool = False,
+        snapshot_dt=None,
+        max_mlg_scan: int = 1000,
+    ):
         """
         Initialize mission log processor
         
@@ -37,6 +43,8 @@ class MissionLogProcessor:
         self.flight_logs_dir = self.game_directory / "data" / "FlightLogs"
         self.verbose = verbose
         self.snapshot_dt = snapshot_dt
+        self.max_mlg_scan = max_mlg_scan
+        self._mlg_scan_warning_emitted = False
         
         # Working directory for temporary files
         self.work_dir = Path.cwd()
@@ -201,8 +209,22 @@ class MissionLogProcessor:
         
         matching_files = []
         
-        # Scan all .mlg files
-        for mlg_file in self.flight_logs_dir.glob("*.mlg"):
+        # Scan all .mlg files (guard against huge directories)
+        mlg_files = list(self.flight_logs_dir.glob("*.mlg"))
+        if self.max_mlg_scan > 0 and len(mlg_files) > self.max_mlg_scan:
+            if not self._mlg_scan_warning_emitted:
+                print(
+                    f"  ⚠️  Found {len(mlg_files)} mission logs; "
+                    f"scanning newest {self.max_mlg_scan} files only"
+                )
+                self._mlg_scan_warning_emitted = True
+            mlg_files = sorted(
+                mlg_files,
+                key=lambda path: path.stat().st_mtime,
+                reverse=True,
+            )[: self.max_mlg_scan]
+
+        for mlg_file in mlg_files:
             try:
                 # Read file and search for campaign mission pattern
                 with open(mlg_file, "rb") as f:
