@@ -39,6 +39,7 @@ import contextlib
 import logging
 from logging.handlers import RotatingFileHandler
 
+from utils.il2_paths import resolve_il2_paths
 from utils.pathing import get_base_path
 # ================================================================
 # DEBUG: psutil import test
@@ -115,23 +116,12 @@ class CampaignMonitor:
             print(f"[monitor] Using provided path: {self.campaign_file}")
         else:
             # Auto-detect (backward compatibility)
-            # Load game directory from mission dates
-            self.game_dir = self._load_game_directory()
-            self.campaign_file = None
-            self.campaigns_folder = None
-            
-            if self.game_dir:
-                # Try to find campaignsstates.txt
-                usersave_dir = self.game_dir / 'data' / 'swf' / 'il2' / 'usersave'
-                
-                if usersave_dir.exists():
-                    for user_dir in usersave_dir.iterdir():
-                        if user_dir.is_dir():
-                            potential = user_dir / 'campaign' / 'campaignsstates.txt'
-                            if potential.exists():
-                                self.campaign_file = potential
-                                self.campaigns_folder = user_dir / 'campaign'
-                                break 
+            paths = resolve_il2_paths(self.script_dir)
+            self.game_dir = paths.game_directory
+            self.campaign_file = paths.campaignsstates_path
+            self.campaigns_folder = (
+                self.campaign_file.parent if self.campaign_file else None
+            )
         if self.use_file_watcher:
             # Starte verzögert den Watcher (nach 5 Sekunden)
             import threading, time
@@ -378,16 +368,9 @@ class CampaignMonitor:
     
     def _load_game_directory(self):
         """Load game directory from mission dates file"""
-        mission_dates = self.script_dir / "campaign_mission_dates.json"
-        if mission_dates.exists():
-            try:
-                with open(mission_dates, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    game_dir_str = data.get('game_directory', '')
-                    if game_dir_str:
-                        return Path(game_dir_str).expanduser().resolve()
-            except Exception as e:
-                self.log(f"Warning: Could not load game directory: {e}")
+        paths = resolve_il2_paths(self.script_dir)
+        if paths.game_directory:
+            return paths.game_directory
         return None
      
     def _load_mission_dates(self) -> bool:
