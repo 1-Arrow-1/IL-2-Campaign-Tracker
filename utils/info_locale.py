@@ -14,7 +14,7 @@ def detect_info_locale_encoding(raw: bytes) -> str:
     return "utf-8"
 
 
-def decode_and_clean_info_locale(raw: bytes) -> tuple[str, str, int]:
+def decode_and_clean_info_locale(raw: bytes) -> tuple[str, str, str]:
     encoding = detect_info_locale_encoding(raw)
     content = raw.decode(encoding)
 
@@ -29,4 +29,4 @@ def decode_and_clean_info_locale(raw: bytes) -> tuple[str, str, int]:
     while cleaned.endswith('<br>'):
         cleaned = cleaned[:-4].rstrip()
 
-    return cleaned, encoding, len(content)
+    return cleaned, encoding, content
