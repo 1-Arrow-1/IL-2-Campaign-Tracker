@@ -180,6 +180,170 @@ def _update_campaign_mission_dates(
     return True, removed_summary
 
 
+def _extract_mission_from_popup_key(key: str) -> str | None:
+    parts = str(key).split("|")
+    if len(parts) == 4:
+        return parts[2]
+    if len(parts) == 3:
+        return parts[1]
+    return None
+
+
+def _prune_campaign_events(
+    removed_by_campaign: Dict[str, Set[str]],
+    events_path: Path = Path("campaign_events.json"),
+) -> bool:
+    if not events_path.exists():
+        return False
+
+    try:
+        with open(events_path, "r", encoding="utf-8") as file:
+            events_data = json.load(file)
+    except Exception as exc:
+        print(f"⚠️  Could not read {events_path.name}: {exc}")
+        return False
+
+    if not isinstance(events_data, dict):
+        print(f"⚠️  Invalid {events_path.name} format; skipping cleanup.")
+        return False
+
+    updated = False
+
+    for campaign_name, removed_missions in removed_by_campaign.items():
+        campaign_data = events_data.get(campaign_name)
+        if not isinstance(campaign_data, dict):
+            continue
+        events_list = campaign_data.get("events")
+        if not isinstance(events_list, list):
+            continue
+
+        filtered_events = [
+            event
+            for event in events_list
+            if str(event.get("mission", "")) not in removed_missions
+        ]
+
+        if len(filtered_events) != len(events_list):
+            updated = True
+            if filtered_events:
+                campaign_data["events"] = filtered_events
+            else:
+                events_data.pop(campaign_name, None)
+
+    if not updated:
+        return False
+
+    try:
+        with open(events_path, "w", encoding="utf-8") as file:
+            json.dump(events_data, file, indent=2, ensure_ascii=False)
+    except Exception as exc:
+        print(f"⚠️  Could not save {events_path.name}: {exc}")
+        return False
+
+    print(f"✓ {events_path.name} cleaned")
+    return True
+
+
+def _prune_popup_seen(
+    removed_by_campaign: Dict[str, Set[str]],
+    popup_seen_path: Path = Path("campaign_popups_seen.json"),
+) -> bool:
+    if not popup_seen_path.exists():
+        return False
+
+    try:
+        with open(popup_seen_path, "r", encoding="utf-8") as file:
+            popup_data = json.load(file)
+    except Exception as exc:
+        print(f"⚠️  Could not read {popup_seen_path.name}: {exc}")
+        return False
+
+    if not isinstance(popup_data, dict):
+        print(f"⚠️  Invalid {popup_seen_path.name} format; skipping cleanup.")
+        return False
+
+    updated = False
+
+    for campaign_name, removed_missions in removed_by_campaign.items():
+        events = popup_data.get(campaign_name)
+        if not isinstance(events, list):
+            continue
+
+        filtered_events = [
+            key
+            for key in events
+            if (_extract_mission_from_popup_key(key) or "") not in removed_missions
+        ]
+
+        if len(filtered_events) != len(events):
+            updated = True
+            if filtered_events:
+                popup_data[campaign_name] = filtered_events
+            else:
+                popup_data.pop(campaign_name, None)
+
+    if not updated:
+        return False
+
+    try:
+        with open(popup_seen_path, "w", encoding="utf-8") as file:
+            json.dump(popup_data, file, indent=2, ensure_ascii=False)
+    except Exception as exc:
+        print(f"⚠️  Could not save {popup_seen_path.name}: {exc}")
+        return False
+
+    print(f"✓ {popup_seen_path.name} cleaned")
+    return True
+
+
+def _prune_completion_state(
+    removed_by_campaign: Dict[str, Set[str]],
+    completion_state_path: Path = Path("campaign_completion_state.json"),
+) -> bool:
+    if not completion_state_path.exists():
+        return False
+
+    try:
+        with open(completion_state_path, "r", encoding="utf-8") as file:
+            state_data = json.load(file)
+    except Exception as exc:
+        print(f"⚠️  Could not read {completion_state_path.name}: {exc}")
+        return False
+
+    if not isinstance(state_data, dict):
+        print(f"⚠️  Invalid {completion_state_path.name} format; skipping cleanup.")
+        return False
+
+    updated = False
+
+    for campaign_name, removed_missions in removed_by_campaign.items():
+        missions = state_data.get(campaign_name)
+        if not isinstance(missions, list):
+            continue
+        filtered_missions = [
+            mission_id for mission_id in missions if mission_id not in removed_missions
+        ]
+        if len(filtered_missions) != len(missions):
+            updated = True
+            if filtered_missions:
+                state_data[campaign_name] = filtered_missions
+            else:
+                state_data.pop(campaign_name, None)
+
+    if not updated:
+        return False
+
+    try:
+        with open(completion_state_path, "w", encoding="utf-8") as file:
+            json.dump(state_data, file, indent=2, ensure_ascii=False)
+    except Exception as exc:
+        print(f"⚠️  Could not save {completion_state_path.name}: {exc}")
+        return False
+
+    print(f"✓ {completion_state_path.name} cleaned")
+    return True
+
+
 def sync_campaign_states(states_path: str | None = None) -> bool:
     base_dir = Path.cwd()
     game_directory = read_game_directory(base_dir)
@@ -277,6 +441,15 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
     encoded = _encode_campaignsstates(campaigns)
     states_path_obj.write_text(encoded, encoding="utf-8")
     print("✓ campaignsstates.txt updated")
+
+    removed_by_campaign = {
+        campaign_name: set(mission_ids) for campaign_name, mission_ids in removed_summary
+    }
+
+    print("\nCleaning stale campaign state artifacts...")
+    _prune_campaign_events(removed_by_campaign)
+    _prune_popup_seen(removed_by_campaign)
+    _prune_completion_state(removed_by_campaign)
 
     print("\nSUMMARY")
     print("=" * 70)
