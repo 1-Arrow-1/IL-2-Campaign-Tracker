@@ -136,6 +136,11 @@ if not exist "utils\il2_paths.py" (
     pause
     exit /b 1
 )
+if not exist "CampaignRanksAwards.zip" (
+    echo ERROR: CampaignRanksAwards.zip not found!
+    pause
+    exit /b 1
+)
 echo OK
 echo.
 
@@ -253,6 +258,15 @@ copy "stock_campaigns.yaml" "IL2_Campaign_Tracker_v2.0\" >NUL
 REM Copy README if exists
 if exist "README.html" copy "README.html" "IL2_Campaign_Tracker_v2.0\README.html" >NUL
 
+REM Unzip CampaignRanksAwards and delete zip after extraction
+@echo off
+set SCRIPT_DIR=%~dp0
+set TARGET_DIR=%SCRIPT_DIR%IL2_Campaign_Tracker_v2.0
+
+powershell -NoProfile -Command ^
+  "Expand-Archive -Path '%SCRIPT_DIR%CampaignRanksAwards.zip' -DestinationPath '%TARGET_DIR%' -Force -ErrorAction Stop; Remove-Item '%SCRIPT_DIR%CampaignRanksAwards.zip' -Force"
+
+
 REM Create quick start guide
 echo IL-2 CAMPAIGN PROGRESS TRACKER v2.0 > "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
 echo ================================================= >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
@@ -264,10 +278,10 @@ echo 1. Download the latest release: IL2_Campaign_Tracker_v2.0.zip >> "IL2_Campa
 echo 2. Extract the archive to a folder of your choice >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
 echo    (e.g. C:\IL2_Campaign_Tracker_v2.0) >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
 echo. >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
-echo 3. Copy the extracted CampaignRanksAwards folder to: >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
-echo    ^<Path to IL-2^>\data\swf >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
+echo 3. Copy the CampaignRanksAwards folder to: >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
+echo    ^<Path to IL-2 Great Battles^>\data\swf >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
 echo. >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
-echo 4. Extract Campaigns.gtp (standard IL-2 campaigns): >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
+echo 4. OPTIONAL: Extract Campaigns.gtp (standard IL-2 campaigns): >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
 echo    - Download unGTP-IL2 from: >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
 echo      https://www.mediafire.com/file/caxpalaudz1hd47/unGTP-IL2.zip >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
 echo    - Place unGTP-IL2.exe into: >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
@@ -286,7 +300,7 @@ echo    can be monitored by the tracker. >> "IL2_Campaign_Tracker_v2.0\QUICK_STA
 echo. >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
 echo 5. Run IL2_Campaign_Tracker_v2.0.exe >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
 echo. >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
-echo For detailed information, please refer to README.txt >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
+echo For detailed information, please refer to README.html >> "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
 
 echo.
 echo OK
@@ -300,10 +314,9 @@ echo Distribution package created in: IL2_Campaign_Tracker_v2.0\
 echo.
 echo Contents:
 echo   - IL2_CampaignTracker.exe (~40 MB)
-echo   - mlg2txt.exe (~10 MB)
+echo   - mlg2txt.exe (~8 MB)
 echo   - Configuration files (*.yaml)
-echo   - Documentation (README.txt, QUICK_START.txt)
-echo.
-echo IMPORTANT: Users must download CampaignRanksAwards.zip separately!
+echo   - Documentation (README.html, QUICK_START.txt)
+echo   - CampaignRanksAwards (folder ~37 MB) 		
 echo.
 pause
