@@ -318,6 +318,28 @@ def show_event_popups(
         print("[popups] Keine Popup-Events gefunden – nichts zu tun.")
         return
 
+    def _is_initial_rank_or_pilot_badge(event: Dict[str, Any]) -> bool:
+        mission = str(event.get("mission", "")).strip().lower()
+        if mission != "initial":
+            return False
+
+        ev_type = str(event.get("type", "")).strip().lower()
+        if ev_type == "promotion":
+            return True
+
+        if ev_type != "award":
+            return False
+
+        award_name = str(event.get("name", "")).strip()
+        award_image = str(event.get("image", "")).strip().lower()
+        return (
+            "Pilot's Badge" in award_name
+            or "Aviation Badge" in award_name
+            or "Aviation Emblem" in award_name
+            or "pilots_badge" in award_image
+            or "pilots_emblem" in award_image
+        )
+
     # GUI vorbereiten
     root = tk.Tk()
     root.withdraw()  # kein Hauptfenster
@@ -332,6 +354,13 @@ def show_event_popups(
             or campaign_country_map.get(campaign_name.lower())
             or ""
         ).strip()
+
+        if _is_initial_rank_or_pilot_badge(ev):
+            print(
+                "[popups][TRACE] skipping initial rank/pilot badge for campaign '%s'",
+                campaign_name,
+            )
+            continue
 
         print(f"[popups][TRACE] processing event '{ev_type}' for campaign '{campaign_name}' (country='{country}')")
 
