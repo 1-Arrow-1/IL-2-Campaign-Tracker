@@ -30,7 +30,7 @@ class MissionLogProcessor:
         game_directory: str,
         verbose: bool = False,
         snapshot_dt=None,
-        max_mlg_scan: int = 1000,
+        max_mlg_scan: int = 3000,
     ):
         """
         Initialize mission log processor
