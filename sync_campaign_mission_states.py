@@ -11,6 +11,7 @@ from __future__ import annotations
 import re
 import shutil
 import urllib.parse
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, Iterable, List, Set, Tuple
 
@@ -88,6 +89,23 @@ def _encode_campaignsstates(campaigns: Dict[str, dict]) -> str:
         encoded_name = urllib.parse.quote(str(campaign_name), safe="")
         entries.append(f"campaigns/{encoded_name}={encoded_value}")
     return "&".join(entries)
+
+def _create_sync_backup(states_path: Path) -> Path | None:
+    if not states_path.exists():
+        print(f"⚠️  {states_path} not found - cannot backup")
+        return None
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_name = f"{states_path.name}_{timestamp}.backup"
+    backup_path = states_path.parent / backup_name
+
+    try:
+        shutil.copy2(states_path, backup_path)
+        print(f"✓ Backup created: {backup_path}")
+        return backup_path
+    except Exception as exc:
+        print(f"❌ Backup failed: {exc}")
+        return None
 
 
 def _collect_campaign_missions(campaigns_dir: Path) -> Dict[str, Set[str]]:
@@ -277,8 +295,7 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
                 print(f"  • {campaign_name}: {', '.join(mission_ids)}")
         return False
 
-    cleanup_tool = MissionCleanup(campaignstates_path=str(states_path_obj))
-    backup_path = cleanup_tool.create_backup()
+    backup_path = _create_sync_backup(states_path_obj)
     if not backup_path:
         print("❌ Backup failed; aborting sync.")
         return False
@@ -301,9 +318,7 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
 
     print("\nRe-decoding campaignsstates.txt to update campaigns_decoded.json...")
     try:
-        local_copy = base_dir / "campaignsstates.txt"
-        shutil.copy2(states_path_obj, local_copy)
-        if decode_campaignsstates():
+        if decode_campaignsstates(states_path=str(states_path_obj)):
             print("✓ campaigns_decoded.json successfully regenerated.")
         else:
             print("⚠️  Decoder reported failure; campaigns_decoded.json may be outdated.")

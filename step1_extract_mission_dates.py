@@ -25,6 +25,7 @@ from typing import Dict, List, Optional
 from datetime import datetime
 
 from utils.pathing import get_base_path
+from utils.il2_paths import find_campaignsstates_path
 from utils.formatting import safe_campaign_filename
 
 def _load_json_dict(path: Path) -> Optional[Dict]:
@@ -1318,6 +1319,7 @@ class CampaignDateExtractor:
             final_data = {}
             new_campaigns = []
             updated_campaigns = []
+            removed_missions_detected = False
             
             # Process each campaign
             all_campaigns = set(list(existing_data.keys()) + list(new_data.keys()))
@@ -1365,6 +1367,7 @@ class CampaignDateExtractor:
                         print(f"  ⚠️ Removed missing mission '{m}' from {campaign_name}")
 
                     if removed_missions:
+                        removed_missions_detected = True
                         if campaign_name in final_data:
                             final_data[campaign_name]["mission_count"] = len(
                                 final_data[campaign_name].get("missions", {})
@@ -1378,6 +1381,19 @@ class CampaignDateExtractor:
                         except Exception:
                             pass
 
+            if removed_missions_detected:
+                try:
+                    from sync_campaign_mission_states import sync_campaign_states
+
+                    states_path = find_campaignsstates_path(Path(self.game_directory))
+                    if states_path:
+                        print("[Monitor] 🧹 Syncing campaign mission states after mission deletions...")
+                        sync_campaign_states(states_path=str(states_path))
+                    else:
+                        print("⚠️ campaignsstates.txt not found; skipping mission state sync.")
+                except Exception as e:
+                    print(f"⚠️ Could not sync campaign mission states: {e}")
+                    
             # Add game directory
             final_data['game_directory'] = self.game_directory
             
