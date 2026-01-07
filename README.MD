@@ -18,8 +18,8 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **W
 - [How It Works](#-how-it-works)
 - [Promotions & Awards System](#-promotions--awards-system)
 - [Mission Debriefings](#-mission-debriefings)
-- [Backup & Restore System](#-backup--restore-system)
 - [Mission Cleanup](#-mission-cleanup)
+- [Backup & Restore System](#-backup--restore-system)
 - [File Reference](#-file-reference)
 - [Troubleshooting](#-troubleshooting)
 - [FAQ](#-faq)
@@ -290,14 +290,6 @@ Each mission generates detailed output in two formats:
 
 ---
 
-## 💾 Backup & Restore System
-
-### When Backups Are Created
-
-Backups are **only** created when you remove incomplete missions via the Mission Cleanup tool.  They are **not** created automatically after every mission.
-
-This ensures you can restore your campaign to the state **before** you removed any missions.
-
 ## 🧹 Mission Cleanup
 
 ### What is takeoffStatus?
@@ -360,6 +352,13 @@ If you click "Keep All" or don't select a mission:
 
 ---
 
+## 💾 Backup & Restore System
+
+### When Backups Are Created
+
+Backups are **only** created when you remove incomplete missions via the Mission Cleanup tool.  They are **not** created automatically after every mission.
+
+This ensures you can restore your campaign to the state **before** you removed any missions.
 
 ### Restore GUI
 
