@@ -2,8 +2,9 @@
 """
 Synchronize campaignsstates.txt with on-disk missions.
 
-Removes decoded mission entries that no longer exist on disk and
-regenerates downstream artifacts after updating campaignsstates.txt.
+Removes decoded mission entries that no longer exist on disk, restores
+entries for missions found on disk but missing from state, and regenerates
+downstream artifacts after updating campaignsstates.txt.
 """
 
 from __future__ import annotations
@@ -231,6 +232,46 @@ def _regenerate_reports(affected_campaigns: Set[str]) -> None:
     print("\n✅ PDF regeneration complete")
 
 
+def _popup_mission_id(event_key: str) -> str | None:
+    parts = event_key.split("|")
+    if len(parts) < 3:
+        return None
+    return parts[-2]
+
+
+def _regenerate_popup_state(removed_missions: Dict[str, Set[str]]) -> None:
+    if not removed_missions:
+        return
+
+    from step3_generate_events import load_popup_seen, save_popup_seen
+
+    popup_state = load_popup_seen()
+    updated = False
+
+    for campaign_name, mission_ids in removed_missions.items():
+        if not mission_ids:
+            continue
+        existing = popup_state.get(campaign_name)
+        if not isinstance(existing, list):
+            continue
+        mission_set = set(mission_ids)
+        original_count = len(existing)
+        filtered = [
+            key for key in existing if _popup_mission_id(key) not in mission_set
+        ]
+        removed_count = original_count - len(filtered)
+        if removed_count:
+            popup_state[campaign_name] = filtered
+            updated = True
+            print(
+                f"    ✓ Removed {removed_count} popup event(s) for {campaign_name}"
+            )
+
+    if updated:
+        save_popup_seen(popup_state)
+        print("    ✓ campaign_popups_seen.json updated")
+
+
 def sync_campaign_states(states_path: str | None = None) -> bool:
     base_dir = Path.cwd()
     game_directory = read_game_directory(base_dir)
@@ -256,8 +297,9 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
 
     affected_campaigns: Set[str] = set()
     removed_summary = []
-    missing_state_summary = []
-
+    added_summary = []
+    removed_missions_by_campaign: Dict[str, Set[str]] = {}
+    
     for campaign_name, params in campaigns.items():
         if not isinstance(params, dict):
             continue
@@ -279,20 +321,21 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
                 completed.pop(mission_id, None)
                 stats.pop(mission_id, None)
             removed_summary.append((campaign_name, sorted(missing_on_disk)))
+            removed_missions_by_campaign[campaign_name] = set(missing_on_disk)
             affected_campaigns.add(campaign_name)
 
         if missing_in_state:
-            missing_state_summary.append((campaign_name, sorted(missing_in_state)))
+            for mission_id in missing_in_state:
+                completed[mission_id] = 1
+                stats[mission_id] = {}
+            added_summary.append((campaign_name, sorted(missing_in_state)))
+            affected_campaigns.add(campaign_name)
 
         params["completedMissionsByFileName"] = completed
         params["characterStatisticsByFileName"] = stats
 
-    if not removed_summary:
-        print("✓ No missing missions detected; no updates required.")
-        if missing_state_summary:
-            print("\nMissions present on disk but missing in state (left unchanged):")
-            for campaign_name, mission_ids in missing_state_summary:
-                print(f"  • {campaign_name}: {', '.join(mission_ids)}")
+    if not removed_summary and not added_summary:
+        print("✓ No campaign state updates required.")
         return False
 
     backup_path = _create_sync_backup(states_path_obj)
@@ -311,10 +354,11 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
             f"Removed {len(mission_ids)} missing mission(s) from {campaign_name}: "
             f"{', '.join(mission_ids)}"
         )
-    if missing_state_summary:
-        print("\nMissions present on disk but missing in state (left unchanged):")
-        for campaign_name, mission_ids in missing_state_summary:
-            print(f"  • {campaign_name}: {', '.join(mission_ids)}")
+    for campaign_name, mission_ids in added_summary:
+        print(
+            f"Added {len(mission_ids)} mission(s) back to {campaign_name}: "
+            f"{', '.join(mission_ids)}"
+        )
 
     print("\nRe-decoding campaignsstates.txt to update campaigns_decoded.json...")
     try:
@@ -326,6 +370,7 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
         print(f"⚠️  Could not re-decode campaigns_decoded.json: {e}")
 
     _regenerate_reports(affected_campaigns)
+    _regenerate_popup_state(removed_missions_by_campaign)
 
     return True
 
