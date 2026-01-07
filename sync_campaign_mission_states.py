@@ -9,6 +9,7 @@ downstream artifacts after updating campaignsstates.txt.
 
 from __future__ import annotations
 
+import os
 import re
 import json
 import shutil
@@ -17,11 +18,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Iterable, List, Set, Tuple
 
-from cleanup_failed_missions import (
-    MissionCleanup,
-    resync_campaign_events_for_campaign,
-    update_completion_state_for_campaign,
-)
 from decode_campaign_usersave1 import main as decode_campaignsstates
 from decode_campaign_usersave1 import parse_campaignsstates
 from utils.il2_paths import (
@@ -91,6 +87,7 @@ def _encode_campaignsstates(campaigns: Dict[str, dict]) -> str:
         encoded_name = urllib.parse.quote(str(campaign_name), safe="")
         entries.append(f"campaigns/{encoded_name}={encoded_value}")
     return "&".join(entries)
+
 
 def _create_sync_backup(states_path: Path) -> Path | None:
     if not states_path.exists():
@@ -183,154 +180,6 @@ def _update_campaign_mission_dates(
     return True, removed_summary
 
 
-def _regenerate_reports(affected_campaigns: Set[str]) -> None:
-    if not affected_campaigns:
-        return
-    print("\n" + "=" * 70)
-    print("REGENERATING PDF REPORTS")
-    print("=" * 70)
-    print(f"Regenerating PDFs for {len(affected_campaigns)} campaign(s)...")
-
-    import step3_generate_events
-
-    generator = step3_generate_events.EventGenerator(dry_run=False, show_popups=False)
-
-    for campaign_name in sorted(affected_campaigns):
-        print(f"\n  Processing: {campaign_name}")
-        try:
-            resync_result = resync_campaign_events_for_campaign(campaign_name, generator)
-            events = resync_result["events"]
-            campaign_data = resync_result["campaign_data"]
-            completed_missions = resync_result["completed_missions"]
-            country = resync_result["country"]
-            update_completion_state_for_campaign(campaign_name, campaign_data=campaign_data)
-
-            if events:
-                if country:
-                    generator.update_campaign_info_file(
-                        campaign_name, resync_result["combined_html"]
-                    )
-
-                    if completed_missions and len(completed_missions) > 0:
-                        print("    Regenerating PDF...")
-                        generator.set_mode("pdf")
-                        debriefings_html_pdf, debriefings_pdf = (
-                            generator.generate_debriefings_html(
-                                campaign_name, completed_missions
-                            )
-                        )
-                        events_html_pdf = generator.generate_events_html(
-                            events, country, for_pdf=True
-                        )
-                        if debriefings_html_pdf:
-                            combined_html_pdf = (
-                                debriefings_html_pdf + "\n" + events_html_pdf
-                            )
-                        else:
-                            combined_html_pdf = events_html_pdf
-
-                        cumulative_stats = None
-                        try:
-                            stats = campaign_data.get("characterStatisticsByFileName", {})
-                            if stats:
-                                latest_mission = max(
-                                    stats.keys(),
-                                    key=lambda x: int(x) if x.isdigit() else 0,
-                                )
-                                cumulative_stats = stats.get(latest_mission, {})
-                        except Exception:
-                            pass
-
-                        summary_html = generator.generate_campaign_summary_html(
-                            campaign_name,
-                            events,
-                            debriefings_pdf,
-                            country,
-                            cumulative_stats,
-                            campaign_data,
-                        )
-
-                        if summary_html:
-                            combined_html_pdf += "\n" + summary_html
-
-                        generator.export_campaign_to_pdf(campaign_name, combined_html_pdf)
-                        generator.set_mode("ingame")
-                        print("    ✓ PDF regenerated")
-                    else:
-                        print("    ℹ️  No completed missions - skipping PDF")
-                        pdf_path = Path("reports") / f"{campaign_name}_Report.pdf"
-                        if pdf_path.exists():
-                            try:
-                                pdf_path.unlink()
-                                print(f"    ✓ Removed outdated PDF: {pdf_path.name}")
-                            except Exception as e:
-                                print(f"    ⚠️  Could not remove PDF: {e}")
-                else:
-                    print("    ⚠️  No country metadata found")
-            else:
-                print("    ℹ️  No events generated")
-                try:
-                    if not completed_missions:
-                        print("    ℹ️  No missions left - cleaning up")
-                        pdf_path = Path("reports") / f"{campaign_name}_Report.pdf"
-                        if pdf_path.exists():
-                            try:
-                                pdf_path.unlink()
-                                print(f"    ✓ Removed PDF: {pdf_path.name}")
-                            except Exception as e:
-                                print(f"    ⚠️  Could not remove PDF: {e}")
-
-                        if country:
-                            generator.update_campaign_info_file(campaign_name, "")
-                            print("    ✓ Cleared campaign info file")
-                except Exception as e:
-                    print(f"    ⚠️  Error during cleanup: {e}")
-        except Exception as e:
-            print(f"    ⚠️  Error regenerating for {campaign_name}: {e}")
-
-    print("\n✅ PDF regeneration complete")
-
-
-def _popup_mission_id(event_key: str) -> str | None:
-    parts = event_key.split("|")
-    if len(parts) < 3:
-        return None
-    return parts[-2]
-
-
-def _regenerate_popup_state(removed_missions: Dict[str, Set[str]]) -> None:
-    if not removed_missions:
-        return
-
-    from step3_generate_events import load_popup_seen, save_popup_seen
-
-    popup_state = load_popup_seen()
-    updated = False
-
-    for campaign_name, mission_ids in removed_missions.items():
-        if not mission_ids:
-            continue
-        existing = popup_state.get(campaign_name)
-        if not isinstance(existing, list):
-            continue
-        mission_set = set(mission_ids)
-        original_count = len(existing)
-        filtered = [
-            key for key in existing if _popup_mission_id(key) not in mission_set
-        ]
-        removed_count = original_count - len(filtered)
-        if removed_count:
-            popup_state[campaign_name] = filtered
-            updated = True
-            print(
-                f"    ✓ Removed {removed_count} popup event(s) for {campaign_name}"
-            )
-
-    if updated:
-        save_popup_seen(popup_state)
-        print("    ✓ campaign_popups_seen.json updated")
-
-
 def sync_campaign_states(states_path: str | None = None) -> bool:
     base_dir = Path.cwd()
     game_directory = read_game_directory(base_dir)
@@ -357,10 +206,8 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
         on_disk
     )
     
-    affected_campaigns: Set[str] = set()
     removed_summary = []
     added_summary = []
-    removed_missions_by_campaign: Dict[str, Set[str]] = {}
     
     for campaign_name, params in campaigns.items():
         if not isinstance(params, dict):
@@ -383,9 +230,7 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
                 completed.pop(mission_id, None)
                 stats.pop(mission_id, None)
             removed_summary.append((campaign_name, sorted(missing_on_disk)))
-            removed_missions_by_campaign[campaign_name] = set(missing_on_disk)
-            affected_campaigns.add(campaign_name)
-
+            
         if missing_in_state:
             added_summary.append((campaign_name, sorted(missing_in_state)))
             
@@ -461,8 +306,17 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
     except Exception as e:
         print(f"⚠️  Could not re-decode campaigns_decoded.json: {e}")
 
-    _regenerate_reports(affected_campaigns)
-    _regenerate_popup_state(removed_missions_by_campaign)
+    print("\nRegenerating campaign events and reports...")
+    os.environ["FORCE_REGENERATE"] = "1"
+    try:
+        import step3_generate_events
+
+        if step3_generate_events.main(args=["--auto"], show_popups=False):
+            print("✓ Event regeneration complete.")
+        else:
+            print("⚠️  Event regeneration reported failure.")
+    except Exception as e:
+        print(f"⚠️  Could not regenerate events: {e}")
 
     return True
 
