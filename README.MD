@@ -73,7 +73,7 @@ The tracker includes historically accurate ranks and awards for:
 
 3. **Copy** the extracted `CampaignRanksAwards` folder to `<Path to IL-2 BoS>\data\swf`<br>
  
-Before proceeding to step 4:  
+Before proceeding to the **optional** step 4:  
 
 ⚠️ **IMPORTANT** 
 The tracker can monitor **only** campaigns located in `<Path to Il-2 BoS>\data\campaigns`. Standard IL-2 campaigns are not stored directly in this folder; instead, they are run internally from `campaigns.gtp`. As a result, these campaigns must be extracted before they can be tracked (see **Step 4**). 
@@ -81,7 +81,7 @@ The tracker can monitor **only** campaigns located in `<Path to Il-2 BoS>\data\c
 🚨 **IMPORTANT** 
 If you have modified missions belonging to a standard campaign, proceed with extreme caution when copying extracted files from `campaigns.gtp` into the `<Path to Il-2 BoS>\data\campaigns` folder. Existing files will be **overwritten**, and any custom mission modifications will be replaced by the original out-of-the-box versions.  
 
-4. **OPTIONAL:**  
+ℹ️ 4.  **OPTIONAL:**  
             - **Extract** Campaigns.gtp (standard IL-2 BoS campaigns) from `<Path to Il-2 BoS>\data` with the help of unGTP-IL2 (download it here: https://www.mediafire.com/file/caxpalaudz1hd47/unGTP-IL2.zip).   
             - **Unzip & Move** the `unGTP-IL2.exe` to `<Path to Il-2 BoS>\data`.  
             - **Drag** `Campaigns.gtp` onto `unGTP-IL2.exe`. Ignore the error warning in the cmd-window (don't worry - everything has beed extracted).  
