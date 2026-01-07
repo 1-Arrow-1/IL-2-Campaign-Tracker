@@ -325,12 +325,8 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
             affected_campaigns.add(campaign_name)
 
         if missing_in_state:
-            for mission_id in missing_in_state:
-                completed[mission_id] = 1
-                stats[mission_id] = {}
             added_summary.append((campaign_name, sorted(missing_in_state)))
-            affected_campaigns.add(campaign_name)
-
+            
         params["completedMissionsByFileName"] = completed
         params["characterStatisticsByFileName"] = stats
 
@@ -338,6 +334,16 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
         print("✓ No campaign state updates required.")
         return False
 
+    if not removed_summary:
+        print("✓ No campaign state removals required.")
+        print("ℹ️  New missions detected on disk will only update campaign_mission_dates.json.")
+        for campaign_name, mission_ids in added_summary:
+            print(
+                f"Detected {len(mission_ids)} new mission(s) for {campaign_name}: "
+                f"{', '.join(mission_ids)}"
+            )
+        return False
+        
     backup_path = _create_sync_backup(states_path_obj)
     if not backup_path:
         print("❌ Backup failed; aborting sync.")
@@ -356,7 +362,7 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
         )
     for campaign_name, mission_ids in added_summary:
         print(
-            f"Added {len(mission_ids)} mission(s) back to {campaign_name}: "
+            f"Detected {len(mission_ids)} new mission(s) for {campaign_name} (no state update): "
             f"{', '.join(mission_ids)}"
         )
 
