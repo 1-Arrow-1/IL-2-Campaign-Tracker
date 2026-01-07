@@ -10,6 +10,7 @@ downstream artifacts after updating campaignsstates.txt.
 from __future__ import annotations
 
 import re
+import json
 import shutil
 import urllib.parse
 from datetime import datetime
@@ -122,6 +123,64 @@ def _collect_campaign_missions(campaigns_dir: Path) -> Dict[str, Set[str]]:
                 mission_ids.add(mission_file.stem)
         mission_map[folder.name.lower()] = mission_ids
     return mission_map
+
+
+def _update_campaign_mission_dates(
+    on_disk: Dict[str, Set[str]],
+    mission_dates_path: Path = Path("campaign_mission_dates.json"),
+) -> Tuple[bool, List[Tuple[str, List[str]]]]:
+    if not mission_dates_path.exists():
+        return False, []
+
+    try:
+        with open(mission_dates_path, "r", encoding="utf-8") as file:
+            mission_dates = json.load(file)
+    except Exception as exc:
+        print(f"⚠️  Could not read {mission_dates_path.name}: {exc}")
+        return False, []
+
+    updated = False
+    removed_summary: List[Tuple[str, List[str]]] = []
+
+    for campaign_name, data in mission_dates.items():
+        if campaign_name == "game_directory":
+            continue
+        if not isinstance(data, dict):
+            continue
+        missions = data.get("missions")
+        if not isinstance(missions, dict):
+            continue
+        on_disk_missions = on_disk.get(campaign_name.lower())
+        if on_disk_missions is None:
+            continue
+
+        removed_missions = [
+            mission_id
+            for mission_id in list(missions.keys())
+            if mission_id not in on_disk_missions
+        ]
+        if not removed_missions:
+            continue
+
+        for mission_id in removed_missions:
+            missions.pop(mission_id, None)
+
+        data["mission_count"] = len(missions)
+        removed_summary.append((campaign_name, sorted(removed_missions)))
+        updated = True
+
+    if not updated:
+        return False, []
+
+    try:
+        with open(mission_dates_path, "w", encoding="utf-8") as file:
+            json.dump(mission_dates, file, indent=2, ensure_ascii=False)
+    except Exception as exc:
+        print(f"⚠️  Could not save {mission_dates_path.name}: {exc}")
+        return False, []
+
+    print(f"✓ {mission_dates_path.name} updated")
+    return True, removed_summary
 
 
 def _regenerate_reports(affected_campaigns: Set[str]) -> None:
@@ -294,7 +353,10 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
 
     campaigns = parse_campaignsstates(str(states_path_obj))
     on_disk = _collect_campaign_missions(campaigns_dir)
-
+    mission_dates_updated, mission_dates_removed = _update_campaign_mission_dates(
+        on_disk
+    )
+    
     affected_campaigns: Set[str] = set()
     removed_summary = []
     added_summary = []
@@ -332,6 +394,15 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
 
     if not removed_summary and not added_summary:
         print("✓ No campaign state updates required.")
+        if mission_dates_updated:
+            print("\nSUMMARY")
+            print("=" * 70)
+            for campaign_name, mission_ids in mission_dates_removed:
+                print(
+                    f"Removed {len(mission_ids)} mission(s) from campaign_mission_dates.json for "
+                    f"{campaign_name}: {', '.join(mission_ids)}"
+                )
+            return True
         return False
 
     if not removed_summary:
@@ -342,6 +413,15 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
                 f"Detected {len(mission_ids)} new mission(s) for {campaign_name}: "
                 f"{', '.join(mission_ids)}"
             )
+        if mission_dates_updated:
+            print("\nSUMMARY")
+            print("=" * 70)
+            for campaign_name, mission_ids in mission_dates_removed:
+                print(
+                    f"Removed {len(mission_ids)} mission(s) from campaign_mission_dates.json for "
+                    f"{campaign_name}: {', '.join(mission_ids)}"
+                )
+            return True    
         return False
         
     backup_path = _create_sync_backup(states_path_obj)
@@ -365,7 +445,13 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
             f"Detected {len(mission_ids)} new mission(s) for {campaign_name} (no state update): "
             f"{', '.join(mission_ids)}"
         )
-
+    if mission_dates_updated:
+        for campaign_name, mission_ids in mission_dates_removed:
+            print(
+                f"Removed {len(mission_ids)} mission(s) from campaign_mission_dates.json for "
+                f"{campaign_name}: {', '.join(mission_ids)}"
+            )
+            
     print("\nRe-decoding campaignsstates.txt to update campaigns_decoded.json...")
     try:
         if decode_campaignsstates(states_path=str(states_path_obj)):
