@@ -23,6 +23,8 @@ from utils.il2_paths import find_campaignsstates_path, read_game_directory
 from utils.pathing import get_base_path
 
 logger = logging.getLogger(__name__)
+BASE_DIR = get_base_path(__file__)
+CAMPAIGN_COMPLETION_STATE_FILE = BASE_DIR / "campaign_completion_state.json"
 
 
 def _is_debug_enabled() -> bool:
@@ -146,6 +148,54 @@ def _load_json_file(path: Path) -> dict:
     except Exception as e:
         print(f"⚠️  Could not read {path}: {e}")
         return {}
+
+def _load_completion_state(path: Path = CAMPAIGN_COMPLETION_STATE_FILE) -> dict:
+    if not path.exists():
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except Exception as e:
+        print(f"⚠️  Could not read completion state file {path}: {e}")
+        return {}
+
+
+def _save_completion_state(state: dict, path: Path = CAMPAIGN_COMPLETION_STATE_FILE) -> bool:
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(state, f, indent=2)
+        return True
+    except Exception as e:
+        print(f"⚠️  Could not save completion state file {path}: {e}")
+        return False
+
+
+def update_completion_state_for_campaign(
+    campaign_name: str,
+    campaign_data: Optional[dict] = None,
+    decoded_path: Path = Path("campaigns_decoded.json"),
+    state_path: Path = CAMPAIGN_COMPLETION_STATE_FILE,
+) -> bool:
+    if not campaign_data:
+        decoded_data = _load_json_file(decoded_path)
+        campaign_data = decoded_data.get(campaign_name)
+
+    if not campaign_data:
+        print(f"    ⚠️  Could not update completion state; campaign '{campaign_name}' not found")
+        return False
+
+    state = _load_completion_state(state_path)
+    completed = sorted(
+        list(campaign_data.get("completedMissionsByFileName", {}).keys())
+    )
+    state[campaign_name] = completed
+
+    if _save_completion_state(state, state_path):
+        print(f"    ✓ Updated completion state for campaign {campaign_name} after cleanup")
+        return True
+    return False
+
 
 
 def resync_campaign_events_for_campaign(
@@ -1240,6 +1290,9 @@ class CleanupGUI:
                         campaign_data = resync_result["campaign_data"]
                         completed_missions = resync_result["completed_missions"]
                         country = resync_result["country"]
+                        update_completion_state_for_campaign(
+                            campaign_name, campaign_data=campaign_data
+                        )
                         
                         if events:
                             if country:
