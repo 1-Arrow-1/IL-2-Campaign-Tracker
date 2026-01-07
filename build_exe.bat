@@ -136,6 +136,11 @@ if not exist "utils\il2_paths.py" (
     pause
     exit /b 1
 )
+if not exist "sync_campaign_mission_states.py" (
+    echo ERROR: sync_campaign_mission_states.py not found!
+    pause
+    exit /b 1
+)
 if not exist "CampaignRanksAwards.zip" (
     echo ERROR: CampaignRanksAwards.zip not found!
     pause
@@ -161,6 +166,7 @@ for %%F in (
 		"popups_min.py"
 		"campaign_reset_checker.py"
 		"backup_restore_gui.py"
+		"sync_campaign_mission_states.py"
 		"utils\__init__.py"
 		"utils\formatting.py"
 		"utils\info_locale.py"

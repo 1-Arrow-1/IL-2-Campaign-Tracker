@@ -30,6 +30,7 @@ a = Analysis(
         'backup_restore_gui',
         'popups_min',
         'campaign_reset_checker',
+		'sync_campaign_mission_states'
         'utils',
         'utils.formatting',
         'utils.info_locale',
