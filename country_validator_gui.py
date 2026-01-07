@@ -14,7 +14,7 @@ import tkinter as tk
 from tkinter import ttk
 import json
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 
 COUNTRIES = ['Germany', 'Soviet Union', 'USA', 'Britain']
@@ -279,6 +279,9 @@ def validate_countries(json_file_path: str) -> bool:
     with open(json_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
     
+    stock_mapping = _build_stock_campaign_mapping(data.get('game_directory'))
+    auto_changes_made = _apply_stock_mapping(data, stock_mapping)
+
     # Extract campaigns - exclude game_directory AND stock campaigns (via is_stock flag)
     campaigns = {}
     stock_count = 0
@@ -297,6 +300,10 @@ def validate_countries(json_file_path: str) -> bool:
     
     if not campaigns:
         print("No user campaigns to validate! (All campaigns are stock)")
+        if auto_changes_made:
+            with open(json_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            print(f"✓ Saved stock campaign updates to {json_file_path}")
         return False
     
     # Show GUI
@@ -308,7 +315,7 @@ def validate_countries(json_file_path: str) -> bool:
         return False
     
     # Apply corrections
-    changes_made = False
+    changes_made = auto_changes_made
     validated_campaigns = {}  # Track validated campaigns to add to stock_campaigns.yaml
     
     for campaign_name, result_data in result.items():
@@ -340,28 +347,27 @@ def validate_countries(json_file_path: str) -> bool:
             data[campaign_name]['country'] = new_country
             data[campaign_name]['is_stock'] = True  # Mark as validated (treated like stock)
             changes_made = True
-            validated_campaigns[campaign_name] = new_country
             print(f"  Updated {campaign_name}: {old_country} → {new_country}")
         else:
             # Even if country didn't change, mark as validated
             if not data[campaign_name].get('is_stock'):
                 data[campaign_name]['is_stock'] = True
                 changes_made = True
-                validated_campaigns[campaign_name] = new_country
                 print(f"  Validated {campaign_name}: {new_country}")
+        validated_campaigns[campaign_name] = new_country
     
     # Save updated data
     if changes_made:
         with open(json_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
-        print(f"✓ Saved corrections to {json_file_path}")
-        
-        # Add validated campaigns to stock_campaigns.yaml
-        if validated_campaigns:
-            _add_to_stock_campaigns(validated_campaigns)
+        print(f"✓ Saved corrections to {json_file_path}")            
     else:
         print("No changes made")
     
+    # Add validated campaigns to stock_campaigns.yaml
+    if validated_campaigns:
+        _add_to_stock_campaigns(validated_campaigns)
+        
     return True
 
 
@@ -438,6 +444,89 @@ def _add_to_stock_campaigns(campaigns: Dict[str, str]):
         print(f"✓ Added {added_count} campaign(s) to stock_campaigns.yaml")
 
 
+
+def _load_stock_campaigns() -> Dict[str, str]:
+    stock_file = Path('stock_campaigns.yaml')
+    if not stock_file.exists():
+        return {}
+
+    try:
+        import yaml
+        with open(stock_file, 'r', encoding='utf-8') as f:
+            data = yaml.safe_load(f) or {}
+        return data.get('stock_campaigns', {}) or {}
+    except Exception:
+        return {}
+
+
+def _extract_official_name(info_file: Path) -> Optional[str]:
+    import re
+
+    for encoding in ['utf-8', 'utf-8-sig', 'iso-8859-1', 'cp1252']:
+        try:
+            content = info_file.read_text(encoding=encoding)
+            break
+        except UnicodeDecodeError:
+            content = None
+    if not content:
+        return None
+
+    name_match = re.search(r'&name\s*=\s*"?([^"\n\r]+)"?', content, re.IGNORECASE)
+    if name_match:
+        return name_match.group(1).strip()
+    return None
+
+
+def _build_stock_campaign_mapping(game_directory: Optional[str]) -> Dict[str, str]:
+    if not game_directory:
+        return {}
+
+    stock_campaigns = _load_stock_campaigns()
+    if not stock_campaigns:
+        return {}
+
+    stock_lookup = {name.lower(): country for name, country in stock_campaigns.items()}
+    campaigns_dir = Path(game_directory) / 'data' / 'Campaigns'
+    if not campaigns_dir.exists():
+        return {}
+
+    mapping = {}
+    for folder in campaigns_dir.iterdir():
+        if not folder.is_dir():
+            continue
+        info_file = folder / 'info.locale=eng.txt'
+        if not info_file.exists():
+            continue
+        official_name = _extract_official_name(info_file)
+        if not official_name:
+            continue
+        country = stock_lookup.get(official_name.lower())
+        if country:
+            mapping[folder.name] = country
+    return mapping
+
+
+def _apply_stock_mapping(data: Dict[str, Dict], stock_mapping: Dict[str, str]) -> bool:
+    changes_made = False
+    if not stock_mapping:
+        return False
+
+    for campaign_name, campaign_data in data.items():
+        if campaign_name == 'game_directory' or not isinstance(campaign_data, dict):
+            continue
+        if campaign_name not in stock_mapping:
+            continue
+        stock_country = stock_mapping[campaign_name]
+        if campaign_data.get('country') != stock_country:
+            campaign_data['country'] = stock_country
+            changes_made = True
+        if not campaign_data.get('is_stock'):
+            campaign_data['is_stock'] = True
+            changes_made = True
+
+    return changes_made
+
+
 def validate_new_campaigns(json_file_path: str, new_campaign_names: List[str]) -> bool:
     """
     Show validation GUI for only newly detected campaigns
@@ -459,6 +548,9 @@ def validate_new_campaigns(json_file_path: str, new_campaign_names: List[str]) -
     with open(json_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
     
+    stock_mapping = _build_stock_campaign_mapping(data.get('game_directory'))
+    auto_changes_made = _apply_stock_mapping(data, stock_mapping)
+
     # Extract only new campaigns (exclude stock campaigns via is_stock flag)
     new_campaigns = {}
     stock_count = 0
@@ -476,6 +568,10 @@ def validate_new_campaigns(json_file_path: str, new_campaign_names: List[str]) -
     
     if not new_campaigns:
         print("No new user campaigns to validate!")
+        if auto_changes_made:
+            with open(json_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            print(f"✓ Saved stock campaign updates to {json_file_path}")
         return True  # Not an error, just nothing to do
     
     # Show GUI
@@ -487,24 +583,45 @@ def validate_new_campaigns(json_file_path: str, new_campaign_names: List[str]) -
         return False
     
     # Apply corrections
-    changes_made = False
+    changes_made = auto_changes_made
     validated_campaigns = {}  # Track validated campaigns to add to stock_campaigns.yaml
     
-    for campaign_name, new_country in result.items():
+    for campaign_name, result_data in result.items():
+        new_country = result_data["country"]
+        is_ww1 = result_data.get("is_ww1", False)
+
+        data[campaign_name]["is_ww1"] = is_ww1
+        if is_ww1:
+            if data[campaign_name].get("excluded") is not True:
+                changes_made = True
+            data[campaign_name]["excluded"] = True
+            if data[campaign_name].get("exclusion_reason") != "WW1 (user-marked)":
+                changes_made = True
+            data[campaign_name]["exclusion_reason"] = "WW1 (user-marked)"
+            print(f"  ⚠️ Marked {campaign_name} as WW1 (excluded from tracking)")
+        else:
+            if data[campaign_name].get("excluded"):
+                changes_made = True
+            if "excluded" in data[campaign_name]:
+                data[campaign_name]["excluded"] = False
+            if "exclusion_reason" in data[campaign_name]:
+                del data[campaign_name]["exclusion_reason"]
+                changes_made = True
+
+                
         old_country = data[campaign_name].get('country')
         if old_country != new_country:
             data[campaign_name]['country'] = new_country
             data[campaign_name]['is_stock'] = True  # Mark as validated
             changes_made = True
-            validated_campaigns[campaign_name] = new_country
             print(f"  Updated {campaign_name}: {old_country} → {new_country}")
         else:
             # Even if country didn't change, mark as validated
             if not data[campaign_name].get('is_stock'):
                 data[campaign_name]['is_stock'] = True
                 changes_made = True
-                validated_campaigns[campaign_name] = new_country
                 print(f"  Validated {campaign_name}: {new_country}")
+        validated_campaigns[campaign_name] = new_country
     
     # Save updated data
     if changes_made:
@@ -512,9 +629,9 @@ def validate_new_campaigns(json_file_path: str, new_campaign_names: List[str]) -
             json.dump(data, f, indent=2, ensure_ascii=False)
         print(f"✓ Saved corrections to {json_file_path}")
         
-        # Add validated campaigns to stock_campaigns.yaml
-        if validated_campaigns:
-            _add_to_stock_campaigns(validated_campaigns)
+    # Add validated campaigns to stock_campaigns.yaml
+    if validated_campaigns:
+        _add_to_stock_campaigns(validated_campaigns)
     
     return True
 
