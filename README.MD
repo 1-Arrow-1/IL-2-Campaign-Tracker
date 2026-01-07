@@ -10,22 +10,22 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **W
 
 ## 📋 Table of Contents
 
-- [Features](#-features)
-- [Supported Nations](#-supported-nations)
-- [Installation](#-installation)
-- [First Run Setup](#-first-run-setup)
-- [WW1 Detection & Exclusion](#-ww1-detection--exclusion)
-- [How It Works](#-how-it-works)
-- [Promotions & Awards System](#-promotions--awards-system)
-- [Mission Debriefings](#-mission-debriefings)
-- [Mission Cleanup](#-mission-cleanup)
-- [Backup & Restore System](#-backup--restore-system)
-- [File Reference](#-file-reference)
-- [Troubleshooting](#-troubleshooting)
-- [FAQ](#-faq)
+- [Features](#features)
+- [Supported Nations](#supported-nations)
+- [Installation](#installation)
+- [First Run Setup](#first-run-setup)
+- [WW1 Detection & Exclusion](#ww1-detection--exclusion)
+- [How It Works](#how-it-works)
+- [Promotions & Awards System](#promotions--awards-system)
+- [Mission Debriefings](#mission-debriefings)
+- [Mission Cleanup](#mission-cleanup)
+- [Backup & Restore System](#backup--restore-system)
+- [File Reference](#file-reference)
+- [Troubleshooting](#troubleshooting)
+- [FAQ](#faq)
 
 ---
-
+<a id="features"></a>
 ## ✨ Features
 
 | Feature | Description |
@@ -43,7 +43,7 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **W
 | **WW1 Detection & Exclusion** | Detects Flying Circus (WW1) campaigns and skips them by default |
 
 ---
-
+<a id="supported-nations"></a>
 ## 🌍 Supported Nations
 
 The tracker includes historically accurate ranks and awards for: 
@@ -64,7 +64,7 @@ The tracker includes historically accurate ranks and awards for:
             
 
 ---
-
+<a id="installation"></a>
 ## 📥 Installation
 
 1. **Download** the latest release (`IL2_Campaign_Tracker_v2.0.zip`)
@@ -111,7 +111,7 @@ IL2_Campaign_Tracker_v2.0/
 ```
 
 ---
-
+<a id="first-run-setup"></a>
 ## 🚀 First Run Setup
 
 When you start the tracker for the first time, a setup wizard guides you through the configuration:
@@ -148,7 +148,7 @@ After setup, the tracker:
 3. Starts monitoring for changes
 
 ---
-
+<a id="ww1-detection--exclusion"></a>
 ## 🪖 WW1 Detection & Exclusion
 
 Flying Circus (WW1) campaigns are detected and excluded by default because the tracker only includes WWII ranks, awards, and debriefing logic.
@@ -164,7 +164,7 @@ Flying Circus (WW1) campaigns are detected and excluded by default because the t
 - You can review or change exclusions by re-running setup (delete `campaign_mission_dates.json` and the respective entry in the `stock_campaigns.yaml`) and using the **WW1 (ignore)** checkbox in the country validation GUI.
 
 ---
-
+<a id="how-it-works"></a>
 ## ⚙️ How It Works
 
 ### Monitoring Loop
@@ -181,11 +181,11 @@ Flying Circus (WW1) campaigns are detected and excluded by default because the t
 │   3. Decode campaign save file                          │
 │                          ↓                              │
 │   4. Calculate new promotions/awards                    │
-│                          ↓                              │
-│   5. Parse mission log for debriefing                   │
-│                          ↓                              │
-│   6. Show popups for new events                         │
-│                          ↓                              │
+│                          ↓                              |
+|   5. Show popups for new events                         |
+|                          ↓                              │                                          
+│   6. Parse mission log for debriefing                   │
+│                          ↓                              │                                 
 │   7. Update campaign info file                          │
 │                          ↓                              │
 │   8. Generate PDF report                                │
@@ -207,7 +207,7 @@ When you earn a promotion or award, a popup notification appears on screen:
 and set ```enable_popups: false```
 
 ---
-
+<a id="promotions--awards-system"></a>
 ## 🎖️ Promotions & Awards System
 
 ### How Promotions Work
@@ -257,7 +257,7 @@ Campaigns can start with higher ranks (if you want to).  This is configurable pe
 ```
 
 ---
-
+<a id="mission-debriefings"></a>
 ## 📊 Mission Debriefings
 
 ### Data Source
@@ -289,7 +289,7 @@ Each mission generates detailed output in two formats:
 2. **PDF Report** - Detailed kill breakdown by category matching the in-game results screen
 
 ---
-
+<a id="mission-cleanup"></a>
 ## 🧹 Mission Cleanup
 
 ### What is takeoffStatus?
@@ -351,7 +351,7 @@ If you click "Keep All" or don't select a mission:
 - Cleanup GUI will appear again next time (for remaining incomplete missions)
 
 ---
-
+<a id="backup--restore-system"></a>
 ## 💾 Backup & Restore System
 
 ### When Backups Are Created
@@ -423,7 +423,7 @@ Later, if needed:
 
 ---
 
-
+<a id="file-reference"></a>
 ## 📁 File Reference
 
 ### Configuration Files
@@ -525,7 +525,7 @@ Auto-generated during first run, contains:
 | `[Campaign]_Report.pdf` | Career PDF report | `reports/` subfolder |
 
 ---
-
+<a id="troubleshooting"></a>
 ## 🔧 Troubleshooting
 
 ### Tracker Won't Start
@@ -568,7 +568,7 @@ Auto-generated during first run, contains:
 | Events written to wrong file | Check campaign country assignment |
 
 ---
-
+<a id="faq"></a>
 ## ❓ FAQ
 
 ### Q: Can I run multiple instances of the tracker?
