@@ -1,557 +1,155 @@
 # Building IL-2 Campaign Tracker
 
-This guide covers building a standalone executable using the provided build script.
-
-## Important Notes
+This guide covers running the tracker from Python and building Windows executables with the provided build script.
 
 **To BUILD the EXE:** You need Python 3.8+ and all dependencies installed.
 
-**To RUN the EXE:** End users do NOT need Python - the EXE is standalone (~40 MB).
+Use this if you want to run the tracker directly from source.
 
-**Pre-built EXE:** NOT provided in GitHub releases. You must build your own.
-
-## Prerequisites
-
-### Required Software
-- **Python 3.8 or higher**
-- **PyInstaller 5.0 or higher**
-- **All project dependencies**
+### Prerequisites
+- **Python 3.8+**
+- Optional: **wkhtmltopdf** for PDF exports
 
 ### Install Dependencies
+
 ```bash
 pip install -r requirements.txt
-pip install pyinstaller
+```
+The `requirements.txt` file includes the core runtime dependencies (Pillow, PyYAML, psutil, pdfkit, regex).
+
+### Run the tracker
+```bash
+python il2_tracker_launcher.py
 ```
 
-**Required packages:**
-- `pillow` - Image processing (DDS to PNG conversion)
-- `pyyaml` - Configuration parsing
-- `psutil` - Process monitoring
-- `pdfkit` - PDF generation
-- `pyinstaller` - EXE builder
+The launcher opens the GUI and starts the background monitoring flow. Make sure the `.yaml` config files remain in the same folder as the script.
 
-### Optional (but recommended): wkhtmltopdf
-For PDF generation:
-- Download: https://wkhtmltopdf.org/downloads.html
-- Install to: `C:\Program Files\wkhtmltopdf\`
-- Build script will automatically bundle it if found
+### Optional: wkhtmltopdf
+If you want PDF exports, install wkhtmltopdf from https://wkhtmltopdf.org/downloads.html and ensure it is on your PATH (or installed at the default `C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe`).
 
-## Build Instructions
+---
 
-### Simple Method: Run the Build Script
+## Build a Windows EXE (build_exe.bat + spec files)
 
-Execute:
+The build process requires a Python environment, but the compiled executable is fully self-contained and does not depend on Python at runtime.
+
+### Prerequisites
+- **Python 3.8+**
+- **PyInstaller**
+- All dependencies from `requirements.txt`
+
+```bash
+pip install -r requirements.txt
+```
+
+### Build command
 ```bash
 build_exe.bat
 ```
 
-### What the Script Does
+### What the build script does
 
-**[1/5] Checks for PyInstaller**
-- Verifies PyInstaller is installed
-- Exits if missing
+**[1/5] Checks required files**
+- `il2_tracker_launcher.py` (main entry point)
+- `step1_extract_mission_dates.py`
+- `decode_campaign_usersave1.py`
+- `step3_generate_events.py`
+- `monitor_campaigns.py`
+- `step4_process_mission_logs.py`
+- `cleanup_failed_missions.py`
+- `mlg2txt.py`
+- `popups_min.py`
+- `campaign_reset_checker.py`
+- `backup_restore_gui.py`
+- `IBMPlexSans-Light.ttf`
+- `utils/` (and `utils` modules)
+- `campaign_progress_config.yaml`
+- `object_categories.yaml`
+- `stock_campaigns.yaml`
+- `IL2_CampaignTracker.spec`
+- `mlg2txt.spec`
 
-**[2/5] Validates Python Files**
-- Syntax check on all `.py` files
-- Does NOT execute code - only validates
-- Files checked:
-  - `il2_tracker_launcher.py` (main entry point)
-  - `monitor_campaigns.py` (background monitoring)
-  - `step1_extract_mission_dates.py` (mission extraction + GUI)
-  - `step3_generate_events.py` (rank/award calculation)
-  - `decode_campaing_usersave1.py` (save file decoder)
-  - `step4_process_mission_logs.py` (mission log parser)
-  - `il2_mission_debrief.py` (debriefing generator)
-  - `mlg2txt.py` (mission log converter)
-  - `country_validator_gui.py` (country validation GUI)
-  - `cleanup_failed_missions.py` (mission cleanup tool - NEW in v1.1)
+**[2/5] Validates Python syntax**
+- Runs `python -m py_compile` on the Python files listed above.
 
-**[3/5] Cleans Build Artifacts**
-- Removes `build/` directory
-- Removes `dist/` directory
-- Removes old EXE
+**[3/5] Cleans build artifacts**
+- Removes `build/`, `dist/`, and any prior `.exe` files.
 
-**[4/5] Runs PyInstaller**
-- Executes: `pyinstaller IL2_CampaignTracker.spec`
-- Uses spec file to bundle everything
-- Takes 2-5 minutes depending on system
+**[4/5] Builds EXEs**
+- `pyinstaller IL2_CampaignTracker.spec`
+- `pyinstaller mlg2txt.spec`
 
-**[5/5] Creates Distribution Package**
-- Creates distribution folder (e.g., `IL2_Campaign_Tracker_v1.1\`)
-- Copies EXE from `dist/`
-- Copies all configuration YAML files
-- Copies `mlg2txt.py` (required at runtime for log conversion)
-- Generates `QUICK_START.txt` with usage instructions
+**[5/5] Creates distribution package**
+- Creates `IL2_Campaign_Tracker_v2.0/`
+- Copies `IL2_CampaignTracker_v2.0.exe` from `dist/`
+- Copies `mlg2txt.exe` from `dist/`
+- Copies YAML configuration files
+- Writes `QUICK_START.txt`
 
-### Build Output
-
+### Build output
 ```
-dist\IL2_CampaignTracker\
-├── IL2_CampaignTracker.exe          # Standalone executable (~40 MB)
-├── campaign_progress_config.yaml    # Awards & ranks config
-├── object_categories.yaml           # Aircraft classifications
-├── stock_campaigns.yaml             # Known campaigns
-├── weapons_mappings.yaml            # Weapon classifications (NEW in v1.1)
-└── mlg2txt.exe                      # Mission log converter (optional standalone)
-```
-
-**Note:** If you build `mlg2txt.py` separately using `pyinstaller mlg2txt.spec`, you'll get a standalone `mlg2txt.exe`. This is useful for users who want to convert mission logs independently of the tracker.
-
-**This folder is ready for distribution!**
-
-## The Spec File
-
-`IL2_CampaignTracker.spec` defines the build:
-
-### Entry Point
-```python
-['il2_tracker_launcher.py']  # Main unified launcher
+IL2_Campaign_Tracker_v2.0/
+├── IL2_CampaignTracker_v2.0.exe
+├── mlg2txt.exe
+├── campaign_progress_config.yaml
+├── object_categories.yaml
+├── stock_campaigns.yaml
+├── README.html
+└── QUICK_START.txt
 ```
 
-### Hidden Imports
-Modules PyInstaller might miss:
-- `decode_campaing_usersave1` - Save file decoder
-- `step1_extract_mission_dates` - Mission extraction
-- `step3_generate_events` - Event generator
-- `step4_process_mission_logs` - Log processor
-- `il2_mission_debrief` - Debriefing parser
-- `monitor_campaigns` - Background monitor
-- `country_validator_gui` - Country validation
-- `cleanup_failed_missions` - Mission cleanup (NEW)
-- `mlg2txt` - Log converter
+### Notes on the spec files
+- `IL2_CampaignTracker.spec` bundles the tracker and its dependencies, includes `IBMPlexSans-Light.ttf`, `wkhtmltopdf.exe` 
+- `mlg2txt.spec` builds a standalone CLI converter for `.mlg` files.
 
-### Bundled Data
-Configuration files (must be in same directory as EXE):
-- `campaign_progress_config.yaml` - Ranks, awards, scaling factors
-- `object_categories.yaml` - Aircraft/vehicle classifications
-- `stock_campaigns.yaml` - Known campaign definitions
-- `weapons_mappings.yaml` - Weapon type definitions
+### Distribution reminders
+- Include `CampaignRanksAwards.zip` alongside your distribution folder. Unzip and move to `<Path to Il-2 BG>\data\swf`
+- End users do **not** need Python when using the EXE.
 
-### One-File Build
-```python
-onefile=True  # Single ~40 MB executable
-```
-
-All dependencies are bundled into a single EXE file.
-
-## Distribution
-
-### What to Package
-
-**Essential:**
-1. The entire distribution folder (e.g., `IL2_Campaign_Tracker_v1.1\`)
-2. `CampaignRanksAwards.zip` (from repository - medal/rank images)
-
-### Distribution Structure
-```
-YourDistribution\
-├── IL2_Campaign_Tracker_v1.1\
-│   ├── IL2_CampaignTracker.exe
-│   ├── campaign_progress_config.yaml
-│   ├── object_categories.yaml
-│   ├── stock_campaigns.yaml
-│   ├── weapons_mappings.yaml
-│   ├── mlg2txt.py (optional)
-│   └── QUICK_START.txt
-└── CampaignRanksAwards.zip
-```
-
-### User Instructions
-
-**Installation Steps:**
-1. Extract `CampaignRanksAwards.zip`
-2. Copy `CampaignRanksAwards\` folder to: `<IL-2>\data\swf\`
-3. Run `IL2_CampaignTracker.exe`
-4. On first run:
-   - Select IL-2 installation directory via GUI
-   - Validate auto-detected country assignments
-   - Review any unsuccessful missions (if applicable)
-
-**Requirements:**
-- IL-2 Sturmovik: Great Battles (any version)
-- Windows OS
-- NO Python needed by end users
-
-### Creating a ZIP
-
-```bash
-# After successful build
-cd dist
-powershell Compress-Archive -Path IL2_CampaignTracker -DestinationPath IL2_Tracker_v1.1.zip
-```
-
-Or manually zip the `IL2_CampaignTracker\` folder.
+---
 
 ## Troubleshooting
-
 ### PyInstaller Not Found
-
-**Error:** `pyinstaller: command not found`
-
-**Solution:**
 ```bash
 pip install pyinstaller
 ```
 
-### Syntax Errors
+### Syntax errors during validation
+Run the failing file directly to see the issue:
+```bash
+python -m py_compile path\to\file.py
+```
 
-**Error:** `SyntaxError` or `IndentationError` during validation
-
-**Solution:**
-- Fix the reported Python file
-- Common issues: mixed tabs/spaces, missing colons, incorrect indentation
-- Test manually: `python -m py_compile filename.py`
-
-### Missing Files
-
-**Error:** `ERROR: filename.py not found!`
-
-**Solution:**
-- Ensure all required `.py` files are present in the project directory
-- Check file names match exactly (case-sensitive)
-- Required files listed in "What the Script Does" section
-
-### Build Fails
-
-**Error:** PyInstaller errors during build
-
-**Solutions:**
-
-1. **Clean and retry:**
+### Build fails
+1. Clean and retry:
    ```bash
    rmdir /s /q build dist
    build_exe.bat
    ```
 
-2. **Update PyInstaller:**
+2. Upgrade PyInstaller:
    ```bash
    pip install --upgrade pyinstaller
    ```
 
-3. **Reinstall dependencies:**
+### EXE won't start
+1. Run from a terminal to see errors:
    ```bash
-   pip install --force-reinstall -r requirements.txt
+   cd IL2_Campaign_Tracker_v2.0
+   IL2_CampaignTracker_v2.0.exe
    ```
-
-4. **Check for import errors:**
-   - Review PyInstaller output for missing modules
-   - Add missing modules to `hiddenimports` in spec file
-
-### EXE Won't Start
-
-**Solution:**
-
-1. **Run from command line to see errors:**
-   ```bash
-   cd dist\IL2_CampaignTracker
-   IL2_CampaignTracker.exe
-   ```
-
-2. **Common issues:**
-   - YAML files missing from EXE directory
-   - Antivirus blocking the executable
-   - Missing Visual C++ Redistributables (install from Microsoft)
-
-3. **Verify file structure:**
-   ```
-   IL2_CampaignTracker.exe
-   campaign_progress_config.yaml  ✓
-   object_categories.yaml         ✓
-   stock_campaigns.yaml           ✓
-   weapons_mappings.yaml          ✓
-   ```
-
-4. **Temporarily disable antivirus and retry**
-
-### YAML Configuration Errors
-
-**Error:** `FileNotFoundError: campaign_progress_config.yaml`
-
-**Solution:**
-- YAML files MUST be in the same directory as the EXE
-- These files are NOT embedded in the EXE (intentionally - for user editing)
-- Copy YAML files from source to EXE directory if missing
-
-### Mission Cleanup GUI Not Showing
-
-**Symptom:** Cleanup GUI doesn't appear on startup
-
-**Solution:**
-- Ensure `cleanup_failed_missions.py` is included in build
-- Check that `campaigns_decoded.json` exists (created after first mission)
-- GUI only shows if unsuccessful missions are found
-
-### PDF Export Fails
-
-**Error:** PDF generation errors or missing PDFs
-
-**Solutions:**
-
-1. **Install wkhtmltopdf:**
-   - Download: https://wkhtmltopdf.org/downloads.html
-   - Use default path: `C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe`
-
-2. **For standalone EXE:**
-   - Copy `wkhtmltopdf.exe` to same directory as tracker EXE
-   - Or bundle during build (see Advanced Customization)
-
-3. **Install pdfkit:**
-   ```bash
-   pip install pdfkit
-   ```
-
-4. **Check PDF output directory:**
-   - Default: `<IL-2>\data\Campaigns\<CampaignName>\reports\`
-   - Verify write permissions
-
-### Size Issues
-
-**Expected size:** ~40 MB for the EXE
-
-**If larger:**
-- Normal variation depending on Python version and dependencies
-- 35-45 MB is typical range
-
-**If smaller (<20 MB):**
-- May indicate missing dependencies
-- Run and test thoroughly
-
-## Advanced Customization
-
-### Modifying the Build
-
-1. **Edit `IL2_CampaignTracker.spec`**
-
-2. **Common changes:**
-   - **Executable name:** Change `name='IL2_CampaignTracker'`
-   - **Version info:** Add `version` parameter
-   - **Bundled files:** Modify `datas` list
-   - **Excluded modules:** Add to `excludes` list
-   - **Custom icon:** Set `icon='path/to/icon.ico'`
-
-3. **Rebuild:**
-   ```bash
-   build_exe.bat
-   ```
-
-### Adding Custom Icon
-
-In `IL2_CampaignTracker.spec`:
-```python
-exe = EXE(
-    pyz,
-    a.scripts,
-    a.binaries,
-    # ...
-    icon='resources/icon.ico',  # Add this line
-    # ...
-)
-```
-
-Requires `.ico` file (Windows icon format).
-
-### Bundling Additional Files
-
-In `IL2_CampaignTracker.spec`:
-```python
-datas=[
-    ('campaign_progress_config.yaml', '.'),
-    ('object_categories.yaml', '.'),
-    ('stock_campaigns.yaml', '.'),
-    ('weapons_mappings.yaml', '.'),
-    ('your_new_file.txt', '.'),  # Add your file here
-],
-```
-
-### Optimizing Build Size
-
-1. **Exclude unused modules:**
-```python
-excludes=['tkinter.test', 'unittest', 'pydoc']
-```
-
-2. **Use UPX compression** (optional):
-```python
-upx=True,
-upx_exclude=[],
-```
-
-Note: UPX may trigger some antivirus software.
-
-### Bundling wkhtmltopdf (for standalone PDF generation)
-
-To include wkhtmltopdf in your EXE distribution:
-
-1. **Install wkhtmltopdf:**
-   - Download from: https://wkhtmltopdf.org/downloads.html
-   - Note installation path (e.g., `C:\Program Files\wkhtmltopdf\bin\`)
-
-2. **Modify spec file to bundle it:**
-```python
-# In IL2_CampaignTracker.spec
-import os
-
-# Add wkhtmltopdf binary to bundle
-wkhtmltopdf_path = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
-if os.path.exists(wkhtmltopdf_path):
-    a.binaries += [('wkhtmltopdf.exe', wkhtmltopdf_path, 'BINARY')]
-```
-
-3. **Rebuild:**
-```bash
-build_exe.bat
-```
-
-4. **Result:**
-   - wkhtmltopdf.exe bundled in EXE
-   - No separate installation needed by end users
-   - PDF generation works out of the box
-
-**Alternative (simpler):**
-- Copy `wkhtmltopdf.exe` manually to distribution folder
-- Users place it next to tracker EXE
-
-### Building mlg2txt Separately (Optional)
-
-The `mlg2txt.py` tool can be built as a standalone executable for users who want to convert mission logs independently:
-
-**Build command:**
-```bash
-pyinstaller mlg2txt.spec
-```
-
-**Output:**
-- `dist\mlg2txt\mlg2txt.exe` - Standalone log converter (~8 MB)
-
-**Usage:**
-```bash
-mlg2txt.exe input.mlg output.txt
-```
-
-**Distribution:**
-- Can be included with main tracker
-- Or distributed separately as utility tool
-- Useful for users analyzing logs outside the tracker
-
-**Note:** The main tracker (`IL2_CampaignTracker.exe`) includes log conversion internally, so `mlg2txt.exe` is optional.
-
-## Testing the Build
-
-### Basic Functionality Test
-
-1. **First Run:**
-   ```bash
-   cd dist\IL2_CampaignTracker
-   IL2_CampaignTracker.exe
-   ```
-
-2. **Test GUI:**
-   - Folder selection dialog should appear
-   - Select a valid IL-2 directory
-   - Country validation should show
-
-3. **Test Monitoring:**
-   - Tracker should continue running
-   - Check `campaign_monitor.log` is created
-   - Press Ctrl+C to exit cleanly
-
-4. **Test with Real Data:**
-   - Copy a real `campaignsstates.txt` to tracker directory
-   - Run tracker
-   - Verify events are generated
-
-### Distribution Test
-
-1. Copy distribution folder to clean test environment
-2. Run without Python installed
-3. Verify all features work
-4. Test with actual IL-2 installation
-
-## Version Management
-
-### Updating Version Number
-
-When releasing a new version:
-
-1. **Update version in code:**
-   - `il2_tracker_launcher.py` - Update version string
-   - `build_exe.bat` - Update folder name
-
-2. **Update documentation:**
-   - `README.md` - Version history section
-   - `BUILD.md` - Version references
-   - `QUICK_START.txt` template
-
-3. **Rebuild:**
-   ```bash
-   build_exe.bat
-   ```
-
-4. **Test thoroughly before distribution**
-
-## Continuous Integration (Optional)
-
-For automated builds, you can integrate into CI/CD:
-
-```yaml
-# Example GitHub Actions workflow
-- name: Build EXE
-  run: |
-    pip install -r requirements.txt
-    pip install pyinstaller
-    python -m PyInstaller IL2_CampaignTracker.spec
-```
-
-## Support
-
-For build issues, open a GitHub issue with:
-- **Full error output** (copy entire console output)
-- **Python version:** `python --version`
-- **PyInstaller version:** `pyinstaller --version`
-- **Operating system** and version
-- **Steps to reproduce**
-
-**Tip:** Run `build_exe.bat` from a command prompt (not double-click) to see full output.
+2. Verify required YAML files are next to the EXE.
+
+### PDF export fails
+Install wkhtmltopdf and ensure the executable is available at:
+`C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe`   
 
 ---
 
-## Quick Reference
+**Recommendation:** Use `build_exe.bat` to ensure both `IL2_CampaignTracker_v2.0.exe` and `mlg2txt.exe` are built consistently.
 
-**Build Command:**
-```bash
-build_exe.bat
-```
 
-**Build mlg2txt separately:**
-```bash
-pyinstaller mlg2txt.spec
-```
 
-**Clean Build:**
-```bash
-rmdir /s /q build dist
-build_exe.bat
-```
 
-**Test Build:**
-```bash
-cd dist\IL2_CampaignTracker
-IL2_CampaignTracker.exe
-```
-
-**Required Files:**
-- All `.py` files listed in script
-- All `.yaml` config files
-- `IL2_CampaignTracker.spec` (main tracker build)
-- `mlg2txt.spec` (optional - for standalone log converter)
-- `build_exe.bat`
-
-**Output:**
-- `dist\IL2_CampaignTracker\` folder with EXE and configs
-
----
-
-**Happy Building! 🔨**
-
-**Recommendation:** Always use `build_exe.bat` for automated, reliable builds. Manual PyInstaller commands may miss dependencies.
+ 
 
