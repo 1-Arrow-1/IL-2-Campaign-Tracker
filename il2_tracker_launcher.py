@@ -217,6 +217,12 @@ def generate_initial_events() -> bool:
     
     if force_regenerate: 
         print("⚡ Regenerating events after backup restore...")
+        print("🔄 Refreshing campaign mission dates...")
+        try:
+            import step1_extract_mission_dates
+            step1_extract_mission_dates.main(args=["--auto"])
+        except Exception as e:
+            print(f"⚠️ Failed to refresh campaign mission dates: {e}")
     else:
         print("🎯 First run detected - generating initial events...")
         print("   (This fills campaign_popups_seen.json with baseline)")
