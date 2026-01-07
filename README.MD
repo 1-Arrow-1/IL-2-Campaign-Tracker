@@ -84,7 +84,7 @@ If you have modified missions belonging to a standard campaign, proceed with ext
 ℹ️ 4.  **OPTIONAL:**  
             - **Extract** Campaigns.gtp (standard IL-2 BoS campaigns) from `<Path to Il-2 BoS>\data` with the help of unGTP-IL2 (download it here: https://www.mediafire.com/file/caxpalaudz1hd47/unGTP-IL2.zip).   
             - **Unzip & Move** the `unGTP-IL2.exe` to `<Path to Il-2 BoS>\data`.  
-            - **Drag** `Campaigns.gtp` onto `unGTP-IL2.exe`. Ignore the error warning in the cmd-window (don't worry - everything has beed extracted).  
+            - **Drag** `Campaigns.gtp` onto `unGTP-IL2.exe`. Ignore the error warning in the cmd-window at the end (don't worry - everything has beed extracted).  
             - **Goto** `<Path to Il-2 BoS>\data\(null)\campaigns`.  
             - **Copy** the subfolders of `<Path to Il-2 BoS>\data\(null)\campaigns` to `<Path to Il-2 BoS>\data\campaigns`  
 
