@@ -251,7 +251,7 @@ copy "object_categories.yaml" "IL2_Campaign_Tracker_v2.0\" >NUL
 copy "stock_campaigns.yaml" "IL2_Campaign_Tracker_v2.0\" >NUL
 
 REM Copy README if exists
-if exist "README.md" copy "README.md" "IL2_Campaign_Tracker_v2.0\README.txt" >NUL
+if exist "README.html" copy "README.html" "IL2_Campaign_Tracker_v2.0\README.html" >NUL
 
 REM Create quick start guide
 echo IL-2 CAMPAIGN PROGRESS TRACKER v2.0 > "IL2_Campaign_Tracker_v2.0\QUICK_START.txt"
