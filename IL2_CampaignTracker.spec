@@ -36,6 +36,7 @@ a = Analysis(
         'utils.info_locale',
         'utils.pathing',
 		'utils.il2_paths',
+		'utils.combat_results_html',
 		'regex',
         'PIL',
         'PIL.Image',

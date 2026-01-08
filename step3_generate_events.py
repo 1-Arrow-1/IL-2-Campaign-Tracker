@@ -287,119 +287,16 @@ class EventGenerator:
         
         # Load configuration
         # Try external file first (for user editing), then embedded
-        from pathlib import Path
-        import sys
-        
-        config_path = Path(config_file)
-        if not config_path.is_absolute():
-            # Relative path - check multiple locations
-            if getattr(sys, 'frozen', False):
-                # Running as EXE - check directory next to EXE first
-                config_path = get_base_path(__file__) / config_file
-                if not config_path.exists():
-                    # Fallback to embedded
-                    config_path = Path(sys._MEIPASS) / config_file
-        
-        # Try UTF-8 first, fallback to ISO-8859-1
-        try:
-            with open(config_path, 'r', encoding='utf-8') as f:
-                self.config = yaml.safe_load(f)
-        except UnicodeDecodeError:
-            with open(config_path, 'r', encoding='iso-8859-1') as f:
-                self.config = yaml.safe_load(f)
-                
-        # --- NEW: default handling for popup setting ---
-        if not isinstance(self.config, dict):
-            self.config = {}
-
-        self.enable_popups = bool(self.config.get("enable_popups", True))
-        print(f"[popups] enabled = {self.enable_popups}")
-        if not self.enable_popups:
-            self.show_popups = False
-        # 🧩 Debug line to confirm popup activation
-        print(f"[DEBUG] Popups aktiviert: {self.show_popups}")
-        self.popup_seen = load_popup_seen()
-        print(f"[popups] seen campaigns = {len(self.popup_seen)}")
-        
-        # Load mission dates with explicit error handling
-        try:
-            with open(CAMPAIGN_MISSION_DATES_FILE, 'r', encoding='utf-8') as f:
-                self.mission_dates = json.load(f)
-        except FileNotFoundError:
-            print(f"ERROR: Required file '{CAMPAIGN_MISSION_DATES_FILE.name}' not found!")
-            print(f"Please run step1_extract_mission_dates.py first.")
-            raise
-        except json.JSONDecodeError as e:
-            print(f"ERROR: Invalid JSON in '{CAMPAIGN_MISSION_DATES_FILE.name}'")
-            print(f"  Line {e.lineno}, Column {e.colno}: {e.msg}")
-            print(f"  The file may be corrupted. Try regenerating it.")
-            raise
-        
-        # Load decoded save data with explicit error handling
-        try:
-            with open(CAMPAIGNS_DECODED_FILE, 'r', encoding='utf-8') as f:
-                self.save_data = json.load(f)
-        except FileNotFoundError:
-            print(f"ERROR: Required file '{CAMPAIGNS_DECODED_FILE.name}' not found!")
-            print(f"Please run decode_campaign_usersave1.py first.")
-            raise
-        except json.JSONDecodeError as e:
-            print(f"ERROR: Invalid JSON in '{CAMPAIGNS_DECODED_FILE.name}'")
-            print(f"  Line {e.lineno}, Column {e.colno}: {e.msg}")
-            print(f"  The file may be corrupted. Try re-decoding the save file.")
-            raise
+        self.config = self._load_config(config_file)
+        self._init_popup_state()
+        self.mission_dates = self._load_mission_dates()
+        self.save_data = self._load_save_data()
         
         # Extract game directory from mission dates JSON
         self.game_directory = self.mission_dates.get('game_directory', '')
         
         # Initialize Mission Log Processor for debriefings
-        self.log_processor = None
-        if self.game_directory:
-            try:
-                from step4_process_mission_logs import MissionLogProcessor
-                snapshot_dt = None
-                try:
-                    # Try to find states file in IL-2 directory
-                    states_path, index_path = self._find_il2_states_path()
-                    
-                    # Fallback: try CWD (backward compatibility)
-                    if not states_path:
-                        states_path = Path("campaignsstates.txt")
-                        index_path = Path("campaignsstates_hash_index.json")
-
-                    if states_path and states_path.exists() and index_path and index_path.exists():
-                        import hashlib
-                        h = hashlib.md5(states_path.read_bytes()).hexdigest()
-                        with open(index_path, "r", encoding="utf-8") as f:
-                            idx = json.load(f) or {}
-                        
-                        print(f"[snapshot] hash={h} → {'FOUND' if h in idx else 'NOT FOUND'} in index")
-
-                        entry = idx.get(h)
-                        if entry:
-                            # New format: entry is dict with timestamp
-                            if isinstance(entry, dict):
-                                ts = entry.get("timestamp")
-                            else:
-                                # Old format: entry is timestamp string
-                                ts = entry
-                            
-                            if ts:
-                                snapshot_dt = datetime.strptime(ts, "%Y%m%d_%H%M%S")
-                except Exception as e:
-                    print(f"[snapshot] Error during snapshot lookup: {e}")
-                    snapshot_dt = None
-                    
-                # ✅ ADD LOGGING RIGHT HERE
-                if snapshot_dt:
-                    print(f"[snapshot] Using snapshot timestamp: {snapshot_dt}")
-                else:
-                    print("[snapshot] No snapshot match found – using newest mission logs")
-                    
-                self.log_processor = MissionLogProcessor(self.game_directory, verbose=False, snapshot_dt=snapshot_dt)
-                print(f"  - Mission log processor initialized")
-            except Exception as e:
-                print(f"  - Warning: Could not initialize mission log processor: {e}")
+        self.log_processor = self._init_log_processor()
         
         print(f"Loaded configuration:")
         print(f"  - {len(self.mission_dates) - 1} campaigns with dates")  # -1 for game_directory key
@@ -411,6 +308,112 @@ class EventGenerator:
         self.mission_dates_lower = {
             k.lower(): (k, v) for k, v in self.mission_dates.items() if k != 'game_directory'
         }
+
+    def _resolve_config_path(self, config_file: str) -> Path:        
+        config_path = Path(config_file)
+        if not config_path.is_absolute():
+            if getattr(sys, 'frozen', False):
+                config_path = get_base_path(__file__) / config_file
+                if not config_path.exists():
+                    config_path = Path(sys._MEIPASS) / config_file
+        return config_path
+        
+    def _load_config(self, config_file: str) -> dict:
+        config_path = self._resolve_config_path(config_file)
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = yaml.safe_load(f)
+        except UnicodeDecodeError:
+            with open(config_path, 'r', encoding='iso-8859-1') as f:
+                config = yaml.safe_load(f)  
+
+        if not isinstance(config, dict):
+            return {}
+        return config        
+                
+    def _init_popup_state(self) -> None:
+        self.enable_popups = bool(self.config.get("enable_popups", True))
+        print(f"[popups] enabled = {self.enable_popups}")
+        if not self.enable_popups:
+            self.show_popups = False
+        print(f"[DEBUG] Popups aktiviert: {self.show_popups}")
+        self.popup_seen = load_popup_seen()
+        print(f"[popups] seen campaigns = {len(self.popup_seen)}")
+        
+    def _load_mission_dates(self) -> dict:
+        try:
+            with open(CAMPAIGN_MISSION_DATES_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except FileNotFoundError:
+            print(f"ERROR: Required file '{CAMPAIGN_MISSION_DATES_FILE.name}' not found!")
+            print(f"Please run step1_extract_mission_dates.py first.")
+            raise
+        except json.JSONDecodeError as e:
+            print(f"ERROR: Invalid JSON in '{CAMPAIGN_MISSION_DATES_FILE.name}'")
+            print(f"  Line {e.lineno}, Column {e.colno}: {e.msg}")
+            print(f"  The file may be corrupted. Try regenerating it.")
+            raise
+        
+    def _load_save_data(self) -> dict:
+        try:
+            with open(CAMPAIGNS_DECODED_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except FileNotFoundError:
+            print(f"ERROR: Required file '{CAMPAIGNS_DECODED_FILE.name}' not found!")
+            print(f"Please run decode_campaign_usersave1.py first.")
+            raise
+        except json.JSONDecodeError as e:
+            print(f"ERROR: Invalid JSON in '{CAMPAIGNS_DECODED_FILE.name}'")
+            print(f"  Line {e.lineno}, Column {e.colno}: {e.msg}")
+            print(f"  The file may be corrupted. Try re-decoding the save file.")
+            raise
+        
+    def _init_log_processor(self):
+        if not self.game_directory:
+            return None
+
+        try:
+            from step4_process_mission_logs import MissionLogProcessor
+            snapshot_dt = None    
+            try:
+                states_path, index_path = self._find_il2_states_path()
+
+                if not states_path:
+                    states_path = Path("campaignsstates.txt")
+                    index_path = Path("campaignsstates_hash_index.json")
+
+                if states_path and states_path.exists() and index_path and index_path.exists():
+                    import hashlib
+                    h = hashlib.md5(states_path.read_bytes()).hexdigest()
+                    with open(index_path, "r", encoding="utf-8") as f:
+                        idx = json.load(f) or {}
+
+                    print(f"[snapshot] hash={h} → {'FOUND' if h in idx else 'NOT FOUND'} in index")
+
+                    entry = idx.get(h)
+                    if entry:
+                        if isinstance(entry, dict):
+                            ts = entry.get("timestamp")
+                        else:
+                            ts = entry
+
+                        if ts:
+                            snapshot_dt = datetime.strptime(ts, "%Y%m%d_%H%M%S")        
+            except Exception as e:
+                print(f"[snapshot] Error during snapshot lookup: {e}")
+                snapshot_dt = None
+
+            if snapshot_dt:
+                print(f"[snapshot] Using snapshot timestamp: {snapshot_dt}")
+            else:
+                print("[snapshot] No snapshot match found – using newest mission logs")
+
+            log_processor = MissionLogProcessor(self.game_directory, verbose=False, snapshot_dt=snapshot_dt)
+            print(f"  - Mission log processor initialized")
+            return log_processor
+        except Exception as e:
+            print(f"  - Warning: Could not initialize mission log processor: {e}")
+            return None
 
     def reload_mission_dates(self) -> bool:
         """Reload mission dates to refresh WW1 exclusions and campaign metadata."""
