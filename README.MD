@@ -25,11 +25,11 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **W
 - [FAQ](#faq)
 
 ---
-<a id="features"></a>
-## ✨ Features
+
+## ✨ Features <a id="features"></a>
 
 | Feature | Description |
-|---------|-------------|
+| --- | --- |
 | **Automatic Monitoring** | Watches your campaign save file and updates in real-time |
 | **Promotions** | Calculates rank promotions based on accumulated score |
 | **Awards & Decorations** | Grants medals based on kills, missions flown, and other criteria |
@@ -43,58 +43,56 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **W
 | **WW1 Detection & Exclusion** | Detects Flying Circus (WW1) campaigns and skips them by default |
 
 ---
-<a id="supported-nations"></a>
-## 🌍 Supported Nations
 
-The tracker includes historically accurate ranks and awards for: 
+## 🌍 Supported Nations <a id="supported-nations"></a>
+
+The tracker includes historically accurate ranks and awards for:
 
 | Nation | Ranks | Awards |
-|--------|-------|--------|
+| ------ | ----- | ------ |
 | 🇩🇪 **Germany** | Unteroffizier → Generalleutnant | Iron Cross, Knight's Cross, etc. |
 | 🇷🇺 **Soviet Union** | Sergeant → Lieutenant General | Order of the Red Banner, Hero of the Soviet Union, etc. |
-| 🇺🇸 **USA** | First Sergeant → Major General | Distinguished Flying Cross, Medal of Honor, etc.  |
+| 🇺🇸 **USA** | First Sergeant → Major General | Distinguished Flying Cross, Medal of Honor, etc. |
 | 🇬🇧 **Britain** | Sergeant → Air Vice Marshal | Distinguished Flying Cross, Victoria Cross, etc. |
 
 > **Note 1:** Soviet ranks automatically switch between early (pre-1943) and late (post-January 6, 1943) insignia based on mission dates.  
-
-> **Note 2:** The German awards shown are based on the official 1957 reissue versions. If you wish to customize their appearance, you can replace the images located in `CampaignRanksAwards\Germany`. 
+> **Note 2:** The German awards shown are based on the official 1957 reissue versions. If you wish to customize their appearance, you can replace the images located in `CampaignRanksAwards\Germany`.
 
 ⚠️ Important: Keep the original filenames when replacing images — for example,
 `iron_cross_2nd.dds` and `iron_cross_2nd_big.dds` must retain the exact same names after replacement.
-            
 
 ---
-<a id="installation"></a>
-## 📥 Installation
+
+## 📥 Installation <a id="installation"></a>
 
 1. **Download** the latest release (`IL2_Campaign_Tracker_v2.0.zip`)
 
 2. **Extract** to a folder of your choice (e.g., `C:IL2_Campaign_Tracker_v2.0`)
 
 3. **Copy** the extracted `CampaignRanksAwards` folder to `<Path to IL-2 BoS>\data\swf`<br>
- 
+
 Before proceeding to the **optional** step 4:  
 
-⚠️ **IMPORTANT** 
-The tracker can monitor **only** campaigns located in `<Path to Il-2 BoS>\data\campaigns`. Standard IL-2 campaigns are not stored directly in this folder; instead, they are run internally from `campaigns.gtp`. As a result, these campaigns must be extracted before they can be tracked (see **Step 4**). 
+⚠️ **IMPORTANT**
+The tracker can monitor **only** campaigns located in `<Path to Il-2 BoS>\data\campaigns`. Standard IL-2 campaigns are not stored directly in this folder; instead, they are run internally from `campaigns.gtp`. As a result, these campaigns must be extracted before they can be tracked (see **Step 4**).
 
-🚨 **IMPORTANT** 
+🚨 **IMPORTANT**
 If you have modified missions belonging to a standard official campaign, proceed with extreme caution when copying extracted files from `campaigns.gtp` into the `<Path to Il-2 BoS>\data\campaigns` folder. Existing files will be **overwritten**, and any custom mission modifications will be replaced by the original out-of-the-box versions.  
 
 ℹ️ 4.  **OPTIONAL:**  
 Note: The intention of the extraction of the standard official campaigns is ONLY to make them usable for the Campaign Tracker. Please do not change the official campaigns.  
 
-   - **Extract** Campaigns.gtp (standard IL-2 BoS campaigns) from `<Path to Il-2 BoS>\data` with the help of unGTP-IL2 (download it here: https://www.mediafire.com/file/caxpalaudz1hd47/unGTP-IL2.zip).   
-   - **Unzip & Move** the `unGTP-IL2.exe` to `<Path to Il-2 BoS>\data`.  
-   - **Drag** `Campaigns.gtp` onto `unGTP-IL2.exe`. Ignore the error warning in the cmd-window at the end (don't worry - everything has beed extracted).  
-   - **Goto** `<Path to Il-2 BoS>\data\(null)\campaigns`.  
-   - **Copy** the subfolders of `<Path to Il-2 BoS>\data\(null)\campaigns` to `<Path to Il-2 BoS>\data\campaigns`  
+- **Extract** Campaigns.gtp (standard IL-2 BoS campaigns) from `<Path to Il-2 BoS>\data` with the help of unGTP-IL2 (download it here: <https://www.mediafire.com/file/caxpalaudz1hd47/unGTP-IL2.zip>).
+- **Unzip & Move** the `unGTP-IL2.exe` to `<Path to Il-2 BoS>\data`.  
+- **Drag** `Campaigns.gtp` onto `unGTP-IL2.exe`. Ignore the error warning in the cmd-window at the end (don't worry - everything has beed extracted).  
+- **Goto** `<Path to Il-2 BoS>\data\(null)\campaigns`.  
+- **Copy** the subfolders of `<Path to Il-2 BoS>\data\(null)\campaigns` to `<Path to Il-2 BoS>\data\campaigns`  
 
-5. **Run** `IL2_Campaign_Tracker_v2.0.exe` from your Tracker installation directory.
+1. **Run** `IL2_Campaign_Tracker_v2.0.exe` from your Tracker installation directory.
 
 ### PDF Requirements
 
-PDF export uses `pdfkit`, which requires `wkhtmltopdf` to be installed or bundled. If `wkhtmltopdf` is missing, PDF export is skipped (see `step3_generate_events.py`) and the tracker continues without generating PDFs. You can install `wkhtmltopdf` from the official site: https://wkhtmltopdf.org/downloads.html.
+PDF export uses `pdfkit`, which requires `wkhtmltopdf` to be installed or bundled. If `wkhtmltopdf` is missing, PDF export is skipped (see `step3_generate_events.py`) and the tracker continues without generating PDFs. You can install `wkhtmltopdf` from the official site: <https://wkhtmltopdf.org/downloads.html>.
 
 **Packaged EXE:** The PyInstaller build is configured to bundle `wkhtmltopdf.exe` when available during the build. If it is not bundled, the tracker expects `wkhtmltopdf` to be available on your system `PATH`.
 
@@ -102,7 +100,7 @@ PDF export uses `pdfkit`, which requires `wkhtmltopdf` to be installed or bundle
 
 Ensure these files are in the same folder as the executable:
 
-```
+```text
 IL2_Campaign_Tracker_v2.0/
 ├── IL2_Campaign_Tracker_v2.0.exe        # Main executable
 ├── mlg2txt.exe                          # Helper-exe for decoding missionreports (mlg files)
@@ -113,16 +111,16 @@ IL2_Campaign_Tracker_v2.0/
 ```
 
 ---
-<a id="first-run-setup"></a>
-## 🚀 First Run Setup
+
+## 🚀 First Run Setup <a id="first-run-setup"></a>
 
 When you start the tracker for the first time, a setup wizard guides you through the configuration:
 
 ### Step 1: Select Game Directory
 
-A folder browser opens.  Navigate to your IL-2 installation folder: 
+A folder browser opens.  Navigate to your IL-2 installation folder:
 
-```
+```bash
 Example: C:\Program Files (x86)\Steam\steamapps\common\IL-2 Sturmovik Battle of Stalingrad
 ```
 
@@ -145,34 +143,37 @@ If the tracker detects Flying Circus campaigns, you can - or better should - mar
 
 ### Step 3: Ready to Track
 
-After setup, the tracker: 
+After setup, the tracker:
+
 1. Decodes your current campaign save file
 2. Generates initial events (existing promotions/awards)
 3. Starts monitoring for changes
 
 ---
-<a id="ww1-detection--exclusion"></a>
-## 🪖 WW1 Detection & Exclusion
+
+## 🪖 WW1 Detection & Exclusion <a id="ww1-detection--exclusion"></a>
 
 Flying Circus (WW1) campaigns are detected and excluded by default because the tracker only includes WWII ranks, awards, and debriefing logic.
 
 **Detection signals include:**
+
 - Mission dates in the 1914–1918 range
 - WW1 aircraft keywords in campaign data
 - “Flying Circus”/WW1 keywords in campaign descriptions
 
 **How exclusion works:**
+
 - Excluded campaigns are skipped during decoding and event generation.
 - The exclusion reason is stored in `campaign_mission_dates.json` so the tracker consistently ignores them.
 - You can review or change exclusions by re-running setup (delete `campaign_mission_dates.json` and the respective entry in the `stock_campaigns.yaml`) and using the **WW1 (ignore)** checkbox in the country validation GUI.
 
 ---
-<a id="how-it-works"></a>
-## ⚙️ How It Works
+
+## ⚙️ How It Works <a id="how-it-works"></a>
 
 ### Monitoring Loop
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                    TRACKER RUNNING                      │
 ├─────────────────────────────────────────────────────────┤
@@ -204,20 +205,20 @@ When you earn a promotion or award, a popup notification appears on screen:
 
 - 🎖️ Shows the rank insignia or medal image
 - 📅 Displays the date earned
-- ⏱️ Auto-dismisses after 5 seconds 
+- ⏱️ Auto-dismisses after 5 seconds
 
 > **Note:** Popups only appear while IL-2 is running to avoid interruptions during other activities. If you don't like popups, go to `campaign_progress_config.yaml` in your tracker installation directory
 and set ```enable_popups: false```
 
 ---
-<a id="promotions--awards-system"></a>
-## 🎖️ Promotions & Awards System
+
+## 🎖️ Promotions & Awards System <a id="promotions--awards-system"></a>
 
 ### How Promotions Work
 
 Promotions are based on **accumulated score** across all completed missions (the score value comes from the campaignsstates.txt and is calculated by IL-2 GB internal rules):
 
-```
+```text
 Overall Score per Campaign = ∑ Mission Scores
 Promotion Score = Base Score × Rank Scaling Factor
 
@@ -240,7 +241,7 @@ Awards are granted based on various criteria defined in `campaign_progress_confi
 All conditions for awards are `OR` conditions:
 
 | Criteria Type | Example |
-|---------------|---------|
+| ------------- | ------- |
 | **Cumulative Kills** | 8 air combat score → Iron Cross 1st Class |
 | **Single Mission** | 7 kills in one sortie → Medal of Honor |
 | **Missions Completed** | 15 missions → Order of the Red Star |
@@ -260,27 +261,28 @@ Campaigns can start with higher ranks (if you want to).  This is configurable pe
   "missions": { ...  }
 }
 ```
+
 ℹ️ **Note:** You may customize the promotion and award criteria to suit your preferences. However, it is strongly recommended to create a backup copy of the original `campaign_progress_config.yaml` file before making any changes.
 
 ---
-<a id="mission-debriefings"></a>
-## 📊 Mission Debriefings
+
+## 📊 Mission Debriefings <a id="mission-debriefings"></a>
 
 ### Data Source
 
 Debriefing data is extracted from IL-2's **mission log files** (`.mlg` files):
 
-```
+```text
 Location: [IL-2 Directory]\data\FlightLogs\[mission].mlg
 ```
 
-These binary files contain detailed records of everything that happened during the mission. 
+These binary files contain detailed records of everything that happened during the mission.
 These binary files are "translated" by `mlg2txt.exe` into a *.txt file and is then further processed.
 
 ### What's Tracked
 
 | Category | Details |
-|----------|---------|
+| -------- | ------- |
 | **Flight Time** | Takeoff to landing duration |
 | **Kills** | Air, ground, and naval targets with timestamps |
 | **Damage Taken** | Hits received, from whom, damage percentage |
@@ -295,23 +297,24 @@ Each mission generates detailed output in two formats:
 2. **PDF Report** - Detailed kill breakdown by category matching the in-game results screen
 
 ---
-<a id="mission-cleanup"></a>
-## 🧹 Mission Cleanup
+
+## 🧹 Mission Cleanup <a id="mission-cleanup"></a>
 
 ### What is takeoffStatus?
 
 IL-2 tracks mission completion with a `takeoffStatus` flag:
 
-| Value | Meaning |
+|Value|Meaning|
 |-------|---------|
-| `takeoffStatus=1` | Mission started but not completed properly |
-| `takeoffStatus=2` | Mission completed successfully |
+|`takeoffStatus=1`|Mission started but not completed properly|
+|`takeoffStatus=2`|Mission completed successfully|
 
 ### When Cleanup GUI Appears
 
-The Mission Cleanup GUI appears at tracker startup when missions with `takeoffStatus=1` are detected. 
+The Mission Cleanup GUI appears at tracker startup when missions with `takeoffStatus=1` are detected.
 
 **Common causes for `takeoffStatus=1`:**
+
 - ❌ Mission objective not completed
 - 🪂 Pilot bailed out
 - 💀 Pilot killed in action (KIA)
@@ -324,7 +327,7 @@ The Mission Cleanup GUI appears at tracker startup when missions with `takeoffSt
 
 ### Cleanup GUI
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │        ⚠️ Incomplete Missions Detected                  │
 ├─────────────────────────────────────────────────────────┤
@@ -350,15 +353,16 @@ The Mission Cleanup GUI appears at tracker startup when missions with `takeoffSt
 
 ### What Happens When You Keep a Mission
 
-If you click "Keep All" or don't select a mission: 
+If you click "Keep All" or don't select a mission:
+
 - No backup is created
 - No changes are made
 - The mission remains in your save file
 - Cleanup GUI will appear again next time (for remaining incomplete missions)
 
 ---
-<a id="backup--restore-system"></a>
-## 💾 Backup & Restore System
+
+## 💾 Backup & Restore System <a id="backup--restore-system"></a>
 
 ### When Backups Are Created
 
@@ -370,7 +374,7 @@ This ensures you can restore your campaign to the state **before** you removed a
 
 When the tracker starts and backups are available, a restore GUI may appear:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │           🔄 Restore Campaign Backup                    │
 ├─────────────────────────────────────────────────────────┤
@@ -382,19 +386,21 @@ When the tracker starts and backups are available, a restore GUI may appear:
 │  ├──────────────────────┼──────────────────┼──────────┤ │
 │  │ 2024-01-15 14:30:22  │ Currently Active │ ✓ Yes    │ │
 │  │ 2024-01-15 12:15:03  │                  │ ✓ Yes    │ │
-│  │ 2024-01-14 20:45:11  │                  │ ✗ No    | │
+│  │ 2024-01-14 20:45:11  │                  │ ✗ No     | │
 │  └────────────────────────────────────────────────────┘ │
 │                                                         │
-│  [🔄 Restore Selected]  [▶ Continue]  [✕ Exit]         │
+│  [🔄 Restore Selected]  [▶ Continue]  [✕ Exit]        │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
 ```
 
 **When the GUI appears:**
+
 - Multiple backups exist, OR
 - One backup exists that is **not** the current state
 
 **When the GUI does NOT appear:**
+
 - No backups exist
 - Only one backup exists and it's already the active state
 
@@ -403,7 +409,7 @@ When the tracker starts and backups are available, a restore GUI may appear:
 1. Select a backup from the list
 2. Click "Restore Selected Backup"
 3. Confirm the action
-4. Tracker automatically: 
+4. Tracker automatically:
    - Creates a copy of the backup file (original backup preserved)
    - Deletes current `campaignsstates.txt`
    - Renames backup copy to `campaignsstates.txt`
@@ -412,7 +418,7 @@ When the tracker starts and backups are available, a restore GUI may appear:
 
 ### Use Case Example
 
-```
+```text
 1. You fly Mission 05 in "kerch" campaign
 2. IL-2 crashes mid-mission → takeoffStatus=1
 3. Next tracker start: Cleanup GUI appears
@@ -429,15 +435,14 @@ Later, if needed:
 
 ---
 
-<a id="file-reference"></a>
-## 📁 File Reference
+## 📁 File Reference <a id="file-reference"></a>
 
 ### Configuration Files
 
-| File | Purpose | User Editable |
+|File|Purpose|User Editable|
 |------|---------|---------------|
-| `campaign_progress_config.yaml` | Ranks, awards, criteria, and settings | ✅ Yes |
-| `campaign_mission_dates.json` | Campaign metadata, mission dates, countries | ⚠️ Careful |
+|`campaign_progress_config.yaml`|Ranks, awards, criteria, and settings|✅ Yes|
+|`campaign_mission_dates.json`|Campaign metadata, mission dates, countries|⚠️ Careful|
 
 ### Configuration Details
 
@@ -510,7 +515,7 @@ Auto-generated during first run, contains:
 ### Data Files (Auto-Generated)
 
 | File | Purpose | Location |
-|------|---------|----------|
+| ------ | --------- | ---------- |
 | `campaigns_decoded.json` | Decoded campaign save data | Tracker folder |
 | `campaign_popups_seen.json` | Tracks shown popups per campaign | Tracker folder |
 | `campaign_events.json` | Generated events (promotions/awards) | Tracker folder |
@@ -519,7 +524,7 @@ Auto-generated during first run, contains:
 ### Backup Files
 
 | File | Purpose | Location |
-|------|---------|----------|
+| ---- | ------- | -------- |
 | `campaignsstates_[timestamp].backup` | Campaign save backup | IL-2 usersave folder |
 | `popups_[timestamp].backup` | Popup state backup | IL-2 usersave folder |
 | `campaignsstates_hash_index.json` | Backup index with hashes | IL-2 usersave folder |
@@ -527,17 +532,17 @@ Auto-generated during first run, contains:
 ### Output Files
 
 | File | Purpose | Location |
-|------|---------|----------|
+| ---- | ------- | -------- |
 | `[Campaign]_Report.pdf` | Career PDF report | `reports/` subfolder |
 
 ---
-<a id="troubleshooting"></a>
-## 🔧 Troubleshooting
+
+## 🔧 Troubleshooting <a id="troubleshooting"></a>
 
 ### Tracker Won't Start
 
 | Problem | Solution |
-|---------|----------|
+| ------- | -------- |
 | Missing `campaign_progress_config.yaml` | Ensure file is in same folder as EXE |
 | Antivirus blocking | Add exception for tracker folder |
 | Missing Visual C++ Runtime | Install [VC++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe) |
@@ -545,7 +550,7 @@ Auto-generated during first run, contains:
 ### No Campaigns Detected
 
 | Problem | Solution |
-|---------|----------|
+| ------- | -------- |
 | Wrong folder selected | Re-run setup (delete `campaign_mission_dates.json`) |
 | No missions flown yet | Start a campaign in IL-2, fly at least one mission |
 | Permission issues | Run tracker as Administrator |
@@ -553,7 +558,7 @@ Auto-generated during first run, contains:
 ### Popups Not Appearing
 
 | Problem | Solution |
-|---------|----------|
+| ------- | -------- |
 | IL-2 not running | Popups only show while IL-2 is active |
 | Already seen | Check `campaign_popups_seen.json` |
 | Popups disabled | Check `enable_popups:  true` in config |
@@ -561,7 +566,7 @@ Auto-generated during first run, contains:
 ### PDF Generation Fails
 
 | Problem | Solution |
-|---------|----------|
+| ------- | -------- |
 | Missing dependencies | Ensure all required DLLs are present |
 | PDF locked | Close the PDF if open in a viewer |
 | Path too long | Move tracker to shorter path |
@@ -569,13 +574,13 @@ Auto-generated during first run, contains:
 ### Events Not Appearing In-Game
 
 | Problem | Solution |
-|---------|----------|
+| ------- | -------- |
 | IL-2 caches description | Restart IL-2 to see updated campaign description |
 | Events written to wrong file | Check campaign country assignment |
 
 ---
-<a id="faq"></a>
-## ❓ FAQ
+
+## ❓ FAQ <a id="faq"></a>
 
 ### Q: Can I run multiple instances of the tracker?
 
@@ -583,7 +588,8 @@ Auto-generated during first run, contains:
 
 ### Q: Does the tracker modify my IL-2 installation?
 
-**A:** The tracker only modifies: 
+**A:** The tracker only modifies:
+
 - Campaign `info.locale=eng.txt` files (adds Events section)
 - Creates backup files in the usersave folder
 
@@ -593,9 +599,10 @@ It does **not** modify any game executables or core files.
 
 **A:** Yes, as long as the mod uses standard campaign structure.  Custom campaigns are automatically detected during first-run setup.
 
-### Q:  Can I manually edit the configuration? 
+### Q:  Can I manually edit the configuration?
 
-**A:** Yes!  `campaign_progress_config.yaml` can be edited to: 
+**A:** Yes!  `campaign_progress_config.yaml` can be edited to:
+
 - Adjust promotion score thresholds
 - Modify award criteria
 - Add custom awards
@@ -604,6 +611,7 @@ It does **not** modify any game executables or core files.
 ### Q: How do I reset everything?
 
 **A:** Delete these files and restart the tracker:
+
 - `campaign_mission_dates.json`
 - `campaign_popups_seen.json`
 - `campaigns_decoded.json`
@@ -615,7 +623,7 @@ It does **not** modify any game executables or core files.
 
 ### Q:  Why do I need to restart IL-2 to see new events?
 
-**A:** IL-2 loads the campaign description (`info.locale=eng.txt`) when the game starts and caches it in memory. Changes made by the tracker are written to the file but won't appear in-game until you restart IL-2. However, you'll still see **popups immediately** when you earn promotions or awards. 
+**A:** IL-2 loads the campaign description (`info.locale=eng.txt`) when the game starts and caches it in memory. Changes made by the tracker are written to the file but won't appear in-game until you restart IL-2. However, you'll still see **popups immediately** when you earn promotions or awards.
 
 ### Q: What happens if I delete a backup file manually?
 
@@ -633,7 +641,7 @@ It does **not** modify any game executables or core files.
 
 ## 📜 License
 
-This project is provided as-is for personal use with IL-2 Sturmovik Great Battles. 
+This project is provided as-is for personal use with IL-2 Sturmovik Great Battles.
 
 ---
 
@@ -641,8 +649,8 @@ This project is provided as-is for personal use with IL-2 Sturmovik Great Battle
 
 - **1C Game Studios / 777 Studios** - For creating IL-2 Great Battles
 - **The IL-2 Community** - For inspiration and feedback
-- **Kraut1** - For giving useful input and comprehensive testing 
+- **Kraut1** - For giving useful input and comprehensive testing
 
 ---
 
-*Happy flying!  ✈️🎖️*
+## Happy flying!  ✈️🎖️
