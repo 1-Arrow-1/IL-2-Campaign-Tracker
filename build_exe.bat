@@ -141,6 +141,26 @@ if not exist "utils\combat_results_html.py" (
     pause
     exit /b 1
 )
+if not exist "utils\filesystem.py" (
+    echo ERROR: utils\filesystem.py not found!
+    pause
+    exit /b 1
+)
+if not exist "utils\popup_state.py" (
+    echo ERROR: utils\popup_state.py not found!
+    pause
+    exit /b 1
+)
+if not exist "utils\process.py" (
+    echo ERROR: utils\process.py not found!
+    pause
+    exit /b 1
+)
+if not exist "utils\sorting.py" (
+    echo ERROR: utils\sorting.py not found!
+    pause
+    exit /b 1
+)
 if not exist "sync_campaign_mission_states.py" (
     echo ERROR: sync_campaign_mission_states.py not found!
     pause
@@ -177,7 +197,11 @@ for %%F in (
 		"utils\info_locale.py"
 		"utils\pathing.py"
 		"utils\il2_paths.py"
+		"utils\sorting.py"
+		"utils\process.py"
+		"utils\popup_state.py"
 		"utils\combat_results_html.py"
+		"utils\filesystem.py"
 ) do (
     if exist %%F (
         echo Testing %%F ...
