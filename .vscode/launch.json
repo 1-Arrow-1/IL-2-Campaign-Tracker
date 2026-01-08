@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug IL-2 Tracker Launcher",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/il2_tracker_launcher.py",
+      "cwd": "${workspaceFolder}",
+      "args": ["--debug"],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}
