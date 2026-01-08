@@ -20,13 +20,10 @@ Files needed:
 
 import json, os
 import yaml
-import shutil
 import sys
-import subprocess
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
-import re
 import argparse
 
 from utils.info_locale import (
@@ -40,7 +37,10 @@ from utils.combat_results_html import (
     generate_mission_combat_results_html,
     generate_campaign_summary_combat_results_html,
 )
-
+from utils.filesystem import is_file_locked
+from utils.popup_state import load_popup_seen, save_popup_seen, make_event_key
+from utils.process import is_il2_running
+from utils.sorting import smart_mission_sort_key
 
 BASE_DIR = get_base_path(__file__)
 POPUP_SEEN_FILE = BASE_DIR / "campaign_popups_seen.json"
@@ -61,212 +61,7 @@ def _load_decoded_campaign(decoded_path: str) -> dict:
         print(f"❌ Error reading decoded campaign file: {e}")
         return {}
 
-def generate_mission_combat_results_html(mission_id: str, decoded_data: dict, game_directory: str = None) -> str:
-    """
-    Creates Combat-Results table for a specific mission (for PDF debrief).
-    Matches the in-game layout with icons and shows ALL categories (even 0 kills).
-    """
-    stats = decoded_data.get("characterStatisticsByFileName", {}).get(mission_id, {})
-    if not stats:
-        return "<p>Combat data not available for this mission.</p>"
-    
-    # Calculate totals per category
-    category_totals = {}
-    for category, subcats in KILL_MAPPING.items():
-        total = sum(stats.get(key, 0) for key in subcats.values())
-        category_totals[category] = total
-    
-    # Build HTML matching screenshot layout
-    html = []
-    html.append('<div class="combat-results-grid">')
-    
-    # Category headers with icons and totals
-    html.append('<div class="category-headers">')
-    for category in KILL_MAPPING.keys():
-        icon_file = f"icon_{category.lower()}.png"
-        if game_directory:
-            icon_path = "file:///" + game_directory.replace("\\", "/") + "/data/swf/CampaignRanksAwards/Misc/" + icon_file
-        else:
-            icon_path = f"data/swf/CampaignRanksAwards/Misc/{icon_file}"
-        
-        total = category_totals[category]
-        html.append(f'<div class="category-col">')
-        html.append(f'  <div class="category-icon"><img src="{icon_path}" width="48" height="48"/></div>')
-        html.append(f'  <div class="category-total">{total}</div>')
-        html.append(f'  <div class="category-name">{category}</div>')
-        html.append(f'</div>')
-    html.append('</div>')
-    
-    # Subcategories - BUILD COLUMNS, NOT ROWS!
-    html.append('<div class="subcategory-columns">')
-    
-    for category, subcats in KILL_MAPPING.items():
-        html.append('<div class="subcat-column">')
-        for subcat, key in subcats.items():
-            count = stats.get(key, 0)
-            html.append(f'<div class="subcat-row">')
-            html.append(f'  <span class="subcat-name">{subcat}</span>')
-            html.append(f'  <span class="subcat-value">{count}</span>')
-            html.append(f'</div>')
-        html.append('</div>')
-    
-    html.append('</div>')
-    html.append('</div>')
-    
-    return "\n".join(html)
 
-
-def load_popup_seen() -> dict:
-    """
-    Load already-shown popup event keys. Returns dict: {campaign_name: [keys...]}.
-    
-    ✅ IMPROVED: Better error handling and validation
-    """
-    if not POPUP_SEEN_FILE.exists():
-        return {}
-    
-    try:
-        with open(POPUP_SEEN_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        
-        # ✅ Validate structure
-        if not isinstance(data, dict):
-            print(f"[popups] Warning: Invalid popup state structure, resetting")
-            return {}
-        
-        # ✅ Validate each campaign's data
-        validated_data = {}
-        for campaign_name, events in data.items():
-            if isinstance(events, list):
-                validated_data[campaign_name] = events
-            else:
-                print(f"[popups] Warning: Invalid events for '{campaign_name}', skipping")
-        
-        return validated_data
-        
-    except json.JSONDecodeError as e:
-        print(f"[popups] ERROR: Corrupted popup state file: {e}")
-        print(f"[popups] Creating backup and resetting...")
-        
-        # ✅ Backup corrupted file
-        backup_path = POPUP_SEEN_FILE.with_suffix('.corrupted')
-        try:
-            shutil.copy2(POPUP_SEEN_FILE, backup_path)
-            print(f"[popups] Corrupted file backed up to: {backup_path}")
-        except Exception:
-            pass
-        
-        return {}
-    
-    except Exception as e:
-        print(f"[popups] Warning: Could not load popup state: {e}")
-        return {}
-
-
-def save_popup_seen(data: dict) -> None:
-    """
-    Save already-shown popup event keys.
-    
-    ✅ IMPROVED: Uses atomic write to prevent corruption
-    
-    How atomic write works:
-    1. Write to temporary file
-    2. If successful, replace original file in one operation
-    3. If crash happens during write, original file stays intact
-    """
-    try:
-        # ✅ Validate input
-        if not isinstance(data, dict):
-            print(f"[popups] ERROR: Invalid data type for popup state (expected dict, got {type(data).__name__})")
-            return
-        
-        # ✅ FIX: Write to temporary file first (atomic write pattern)
-        tmp_file = POPUP_SEEN_FILE.with_suffix('.tmp')
-        
-        with open(tmp_file, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, sort_keys=True, ensure_ascii=False)
-        
-        # ✅ Atomic replace: if we got here, the write was successful
-        # This is atomic on most filesystems (POSIX rename, Windows MoveFileEx)
-        tmp_file.replace(POPUP_SEEN_FILE)
-        
-        # Success - no print needed (too verbose)
-        
-    except Exception as e:
-        print(f"[popups] ERROR: Could not save popup state: {e}")
-        
-        # ✅ Cleanup temp file if it exists
-        try:
-            tmp_file = POPUP_SEEN_FILE.with_suffix('.tmp')
-            if tmp_file.exists():
-                tmp_file.unlink()
-        except Exception:
-            pass
-
-def is_il2_running() -> bool:
-    """
-    True if IL-2 is running (Windows: checks tasklist).
-    Keeps Step3 independent of extra dependencies (no psutil needed).
-    """
-    try:
-        # Windows only (your tracker is Windows-focused)
-        out = subprocess.check_output(["tasklist"], text=True, errors="ignore")
-        out_l = out.lower()
-        return ("il-2.exe" in out_l) or ("il2.exe" in out_l)
-    except Exception:
-        # If detection fails, be conservative: treat as "not running"
-        return False
-        
-def make_event_key(ev: dict) -> str:
-    """
-    Build a stable key for an event so we can detect if it was already shown as a popup.
-    Expected fields (from campaign_events.json structure): type, rank/name, mission, date
-    """
-    ev_type = str(ev.get("type", "")).strip().lower()
-    mission = str(ev.get("mission", "")).strip()
-    date = str(ev.get("date", "")).strip()
-
-    if ev_type == "promotion":
-        rank = str(ev.get("rank", "")).strip()
-        return f"promotion|{rank}|{mission}|{date}"
-
-    if ev_type == "award":
-        name = str(ev.get("name", "")).strip()
-        return f"award|{name}|{mission}|{date}"
-
-    # fallback for unknown event types
-    return f"{ev_type}|{mission}|{date}"
-
-
-def is_file_locked(path: Path) -> bool:
-    """True if the file exists and is locked for writing (e.g., open in a PDF viewer on Windows)."""
-    if not path.exists():
-        return False
-    try:
-        with open(path, "ab"):
-            return False
-    except (PermissionError, OSError):
-        return True
-        
-def smart_mission_sort_key(mission_id: str):
-    """
-    Smart sorting for mission IDs
-    - Numeric IDs (01, 02, 10): Sort numerically
-    - Date-based IDs (1943-07-04a): Sort alphabetically (ISO format sorts correctly)
-    - Mixed (01a, 02b): Sort by number then suffix
-    """
-    # If it's purely numeric, convert to int
-    if mission_id.isdigit():
-        return (int(mission_id), "")
-    
-    # Try to extract leading digits (handles "01a", "02b", "1943-07-04a", etc.)
-    match = re.match(r'^(\d+)(.*)$', mission_id)
-    if match:
-        return (int(match.group(1)), match.group(2))
-    
-    # No leading digits - sort alphabetically (works for ISO dates like "1943-07-04a")
-    # Use large number to put these after pure numeric missions
-    return (999999, mission_id)
 
 
 class EventGenerator:
@@ -337,7 +132,7 @@ class EventGenerator:
         if not self.enable_popups:
             self.show_popups = False
         print(f"[DEBUG] Popups aktiviert: {self.show_popups}")
-        self.popup_seen = load_popup_seen()
+        self.popup_seen = load_popup_seen(POPUP_SEEN_FILE)
         print(f"[popups] seen campaigns = {len(self.popup_seen)}")
         
     def _load_mission_dates(self) -> dict:
@@ -2869,7 +2664,7 @@ class EventGenerator:
         self.reload_mission_dates()
         
         # Reload popup state from disk (in case it was modified by reset checker)
-        self.popup_seen = load_popup_seen()
+        self.popup_seen = load_popup_seen(POPUP_SEEN_FILE)
         popup_state_missing = (not POPUP_SEEN_FILE.exists()) or (not self.popup_seen)
         print(f"[popups] Reloaded state: {len(self.popup_seen)} campaigns")
         
@@ -2898,7 +2693,7 @@ class EventGenerator:
                 keys_now = [make_event_key(ev) for ev in events]
                 keys_now_set = set(keys_now)
                 self.popup_seen[campaign_name] = sorted(keys_now_set)
-                save_popup_seen(self.popup_seen)
+                save_popup_seen(POPUP_SEEN_FILE, self.popup_seen)
                 print(f"[popups] {campaign_name}: initial sync ({len(keys_now_set)} events)")
                 baseline_synced = True
 
@@ -2943,7 +2738,7 @@ class EventGenerator:
 
                         # mark as seen AFTER popup
                         self.popup_seen[campaign_name] = sorted(campaign_seen | new_keys)
-                        save_popup_seen(self.popup_seen)
+                        save_popup_seen(POPUP_SEEN_FILE, self.popup_seen)
                     else:
                         print(
                             f"[popups] deferred ({len(new_keys)}) "
