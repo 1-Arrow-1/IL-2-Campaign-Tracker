@@ -19,6 +19,7 @@ Files needed:
 """
 
 import json, os
+import re
 import yaml
 import sys
 from pathlib import Path
@@ -436,6 +437,53 @@ class EventGenerator:
         """
         _, time_str = self.extract_mission_datetime(campaign_name, mission_id)
         return time_str
+
+    def get_mission_date(self, campaign_name: str, mission_id: str) -> Optional[str]:
+        """Return normalized mission date for a campaign mission ID."""
+        if not mission_id:
+            return None
+
+        campaign_name_lower = campaign_name.lower()
+        if campaign_name_lower not in self.mission_dates_lower:
+            return None
+
+        _, mission_data = self.mission_dates_lower[campaign_name_lower]
+        missions = mission_data.get('missions', {})
+        if not missions:
+            return None
+
+        mission_id_str = str(mission_id)
+        candidate_ids = [mission_id_str]
+
+        if mission_id_str.isdigit():
+            try:
+                mission_num = int(mission_id_str)
+                candidate_ids.append(str(mission_num))
+                candidate_ids.append(str(mission_num).zfill(2))
+            except ValueError:
+                pass
+        else:
+            match = re.match(r'^0*(\d+)(.*)$', mission_id_str)
+            if match:
+                numeric_part = match.group(1)
+                suffix = match.group(2)
+                try:
+                    mission_num = int(numeric_part)
+                    candidate_ids.append(f"{mission_num}{suffix}")
+                    candidate_ids.append(f"{str(mission_num).zfill(2)}{suffix}")
+                except ValueError:
+                    pass
+
+        mission_info = None
+        for candidate in candidate_ids:
+            if candidate in missions:
+                mission_info = missions[candidate]
+                break
+
+        if not mission_info:
+            return None
+
+        return mission_info.get('normalized_date') or mission_info.get('raw_date')
     
     def calculate_cumulative_stats(self, campaign_stats: Dict) -> Dict:
         """
@@ -991,7 +1039,8 @@ class EventGenerator:
             promotions = self.check_rank_promotions_v2(
                 campaign_name, country, per_mission_stats, completed_missions
             )
-            
+            events = list(promotions)
+
             # Check awards (pass debriefing wounds for accurate wound counting)
             awards = self.check_awards(
                 country, cumulative_stats, per_mission_stats, 
