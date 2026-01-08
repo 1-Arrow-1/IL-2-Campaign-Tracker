@@ -21,7 +21,7 @@ import json
 import yaml
 import shutil
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 
 from utils.pathing import get_base_path
@@ -1207,7 +1207,7 @@ class CampaignDateExtractor:
                 if self.verbose:
                     print(f"    + New mission {mission_num}")
         
-        merged['missions'] = merged_missions
+        merged['missions'] = self._sort_missions(merged_missions)
         merged['mission_count'] = len(merged_missions)
         
         if new_mission_count > 0 and not self.verbose:
@@ -1215,6 +1215,16 @@ class CampaignDateExtractor:
         
         return merged
     
+    @staticmethod
+    def _sort_missions(missions: Dict[str, Dict]) -> Dict[str, Dict]:
+        def smart_sort_key(mission_id: str) -> Tuple[int, int | str, str]:
+            match = re.match(r'^(\d+)', mission_id)
+            if match:
+                return (0, int(match.group(1)), mission_id)
+            return (1, mission_id, mission_id)
+
+        return {mission_id: missions[mission_id] for mission_id in sorted(missions, key=smart_sort_key)}
+        
     def save_to_json(self, output_file: str, existing_data: Dict = None):
         """Save extracted dates to JSON file, merging with existing data if provided"""
         print(f"\n{'='*70}")
