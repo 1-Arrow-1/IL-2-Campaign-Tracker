@@ -11,7 +11,6 @@ import re
 import shutil
 import urllib.parse
 import hashlib
-import logging
 import os
 from pathlib import Path
 from datetime import datetime
@@ -20,9 +19,9 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 from utils.il2_paths import find_campaignsstates_path, read_game_directory
+from utils.logging import get_logger, log_message
 from utils.pathing import get_base_path
 
-logger = logging.getLogger(__name__)
 BASE_DIR = get_base_path(__file__)
 CAMPAIGN_COMPLETION_STATE_FILE = BASE_DIR / "campaign_completion_state.json"
 
@@ -31,20 +30,7 @@ def _is_debug_enabled() -> bool:
     env_value = os.environ.get("IL2_TRACKER_DEBUG", "")
     return env_value.strip().lower() in {"1", "true", "yes", "on"}
 
-
-def _configure_logging():
-    if not _is_debug_enabled():
-        return
-
-    logger.setLevel(logging.DEBUG)
-    if not logging.getLogger().handlers and not logger.handlers:
-        handler = logging.StreamHandler()
-        handler.setFormatter(logging.Formatter("[%(levelname)s] %(message)s"))
-        logger.addHandler(handler)
-        logger.propagate = False
-
-
-_configure_logging()
+logger = get_logger(__name__, debug=_is_debug_enabled())
 
 
 # File to store "don't ask again" preferences
@@ -66,7 +52,7 @@ def load_ignored_missions() -> Set[str]:
             data = json.load(f)
             return set(data.get('ignored', []))
     except Exception as e:
-        print(f"Warning: Could not load ignored missions: {e}")
+        log_message(logger, f"Warning: Could not load ignored missions: {e}")
         return set()
 
 
@@ -85,7 +71,7 @@ def save_ignored_missions(ignored: Set[str]):
         with open(IGNORE_FILE, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2)
     except Exception as e:
-        print(f"Warning: Could not save ignored missions: {e}")
+        log_message(logger, f"Warning: Could not save ignored missions: {e}")
 
 
 def add_to_ignored(campaign_name: str, mission_id: str):
@@ -100,7 +86,7 @@ def add_to_ignored(campaign_name: str, mission_id: str):
     key = f"{campaign_name}::{mission_id}"
     ignored.add(key)
     save_ignored_missions(ignored)
-    print(f"✓ Added to ignore list: {campaign_name} - Mission {mission_id}")
+    log_message(logger, f"✓ Added to ignore list: {campaign_name} - Mission {mission_id}")
 
 
 def is_ignored(campaign_name: str, mission_id: str) -> bool:
@@ -143,10 +129,10 @@ def _load_json_file(path: Path) -> dict:
             data = json.load(f)
         if isinstance(data, dict):
             return data
-        print(f"⚠️  Expected JSON object in {path}, got {type(data).__name__}")
+        log_message(logger, f"⚠️  Expected JSON object in {path}, got {type(data).__name__}")
         return {}
     except Exception as e:
-        print(f"⚠️  Could not read {path}: {e}")
+        log_message(logger, f"⚠️  Could not read {path}: {e}")
         return {}
 
 def _load_completion_state(path: Path = CAMPAIGN_COMPLETION_STATE_FILE) -> dict:
@@ -157,7 +143,7 @@ def _load_completion_state(path: Path = CAMPAIGN_COMPLETION_STATE_FILE) -> dict:
             data = json.load(f)
         return data if isinstance(data, dict) else {}
     except Exception as e:
-        print(f"⚠️  Could not read completion state file {path}: {e}")
+        log_message(logger, f"⚠️  Could not read completion state file {path}: {e}")
         return {}
 
 
@@ -167,7 +153,7 @@ def _save_completion_state(state: dict, path: Path = CAMPAIGN_COMPLETION_STATE_F
             json.dump(state, f, indent=2)
         return True
     except Exception as e:
-        print(f"⚠️  Could not save completion state file {path}: {e}")
+        log_message(logger, f"⚠️  Could not save completion state file {path}: {e}")
         return False
 
 
@@ -182,7 +168,7 @@ def update_completion_state_for_campaign(
         campaign_data = decoded_data.get(campaign_name)
 
     if not campaign_data:
-        print(f"    ⚠️  Could not update completion state; campaign '{campaign_name}' not found")
+        log_message(logger, f"    ⚠️  Could not update completion state; campaign '{campaign_name}' not found")
         return False
 
     state = _load_completion_state(state_path)
@@ -192,7 +178,7 @@ def update_completion_state_for_campaign(
     state[campaign_name] = completed
 
     if _save_completion_state(state, state_path):
-        print(f"    ✓ Updated completion state for campaign {campaign_name} after cleanup")
+        log_message(logger, f"    ✓ Updated completion state for campaign {campaign_name} after cleanup")
         return True
     return False
 
@@ -207,7 +193,7 @@ def resync_campaign_events_for_campaign(
     decoded_data = _load_json_file(decoded_path)
     campaign_data = decoded_data.get(campaign_name)
     if not campaign_data:
-        print(f"    ⚠️  Campaign '{campaign_name}' not found in {decoded_path}")
+        log_message(logger, f"    ⚠️  Campaign '{campaign_name}' not found in {decoded_path}")
         return {
             "events": [],
             "campaign_data": {},
@@ -243,15 +229,15 @@ def resync_campaign_events_for_campaign(
             "events_html": events_html,
             "html": combined_html,
         }
-        print(f"    ✓ Resynced campaign_events.json")
+        log_message(logger, f"    ✓ Resynced campaign_events.json")
     else:
         if completed_missions:
-            print(
+            log_message(logger, 
                 f"    ⚠️  No events generated for '{campaign_name}' despite completed missions; "
                 "clearing stale campaign_events.json entry"
             )
         else:
-            print(
+            log_message(logger, 
                 f"    ℹ️  No completed missions for '{campaign_name}'; clearing campaign_events.json entry"
             )
         events_data[campaign_name] = []
@@ -260,7 +246,7 @@ def resync_campaign_events_for_campaign(
         with open(events_path, "w", encoding="utf-8") as f:
             json.dump(events_data, f, indent=2, ensure_ascii=False)
     except Exception as e:
-        print(f"    ⚠️  Could not update {events_path}: {e}")
+        log_message(logger, f"    ⚠️  Could not update {events_path}: {e}")
 
     return {
         "events": events,
@@ -296,7 +282,7 @@ class MissionCleanup:
         
         self.max_backups = 50
         
-        print(f"Using campaignsstates.txt: {self.states_path}")
+        log_message(logger, f"Using campaignsstates.txt: {self.states_path}")
         
     def _get_tracker_popups_path(self) -> Path:
         """
@@ -334,19 +320,19 @@ class MissionCleanup:
         if game_path:
             states_path = find_campaignsstates_path(game_path)
             if states_path:
-                print(f"✓ Found campaignsstates.txt in {states_path}")
+                log_message(logger, f"✓ Found campaignsstates.txt in {states_path}")
                 return states_path
-            print("⚠️  campaignsstates.txt not found in expected IL-2 directories")
+            log_message(logger, "⚠️  campaignsstates.txt not found in expected IL-2 directories")
         else:
-            print("⚠️  Could not read game directory from mission dates")
+            log_message(logger, "⚠️  Could not read game directory from mission dates")
 
         # Fallback to current working directory
         fallback = Path('campaignsstates.txt')
         if fallback.exists():
-            print(f"⚠️  Using campaignsstates.txt from current directory (fallback)")
+            log_message(logger, f"⚠️  Using campaignsstates.txt from current directory (fallback)")
             return fallback
 
-        print("❌ campaignsstates.txt not found! Please verify your IL-2 user save path.")
+        log_message(logger, "❌ campaignsstates.txt not found! Please verify your IL-2 user save path.")
         raise FileNotFoundError("campaignsstates.txt not found in expected IL-2 user directory structure")
 
     
@@ -360,7 +346,7 @@ class MissionCleanup:
             (excludes missions marked as "don't ask again")
         """
         if not self.decoded_path.exists():
-            print(f"⚠️  {self.decoded_path} not found - cannot scan")
+            log_message(logger, f"⚠️  {self.decoded_path} not found - cannot scan")
             return {}
         
         # Load decoded campaign states
@@ -476,7 +462,7 @@ class MissionCleanup:
             Path to campaignsstates backup, or None if skipped/failed. 
         """
         if not self.states_path.exists():
-            print(f"⚠️  {self.states_path} not found - cannot backup")
+            log_message(logger, f"⚠️  {self.states_path} not found - cannot backup")
             return None
 
         # --- Check for recent backup (last 60 seconds)
@@ -492,10 +478,10 @@ class MissionCleanup:
                     now = time.localtime()
                     delta = time.mktime(now) - time.mktime(last_ts)
                     if delta < 60:
-                        print(f"🟡 Skipping backup — last backup only {int(delta)}s ago ({last_entry['timestamp']})")
+                        log_message(logger, f"🟡 Skipping backup — last backup only {int(delta)}s ago ({last_entry['timestamp']})")
                         return None
             except Exception as e:
-                print(f"⚠️  Could not check last backup time: {e}")
+                log_message(logger, f"⚠️  Could not check last backup time: {e}")
 
         # --- Normal backup process below ---
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -514,7 +500,7 @@ class MissionCleanup:
         try:
             # 1️⃣ Backup campaignsstates.txt
             shutil.copy2(self.states_path, backup_path)
-            print(f"✓ Backup created:  {backup_path.name}")
+            log_message(logger, f"✓ Backup created:  {backup_path.name}")
 
             # 2️⃣ Backup popups file if available
             backup_popups_path = None
@@ -522,9 +508,9 @@ class MissionCleanup:
                 backup_popups_filename = f'campaign_popups_seen_{timestamp}.backup'
                 backup_popups_path = self.states_path.parent / backup_popups_filename
                 shutil.copy2(tracker_popups_path, backup_popups_path)
-                print(f"✓ Popup backup created: {backup_popups_path.name}")
+                log_message(logger, f"✓ Popup backup created: {backup_popups_path.name}")
             else:
-                print(f"⚠️  No campaign_popups_seen.json found at {tracker_popups_path}")
+                log_message(logger, f"⚠️  No campaign_popups_seen.json found at {tracker_popups_path}")
 
             # 3️⃣ Compute hash and update index
             backup_hash = _md5_file(self.states_path)
@@ -540,11 +526,11 @@ class MissionCleanup:
             # 4️⃣ Cleanup old backups
             self.cleanup_old_backups()
 
-            print(f"✅ Backup set completed with hash {backup_hash}")
+            log_message(logger, f"✅ Backup set completed with hash {backup_hash}")
             return backup_path
 
         except Exception as e:
-            print(f"❌ Failed to create backup: {e}")
+            log_message(logger, f"❌ Failed to create backup: {e}")
             import traceback
             traceback.print_exc()
             return None
@@ -569,11 +555,11 @@ class MissionCleanup:
         logger.debug("IL-2 states path: %s", self.states_path)
         
         if not self.states_path.exists():
-            print("⚠️ Cannot restore popups — states file missing.")
+            log_message(logger, "⚠️ Cannot restore popups — states file missing.")
             return False
         
         if not index_path.exists():
-            print("⚠️ Cannot restore popups — hash index missing.")
+            log_message(logger, "⚠️ Cannot restore popups — hash index missing.")
             return False
         
         # Calculate hash of current states file
@@ -582,32 +568,32 @@ class MissionCleanup:
         entry = index.get(backup_hash)
         
         if not entry:
-            print("ℹ️ No matching hash entry found in index.")
+            log_message(logger, "ℹ️ No matching hash entry found in index.")
             return False
         
         popups_backup_name = entry.get("popups_backup")
         
         # Handle legacy backups that were created before popup initialization
         if not popups_backup_name:
-            print("ℹ️ Restored state has no popup backup (legacy backup)")
-            print("   Popup state will be regenerated on next event generation")
+            log_message(logger, "ℹ️ Restored state has no popup backup (legacy backup)")
+            log_message(logger, "   Popup state will be regenerated on next event generation")
             return False
         
         # Backup file is in IL-2 directory (next to campaignsstates.txt)
         src = self.states_path.parent / popups_backup_name
         
         if not src.exists():
-            print(f"⚠️ Popup backup missing: {src}")
+            log_message(logger, f"⚠️ Popup backup missing: {src}")
             return False
         
         try: 
             shutil.copy2(src, popups_path)
-            print(f"✅ Restored popups from backup: {popups_backup_name}")
-            print(f"   Source: {src}")
-            print(f"   Target: {popups_path}")
+            log_message(logger, f"✅ Restored popups from backup: {popups_backup_name}")
+            log_message(logger, f"   Source: {src}")
+            log_message(logger, f"   Target: {popups_path}")
             return True  # ✅ Erfolg! 
         except Exception as e:
-            print(f"❌ Failed to restore popup backup: {e}")
+            log_message(logger, f"❌ Failed to restore popup backup: {e}")
             return False
 
 
@@ -628,21 +614,21 @@ class MissionCleanup:
         logger.debug("Looking for popups at: %s", popups_path)
         
         if not popups_path.exists():
-            print("  ℹ️ No popup file found - nothing to clean")
+            log_message(logger, "  ℹ️ No popup file found - nothing to clean")
             return
         
         try:
             with open(popups_path, 'r', encoding='utf-8') as f:
                 popups_data = json.load(f)
         except json.JSONDecodeError:
-            print("  ⚠️ Warning: Could not read popup file (invalid JSON)")
+            log_message(logger, "  ⚠️ Warning: Could not read popup file (invalid JSON)")
             return
         except Exception as e: 
-            print(f"  ⚠️ Warning: Could not read popup file: {e}")
+            log_message(logger, f"  ⚠️ Warning: Could not read popup file: {e}")
             return
         
         if campaign_name not in popups_data: 
-            print(f"  ℹ️ No popup history for campaign '{campaign_name}'")
+            log_message(logger, f"  ℹ️ No popup history for campaign '{campaign_name}'")
             return
         
         # Event keys look like: "promotion|Hauptmann|05|1943-07-15" or "award|Iron Cross|05|1943-07-15"
@@ -662,12 +648,12 @@ class MissionCleanup:
             try:
                 with open(popups_path, 'w', encoding='utf-8') as f:
                     json.dump(popups_data, f, indent=2, sort_keys=True)
-                print(f"  ✓ Removed {removed} popup event(s) for Mission {mission_id}")
-                print(f"    (Events will be shown again when mission is replayed)")
+                log_message(logger, f"  ✓ Removed {removed} popup event(s) for Mission {mission_id}")
+                log_message(logger, f"    (Events will be shown again when mission is replayed)")
             except Exception as e:
-                print(f"  ⚠️ Warning: Could not save popup file: {e}")
+                log_message(logger, f"  ⚠️ Warning: Could not save popup file: {e}")
         else:
-            print(f"  ℹ️ No popup events found for Mission {mission_id}")
+            log_message(logger, f"  ℹ️ No popup events found for Mission {mission_id}")
    
     def cleanup_old_backups(self):
         """Keep only the last N backups in game directory"""
@@ -681,9 +667,9 @@ class MissionCleanup:
             for backup in to_remove:
                 try:
                     backup.unlink()
-                    print(f"  Removed old backup: {backup.name}")
+                    log_message(logger, f"  Removed old backup: {backup.name}")
                 except Exception as e:
-                    print(f"  ⚠️  Could not remove {backup.name}: {e}")
+                    log_message(logger, f"  ⚠️  Could not remove {backup.name}: {e}")
     
     def delete_mission_entry(self, campaign_name: str, mission_id: str) -> bool:
         """
@@ -700,18 +686,18 @@ class MissionCleanup:
             True if successful, False otherwise
         """
         if not self.states_path.exists():
-            print(f"❌ {self.states_path} not found")
+            log_message(logger, f"❌ {self.states_path} not found")
             return False
         
-        print(f"\n{'='*70}")
-        print(f"DELETING: {campaign_name} - Mission {mission_id}")
-        print(f"{'='*70}")
-        print(f"Target: completedMissionsByFileName entry only")
+        log_message(logger, f"\n{'='*70}")
+        log_message(logger, f"DELETING: {campaign_name} - Mission {mission_id}")
+        log_message(logger, f"{'='*70}")
+        log_message(logger, f"Target: completedMissionsByFileName entry only")
         
         # Create backup FIRST
         backup_path = self.create_backup()
         if not backup_path:
-            print("❌ Cannot proceed without backup!")
+            log_message(logger, "❌ Cannot proceed without backup!")
             return False
         
         try:
@@ -719,14 +705,14 @@ class MissionCleanup:
             with open(self.states_path, 'rb') as f:
                 content = f.read().decode('utf-8', errors='ignore')
             
-            print(f"✓ Loaded {self.states_path.name} ({len(content)} chars)")
+            log_message(logger, f"✓ Loaded {self.states_path.name} ({len(content)} chars)")
             
             # Find campaign section (between =kampagne= tags)
             campaign_start_tag = f'{campaign_name}='
             campaign_start = content.find(campaign_start_tag)
             
             if campaign_start == -1:
-                print(f"❌ Campaign '{campaign_name}' not found in file")
+                log_message(logger, f"❌ Campaign '{campaign_name}' not found in file")
                 return False
             
             # Find end of campaign (next =kampagne= or end of file)
@@ -757,20 +743,20 @@ class MissionCleanup:
             before_campaign = content[:campaign_start]
             after_campaign = content[campaign_end:]
             
-            print(f"✓ Found campaign section ({len(campaign_section)} chars)")
+            log_message(logger, f"✓ Found campaign section ({len(campaign_section)} chars)")
             
             # ✅ FIX: Find completedMissionsByFileName parameter
             completed_marker = "completedMissionsByFileName"
             completed_start = campaign_section.find(completed_marker)
             
             if completed_start == -1:
-                print(f"⚠️  completedMissionsByFileName not found in campaign section")
+                log_message(logger, f"⚠️  completedMissionsByFileName not found in campaign section")
                 return False
             
             # Find the value part (after the =)
             value_start = campaign_section.find('%3D', completed_start)
             if value_start == -1:
-                print(f"⚠️  No missions in completedMissionsByFileName")
+                log_message(logger, f"⚠️  No missions in completedMissionsByFileName")
                 return False
             
             # Find end of this parameter (next & or end of section)
@@ -784,7 +770,7 @@ class MissionCleanup:
             # Missions are separated by %2526
             mission_count = completed_value.count('%253D1')
             
-            print(f"  Current missions in completedMissionsByFileName: {mission_count}")
+            log_message(logger, f"  Current missions in completedMissionsByFileName: {mission_count}")
             
             # IMPORTANT: Mission IDs with spaces need to be TRIPLE-encoded!
             import urllib.parse
@@ -805,7 +791,7 @@ class MissionCleanup:
                     if mission_count == 1:
                         # Last mission - replace value with %3D (encoded "=")
                         # This creates: completedMissionsByFileName%3D& → decodes to: completedMissionsByFileName=&
-                        print(f"  This is the LAST mission in completedMissionsByFileName")
+                        log_message(logger, f"  This is the LAST mission in completedMissionsByFileName")
                         new_completed_value = "%3D"
                     else:
                         # Not the last mission - just remove this one
@@ -827,59 +813,59 @@ class MissionCleanup:
                     old_length = len(campaign_section)
                     new_length = len(new_campaign_section)
                     
-                    print(f"✓ Deleted mission {mission_id} from completedMissionsByFileName")
-                    print(f"  Pattern: {pattern} ({description})")
-                    print(f"  Removed: {old_length - new_length} chars")
+                    log_message(logger, f"✓ Deleted mission {mission_id} from completedMissionsByFileName")
+                    log_message(logger, f"  Pattern: {pattern} ({description})")
+                    log_message(logger, f"  Removed: {old_length - new_length} chars")
                     
                     if mission_count == 1:
-                        print(f"  ✅ completedMissionsByFileName is now EMPTY (correct!)")
+                        log_message(logger, f"  ✅ completedMissionsByFileName is now EMPTY (correct!)")
                     else:
-                        print(f"  Remaining missions: {mission_count - 1}")
+                        log_message(logger, f"  Remaining missions: {mission_count - 1}")
                     
                     campaign_section = new_campaign_section
                     deleted = True
                     break
             
             if not deleted:
-                print(f"⚠️  Mission {mission_id} not found in completedMissionsByFileName")
-                print(f"   Searched for patterns:")
+                log_message(logger, f"⚠️  Mission {mission_id} not found in completedMissionsByFileName")
+                log_message(logger, f"   Searched for patterns:")
                 for p, desc in patterns_to_try:
-                    print(f"     - {p} ({desc})")
-                print(f"\n   This might mean:")
-                print(f"   - Mission was never completed (not in completedMissionsByFileName)")
-                print(f"   - Mission has different ID encoding")
+                    log_message(logger, f"     - {p} ({desc})")
+                log_message(logger, f"\n   This might mean:")
+                log_message(logger, f"   - Mission was never completed (not in completedMissionsByFileName)")
+                log_message(logger, f"   - Mission has different ID encoding")
                 return False
             
             # Reconstruct file
             new_content = before_campaign + campaign_section + after_campaign
             
-            print(f"\n{'='*70}")
-            print(f"WRITING CHANGES")
-            print(f"{'='*70}")
-            print(f"Original file size: {len(content)} chars")
-            print(f"New file size: {len(new_content)} chars")
-            print(f"Difference: {len(content) - len(new_content)} chars")
+            log_message(logger, f"\n{'='*70}")
+            log_message(logger, f"WRITING CHANGES")
+            log_message(logger, f"{'='*70}")
+            log_message(logger, f"Original file size: {len(content)} chars")
+            log_message(logger, f"New file size: {len(new_content)} chars")
+            log_message(logger, f"Difference: {len(content) - len(new_content)} chars")
             
             # Write back
             with open(self.states_path, 'wb') as f:
                 f.write(new_content.encode('utf-8'))
             
-            print(f"✓ Saved {self.states_path.name}")
+            log_message(logger, f"✓ Saved {self.states_path.name}")
             
             # Verify by reading back
             with open(self.states_path, 'rb') as f:
                 verify_content = f.read().decode('utf-8', errors='ignore')
             
-            print(f"\n{'='*70}")
-            print(f"VERIFICATION")
-            print(f"{'='*70}")
+            log_message(logger, f"\n{'='*70}")
+            log_message(logger, f"VERIFICATION")
+            log_message(logger, f"{'='*70}")
             
             # Check if completedMissionsByFileName structure is preserved
             verify_section = verify_content[verify_content.find(campaign_start_tag):
                                            verify_content.find(campaign_start_tag) + len(campaign_section)]
             
             if "completedMissionsByFileName" in verify_section:
-                print(f"✓ Verification passed - completedMissionsByFileName structure preserved")
+                log_message(logger, f"✓ Verification passed - completedMissionsByFileName structure preserved")
                 
                 # ✅ Additional check: make sure it's not left as a string
                 completed_pos = verify_section.find("completedMissionsByFileName")
@@ -890,34 +876,34 @@ class MissionCleanup:
                         next_char = verify_section[next_char_pos + 1] if next_char_pos + 1 < len(verify_section) else ''
                         # Should be either & (empty) or % (has missions)
                         if next_char in ['&', '%', '']:
-                            print(f"✓ completedMissionsByFileName format correct")
+                            log_message(logger, f"✓ completedMissionsByFileName format correct")
                         else:
-                            print(f"⚠️  Unexpected character after completedMissionsByFileName: '{next_char}'")
+                            log_message(logger, f"⚠️  Unexpected character after completedMissionsByFileName: '{next_char}'")
             else:
-                print(f"⚠️  Warning: completedMissionsByFileName not found in verification")
+                log_message(logger, f"⚠️  Warning: completedMissionsByFileName not found in verification")
             
             # Cleanup popup events for this mission
-            print(f"\n{'='*70}")
-            print(f"POPUP CLEANUP")
-            print(f"{'='*70}")
+            log_message(logger, f"\n{'='*70}")
+            log_message(logger, f"POPUP CLEANUP")
+            log_message(logger, f"{'='*70}")
             self._cleanup_mission_popups(campaign_name, mission_id)
             
-            print(f"\n{'='*70}")
-            print(f"SUCCESS!")
-            print(f"{'='*70}")
-            print(f"Mission {mission_id} removed from completedMissionsByFileName")
-            print(f"characterStatisticsByFileName remains intact")
-            print(f"")
-            print(f"When you replay the mission:")
-            print(f"  - IL-2 will let you fly it again")
-            print(f"  - New stats will overwrite old stats")
-            print(f"  - Mission will be re-added to completedMissionsByFileName on success")
-            print(f"  - Popups for events will be shown again")
+            log_message(logger, f"\n{'='*70}")
+            log_message(logger, f"SUCCESS!")
+            log_message(logger, f"{'='*70}")
+            log_message(logger, f"Mission {mission_id} removed from completedMissionsByFileName")
+            log_message(logger, f"characterStatisticsByFileName remains intact")
+            log_message(logger, f"")
+            log_message(logger, f"When you replay the mission:")
+            log_message(logger, f"  - IL-2 will let you fly it again")
+            log_message(logger, f"  - New stats will overwrite old stats")
+            log_message(logger, f"  - Mission will be re-added to completedMissionsByFileName on success")
+            log_message(logger, f"  - Popups for events will be shown again")
             
             return True
             
         except Exception as e:
-            print(f"❌ Error during deletion: {e}")
+            log_message(logger, f"❌ Error during deletion: {e}")
             import traceback
             traceback.print_exc()
             return False
@@ -941,7 +927,7 @@ class MissionCleanup:
             # Find campaign section
             campaign_pattern = f'campaigns/{campaign_name}='
             if campaign_pattern not in content:
-                print(f"⚠️  Campaign {campaign_name} not found in file")
+                log_message(logger, f"⚠️  Campaign {campaign_name} not found in file")
                 return False
             
             # Extract campaign section
@@ -965,7 +951,7 @@ class MissionCleanup:
             
             for pattern in mission_patterns:
                 if pattern in decoded:
-                    print(f"⚠️  Mission {mission_id} still found with pattern: {pattern}")
+                    log_message(logger, f"⚠️  Mission {mission_id} still found with pattern: {pattern}")
                     return False
             
             # Double check with URL-encoded version
@@ -976,13 +962,13 @@ class MissionCleanup:
             
             for pattern in encoded_patterns:
                 if pattern in campaign_section:
-                    print(f"⚠️  Mission {mission_id} still found (encoded)")
+                    log_message(logger, f"⚠️  Mission {mission_id} still found (encoded)")
                     return False
             
             return True
             
         except Exception as e:
-            print(f"⚠️  Could not verify deletion: {e}")
+            log_message(logger, f"⚠️  Could not verify deletion: {e}")
             import traceback
             traceback.print_exc()
             return False
@@ -1235,7 +1221,7 @@ class CleanupGUI:
         
         # ✅ Automatically re-decode campaignsstates.txt after all deletions
         if success_count > 0:
-            print("\nRe-decoding campaignsstates.txt to update campaigns_decoded.json...")
+            log_message(logger, "\nRe-decoding campaignsstates.txt to update campaigns_decoded.json...")
             try:
                 # Copy the in-game campaignsstates.txt to local working directory
                 source_file = self.cleanup_tool.states_path
@@ -1243,31 +1229,31 @@ class CleanupGUI:
 
                 if source_file.exists():
                     shutil.copy2(source_file, local_copy)
-                    print(f"✓ Copied {source_file} → {local_copy}")
+                    log_message(logger, f"✓ Copied {source_file} → {local_copy}")
                 else:
-                    print(f"⚠️ Source file not found at {source_file}, skipping copy")
+                    log_message(logger, f"⚠️ Source file not found at {source_file}, skipping copy")
                     
                 # Decode using local file    
                 from decode_campaign_usersave1 import main as decode_campaignsstates
                 success = decode_campaignsstates()
                 if success:
-                    print("✓ campaigns_decoded.json successfully regenerated.")
+                    log_message(logger, "✓ campaigns_decoded.json successfully regenerated.")
                 else:
-                    print("⚠️ Decoder reported failure; campaigns_decoded.json may be outdated.")
+                    log_message(logger, "⚠️ Decoder reported failure; campaigns_decoded.json may be outdated.")
             except Exception as e:
-                print(f"⚠️ Could not re-decode campaigns_decoded.json: {e}")
+                log_message(logger, f"⚠️ Could not re-decode campaigns_decoded.json: {e}")
             
             # ✅ NEW: Regenerate PDFs for affected campaigns after cleanup
-            print("\n" + "="*70)
-            print("REGENERATING PDF REPORTS")
-            print("="*70)
+            log_message(logger, "\n" + "="*70)
+            log_message(logger, "REGENERATING PDF REPORTS")
+            log_message(logger, "="*70)
             
             # Collect affected campaigns
             affected_campaigns = set()
             for campaign_name, mission_id, data in to_delete:
                 affected_campaigns.add(campaign_name)
             
-            print(f"Regenerating PDFs for {len(affected_campaigns)} campaign(s)...")
+            log_message(logger, f"Regenerating PDFs for {len(affected_campaigns)} campaign(s)...")
             
             try:
                 import step3_generate_events
@@ -1280,7 +1266,7 @@ class CleanupGUI:
                 
                 # Regenerate events and PDFs for each affected campaign
                 for campaign_name in affected_campaigns:
-                    print(f"\n  Processing: {campaign_name}")
+                    log_message(logger, f"\n  Processing: {campaign_name}")
                     
                     try:
                         resync_result = resync_campaign_events_for_campaign(
@@ -1303,7 +1289,7 @@ class CleanupGUI:
 
                                 # *** REGENERATE PDF ***
                                 if completed_missions and len(completed_missions) > 0:
-                                    print(f"    Regenerating PDF...")
+                                    log_message(logger, f"    Regenerating PDF...")
 
                                     # Switch to PDF mode
                                     generator.set_mode("pdf")
@@ -1353,9 +1339,9 @@ class CleanupGUI:
                                     # Switch back to ingame mode
                                     generator.set_mode("ingame")
 
-                                    print(f"    ✓ PDF regenerated")
+                                    log_message(logger, f"    ✓ PDF regenerated")
                                 else:
-                                    print(f"    ℹ️  No completed missions - skipping PDF")
+                                    log_message(logger, f"    ℹ️  No completed missions - skipping PDF")
 
                                     # ✅ Delete existing PDF if it exists
                                     import os
@@ -1363,19 +1349,19 @@ class CleanupGUI:
                                     if pdf_path.exists():
                                         try:
                                             os.remove(pdf_path)
-                                            print(f"    ✓ Removed outdated PDF: {pdf_path.name}")
+                                            log_message(logger, f"    ✓ Removed outdated PDF: {pdf_path.name}")
                                         except Exception as e:
-                                            print(f"    ⚠️  Could not remove PDF: {e}")
+                                            log_message(logger, f"    ⚠️  Could not remove PDF: {e}")
                             else:
-                                print(f"    ⚠️  No country metadata found")
+                                log_message(logger, f"    ⚠️  No country metadata found")
                         else:
-                            print(f"    ℹ️  No events generated")
+                            log_message(logger, f"    ℹ️  No events generated")
 
                             # ✅ CRITICAL: Even with no events, cleanup PDF and info file if no missions left
                             try:
                                # If no missions left, cleanup everything
                                 if not completed_missions or len(completed_missions) == 0:
-                                    print(f"    ℹ️  No missions left - cleaning up")
+                                    log_message(logger, f"    ℹ️  No missions left - cleaning up")
                                     
                                     # Delete PDF if exists
                                     import os
@@ -1383,32 +1369,32 @@ class CleanupGUI:
                                     if pdf_path.exists():
                                         try:
                                             os.remove(pdf_path)
-                                            print(f"    ✓ Removed PDF: {pdf_path.name}")
+                                            log_message(logger, f"    ✓ Removed PDF: {pdf_path.name}")
                                         except Exception as e:
-                                            print(f"    ⚠️  Could not remove PDF: {e}")
+                                            log_message(logger, f"    ⚠️  Could not remove PDF: {e}")
 
                                     # Update info file with empty content
                                     try:
                                         if country:
                                             empty_html = ""
                                             generator.update_campaign_info_file(campaign_name, empty_html)
-                                            print(f"    ✓ Cleared campaign info file")
+                                            log_message(logger, f"    ✓ Cleared campaign info file")
                                     except Exception as e:
-                                        print(f"    ⚠️  Could not update info file: {e}")
+                                        log_message(logger, f"    ⚠️  Could not update info file: {e}")
                                                                        
                             except Exception as e:
-                                print(f"    ⚠️  Error during cleanup: {e}")
+                                log_message(logger, f"    ⚠️  Error during cleanup: {e}")
                             
                     except Exception as e:
-                        print(f"    ⚠️  Error regenerating for {campaign_name}: {e}")
+                        log_message(logger, f"    ⚠️  Error regenerating for {campaign_name}: {e}")
                         import traceback
                         traceback.print_exc()
                 
-                print(f"\n✅ PDF regeneration complete")
+                log_message(logger, f"\n✅ PDF regeneration complete")
                 
             except Exception as e:
-                print(f"⚠️  PDF regeneration failed: {e}")
-                print(f"   PDFs may be outdated - run tracker again to update")
+                log_message(logger, f"⚠️  PDF regeneration failed: {e}")
+                log_message(logger, f"   PDFs may be outdated - run tracker again to update")
                 import traceback
                 traceback.print_exc()
         
@@ -1433,9 +1419,9 @@ def startup_cleanup_check(states_path=None):
     Returns:
         True if cleanup was performed, False otherwise
     """
-    print("\n" + "="*70)
-    print("SCANNING FOR UNSUCCESSFUL MISSIONS...")
-    print("="*70)
+    log_message(logger, "\n" + "="*70)
+    log_message(logger, "SCANNING FOR UNSUCCESSFUL MISSIONS...")
+    log_message(logger, "="*70)
     
     cleanup = MissionCleanup(campaignstates_path=states_path)
     opportunities = cleanup.find_cleanup_opportunities()
@@ -1443,26 +1429,26 @@ def startup_cleanup_check(states_path=None):
     # Show info about ignored missions (if any exist)
     ignored = load_ignored_missions()
     if ignored:
-        print(f"ℹ️  {len(ignored)} mission(s) currently in ignore list")
-        print(f"   (To manage: edit cleanup_ignored_missions.json)")
-        print()
+        log_message(logger, f"ℹ️  {len(ignored)} mission(s) currently in ignore list")
+        log_message(logger, f"   (To manage: edit cleanup_ignored_missions.json)")
+        log_message(logger)
     
     if not opportunities:
-        print("✓ All campaigns clean - no unsuccessful missions found")
+        log_message(logger, "✓ All campaigns clean - no unsuccessful missions found")
         return False
     
     # Count total missions across all campaigns
     total_missions = sum(len(missions) if isinstance(missions, dict) else 1 
                         for missions in opportunities.values())
     
-    print(f"\n⚠️  Found {total_missions} unsuccessful mission(s) across {len(opportunities)} campaign(s):")
+    log_message(logger, f"\n⚠️  Found {total_missions} unsuccessful mission(s) across {len(opportunities)} campaign(s):")
     for campaign_name, missions in opportunities.items():
         if isinstance(missions, dict):
             for mission_id in missions.keys():
-                print(f"  • {campaign_name} - Mission {mission_id}")
+                log_message(logger, f"  • {campaign_name} - Mission {mission_id}")
         else:
             # Old format compatibility
-            print(f"  • {campaign_name} - Mission {missions['mission_id']}")
+            log_message(logger, f"  • {campaign_name} - Mission {missions['mission_id']}")
     
     # Show GUI
     gui = CleanupGUI(opportunities)

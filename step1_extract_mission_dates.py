@@ -24,10 +24,12 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 
+from utils.logging import get_logger, log_message
 from utils.pathing import get_base_path
 from utils.il2_paths import find_campaignsstates_path
 from utils.formatting import safe_campaign_filename
 
+logger = get_logger(__name__)
 def _load_json_dict(path: Path) -> Optional[Dict]:
     if not path.exists():
         return None
@@ -36,10 +38,10 @@ def _load_json_dict(path: Path) -> Optional[Dict]:
             data = json.load(f)
         if isinstance(data, dict):
             return data
-        print(f"⚠️ Expected JSON object in {path}, got {type(data).__name__}")
+        log_message(logger, f"⚠️ Expected JSON object in {path}, got {type(data).__name__}")
         return None
     except json.JSONDecodeError:
-        print(f"⚠️ Invalid JSON in {path} - skipping cleanup")
+        log_message(logger, f"⚠️ Invalid JSON in {path} - skipping cleanup")
         return None
 
 
@@ -67,9 +69,9 @@ def _cleanup_deleted_campaign_entries(removed: List[str], base_dir: Path) -> Non
         try:
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, sort_keys=sort_keys, ensure_ascii=False)
-            print(f"⚠️ Removed deleted campaigns from {label}: {removed_keys}")
+            log_message(logger, f"⚠️ Removed deleted campaigns from {label}: {removed_keys}")
         except Exception as e:
-            print(f"⚠️ Could not update {label}: {e}")
+            log_message(logger, f"⚠️ Could not update {label}: {e}")
             
     reports_dir = base_dir / "reports"
     if reports_dir.exists():
@@ -79,9 +81,9 @@ def _cleanup_deleted_campaign_entries(removed: List[str], base_dir: Path) -> Non
             if pdf_path.exists():
                 try:
                     pdf_path.unlink()
-                    print(f"⚠️ Removed report PDF for deleted campaign: {name}")
+                    log_message(logger, f"⚠️ Removed report PDF for deleted campaign: {name}")
                 except Exception as e:
-                    print(f"⚠️ Could not remove report PDF for {name}: {e}")        
+                    log_message(logger, f"⚠️ Could not remove report PDF for {name}: {e}")        
                     
 class CampaignDateExtractor:
     def __init__(self, campaigns_folder: str, verbose: bool = False, exclude_ww1: bool = True):
@@ -281,7 +283,7 @@ class CampaignDateExtractor:
             
             if not stock_campaigns:
                 if self.verbose:
-                    print("    Warning: No stock campaigns in library")
+                    log_message(logger, "    Warning: No stock campaigns in library")
                 return
             
             # Scan all campaign folders
@@ -291,8 +293,8 @@ class CampaignDateExtractor:
             campaign_folders = [f for f in self.campaigns_folder.iterdir() if f.is_dir()]
             
             # Always show this important step
-            print(f"\n  Building stock campaigns mapping...")
-            print(f"  Scanning {len(campaign_folders)} folders...")
+            log_message(logger, f"\n  Building stock campaigns mapping...")
+            log_message(logger, f"  Scanning {len(campaign_folders)} folders...")
             
             matched = 0
             for folder in campaign_folders:
@@ -316,7 +318,7 @@ class CampaignDateExtractor:
                     
                     if not content:
                         if self.verbose:
-                            print(f"    ✗ {folder.name}: Could not decode file with any encoding")
+                            log_message(logger, f"    ✗ {folder.name}: Could not decode file with any encoding")
                         continue
                     
                     # Extract &name="Campaign Name" or &name=Campaign Name
@@ -335,27 +337,27 @@ class CampaignDateExtractor:
                                 self._stock_folder_mapping[folder.name] = country
                                 matched += 1
                                 if self.verbose:
-                                    print(f"    ✓ {folder.name} → '{display_name}' → {country}")
+                                    log_message(logger, f"    ✓ {folder.name} → '{display_name}' → {country}")
                                 break
                     else:
                         if self.verbose:
-                            print(f"    ✗ {folder.name}: No &name= found in first 1000 chars")
+                            log_message(logger, f"    ✗ {folder.name}: No &name= found in first 1000 chars")
                 
                 except Exception as e:
                     if self.verbose:
-                        print(f"    Warning: Could not read {folder.name}/info.locale: {e}")
+                        log_message(logger, f"    Warning: Could not read {folder.name}/info.locale: {e}")
             
             # Always show final count
-            print(f"  Mapped {matched} stock campaigns")
+            log_message(logger, f"  Mapped {matched} stock campaigns")
             
             # Debug: Show first few mappings
             if matched > 0 and self.verbose:
-                print(f"  Sample mappings:")
+                log_message(logger, f"  Sample mappings:")
                 for folder, country in list(self._stock_folder_mapping.items())[:5]:
-                    print(f"    {folder} → {country}")
+                    log_message(logger, f"    {folder} → {country}")
         
         except Exception as e:
-            print(f"    ERROR: Could not load stock campaigns library: {e}")
+            log_message(logger, f"    ERROR: Could not load stock campaigns library: {e}")
             import traceback
             traceback.print_exc()
             self._stock_folder_mapping = {}
@@ -390,49 +392,49 @@ class CampaignDateExtractor:
         stock_result = self._check_stock_campaign(campaign_name)
         if stock_result:
             if self.verbose:
-                print(f"    Detection method: Stock campaign library")
+                log_message(logger, f"    Detection method: Stock campaign library")
             return (stock_result, True)  # Return country and is_stock=True
         elif self.verbose:
-            print(f"    Method 0 (Stock Library): Not a known stock campaign")
+            log_message(logger, f"    Method 0 (Stock Library): Not a known stock campaign")
         
         # Method 1: Check campaign name and mission names
         country = self._detect_from_names(campaign_name, campaign_path)
         if country:
             if self.verbose:
-                print(f"    Detection method: Campaign/Mission names")
+                log_message(logger, f"    Detection method: Campaign/Mission names")
             return (country, False)  # Not a stock campaign
         elif self.verbose:
-            print(f"    Method 0 (Names): No match")
+            log_message(logger, f"    Method 0 (Names): No match")
         
         # Method 1: Check aircraft from info.txt
         country = self._detect_from_aircraft(campaign_path)
         if country:
             if self.verbose:
-                print(f"    Detection method: Aircraft type")
+                log_message(logger, f"    Detection method: Aircraft type")
             return (country, False)  # Not a stock campaign
         elif self.verbose:
-            print(f"    Method 1 (Aircraft): No match")
+            log_message(logger, f"    Method 1 (Aircraft): No match")
         
         # Method 2: Check campaign description
         country, scores = self._detect_from_description(campaign_path)
         if country:
             if self.verbose:
-                print(f"    Detection method: Campaign description keywords")
-                print(f"    Keyword scores: {scores}")
+                log_message(logger, f"    Detection method: Campaign description keywords")
+                log_message(logger, f"    Keyword scores: {scores}")
             return (country, False)  # Not a stock campaign
         elif self.verbose:
-            print(f"    Method 2 (Description): No strong match. Scores: {scores}")
+            log_message(logger, f"    Method 2 (Description): No strong match. Scores: {scores}")
         
         # Method 3: Check mission briefings as last resort
         country = self._detect_from_briefings(campaign_path)
         if country:
             if self.verbose:
-                print(f"    Detection method: Mission briefing keywords")
+                log_message(logger, f"    Detection method: Mission briefing keywords")
             return (country, False)  # Not a stock campaign
         elif self.verbose:
-            print(f"    Method 3 (Briefings): No match")
+            log_message(logger, f"    Method 3 (Briefings): No match")
         
-        print(f"  ⚠ WARNING: Could not detect country for {campaign_name}")
+        log_message(logger, f"  ⚠ WARNING: Could not detect country for {campaign_name}")
         
         return (None, False)  # No detection, not stock
     
@@ -624,21 +626,21 @@ class CampaignDateExtractor:
                     if any(word in test_lower for word in ['campaign', 'mission', 'pilot', 'aircraft', 'the ', 'and ']):
                         content = test_lower
                         if self.verbose:
-                            print(f"    Successfully read with {encoding}")
+                            log_message(logger, f"    Successfully read with {encoding}")
                         break
                 except (UnicodeDecodeError, UnicodeError):
                     continue
             
             if not content:
                 if self.verbose:
-                    print(f"    Warning: Could not decode file with any encoding")
+                    log_message(logger, f"    Warning: Could not decode file with any encoding")
                 return None, scores
             
             if self.verbose:
-                print(f"    Read {len(content)} chars from description")
-                print(f"    First 200 chars: {content[:200]}")
+                log_message(logger, f"    Read {len(content)} chars from description")
+                log_message(logger, f"    First 200 chars: {content[:200]}")
                 if len(content) < 100:
-                    print(f"    WARNING: Description seems too short!")
+                    log_message(logger, f"    WARNING: Description seems too short!")
             
             if not content or len(content) < 50:
                 # File read but empty or too short
@@ -747,11 +749,11 @@ class CampaignDateExtractor:
             
         except UnicodeDecodeError as e:
             if self.verbose:
-                print(f"    Warning: Encoding error reading description: {e}")
+                log_message(logger, f"    Warning: Encoding error reading description: {e}")
             return None, scores
         except Exception as e:
             if self.verbose:
-                print(f"    Warning: Error in description detection: {e}")
+                log_message(logger, f"    Warning: Error in description detection: {e}")
             return None, scores
     
     def _detect_from_briefings(self, campaign_path: Path) -> Optional[str]:
@@ -783,7 +785,7 @@ class CampaignDateExtractor:
         campaigns = []
         
         if not self.campaigns_folder.exists():
-            print(f"Error: Campaign folder not found: {self.campaigns_folder}")
+            log_message(logger, f"Error: Campaign folder not found: {self.campaigns_folder}")
             return campaigns
         
         # Each subfolder is a campaign
@@ -821,7 +823,7 @@ class CampaignDateExtractor:
         if not msnbin_files:
             # Fallback: No .msnbin files found, try old method (for very old campaigns)
             if self.verbose:
-                print(f"  No .msnbin files found, using fallback detection")
+                log_message(logger, f"  No .msnbin files found, using fallback detection")
             return self._get_mission_files_fallback(campaign_path)
         
         # For each .msnbin, find corresponding language files
@@ -852,7 +854,7 @@ class CampaignDateExtractor:
             mission_files[mission_id] = lang_files
             
             if self.verbose and not lang_files:
-                print(f"  Warning: Mission {mission_id} has .msnbin but no language files")
+                log_message(logger, f"  Warning: Mission {mission_id} has .msnbin but no language files")
         
         return mission_files
     
@@ -954,7 +956,7 @@ class CampaignDateExtractor:
             }
             
         except Exception as e:
-            print(f"  Warning: Could not read {briefing_file.name}: {e}")
+            log_message(logger, f"  Warning: Could not read {briefing_file.name}: {e}")
             return None
     
     def normalize_date(self, date_string: str) -> Optional[str]:
@@ -1007,7 +1009,7 @@ class CampaignDateExtractor:
     
     def scan_campaign(self, campaign_name: str) -> Dict:
         """Scan a single campaign and extract all mission dates"""
-        print(f"\nScanning campaign: {campaign_name}")
+        log_message(logger, f"\nScanning campaign: {campaign_name}")
         
         # Detect country (returns tuple: (country, is_stock))
         detection_result = self.detect_country(campaign_name)
@@ -1015,15 +1017,15 @@ class CampaignDateExtractor:
         
         if country:
             stock_label = " (Stock)" if is_stock else ""
-            print(f"  Country: {country}{stock_label}")
+            log_message(logger, f"  Country: {country}{stock_label}")
         
         mission_files_dict = self.get_mission_files(campaign_name)
         
         if not mission_files_dict:
-            print(f"  No mission files found")
+            log_message(logger, f"  No mission files found")
             return {}
         
-        print(f"  Found {len(mission_files_dict)} missions")
+        log_message(logger, f"  Found {len(mission_files_dict)} missions")
         
         campaign_data = {
             'campaign_name': campaign_name,
@@ -1053,7 +1055,7 @@ class CampaignDateExtractor:
             
             if self.verbose:
                 file_list = ', '.join(f.name for f in files_for_mission)
-                print(f"    Mission {mission_num}: Checking {len(files_for_mission)} files: {file_list}")
+                log_message(logger, f"    Mission {mission_num}: Checking {len(files_for_mission)} files: {file_list}")
             
             date_info = None
             
@@ -1066,12 +1068,12 @@ class CampaignDateExtractor:
             if date_info:
                 campaign_data['missions'][mission_num] = date_info
                 if self.verbose:
-                    print(f"      ✓ Found: {date_info['raw_date']} (from {date_info['mission_file']})")
+                    log_message(logger, f"      ✓ Found: {date_info['raw_date']} (from {date_info['mission_file']})")
                 else:
-                    print(f"    Mission {mission_num}: {date_info['raw_date']} (from {date_info['mission_file']})")
+                    log_message(logger, f"    Mission {mission_num}: {date_info['raw_date']} (from {date_info['mission_file']})")
             else:
                 # No date found in any file variant
-                print(f"    Mission {mission_num}: No date found (checked {len(files_for_mission)} files)")
+                log_message(logger, f"    Mission {mission_num}: No date found (checked {len(files_for_mission)} files)")
                 campaign_data['missions'][mission_num] = {
                     'raw_date': None,
                     'normalized_date': None,
@@ -1080,7 +1082,7 @@ class CampaignDateExtractor:
         
         # Check if WW1 and should be excluded
         if self.exclude_ww1 and self.is_ww1_campaign(campaign_name, campaign_data):
-            print(f"  ⚠ WW1 campaign detected - EXCLUDED")
+            log_message(logger, f"  ⚠ WW1 campaign detected - EXCLUDED")
             campaign_data['excluded'] = True
             campaign_data['exclusion_reason'] = 'WW1 Flying Circus campaign'
         
@@ -1088,20 +1090,20 @@ class CampaignDateExtractor:
     
     def scan_all_campaigns(self) -> Dict:
         """Scan all campaigns and extract mission dates"""
-        print("="*70)
-        print("SCANNING ALL IL-2 CAMPAIGNS FOR MISSION DATES")
-        print("="*70)
-        print(f"Campaign folder: {self.campaigns_folder}")
+        log_message(logger, "="*70)
+        log_message(logger, "SCANNING ALL IL-2 CAMPAIGNS FOR MISSION DATES")
+        log_message(logger, "="*70)
+        log_message(logger, f"Campaign folder: {self.campaigns_folder}")
         
         campaigns = self.find_all_campaigns()
         
         if not campaigns:
-            print("\nNo campaigns found!")
+            log_message(logger, "\nNo campaigns found!")
             return {}
         
-        print(f"\nFound {len(campaigns)} campaigns:")
+        log_message(logger, f"\nFound {len(campaigns)} campaigns:")
         for campaign in campaigns:
-            print(f"  - {campaign}")
+            log_message(logger, f"  - {campaign}")
         
         # Scan each campaign
         all_data = {}
@@ -1112,13 +1114,13 @@ class CampaignDateExtractor:
                 # 🟡 NEU: Skip WW1 campaigns completely if excluded
                 if self.exclude_ww1 and campaign_data.get('excluded') and \
                    campaign_data.get('exclusion_reason', '').startswith('WW1'):
-                    print(f"⚠️  Skipping WW1 campaign (excluded): {campaign_name}")
+                    log_message(logger, f"⚠️  Skipping WW1 campaign (excluded): {campaign_name}")
                     continue
                     
                 if campaign_data:
                     all_data[campaign_name] = campaign_data
             except Exception as e:
-                print(f"  Error scanning {campaign_name}: {e}")
+                log_message(logger, f"  Error scanning {campaign_name}: {e}")
         
         return all_data
     
@@ -1138,13 +1140,13 @@ class CampaignDateExtractor:
                 # Extract game directory if present
                 if 'game_directory' in data:
                     stored_game_dir = data['game_directory']
-                    print(f"✓ Found existing data with game directory: {stored_game_dir}")
+                    log_message(logger, f"✓ Found existing data with game directory: {stored_game_dir}")
                     return data
                 else:
-                    print(f"✓ Found existing data (no game directory stored)")
+                    log_message(logger, f"✓ Found existing data (no game directory stored)")
                     return data
             except Exception as e:
-                print(f"⚠ Warning: Could not load existing data: {e}")
+                log_message(logger, f"⚠ Warning: Could not load existing data: {e}")
                 return {}
         return {}
     
@@ -1172,7 +1174,7 @@ class CampaignDateExtractor:
             merged['is_stock'] = existing_campaign.get('is_stock', False)
             if self.verbose:
                 stock_label = " (stock)" if existing_campaign.get('is_stock') else " (manual)"
-                print(f"  ✓ Preserving country{stock_label}: {merged['country']}")
+                log_message(logger, f"  ✓ Preserving country{stock_label}: {merged['country']}")
         else:
             # No existing country - use new detection
             merged['country'] = new_campaign.get('country')
@@ -1183,7 +1185,7 @@ class CampaignDateExtractor:
         if 'starting_rank_offset' in existing_campaign:
             merged['starting_rank_offset'] = existing_campaign['starting_rank_offset']
             if self.verbose and existing_campaign['starting_rank_offset'] != 0:
-                print(f"  ✓ Preserving starting rank offset: {existing_campaign['starting_rank_offset']}")
+                log_message(logger, f"  ✓ Preserving starting rank offset: {existing_campaign['starting_rank_offset']}")
         else:
             # No existing value - use new default
             merged['starting_rank_offset'] = new_campaign.get('starting_rank_offset', 0)
@@ -1205,13 +1207,13 @@ class CampaignDateExtractor:
                 merged_missions[mission_num] = mission_data
                 new_mission_count += 1
                 if self.verbose:
-                    print(f"    + New mission {mission_num}")
+                    log_message(logger, f"    + New mission {mission_num}")
         
         merged['missions'] = self._sort_missions(merged_missions)
         merged['mission_count'] = len(merged_missions)
         
         if new_mission_count > 0 and not self.verbose:
-            print(f"  ✓ Added {new_mission_count} new mission(s)")
+            log_message(logger, f"  ✓ Added {new_mission_count} new mission(s)")
         
         return merged
     
@@ -1227,9 +1229,9 @@ class CampaignDateExtractor:
         
     def save_to_json(self, output_file: str, existing_data: Dict = None):
         """Save extracted dates to JSON file, merging with existing data if provided"""
-        print(f"\n{'='*70}")
-        print("SCANNING CAMPAIGNS")
-        print(f"{'='*70}")
+        log_message(logger, f"\n{'='*70}")
+        log_message(logger, "SCANNING CAMPAIGNS")
+        log_message(logger, f"{'='*70}")
         
         # Scan all campaigns
         new_data = self.scan_all_campaigns()
@@ -1259,7 +1261,7 @@ class CampaignDateExtractor:
                         del existing_data[cname]
 
                 if removed:
-                    print(f"⚠️ Removed deleted campaigns from JSON: {removed}")
+                    log_message(logger, f"⚠️ Removed deleted campaigns from JSON: {removed}")
                     # ✅ log this to campaign_monitor.log if running in monitor context
                     try:
                         from datetime import datetime
@@ -1268,7 +1270,7 @@ class CampaignDateExtractor:
                         with open(log_path, "a", encoding="utf-8") as f:
                             f.write(f"{timestamp} ⚠️ Removed deleted campaigns from JSON: {removed}\n")
                     except Exception as e:
-                        print(f"⚠️ Logging failed: {e}")
+                        log_message(logger, f"⚠️ Logging failed: {e}")
                         
                     # 🟡 ALSO: Remove same campaigns from stock_campaigns.yaml
                     try:
@@ -1294,7 +1296,7 @@ class CampaignDateExtractor:
                                         if key.strip().lower() == cname.strip().lower():
                                             del campaigns_dict[key]
                                             modified = True
-                                            print(f"  ⚠️ Removed '{key}' from stock_campaigns.yaml")
+                                            log_message(logger, f"  ⚠️ Removed '{key}' from stock_campaigns.yaml")
 
                                 # Falls keine Kampagnen mehr übrig → optional Key löschen
                                 if not campaigns_dict:
@@ -1306,12 +1308,12 @@ class CampaignDateExtractor:
                                     if cname in stock_data:
                                         del stock_data[cname]
                                         modified = True
-                                        print(f"  ⚠️ Removed '{cname}' from root-level YAML")
+                                        log_message(logger, f"  ⚠️ Removed '{cname}' from root-level YAML")
 
                             if modified:
                                 with open(stock_yaml, "w", encoding="utf-8") as f:
                                     yaml.dump(stock_data, f, allow_unicode=True, sort_keys=False)
-                                print(f"⚠️ Also removed from stock_campaigns.yaml: {removed}")
+                                log_message(logger, f"⚠️ Also removed from stock_campaigns.yaml: {removed}")
 
                                 # Log it
                                 from datetime import datetime
@@ -1320,10 +1322,10 @@ class CampaignDateExtractor:
                                 with open(log_path, "a", encoding="utf-8") as f:
                                     f.write(f"{timestamp} [Monitor] ⚠️ Also removed from stock_campaigns.yaml: {removed}\n")
                             else:
-                                print("ℹ️ No matching campaign names found in stock_campaigns.yaml")
+                                log_message(logger, "ℹ️ No matching campaign names found in stock_campaigns.yaml")
 
                     except Exception as e:
-                        print(f"⚠️ Could not update stock_campaigns.yaml: {e}")
+                        log_message(logger, f"⚠️ Could not update stock_campaigns.yaml: {e}")
 
     
             final_data = {}
@@ -1338,7 +1340,7 @@ class CampaignDateExtractor:
             for campaign_name in all_campaigns:
                 if campaign_name in existing_data and campaign_name in new_data:
                     # Existing campaign - merge
-                    print(f"\nUpdating: {campaign_name}")
+                    log_message(logger, f"\nUpdating: {campaign_name}")
                     final_data[campaign_name] = self.merge_campaign_data(
                         existing_data[campaign_name],
                         new_data[campaign_name]
@@ -1346,7 +1348,7 @@ class CampaignDateExtractor:
                     updated_campaigns.append(campaign_name)
                 elif campaign_name in new_data:
                     # New campaign
-                    print(f"\n✓ New campaign: {campaign_name}")
+                    log_message(logger, f"\n✓ New campaign: {campaign_name}")
                     final_data[campaign_name] = new_data[campaign_name]
                     new_campaigns.append(campaign_name)
                 else:
@@ -1374,7 +1376,7 @@ class CampaignDateExtractor:
                             and m in final_data[campaign_name]["missions"]
                         ):
                             del final_data[campaign_name]["missions"][m]
-                        print(f"  ⚠️ Removed missing mission '{m}' from {campaign_name}")
+                        log_message(logger, f"  ⚠️ Removed missing mission '{m}' from {campaign_name}")
 
                     if removed_missions:
                         removed_missions_detected = True
@@ -1397,28 +1399,28 @@ class CampaignDateExtractor:
 
                     states_path = find_campaignsstates_path(Path(self.game_directory))
                     if states_path:
-                        print("[Monitor] 🧹 Syncing campaign mission states after mission deletions...")
+                        log_message(logger, "[Monitor] 🧹 Syncing campaign mission states after mission deletions...")
                         sync_campaign_states(states_path=str(states_path))
                     else:
-                        print("⚠️ campaignsstates.txt not found; skipping mission state sync.")
+                        log_message(logger, "⚠️ campaignsstates.txt not found; skipping mission state sync.")
                 except Exception as e:
-                    print(f"⚠️ Could not sync campaign mission states: {e}")
+                    log_message(logger, f"⚠️ Could not sync campaign mission states: {e}")
                     
             # Add game directory
             final_data['game_directory'] = self.game_directory
             
             data = final_data
             
-            print(f"\n{'='*70}")
-            print("MERGE SUMMARY")
-            print(f"{'='*70}")
+            log_message(logger, f"\n{'='*70}")
+            log_message(logger, "MERGE SUMMARY")
+            log_message(logger, f"{'='*70}")
             if new_campaigns:
-                print(f"✓ New campaigns added: {len(new_campaigns)}")
+                log_message(logger, f"✓ New campaigns added: {len(new_campaigns)}")
                 for name in new_campaigns:
-                    print(f"    - {name}")
+                    log_message(logger, f"    - {name}")
             if updated_campaigns:
-                print(f"✓ Campaigns checked for updates: {len(updated_campaigns)}")
-            print(f"✓ Total campaigns: {len(final_data) - 1}")  # -1 for game_directory key
+                log_message(logger, f"✓ Campaigns checked for updates: {len(updated_campaigns)}")
+            log_message(logger, f"✓ Total campaigns: {len(final_data) - 1}")  # -1 for game_directory key
         else:
             # No existing data - save as new
             data = new_data
@@ -1428,9 +1430,9 @@ class CampaignDateExtractor:
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
         
-        print(f"\n{'='*70}")
-        print(f"✓ Mission dates saved to: {output_file}")
-        print(f"{'='*70}")
+        log_message(logger, f"\n{'='*70}")
+        log_message(logger, f"✓ Mission dates saved to: {output_file}")
+        log_message(logger, f"{'='*70}")
         
         # Print summary (excluding game_directory key)
         campaign_data = {k: v for k, v in data.items() if k != 'game_directory'}
@@ -1441,16 +1443,16 @@ class CampaignDateExtractor:
             for camp in campaign_data.values()
         )
         
-        print(f"\nSummary:")
-        print(f"  Total campaigns: {len(campaign_data)}")
+        log_message(logger, f"\nSummary:")
+        log_message(logger, f"  Total campaigns: {len(campaign_data)}")
         
         # Count excluded
         excluded_count = sum(1 for c in campaign_data.values() if c.get('excluded'))
         active_count = len(campaign_data) - excluded_count
         
         if excluded_count > 0:
-            print(f"  Active campaigns: {active_count}")
-            print(f"  Excluded (WW1): {excluded_count}")
+            log_message(logger, f"  Active campaigns: {active_count}")
+            log_message(logger, f"  Excluded (WW1): {excluded_count}")
         
         total_missions = sum(camp['mission_count'] for camp in campaign_data.values() if not camp.get('excluded'))
         missions_with_dates = sum(
@@ -1458,9 +1460,9 @@ class CampaignDateExtractor:
             for camp in campaign_data.values() if not camp.get('excluded')
         )
         
-        print(f"  Total missions: {total_missions}")
-        print(f"  Missions with dates: {missions_with_dates}")
-        print(f"  Missing dates: {total_missions - missions_with_dates}")
+        log_message(logger, f"  Total missions: {total_missions}")
+        log_message(logger, f"  Missions with dates: {missions_with_dates}")
+        log_message(logger, f"  Missing dates: {total_missions - missions_with_dates}")
         
         # Country breakdown (excluding WW1)
         country_counts = {}
@@ -1472,15 +1474,15 @@ class CampaignDateExtractor:
                 country_counts[country] = country_counts.get(country, 0) + 1
         
         if country_counts:
-            print(f"\n  Active campaigns by country:")
+            log_message(logger, f"\n  Active campaigns by country:")
             for country, count in sorted(country_counts.items()):
-                print(f"    {country}: {count}")
+                log_message(logger, f"    {country}: {count}")
         
         if excluded_count > 0:
-            print(f"\n  Excluded campaigns:")
+            log_message(logger, f"\n  Excluded campaigns:")
             for name, camp in campaign_data.items():
                 if camp.get('excluded'):
-                    print(f"    - {name} ({camp.get('exclusion_reason', 'Unknown')})")
+                    log_message(logger, f"    - {name} ({camp.get('exclusion_reason', 'Unknown')})")
         
         return data
 
@@ -1489,9 +1491,9 @@ def main(args=None):
     """Main entry point"""
     import sys
     
-    print("="*70)
-    print("IL-2 CAMPAIGN PROGRESS TRACKER - Date Extractor")
-    print("="*70)
+    log_message(logger, "="*70)
+    log_message(logger, "IL-2 CAMPAIGN PROGRESS TRACKER - Date Extractor")
+    log_message(logger, "="*70)
     
     if args is None:
         args = sys.argv[1:]
@@ -1509,7 +1511,7 @@ def main(args=None):
     campaigns_folder = None
     
     if output_file.exists() and not force_new:
-        print(f"\n✓ Found existing {output_file}")
+        log_message(logger, f"\n✓ Found existing {output_file}")
         
         try:
             with open(output_file, 'r', encoding='utf-8') as f:
@@ -1521,17 +1523,17 @@ def main(args=None):
                 campaigns_folder = str(Path(game_dir) / 'data' / 'Campaigns')
                 
                 if not auto_mode:
-                    print(f"✓ Game directory: {game_dir}")
-                    print(f"✓ Campaigns folder: {campaigns_folder}")
-                    print(f"\nChecking for new campaigns or missions...")
+                    log_message(logger, f"✓ Game directory: {game_dir}")
+                    log_message(logger, f"✓ Campaigns folder: {campaigns_folder}")
+                    log_message(logger, f"\nChecking for new campaigns or missions...")
             else:
                 if not auto_mode:
-                    print("⚠ Warning: No game directory stored in existing file.")
-                    print("  Will ask for IL-2 path...")
+                    log_message(logger, "⚠ Warning: No game directory stored in existing file.")
+                    log_message(logger, "  Will ask for IL-2 path...")
         except Exception as e:
             if not auto_mode:
-                print(f"⚠ Warning: Could not read existing file: {e}")
-                print("  Will create new file...")
+                log_message(logger, f"⚠ Warning: Could not read existing file: {e}")
+                log_message(logger, "  Will create new file...")
     
     # If no existing data or no game directory, check arguments or ask user
     if not campaigns_folder:
@@ -1548,7 +1550,7 @@ def main(args=None):
             game_dir = select_game_directory_gui()
             
             if not game_dir:
-                print("\n⚠ No directory selected. Exiting.")
+                log_message(logger, "\n⚠ No directory selected. Exiting.")
                 return
             
             # Construct campaigns folder path
@@ -1556,8 +1558,8 @@ def main(args=None):
             
             # Validate path exists
             if not Path(campaigns_folder).exists():
-                print(f"\n⚠ Error: Campaigns folder not found at: {campaigns_folder}")
-                print("  Please check your IL-2 installation path.")
+                log_message(logger, f"\n⚠ Error: Campaigns folder not found at: {campaigns_folder}")
+                log_message(logger, "  Please check your IL-2 installation path.")
                 
                 # Ask if user wants to try again
                 try_again = input("\nTry selecting another folder? (y/n): ").strip().lower()
@@ -1565,14 +1567,14 @@ def main(args=None):
                     return main()  # Recursive call to try again
                 return
             
-            print(f"\n✓ Campaigns folder found: {campaigns_folder}")
+            log_message(logger, f"\n✓ Campaigns folder found: {campaigns_folder}")
     
     # Validate campaigns folder exists
     if not Path(campaigns_folder).exists():
         if not auto_mode:
-            print(f"\n⚠ Error: Campaigns folder not found: {campaigns_folder}")
-            print("  The game directory may have changed.")
-            print("  Run with --force-new to select a new directory.")
+            log_message(logger, f"\n⚠ Error: Campaigns folder not found: {campaigns_folder}")
+            log_message(logger, "  The game directory may have changed.")
+            log_message(logger, "  Run with --force-new to select a new directory.")
         return
     
     # Run extraction
@@ -1592,16 +1594,16 @@ def main(args=None):
         extractor.save_to_json(output_file, existing_data if existing_data else None)
     
     if not auto_mode:
-        print(f"\n{'='*70}")
-        print("COMPLETE!")
-        print(f"{'='*70}")
-        print(f"\n✓ Data saved to: {output_file}")
-        print(f"✓ Configuration: campaign_progress_config.yaml")
-        print(f"\nNext run: Just execute the script - it will auto-update!")
+        log_message(logger, f"\n{'='*70}")
+        log_message(logger, "COMPLETE!")
+        log_message(logger, f"{'='*70}")
+        log_message(logger, f"\n✓ Data saved to: {output_file}")
+        log_message(logger, f"✓ Configuration: campaign_progress_config.yaml")
+        log_message(logger, f"\nNext run: Just execute the script - it will auto-update!")
     
     if not include_ww1:
-        print(f"\nNote: WW1 Flying Circus campaigns excluded by default.")
-        print(f"      Use --include-ww1 flag to include them.")
+        log_message(logger, f"\nNote: WW1 Flying Circus campaigns excluded by default.")
+        log_message(logger, f"      Use --include-ww1 flag to include them.")
 
 
 def select_game_directory_gui():
@@ -1615,13 +1617,13 @@ def select_game_directory_gui():
     from tkinter import filedialog
     import os
     
-    print("\n" + "="*70)
-    print("FIRST TIME SETUP - Select IL-2 Game Directory")
-    print("="*70)
-    print("\nA folder browser will open...")
-    print("Please select your IL-2 Sturmovik installation folder")
-    print("(The main game folder, NOT the Campaigns subfolder)")
-    print("\nExample: IL-2 Sturmovik Battle of Stalingrad")
+    log_message(logger, "\n" + "="*70)
+    log_message(logger, "FIRST TIME SETUP - Select IL-2 Game Directory")
+    log_message(logger, "="*70)
+    log_message(logger, "\nA folder browser will open...")
+    log_message(logger, "Please select your IL-2 Sturmovik installation folder")
+    log_message(logger, "(The main game folder, NOT the Campaigns subfolder)")
+    log_message(logger, "\nExample: IL-2 Sturmovik Battle of Stalingrad")
     
     # Create invisible root window
     root = tk.Tk()
@@ -1653,10 +1655,10 @@ def select_game_directory_gui():
     root.destroy()  # Clean up
     
     if selected_path:
-        print(f"\n✓ Selected: {selected_path}")
+        log_message(logger, f"\n✓ Selected: {selected_path}")
         return selected_path
     else:
-        print("\n⚠ No folder selected")
+        log_message(logger, "\n⚠ No folder selected")
         return None
 
 

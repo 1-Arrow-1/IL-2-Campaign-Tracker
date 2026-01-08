@@ -21,7 +21,10 @@ import json
 import os
 from pathlib import Path
 
+from utils.logging import get_logger, log_message
 from utils.pathing import get_base_path
+
+logger = get_logger(__name__)
 
 # ✅ Configuration constants
 MAX_FILE_SIZE_MB = 50  # Klar definiert in MB
@@ -53,8 +56,8 @@ def deep_urldecode(s, max_iterations=MAX_DECODE_ITERATIONS):
     
     # ✅ Warn if we hit the limit (shouldn't happen in normal usage)
     if iterations >= max_iterations:
-        print(f"⚠️  Warning: Max decode iterations ({max_iterations}) reached")
-        print(f"   String may not be fully decoded: {s[:80]}...")
+        log_message(logger, f"⚠️  Warning: Max decode iterations ({max_iterations}) reached")
+        log_message(logger, f"   String may not be fully decoded: {s[:80]}...")
     
     return s
 
@@ -83,15 +86,15 @@ def parse_campaignsstates(filename):
     
     # Show warning for large files (but still process them)
     if file_size > 5 * 1024 * 1024:  # 5 MB
-        print(f"ℹ️  Large campaign save detected: {file_size:,} bytes")
-        print(f"   This may take a moment to process...")
+        log_message(logger, f"ℹ️  Large campaign save detected: {file_size:,} bytes")
+        log_message(logger, f"   This may take a moment to process...")
     
     # Read and parse file
     with open(filename, encoding="utf-8") as f:
         raw = f.read().strip()
     
     if not raw:
-        print("⚠️  Warning: Campaign save file is empty")
+        log_message(logger, "⚠️  Warning: Campaign save file is empty")
         return {}
     
     campaigns = {}
@@ -101,13 +104,13 @@ def parse_campaignsstates(filename):
     # ✅ Show progress for large files
     show_progress = total_entries > 100
     if show_progress:
-        print(f"   Processing {total_entries} entries", end="", flush=True)
+        log_message(logger, f"   Processing {total_entries} entries", end="", flush=True)
     
     # Split by & to get each campaign entry
     for idx, entry in enumerate(entries):
         # ✅ Show progress dots
         if show_progress and idx > 0 and idx % 50 == 0:
-            print(".", end="", flush=True)
+            log_message(logger, ".", end="", flush=True)
         
         if "=" not in entry:
             continue
@@ -115,7 +118,7 @@ def parse_campaignsstates(filename):
         try:
             key, value = entry.split("=", 1)
         except ValueError:
-            print(f"\n⚠️  Warning: Malformed entry (no '=' found): {entry[:50]}...")
+            log_message(logger, f"\n⚠️  Warning: Malformed entry (no '=' found): {entry[:50]}...")
             continue
         
         if not key.startswith("campaigns/"):
@@ -205,7 +208,7 @@ def parse_campaignsstates(filename):
         campaigns[campaign_name] = params
     
     if show_progress:
-        print()  # New line after progress dots
+        log_message(logger)  # New line after progress dots
     
     return campaigns
 
@@ -232,13 +235,13 @@ def main(states_path=None) -> bool:
     
     # ✅ Better error messages
     if not input_file.exists():
-        print(f"❌ ERROR: {input_file} not found!")
-        print(f"   Expected location: {input_file.absolute()}")
+        log_message(logger, f"❌ ERROR: {input_file} not found!")
+        log_message(logger, f"   Expected location: {input_file.absolute()}")
         return False
     
     try:
-        print(f"📖 Decoding: {input_file}")
-        print(f"   File size: {input_file.stat().st_size:,} bytes")
+        log_message(logger, f"📖 Decoding: {input_file}")
+        log_message(logger, f"   File size: {input_file.stat().st_size:,} bytes")
         
         # Parse campaign states
         data = parse_campaignsstates(str(input_file))
@@ -255,7 +258,7 @@ def main(states_path=None) -> bool:
                 with open(mission_dates_file, "r", encoding="utf-8") as f:
                     mission_dates_data = json.load(f)
                 if not isinstance(mission_dates_data, dict):
-                    print(f"⚠️  Invalid mission dates format in {mission_dates_file}")
+                    log_message(logger, f"⚠️  Invalid mission dates format in {mission_dates_file}")
                     mission_dates_data = {}
                 game_directory_str = mission_dates_data.get("game_directory", "")
                 if game_directory_str:
@@ -266,20 +269,20 @@ def main(states_path=None) -> bool:
                     if isinstance(data, dict) and data.get("is_ww1", False)
                 }
             except Exception as e:
-                print(f"⚠️  Could not read game directory from {mission_dates_file}: {e}")
+                log_message(logger, f"⚠️  Could not read game directory from {mission_dates_file}: {e}")
 
         # Fallback: current directory if not found
         if not game_directory or not game_directory.exists():
-            print("⚠️  Using current directory as fallback (game_directory not found)")
+            log_message(logger, "⚠️  Using current directory as fallback (game_directory not found)")
             game_directory = Path.cwd()
 
         campaigns_root = game_directory / "data" / "Campaigns"
 
         if not campaigns_root.exists():
-            print(f"⚠️  Campaigns directory not found: {campaigns_root}")
+            log_message(logger, f"⚠️  Campaigns directory not found: {campaigns_root}")
         else:
             existing_campaigns = {folder.name.lower() for folder in campaigns_root.iterdir() if folder.is_dir()}
-            print(f"📁 Found {len(existing_campaigns)} campaign folders in {campaigns_root}")
+            log_message(logger, f"📁 Found {len(existing_campaigns)} campaign folders in {campaigns_root}")
 
             filtered_data = {}
             skipped_count = 0
@@ -288,20 +291,20 @@ def main(states_path=None) -> bool:
                 campaign_name = key.lower()
                 # 🟡 NEU: WW1-Erkennung – Kampagne überspringen, falls markiert
                 if campaign_name in ww1_campaigns or campaign.get("is_ww1", False):
-                    print(f"  ⚠️  Skipping WW1 campaign: {campaign_name}")
+                    log_message(logger, f"  ⚠️  Skipping WW1 campaign: {campaign_name}")
                     continue
                 if campaign_name in existing_campaigns:
                     filtered_data[key] = campaign
                 else:
                     skipped_count += 1
                     if skipped_count <= 5:  # Only show first 5 to avoid spam
-                        print(f"  ⚠️  Skipping orphaned campaign: {campaign_name}")
+                        log_message(logger, f"  ⚠️  Skipping orphaned campaign: {campaign_name}")
             
             if skipped_count > 5:
-                print(f"  ⚠️  ... and {skipped_count - 5} more orphaned campaigns")
+                log_message(logger, f"  ⚠️  ... and {skipped_count - 5} more orphaned campaigns")
 
             data = filtered_data
-            print(f"✅ {len(data)} campaigns remain after filtering")
+            log_message(logger, f"✅ {len(data)} campaigns remain after filtering")
         
         # ✅ Write to JSON file with atomic write pattern
         tmp_output = output_file.with_suffix('.tmp')
@@ -312,24 +315,24 @@ def main(states_path=None) -> bool:
         # Atomic replace
         tmp_output.replace(output_file)
         
-        print(f"✅ Decoded {len(data)} campaigns")
-        print(f"✅ Saved to: {output_file}")
+        log_message(logger, f"✅ Decoded {len(data)} campaigns")
+        log_message(logger, f"✅ Saved to: {output_file}")
         return True
         
     except FileNotFoundError as e:
-        print(f"❌ ERROR: {e}")
+        log_message(logger, f"❌ ERROR: {e}")
         return False
     
     except ValueError as e:
-        print(f"❌ ERROR: {e}")
+        log_message(logger, f"❌ ERROR: {e}")
         return False
     
     except json.JSONDecodeError as e:
-        print(f"❌ ERROR: Failed to parse mission dates JSON: {e}")
+        log_message(logger, f"❌ ERROR: Failed to parse mission dates JSON: {e}")
         return False
     
     except Exception as e:
-        print(f"❌ ERROR decoding save file: {e}")
+        log_message(logger, f"❌ ERROR decoding save file: {e}")
         import traceback
         traceback.print_exc()
         return False

@@ -36,15 +36,14 @@ from datetime import datetime
 import sys
 import io
 import contextlib
-import logging
-from logging.handlers import RotatingFileHandler
 
 from utils.il2_paths import resolve_il2_paths
+from utils.logging import get_logger, log_message
 from utils.pathing import get_base_path
 # ================================================================
 # DEBUG: psutil import test
 # ================================================================
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 logger.debug("sys.executable: %s", sys.executable)
 logger.debug("sys.frozen: %s", getattr(sys, 'frozen', False))
 
@@ -113,7 +112,7 @@ class CampaignMonitor:
         if il2_states_path:
             self.campaign_file = Path(il2_states_path)
             self.campaigns_folder = self.campaign_file.parent
-            print(f"[monitor] Using provided path: {self.campaign_file}")
+            log_message(self.logger, f"[monitor] Using provided path: {self.campaign_file}")
         else:
             # Auto-detect (backward compatibility)
             paths = resolve_il2_paths(self.script_dir)
@@ -148,15 +147,15 @@ class CampaignMonitor:
             if use_file_watcher
             else "🌍 LEGACY MODE (Polling, no Campaign Watcher)"
         )
-        print(f"\n{'='*70}")
-        print(f"CAMPAIGN MONITOR - {mode}")
-        print(f"{'='*70}")
-        print(f"Check interval: {check_interval} second(s)")
+        log_message(self.logger, f"\n{'='*70}")
+        log_message(self.logger, f"CAMPAIGN MONITOR - {mode}")
+        log_message(self.logger, f"{'='*70}")
+        log_message(self.logger, f"Check interval: {check_interval} second(s)")
         if use_file_watcher:
-            print(f"Debounce: {self.debounce_seconds}s (prevents race conditions)")
-            print(f"⚡ Fast mode enabled - popups appear within 2-3 seconds!")
-        print(f"Log rotation: 5 MB max, 3 backups")
-        print(f"{'='*70}\n")
+            log_message(self.logger, f"Debounce: {self.debounce_seconds}s (prevents race conditions)")
+            log_message(self.logger, f"⚡ Fast mode enabled - popups appear within 2-3 seconds!")
+        log_message(self.logger, "Log rotation: 5 MB max, 3 backups")
+        log_message(self.logger, f"{'='*70}\n")
         
         
         # 🟡 WW1 Filter - Skip user-marked campaigns
@@ -165,7 +164,7 @@ class CampaignMonitor:
     def _restart_file_monitor(self):
         """Restart the main campaignsstates.txt file watcher."""
         try:
-            print("[Monitor] 🔁 Restarting main file watcher after campaign rescan...")
+            log_message(self.logger, "[Monitor] 🔁 Restarting main file watcher after campaign rescan...")
             self.last_hash = None
             self.last_campaigns_hash = None
             self.processing = False
@@ -175,7 +174,7 @@ class CampaignMonitor:
 
             # Optional: kleine Pause für Stabilität
             time.sleep(2)
-            print("[Monitor] ✅ File watcher re-initialized, monitoring resumed.")
+            log_message(self.logger, "[Monitor] ✅ File watcher re-initialized, monitoring resumed.")
         except Exception as e:
             self.log(f"⚠️ Could not restart file watcher: {e}")
             
@@ -195,11 +194,11 @@ class CampaignMonitor:
                     game_dir_str = data.get("game_directory", "")
                     if game_dir_str:
                         self.game_dir = Path(game_dir_str).expanduser().resolve()
-                        print(f"[Monitor] ✅ Loaded game_directory from JSON: {self.game_dir}")
+                        log_message(self.logger, f"[Monitor] ✅ Loaded game_directory from JSON: {self.game_dir}")
                     else:
-                        print("[Monitor] ⚠️ game_directory key not found in JSON")
+                        log_message(self.logger, "[Monitor] ⚠️ game_directory key not found in JSON")
             except Exception as e:
-                print(f"[Monitor] ⚠️ Failed to read campaign_mission_dates.json: {e}")
+                log_message(self.logger, f"[Monitor] ⚠️ Failed to read campaign_mission_dates.json: {e}")
 
         # 🟡 Build correct campaigns path <game_dir>\data\Campaigns
         if getattr(self, "game_dir", None):
@@ -207,13 +206,13 @@ class CampaignMonitor:
             if campaign_root.exists():
                 self.campaigns_folder = campaign_root
             else:
-                print(f"[Monitor] ⚠️ Campaigns folder not found: {campaign_root}")
+                log_message(self.logger, f"[Monitor] ⚠️ Campaigns folder not found: {campaign_root}")
                 return
         else:
-            print("[Monitor] ⚠️ No game_dir set - watcher aborted.")
+            log_message(self.logger, "[Monitor] ⚠️ No game_dir set - watcher aborted.")
             return
 
-        print(f"[Monitor] 🟢 Watching {self.campaigns_folder} for new campaigns...")
+        log_message(self.logger, f"[Monitor] 🟢 Watching {self.campaigns_folder} for new campaigns...")
         self.logger.debug("entering monitoring loop...")
 
         # 🟢 Local helper to snapshot campaign structure
@@ -247,7 +246,10 @@ class CampaignMonitor:
             }
 
             if added or removed or changed:
-                print(f"[Monitor] 🔄 Added: {added} | Removed: {removed} | Changed: {changed} - rescanning...")
+                log_message(
+                    self.logger,
+                    f"[Monitor] 🔄 Added: {added} | Removed: {removed} | Changed: {changed} - rescanning...",
+                )
                 self.log(f"[Monitor] 🔄 Added: {added} | Removed: {removed} | Changed: {changed} - rescanning...")
                 prev_snapshot = current_snapshot
 
@@ -280,7 +282,7 @@ class CampaignMonitor:
                         import step1_extract_mission_dates
                         step1_extract_mission_dates.main(args=["--auto"])
 
-                    print("[Monitor] ✅ Extraction completed, resuming monitoring.")
+                    log_message(self.logger, "[Monitor] ✅ Extraction completed, resuming monitoring.")
 
                     # 🟢 Restart main file watcher (campaignsstates.txt watcher)
                     self._restart_file_monitor()
@@ -313,25 +315,25 @@ class CampaignMonitor:
                         custom_to_validate = [c for c in added if c not in stock_campaigns]
 
                         if custom_to_validate:
-                            print(f"[Monitor] 🟡 New custom campaigns detected: {custom_to_validate}")
+                            log_message(self.logger, f"[Monitor] 🟡 New custom campaigns detected: {custom_to_validate}")
                             #self.log(f"[Monitor] 🟡 New custom campaigns detected: {custom_to_validate}")
-                            print("[Monitor] 🪶 Launching country validator GUI for user verification...")
+                            log_message(self.logger, "[Monitor] 🪶 Launching country validator GUI for user verification...")
 
                             validate_countries(str(mission_json))
-                            print("[Monitor] ✅ Validation complete.")
+                            log_message(self.logger, "[Monitor] ✅ Validation complete.")
 
                         else:
-                            print("[Monitor] 💤 No custom campaigns needing validation found.")
+                            log_message(self.logger, "[Monitor] 💤 No custom campaigns needing validation found.")
 
                     except Exception as e:
-                        print(f"⚠️ Could not perform validation check: {e}")
+                        log_message(self.logger, f"⚠️ Could not perform validation check: {e}")
 
                     # 🟢 Restart main file watcher (campaignsstates.txt watcher)
                     self._restart_file_monitor()
                 except subprocess.CalledProcessError as e:
-                    print(f"⚠️ step1_extract_mission_dates exited with error: {e}")
+                    log_message(self.logger, f"⚠️ step1_extract_mission_dates exited with error: {e}")
                 except Exception as e:
-                    print(f"⚠️ Could not rescan campaigns: {e}")
+                    log_message(self.logger, f"⚠️ Could not rescan campaigns: {e}")
      
                 
     def _setup_logging(self):
@@ -339,32 +341,7 @@ class CampaignMonitor:
         ✅ FIX #2: Setup rotating log handler
         Max 5 MB per file, keeps 3 backup files
         """
-        # Create logger
-        self.logger = logging.getLogger('CampaignMonitor')
-        self.logger.setLevel(logging.DEBUG if self.debug else logging.INFO)
-        
-        # Remove existing handlers
-        self.logger.handlers.clear()
-        
-        # Rotating file handler (5 MB max, 3 backups)
-        file_handler = RotatingFileHandler(
-            self.log_file,
-            maxBytes=5 * 1024 * 1024,  # 5 MB
-            backupCount=3,
-            encoding='utf-8'
-        )
-        
-        # Format with timestamp
-        formatter = logging.Formatter('[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-        file_handler.setFormatter(formatter)
-        
-        # Console handler (also print to console)
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setFormatter(formatter)
-        
-        # Add both handlers
-        self.logger.addHandler(file_handler)
-        self.logger.addHandler(console_handler)
+        self.logger = get_logger('CampaignMonitor', log_path=self.log_file, debug=self.debug)
     
     def _load_game_directory(self):
         """Load game directory from mission dates file"""

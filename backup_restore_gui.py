@@ -18,6 +18,9 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from typing import Optional, Dict, List
 
+from utils.logging import get_logger, log_message
+
+logger = get_logger(__name__)
 
 class BackupRestoreGUI:
     """GUI for selecting and restoring campaign backups"""
@@ -120,7 +123,7 @@ class BackupRestoreGUI:
             return backups
             
         except Exception as e:
-            print(f"⚠️ Could not load backup index: {e}")
+            log_message(logger, f"⚠️ Could not load backup index: {e}")
             return []
     
     def _format_size(self, size_bytes: int) -> str:
@@ -344,26 +347,26 @@ class BackupRestoreGUI:
             backup_path = backup_info['backup_path']
             restore_path = self. il2_states_path
             
-            print()
-            print("=" * 70)
-            print("🔄 RESTORING BACKUP")
-            print("=" * 70)
-            print(f"  Backup file: {backup_info['backup_file']}")
-            print(f"  Backup path: {backup_path}")
-            print(f"  Target path: {restore_path}")
-            print()
+            log_message(logger)
+            log_message(logger, "=" * 70)
+            log_message(logger, "🔄 RESTORING BACKUP")
+            log_message(logger, "=" * 70)
+            log_message(logger, f"  Backup file: {backup_info['backup_file']}")
+            log_message(logger, f"  Backup path: {backup_path}")
+            log_message(logger, f"  Target path: {restore_path}")
+            log_message(logger)
             
             # ================================================================
             # Step 1: Verify backup exists
             # ================================================================
             if not backup_path. exists():
-                print(f"❌ ERROR: Backup file not found!")
-                print(f"   Path: {backup_path}")
+                log_message(logger, f"❌ ERROR: Backup file not found!")
+                log_message(logger, f"   Path: {backup_path}")
                 input("Press Enter to exit...")
                 self.result = 'cancelled'
                 return
             
-            print(f"  ✓ Step 1: Backup file exists ({backup_info['size']})")
+            log_message(logger, f"  ✓ Step 1: Backup file exists ({backup_info['size']})")
             
             # ================================================================
             # Step 2: Create a COPY of the backup file (preserve original)
@@ -372,9 +375,9 @@ class BackupRestoreGUI:
             
             try:
                 shutil.copy2(backup_path, backup_copy_path)
-                print(f"  ✓ Step 2: Created backup copy:  {backup_copy_path. name}")
+                log_message(logger, f"  ✓ Step 2: Created backup copy:  {backup_copy_path. name}")
             except Exception as e: 
-                print(f"❌ ERROR:  Could not create backup copy:  {e}")
+                log_message(logger, f"❌ ERROR:  Could not create backup copy:  {e}")
                 input("Press Enter to exit...")
                 self.result = 'cancelled'
                 return
@@ -385,10 +388,10 @@ class BackupRestoreGUI:
             if restore_path.exists():
                 try:
                     restore_path.unlink()
-                    print(f"  ✓ Step 3: Deleted current campaignsstates.txt")
+                    log_message(logger, f"  ✓ Step 3: Deleted current campaignsstates.txt")
                 except PermissionError: 
-                    print(f"❌ ERROR:  Cannot delete campaignsstates.txt - file is locked!")
-                    print(f"   Make sure IL-2 is not running.")
+                    log_message(logger, f"❌ ERROR:  Cannot delete campaignsstates.txt - file is locked!")
+                    log_message(logger, f"   Make sure IL-2 is not running.")
                     # Clean up temp file
                     if backup_copy_path.exists():
                         backup_copy_path.unlink()
@@ -396,7 +399,7 @@ class BackupRestoreGUI:
                     self.result = 'cancelled'
                     return
                 except Exception as e: 
-                    print(f"❌ ERROR:  Could not delete current file: {e}")
+                    log_message(logger, f"❌ ERROR:  Could not delete current file: {e}")
                     # Clean up temp file
                     if backup_copy_path.exists():
                         backup_copy_path.unlink()
@@ -404,16 +407,16 @@ class BackupRestoreGUI:
                     self. result = 'cancelled'
                     return
             else:
-                print(f"  ℹ️ Step 3: No current campaignsstates.txt to remove")
+                log_message(logger, f"  ℹ️ Step 3: No current campaignsstates.txt to remove")
             
             # ================================================================
             # Step 4: Rename the backup copy to campaignsstates.txt
             # ================================================================
             try:
                 backup_copy_path.rename(restore_path)
-                print(f"  ✓ Step 4: Renamed backup copy to campaignsstates. txt")
+                log_message(logger, f"  ✓ Step 4: Renamed backup copy to campaignsstates. txt")
             except Exception as e: 
-                print(f"❌ ERROR:  Could not rename backup copy: {e}")
+                log_message(logger, f"❌ ERROR:  Could not rename backup copy: {e}")
                 # Try to clean up
                 if backup_copy_path.exists():
                     backup_copy_path.unlink()
@@ -426,9 +429,9 @@ class BackupRestoreGUI:
             # ================================================================
             if restore_path.exists():
                 new_size = restore_path.stat().st_size
-                print(f"  ✓ Step 5: Verified - new file exists ({new_size} bytes)")
+                log_message(logger, f"  ✓ Step 5: Verified - new file exists ({new_size} bytes)")
             else: 
-                print(f"❌ ERROR: campaignsstates.txt was not created!")
+                log_message(logger, f"❌ ERROR: campaignsstates.txt was not created!")
                 input("Press Enter to exit...")
                 self.result = 'cancelled'
                 return
@@ -437,20 +440,20 @@ class BackupRestoreGUI:
             # Step 6: Verify original backup is still intact
             # ================================================================
             if backup_path.exists():
-                print(f"  ✓ Step 6: Original backup preserved:  {backup_info['backup_file']}")
+                log_message(logger, f"  ✓ Step 6: Original backup preserved:  {backup_info['backup_file']}")
             else:
-                print(f"  ⚠️ Warning: Original backup no longer exists")
+                log_message(logger, f"  ⚠️ Warning: Original backup no longer exists")
             
-            print()
-            print("=" * 70)
-            print("✅ BACKUP RESTORED SUCCESSFULLY!")
-            print("=" * 70)
-            print()
-            print(f"  Restored from: {backup_info['display_date']}")
-            print(f"  Original backup is still available for future restores.")
-            print()
-            print("  The tracker will now re-process the restored state...")
-            print()
+            log_message(logger)
+            log_message(logger, "=" * 70)
+            log_message(logger, "✅ BACKUP RESTORED SUCCESSFULLY!")
+            log_message(logger, "=" * 70)
+            log_message(logger)
+            log_message(logger, f"  Restored from: {backup_info['display_date']}")
+            log_message(logger, f"  Original backup is still available for future restores.")
+            log_message(logger)
+            log_message(logger, "  The tracker will now re-process the restored state...")
+            log_message(logger)
             
             # ✅ NO RESTART NEEDED! Just set result and let launcher continue
             self.result = 'restored'
@@ -460,11 +463,11 @@ class BackupRestoreGUI:
             time.sleep(2)
             
         except Exception as e:
-            print()
-            print(f"❌ ERROR during restore: {e}")
+            log_message(logger)
+            log_message(logger, f"❌ ERROR during restore: {e}")
             import traceback
             traceback.print_exc()
-            print()
+            log_message(logger)
             input("Press Enter to exit...")
             self.result = 'cancelled'
     
@@ -530,7 +533,7 @@ def check_and_show_backup_gui(il2_states_path:  Path) -> str:
             return 'no_backups'
         
     except Exception as e:
-        print(f"⚠️ Could not check backups: {e}")
+        log_message(logger, f"⚠️ Could not check backups: {e}")
         return 'no_backups'
     
     # Get current hash
@@ -567,7 +570,7 @@ def check_and_show_backup_gui(il2_states_path:  Path) -> str:
     
     if num_backups == 0:
         # No valid backups
-        print("ℹ️ No valid backups found")
+        log_message(logger, "ℹ️ No valid backups found")
         return 'no_backups'
     
     elif num_backups == 1:
@@ -576,15 +579,15 @@ def check_and_show_backup_gui(il2_states_path:  Path) -> str:
         
         if only_backup['hash'] == current_hash: 
             # The only backup IS the current state - no point showing GUI
-            print(f"ℹ️ Only one backup exists and it's already active - skipping GUI")
+            log_message(logger, f"ℹ️ Only one backup exists and it's already active - skipping GUI")
             return 'skipped'
         else: 
             # One backup exists but it's different - show GUI
-            print(f"ℹ️ One backup available (not current state) - showing GUI")
+            log_message(logger, f"ℹ️ One backup available (not current state) - showing GUI")
     
     else: 
         # Multiple backups - always show GUI
-        print(f"ℹ️ {num_backups} backups available - showing GUI")
+        log_message(logger, f"ℹ️ {num_backups} backups available - showing GUI")
     
     # Show GUI
     gui = BackupRestoreGUI(il2_states_path, index_path)
@@ -602,14 +605,14 @@ def restart_tracker():
     3. No DLL extraction issues
     4. User sees continuous flow
     """
-    print()
-    print("=" * 70)
-    print("ℹ️  CONTINUING WITHOUT RESTART")
-    print("=" * 70)
-    print()
-    print("  The tracker will re-decode and re-process the restored backup.")
-    print("  This is faster and more reliable than restarting!")
-    print()
+    log_message(logger)
+    log_message(logger, "=" * 70)
+    log_message(logger, "ℹ️  CONTINUING WITHOUT RESTART")
+    log_message(logger, "=" * 70)
+    log_message(logger)
+    log_message(logger, "  The tracker will re-decode and re-process the restored backup.")
+    log_message(logger, "  This is faster and more reliable than restarting!")
+    log_message(logger)
     # Just return - let the launcher continue
     return
 
@@ -618,9 +621,9 @@ def restart_tracker():
 # Test Mode
 # =============================================================================
 if __name__ == "__main__":
-    print("=" * 60)
-    print("Backup Restore GUI - Test Mode")
-    print("=" * 60)
+    log_message(logger, "=" * 60)
+    log_message(logger, "Backup Restore GUI - Test Mode")
+    log_message(logger, "=" * 60)
     
     # Try to find IL-2 states path for testing
     # Check common locations
@@ -645,7 +648,7 @@ if __name__ == "__main__":
                             test_paths. insert(0, potential)
                             break
         except Exception as e: 
-            print(f"Could not load config: {e}")
+            log_message(logger, f"Could not load config: {e}")
     
     # Find first existing path
     test_path = None
@@ -655,15 +658,15 @@ if __name__ == "__main__":
             break
     
     if test_path:
-        print(f"Found:  {test_path}")
-        print()
+        log_message(logger, f"Found:  {test_path}")
+        log_message(logger)
         result = check_and_show_backup_gui(test_path)
-        print(f"\nResult: {result}")
+        log_message(logger, f"\nResult: {result}")
         
         if result == 'restored':
-            print("Would restart tracker here...")
+            log_message(logger, "Would restart tracker here...")
     else:
-        print("No campaignsstates.txt found for testing")
-        print("Checked:")
+        log_message(logger, "No campaignsstates.txt found for testing")
+        log_message(logger, "Checked:")
         for p in test_paths: 
-            print(f"  - {p}")
+            log_message(logger, f"  - {p}")

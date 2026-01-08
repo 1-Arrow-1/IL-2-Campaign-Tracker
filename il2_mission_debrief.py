@@ -14,7 +14,10 @@ import os, re, json, yaml
 from collections import defaultdict
 from pathlib import Path
 
+from utils.logging import get_logger, log_message
 from utils.pathing import get_base_path
+
+logger = get_logger(__name__)
 
 # ==========================================================
 # === GameObject ==========================================
@@ -163,7 +166,7 @@ class MissionDebriefParser:
                         self._s(ln, r"TYPE:([^\r\n]+?)\s+COUNTRY:") or self._s(ln, r"TYPE:([^ ]+)")
                     )
                     # Debug output (optional)
-                    print(f"[DEBUG] Player detected: {self.stats.player_name} (PLID={plid}, PID={pid})")
+                    log_message(logger, f"[DEBUG] Player detected: {self.stats.player_name} (PLID={plid}, PID={pid})")
                 gid = self._i(ln, r"AID:(\d+)")
                 self.stats.add_object(GameObject(gid,
                     self._s(ln, r"NAME:([^ ]+)"),
@@ -280,7 +283,7 @@ class MissionDebriefParser:
                     botid == self.stats.player_pid and parentid == self.stats.player_plid):
                     self.stats.pilot_separation_time = t  # Store time (ticks)
                     if self.verbose:
-                        print(f"  Pilot separation detected at {ts} (T:{t})")
+                        log_message(logger, f"  Pilot separation detected at {ts} (T:{t})")
 
             elif "AType:6" in ln or "AType:7" in ln:  # ✅ Landing / Crash / Bailout
                 pid = self._i(ln, r"PID:(-?\d+)")
@@ -424,14 +427,14 @@ class MissionDebriefParser:
                         self.stats.final_state = "Crashed (Wounded)"
                     else:
                         self.stats.final_state = "Crashed"
-                    print(f"[CRASH-EJECT] Heavy aircraft damage before separation - status set to Crashed")
+                    log_message(logger, f"[CRASH-EJECT] Heavy aircraft damage before separation - status set to Crashed")
                 else:
                     # No heavy damage → normal bailout
                     if self.stats.wounded:
                         self.stats.final_state = "Bailout (Wounded)"
                     else:
                         self.stats.final_state = "Bailout"
-                    print(f"[BAILOUT] Mission ended mid-bailout - status set to Bailout")
+                    log_message(logger, f"[BAILOUT] Mission ended mid-bailout - status set to Bailout")
 
         return self.stats
 
@@ -744,7 +747,7 @@ class MissionDebriefParser:
         
         with open(out_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
-        print(f"✓ JSON exported to {out_path}")
+        log_message(logger, f"✓ JSON exported to {out_path}")
 
     # ------------------------------------------------------
     @staticmethod
@@ -769,7 +772,7 @@ def main(args=None):
         args = sys.argv[1:]
 
     if len(args) < 1:
-        print("Usage: python il2_mission_debrief.py <missionReport.txt>")
+        log_message(logger, "Usage: python il2_mission_debrief.py <missionReport.txt>")
         return False
 
     f = args[0]

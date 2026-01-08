@@ -20,12 +20,15 @@ from typing import Dict, Iterable, List, Set, Tuple
 
 from decode_campaign_usersave1 import main as decode_campaignsstates
 from decode_campaign_usersave1 import parse_campaignsstates
+from utils.logging import get_logger, log_message
 from utils.il2_paths import (
     find_campaignsstates_path,
     read_game_directory,
     resolve_campaigns_dir,
 )
 from utils.popup_state import load_popup_seen, save_popup_seen
+
+logger = get_logger(__name__)
 
 MISSION_PATTERNS = ("*.Mission*", "*.mission*", "*.msnbin", "*.MSNBIN")
 
@@ -92,7 +95,7 @@ def _encode_campaignsstates(campaigns: Dict[str, dict]) -> str:
 
 def _create_sync_backup(states_path: Path) -> Path | None:
     if not states_path.exists():
-        print(f"⚠️  {states_path} not found - cannot backup")
+        log_message(logger, f"⚠️  {states_path} not found - cannot backup")
         return None
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -101,10 +104,10 @@ def _create_sync_backup(states_path: Path) -> Path | None:
 
     try:
         shutil.copy2(states_path, backup_path)
-        print(f"✓ Backup created: {backup_path}")
+        log_message(logger, f"✓ Backup created: {backup_path}")
         return backup_path
     except Exception as exc:
-        print(f"❌ Backup failed: {exc}")
+        log_message(logger, f"❌ Backup failed: {exc}")
         return None
 
 
@@ -134,7 +137,7 @@ def _update_campaign_mission_dates(
         with open(mission_dates_path, "r", encoding="utf-8") as file:
             mission_dates = json.load(file)
     except Exception as exc:
-        print(f"⚠️  Could not read {mission_dates_path.name}: {exc}")
+        log_message(logger, f"⚠️  Could not read {mission_dates_path.name}: {exc}")
         return False, []
 
     updated = False
@@ -174,10 +177,10 @@ def _update_campaign_mission_dates(
         with open(mission_dates_path, "w", encoding="utf-8") as file:
             json.dump(mission_dates, file, indent=2, ensure_ascii=False)
     except Exception as exc:
-        print(f"⚠️  Could not save {mission_dates_path.name}: {exc}")
+        log_message(logger, f"⚠️  Could not save {mission_dates_path.name}: {exc}")
         return False, []
 
-    print(f"✓ {mission_dates_path.name} updated")
+    log_message(logger, f"✓ {mission_dates_path.name} updated")
     return True, removed_summary
 
 
@@ -201,11 +204,11 @@ def _prune_campaign_events(
         with open(events_path, "r", encoding="utf-8") as file:
             events_data = json.load(file)
     except Exception as exc:
-        print(f"⚠️  Could not read {events_path.name}: {exc}")
+        log_message(logger, f"⚠️  Could not read {events_path.name}: {exc}")
         return False
 
     if not isinstance(events_data, dict):
-        print(f"⚠️  Invalid {events_path.name} format; skipping cleanup.")
+        log_message(logger, f"⚠️  Invalid {events_path.name} format; skipping cleanup.")
         return False
 
     updated = False
@@ -238,10 +241,10 @@ def _prune_campaign_events(
         with open(events_path, "w", encoding="utf-8") as file:
             json.dump(events_data, file, indent=2, ensure_ascii=False)
     except Exception as exc:
-        print(f"⚠️  Could not save {events_path.name}: {exc}")
+        log_message(logger, f"⚠️  Could not save {events_path.name}: {exc}")
         return False
 
-    print(f"✓ {events_path.name} cleaned")
+    log_message(logger, f"✓ {events_path.name} cleaned")
     return True
 
 
@@ -279,7 +282,7 @@ def _prune_popup_seen(
 
     save_popup_seen(popup_seen_path, popup_data)
 
-    print(f"✓ {popup_seen_path.name} cleaned")
+    log_message(logger, f"✓ {popup_seen_path.name} cleaned")
     return True
 
 
@@ -294,11 +297,11 @@ def _prune_completion_state(
         with open(completion_state_path, "r", encoding="utf-8") as file:
             state_data = json.load(file)
     except Exception as exc:
-        print(f"⚠️  Could not read {completion_state_path.name}: {exc}")
+        log_message(logger, f"⚠️  Could not read {completion_state_path.name}: {exc}")
         return False
 
     if not isinstance(state_data, dict):
-        print(f"⚠️  Invalid {completion_state_path.name} format; skipping cleanup.")
+        log_message(logger, f"⚠️  Invalid {completion_state_path.name} format; skipping cleanup.")
         return False
 
     updated = False
@@ -324,10 +327,10 @@ def _prune_completion_state(
         with open(completion_state_path, "w", encoding="utf-8") as file:
             json.dump(state_data, file, indent=2, ensure_ascii=False)
     except Exception as exc:
-        print(f"⚠️  Could not save {completion_state_path.name}: {exc}")
+        log_message(logger, f"⚠️  Could not save {completion_state_path.name}: {exc}")
         return False
 
-    print(f"✓ {completion_state_path.name} cleaned")
+    log_message(logger, f"✓ {completion_state_path.name} cleaned")
     return True
 
 
@@ -340,16 +343,16 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
         states_path_obj = Path(states_path)
 
     if not states_path_obj or not states_path_obj.exists():
-        print("❌ campaignsstates.txt not found. Aborting sync.")
+        log_message(logger, "❌ campaignsstates.txt not found. Aborting sync.")
         return False
 
     campaigns_dir = resolve_campaigns_dir(game_directory)
     if not campaigns_dir.exists():
-        print(f"⚠️  Campaigns directory not found: {campaigns_dir}")
+        log_message(logger, f"⚠️  Campaigns directory not found: {campaigns_dir}")
         return False
 
-    print(f"Using campaignsstates.txt: {states_path_obj}")
-    print(f"Using campaigns directory: {campaigns_dir}")
+    log_message(logger, f"Using campaignsstates.txt: {states_path_obj}")
+    log_message(logger, f"Using campaigns directory: {campaigns_dir}")
 
     campaigns = parse_campaignsstates(str(states_path_obj))
     on_disk = _collect_campaign_missions(campaigns_dir)
@@ -366,7 +369,7 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
         folder_key = campaign_name.lower()
         on_disk_missions = on_disk.get(folder_key)
         if on_disk_missions is None:
-            print(f"⚠️  Campaign folder missing on disk: {campaign_name}")
+            log_message(logger, f"⚠️  Campaign folder missing on disk: {campaign_name}")
             continue
 
         completed = params.get("completedMissionsByFileName", {}) or {}
@@ -389,12 +392,12 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
         params["characterStatisticsByFileName"] = stats
 
     if not removed_summary and not added_summary:
-        print("✓ No campaign state updates required.")
+        log_message(logger, "✓ No campaign state updates required.")
         if mission_dates_updated:
-            print("\nSUMMARY")
-            print("=" * 70)
+            log_message(logger, "\nSUMMARY")
+            log_message(logger, "=" * 70)
             for campaign_name, mission_ids in mission_dates_removed:
-                print(
+                log_message(logger, 
                     f"Removed {len(mission_ids)} mission(s) from campaign_mission_dates.json for "
                     f"{campaign_name}: {', '.join(mission_ids)}"
                 )
@@ -402,18 +405,18 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
         return False
 
     if not removed_summary:
-        print("✓ No campaign state removals required.")
-        print("ℹ️  New missions detected on disk will only update campaign_mission_dates.json.")
+        log_message(logger, "✓ No campaign state removals required.")
+        log_message(logger, "ℹ️  New missions detected on disk will only update campaign_mission_dates.json.")
         for campaign_name, mission_ids in added_summary:
-            print(
+            log_message(logger, 
                 f"Detected {len(mission_ids)} new mission(s) for {campaign_name}: "
                 f"{', '.join(mission_ids)}"
             )
         if mission_dates_updated:
-            print("\nSUMMARY")
-            print("=" * 70)
+            log_message(logger, "\nSUMMARY")
+            log_message(logger, "=" * 70)
             for campaign_name, mission_ids in mission_dates_removed:
-                print(
+                log_message(logger, 
                     f"Removed {len(mission_ids)} mission(s) from campaign_mission_dates.json for "
                     f"{campaign_name}: {', '.join(mission_ids)}"
                 )
@@ -422,61 +425,61 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
         
     backup_path = _create_sync_backup(states_path_obj)
     if not backup_path:
-        print("❌ Backup failed; aborting sync.")
+        log_message(logger, "❌ Backup failed; aborting sync.")
         return False
 
     encoded = _encode_campaignsstates(campaigns)
     states_path_obj.write_text(encoded, encoding="utf-8")
-    print("✓ campaignsstates.txt updated")
+    log_message(logger, "✓ campaignsstates.txt updated")
 
     removed_by_campaign = {
         campaign_name: set(mission_ids) for campaign_name, mission_ids in removed_summary
     }
 
-    print("\nCleaning stale campaign state artifacts...")
+    log_message(logger, "\nCleaning stale campaign state artifacts...")
     _prune_campaign_events(removed_by_campaign)
     _prune_popup_seen(removed_by_campaign)
     _prune_completion_state(removed_by_campaign)
 
-    print("\nSUMMARY")
-    print("=" * 70)
+    log_message(logger, "\nSUMMARY")
+    log_message(logger, "=" * 70)
     for campaign_name, mission_ids in removed_summary:
-        print(
+        log_message(logger, 
             f"Removed {len(mission_ids)} missing mission(s) from {campaign_name}: "
             f"{', '.join(mission_ids)}"
         )
     for campaign_name, mission_ids in added_summary:
-        print(
+        log_message(logger, 
             f"Detected {len(mission_ids)} new mission(s) for {campaign_name} (no state update): "
             f"{', '.join(mission_ids)}"
         )
     if mission_dates_updated:
         for campaign_name, mission_ids in mission_dates_removed:
-            print(
+            log_message(logger, 
                 f"Removed {len(mission_ids)} mission(s) from campaign_mission_dates.json for "
                 f"{campaign_name}: {', '.join(mission_ids)}"
             )
             
-    print("\nRe-decoding campaignsstates.txt to update campaigns_decoded.json...")
+    log_message(logger, "\nRe-decoding campaignsstates.txt to update campaigns_decoded.json...")
     try:
         if decode_campaignsstates(states_path=str(states_path_obj)):
-            print("✓ campaigns_decoded.json successfully regenerated.")
+            log_message(logger, "✓ campaigns_decoded.json successfully regenerated.")
         else:
-            print("⚠️  Decoder reported failure; campaigns_decoded.json may be outdated.")
+            log_message(logger, "⚠️  Decoder reported failure; campaigns_decoded.json may be outdated.")
     except Exception as e:
-        print(f"⚠️  Could not re-decode campaigns_decoded.json: {e}")
+        log_message(logger, f"⚠️  Could not re-decode campaigns_decoded.json: {e}")
 
-    print("\nRegenerating campaign events and reports...")
+    log_message(logger, "\nRegenerating campaign events and reports...")
     os.environ["FORCE_REGENERATE"] = "1"
     try:
         import step3_generate_events
 
         if step3_generate_events.main(args=["--auto"], show_popups=False):
-            print("✓ Event regeneration complete.")
+            log_message(logger, "✓ Event regeneration complete.")
         else:
-            print("⚠️  Event regeneration reported failure.")
+            log_message(logger, "⚠️  Event regeneration reported failure.")
     except Exception as e:
-        print(f"⚠️  Could not regenerate events: {e}")
+        log_message(logger, f"⚠️  Could not regenerate events: {e}")
 
     return True
 

@@ -16,6 +16,9 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from utils.logging import get_logger, log_message
+
+logger = get_logger(__name__)
 
 COUNTRIES = ['Germany', 'Soviet Union', 'USA', 'Britain']
 
@@ -272,7 +275,7 @@ def validate_countries(json_file_path: str) -> bool:
     json_path = Path(json_file_path)
     
     if not json_path.exists():
-        print(f"Error: {json_file_path} not found!")
+        log_message(logger, f"Error: {json_file_path} not found!")
         return False
     
     # Load campaign data
@@ -290,20 +293,20 @@ def validate_countries(json_file_path: str) -> bool:
             continue
         # Skip stock campaigns (detected via is_stock flag in JSON)
         if isinstance(v, dict) and v.get('is_stock', False):
-            print(f"  Skipping stock campaign: {k}")
+            log_message(logger, f"  Skipping stock campaign: {k}")
             stock_count += 1
             continue
         campaigns[k] = v
     
     if stock_count > 0:
-        print(f"  {stock_count} stock campaign(s) auto-detected")
+        log_message(logger, f"  {stock_count} stock campaign(s) auto-detected")
     
     if not campaigns:
-        print("No user campaigns to validate! (All campaigns are stock)")
+        log_message(logger, "No user campaigns to validate! (All campaigns are stock)")
         if auto_changes_made:
             with open(json_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
-            print(f"✓ Saved stock campaign updates to {json_file_path}")
+            log_message(logger, f"✓ Saved stock campaign updates to {json_file_path}")
         return False
     
     # Show GUI
@@ -311,7 +314,7 @@ def validate_countries(json_file_path: str) -> bool:
     result = gui.show()
     
     if result is None:
-        print("Country validation cancelled by user")
+        log_message(logger, "Country validation cancelled by user")
         return False
     
     # Apply corrections
@@ -332,7 +335,7 @@ def validate_countries(json_file_path: str) -> bool:
             if data[campaign_name].get("exclusion_reason") != "WW1 (user-marked)":
                 changes_made = True
             data[campaign_name]["exclusion_reason"] = "WW1 (user-marked)"
-            print(f"  ⚠️ Marked {campaign_name} as WW1 (excluded from tracking)")
+            log_message(logger, f"  ⚠️ Marked {campaign_name} as WW1 (excluded from tracking)")
         else:
             if data[campaign_name].get("excluded"):
                 changes_made = True
@@ -347,22 +350,22 @@ def validate_countries(json_file_path: str) -> bool:
             data[campaign_name]['country'] = new_country
             data[campaign_name]['is_stock'] = True  # Mark as validated (treated like stock)
             changes_made = True
-            print(f"  Updated {campaign_name}: {old_country} → {new_country}")
+            log_message(logger, f"  Updated {campaign_name}: {old_country} → {new_country}")
         else:
             # Even if country didn't change, mark as validated
             if not data[campaign_name].get('is_stock'):
                 data[campaign_name]['is_stock'] = True
                 changes_made = True
-                print(f"  Validated {campaign_name}: {new_country}")
+                log_message(logger, f"  Validated {campaign_name}: {new_country}")
         validated_campaigns[campaign_name] = new_country
     
     # Save updated data
     if changes_made:
         with open(json_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
-        print(f"✓ Saved corrections to {json_file_path}")            
+        log_message(logger, f"✓ Saved corrections to {json_file_path}")            
     else:
-        print("No changes made")
+        log_message(logger, "No changes made")
     
     # Add validated campaigns to stock_campaigns.yaml
     if validated_campaigns:
@@ -404,7 +407,7 @@ def _add_to_stock_campaigns(campaigns: Dict[str, str]):
         pass
     
     if not game_directory:
-        print("  ⚠️ Warning: Could not find game directory, using folder names instead of official names")
+        log_message(logger, "  ⚠️ Warning: Could not find game directory, using folder names instead of official names")
     
     # Add new validated campaigns
     added_count = 0
@@ -422,26 +425,26 @@ def _add_to_stock_campaigns(campaigns: Dict[str, str]):
                         name_match = re.search(r'&name\s*=\s*"?([^"\n\r]+)"?', content, re.IGNORECASE)
                         if name_match:
                             official_name = name_match.group(1).strip()
-                            print(f"  📝 Official name: '{official_name}' (folder: '{campaign_folder}')")
+                            log_message(logger, f"  📝 Official name: '{official_name}' (folder: '{campaign_folder}')")
                 except Exception as e:
-                    print(f"  ⚠️ Could not read info file for {campaign_folder}: {e}")
+                    log_message(logger, f"  ⚠️ Could not read info file for {campaign_folder}: {e}")
         
         # Check if already exists (by official name)
         if official_name not in stock_data['stock_campaigns']:
             stock_data['stock_campaigns'][official_name] = country
             added_count += 1
             if official_name != campaign_folder:
-                print(f"  ✓ Added to stock library: '{official_name}' ({country})")
+                log_message(logger, f"  ✓ Added to stock library: '{official_name}' ({country})")
             else:
-                print(f"  ✓ Added to stock library: {official_name} ({country})")
+                log_message(logger, f"  ✓ Added to stock library: {official_name} ({country})")
         else:
-            print(f"  ℹ️ Already in stock library: '{official_name}'")
+            log_message(logger, f"  ℹ️ Already in stock library: '{official_name}'")
     
     # Save updated stock campaigns
     if added_count > 0:
         with open(stock_file, 'w', encoding='utf-8') as f:
             yaml.dump(stock_data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
-        print(f"✓ Added {added_count} campaign(s) to stock_campaigns.yaml")
+        log_message(logger, f"✓ Added {added_count} campaign(s) to stock_campaigns.yaml")
 
 
 
@@ -541,7 +544,7 @@ def validate_new_campaigns(json_file_path: str, new_campaign_names: List[str]) -
     json_path = Path(json_file_path)
     
     if not json_path.exists():
-        print(f"Error: {json_file_path} not found!")
+        log_message(logger, f"Error: {json_file_path} not found!")
         return False
     
     # Load campaign data
@@ -558,20 +561,20 @@ def validate_new_campaigns(json_file_path: str, new_campaign_names: List[str]) -
         if k in new_campaign_names and k != 'game_directory':
             # Skip stock campaigns
             if isinstance(v, dict) and v.get('is_stock', False):
-                print(f"  Skipping stock campaign: {k}")
+                log_message(logger, f"  Skipping stock campaign: {k}")
                 stock_count += 1
                 continue
             new_campaigns[k] = v
     
     if stock_count > 0:
-        print(f"  {stock_count} new stock campaign(s) auto-detected")
+        log_message(logger, f"  {stock_count} new stock campaign(s) auto-detected")
     
     if not new_campaigns:
-        print("No new user campaigns to validate!")
+        log_message(logger, "No new user campaigns to validate!")
         if auto_changes_made:
             with open(json_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
-            print(f"✓ Saved stock campaign updates to {json_file_path}")
+            log_message(logger, f"✓ Saved stock campaign updates to {json_file_path}")
         return True  # Not an error, just nothing to do
     
     # Show GUI
@@ -579,7 +582,7 @@ def validate_new_campaigns(json_file_path: str, new_campaign_names: List[str]) -
     result = gui.show()
     
     if result is None:
-        print("Country validation cancelled by user")
+        log_message(logger, "Country validation cancelled by user")
         return False
     
     # Apply corrections
@@ -598,7 +601,7 @@ def validate_new_campaigns(json_file_path: str, new_campaign_names: List[str]) -
             if data[campaign_name].get("exclusion_reason") != "WW1 (user-marked)":
                 changes_made = True
             data[campaign_name]["exclusion_reason"] = "WW1 (user-marked)"
-            print(f"  ⚠️ Marked {campaign_name} as WW1 (excluded from tracking)")
+            log_message(logger, f"  ⚠️ Marked {campaign_name} as WW1 (excluded from tracking)")
         else:
             if data[campaign_name].get("excluded"):
                 changes_made = True
@@ -614,20 +617,20 @@ def validate_new_campaigns(json_file_path: str, new_campaign_names: List[str]) -
             data[campaign_name]['country'] = new_country
             data[campaign_name]['is_stock'] = True  # Mark as validated
             changes_made = True
-            print(f"  Updated {campaign_name}: {old_country} → {new_country}")
+            log_message(logger, f"  Updated {campaign_name}: {old_country} → {new_country}")
         else:
             # Even if country didn't change, mark as validated
             if not data[campaign_name].get('is_stock'):
                 data[campaign_name]['is_stock'] = True
                 changes_made = True
-                print(f"  Validated {campaign_name}: {new_country}")
+                log_message(logger, f"  Validated {campaign_name}: {new_country}")
         validated_campaigns[campaign_name] = new_country
     
     # Save updated data
     if changes_made:
         with open(json_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
-        print(f"✓ Saved corrections to {json_file_path}")
+        log_message(logger, f"✓ Saved corrections to {json_file_path}")
         
     # Add validated campaigns to stock_campaigns.yaml
     if validated_campaigns:
@@ -642,7 +645,7 @@ def main(args=None):
         args = sys.argv[1:]
     
     if len(args) < 1:
-        print("Usage: python country_validator_gui.py <campaign_mission_dates.json>")
+        log_message(logger, "Usage: python country_validator_gui.py <campaign_mission_dates.json>")
         return False
 
     json_file = args[0]

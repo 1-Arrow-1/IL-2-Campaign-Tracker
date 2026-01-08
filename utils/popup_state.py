@@ -3,6 +3,9 @@ import shutil
 from pathlib import Path
 from typing import Dict, List
 
+from utils.logging import get_logger, log_message
+
+logger = get_logger(__name__)
 
 def load_popup_seen(path: Path) -> Dict[str, List[str]]:
     """
@@ -19,7 +22,7 @@ def load_popup_seen(path: Path) -> Dict[str, List[str]]:
 
         # ✅ Validate structure
         if not isinstance(data, dict):
-            print(f"[popups] Warning: Invalid popup state structure, resetting")
+            log_message(logger, "[popups] Warning: Invalid popup state structure, resetting")
             return {}
 
         # ✅ Validate each campaign's data
@@ -28,26 +31,26 @@ def load_popup_seen(path: Path) -> Dict[str, List[str]]:
             if isinstance(events, list):
                 validated_data[campaign_name] = events
             else:
-                print(f"[popups] Warning: Invalid events for '{campaign_name}', skipping")
+                log_message(logger, f"[popups] Warning: Invalid events for '{campaign_name}', skipping")
 
         return validated_data
 
     except json.JSONDecodeError as e:
-        print(f"[popups] ERROR: Corrupted popup state file: {e}")
-        print(f"[popups] Creating backup and resetting...")
+        log_message(logger, f"[popups] ERROR: Corrupted popup state file: {e}")
+        log_message(logger, "[popups] Creating backup and resetting...")
 
         # ✅ Backup corrupted file
         backup_path = path.with_suffix('.corrupted')
         try:
             shutil.copy2(path, backup_path)
-            print(f"[popups] Corrupted file backed up to: {backup_path}")
+            log_message(logger, f"[popups] Corrupted file backed up to: {backup_path}")
         except Exception:
             pass
 
         return {}
 
     except Exception as e:
-        print(f"[popups] Warning: Could not load popup state: {e}")
+        log_message(logger, f"[popups] Warning: Could not load popup state: {e}")
         return {}
 
 
@@ -65,7 +68,11 @@ def save_popup_seen(path: Path, data: Dict[str, List[str]]) -> None:
     try:
         # ✅ Validate input
         if not isinstance(data, dict):
-            print(f"[popups] ERROR: Invalid data type for popup state (expected dict, got {type(data).__name__})")
+            log_message(
+                logger,
+                "[popups] ERROR: Invalid data type for popup state (expected dict, got "
+                f"{type(data).__name__})",
+            )
             return
 
         # ✅ FIX: Write to temporary file first (atomic write pattern)
@@ -81,7 +88,7 @@ def save_popup_seen(path: Path, data: Dict[str, List[str]]) -> None:
         # Success - no print needed (too verbose)
 
     except Exception as e:
-        print(f"[popups] ERROR: Could not save popup state: {e}")
+        log_message(logger, f"[popups] ERROR: Could not save popup state: {e}")
 
         # ✅ Cleanup temp file if it exists
         try:

@@ -34,3 +34,39 @@ def get_logger(name: str, log_path: str | Path | None = None, debug: bool = Fals
     logger.addHandler(console_handler)
 
     return logger
+
+
+def log_message(
+    logger: logging.Logger,
+    *args: object,
+    sep: str = " ",
+    end: str = "\n",
+    flush: bool = False,
+    level: str | None = None,
+) -> None:
+    """Log a message with print-like semantics using the provided logger."""
+    message = sep.join(str(arg) for arg in args)
+    _ = (end, flush)
+
+    if level is None:
+        lowered = message.lower()
+        if message.startswith("❌") or lowered.startswith("error") or "[error]" in lowered:
+            level = "error"
+        elif (
+            message.startswith("⚠️")
+            or "warning" in lowered
+            or "[warn]" in lowered
+            or "[warning]" in lowered
+        ):
+            level = "warning"
+        elif (
+            message.startswith("[debug]")
+            or lowered.startswith("debug")
+            or "[debug]" in lowered
+        ):
+            level = "debug"
+        else:
+            level = "info"
+
+    log_fn = getattr(logger, level, logger.info)
+    log_fn(message)
