@@ -25,6 +25,7 @@ from utils.il2_paths import (
     read_game_directory,
     resolve_campaigns_dir,
 )
+from utils.popup_state import load_popup_seen, save_popup_seen
 
 MISSION_PATTERNS = ("*.Mission*", "*.mission*", "*.msnbin", "*.MSNBIN")
 
@@ -251,16 +252,7 @@ def _prune_popup_seen(
     if not popup_seen_path.exists():
         return False
 
-    try:
-        with open(popup_seen_path, "r", encoding="utf-8") as file:
-            popup_data = json.load(file)
-    except Exception as exc:
-        print(f"⚠️  Could not read {popup_seen_path.name}: {exc}")
-        return False
-
-    if not isinstance(popup_data, dict):
-        print(f"⚠️  Invalid {popup_seen_path.name} format; skipping cleanup.")
-        return False
+    popup_data = load_popup_seen(popup_seen_path)
 
     updated = False
 
@@ -285,12 +277,7 @@ def _prune_popup_seen(
     if not updated:
         return False
 
-    try:
-        with open(popup_seen_path, "w", encoding="utf-8") as file:
-            json.dump(popup_data, file, indent=2, ensure_ascii=False)
-    except Exception as exc:
-        print(f"⚠️  Could not save {popup_seen_path.name}: {exc}")
-        return False
+    save_popup_seen(popup_seen_path, popup_data)
 
     print(f"✓ {popup_seen_path.name} cleaned")
     return True

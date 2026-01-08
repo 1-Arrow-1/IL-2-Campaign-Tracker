@@ -11,11 +11,13 @@
 import json
 import os
 import re
+from pathlib import Path
 
 from utils.info_locale import decode_and_clean_info_locale
 from utils.formatting import safe_campaign_filename
 from utils.il2_paths import resolve_il2_paths
 from utils.pathing import get_base_path
+from utils.popup_state import load_popup_seen, save_popup_seen
 
 def cleanup_popups_for_reset_campaigns() -> bool:
     """
@@ -33,7 +35,8 @@ def cleanup_popups_for_reset_campaigns() -> bool:
 
     decoded_path = os.path.join(base_path, "campaigns_decoded.json")
     popups_path = os.path.join(base_path, "campaign_popups_seen.json")
-
+    popups_path_obj = Path(popups_path)
+    
     # ================================================================
     # Validate files exist
     # ================================================================
@@ -52,12 +55,7 @@ def cleanup_popups_for_reset_campaigns() -> bool:
         print("[INFO] campaign_popups_seen.json not found – skipping cleanup")
         return False
 
-    try:
-        with open(popups_path, "r", encoding="utf-8") as f:
-            popups_data = json.load(f)
-    except json.JSONDecodeError:
-        print("[WARN] campaign_popups_seen.json invalid JSON – resetting")
-        popups_data = {}
+    popups_data = load_popup_seen(popups_path_obj)
 
     # ================================================================
     # Detect reset campaigns (empty completedMissionsByFileName)
@@ -114,10 +112,7 @@ def cleanup_popups_for_reset_campaigns() -> bool:
             modified = True
 
     if modified:
-        tmp_path = popups_path + ".tmp"
-        with open(tmp_path, "w", encoding="utf-8") as f:
-            json.dump(popups_data, f, indent=4)
-        os.replace(tmp_path, popups_path)
+        save_popup_seen(popups_path_obj, popups_data)
         print("[INFO] campaign_popups_seen.json updated")
     
     # ================================================================
