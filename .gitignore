@@ -4,3 +4,7 @@ __pycache__/
 *.pyc
 *.pyo
 .markdownlint.json
+dist/
+build/
+IL2_Campaign_Tracker_v2.0/
+CampaignRanksAwards.zip
