@@ -187,9 +187,9 @@ Flying Circus (WW1) campaigns are detected and excluded by default because the t
 │   4. Calculate new promotions/awards                    │
 │                          ↓                              |
 |   5. Show popups for new events                         |
-|                          ↓                              │                                          
+|                          ↓                              │                     
 │   6. Parse mission log for debriefing                   │
-│                          ↓                              │                                 
+│                          ↓                              │                     
 │   7. Update campaign info file                          │
 │                          ↓                              │
 │   8. Generate PDF report                                │
@@ -224,7 +224,8 @@ Promotion Score = Base Score × Rank Scaling Factor
 
 ```
 
-**Rank Scaling Factor** adjusts requirements based on campaign length (can be editited in `campaign_progress_config.yaml`) :  
+**Rank Scaling Factor** adjusts requirements based on campaign length (can be editited in `campaign_progress_config.yaml`):  
+
 "1-10":    1.00   # Short campaigns (stock campaigns)  
 "11-20":   1.15   # Medium-short campaigns  
 "21-30":   1.30   # Medium campaigns  
