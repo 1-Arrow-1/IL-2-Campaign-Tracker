@@ -348,7 +348,7 @@ class EventGenerator:
                     self.logger.info("[state] %s: -%s removed mission(s)", campaign_name, removed_count)
         
         if not changed:
-            print(f"[state] No campaign changes detected")
+            self.logger(f"[state] No campaign changes detected")
         
         return changed    
     
@@ -467,7 +467,7 @@ class EventGenerator:
         for mission_num, stats in campaign_stats.items():
             # Defensive: ensure stats is a dict
             if not isinstance(stats, dict):
-                print(f"    Warning: Stats for mission {mission_num} is not a dict: {type(stats)} = {stats}")
+                self.logger(f"    Warning: Stats for mission {mission_num} is not a dict: {type(stats)} = {stats}")
                 continue
             
             cumulative['missions_completed'] += 1
@@ -562,7 +562,7 @@ class EventGenerator:
             if isinstance(mission_data, dict):
                 return mission_data.get('normalized_date')
             else:
-                print(f"    Warning: mission_data for {campaign_name}/{mission_num} is {type(mission_data)}: {mission_data}")
+                self.logger(f"    Warning: mission_data for {campaign_name}/{mission_num} is {type(mission_data)}: {mission_data}")
                 return None
         
         return None
@@ -982,7 +982,7 @@ class EventGenerator:
                                     'date': mission_date
                                 })
                                 already_earned.append(award['name'])
-                                print(f"  ✓ Awarded {award['name']} after {cumulative_wounds} wounds")
+                                self.logger(f"  ✓ Awarded {award['name']} after {cumulative_wounds} wounds")
 
         
         return earned_awards
@@ -1140,18 +1140,18 @@ class EventGenerator:
         # Get country (case-insensitive lookup)
         campaign_name_lower = campaign_name.lower()
         if campaign_name_lower not in self.mission_dates_lower:
-            print(f"  Warning: No mission dates found for {campaign_name}")
+            self.logger(f"  Warning: No mission dates found for {campaign_name}")
             return []
         
         # Get original campaign name and data from mission_dates
         original_name, mission_data = self.mission_dates_lower[campaign_name_lower]
         country = mission_data.get('country')
         if not country:
-            print(f"  Warning: No country detected for {campaign_name}")
+            self.logger(f"  Warning: No country detected for {campaign_name}")
             return []
         
-        print(f"\nProcessing: {campaign_name} ({country})")
-        print(f"  Missions completed: {len(completed)}")
+        self.logger(f"\nProcessing: {campaign_name} ({country})")
+        self.logger(f"  Missions completed: {len(completed)}")
         
         # STEP 1: Load debriefing data FIRST (for accurate wound counting)
         debriefing_wounds = {}  # mission_id -> True/False
@@ -1167,24 +1167,24 @@ class EventGenerator:
                 
                 if debriefing_wounds:
                     wound_count = sum(1 for w in debriefing_wounds.values() if w)
-                    print(f"  Debriefings loaded: {len(debriefings)} missions, {wound_count} wounded")
+                    self.logger(f"  Debriefings loaded: {len(debriefings)} missions, {wound_count} wounded")
             except Exception as e:
-                print(f"  Warning: Could not load debriefings: {e}")
+                self.logger(f"  Warning: Could not load debriefings: {e}")
         
         try:
             # Calculate statistics
             per_mission_stats = campaign_data.get('characterStatisticsByFileName', {})
             cumulative_stats = self.calculate_cumulative_stats(per_mission_stats)
             
-            print(f"  Total score: {cumulative_stats['total_score']}")
-            print(f"  Air kills: {cumulative_stats['total_air_kills']}")
-            print(f"  Air combat score: {cumulative_stats['air_combat_score']}")
+            self.logger(f"  Total score: {cumulative_stats['total_score']}")
+            self.logger(f"  Air kills: {cumulative_stats['total_air_kills']}")
+            self.logger(f"  Air combat score: {cumulative_stats['air_combat_score']}")
             
             # Show rank scaling info
             scale_factor = self.get_rank_scaling_factor(campaign_name)
             if scale_factor != 1.0:
                 mission_count = len(completed)
-                print(f"  Rank scaling: {scale_factor}x (campaign length: {mission_count} missions)")
+                self.logger(f"  Rank scaling: {scale_factor}x (campaign length: {mission_count} missions)")
             
             events = []
             
@@ -1244,12 +1244,12 @@ class EventGenerator:
             
             events.sort(key=sort_key)
             
-            print(f"  Generated {len(events)} events ({len(promotions)} promotions, {len(awards)} awards)")
+            self.logger(f"  Generated {len(events)} events ({len(promotions)} promotions, {len(awards)} awards)")
             
             return events
             
         except Exception as e:
-            print(f"  ERROR in {campaign_name}: {e}")
+            self.logger(f"  ERROR in {campaign_name}: {e}")
             import traceback
             traceback.print_exc()
             return []
@@ -1317,7 +1317,7 @@ class EventGenerator:
             
             except (ValueError, TypeError):
                 # Invalid bracket format, skip it
-                print(f"  Warning: Invalid rank_scaling bracket format: '{bracket_str}'")
+                self.logger(f"  Warning: Invalid rank_scaling bracket format: '{bracket_str}'")
                 continue
         
         return matching_factor
@@ -1403,10 +1403,10 @@ class EventGenerator:
                 if dds_path.exists():
                     full_path = dds_path
                 else:
-                    print(f"  ⚠️  Image not found: {full_path} (also tried .dds)")
+                    self.logger(f"  ⚠️  Image not found: {full_path} (also tried .dds)")
                     return image_path
             else:
-                print(f"  ⚠️  Image not found: {full_path}")
+                self.logger(f"  ⚠️  Image not found: {full_path}")
                 return image_path
         
         try:
@@ -1432,10 +1432,10 @@ class EventGenerator:
                     mime_type = 'image/png'
                     
                 except ImportError:
-                    print(f"  ⚠️  PIL not available, cannot convert DDS: {full_path.name}")
+                    self.logger(f"  ⚠️  PIL not available, cannot convert DDS: {full_path.name}")
                     return image_path
                 except Exception as e:
-                    print(f"  ⚠️  Failed to convert DDS {full_path.name}: {e}")
+                    self.logger(f"  ⚠️  Failed to convert DDS {full_path.name}: {e}")
                     return image_path
             
             # Handle regular image files (PNG, JPG, etc)
@@ -1455,7 +1455,7 @@ class EventGenerator:
                         mime_type = 'image/png'
                         
                     except ImportError:
-                        print(f"  ⚠️  PIL not available, cannot rotate image: {full_path.name}")
+                        self.logger(f"  ⚠️  PIL not available, cannot rotate image: {full_path.name}")
                         # Fallback: read without rotation
                         with open(full_path, 'rb') as f:
                             img_data = f.read()
@@ -1467,7 +1467,7 @@ class EventGenerator:
                         }
                         mime_type = mime_types.get(ext, 'image/png')
                     except Exception as e:
-                        print(f"  ⚠️  Failed to rotate image {full_path.name}: {e}")
+                        self.logger(f"  ⚠️  Failed to rotate image {full_path.name}: {e}")
                         # Fallback: read without rotation
                         with open(full_path, 'rb') as f:
                             img_data = f.read()
@@ -1498,7 +1498,7 @@ class EventGenerator:
             return f"data:{mime_type};base64,{b64_data}"
             
         except Exception as e:
-            print(f"  ⚠️  Failed to convert image {image_path}: {e}")
+            self.logger(f"  ⚠️  Failed to convert image {image_path}: {e}")
             return image_path
     
     def rank_needs_rotation(self, event: Dict, country: str, country_folder: str = None) -> bool:
@@ -1688,7 +1688,7 @@ class EventGenerator:
         else:
             # In-game: IL-2 expects unquoted src, image after text
             result = f"• {date_str} - {description} <img src={image_src}><br>"
-            print(f"DEBUG HTML: {result[:150]}")  # First 150 chars
+            self.logger(f"DEBUG HTML: {result[:150]}")  # First 150 chars
         
         return result
     
@@ -1725,21 +1725,21 @@ class EventGenerator:
                 # Try exact match first
                 if campaign_name in all_decoded:
                     decoded_data = all_decoded[campaign_name]
-                    print(f"  ✓ Loaded combat data for '{campaign_name}'")
+                    self.logger(f"  ✓ Loaded combat data for '{campaign_name}'")
                 else:
                     # Try case-insensitive match
                     campaign_name_lower = campaign_name.lower()
                     for key, value in all_decoded.items():
                         if key.lower() == campaign_name_lower:
                             decoded_data = value
-                            print(f"  ✓ Loaded combat data for '{campaign_name}' (matched as '{key}')")
+                            self.logger(f"  ✓ Loaded combat data for '{campaign_name}' (matched as '{key}')")
                             break
                     
                     if not decoded_data:
-                        print(f"  ⚠️  Warning: No decoded data found for campaign '{campaign_name}'")
-                        print(f"      Available campaigns in decoded file: {', '.join(all_decoded.keys())}")
+                        self.logger(f"  ⚠️  Warning: No decoded data found for campaign '{campaign_name}'")
+                        self.logger(f"      Available campaigns in decoded file: {', '.join(all_decoded.keys())}")
             else:
-                print(f"  ⚠️  Warning: campaigns_decoded.json not found at: {decoded_path}")
+                self.logger(f"  ⚠️  Warning: campaigns_decoded.json not found at: {decoded_path}")
         
         html_lines = ["<b>Mission Debriefings</b><br>", "<br>"]
         
@@ -1749,7 +1749,7 @@ class EventGenerator:
         for mission_id in sorted_missions:
             data = debriefings[mission_id]
             
-            print(f"  Processing debriefing for Mission {mission_id}...")
+            self.logger(f"  Processing debriefing for Mission {mission_id}...")
             
             # Extract mission date and start time
             mission_date, mission_start_time = self.extract_mission_datetime(campaign_name, mission_id)
@@ -1843,18 +1843,18 @@ class EventGenerator:
         Uses re.sub for robust removal of ALL tracker content (including duplicates)
         """
         if not self.game_directory:
-            print(f"  Error: No game directory configured")
+            self.logger(f"  Error: No game directory configured")
             return False
         
         info_file = Path(self.game_directory) / "data" / "Campaigns" / campaign_name / "info.locale=eng.txt"
         
         if not info_file.exists():
-            print(f"  Warning: Info file not found: {info_file}")
-            print(f"  (This is normal if campaign hasn't been started)")
+            self.logger(f"  Warning: Info file not found: {info_file}")
+            self.logger(f"  (This is normal if campaign hasn't been started)")
             return False
         
         if self.dry_run:
-            print(f"  [DRY RUN] Would update: {info_file}")
+            self.logger(f"  [DRY RUN] Would update: {info_file}")
             return True
         
         try:
@@ -1862,20 +1862,20 @@ class EventGenerator:
             backup_file = info_file.with_suffix('.txt.backup')
             if not backup_file.exists():
                 shutil.copy(info_file, backup_file)
-                print(f"  Created backup: {backup_file.name}")
+                self.logger(f"  Created backup: {backup_file.name}")
             
             raw = info_file.read_bytes()
             cleaned, detected_encoding, original = decode_and_clean_info_locale(raw)
             removed = len(original) - len(cleaned)
             if removed > 0:
-                print(f"  ✂️  Removed {removed} chars of old tracker content")
+                self.logger(f"  ✂️  Removed {removed} chars of old tracker content")
             else:
-                print(f"  ℹ️  No old tracker sections (first run)")
+                self.logger(f"  ℹ️  No old tracker sections (first run)")
             
             # Remove excessive <u> tags from description
             u_count = cleaned.count('<u>')
             if u_count > 3:
-                print(f"  🧹 Cleaning {u_count} <u> tags from description...")
+                self.logger(f"  🧹 Cleaning {u_count} <u> tags from description...")
                 # Find section headers: <u>text</u><br>
                 headers = re.findall(r'<u>([^<]+)</u><br>', cleaned)
                 # Remove all <u> tags
@@ -1883,7 +1883,7 @@ class EventGenerator:
                 # Re-add as <b> for headers
                 for h in headers:
                     cleaned = cleaned.replace(f'{h}<br>', f'<b>{h}</b><br>', 1)
-                print(f"  ✓ Converted headers to bold")
+                self.logger(f"  ✓ Converted headers to bold")
             
             # Build final content
             updated = cleaned + '<br><br>' + events_html
@@ -1894,23 +1894,23 @@ class EventGenerator:
             matches = list(re.finditer(TRACKER_SECTION_HEADER_PATTERN, updated, re.IGNORECASE))
             
             if len(matches) > 2:
-                print(f"  ⚠️  WARNING: {len(matches)} sections in final content (expected 2)!")
-                print(f"     Positions: {[m.start() for m in matches]}")
-                print(f"     Found: {[m.group() for m in matches]}")
+                self.logger(f"  ⚠️  WARNING: {len(matches)} sections in final content (expected 2)!")
+                self.logger(f"     Positions: {[m.start() for m in matches]}")
+                self.logger(f"     Found: {[m.group() for m in matches]}")
             elif len(matches) == 2:
-                print(f"  ✓ Verified: 2 sections (Debriefings + Events)")
+                self.logger(f"  ✓ Verified: 2 sections (Debriefings + Events)")
             else:
-                print(f"  ℹ️  {len(matches)} section(s) found")
+                self.logger(f"  ℹ️  {len(matches)} section(s) found")
             
             # Write with original encoding
             with open(info_file, "w", encoding=detected_encoding, newline="") as f:
                 f.write(updated)
             
-            print(f"  ✅ Updated: {info_file.name} ({len(updated)} chars, {detected_encoding})")
+            self.logger(f"  ✅ Updated: {info_file.name} ({len(updated)} chars, {detected_encoding})")
             return True
             
         except Exception as e:
-            print(f"  ❌ Error: {e}")
+            self.logger(f"  ❌ Error: {e}")
             import traceback
             traceback.print_exc()
             return False
@@ -1953,7 +1953,7 @@ class EventGenerator:
                 return match.group(1).strip()
             
         except Exception as e:
-            print(f"  ⚠️  Could not read campaign name: {e}")
+            self.logger(f"  ⚠️  Could not read campaign name: {e}")
         
         return campaign_name
     
@@ -2219,8 +2219,8 @@ class EventGenerator:
         try:
             import pdfkit
         except ImportError:
-            print(f"  ℹ️  PDF export skipped: pdfkit not installed")
-            print(f"      Install with: pip install pdfkit")
+            self.logger(f"  ℹ️  PDF export skipped: pdfkit not installed")
+            self.logger(f"      Install with: pip install pdfkit")
             return False
         
         # Check if wkhtmltopdf is available
@@ -2243,8 +2243,8 @@ class EventGenerator:
                 config = pdfkit.configuration()
                 
         except OSError:
-            print(f"  ℹ️  PDF export skipped: wkhtmltopdf not found")
-            print(f"      Download from: https://wkhtmltopdf.org/downloads.html")
+            self.logger(f"  ℹ️  PDF export skipped: wkhtmltopdf not found")
+            self.logger(f"      Download from: https://wkhtmltopdf.org/downloads.html")
             return False
         
         # ✅ Create reports directory if it doesn't exist
@@ -2252,7 +2252,7 @@ class EventGenerator:
         try:
             reports_dir.mkdir(exist_ok=True)
         except Exception as e:
-            print(f"  ⚠️  Could not create reports directory: {e}")
+            self.logger(f"  ⚠️  Could not create reports directory: {e}")
             return False
         
         # Get campaign display name from info file
@@ -2266,7 +2266,7 @@ class EventGenerator:
         if is_file_locked(pdf_filename):
             ts = datetime.now().strftime("%Y%m%d_%H%M%S")
             fallback = reports_dir / f"{safe_name}_Report_LOCKED_{ts}.pdf"
-            print(f"  ⚠️  PDF is open/locked. Writing fallback: {fallback.name}")
+            self.logger(f"  ⚠️  PDF is open/locked. Writing fallback: {fallback.name}")
             pdf_filename = fallback
         
         try:
@@ -2420,13 +2420,13 @@ class EventGenerator:
                 # ✅ Atomic replace: if we got here, PDF generation succeeded
                 tmp_pdf.replace(pdf_filename)
                 
-                print(f"  ✓ PDF exported: {pdf_filename}")
+                self.logger(f"  ✓ PDF exported: {pdf_filename}")
                 return True
                 
             except Exception as pdf_error:
                 # ✅ IMPROVED: More specific error handling
-                print(f"  ⚠️  PDF conversion failed: {pdf_error}")
-                print(f"      Campaign data is still saved in JSON/HTML format")
+                self.logger(f"  ⚠️  PDF conversion failed: {pdf_error}")
+                self.logger(f"      Campaign data is still saved in JSON/HTML format")
                 
                 # ✅ Clean up temp file if it exists
                 try:
@@ -2440,16 +2440,16 @@ class EventGenerator:
                     html_fallback = pdf_filename.with_suffix('.html')
                     with open(html_fallback, 'w', encoding='utf-8') as f:
                         f.write(full_html)
-                    print(f"  ℹ️  HTML fallback saved: {html_fallback}")
+                    self.logger(f"  ℹ️  HTML fallback saved: {html_fallback}")
                 except Exception as html_error:
-                    print(f"  ⚠️  Could not save HTML fallback: {html_error}")
+                    self.logger(f"  ⚠️  Could not save HTML fallback: {html_error}")
                 
                 return False
             
         except Exception as e:
             # ✅ IMPROVED: Catch any other errors gracefully
-            print(f"  ❌ PDF export error: {e}")
-            print(f"      This is not critical - campaign data is still processed")
+            self.logger(f"  ❌ PDF export error: {e}")
+            self.logger(f"      This is not critical - campaign data is still processed")
             
             # ✅ Try to save debug info
             try:
@@ -2459,7 +2459,7 @@ class EventGenerator:
                     f.write(f"PDF Export Error for {campaign_name}\n")
                     f.write(f"Time: {datetime.now()}\n\n")
                     f.write(traceback.format_exc())
-                print(f"  ℹ️  Error details saved to: {error_log}")
+                self.logger(f"  ℹ️  Error details saved to: {error_log}")
             except Exception:
                 pass
             
@@ -2678,16 +2678,16 @@ class EventGenerator:
     
     def process_all_campaigns(self):
         """Process all campaigns and generate events"""
-        print("="*70)
-        print("IL-2 CAMPAIGN EVENTS GENERATOR")
-        print("="*70)
+        self.logger("="*70)
+        self.logger("IL-2 CAMPAIGN EVENTS GENERATOR")
+        self.logger("="*70)
 
         self.reload_mission_dates()
         
         # Reload popup state from disk (in case it was modified by reset checker)
         self.popup_seen = load_popup_seen(POPUP_SEEN_FILE)
         popup_state_missing = (not POPUP_SEEN_FILE.exists()) or (not self.popup_seen)
-        print(f"[popups] Reloaded state: {len(self.popup_seen)} campaigns")
+        self.logger(f"[popups] Reloaded state: {len(self.popup_seen)} campaigns")
         
         # Detect which campaigns have new missions since last run
         campaigns_with_changes = self._get_campaigns_with_new_missions()
@@ -2701,7 +2701,7 @@ class EventGenerator:
             if campaign_name_lower in self.mission_dates_lower:
                 _, mission_data = self.mission_dates_lower[campaign_name_lower]
                 if mission_data.get('excluded'):
-                    print(f"\nSkipping {campaign_name} (excluded: WW1)")
+                    self.logger(f"\nSkipping {campaign_name} (excluded: WW1)")
                     continue
             
             events = self.generate_events_for_campaign(campaign_name)
@@ -2715,7 +2715,7 @@ class EventGenerator:
                 keys_now_set = set(keys_now)
                 self.popup_seen[campaign_name] = sorted(keys_now_set)
                 save_popup_seen(POPUP_SEEN_FILE, self.popup_seen)
-                print(f"[popups] {campaign_name}: initial sync ({len(keys_now_set)} events)")
+                self.logger(f"[popups] {campaign_name}: initial sync ({len(keys_now_set)} events)")
                 baseline_synced = True
 
             # CRITICAL: Only process popups for campaigns that changed THIS run
@@ -2735,7 +2735,7 @@ class EventGenerator:
                     if self.show_popups and is_il2_running():
                         # show popups IMMEDIATELY!
                         new_events = [ev for ev in events if make_event_key(ev) in new_keys]
-                        print(f"[popups] {campaign_name}: {len(new_events)} new event(s) - SHOWING NOW!")
+                        self.logger(f"[popups] {campaign_name}: {len(new_events)} new event(s) - SHOWING NOW!")
 
                         # Build country map for this popup
                         campaign_country_map = {}
@@ -2761,7 +2761,7 @@ class EventGenerator:
                         self.popup_seen[campaign_name] = sorted(campaign_seen | new_keys)
                         save_popup_seen(POPUP_SEEN_FILE, self.popup_seen)
                     else:
-                        print(
+                        self.logger(
                             f"[popups] deferred ({len(new_keys)}) "
                             f"(show_popups={self.show_popups}), il2_running={is_il2_running()})"
                         )
@@ -2772,7 +2772,7 @@ class EventGenerator:
                 and not baseline_synced
             ):    
                 # Campaign has events but didn't change - skip popup processing
-                print(f"[popups] {campaign_name}: skipped (no changes detected)")
+                self.logger(f"[popups] {campaign_name}: skipped (no changes detected)")
 
             
             if events:
@@ -2792,7 +2792,7 @@ class EventGenerator:
                 debriefings = {}
                 
                 if self.log_processor and completed_missions:
-                    print(f"  Generating debriefings for {len(completed_missions)} mission(s)...")
+                    self.logger(f"  Generating debriefings for {len(completed_missions)} mission(s)...")
                     debriefings_html, debriefings = self.generate_debriefings_html(campaign_name, completed_missions)
                 
                 # Combine: Debriefings BEFORE Events
@@ -2833,7 +2833,7 @@ class EventGenerator:
                     self.set_mode("pdf")
                     
                     # Regenerate debriefings in PDF mode (with Combat Results instead of Flight Log)
-                    print(f"  Regenerating debriefings in PDF mode...")
+                    self.logger(f"  Regenerating debriefings in PDF mode...")
                     debriefings_html_pdf, debriefings_pdf = self.generate_debriefings_html(campaign_name, completed_missions)
                     
                     # Generate PDF-specific HTML with base64-embedded images
@@ -2866,20 +2866,20 @@ class EventGenerator:
         # This enables filtering popups to only changed campaigns
         self._save_campaign_completion_state()
         
-        print(f"\n{'='*70}")
-        print(f"COMPLETE!")
-        print(f"{'='*70}")
-        print(f"Generated events for {len(results)} campaigns")
-        print(f"Updated {files_updated} campaign info files")
-        print(f"Results saved to: {CAMPAIGN_EVENTS_FILE}")
-        print(f"PDF reports saved to: {BASE_DIR / 'reports'}")
+        self.logger(f"\n{'='*70}")
+        self.logger(f"COMPLETE!")
+        self.logger(f"{'='*70}")
+        self.logger(f"Generated events for {len(results)} campaigns")
+        self.logger(f"Updated {files_updated} campaign info files")
+        self.logger(f"Results saved to: {CAMPAIGN_EVENTS_FILE}")
+        self.logger(f"PDF reports saved to: {BASE_DIR / 'reports'}")
         
         # Show sample for kerch if available
         if 'kerch' in results:
-            print(f"\n{'='*70}")
-            print("SAMPLE OUTPUT (kerch):")
-            print(f"{'='*70}")
-            print(results['kerch']['html'])
+            self.logger(f"\n{'='*70}")
+            self.logger("SAMPLE OUTPUT (kerch):")
+            self.logger(f"{'='*70}")
+            self.logger(results['kerch']['html'])
         
         # NOTE: Popups are now shown IMMEDIATELY when events are detected
         # (see loop above - no longer deferred to end of processing)
@@ -2935,12 +2935,12 @@ def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bo
         parsed_args.test_popups = test_popups
 
     # --- Logging & Debug Info ---
-    print(f"[step3] AUTO mode     = {parsed_args.auto}")
-    print(f"[step3] SHOW_POPUPS   = {parsed_args.show_popups}")
-    print(f"[step3] DRY_RUN       = {parsed_args.dry_run}")
+    self.logger(f"[step3] AUTO mode     = {parsed_args.auto}")
+    self.logger(f"[step3] SHOW_POPUPS   = {parsed_args.show_popups}")
+    self.logger(f"[step3] DRY_RUN       = {parsed_args.dry_run}")
 
     if parsed_args.auto:
-        print("⚙️ Running in AUTO mode (no user interaction).")
+        self.logger("⚙️ Running in AUTO mode (no user interaction).")
     
     generator = EventGenerator(
         dry_run=parsed_args.dry_run,
@@ -2980,7 +2980,7 @@ def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bo
             }),
         ]
 
-        print("[popups] TEST MODE: showing 2 popups...")
+        self.logger("[popups] TEST MODE: showing 2 popups...")
         show_event_popups(
             test_events,
             game_directory=generator.game_directory,
@@ -2990,12 +2990,12 @@ def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bo
         return True  # ✅ Expliziter Rückgabewert
 
     if parsed_args.campaign:
-        print(f"Processing single campaign: {parsed_args.campaign}")
+        self.logger(f"Processing single campaign: {parsed_args.campaign}")
         events = generator.generate_events_for_campaign(parsed_args.campaign)
         if events:
             country = generator.mission_dates[parsed_args.campaign].get('country')
             html = generator.generate_events_html(events, country)
-            print(f"\n{'='*70}\nGenerated HTML:\n{'='*70}\n{html}")
+            self.logger(f"\n{'='*70}\nGenerated HTML:\n{'='*70}\n{html}")
             
             if not parsed_args.dry_run:
                 generator.update_campaign_info_file(parsed_args.campaign, html)
