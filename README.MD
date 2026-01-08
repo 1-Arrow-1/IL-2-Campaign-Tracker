@@ -79,14 +79,16 @@ Before proceeding to the **optional** step 4:
 The tracker can monitor **only** campaigns located in `<Path to Il-2 BoS>\data\campaigns`. Standard IL-2 campaigns are not stored directly in this folder; instead, they are run internally from `campaigns.gtp`. As a result, these campaigns must be extracted before they can be tracked (see **Step 4**). 
 
 🚨 **IMPORTANT** 
-If you have modified missions belonging to a standard campaign, proceed with extreme caution when copying extracted files from `campaigns.gtp` into the `<Path to Il-2 BoS>\data\campaigns` folder. Existing files will be **overwritten**, and any custom mission modifications will be replaced by the original out-of-the-box versions.  
+If you have modified missions belonging to a standard official campaign, proceed with extreme caution when copying extracted files from `campaigns.gtp` into the `<Path to Il-2 BoS>\data\campaigns` folder. Existing files will be **overwritten**, and any custom mission modifications will be replaced by the original out-of-the-box versions.  
 
 ℹ️ 4.  **OPTIONAL:**  
-            - **Extract** Campaigns.gtp (standard IL-2 BoS campaigns) from `<Path to Il-2 BoS>\data` with the help of unGTP-IL2 (download it here: https://www.mediafire.com/file/caxpalaudz1hd47/unGTP-IL2.zip).   
-            - **Unzip & Move** the `unGTP-IL2.exe` to `<Path to Il-2 BoS>\data`.  
-            - **Drag** `Campaigns.gtp` onto `unGTP-IL2.exe`. Ignore the error warning in the cmd-window at the end (don't worry - everything has beed extracted).  
-            - **Goto** `<Path to Il-2 BoS>\data\(null)\campaigns`.  
-            - **Copy** the subfolders of `<Path to Il-2 BoS>\data\(null)\campaigns` to `<Path to Il-2 BoS>\data\campaigns`  
+Note: The intention of the extraction of the standard official campaigns is ONLY to make them usable for the Campaign Tracker. Please do not change the official campaigns.  
+
+   - **Extract** Campaigns.gtp (standard IL-2 BoS campaigns) from `<Path to Il-2 BoS>\data` with the help of unGTP-IL2 (download it here: https://www.mediafire.com/file/caxpalaudz1hd47/unGTP-IL2.zip).   
+   - **Unzip & Move** the `unGTP-IL2.exe` to `<Path to Il-2 BoS>\data`.  
+   - **Drag** `Campaigns.gtp` onto `unGTP-IL2.exe`. Ignore the error warning in the cmd-window at the end (don't worry - everything has beed extracted).  
+   - **Goto** `<Path to Il-2 BoS>\data\(null)\campaigns`.  
+   - **Copy** the subfolders of `<Path to Il-2 BoS>\data\(null)\campaigns` to `<Path to Il-2 BoS>\data\campaigns`  
 
 5. **Run** `IL2_Campaign_Tracker_v2.0.exe` from your Tracker installation directory.
 
@@ -124,7 +126,7 @@ A folder browser opens.  Navigate to your IL-2 installation folder:
 Example: C:\Program Files (x86)\Steam\steamapps\common\IL-2 Sturmovik Battle of Stalingrad
 ```
 
-> **Important:** Select the main game folder, NOT the `data\Campaigns` subfolder. 
+> **Important:** Select the main game folder, NOT the `data\Campaigns` subfolder.  
 
 ### Step 2: Country Validation
 
@@ -134,7 +136,8 @@ The tracker scans all installed campaigns and attempts to detect the correct cou
 - ✏️ Correct any misidentified campaigns
 - 🚫 Exclude WW1 (Flying Circus) campaigns
 
-This is important because promotions and awards are nation-specific.
+This is important because promotions and awards are nation-specific.  
+ℹ️ After validating/correcting countries, those campaigns are written into the `stock_campaigns.yaml`. If you accidentally assigned the wrong country, you can fix that by manually editing the country in the `stock_campaigns.yaml`.
 
 ### WW1 (Flying Circus) Detection
 
@@ -212,10 +215,12 @@ and set ```enable_popups: false```
 
 ### How Promotions Work
 
-Promotions are based on **accumulated score** across all completed missions (the score value comes from the campaignsstates.txt and is calculated by IL-2 BoS internal rules):
+Promotions are based on **accumulated score** across all completed missions (the score value comes from the campaignsstates.txt and is calculated by IL-2 GB internal rules):
 
 ```
-Score Earned = Mission Score × Rank Scaling Factor
+Overall Score per Campaign = ∑ Mission Scores
+Promotion Score = Base Score × Rank Scaling Factor
+
 ```
 
 **Rank Scaling Factor** adjusts requirements based on campaign length (can be editited in `campaign_progress_config.yaml`) :  
@@ -255,6 +260,7 @@ Campaigns can start with higher ranks (if you want to).  This is configurable pe
   "missions": { ...  }
 }
 ```
+ℹ️ **Note:** You may customize the promotion and award criteria to suit your preferences. However, it is strongly recommended to create a backup copy of the original `campaign_progress_config.yaml` file before making any changes.
 
 ---
 <a id="mission-debriefings"></a>

@@ -41,6 +41,7 @@ a = Analysis(
 		'utils.popup_state',
 		'utils.process',
 		'utils.sorting',
+		'utils.logging',
 		'regex',
         'PIL',
         'PIL.Image',
