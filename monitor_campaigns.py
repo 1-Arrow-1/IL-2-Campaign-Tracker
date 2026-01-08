@@ -125,14 +125,17 @@ class CampaignMonitor:
             # Starte verzögert den Watcher (nach 5 Sekunden)
             import threading, time
 
+            if not hasattr(self, "_watcher_lock"):
+                self._watcher_lock = threading.Lock()
             if not hasattr(self, "campaign_watcher_running"):
                 self.campaign_watcher_running = False
 
             def delayed_start():
-                if self.campaign_watcher_running:
-                    self.logger.debug("Campaign watcher already active, skipping duplicate launch.")
-                    return
-                self.campaign_watcher_running = True
+                with self._watcher_lock:
+                    if self.campaign_watcher_running:
+                        self.logger.debug("Campaign watcher already active, skipping duplicate launch.")
+                        return
+                    self.campaign_watcher_running = True
                 self.logger.debug("delayed_start() thread launched")
                 time.sleep(5)
                 self.logger.debug("launching watcher...")
@@ -285,7 +288,7 @@ class CampaignMonitor:
                     log_message(self.logger, "[Monitor] ✅ Extraction completed, resuming monitoring.")
 
                     # 🟢 Restart main file watcher (campaignsstates.txt watcher)
-                    self._restart_file_monitor()
+                    # self._restart_file_monitor()
                     try:
                         import yaml
                         from country_validator_gui import validate_countries
