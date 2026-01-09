@@ -390,7 +390,7 @@ When the tracker starts and backups are available, a restore GUI may appear:
 │  │ 2024-01-14 20:45:11  │                  │ ✗ No     | │
 │  └────────────────────────────────────────────────────┘ │
 │                                                         │
-│  [🔄 Restore Selected]  [▶ Continue]  [✕ Exit]        │
+│  [🔄 Restore Selected]  [▶ Continue]  [✕ Exit]         │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -582,6 +582,70 @@ Auto-generated during first run, contains:
 ---
 
 ## ❓ FAQ <a id="faq"></a>
+
+### Why is my custom campaign not detected / missions are not detected?
+
+**A:** The tracker parses mission files to extract dates and metadata. To ensure your custom campaign is properly detected, follow these golden rules:
+
+⚠️ *Important: English Locale Files Required for Reading*
+
+The tracker only reads English locale files (`.eng` briefings and `info.locale=eng.txt`) to extract mission dates and campaign information. IL-2 stores the user's language preference internally, and we have no way to detect which language you're using in-game. Therefore:
+
+- Every mission must have a corresponding .eng briefing file (e.g., `01.eng` for `01.Mission`)
+- Your campaign folder must contain an `info.locale=eng.txt` file for the campaign description
+
+Even if you play in another language, these English files must exist for the tracker to work. The tracker will not read `.ger`, `.rus`, `.fra` or other language files.
+
+Note: When writing Events and Debriefings back to your campaign, the tracker automatically updates all existing `info.locale=*.txt`
+
+⚠️ *Important: All Debriefings/Events are in English, independent of your in-game chosen language. NO multi-language support yet*
+
+**Mission File Naming:**
+
+- Use numeric prefixes for mission order: `01.Mission`, `02.Mission`, `03.Mission` or `1.Mission`, `2.Mission`, etc.
+- Date-based naming also works: `1943-07-04.Mission`, `1943-07-04a.Mission`
+- Supported extensions: `.Mission`, `.mission`, `.msnbin`
+
+Mission Date Detection (in `.eng` briefing files):
+The tracker looks for date information in this priority order:
+
+1. `Date:` field in briefing (e.g., `Date: 4 November, 1943`)
+2. `Time:` field for mission start time (e.g., `Time: 09:45`)
+3. Filename if it contains a date (e.g., `1943-07-04.Mission`)
+
+**Supported Date Formats:**
+
+- `4 November, 1943` or `November 4, 1943`
+- `4 November 1943` (no comma)
+- `04.11.1943` or `11.04.1943` (DD.MM.YYYY or MM.DD.YYYY)
+- `1943-07-04` (ISO format in filename)
+
+**Campaign Folder Structure:**
+
+`Path to IL-2 Bos\data\Campaigns\YourCampaignName\`  
+    ├── `info.locale=eng.txt`    (required for reading - campaign description)  
+    ├── `info.locale=ger.txt`    (optional - tracker will also write here if present)  
+    ├── `info.locale=rus.txt`    (optional - tracker will also write here if present)  
+    ├── `01.Mission`             (mission file)  
+    ├── `01.eng`                 (required - English briefing with date/time)  
+    ├── `02.Mission`  
+    ├── `02.eng`                 (required - English briefing with date/time)  
+    └── ...  
+
+**Country Detection:**
+The tracker auto-detects your country/faction from:
+
+1. Aircraft names in mission files (e.g., bf109 → Germany, spitfire → Britain)
+2. Unit names containing country identifiers
+3. You can manually set/correct this in the Country Validator GUI on first run, or adjust it later manually in the `stock_campaigns.yaml`
+
+**Common Issues:**
+
+- Missing `.eng` briefing file → dates cannot be extracted (mission will still be tracked as "Mission 1", "Mission 2", etc. but without date information)
+- Missing `info.locale=eng.txt` → campaign description unavailable, tracker cannot read campaign info
+- Non-standard date format in briefing → use one of the supported formats above
+- Special characters in campaign folder name → avoid umlauts or special symbols
+- WW1 campaigns (Flying Circus) → excluded by default for IL-2 campaigns (see WW1 Detection & Exclusion section)
 
 ### Q: Can I run multiple instances of the tracker?
 
