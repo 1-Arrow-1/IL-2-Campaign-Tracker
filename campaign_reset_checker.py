@@ -4,7 +4,7 @@
 # Removes ALL traces when a campaign has been reset:
 # - Popup entries in campaign_popups_seen.json
 # - PDF reports
-# - Events/Debriefings from info.locale=eng.txt
+# - Events/Debriefings from all info.locale=*.txt files
 # Works both in script and EXE environment.
 # ==============================================================
 
@@ -13,7 +13,7 @@ import os
 import re
 from pathlib import Path
 
-from utils.info_locale import decode_and_clean_info_locale
+from utils.info_locale import decode_and_clean_info_locale, find_all_info_locale_files
 from utils.formatting import safe_campaign_filename
 from utils.il2_paths import resolve_il2_paths
 from utils.logging import get_logger, log_message
@@ -140,7 +140,7 @@ def cleanup_popups_for_reset_campaigns() -> bool:
                     log_message(logger, f"[WARN] Could not delete PDF for '{campaign_name}': {e}")
     
     # ================================================================
-    # Step 3: Clear info.locale=eng.txt
+    # # Step 3: Clear all info.locale=*.txt files
     # ================================================================
     # Load mission dates to get game directory
     paths = resolve_il2_paths(base_path)
@@ -149,9 +149,19 @@ def cleanup_popups_for_reset_campaigns() -> bool:
             log_message(logger, f"[WARN] Campaigns directory not resolved under {paths.game_directory}")
         else:
             for campaign_name in reset_campaigns:
-                info_file = paths.campaigns_dir / campaign_name / "info.locale=eng.txt"
-
-                if info_file.exists():
+                campaign_path = paths.campaigns_dir / campaign_name
+                
+                if not campaign_path.exists():
+                    continue
+                
+                # Find all locale files
+                locale_files = find_all_info_locale_files(campaign_path)
+                
+                if not locale_files:
+                    continue
+                
+                files_cleaned = 0
+                for info_file in locale_files:
                     try:
                         # Read file with encoding detection and tracker cleanup
                         raw = info_file.read_bytes()
@@ -160,11 +170,13 @@ def cleanup_popups_for_reset_campaigns() -> bool:
                         # Write back only if content changed
                         if cleaned != original:
                             info_file.write_text(cleaned, encoding=encoding, newline="")
-                            log_message(logger, f"  ✂️  Cleared info file: {campaign_name}")
+                            files_cleaned += 1
                             modified = True
 
                     except Exception as e:
-                        log_message(logger, f"[WARN] Could not clear info file for '{campaign_name}': {e}")
+                        log_message(logger, f"[WARN] Could not clear {info_file.name} for '{campaign_name}': {e}")
+                if files_cleaned > 0:
+                    log_message(logger, f"  ✂️  Cleared {files_cleaned} info file(s): {campaign_name}")        
     else:
         mission_dates_path = os.path.join(base_path, "campaign_mission_dates.json")
         log_message(logger, f"[WARN] Game directory not found via {mission_dates_path}")

@@ -1840,80 +1840,92 @@ class EventGenerator:
     
     def update_campaign_info_file(self, campaign_name: str, events_html: str) -> bool:
         """
-        Update campaign info.locale=eng.txt with Events section
+        Update all campaign info.locale=*.txt files with Events section.
+        
+        IL-2 loads the locale file matching the user's language setting.
+        To ensure tracker content is visible regardless of language,
+        we write to all existing locale files (eng, ger, rus, fra, spa, chs, etc.).
         Uses re.sub for robust removal of ALL tracker content (including duplicates)
         """
         if not self.game_directory:
             log_message(LOGGER, f"  Error: No game directory configured")
             return False
         
-        info_file = Path(self.game_directory) / "data" / "Campaigns" / campaign_name / "info.locale=eng.txt"
+        campaign_path = Path(self.game_directory) / "data" / "Campaigns" / campaign_name
         
-        if not info_file.exists():
-            log_message(LOGGER, f"  Warning: Info file not found: {info_file}")
+        if not campaign_path.exists():
+            log_message(LOGGER, f"  Warning: Campaign folder not found: {campaign_path}")
+            return False
+        
+        # Find all locale files
+        from utils.info_locale import find_all_info_locale_files
+        locale_files = find_all_info_locale_files(campaign_path)
+        
+        if not locale_files:
+            # Fallback: check for eng file specifically (for error message)
+            eng_file = campaign_path / "info.locale=eng.txt"
+            log_message(LOGGER, f"  Warning: No info.locale files found in: {campaign_path}")
             log_message(LOGGER, f"  (This is normal if campaign hasn't been started)")
             return False
         
         if self.dry_run:
-            log_message(LOGGER, f"  [DRY RUN] Would update: {info_file}")
+            log_message(LOGGER, f"  [DRY RUN] Would update {len(locale_files)} locale file(s): {[f.name for f in locale_files]}")
             return True
         
-        try:
-            # Backup once
-            backup_file = info_file.with_suffix('.txt.backup')
-            if not backup_file.exists():
-                shutil.copy(info_file, backup_file)
-                log_message(LOGGER, f"  Created backup: {backup_file.name}")
-            
-            raw = info_file.read_bytes()
-            cleaned, detected_encoding, original = decode_and_clean_info_locale(raw)
-            removed = len(original) - len(cleaned)
-            if removed > 0:
-                log_message(LOGGER, f"  ✂️  Removed {removed} chars of old tracker content")
-            else:
-                log_message(LOGGER, f"  ℹ️  No old tracker sections (first run)")
-            
-            # Remove excessive <u> tags from description
-            u_count = cleaned.count('<u>')
-            if u_count > 3:
-                log_message(LOGGER, f"  🧹 Cleaning {u_count} <u> tags from description...")
-                # Find section headers: <u>text</u><br>
-                headers = re.findall(r'<u>([^<]+)</u><br>', cleaned)
-                # Remove all <u> tags
-                cleaned = cleaned.replace('<u>', '').replace('</u>', '')
-                # Re-add as <b> for headers
-                for h in headers:
-                    cleaned = cleaned.replace(f'{h}<br>', f'<b>{h}</b><br>', 1)
-                log_message(LOGGER, f"  ✓ Converted headers to bold")
-            
-            # Build final content
-            updated = cleaned + '<br><br>' + events_html
-            
-            # ====================================================================
-            # VERIFICATION: Count sections in final content
-            # ====================================================================
-            matches = list(re.finditer(TRACKER_SECTION_HEADER_PATTERN, updated, re.IGNORECASE))
-            
-            if len(matches) > 2:
-                log_message(LOGGER, f"  ⚠️  WARNING: {len(matches)} sections in final content (expected 2)!")
-                log_message(LOGGER, f"     Positions: {[m.start() for m in matches]}")
-                log_message(LOGGER, f"     Found: {[m.group() for m in matches]}")
-            elif len(matches) == 2:
-                log_message(LOGGER, f"  ✓ Verified: 2 sections (Debriefings + Events)")
-            else:
-                log_message(LOGGER, f"  ℹ️  {len(matches)} section(s) found")
-            
-            # Write with original encoding
-            with open(info_file, "w", encoding=detected_encoding, newline="") as f:
-                f.write(updated)
-            
-            log_message(LOGGER, f"  ✅ Updated: {info_file.name} ({len(updated)} chars, {detected_encoding})")
+        success_count = 0
+        
+        for info_file in locale_files:
+            try:
+                # Backup once per file
+                backup_file = info_file.with_suffix('.txt.backup')
+                if not backup_file.exists():
+                    shutil.copy(info_file, backup_file)
+                    log_message(LOGGER, f"  Created backup: {backup_file.name}")
+                
+                raw = info_file.read_bytes()
+                cleaned, detected_encoding, original = decode_and_clean_info_locale(raw)
+                removed = len(original) - len(cleaned)
+                if removed > 0:
+                    log_message(LOGGER, f"  ✂️  [{info_file.name}] Removed {removed} chars of old tracker content")
+                
+                # Remove excessive <u> tags from description
+                u_count = cleaned.count('<u>')
+                if u_count > 3:
+                    log_message(LOGGER, f"  🧹 [{info_file.name}] Cleaning {u_count} <u> tags...")
+                    # Find section headers: <u>text</u><br>
+                    headers = re.findall(r'<u>([^<]+)</u><br>', cleaned)
+                    # Remove all <u> tags
+                    cleaned = cleaned.replace('<u>', '').replace('</u>', '')
+                    # Re-add as <b> for headers
+                    for h in headers:
+                        cleaned = cleaned.replace(f'{h}<br>', f'<b>{h}</b><br>', 1)
+                
+                # Build final content
+                updated = cleaned + '<br><br>' + events_html
+                
+                # Verification: Count sections in final content
+                matches = list(re.finditer(TRACKER_SECTION_HEADER_PATTERN, updated, re.IGNORECASE))
+                
+                if len(matches) > 2:
+                    log_message(LOGGER, f"  ⚠️  [{info_file.name}] WARNING: {len(matches)} sections (expected 2)!")
+                
+                # Write with original encoding
+                with open(info_file, "w", encoding=detected_encoding, newline="") as f:
+                    f.write(updated)
+                
+                success_count += 1
+                
+            except Exception as e:
+                log_message(LOGGER, f"  ❌ [{info_file.name}] Error: {e}")
+                import traceback
+                traceback.print_exc()
+        
+        if success_count > 0:
+            log_message(LOGGER, f"  ✅ Updated {success_count}/{len(locale_files)} locale file(s)")
             return True
             
-        except Exception as e:
-            log_message(LOGGER, f"  ❌ Error: {e}")
-            import traceback
-            traceback.print_exc()
+        else:
+            log_message(LOGGER, f"  ❌ Failed to update any locale files")
             return False
 
 
