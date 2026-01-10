@@ -40,7 +40,8 @@ from utils.combat_results_html import (
     generate_campaign_summary_combat_results_html,
 )
 from utils.filesystem import is_file_locked
-from utils.popup_state import load_popup_seen, save_popup_seen, make_event_key
+from utils.popup_state import load_popup_seen, save_popup_seen, make_event_key, get_seen_keys, set_seen_keys
+from utils.rank_scaling import check_and_cleanup_rank_scaling
 from utils.process import is_il2_running
 from utils.sorting import smart_mission_sort_key
 from utils.logging import get_logger, log_message
@@ -2718,6 +2719,46 @@ class EventGenerator:
                     log_message(LOGGER, f"\nSkipping {campaign_name} (excluded: WW1)")
                     continue
             
+            # ============================================================
+            # Rank scaling factor change detection
+            # ============================================================
+            # Check if rank scaling factor changed (increased) and cleanup invalid promotions
+            current_factor = 1.0  # Default
+            if campaign_name_lower in self.mission_dates_lower:
+                _, mission_data = self.mission_dates_lower[campaign_name_lower]
+                country = mission_data.get('country')
+                
+                if country and country in self.config.get('ranks', {}):
+                    # Get required data for rank scaling check
+                    ranks = self.config['ranks'][country]
+                    current_factor = self.get_rank_scaling_factor(campaign_name)
+                    
+                    # Only do cleanup check if campaign already exists in popup_seen
+                    if campaign_name in self.popup_seen:
+                        # Calculate total score from campaign data
+                        campaign_data = self.save_data.get(campaign_name, {})
+                        per_mission_stats = campaign_data.get('characterStatisticsByFileName', {})
+                        total_score = sum(int(stats.get('score', 0)) for stats in per_mission_stats.values())
+                        
+                        # Get starting rank offset
+                        starting_rank_offset = 0
+                        if campaign_name in self.mission_dates:
+                            starting_rank_offset = self.mission_dates[campaign_name].get('starting_rank_offset', 0)
+                        
+                        # Check and cleanup if needed
+                        self.popup_seen, scaling_changed = check_and_cleanup_rank_scaling(
+                            campaign_name=campaign_name,
+                            current_factor=current_factor,
+                            ranks=ranks,
+                            total_score=total_score,
+                            starting_rank_offset=starting_rank_offset,
+                            popup_seen_data=self.popup_seen,
+                            logger_instance=LOGGER
+                        )
+                        
+                        if scaling_changed:
+                            save_popup_seen(POPUP_SEEN_FILE, self.popup_seen)
+            
             events = self.generate_events_for_campaign(campaign_name)
             
             # ============================================================
@@ -2727,7 +2768,8 @@ class EventGenerator:
             if self.enable_popups and events and popup_state_missing and campaign_name not in self.popup_seen:
                 keys_now = [make_event_key(ev) for ev in events]
                 keys_now_set = set(keys_now)
-                self.popup_seen[campaign_name] = sorted(keys_now_set)
+                # Use set_seen_keys to handle new format properly, include scale factor
+                self.popup_seen = set_seen_keys(self.popup_seen, campaign_name, sorted(keys_now_set), current_factor)
                 save_popup_seen(POPUP_SEEN_FILE, self.popup_seen)
                 log_message(LOGGER, f"[popups] {campaign_name}: initial sync ({len(keys_now_set)} events)")
                 baseline_synced = True
@@ -2742,7 +2784,8 @@ class EventGenerator:
                 keys_now = [make_event_key(ev) for ev in events]
                 keys_now_set = set(keys_now)
 
-                campaign_seen = set(self.popup_seen.get(campaign_name, []))
+                # Use get_seen_keys to handle both old and new format
+                campaign_seen = set(get_seen_keys(self.popup_seen, campaign_name))
                 new_keys = keys_now_set - campaign_seen
 
                 if new_keys:
@@ -2772,7 +2815,7 @@ class EventGenerator:
                         )
 
                         # mark as seen AFTER popup
-                        self.popup_seen[campaign_name] = sorted(campaign_seen | new_keys)
+                        self.popup_seen = set_seen_keys(self.popup_seen, campaign_name, sorted(campaign_seen | new_keys))
                         save_popup_seen(POPUP_SEEN_FILE, self.popup_seen)
                     else:
                         log_message(LOGGER, 

@@ -39,7 +39,7 @@ rank_scaling:
     "31-40":   1.50   # Medium-long campaigns
     "41-50":   1.75   # Long campaigns
     "51-70":   2.00   # Very long campaigns
-    "71+":     2.50   # Epic campaigns (70+ missions)
+    "71+":     5.50   # Epic campaigns (70+ missions)
 
 ranks:
   Germany:

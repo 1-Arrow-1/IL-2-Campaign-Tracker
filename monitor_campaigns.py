@@ -62,7 +62,7 @@ except Exception as e:
 class CampaignMonitor:
     def __init__(self, check_interval: int = 1, use_file_watcher: bool = True,
                  il2_states_path=None, debug: bool | None = None,
-                 log_path: str | None = None):
+                 log_path: str | None = None, exit_with_il2: bool = False):
         """
         Initialize campaign monitor
         
@@ -77,10 +77,12 @@ class CampaignMonitor:
             il2_states_path: Path to campaignsstates.txt in IL-2 directory
                             (default: auto-detect)
             debug: Enable debug logging output (default: from IL2_TRACKER_DEBUG env)
-            log_path: Optional log file path (default: campaign_monitor.log in script dir)             
+            log_path: Optional log file path (default: campaign_monitor.log in script dir)
+            exit_with_il2: If True, exit the tracker when IL-2 is closed (default: False)             
         """
         self.check_interval = check_interval
         self.use_file_watcher = use_file_watcher
+        self.exit_with_il2 = exit_with_il2
         if debug is None:
             env_value = os.environ.get("IL2_TRACKER_DEBUG", "")
             debug = env_value.strip().lower() in {"1", "true", "yes", "on"}
@@ -287,8 +289,6 @@ class CampaignMonitor:
 
                     log_message(self.logger, "[Monitor] ✅ Extraction completed, resuming monitoring.")
 
-                    # 🟢 Restart main file watcher (campaignsstates.txt watcher)
-                    # self._restart_file_monitor()
                     try:
                         import yaml
                         from country_validator_gui import validate_countries
@@ -606,6 +606,11 @@ class CampaignMonitor:
                     if self.il2_was_running:
                         self.log("👋 IL-2 Sturmovik closed")
                         self.il2_was_running = False
+                        
+                        # Exit tracker if configured to do so
+                        if self.exit_with_il2:
+                            self.log("🛑 Tracker exiting (exit_with_il2 enabled)")
+                            break
                 
                 # Check for file changes
                 if self._has_file_changed():
@@ -645,12 +650,15 @@ def main():
                        help='Check interval in seconds (default: 1)')
     parser.add_argument('--legacy', action='store_true',
                        help='Use legacy polling mode instead of fast file watcher')
+    parser.add_argument('--exit-with-il2', action='store_true',
+                       help='Exit tracker when IL-2 is closed')
     
     args = parser.parse_args()
     
     monitor = CampaignMonitor(
         check_interval=args.interval,
-        use_file_watcher=not args.legacy
+        use_file_watcher=not args.legacy,
+        exit_with_il2=args.exit_with_il2
     )
     
     monitor.run()

@@ -631,21 +631,37 @@ class MissionCleanup:
             log_message(logger, f"  ℹ️ No popup history for campaign '{campaign_name}'")
             return
         
+        # Handle both old format (list) and new format (dict with 'seen' key)
+        campaign_entry = popups_data[campaign_name]
+        if isinstance(campaign_entry, list):
+            events = campaign_entry
+        elif isinstance(campaign_entry, dict):
+            events = campaign_entry.get('seen', [])
+        else:
+            log_message(logger, f"  ⚠️ Invalid popup data format for campaign '{campaign_name}'")
+            return
+        
         # Event keys look like: "promotion|Hauptmann|05|1943-07-15" or "award|Iron Cross|05|1943-07-15"
         # We need to remove all keys that reference this mission
-        original_count = len(popups_data[campaign_name])
+        original_count = len(events)
         
         # Filter out events that contain this mission ID
         # The mission ID appears between the second and third pipe separator
-        popups_data[campaign_name] = [
-            key for key in popups_data[campaign_name]
+        filtered_events = [
+            key for key in events
             if f"|{mission_id}|" not in key
         ]
         
-        removed = original_count - len(popups_data[campaign_name])
+        removed = original_count - len(filtered_events)
         
         if removed > 0:
             try:
+                # Preserve format when saving
+                if isinstance(campaign_entry, list):
+                    popups_data[campaign_name] = filtered_events
+                else:
+                    popups_data[campaign_name]['seen'] = filtered_events
+                    
                 with open(popups_path, 'w', encoding='utf-8') as f:
                     json.dump(popups_data, f, indent=2, sort_keys=True)
                 log_message(logger, f"  ✓ Removed {removed} popup event(s) for Mission {mission_id}")

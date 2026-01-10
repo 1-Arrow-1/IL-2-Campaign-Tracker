@@ -1,17 +1,42 @@
+"""
+Popup State Management
+
+Handles loading and saving of the popup_seen state which tracks which
+events (promotions, awards) have already been shown as popups.
+
+Supports two formats:
+- Old format: {campaign_name: [event_keys...]}
+- New format: {campaign_name: {seen: [event_keys...], rank_scale_factor: float}}
+
+The new format also stores the rank scaling factor used when events were generated,
+enabling detection of configuration changes that would invalidate previous promotions.
+"""
+
 import json
 import shutil
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from utils.logging import get_logger, log_message
 
 logger = get_logger(__name__)
 
-def load_popup_seen(path: Path) -> Dict[str, List[str]]:
-    """
-    Load already-shown popup event keys. Returns dict: {campaign_name: [keys...]}.
+# Type alias for the popup_seen data structure
+# Can be either old format (list) or new format (dict)
+CampaignSeenData = Union[List[str], Dict[str, Union[List[str], float]]]
+PopupSeenData = Dict[str, CampaignSeenData]
 
-    ✅ IMPROVED: Better error handling and validation
+
+def load_popup_seen(path: Path) -> PopupSeenData:
+    """
+    Load already-shown popup event keys.
+    
+    Supports both old format (list) and new format (dict with 'seen' and 'rank_scale_factor').
+    
+    Returns:
+        Dict mapping campaign_name to either:
+        - Old format: List of event keys
+        - New format: Dict with 'seen' (list) and 'rank_scale_factor' (float)
     """
     if not path.exists():
         return {}
@@ -20,18 +45,29 @@ def load_popup_seen(path: Path) -> Dict[str, List[str]]:
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-        # ✅ Validate structure
+        # Validate structure
         if not isinstance(data, dict):
             log_message(logger, "[popups] Warning: Invalid popup state structure, resetting")
             return {}
 
-        # ✅ Validate each campaign's data
-        validated_data: Dict[str, List[str]] = {}
-        for campaign_name, events in data.items():
-            if isinstance(events, list):
-                validated_data[campaign_name] = events
+        # Validate each campaign's data
+        validated_data: PopupSeenData = {}
+        for campaign_name, campaign_data in data.items():
+            if isinstance(campaign_data, list):
+                # Old format - list of event keys
+                validated_data[campaign_name] = campaign_data
+            elif isinstance(campaign_data, dict):
+                # New format - dict with 'seen' and optionally 'rank_scale_factor'
+                seen = campaign_data.get('seen', [])
+                if isinstance(seen, list):
+                    validated_data[campaign_name] = {
+                        'seen': seen,
+                        'rank_scale_factor': float(campaign_data.get('rank_scale_factor', 0.0))
+                    }
+                else:
+                    log_message(logger, f"[popups] Warning: Invalid 'seen' for '{campaign_name}', skipping")
             else:
-                log_message(logger, f"[popups] Warning: Invalid events for '{campaign_name}', skipping")
+                log_message(logger, f"[popups] Warning: Invalid data for '{campaign_name}', skipping")
 
         return validated_data
 
@@ -39,7 +75,7 @@ def load_popup_seen(path: Path) -> Dict[str, List[str]]:
         log_message(logger, f"[popups] ERROR: Corrupted popup state file: {e}")
         log_message(logger, "[popups] Creating backup and resetting...")
 
-        # ✅ Backup corrupted file
+        # Backup corrupted file
         backup_path = path.with_suffix('.corrupted')
         try:
             shutil.copy2(path, backup_path)
@@ -54,19 +90,15 @@ def load_popup_seen(path: Path) -> Dict[str, List[str]]:
         return {}
 
 
-def save_popup_seen(path: Path, data: Dict[str, List[str]]) -> None:
+def save_popup_seen(path: Path, data: PopupSeenData) -> None:
     """
     Save already-shown popup event keys.
 
-    ✅ IMPROVED: Uses atomic write to prevent corruption
-
-    How atomic write works:
-    1. Write to temporary file
-    2. If successful, replace original file in one operation
-    3. If crash happens during write, original file stays intact
+    Uses atomic write to prevent corruption.
+    Supports both old format (list) and new format (dict).
     """
     try:
-        # ✅ Validate input
+        # Validate input
         if not isinstance(data, dict):
             log_message(
                 logger,
@@ -75,28 +107,109 @@ def save_popup_seen(path: Path, data: Dict[str, List[str]]) -> None:
             )
             return
 
-        # ✅ FIX: Write to temporary file first (atomic write pattern)
+        # Write to temporary file first (atomic write pattern)
         tmp_file = path.with_suffix('.tmp')
 
         with open(tmp_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, sort_keys=True, ensure_ascii=False)
 
-        # ✅ Atomic replace: if we got here, the write was successful
-        # This is atomic on most filesystems (POSIX rename, Windows MoveFileEx)
+        # Atomic replace
         tmp_file.replace(path)
-
-        # Success - no print needed (too verbose)
 
     except Exception as e:
         log_message(logger, f"[popups] ERROR: Could not save popup state: {e}")
 
-        # ✅ Cleanup temp file if it exists
+        # Cleanup temp file if it exists
         try:
             tmp_file = path.with_suffix('.tmp')
             if tmp_file.exists():
                 tmp_file.unlink()
         except Exception:
             pass
+
+
+def get_seen_keys(popup_seen_data: PopupSeenData, campaign_name: str) -> List[str]:
+    """
+    Get the list of seen event keys for a campaign.
+    
+    Handles both old format (list) and new format (dict).
+    
+    Args:
+        popup_seen_data: The popup_seen structure
+        campaign_name: Name of the campaign
+        
+    Returns:
+        List of event keys that have been seen
+    """
+    campaign_data = popup_seen_data.get(campaign_name)
+    
+    if campaign_data is None:
+        return []
+    
+    if isinstance(campaign_data, list):
+        # Old format
+        return campaign_data
+    
+    if isinstance(campaign_data, dict):
+        # New format
+        return campaign_data.get('seen', [])
+    
+    return []
+
+
+def set_seen_keys(popup_seen_data: PopupSeenData, campaign_name: str, keys: List[str], scale_factor: float = 0.0) -> PopupSeenData:
+    """
+    Set the list of seen event keys for a campaign.
+    
+    Preserves the rank_scale_factor if using new format, or sets it if provided.
+    
+    Args:
+        popup_seen_data: The popup_seen structure (will be modified)
+        campaign_name: Name of the campaign
+        keys: List of event keys to set
+        scale_factor: Optional rank scaling factor to set (0.0 means preserve existing or use default)
+        
+    Returns:
+        Modified popup_seen_data
+    """
+    campaign_data = popup_seen_data.get(campaign_name)
+    
+    if campaign_data is None:
+        # New campaign - use new format
+        popup_seen_data[campaign_name] = {
+            'seen': keys,
+            'rank_scale_factor': scale_factor
+        }
+    elif isinstance(campaign_data, list):
+        # Old format - convert to new format
+        popup_seen_data[campaign_name] = {
+            'seen': keys,
+            'rank_scale_factor': scale_factor
+        }
+    elif isinstance(campaign_data, dict):
+        # New format - preserve factor unless new one provided
+        popup_seen_data[campaign_name]['seen'] = keys
+        if scale_factor > 0:
+            popup_seen_data[campaign_name]['rank_scale_factor'] = scale_factor
+    
+    return popup_seen_data
+
+
+def add_seen_keys(popup_seen_data: PopupSeenData, campaign_name: str, new_keys: List[str]) -> PopupSeenData:
+    """
+    Add new event keys to the seen list for a campaign.
+    
+    Args:
+        popup_seen_data: The popup_seen structure (will be modified)
+        campaign_name: Name of the campaign
+        new_keys: List of new event keys to add
+        
+    Returns:
+        Modified popup_seen_data
+    """
+    existing_keys = set(get_seen_keys(popup_seen_data, campaign_name))
+    all_keys = sorted(existing_keys | set(new_keys))
+    return set_seen_keys(popup_seen_data, campaign_name, all_keys)
 
 
 def make_event_key(ev: dict) -> str:

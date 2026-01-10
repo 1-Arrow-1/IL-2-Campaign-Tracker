@@ -166,6 +166,12 @@ if not exist "utils\logging.py" (
     pause
     exit /b 1
 )
+)
+if not exist "utils\rank_scaling.py" (
+    echo ERROR: utils\rank_scaling.py not found!
+    pause
+    exit /b 1
+)
 if not exist "sync_campaign_mission_states.py" (
     echo ERROR: sync_campaign_mission_states.py not found!
     pause
@@ -208,6 +214,7 @@ for %%F in (
 		"utils\combat_results_html.py"
 		"utils\filesystem.py"
 		"utils\logging.py"
+        "utils\rank_scaling.py"
 ) do (
     if exist %%F (
         echo Testing %%F ...

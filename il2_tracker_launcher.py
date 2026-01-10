@@ -321,12 +321,13 @@ def show_campaign_not_found_message(game_dir: Path = None):
     log_message(logger)
 
 
-def start_monitoring(il2_states_path: Path = None) -> int:
+def start_monitoring(il2_states_path: Path = None, exit_with_il2: bool = True) -> int:
     """
     Start the campaign monitor. 
     
     Args:
         il2_states_path:  Path to campaignsstates.txt (optional)
+        exit_with_il2: If True, exit tracker when IL-2 closes (default: True)
         
     Returns:
         Exit code:  0 = normal exit, 1 = error
@@ -337,6 +338,12 @@ def start_monitoring(il2_states_path: Path = None) -> int:
     log_message(logger, "This window will stay open - you can minimize it.")
     log_message(logger, "The tracker will automatically update your campaigns.")
     log_message(logger)
+    if exit_with_il2:
+        log_message(logger, "Tracker will exit when IL-2 closes.")
+        log_message(logger, "(Use --no-exit-with-il2 to keep running)")
+    else:
+        log_message(logger, "Tracker will keep running after IL-2 closes.")
+    log_message(logger)
     log_message(logger, "Press Ctrl+C to stop.")
     log_message(logger)
     
@@ -346,7 +353,8 @@ def start_monitoring(il2_states_path: Path = None) -> int:
             check_interval=1,
             use_file_watcher=True,
             il2_states_path=il2_states_path,
-            debug=DEBUG_ENABLED
+            debug=DEBUG_ENABLED,
+            exit_with_il2=exit_with_il2
         )
         monitor.run()
         return 0
@@ -367,7 +375,9 @@ def run_tracker() -> int:
     parser.add_argument('--skip-backup-gui', action='store_true',
                        help='Skip backup GUI (used only for automatic restart after restore)')
     parser.add_argument('--debug', action='store_true',
-                        help='Enable debug logging output')                   
+                        help='Enable debug logging output')
+    parser.add_argument('--no-exit-with-il2', action='store_true',
+                       help='Keep tracker running after IL-2 closes (default: exit with IL-2)')
     args, unknown = parser.parse_known_args()
     
     global DEBUG_ENABLED
@@ -491,7 +501,7 @@ def run_tracker() -> int:
         show_campaign_not_found_message()
     
     # Step 8: Start monitoring
-    return start_monitoring(il2_states_path)
+    return start_monitoring(il2_states_path, exit_with_il2=not args.no_exit_with_il2)
 
 
 def main() -> int:

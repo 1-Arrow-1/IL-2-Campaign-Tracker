@@ -12,7 +12,8 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **W
 
 - [Features](#features)
 - [Supported Nations](#supported-nations)
-- [Installation](#installation)
+- [Installation (manual)](#installation_manual)
+- [Installation via JSGME](#installation_JSGME)
 - [First Run Setup](#first-run-setup)
 - [WW1 Detection & Exclusion](#ww1-detection--exclusion)
 - [How It Works](#how-it-works)
@@ -63,7 +64,7 @@ The tracker includes historically accurate ranks and awards for:
 
 ---
 
-## 📥 Installation <a id="installation"></a>
+## 📥 Installation (manual) <a id="installation_manual"></a>
 
 1. **Download** the latest release (`IL2_Campaign_Tracker_v2.0.zip`)
 
@@ -88,7 +89,14 @@ Note: The intention of the extraction of the standard official campaigns is ONLY
 - **Goto** `<Path to Il-2 BoS>\data\(null)\campaigns`.  
 - **Copy** the subfolders of `<Path to Il-2 BoS>\data\(null)\campaigns` to `<Path to Il-2 BoS>\data\campaigns`  
 
-1. **Run** `IL2_Campaign_Tracker_v2.0.exe` from your Tracker installation directory.
+5. **Run** `IL2_Campaign_Tracker_v2.0.exe` from your Tracker installation directory.
+
+ℹ️ **NOTE**: By default, the tracker shuts down automatically when IL-2 BoS is closed. To continue using the tracker, you must either restart it manually or configure a Windows Task Scheduler task to launch it automatically when Windows starts.
+
+A general setup guide can be found here:
+https://forum.il2-series.com/topic/772-expanded-career-rank-mod/#findComment-4176
+
+Please adjust the executable names and file paths according to your local installation.
 
 ### PDF Requirements
 
@@ -169,6 +177,26 @@ Flying Circus (WW1) campaigns are detected and excluded by default because the t
 
 ---
 
+## 📥 Installation via JSGME <a id="installation_JSGME"></a>
+
+1. **Download** the latest release (`IL2_Campaign_Tracker_v2.0_JSGME.zip`)
+
+2. **Extract** the `zip` file
+
+3. **Copy** the extracted `IL2_Campaign_Tracker_v2.0` folder (⚠️**NOT** the `IL2_Campaign_Tracker_v2.0_JSGME` folder)  to `<Path to IL-2 BoS>\MODS`
+
+4. **Activate** the mod in JSGME
+
+5. **Run** `IL2_Campaign_Tracker_v2.0.exe` from `<Path to IL-2 BoS>\data\IL-2-Campaign-Tracker`.
+
+
+ℹ️ Rest of the setup is the same as the manual installation method.
+
+---
+
+
+
+
 ## ⚙️ How It Works <a id="how-it-works"></a>
 
 ### Monitoring Loop
@@ -221,7 +249,6 @@ Promotions are based on **accumulated score** across all completed missions (the
 ```text
 Overall Score per Campaign = ∑ Mission Scores
 Promotion Score = Base Score × Rank Scaling Factor
-
 ```
 
 **Rank Scaling Factor** adjusts requirements based on campaign length (can be editited in `campaign_progress_config.yaml`):  
@@ -232,9 +259,14 @@ Promotion Score = Base Score × Rank Scaling Factor
 "31-40":   1.50   # Medium-long campaigns  
 "41-50":   1.75   # Long campaigns  
 "51-70":   2.00   # Very long campaigns  
-"71+":     2.50   # Epic campaigns (70+ missions)
+"71+":     5.50   # Epic campaigns (70+ missions)
 
-This prevents rapid promotions in long campaigns while ensuring fair progression in short ones.
+This prevents rapid promotions in long campaigns while ensuring fair progression in short ones.  
+
+ℹ️ **Example:** In a 24-mission campaign, the scaling factor is 1.3, so a rank requiring 1000 points would need  1300 actual points (1000 x 1.30) to achieve.  
+When your accumulated score meets or exceeds the promotion threshold of 1300 points, you are promoted to the next rank.
+
+🚨 **IMPORTANT**: If you modify the `campaign_progress_config.yaml`, be careful to keep indentation correct (YAML format). Improper indentation can lead to parsing errors.
 
 ### How Awards Work
 

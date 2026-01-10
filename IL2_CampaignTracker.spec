@@ -4,6 +4,9 @@ from PyInstaller.utils. hooks import collect_dynamic_libs
 
 # psutil binaries (. pyd Dateien)
 psutil_binaries = collect_dynamic_libs('psutil')
+#import os
+#wkhtml_path = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
+#print(f"wkhtmltopdf exists: {os.path.exists(wkhtml_path)}")
 
 a = Analysis(
     ['il2_tracker_launcher.py'],
@@ -30,7 +33,7 @@ a = Analysis(
         'backup_restore_gui',
         'popups_min',
         'campaign_reset_checker',
-		'sync_campaign_mission_states'
+		'sync_campaign_mission_states',
         'utils',
         'utils.formatting',
         'utils.info_locale',
@@ -42,6 +45,7 @@ a = Analysis(
 		'utils.process',
 		'utils.sorting',
 		'utils.logging',
+        'utils.rank_scaling',
 		'regex',
         'PIL',
         'PIL.Image',

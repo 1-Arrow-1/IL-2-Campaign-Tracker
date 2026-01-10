@@ -260,8 +260,16 @@ def _prune_popup_seen(
     updated = False
 
     for campaign_name, removed_missions in removed_by_campaign.items():
-        events = popup_data.get(campaign_name)
-        if not isinstance(events, list):
+        campaign_entry = popup_data.get(campaign_name)
+        if campaign_entry is None:
+            continue
+        
+        # Handle both old format (list) and new format (dict with 'seen' key)
+        if isinstance(campaign_entry, list):
+            events = campaign_entry
+        elif isinstance(campaign_entry, dict):
+            events = campaign_entry.get('seen', [])
+        else:
             continue
 
         filtered_events = [
@@ -273,7 +281,11 @@ def _prune_popup_seen(
         if len(filtered_events) != len(events):
             updated = True
             if filtered_events:
-                popup_data[campaign_name] = filtered_events
+                # Preserve format
+                if isinstance(campaign_entry, list):
+                    popup_data[campaign_name] = filtered_events
+                else:
+                    popup_data[campaign_name]['seen'] = filtered_events
             else:
                 popup_data.pop(campaign_name, None)
 
