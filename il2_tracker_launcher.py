@@ -111,6 +111,34 @@ def run_first_time_setup() -> bool:
     return True
 
 
+def sync_campaign_structure() -> bool:
+    """
+    Sync campaign structure (new/deleted campaigns/missions) at every startup.
+    
+    This ensures that campaigns added or missions added while the tracker
+    was not running are properly registered in campaign_mission_dates.json.
+    
+    Returns:
+        True if sync completed successfully, False on error
+    """
+    mission_dates_file = SCRIPT_DIR / "campaign_mission_dates.json"
+    
+    if not mission_dates_file.exists():
+        # First run - will be handled by run_first_time_setup
+        return True
+    
+    log_message(logger, "Checking for new/changed campaigns...")
+    
+    try:
+        import step1_extract_mission_dates
+        step1_extract_mission_dates.main(args=["--auto"])
+        log_message(logger, "✅ Campaign structure synced")
+        return True
+    except Exception as e:
+        log_message(logger, f"⚠️ Warning: Campaign sync failed: {e}")
+        return False
+
+
 def find_il2_states_path() -> Path | None:
     """
     Find IL-2 campaign save file.
@@ -409,6 +437,10 @@ def run_tracker() -> int:
     if not run_first_time_setup():
         input("Press Enter to exit...")
         return 1
+    
+    # Step 1.5: Sync campaign structure (detect new/deleted campaigns/missions)
+    print_header("SYNCING CAMPAIGN STRUCTURE")
+    sync_campaign_structure()
     
     # Step 2: Find IL-2 states path
     print_header("LOCATING IL-2 CAMPAIGN SAVE FILE")
