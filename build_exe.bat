@@ -182,6 +182,16 @@ if not exist "CampaignRanksAwards.zip" (
     pause
     exit /b 1
 )
+if not exist "cleanup_tracker_content.py" (
+    echo ERROR: cleanup_tracker_content.py not found!
+    pause
+    exit /b 1
+)
+if not exist "cleanup_tracker_content.spec" (
+    echo ERROR: cleanup_tracker_content.spec not found!
+    pause
+    exit /b 1
+)
 echo OK
 echo.
 
@@ -203,6 +213,7 @@ for %%F in (
 		"campaign_reset_checker.py"
 		"backup_restore_gui.py"
 		"sync_campaign_mission_states.py"
+        "cleanup_tracker_content.py"
 		"utils\__init__.py"
 		"utils\formatting.py"
 		"utils\info_locale.py"
@@ -277,6 +288,19 @@ if errorlevel 1 (
     exit /b 1
 )
 echo ✓ mlg2txt.exe built successfully
+echo.
+
+REM Build cleanup_tracker_content helper EXE
+echo Building cleanup_tracker_content.exe...
+pyinstaller cleanup_tracker_content.spec
+if errorlevel 1 (
+    echo.
+    echo ERROR: Build failed for cleanup_tracker_content.exe!
+    echo Check the error messages above.
+    pause
+    exit /b 1
+)
+echo ✓ cleanup_tracker_content.exe built successfully
 echo OK
 echo.
 
@@ -295,6 +319,13 @@ REM Copy mlg2txt EXE
 copy "dist\mlg2txt.exe" "IL2_Campaign_Tracker_v2.0\" >NUL
 if errorlevel 1 (
     echo ERROR: Could not copy mlg2txt.exe!
+    pause
+    exit /b 1
+)
+REM Copy cleanup_tracker_content EXE
+copy "dist\cleanup_tracker_content.exe" "IL2_Campaign_Tracker_v2.0\" >NUL
+if errorlevel 1 (
+    echo ERROR: Could not copy cleanup_tracker_content.exe!
     pause
     exit /b 1
 )

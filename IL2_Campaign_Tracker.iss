@@ -34,13 +34,19 @@ Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "A
 
 [Files]
 ; --- Tracker install folder ({app}) ---
-Source: "campaign_progress_config.yaml"; DestDir: "{app}"; Flags: ignoreversion
+; Configuration files: only install if not already present (preserves user settings)
+Source: "campaign_progress_config.yaml"; DestDir: "{app}"; Flags: onlyifdoesntexist
+Source: "object_categories.yaml"; DestDir: "{app}"; Flags: onlyifdoesntexist
+Source: "stock_campaigns.yaml"; DestDir: "{app}"; Flags: onlyifdoesntexist
+
+; Program files: always overwrite
 Source: "IL2_CampaignTracker_v2.0.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "mlg2txt.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "object_categories.yaml"; DestDir: "{app}"; Flags: ignoreversion
 Source: "QUICK_START.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README.html"; DestDir: "{app}"; Flags: ignoreversion
-Source: "stock_campaigns.yaml"; DestDir: "{app}"; Flags: ignoreversion
+
+; --- Cleanup utility for uninstaller ---
+Source: "cleanup_tracker_content.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 ; --- Copy CampaignRanksAwards into IL-2 ---
 ; This places content into: <IL-2>\data\swf\CampaignRanksAwards\*
@@ -56,15 +62,15 @@ Name: "{group}\Uninstall IL-2 Campaign Tracker"; Filename: "{uninstallexe}"
 ; Store IL-2 install path for uninstall cleanup
 Root: HKLM; Subkey: "Software\{#MyAppName}"; ValueType: string; ValueName: "IL2Path"; ValueData: "{code:GetIL2Dir}"; Flags: uninsdeletekey
 
-[UninstallDelete]
-; Delete entire installation folder on uninstall
-Type: filesandordirs; Name: "{app}"
-
 [Code]
 
 var
   IL2DirPage: TInputDirWizardPage;
   IL2DirValue: string;
+  
+  { Uninstall options }
+  KeepConfigFiles: Boolean;
+  KeepBackupFiles: Boolean;
 
 { ----------------------------
   Helpers
@@ -181,16 +187,58 @@ begin
   end;
 end;
 
+{ ----------------------------
+  Uninstall: Ask user about keeping files
+  ---------------------------- }
+
+function InitializeUninstall(): Boolean;
+var
+  MsgResult: Integer;
+begin
+  Result := True;
+  
+  { Default: delete everything }
+  KeepConfigFiles := False;
+  KeepBackupFiles := False;
+  
+  { Ask about configuration files }
+  MsgResult := MsgBox(
+    'Do you want to KEEP your configuration files (*.yaml)?' + #13#10 + #13#10 +
+    'This includes your custom rank scaling settings and award configurations.' + #13#10 + #13#10 +
+    'Click YES to keep configuration files.' + #13#10 +
+    'Click NO to delete everything.',
+    mbConfirmation,
+    MB_YESNO
+  );
+  KeepConfigFiles := (MsgResult = IDYES);
+  
+  { Ask about backup files }
+  MsgResult := MsgBox(
+    'Do you want to KEEP your backup files?' + #13#10 + #13#10 +
+    'This includes:' + #13#10 +
+    '  - campaignsstates_*.backup' + #13#10 +
+    '  - campaign_popups_seen_*.backup' + #13#10 +
+    '  - campaignsstates_hash_index.json' + #13#10 + #13#10 +
+    'These allow you to restore previous campaign states if you reinstall.' + #13#10 + #13#10 +
+    'Click YES to keep backup files.' + #13#10 +
+    'Click NO to delete everything.',
+    mbConfirmation,
+    MB_YESNO
+  );
+  KeepBackupFiles := (MsgResult = IDYES);
+end;
+
 // ----------------------------
 //  Uninstall cleanup
-//  - Deletes:
-//    1) <IL-2>\data\swf\CampaignRanksAwards\*
-//    2) For each UUID folder:
+//  - Runs cleanup_tracker_content.exe to remove Events/Debriefings from info.locale files
+//  - Optionally deletes:
+//    1) Configuration files (*.yaml) in {app}
+//    2) <IL-2>\data\swf\CampaignRanksAwards\*
+//    3) For each UUID folder:
 //       <IL-2>\data\swf\il2\usersave\{UUID}\campaign\
 //         - campaignsstates_*.backup
 //         - campaign_popups_seen_*.backup
 //         - campaignsstates_hash_index.json
-//  Note: Your [UninstallDelete] can delete {app} completely.
 //  ---------------------------- 
 
 procedure DeleteUserSaveCampaignFiles(const IL2Root: string);
@@ -198,6 +246,12 @@ var
   UsersaveRoot, SearchPath, UUIDDir, CampaignDir: string;
   FindRec: TFindRec;
 begin
+  if KeepBackupFiles then
+  begin
+    { User wants to keep backups - skip this step }
+    Exit;
+  end;
+
   UsersaveRoot := IL2Root + '\data\swf\il2\usersave';
   if not DirExists(UsersaveRoot) then
     Exit;
@@ -230,6 +284,65 @@ begin
   end;
 end;
 
+procedure RunCleanupTrackerContent(const IL2Root: string);
+var
+  CleanupExe: string;
+  ResultCode: Integer;
+begin
+  { Run cleanup_tracker_content.exe to remove Events/Debriefings from info.locale files }
+  CleanupExe := ExpandConstant('{app}\cleanup_tracker_content.exe');
+  
+  if FileExists(CleanupExe) then
+  begin
+    { Run silently with --quiet flag }
+    Exec(CleanupExe, '--uninstall --quiet --il2-path "' + IL2Root + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    { Ignore result code - cleanup is best-effort }
+  end;
+end;
+
+procedure DeleteAppFiles();
+var
+  AppDir: string;
+  FindRec: TFindRec;
+  FilePath, FileExt: string;
+begin
+  AppDir := ExpandConstant('{app}');
+  
+  if not DirExists(AppDir) then
+    Exit;
+    
+  { Find and delete files based on extension }
+  if FindFirst(AppDir + '\*', FindRec) then
+  try
+    repeat
+      if (FindRec.Attributes and FILE_ATTRIBUTE_DIRECTORY) = 0 then
+      begin
+        FilePath := AppDir + '\' + FindRec.Name;
+        FileExt := LowerCase(ExtractFileExt(FindRec.Name));
+        
+        { Keep *.yaml files if user chose to keep config }
+        if KeepConfigFiles and (FileExt = '.yaml') then
+        begin
+          { Keep this file }
+        end
+        else
+        begin
+          { Delete all other files: *.json, *.log, *.exe, *.txt, *.html, etc. }
+          DeleteFile(FilePath);
+        end;
+      end;
+    until not FindNext(FindRec);
+  finally
+    FindClose(FindRec);
+  end;
+  
+  { Delete subdirectories (like reports/) }
+  DelTree(AppDir + '\reports', True, True, True);
+  
+  { Try to remove the app directory if empty (will fail if config files kept) }
+  RemoveDir(AppDir);
+end;
+
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   IL2Root, AwardsDir: string;
@@ -240,14 +353,23 @@ begin
 
     if (IL2Root <> '') and DirExists(IL2Root) then
     begin
-      { Remove CampaignRanksAwards folder }
+      { Step 1: Remove tracker content from info.locale files }
+      RunCleanupTrackerContent(IL2Root);
+    
+      { Step 2: Remove CampaignRanksAwards folder }
       AwardsDir := IL2Root + '\data\swf\CampaignRanksAwards';
       if DirExists(AwardsDir) then
         DelTree(AwardsDir, True, True, True);
 
-      { Remove tracker-related files from usersave UUID campaign folders }
+      { Step 3: Remove tracker-related files from usersave UUID campaign folders }
+      { (respects KeepBackupFiles setting) }
       DeleteUserSaveCampaignFiles(IL2Root);
     end;
+    
+    { Step 4: Delete app files (respects KeepConfigFiles setting) }
+    { Deletes: *.json, *.log, *.exe, *.txt, *.html }
+    { Keeps: *.yaml (if KeepConfigFiles = True) }
+    DeleteAppFiles();
   end;
 end;
 
