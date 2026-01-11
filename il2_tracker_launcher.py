@@ -118,6 +118,8 @@ def sync_campaign_structure() -> bool:
     This ensures that campaigns added or missions added while the tracker
     was not running are properly registered in campaign_mission_dates.json.
     
+    If new campaigns are detected, the country validator GUI is shown.
+    
     Returns:
         True if sync completed successfully, False on error
     """
@@ -129,11 +131,52 @@ def sync_campaign_structure() -> bool:
     
     log_message(logger, "Checking for new/changed campaigns...")
     
+    # Load existing campaigns before sync
+    try:
+        with open(mission_dates_file, 'r', encoding='utf-8') as f:
+            old_data = json.load(f)
+        old_campaigns = set(k for k in old_data.keys() if k != 'game_directory')
+    except Exception:
+        old_campaigns = set()
+    
     try:
         import step1_extract_mission_dates
         step1_extract_mission_dates.main(args=["--auto"])
-        log_message(logger, "✅ Campaign structure synced")
+        
+        # Load campaigns after sync
+        try:
+            with open(mission_dates_file, 'r', encoding='utf-8') as f:
+                new_data = json.load(f)
+            new_campaigns = set(k for k in new_data.keys() if k != 'game_directory')
+        except Exception:
+            new_campaigns = set()
+        
+        # Check for newly added campaigns
+        added_campaigns = new_campaigns - old_campaigns
+        
+        if added_campaigns:
+            log_message(logger, f"✅ Found {len(added_campaigns)} new campaign(s):")
+            for name in sorted(added_campaigns):
+                log_message(logger, f"   - {name}")
+            log_message(logger)
+            
+            # Show country validator GUI for new campaigns
+            log_message(logger, "Please verify the country for new campaigns...")
+            try:
+                from country_validator_gui import validate_countries
+                result = validate_countries(str(mission_dates_file))
+                
+                if not result:
+                    log_message(logger, "Country validation was cancelled.")
+                    log_message(logger, "You can manually edit campaign_mission_dates.json later.")
+            except Exception as e:
+                log_message(logger, f"⚠️ Could not show country validation GUI: {e}")
+                log_message(logger, "You can manually edit campaign_mission_dates.json later.")
+        else:
+            log_message(logger, "✅ Campaign structure synced (no new campaigns)")
+        
         return True
+        
     except Exception as e:
         log_message(logger, f"⚠️ Warning: Campaign sync failed: {e}")
         return False
