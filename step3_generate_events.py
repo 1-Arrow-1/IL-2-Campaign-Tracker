@@ -39,6 +39,7 @@ from utils.combat_results import (
     calculate_kills_from_stats,
     calculate_air_combat_score,
     calculate_total_air_kills_weighted,
+    aggregate_kills_from_missions,
 )
 from utils.combat_results_html import (
     generate_campaign_summary_combat_results_html,
@@ -463,25 +464,24 @@ class EventGenerator:
             'total_score': 0
         }
         
+        aggregated_kills = aggregate_kills_from_missions(campaign_stats)
+        cumulative['fighter_kills'] = aggregated_kills['fighter_kills']
+        cumulative['bomber_kills'] = aggregated_kills['bomber_kills']
+        cumulative['static_plane_kills'] = aggregated_kills['static_kills']
+        cumulative['ground_kills'] = aggregated_kills['ground_kills']
+        cumulative['tank_kills'] = aggregated_kills['tank_kills']
+        cumulative['ship_kills'] = aggregated_kills['naval_kills']
+        cumulative['total_kills'] = aggregated_kills['total_kills']
+        
         for mission_num, stats in campaign_stats.items():
             if not isinstance(stats, dict):
                 log_message(LOGGER, f"    Warning: Stats for mission {mission_num} is not a dict")
                 continue
             
             cumulative['missions_completed'] += 1
-            
-            # Use central kill calculation
-            kills = calculate_kills_from_stats(stats)
-            
-            cumulative['fighter_kills'] += kills['fighter_kills']
-            cumulative['bomber_kills'] += kills['bomber_kills']
-            cumulative['static_plane_kills'] += kills['static_kills']
+                        
             cumulative['total_air_kills'] += calculate_total_air_kills_weighted(stats)
             cumulative['air_combat_score'] += calculate_air_combat_score(stats)
-            cumulative['ground_kills'] += kills['ground_kills']
-            cumulative['tank_kills'] += kills['tank_kills']
-            cumulative['ship_kills'] += kills['naval_kills']
-            cumulative['total_kills'] += kills['total_kills']
             
             # Non-kill stats
             cumulative['deaths'] += int(stats.get('deaths', 0))
