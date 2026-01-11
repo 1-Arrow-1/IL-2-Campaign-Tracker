@@ -39,6 +39,7 @@ a = Analysis(
         'utils.info_locale',
         'utils.pathing',
 		'utils.il2_paths',
+        'utils.combat_results',
 		'utils.combat_results_html',
 		'utils.filesystem',
 		'utils.popup_state',

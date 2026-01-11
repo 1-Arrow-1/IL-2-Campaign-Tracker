@@ -141,6 +141,11 @@ if not exist "utils\combat_results_html.py" (
     pause
     exit /b 1
 )
+if not exist "utils\combat_results.py" (
+    echo ERROR: utils\combat_results.py not found!
+    pause
+    exit /b 1
+)
 if not exist "utils\filesystem.py" (
     echo ERROR: utils\filesystem.py not found!
     pause
@@ -223,6 +228,7 @@ for %%F in (
 		"utils\process.py"
 		"utils\popup_state.py"
 		"utils\combat_results_html.py"
+        "utils\combat_results.py"
 		"utils\filesystem.py"
 		"utils\logging.py"
         "utils\rank_scaling.py"

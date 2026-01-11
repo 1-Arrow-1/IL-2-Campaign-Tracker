@@ -34,13 +34,16 @@ from utils.info_locale import (
 )
 from utils.pathing import get_base_path
 from utils.formatting import safe_campaign_filename
-from utils.combat_results_html import (
+from utils.combat_results import (
     KILL_MAPPING,
     calculate_kills_from_stats,
     calculate_air_combat_score,
     calculate_total_air_kills_weighted,
     aggregate_kills_from_missions,
+)
+from utils.combat_results_html import (
     generate_campaign_summary_combat_results_html,
+    generate_mission_combat_results_html,
 )
 from utils.filesystem import is_file_locked
 from utils.popup_state import load_popup_seen, save_popup_seen, make_event_key, get_seen_keys, set_seen_keys
@@ -722,7 +725,7 @@ class EventGenerator:
                 # Check if per-sortie award
                 if award.get('per_sortie'):
                     # Check THIS mission only (static planes count as 0.5)
-                    mission_kills = light + medium + heavy + (static * 0.5)
+                    mission_kills = calculate_total_air_kills_weighted(mission_stats)
                     wounded = int(mission_stats.get('deaths', 0)) > 0
                     
                     award_earned = False
@@ -986,52 +989,15 @@ class EventGenerator:
 
             running_stats['missions_completed'] += 1
 
-            light = int(mission_stats.get('killLightPlane', 0))
-            medium = int(mission_stats.get('killMediumPlane', 0))
-            heavy = int(mission_stats.get('killHeavyPlane', 0))
-            static = int(mission_stats.get('killStaticPlane', 0))
-
-            running_stats['air_combat_score'] += light + medium + (static * 0.5) + (heavy * 2)
-            running_stats['total_air_kills'] += light + medium + heavy + (static * 0.5)
+            kills = calculate_kills_from_stats(mission_stats)
+            running_stats['air_combat_score'] += calculate_air_combat_score(mission_stats)
+            running_stats['total_air_kills'] += calculate_total_air_kills_weighted(mission_stats)
             running_stats['flight_time_hours'] += int(mission_stats.get('totalFlightTime', 0)) / 3600
             running_stats['deaths'] += int(mission_stats.get('deaths', 0))
             running_stats['total_score'] += int(mission_stats.get('score', 0))
-
-            ground = (
-                int(mission_stats.get('killTransportVehicle', 0)) +
-                int(mission_stats.get('killLightArmoredVehicle', 0)) +
-                int(mission_stats.get('killMediumArmoredVehicle', 0)) +
-                int(mission_stats.get('killHeavyArmoredVehicle', 0)) +
-                int(mission_stats.get('killCannon', 0)) +
-                int(mission_stats.get('killAAAGun', 0)) +
-                int(mission_stats.get('killMachinegun', 0)) +
-                int(mission_stats.get('killRocketLauncher', 0)) +
-                int(mission_stats.get('killRailroadCarriage', 0)) +
-                int(mission_stats.get('killLocomotive', 0)) +
-                int(mission_stats.get('killRailroadStation', 0)) +
-                int(mission_stats.get('killBridge', 0)) +
-                int(mission_stats.get('killFacility', 0)) +
-                int(mission_stats.get('killRadar', 0)) +
-                int(mission_stats.get('killSearchlight', 0)) +
-                int(mission_stats.get('killResidentalBuilding', 0))
-            )
-            running_stats['ground_kills'] += ground
-
-            tanks = (
-                int(mission_stats.get('killLightArmoredVehicle', 0)) +
-                int(mission_stats.get('killMediumArmoredVehicle', 0)) +
-                int(mission_stats.get('killHeavyArmoredVehicle', 0))
-            )
-            running_stats['tank_kills'] += tanks
-
-            ships = (
-                int(mission_stats.get('killLightShip', 0)) +
-                int(mission_stats.get('killLargeCargoShip', 0)) +
-                int(mission_stats.get('killDestroyerShip', 0)) +
-                int(mission_stats.get('killSubmarine', 0))
-            )
-            running_stats['ship_kills'] += ships
-
+            running_stats['ground_kills'] += kills['ground_kills']
+            running_stats['tank_kills'] += kills['tank_kills']
+            running_stats['ship_kills'] += kills['naval_kills']
             running_stats['total_kills'] = (
                 running_stats['total_air_kills'] +
                 running_stats['ground_kills'] +
