@@ -11,8 +11,9 @@ AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 
-
-DefaultDirName={autopf}\{#MyAppName}
+[Setup]
+PrivilegesRequired=admin
+DefaultDirName={localappdata}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 
@@ -20,10 +21,10 @@ OutputBaseFilename=IL2_CampaignTracker_Setup_v{#MyAppVersion}
 Compression=lzma
 SolidCompression=yes
 
-PrivilegesRequired=admin
 UsePreviousAppDir=yes
 
-UninstallDisplayIcon={app}\{#MyAppExeName}
+UninstallDisplayName=IL-2 Great Battles SP Campaign Tracker Uninstaller
+UninstallDisplayIcon={app}\IL2_CampaignTracker_v2.0.exe
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -48,6 +49,8 @@ Source: "CampaignRanksAwards\*"; DestDir: "{code:GetIL2Dir}\data\swf\CampaignRan
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{group}\Uninstall IL-2 Campaign Tracker"; Filename: "{uninstallexe}"
+
 
 [Registry]
 ; Store IL-2 install path for uninstall cleanup
@@ -58,9 +61,14 @@ Root: HKLM; Subkey: "Software\{#MyAppName}"; ValueType: string; ValueName: "IL2P
 Type: filesandordirs; Name: "{app}"
 
 [Code]
+
 var
   IL2DirPage: TInputDirWizardPage;
   IL2DirValue: string;
+
+{ ----------------------------
+  Helpers
+  ---------------------------- }
 
 function NormalizeDir(const S: string): string;
 begin
@@ -71,22 +79,57 @@ end;
 
 function LooksLikeIL2Root(const Dir: string): Boolean;
 begin
-  { Adjust these checks to match your environment.
-    Choose markers that are stable for IL-2 Great Battles installations. }
+  { Keep this check internal (do not mention it in UI text).
+    Adjust markers if needed. These are safe and lightweight. }
   Result :=
-    DirExists(Dir + '\bin\game') and
-    DirExists(Dir + '\data');
+    DirExists(Dir + '\data') and
+    DirExists(Dir + '\data\swf');
 end;
 
 function GetStoredIL2Path(): string;
 begin
   Result := '';
-  RegQueryStringValue(HKLM, 'Software\{#MyAppName}', 'IL2Path', Result);
+
+  { Prefer 64-bit HKLM view (recommended write target) }
+  if not RegQueryStringValue(HKLM64, 'Software\{#MyAppName}', 'IL2Path', Result) then
+  begin
+    { Fallback: 32-bit view (WOW6432Node) for legacy installs }
+    RegQueryStringValue(HKLM32, 'Software\{#MyAppName}', 'IL2Path', Result);
+  end;
 end;
 
-procedure InitializeWizard;
+function GetIL2Dir(Param: string): string;
+begin
+  // Used by [Files]/[Registry] as {code:GetIL2Dir} 
+  Result := IL2DirValue;
+
+  { Fallback (e.g., edge cases) }
+  if Result = '' then
+    Result := GetStoredIL2Path();
+end;
+
+procedure PrefillIL2Dir;
 var
   Prev: string;
+  DefaultSteamIL2: string;
+begin
+  Prev := NormalizeDir(GetStoredIL2Path());
+  DefaultSteamIL2 :=
+    'C:\Program Files (x86)\Steam\steamapps\common\IL-2 Sturmovik Battle of Stalingrad';
+
+  if (Prev <> '') and DirExists(Prev) then
+    IL2DirPage.Values[0] := Prev
+  else if DirExists(DefaultSteamIL2) then
+    IL2DirPage.Values[0] := DefaultSteamIL2
+  else
+    IL2DirPage.Values[0] := 'C:\Program Files (x86)\Steam\steamapps\common';
+end;
+
+{ ----------------------------
+  Wizard setup
+  ---------------------------- }
+
+procedure InitializeWizard;
 begin
   IL2DirPage := CreateInputDirPage(
     wpSelectDir,
@@ -97,12 +140,12 @@ begin
     ''
   );
 
-  Prev := GetStoredIL2Path();
-  if Prev <> '' then
-    IL2DirPage.Add(NormalizeDir(Prev))
-  else
-    IL2DirPage.Add('C:\Program Files (x86)\Steam\steamapps\common\IL-2 Sturmovik Battle of Stalingrad');  { reasonable guess, user can browse }
+  // Create the first (and only) directory input row
+  IL2DirPage.Add('');
+
+  PrefillIL2Dir();
 end;
+
 
 function NextButtonClick(CurPageID: Integer): Boolean;
 var
@@ -116,32 +159,39 @@ begin
 
     if (D = '') or (not DirExists(D)) then
     begin
-      MsgBox('Please select an existing IL-2 folder.', mbError, MB_OK);
+      MsgBox('Please select an existing IL-2 Great Battles installation folder.', mbError, MB_OK);
       Result := False;
       Exit;
     end;
 
     if not LooksLikeIL2Root(D) then
     begin
-      MsgBox('The selected folder does not look like a valid IL-2 installation. ' +
-             'It must contain "\data\swf". Please choose the IL-2 root folder.',
-             mbError, MB_OK);
+      MsgBox(
+        'The selected folder does not appear to be a valid IL-2 Great Battles installation.' + #13#10 +
+        'Please select the correct game installation directory.',
+        mbError,
+        MB_OK
+      );
       Result := False;
       Exit;
     end;
 
+    { Store for this run }
     IL2DirValue := D;
   end;
 end;
 
-function GetIL2Dir(Param: string): string;
-begin
-  Result := IL2DirValue;
-
-  { Fallback (e.g., for maintenance/uninstall edge cases) }
-  if Result = '' then
-    Result := GetStoredIL2Path();
-end;
+// ----------------------------
+//  Uninstall cleanup
+//  - Deletes:
+//    1) <IL-2>\data\swf\CampaignRanksAwards\*
+//    2) For each UUID folder:
+//       <IL-2>\data\swf\il2\usersave\{UUID}\campaign\
+//         - campaignsstates_*.backup
+//         - campaign_popups_seen_*.backup
+//         - campaignsstates_hash_index.json
+//  Note: Your [UninstallDelete] can delete {app} completely.
+//  ---------------------------- 
 
 procedure DeleteUserSaveCampaignFiles(const IL2Root: string);
 var
@@ -149,12 +199,10 @@ var
   FindRec: TFindRec;
 begin
   UsersaveRoot := IL2Root + '\data\swf\il2\usersave';
-
   if not DirExists(UsersaveRoot) then
     Exit;
 
   SearchPath := UsersaveRoot + '\*';
-
   if FindFirst(SearchPath, FindRec) then
   try
     repeat
@@ -167,11 +215,11 @@ begin
 
           if DirExists(CampaignDir) then
           begin
-            { Delete wildcard backups (ignore failures) }
+            { Wildcard deletes – ignore errors }
             DelTree(CampaignDir + '\campaignsstates_*.backup', False, True, False);
             DelTree(CampaignDir + '\campaign_popups_seen_*.backup', False, True, False);
 
-            { Delete fixed file }
+            { Single file }
             DeleteFile(CampaignDir + '\campaignsstates_hash_index.json');
           end;
         end;
@@ -184,25 +232,23 @@ end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
-  IL2Root, SwfAwardsDir: string;
+  IL2Root, AwardsDir: string;
 begin
   if CurUninstallStep = usUninstall then
   begin
-    { Read IL-2 path from registry }
-    IL2Root := GetStoredIL2Path();
-    IL2Root := NormalizeDir(IL2Root);
+    IL2Root := NormalizeDir(GetStoredIL2Path());
 
     if (IL2Root <> '') and DirExists(IL2Root) then
     begin
       { Remove CampaignRanksAwards folder }
-      SwfAwardsDir := IL2Root + '\data\swf\CampaignRanksAwards';
-      if DirExists(SwfAwardsDir) then
-        DelTree(SwfAwardsDir, True, True, True);
+      AwardsDir := IL2Root + '\data\swf\CampaignRanksAwards';
+      if DirExists(AwardsDir) then
+        DelTree(AwardsDir, True, True, True);
 
-      { Remove tracker-related files from all UUID campaign folders }
+      { Remove tracker-related files from usersave UUID campaign folders }
       DeleteUserSaveCampaignFiles(IL2Root);
     end;
   end;
 end;
 
-[Setup]
+
