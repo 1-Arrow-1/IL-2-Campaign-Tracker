@@ -36,7 +36,10 @@ from utils.pathing import get_base_path
 from utils.formatting import safe_campaign_filename
 from utils.combat_results_html import (
     KILL_MAPPING,
-    generate_mission_combat_results_html,
+    calculate_kills_from_stats,
+    calculate_air_combat_score,
+    calculate_total_air_kills_weighted,
+    aggregate_kills_from_missions,
     generate_campaign_summary_combat_results_html,
 )
 from utils.filesystem import is_file_locked
@@ -441,113 +444,88 @@ class EventGenerator:
         return time_str
     
     def calculate_cumulative_stats(self, campaign_stats: Dict) -> Dict:
-        """
-        Calculate cumulative statistics from characterStatisticsByFileName
-        
-        Args:
-            campaign_stats: characterStatisticsByFileName from save data
-            
-        Returns:
-            Dictionary of cumulative statistics
-        """
         cumulative = {
             'missions_completed': 0,
             'total_air_kills': 0,
-            'fighter_kills': 0,  # killLightPlane + killMediumPlane
-            'bomber_kills': 0,   # killHeavyPlane
-            'static_plane_kills': 0,  # killStaticPlane (parked aircraft)
-            'air_combat_score': 0,  # fighters + static_planes*0.5 + (bombers*2)
+            'fighter_kills': 0,
+            'bomber_kills': 0,
+            'static_plane_kills': 0,
+            'air_combat_score': 0,
             'ground_kills': 0,
             'tank_kills': 0,
             'ship_kills': 0,
-            'total_kills': 0,  # air + ground + ship
+            'total_kills': 0,
             'deaths': 0,
-            'total_flight_time': 0,  # seconds
+            'total_flight_time': 0,
             'flight_time_hours': 0,
             'total_score': 0
         }
         
         for mission_num, stats in campaign_stats.items():
-            # Defensive: ensure stats is a dict
             if not isinstance(stats, dict):
-                log_message(LOGGER, f"    Warning: Stats for mission {mission_num} is not a dict: {type(stats)} = {stats}")
+                log_message(LOGGER, f"    Warning: Stats for mission {mission_num} is not a dict")
                 continue
             
             cumulative['missions_completed'] += 1
             
-            # Air kills (static planes count as 0.5)
-            light = int(stats.get('killLightPlane', 0))
-            medium = int(stats.get('killMediumPlane', 0))
-            heavy = int(stats.get('killHeavyPlane', 0))
-            static = int(stats.get('killStaticPlane', 0))
+            # Use central kill calculation
+            kills = calculate_kills_from_stats(stats)
             
-            cumulative['fighter_kills'] += light + medium
-            cumulative['bomber_kills'] += heavy
-            cumulative['static_plane_kills'] += static
-            cumulative['total_air_kills'] += light + medium + heavy + (static * 0.5)
+            cumulative['fighter_kills'] += kills['fighter_kills']
+            cumulative['bomber_kills'] += kills['bomber_kills']
+            cumulative['static_plane_kills'] += kills['static_kills']
+            cumulative['total_air_kills'] += calculate_total_air_kills_weighted(stats)
+            cumulative['air_combat_score'] += calculate_air_combat_score(stats)
+            cumulative['ground_kills'] += kills['ground_kills']
+            cumulative['tank_kills'] += kills['tank_kills']
+            cumulative['ship_kills'] += kills['naval_kills']
+            cumulative['total_kills'] += kills['total_kills']
             
-            # Air combat score (weighted: bombers count double, static count 0.5)
-            cumulative['air_combat_score'] += light + medium + (static * 0.5) + (heavy * 2)
-            
-            # Ground kills
-            ground = (
-                int(stats.get('killTransportVehicle', 0)) +
-                int(stats.get('killLightArmoredVehicle', 0)) +
-                int(stats.get('killMediumArmoredVehicle', 0)) +
-                int(stats.get('killHeavyArmoredVehicle', 0)) +
-                int(stats.get('killCannon', 0)) +
-                int(stats.get('killAAAGun', 0)) +
-                int(stats.get('killMachinegun', 0)) +
-                int(stats.get('killRocketLauncher', 0)) +
-                int(stats.get('killRailroadCarriage', 0)) +
-                int(stats.get('killLocomotive', 0)) +
-                int(stats.get('killRailroadStation', 0)) +
-                int(stats.get('killBridge', 0)) +
-                int(stats.get('killFacility', 0)) +
-                int(stats.get('killRadar', 0)) +
-                int(stats.get('killSearchlight', 0)) +
-                int(stats.get('killResidentalBuilding', 0))
-            )
-            cumulative['ground_kills'] += ground
-            
-            # Tank kills
-            tanks = (
-                int(stats.get('killLightArmoredVehicle', 0)) +
-                int(stats.get('killMediumArmoredVehicle', 0)) +
-                int(stats.get('killHeavyArmoredVehicle', 0))
-            )
-            cumulative['tank_kills'] += tanks
-            
-            # Ship kills
-            ships = (
-                int(stats.get('killLightShip', 0)) +
-                int(stats.get('killLargeCargoShip', 0)) +
-                int(stats.get('killDestroyerShip', 0)) +
-                int(stats.get('killSubmarine', 0))
-            )
-            cumulative['ship_kills'] += ships
-            
-            # Deaths
+            # Non-kill stats
             cumulative['deaths'] += int(stats.get('deaths', 0))
-            
-            # Total kills (air + ground + sea)
-            cumulative['total_kills'] = (
-                cumulative['total_air_kills'] + 
-                cumulative['ground_kills'] + 
-                cumulative['ship_kills']
-            )
-            
-            # Flight time
             cumulative['total_flight_time'] += int(stats.get('totalFlightTime', 0))
-            cumulative['flight_time_hours'] = cumulative['total_flight_time'] / 3600
-            
-            # Score
             cumulative['total_score'] += int(stats.get('score', 0))
         
-        # Convert flight time to hours
         cumulative['flight_time_hours'] = cumulative['total_flight_time'] / 3600
-        
         return cumulative
+
+    def _calculate_per_mission_kill_totals(self, campaign_stats: Dict) -> Dict[str, Dict[str, int]]:
+        per_mission = {}
+        for mission_id, stats in campaign_stats.items():
+            if not isinstance(stats, dict):
+                log_message(LOGGER, f"    Warning: Stats for mission {mission_id} is not a dict")
+                continue
+            
+            kills = calculate_kills_from_stats(stats)
+            per_mission[mission_id] = {
+                "air_kills": kills['air_kills'],
+                "ground_kills": kills['ground_kills'],
+                "naval_kills": kills['naval_kills'],
+                "total_kills": kills['total_kills'],
+            }
+        return per_mission
+
+    def _load_mission_aircraft_map(self, campaign_name: str) -> Dict[str, Dict]:
+        safe_name = safe_campaign_filename(campaign_name)
+        cache_path = BASE_DIR / "reports" / safe_name / "mission_aircraft_map.json"
+
+        if not cache_path.exists():
+            return {}
+
+        try:
+            with open(cache_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError) as exc:
+            log_message(LOGGER, f"    Warning: Could not read aircraft cache: {exc}")
+            return {}
+
+        if isinstance(data, dict) and "missions" in data and isinstance(data["missions"], dict):
+            return data["missions"]
+
+        if isinstance(data, dict):
+            return data
+
+        return {}
     
     def get_mission_date(self, campaign_name: str, mission_num: str) -> Optional[str]:
         """Get the date for a specific mission (case-insensitive campaign lookup)"""
@@ -696,61 +674,21 @@ class EventGenerator:
             mission_stats = per_mission_stats[mission_num]
             earned_this_mission = []  # Reset for new mission
             
-            # Update running statistics (static planes count as 0.5)
-            light = int(mission_stats.get('killLightPlane', 0))
-            medium = int(mission_stats.get('killMediumPlane', 0))
-            heavy = int(mission_stats.get('killHeavyPlane', 0))
-            static = int(mission_stats.get('killStaticPlane', 0))
-            
-            running_stats['air_combat_score'] += light + medium + (static * 0.5) + (heavy * 2)
-            running_stats['total_air_kills'] += light + medium + heavy + (static * 0.5)
+            # Update running statistics using central helpers
+            kills = calculate_kills_from_stats(mission_stats)
+
+            running_stats['air_combat_score'] += calculate_air_combat_score(mission_stats)
+            running_stats['total_air_kills'] += calculate_total_air_kills_weighted(mission_stats)
             running_stats['missions_completed'] += 1
             running_stats['flight_time_hours'] += int(mission_stats.get('totalFlightTime', 0)) / 3600
             running_stats['deaths'] += int(mission_stats.get('deaths', 0))
             running_stats['total_score'] += int(mission_stats.get('score', 0))
-            
-            # Ground kills
-            ground = (
-                int(mission_stats.get('killTransportVehicle', 0)) +
-                int(mission_stats.get('killLightArmoredVehicle', 0)) +
-                int(mission_stats.get('killMediumArmoredVehicle', 0)) +
-                int(mission_stats.get('killHeavyArmoredVehicle', 0)) +
-                int(mission_stats.get('killCannon', 0)) +
-                int(mission_stats.get('killAAAGun', 0)) +
-                int(mission_stats.get('killMachinegun', 0)) +
-                int(mission_stats.get('killRocketLauncher', 0)) +
-                int(mission_stats.get('killRailroadCarriage', 0)) +
-                int(mission_stats.get('killLocomotive', 0)) +
-                int(mission_stats.get('killRailroadStation', 0)) +
-                int(mission_stats.get('killBridge', 0)) +
-                int(mission_stats.get('killFacility', 0)) +
-                int(mission_stats.get('killRadar', 0)) +
-                int(mission_stats.get('killSearchlight', 0)) +
-                int(mission_stats.get('killResidentalBuilding', 0))
-            )
-            running_stats['ground_kills'] += ground
-            
-            # Tank kills
-            tanks = (
-                int(mission_stats.get('killLightArmoredVehicle', 0)) +
-                int(mission_stats.get('killMediumArmoredVehicle', 0)) +
-                int(mission_stats.get('killHeavyArmoredVehicle', 0))
-            )
-            running_stats['tank_kills'] += tanks
-            
-            # Ship kills
-            ships = (
-                int(mission_stats.get('killLightShip', 0)) +
-                int(mission_stats.get('killLargeCargoShip', 0)) +
-                int(mission_stats.get('killDestroyerShip', 0)) +
-                int(mission_stats.get('killSubmarine', 0))
-            )
-            running_stats['ship_kills'] += ships
-            
-            # Total kills (air + ground + sea)
+            running_stats['ground_kills'] += kills['ground_kills']
+            running_stats['tank_kills'] += kills['tank_kills']
+            running_stats['ship_kills'] += kills['naval_kills']
             running_stats['total_kills'] = (
-                running_stats['total_air_kills'] + 
-                running_stats['ground_kills'] + 
+                running_stats['total_air_kills'] +
+                running_stats['ground_kills'] +
                 running_stats['ship_kills']
             )
             
@@ -1996,6 +1934,8 @@ class EventGenerator:
         total_naval = 0
         total_flight_time_seconds = 0
         aircraft_usage = {}
+        aircraft_kills = {}
+        debrief_kills_by_aircraft = {}
         target_counts = {'air': {}, 'ground': {}, 'naval': {}}
         mission_count = len(debriefings)
         safe_landings = 0
@@ -2039,9 +1979,13 @@ class EventGenerator:
             # Aircraft usage (from player)
             aircraft = player.get('aircraft', 'Unknown')
             if aircraft not in aircraft_usage:
-                aircraft_usage[aircraft] = {'missions': 0, 'kills': 0}
+                aircraft_usage[aircraft] = {'missions': 0}
             aircraft_usage[aircraft]['missions'] += 1
-            aircraft_usage[aircraft]['kills'] += summary.get('air_kills', 0) + summary.get('ground_kills', 0) + summary.get('naval_kills', 0)
+            debrief_kills_by_aircraft[aircraft] = debrief_kills_by_aircraft.get(aircraft, 0) + (
+                summary.get('air_kills', 0) +
+                summary.get('ground_kills', 0) +
+                summary.get('naval_kills', 0)
+            )
             
             # Landing status (from summary)
             status = summary.get('final_state', '').lower()
@@ -2118,6 +2062,33 @@ class EventGenerator:
         # Get career progression
         promotions = [e for e in events if e.get('type') == 'promotion']
         awards = [e for e in events if e.get('type') == 'award']
+
+        per_mission_kills = {}
+        if decoded_data:
+            per_mission_stats = decoded_data.get('characterStatisticsByFileName', {})
+            per_mission_kills = self._calculate_per_mission_kill_totals(per_mission_stats)
+
+        if per_mission_kills:
+            aircraft_map = self._load_mission_aircraft_map(campaign_name)
+            for mission_id, totals in per_mission_kills.items():
+                aircraft_entry = aircraft_map.get(mission_id, {})
+                if isinstance(aircraft_entry, dict):
+                    aircraft_name = aircraft_entry.get("aircraft")
+                else:
+                    aircraft_name = aircraft_entry
+
+                if not aircraft_name:
+                    aircraft_name = "Unknown"
+
+                aircraft_kills[aircraft_name] = aircraft_kills.get(aircraft_name, 0) + totals.get("total_kills", 0)
+        else:
+            aircraft_kills = dict(debrief_kills_by_aircraft)
+
+        def format_kill_count(value: float) -> str:
+            try:
+                return f"{float(value):g}"
+            except (TypeError, ValueError):
+                return "0"
         
         starting_rank = promotions[0]['rank'] if promotions else 'Unknown'
         final_rank = promotions[-1]['rank'] if promotions else starting_rank
@@ -2176,8 +2147,20 @@ class EventGenerator:
         if aircraft_usage:
             html.append('<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">AIRCRAFT FLOWN</h2>')
             html.append(f'<table style="width: 100%; margin: 10px 0;">')
-            for aircraft, stats in sorted(aircraft_usage.items(), key=lambda x: x[1]['missions'], reverse=True):
-                html.append(f'<tr><td style="padding: 5px 0;"><b>{aircraft}:</b></td><td style="text-align: right;">{stats["missions"]} missions ({stats["kills"]} kills)</td></tr>')
+            aircraft_names = set(aircraft_usage.keys()) | set(aircraft_kills.keys())
+            aircraft_rows = []
+            for aircraft in aircraft_names:
+                missions = aircraft_usage.get(aircraft, {}).get("missions", 0)
+                kills = aircraft_kills.get(aircraft, 0)
+                aircraft_rows.append((aircraft, missions, kills))
+
+            for aircraft, missions, kills in sorted(aircraft_rows, key=lambda x: (x[1], x[2]), reverse=True):
+                if missions == 0 and kills == 0:
+                     continue  # Skip "Unknown: 0 missions (0 kills)"
+                html.append(
+                    f'<tr><td style="padding: 5px 0;"><b>{aircraft}:</b></td>'
+                    f'<td style="text-align: right;">{missions} missions ({format_kill_count(kills)} kills)</td></tr>'
+                )
             html.append('</table>')
         
         # Career Progression
@@ -2275,12 +2258,14 @@ class EventGenerator:
         
         # Clean campaign name for filename (remove special chars)
         safe_name = safe_campaign_filename(campaign_name)
-        pdf_filename = reports_dir / f"{safe_name}_Report.pdf"
+        campaign_report_dir = reports_dir / safe_name
+        campaign_report_dir.mkdir(parents=True, exist_ok=True)
+        pdf_filename = campaign_report_dir / f"{safe_name}_Report.pdf"
 
         # If the target PDF is open/locked, write a fallback instead of failing
         if is_file_locked(pdf_filename):
             ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-            fallback = reports_dir / f"{safe_name}_Report_LOCKED_{ts}.pdf"
+            fallback = campaign_report_dir / f"{safe_name}_Report_LOCKED_{ts}.pdf"
             log_message(LOGGER, f"  ⚠️  PDF is open/locked. Writing fallback: {fallback.name}")
             pdf_filename = fallback
         

@@ -24,6 +24,7 @@ import shutil
 
 from utils.logging import get_logger, log_message
 from utils.pathing import get_base_path
+from utils.formatting import safe_campaign_filename
 
 logger = get_logger(__name__)
 
@@ -60,6 +61,101 @@ class MissionLogProcessor:
             log_message(logger, f"  Game directory: {self.game_directory}")
             log_message(logger, f"  FlightLogs: {self.flight_logs_dir}")
             log_message(logger, f"  Exists: {self.flight_logs_dir.exists()}")
+
+    def _get_aircraft_cache_path(self, campaign_name: str) -> Path:
+        safe_name = safe_campaign_filename(campaign_name)
+        return get_base_path(__file__) / "reports" / safe_name / "mission_aircraft_map.json"
+
+    def _load_aircraft_cache(self, campaign_name: str) -> Dict:
+        cache_path = self._get_aircraft_cache_path(campaign_name)
+        if not cache_path.exists():
+            return {"campaign_name": campaign_name, "missions": {}}
+
+        try:
+            with open(cache_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError) as exc:
+            if self.verbose:
+                log_message(logger, f"  ⚠️  Could not read aircraft cache: {exc}")
+            return {"campaign_name": campaign_name, "missions": {}}
+
+        if isinstance(data, dict) and "missions" in data and isinstance(data["missions"], dict):
+            data.setdefault("campaign_name", campaign_name)
+            return data
+
+        if isinstance(data, dict):
+            return {"campaign_name": campaign_name, "missions": data}
+
+        return {"campaign_name": campaign_name, "missions": {}}
+
+    def _write_aircraft_cache(self, campaign_name: str, cache_data: Dict) -> None:
+        cache_path = self._get_aircraft_cache_path(campaign_name)
+        try:
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(cache_path, "w", encoding="utf-8") as f:
+                json.dump(cache_data, f, indent=2, ensure_ascii=False)
+        except OSError as exc:
+            if self.verbose:
+                log_message(logger, f"  ⚠️  Could not write aircraft cache: {exc}")
+
+    def _should_update_aircraft_cache(self, existing_entry: Optional[Dict], new_entry: Dict) -> bool:
+        if not existing_entry:
+            return True
+
+        def parse_timestamp(value: Optional[str]) -> Optional[datetime]:
+            if not value:
+                return None
+            try:
+                return datetime.strptime(value, "%Y-%m-%d_%H-%M-%S")
+            except ValueError:
+                return None
+
+        existing_ts = parse_timestamp(existing_entry.get("timestamp"))
+        new_ts = parse_timestamp(new_entry.get("timestamp"))
+
+        if existing_ts and new_ts:
+            if new_ts > existing_ts:
+                return True
+            if new_ts < existing_ts:
+                return False
+
+        existing_mtime = existing_entry.get("mlg_mtime", 0)
+        new_mtime = new_entry.get("mlg_mtime", 0)
+        if new_mtime and existing_mtime:
+            return new_mtime > existing_mtime
+
+        return bool(new_entry.get("mlg_filename")) and new_entry.get("mlg_filename") != existing_entry.get("mlg_filename")
+
+    def _update_aircraft_cache(
+        self,
+        campaign_name: str,
+        mission_id: str,
+        aircraft: str,
+        mlg_file: Path,
+        timestamp: Optional[str],
+    ) -> None:
+        cache = self._load_aircraft_cache(campaign_name)
+        missions = cache.setdefault("missions", {})
+
+        new_entry = {
+            "campaign_name": campaign_name,
+            "mission_id": mission_id,
+            "aircraft": aircraft,
+            "timestamp": timestamp,
+            "mlg_filename": mlg_file.name,
+            "mlg_mtime": mlg_file.stat().st_mtime,
+            "mlg_size": mlg_file.stat().st_size,
+            "updated_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+        }
+
+        existing_entry = missions.get(mission_id)
+        if self._should_update_aircraft_cache(existing_entry, new_entry):
+            missions[mission_id] = new_entry
+            cache["campaign_name"] = campaign_name
+            cache["updated_at"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+            self._write_aircraft_cache(campaign_name, cache)
+            if self.verbose:
+                log_message(logger, f"  ✓ Cached aircraft for {mission_id}: {aircraft}")
     
     def _import_modules(self):
         """Import il2_mission_debrief module (mlg2txt used via subprocess only)"""
@@ -166,6 +262,16 @@ class MissionLogProcessor:
             timestamp = self._extract_timestamp(mlg_file.name)
             data['timestamp'] = timestamp
             data['mission_id'] = mission_id
+
+            aircraft = data.get("player", {}).get("aircraft")
+            if aircraft:
+                self._update_aircraft_cache(
+                    campaign_name=campaign_name,
+                    mission_id=mission_id,
+                    aircraft=aircraft,
+                    mlg_file=mlg_file,
+                    timestamp=timestamp,
+                )
             
             if self.verbose:
                 log_message(logger, f"  ✓ Debriefing loaded: {data['summary']}")

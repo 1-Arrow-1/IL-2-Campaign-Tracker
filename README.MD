@@ -13,7 +13,7 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **W
 - [Features](#features)
 - [Supported Nations](#supported-nations)
 - [Installation (manual)](#installation_manual)
-- [Installation via JSGME](#installation_JSGME)
+- [Installation via IL2_CampaignTracker_Setup_v2.0.exe](#installation_exe)
 - [First Run Setup](#first-run-setup)
 - [WW1 Detection & Exclusion](#ww1-detection--exclusion)
 - [How It Works](#how-it-works)
@@ -157,6 +157,16 @@ After setup, the tracker:
 2. Generates initial events (existing promotions/awards)
 3. Starts monitoring for changes
 
+**Uninstall**
+1. **Delete** the tracker folder manually
+2. **Delete** the folder `<Path to IL-2 BoS>\data\swf\CampaignRanksAwards` manually
+3. **Delete** the following files (if existent) from your IL-2 usersave folder `<Path to IL-2 BoS>\data\swf\usersave\{UUID}\campaign` (if you want to remove all tracker data):
+   - `campaignsstates_hash_index.json`
+   - `campaignsstates_[timestamp].backup` (all backup files)
+   - `popups_[timestamp].backup` (all popup state backups)  
+
+⚠️ NOTE: All in-game debriefings and events will still remain in your campaign files `info.locale=[language].txt`. You will need to remove their content manually if you want to revert to the original state.
+
 ---
 
 ## 🪖 WW1 Detection & Exclusion <a id="ww1-detection--exclusion"></a>
@@ -177,20 +187,32 @@ Flying Circus (WW1) campaigns are detected and excluded by default because the t
 
 ---
 
-## 📥 Installation via JSGME <a id="installation_JSGME"></a>
+## 📥 Installation via IL2_CampaignTracker_Setup_v2.0.exe (RECOMMENDED) <a id="installation_exe"></a>
 
-1. **Download** the latest release (`IL2_Campaign_Tracker_v2.0_JSGME.zip`)
+1. **Download** the latest release (`IL2_CampaignTracker_Setup_v2.0.zip`)
 
 2. **Extract** the `zip` file
 
-3. **Copy** the extracted `IL2_Campaign_Tracker_v2.0` folder (⚠️**NOT** the `IL2_Campaign_Tracker_v2.0_JSGME` folder)  to `<Path to IL-2 BoS>\MODS`
+3. **Run** the extracted `IL2_CampaignTracker_Setup_v2.0.exe`
 
-4. **Activate** the mod in JSGME
+4. **Follow** the installation instructions in the setup wizard
 
-5. **Run** `IL2_Campaign_Tracker_v2.0.exe` from `<Path to IL-2 BoS>\data\IL-2-Campaign-Tracker`.
+5. **Run** `IL2_Campaign_Tracker_v2.0.exe` from Tracker installation path.
 
+ℹ️ Rest of the setup is the same as the manual installation method. You will have addional files:
+ - `unins000.exe` - uninstaller
+ - `unins000.dat` - uninstaller data
+ - `cleanup_tracker_content.exe` - helper for `unins000.exe` (removes all tracker generated content from in-game debriefings/events)
 
-ℹ️ Rest of the setup is the same as the manual installation method.
+**Uninstall**
+
+1. **Run** `unins000.exe` from Tracker installation path. 🚨 **DO NOT RUN** `cleanup_tracker_content.exe` directly.
+
+2. **Follow** the uninstallation instructions in the wizard.
+
+ℹ️ **NOTE:** All in-game debriefings and events will be removed, and the original info-locale=[language].txt files will be restored to their out-of-the-box state.
+
+If you choose to keep the configuration files during uninstallation and later reinstall the tracker into the same folder, those files will not be overwritten. Your previously saved configuration will be retained.
 
 ---
 

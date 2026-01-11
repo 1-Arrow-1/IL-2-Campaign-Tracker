@@ -21,6 +21,7 @@ from tkinter import ttk, messagebox
 from utils.il2_paths import find_campaignsstates_path, read_game_directory
 from utils.logging import get_logger, log_message
 from utils.pathing import get_base_path
+from utils.formatting import safe_campaign_filename
 
 BASE_DIR = get_base_path(__file__)
 CAMPAIGN_COMPLETION_STATE_FILE = BASE_DIR / "campaign_completion_state.json"
@@ -670,6 +671,58 @@ class MissionCleanup:
                 log_message(logger, f"  ⚠️ Warning: Could not save popup file: {e}")
         else:
             log_message(logger, f"  ℹ️ No popup events found for Mission {mission_id}")
+
+    def _cleanup_aircraft_cache(self, campaign_name: str, mission_id: str):
+        """
+        Remove mission entry from aircraft cache (mission_aircraft_map.json)
+        
+        This ensures that when a mission is deleted, the aircraft cache stays in sync
+        with the actual mission data.
+        
+        Args:
+            campaign_name: Campaign folder name
+            mission_id: Mission identifier (e.g., "04")
+        """
+        safe_name = safe_campaign_filename(campaign_name)
+        cache_path = BASE_DIR / "reports" / safe_name / "mission_aircraft_map.json"
+        
+        if not cache_path.exists():
+            log_message(logger, f"  ℹ️ No aircraft cache found for campaign")
+            return
+        
+        try:
+            with open(cache_path, 'r', encoding='utf-8') as f:
+                cache_data = json.load(f)
+        except (json.JSONDecodeError, OSError) as e:
+            log_message(logger, f"  ⚠️ Warning: Could not read aircraft cache: {e}")
+            return
+        
+        # Handle both old format (flat dict) and new format (with 'missions' key)
+        if isinstance(cache_data, dict) and "missions" in cache_data:
+            missions = cache_data.get("missions", {})
+        elif isinstance(cache_data, dict):
+            missions = cache_data
+        else:
+            log_message(logger, f"  ⚠️ Invalid aircraft cache format")
+            return
+        
+        if mission_id not in missions:
+            log_message(logger, f"  ℹ️ Mission {mission_id} not in aircraft cache")
+            return
+        
+        try:
+            del missions[mission_id]
+            
+            # Update timestamp
+            if isinstance(cache_data, dict) and "missions" in cache_data:
+                cache_data["updated_at"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+            
+            with open(cache_path, 'w', encoding='utf-8') as f:
+                json.dump(cache_data, f, indent=2, ensure_ascii=False)
+            
+            log_message(logger, f"  ✓ Removed Mission {mission_id} from aircraft cache")
+        except Exception as e:
+            log_message(logger, f"  ⚠️ Warning: Could not update aircraft cache: {e}")
    
     def cleanup_old_backups(self):
         """Keep only the last N backups in game directory"""
@@ -903,6 +956,12 @@ class MissionCleanup:
             log_message(logger, f"POPUP CLEANUP")
             log_message(logger, f"{'='*70}")
             self._cleanup_mission_popups(campaign_name, mission_id)
+            
+            # Cleanup aircraft cache for this mission
+            log_message(logger, f"\n{'='*70}")
+            log_message(logger, f"AIRCRAFT CACHE CLEANUP")
+            log_message(logger, f"{'='*70}")
+            self._cleanup_aircraft_cache(campaign_name, mission_id)
             
             log_message(logger, f"\n{'='*70}")
             log_message(logger, f"SUCCESS!")

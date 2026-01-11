@@ -138,9 +138,19 @@ def cleanup_popups_for_reset_campaigns() -> bool:
                     modified = True
                 except Exception as e:
                     log_message(logger, f"[WARN] Could not delete PDF for '{campaign_name}': {e}")
+            
+            # Also delete aircraft cache for this campaign
+            aircraft_cache_path = os.path.join(reports_dir, safe_name, "mission_aircraft_map.json")
+            if os.path.exists(aircraft_cache_path):
+                try:
+                    os.remove(aircraft_cache_path)
+                    log_message(logger, f"  🗑️  Deleted aircraft cache: {safe_name}/mission_aircraft_map.json")
+                    modified = True
+                except Exception as e:
+                    log_message(logger, f"[WARN] Could not delete aircraft cache for '{campaign_name}': {e}")
     
     # ================================================================
-    # # Step 3: Clear all info.locale=*.txt files
+    # Step 3: Clear all info.locale=*.txt files
     # ================================================================
     # Load mission dates to get game directory
     paths = resolve_il2_paths(base_path)
@@ -175,8 +185,9 @@ def cleanup_popups_for_reset_campaigns() -> bool:
 
                     except Exception as e:
                         log_message(logger, f"[WARN] Could not clear {info_file.name} for '{campaign_name}': {e}")
+                
                 if files_cleaned > 0:
-                    log_message(logger, f"  ✂️  Cleared {files_cleaned} info file(s): {campaign_name}")        
+                    log_message(logger, f"  ✂️  Cleared {files_cleaned} info file(s): {campaign_name}")
     else:
         mission_dates_path = os.path.join(base_path, "campaign_mission_dates.json")
         log_message(logger, f"[WARN] Game directory not found via {mission_dates_path}")
