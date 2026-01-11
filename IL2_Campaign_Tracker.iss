@@ -35,9 +35,9 @@ Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "A
 [Files]
 ; --- Tracker install folder ({app}) ---
 ; Configuration files: only install if not already present (preserves user settings)
-Source: "campaign_progress_config.yaml"; DestDir: "{app}"; Flags: onlyifdoesntexist
-Source: "object_categories.yaml"; DestDir: "{app}"; Flags: onlyifdoesntexist
-Source: "stock_campaigns.yaml"; DestDir: "{app}"; Flags: onlyifdoesntexist
+Source: "campaign_progress_config.yaml"; DestDir: "{app}"; Flags: onlyifdoesntexist uninsneveruninstall
+Source: "object_categories.yaml"; DestDir: "{app}"; Flags: onlyifdoesntexist uninsneveruninstall
+Source: "stock_campaigns.yaml"; DestDir: "{app}"; Flags: onlyifdoesntexist uninsneveruninstall
 
 ; Program files: always overwrite
 Source: "IL2_CampaignTracker_v2.0.exe"; DestDir: "{app}"; Flags: ignoreversion
