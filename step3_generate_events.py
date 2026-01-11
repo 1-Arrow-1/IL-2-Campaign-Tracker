@@ -39,7 +39,6 @@ from utils.combat_results import (
     calculate_kills_from_stats,
     calculate_air_combat_score,
     calculate_total_air_kills_weighted,
-    aggregate_kills_from_missions,
 )
 from utils.combat_results_html import (
     generate_campaign_summary_combat_results_html,

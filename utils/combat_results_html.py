@@ -6,9 +6,7 @@ Provides:
 2. generate_campaign_summary_combat_results_html() - HTML for campaign summary
 """
 
-from collections import defaultdict
-
-from utils.combat_results import KILL_MAPPING
+from utils.combat_results import KILL_MAPPING, aggregate_kills_from_missions
 
 
 # =============================================================================
@@ -57,26 +55,20 @@ def generate_campaign_summary_combat_results_html(decoded_campaign_data: dict, g
     if not stats_by_mission:
         return "<p>No combat data available.</p>"
 
-    # Aggregate ALL missions
-    totals = defaultdict(lambda: defaultdict(int))
-    for mission_id, mission_stats in stats_by_mission.items():
-        if not isinstance(mission_stats, dict):
-            continue
-        for category, subcats in KILL_MAPPING.items():
-            for subcat, key in subcats.items():
-                totals[category][subcat] += int(mission_stats.get(key, 0))
+    aggregated_kills = aggregate_kills_from_missions(stats_by_mission)
+    by_category = aggregated_kills.get("by_category", {})
 
     # Calculate category totals
     category_totals = {}
     for category, subcats in KILL_MAPPING.items():
-        total = sum(totals[category].get(subcat, 0) for subcat in subcats.keys())
+        total = sum(by_category.get(category, {}).get(subcat, 0) for subcat in subcats.keys())
         category_totals[category] = total
 
     # Build aggregated stats dict for HTML builder
     aggregated_stats = {}
     for category, subcats in KILL_MAPPING.items():
         for subcat, key in subcats.items():
-            aggregated_stats[key] = totals[category].get(subcat, 0)
+            aggregated_stats[key] = by_category.get(category, {}).get(subcat, 0)
 
     return _build_combat_results_html(aggregated_stats, category_totals, game_directory)
 
