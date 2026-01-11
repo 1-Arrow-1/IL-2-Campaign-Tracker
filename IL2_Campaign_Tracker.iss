@@ -69,8 +69,8 @@ var
   IL2DirValue: string;
   
   { Uninstall options }
-  KeepConfigFiles: Boolean;
-  KeepBackupFiles: Boolean;
+  RemoveConfigFiles: Boolean;
+  RemoveBackupFiles: Boolean;
 
 { ----------------------------
   Helpers
@@ -197,35 +197,35 @@ var
 begin
   Result := True;
   
-  { Default: delete everything }
-  KeepConfigFiles := False;
-  KeepBackupFiles := False;
+  { Default: keep configuration and backup files }
+  RemoveConfigFiles := False;
+  RemoveBackupFiles := False;
   
   { Ask about configuration files }
   MsgResult := MsgBox(
-    'Do you want to KEEP your configuration files (*.yaml)?' + #13#10 + #13#10 +
+    'Do you want to REMOVE your configuration files (*.yaml)?' + #13#10 + #13#10 +
     'This includes your custom rank scaling settings and award configurations.' + #13#10 + #13#10 +
-    'Click YES to keep configuration files.' + #13#10 +
-    'Click NO to delete everything.',
+    'Click YES to remove configuration files.' + #13#10 +
+    'Click NO to keep them.',
     mbConfirmation,
     MB_YESNO
   );
-  KeepConfigFiles := (MsgResult = IDYES);
+  RemoveConfigFiles := (MsgResult = IDYES);
   
   { Ask about backup files }
   MsgResult := MsgBox(
-    'Do you want to KEEP your backup files?' + #13#10 + #13#10 +
+    'Do you want to REMOVE your backup files?' + #13#10 + #13#10 +
     'This includes:' + #13#10 +
     '  - campaignsstates_*.backup' + #13#10 +
     '  - campaign_popups_seen_*.backup' + #13#10 +
     '  - campaignsstates_hash_index.json' + #13#10 + #13#10 +
     'These allow you to restore previous campaign states if you reinstall.' + #13#10 + #13#10 +
-    'Click YES to keep backup files.' + #13#10 +
-    'Click NO to delete everything.',
+    'Click YES to remove backup files.' + #13#10 +
+    'Click NO to keep them.',
     mbConfirmation,
     MB_YESNO
   );
-  KeepBackupFiles := (MsgResult = IDYES);
+  RemoveBackupFiles := (MsgResult = IDYES);
 end;
 
 // ----------------------------
@@ -246,7 +246,7 @@ var
   UsersaveRoot, SearchPath, UUIDDir, CampaignDir: string;
   FindRec: TFindRec;
 begin
-  if KeepBackupFiles then
+  if not RemoveBackupFiles then
   begin
     { User wants to keep backups - skip this step }
     Exit;
@@ -320,8 +320,8 @@ begin
         FilePath := AppDir + '\' + FindRec.Name;
         FileExt := LowerCase(ExtractFileExt(FindRec.Name));
         
-        { Keep *.yaml files if user chose to keep config }
-        if KeepConfigFiles and (FileExt = '.yaml') then
+        { Keep *.yaml files unless user chose to remove config }
+        if (not RemoveConfigFiles) and (FileExt = '.yaml') then
         begin
           { Keep this file }
         end
@@ -362,15 +362,13 @@ begin
         DelTree(AwardsDir, True, True, True);
 
       { Step 3: Remove tracker-related files from usersave UUID campaign folders }
-      { (respects KeepBackupFiles setting) }
+      { (respects RemoveBackupFiles setting) }
       DeleteUserSaveCampaignFiles(IL2Root);
     end;
     
-    { Step 4: Delete app files (respects KeepConfigFiles setting) }
+    { Step 4: Delete app files (respects RemoveConfigFiles setting) }
     { Deletes: *.json, *.log, *.exe, *.txt, *.html }
-    { Keeps: *.yaml (if KeepConfigFiles = True) }
+    { Keeps: *.yaml (unless RemoveConfigFiles = True) }
     DeleteAppFiles();
   end;
 end;
-
-
