@@ -17,6 +17,7 @@ Usage:
 import re
 import json
 import sys
+import hashlib
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
@@ -49,6 +50,7 @@ class MissionLogProcessor:
         self.snapshot_dt = snapshot_dt
         self.max_mlg_scan = max_mlg_scan
         self._mlg_scan_warning_emitted = False
+        self.campaignsstates_path = self._resolve_campaignsstates_path()
         
         # Working directory for temporary files
         self.work_dir = Path.cwd()
@@ -66,6 +68,40 @@ class MissionLogProcessor:
         safe_name = safe_campaign_filename(campaign_name)
         return get_base_path(__file__) / "reports" / safe_name / "mission_aircraft_map.json"
 
+    def _resolve_campaignsstates_path(self) -> Optional[Path]:
+        try:
+            from utils.il2_paths import find_campaignsstates_path
+        except ImportError:
+            return None
+
+        states_path = find_campaignsstates_path(self.game_directory)
+        if states_path and states_path.exists():
+            return states_path
+
+        base_path = get_base_path(__file__)
+        fallback = base_path / "campaignsstates.txt"
+        if fallback.exists():
+            return fallback
+
+        cwd_fallback = Path.cwd() / "campaignsstates.txt"
+        if cwd_fallback.exists():
+            return cwd_fallback
+
+        return None
+
+    def _calculate_campaignsstates_hash(self) -> Optional[str]:
+        if not self.campaignsstates_path or not self.campaignsstates_path.exists():
+            return None
+
+        try:
+            hasher = hashlib.md5()
+            with open(self.campaignsstates_path, "rb") as handle:
+                for chunk in iter(lambda: handle.read(8192), b""):
+                    hasher.update(chunk)
+            return hasher.hexdigest()
+        except OSError:
+            return None
+
     def _load_aircraft_cache(self, campaign_name: str) -> Dict:
         cache_path = self._get_aircraft_cache_path(campaign_name)
         if not cache_path.exists():
@@ -77,6 +113,17 @@ class MissionLogProcessor:
         except (OSError, json.JSONDecodeError) as exc:
             if self.verbose:
                 log_message(logger, f"  ⚠️  Could not read aircraft cache: {exc}")
+            return {"campaign_name": campaign_name, "missions": {}}
+
+        current_hash = self._calculate_campaignsstates_hash()
+        cached_hash = data.get("campaignsstates_hash") if isinstance(data, dict) else None
+        if current_hash and cached_hash != current_hash:
+            if self.verbose:
+                log_message(logger, "  🧹 Campaign state changed; regenerating aircraft cache.")
+            try:
+                cache_path.unlink(missing_ok=True)
+            except OSError:
+                pass
             return {"campaign_name": campaign_name, "missions": {}}
 
         if isinstance(data, dict) and "missions" in data and isinstance(data["missions"], dict):
@@ -92,6 +139,9 @@ class MissionLogProcessor:
         cache_path = self._get_aircraft_cache_path(campaign_name)
         try:
             cache_path.parent.mkdir(parents=True, exist_ok=True)
+            current_hash = self._calculate_campaignsstates_hash()
+            if current_hash:
+                cache_data["campaignsstates_hash"] = current_hash
             with open(cache_path, "w", encoding="utf-8") as f:
                 json.dump(cache_data, f, indent=2, ensure_ascii=False)
         except OSError as exc:
