@@ -558,7 +558,7 @@ def check_and_show_backup_gui(il2_states_path:  Path) -> str:
         if isinstance(entry, dict):
             backup_file = entry.get('campaignsstates_backup', '')
         else:
-            backup_file = f"campaignsstates_{entry}. backup"
+            backup_file = f"campaignsstates_{entry}.backup"
         
         if (backup_dir / backup_file).exists():
             valid_backups.append({

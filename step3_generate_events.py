@@ -1894,14 +1894,9 @@ class EventGenerator:
             return ""
         
         # Collect statistics
-        total_air = 0
-        total_ground = 0
-        total_naval = 0
         total_flight_time_seconds = 0
         aircraft_usage = {}
         aircraft_kills = {}
-        debrief_kills_by_aircraft = {}
-        target_counts = {'air': {}, 'ground': {}, 'naval': {}}
         mission_count = len(debriefings)
         safe_landings = 0
         hard_landings = 0
@@ -1909,26 +1904,10 @@ class EventGenerator:
         bailouts = 0
         kia_mia = 0
         
-        # Initialize parked kills counter
-        total_air_parked = 0
-        
-        # Get parked kills from cumulative stats (campaigns_decoded.json)
-        # These are kills that happened outside of debriefed missions
-        if cumulative_stats:
-            total_air_parked += cumulative_stats.get('static_plane_kills', 0)
-        
         # Analyze all missions
         for mission_id, data in debriefings.items():
             summary = data.get('summary', {})
             player = data.get('player', {})
-            
-            # Combat stats (from summary)
-            total_air += summary.get('air_kills', 0)
-            total_ground += summary.get('ground_kills', 0)
-            total_naval += summary.get('naval_kills', 0)
-            
-            # Add parked kills from this mission's debriefing
-            total_air_parked += summary.get('air_kills_parked', 0)
             
             # Flight time (from summary)
             duration = summary.get('flight_duration', '')
@@ -1946,11 +1925,6 @@ class EventGenerator:
             if aircraft not in aircraft_usage:
                 aircraft_usage[aircraft] = {'missions': 0}
             aircraft_usage[aircraft]['missions'] += 1
-            debrief_kills_by_aircraft[aircraft] = debrief_kills_by_aircraft.get(aircraft, 0) + (
-                summary.get('air_kills', 0) +
-                summary.get('ground_kills', 0) +
-                summary.get('naval_kills', 0)
-            )
             
             # Landing status (from summary)
             status = summary.get('final_state', '').lower()
@@ -1965,34 +1939,6 @@ class EventGenerator:
                 hard_landings += 1
             elif 'landed' in status:
                 safe_landings += 1
-            
-            # Target breakdown (from events)
-            events_list = data.get('events', [])
-            for event in events_list:
-                # Get event type (try 'type' first, then 'event' as fallback)
-                event_type = event.get('type', event.get('event', ''))
-                
-                if event_type == "Kill":
-                    target = event.get('target', '')
-                    # Categorize by target name patterns
-                    target_lower = target.lower()
-                    
-                    # Naval targets
-                    if any(naval in target_lower for naval in ['boat', 'ship', 'vessel', 'torpedo']):
-                        category = 'naval'
-                    # Ground targets  
-                    elif any(ground in target_lower for ground in ['aa', 'gun', 'ml-20', 'dshk', '52-k', 'flak', 'tank', 'truck', 'artillery']):
-                        category = 'ground'
-                    # Air targets (default)
-                    else:
-                        category = 'air'
-                    
-                    if category == 'air':
-                        target_counts['air'][target] = target_counts['air'].get(target, 0) + 1
-                    elif category == 'ground':
-                        target_counts['ground'][target] = target_counts['ground'].get(target, 0) + 1
-                    elif category == 'naval':
-                        target_counts['naval'][target] = target_counts['naval'].get(target, 0) + 1
         
         # Format flight time
         total_hours = total_flight_time_seconds // 3600
@@ -2046,8 +1992,6 @@ class EventGenerator:
                     aircraft_name = "Unknown"
 
                 aircraft_kills[aircraft_name] = aircraft_kills.get(aircraft_name, 0) + totals.get("total_kills", 0)
-        else:
-            aircraft_kills = dict(debrief_kills_by_aircraft)
 
         def format_kill_count(value: float) -> str:
             try:
