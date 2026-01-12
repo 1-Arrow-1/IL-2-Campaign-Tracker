@@ -46,7 +46,7 @@ KILL_MAPPING = {
         "Radars": "killRadar",
     },
     "Buildings": {
-        "Residential Buildings": "killResidentialBuilding",
+        "Residential Buildings": "killResidentalBuilding",  # IL-2 uses this spelling
         "Facilities": "killFacility",
         "Bridges": "killBridge",
     },

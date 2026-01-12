@@ -496,6 +496,123 @@ def sync_campaign_states(states_path: str | None = None) -> bool:
     return True
 
 
+def cleanup_orphaned_campaigns(
+    existing_campaigns: Set[str],
+    base_dir: Path = None
+) -> bool:
+    """
+    Clean up data for campaigns that no longer exist on disk.
+    
+    Removes orphaned entries from:
+    - campaign_popups_seen.json
+    - campaign_events.json
+    - campaign_completion_state.json
+    - reports/<campaign>/ directories
+    
+    Args:
+        existing_campaigns: Set of campaign names (lowercase) that exist on disk
+        base_dir: Base directory for tracker files (default: current directory)
+        
+    Returns:
+        True if any cleanup was performed, False otherwise
+    """
+    if base_dir is None:
+        base_dir = Path.cwd()
+    
+    modified = False
+    
+    # 1. Clean campaign_popups_seen.json
+    popups_path = base_dir / "campaign_popups_seen.json"
+    if popups_path.exists():
+        popup_data = load_popup_seen(popups_path)
+        orphaned_popups = [
+            name for name in popup_data.keys()
+            if name.lower() not in existing_campaigns
+        ]
+        if orphaned_popups:
+            for name in orphaned_popups:
+                del popup_data[name]
+                log_message(logger, f"  🧹 Removed orphaned popup data: '{name}'")
+            save_popup_seen(popups_path, popup_data)
+            modified = True
+    
+    # 2. Clean campaign_events.json
+    events_path = base_dir / "campaign_events.json"
+    if events_path.exists():
+        try:
+            with open(events_path, "r", encoding="utf-8") as f:
+                events_data = json.load(f)
+            
+            if isinstance(events_data, dict):
+                orphaned_events = [
+                    name for name in events_data.keys()
+                    if name.lower() not in existing_campaigns
+                ]
+                if orphaned_events:
+                    for name in orphaned_events:
+                        del events_data[name]
+                        log_message(logger, f"  🧹 Removed orphaned events: '{name}'")
+                    
+                    tmp_path = events_path.with_suffix('.tmp')
+                    with open(tmp_path, "w", encoding="utf-8") as f:
+                        json.dump(events_data, f, indent=4)
+                    tmp_path.replace(events_path)
+                    modified = True
+        except Exception as e:
+            log_message(logger, f"⚠️  Could not clean campaign_events.json: {e}")
+    
+    # 3. Clean campaign_completion_state.json
+    completion_path = base_dir / "campaign_completion_state.json"
+    if completion_path.exists():
+        try:
+            with open(completion_path, "r", encoding="utf-8") as f:
+                completion_data = json.load(f)
+            
+            if isinstance(completion_data, dict):
+                orphaned_completion = [
+                    name for name in completion_data.keys()
+                    if name.lower() not in existing_campaigns
+                ]
+                if orphaned_completion:
+                    for name in orphaned_completion:
+                        del completion_data[name]
+                        log_message(logger, f"  🧹 Removed orphaned completion state: '{name}'")
+                    
+                    tmp_path = completion_path.with_suffix('.tmp')
+                    with open(tmp_path, "w", encoding="utf-8") as f:
+                        json.dump(completion_data, f, indent=2)
+                    tmp_path.replace(completion_path)
+                    modified = True
+        except Exception as e:
+            log_message(logger, f"⚠️  Could not clean campaign_completion_state.json: {e}")
+    
+    # 4. Clean orphaned report directories
+    reports_dir = base_dir / "reports"
+    if reports_dir.exists():
+        for campaign_dir in reports_dir.iterdir():
+            if campaign_dir.is_dir():
+                # Check if any existing campaign matches this directory name
+                dir_name_lower = campaign_dir.name.lower()
+                # Handle safe_campaign_filename transformations
+                is_orphaned = True
+                for existing in existing_campaigns:
+                    # Simple check - if the dir name starts with the campaign name
+                    if dir_name_lower.startswith(existing.lower().replace(' ', '-').replace('/', '-')[:20]):
+                        is_orphaned = False
+                        break
+                
+                if is_orphaned:
+                    try:
+                        import shutil
+                        shutil.rmtree(campaign_dir)
+                        log_message(logger, f"  🗑️  Removed orphaned report directory: '{campaign_dir.name}'")
+                        modified = True
+                    except Exception as e:
+                        log_message(logger, f"⚠️  Could not remove report directory '{campaign_dir.name}': {e}")
+    
+    return modified
+
+
 if __name__ == "__main__":
     success = sync_campaign_states()
     raise SystemExit(0 if success else 1)

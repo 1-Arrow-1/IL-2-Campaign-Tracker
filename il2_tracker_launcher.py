@@ -119,6 +119,7 @@ def sync_campaign_structure() -> bool:
     was not running are properly registered in campaign_mission_dates.json.
     
     If new campaigns are detected, the country validator GUI is shown.
+    If campaigns were deleted, orphaned data is cleaned up.
     
     Returns:
         True if sync completed successfully, False on error
@@ -175,6 +176,21 @@ def sync_campaign_structure() -> bool:
         else:
             log_message(logger, "✅ Campaign structure synced (no new campaigns)")
         
+        # Check for deleted campaigns and clean up orphaned data
+        deleted_campaigns = old_campaigns - new_campaigns
+        if deleted_campaigns:
+            log_message(logger, f"🗑️ Detected {len(deleted_campaigns)} deleted campaign(s):")
+            for name in sorted(deleted_campaigns):
+                log_message(logger, f"   - {name}")
+            
+            # Clean up orphaned data files
+            try:
+                from sync_campaign_mission_states import cleanup_orphaned_campaigns
+                existing_lower = {name.lower() for name in new_campaigns}
+                cleanup_orphaned_campaigns(existing_lower, SCRIPT_DIR)
+            except Exception as e:
+                log_message(logger, f"⚠️ Could not clean up orphaned campaign data: {e}")
+        
         return True
         
     except Exception as e:
@@ -209,6 +225,48 @@ def find_il2_states_path() -> Path | None:
         traceback.print_exc()
     
     return None
+
+
+def cleanup_after_restore():
+    """
+    Clean up derived state files after backup restore to ensure consistency.
+    
+    Removes:
+    - campaign_completion_state.json (will be regenerated)
+    - All mission_aircraft_map.json files (will be regenerated from MLG)
+    
+    These files may contain stale data that doesn't match the restored backup.
+    """
+    log_message(logger, "🧹 Cleaning up derived state files after restore...")
+    
+    # 1. Remove campaign_completion_state.json
+    completion_state = SCRIPT_DIR / "campaign_completion_state.json"
+    if completion_state.exists():
+        try:
+            completion_state.unlink()
+            log_message(logger, "  ✓ Removed campaign_completion_state.json")
+        except Exception as e:
+            log_message(logger, f"  ⚠️ Could not remove campaign_completion_state.json: {e}")
+    
+    # 2. Remove all mission_aircraft_map.json files
+    reports_dir = SCRIPT_DIR / "reports"
+    if reports_dir.exists():
+        removed_count = 0
+        for campaign_dir in reports_dir.iterdir():
+            if campaign_dir.is_dir():
+                aircraft_cache = campaign_dir / "mission_aircraft_map.json"
+                if aircraft_cache.exists():
+                    try:
+                        aircraft_cache.unlink()
+                        removed_count += 1
+                    except Exception as e:
+                        log_message(logger, f"  ⚠️ Could not remove {aircraft_cache}: {e}")
+        
+        if removed_count > 0:
+            log_message(logger, f"  ✓ Removed {removed_count} aircraft cache file(s)")
+    
+    log_message(logger, "  ✅ Cleanup complete - files will be regenerated")
+
 
 
 def decode_campaign_save(il2_states_path: Path) -> bool:
@@ -520,6 +578,9 @@ def run_tracker() -> int:
                     log_message(logger, "  The tracker will now re-process the restored state...")
                     log_message(logger, "  (This is faster than restarting!)")
                     log_message(logger)
+                    
+                    # ✅ CRITICAL: Clean up derived state files that may be inconsistent
+                    cleanup_after_restore()
                     
                     # ✅ CRITICAL: Set flag to force event regeneration
                     # This ensures that PDFs, events, and all derived files

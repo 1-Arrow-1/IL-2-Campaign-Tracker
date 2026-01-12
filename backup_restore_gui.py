@@ -86,14 +86,20 @@ class BackupRestoreGUI:
                     popups_backup = None
                 
                 # Check if backup file exists
-                backup_path = self. backup_dir / backup_file
+                backup_path = self.backup_dir / backup_file
                 if not backup_path.exists():
                     continue
+                
+                # ✅ FIX: Check if popup backup file ACTUALLY exists on disk
+                popups_backup_exists = False
+                if popups_backup:
+                    popups_backup_path = self.backup_dir / popups_backup
+                    popups_backup_exists = popups_backup_path.exists()
                 
                 # Format display date
                 try:
                     dt = datetime.strptime(timestamp, "%Y%m%d_%H%M%S")
-                    display_date = dt. strftime("%Y-%m-%d %H:%M:%S")
+                    display_date = dt.strftime("%Y-%m-%d %H:%M:%S")
                     sort_key = dt
                 except: 
                     display_date = timestamp
@@ -106,15 +112,15 @@ class BackupRestoreGUI:
                 except:
                     size_str = "Unknown"
                 
-                backups. append({
+                backups.append({
                     'hash': hash_key,
                     'timestamp': timestamp,
                     'display_date': display_date,
                     'sort_key': sort_key,
-                    'backup_file':  backup_file,
+                    'backup_file': backup_file,
                     'backup_path': backup_path,
                     'popups_backup': popups_backup,
-                    'has_popups': popups_backup is not None,
+                    'has_popups': popups_backup_exists,  # ✅ Now checks actual file existence
                     'size': size_str
                 })
             
