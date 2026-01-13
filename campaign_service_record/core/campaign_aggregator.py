@@ -299,6 +299,14 @@ class CampaignAggregator:
         if sorted_missions:
             last_mission = sorted_missions[-1]
             cumulative_stats = per_mission_stats.get(last_mission, {})
+            if not isinstance(cumulative_stats, dict):
+                logger.warning(
+                    "Invalid cumulative stats for %s mission %s: expected dict, got %s",
+                    campaign_name,
+                    last_mission,
+                    type(cumulative_stats)
+                )
+                cumulative_stats = {}
             
             # Calculate kills using Campaign Tracker logic
             summary['combat_results'] = calculate_kills_from_stats(cumulative_stats)
@@ -426,6 +434,9 @@ class CampaignAggregator:
         Returns:
             Total kill count
         """
+        if not isinstance(mission_stats, dict):
+            return 0
+
         # Air kills
         air_kills = mission_stats.get('planesDestroyedAir', 0)
         
