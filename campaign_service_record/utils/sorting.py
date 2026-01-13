@@ -9,6 +9,9 @@ def smart_mission_sort_key(mission_id: str) -> Tuple[int, str]:
     - Date-based IDs (1943-07-04a): Sort alphabetically (ISO format sorts correctly)
     - Mixed (01a, 02b): Sort by number then suffix
     """
+    if not isinstance(mission_id, str):
+        mission_id = str(mission_id)
+
     # If it's purely numeric, convert to int
     if mission_id.isdigit():
         return (int(mission_id), "")
