@@ -60,11 +60,26 @@
     gap: 2rem;
 }
 
+.detail-columns > .column {
+    min-width: 0;
+}
+
 .column {
     background: white;
     border-radius: 8px;
     padding: 1.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.debriefings-container {
+    overflow-x: auto;
+}
+
+.debriefings-container pre,
+.debriefings-container code {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .column h3 {
