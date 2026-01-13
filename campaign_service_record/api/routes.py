@@ -372,7 +372,7 @@ def get_game_asset(asset_path: str):
     if not game_directory:
         return jsonify({'error': 'Game directory not configured'}), 404
 
-    swf_dir = Path(game_directory) / 'swf'
+    swf_dir = Path(game_directory) / 'data' / 'swf'
     requested = (swf_dir / asset_path).resolve()
 
     if swf_dir not in requested.parents and swf_dir != requested:
