@@ -180,6 +180,9 @@ const LandingPage = {
             const response = await API.savePilotPhoto(this.pilotPhotoDesc, imageData);
             if (response && response.path) {
                 this.setPilotPhoto(`${response.path}?t=${Date.now()}`);
+            } else {
+                console.error('Pilot photo save returned unexpected response:', response);
+                alert('Unable to save pilot photo. Please try again.');
             }
         } catch (error) {
             console.error('Failed to save pilot photo:', error);

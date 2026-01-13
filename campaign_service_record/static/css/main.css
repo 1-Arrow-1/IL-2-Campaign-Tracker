@@ -82,7 +82,7 @@ small {
 }
 
 .header-content {
-    max-width: 1400px;
+    max-width: 1700px;
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
@@ -100,7 +100,7 @@ small {
 #app-main {
     flex: 1;
     padding: 2rem;
-    max-width: 1400px;
+    max-width: 1700px;
     margin: 0 auto;
     width: 100%;
 }

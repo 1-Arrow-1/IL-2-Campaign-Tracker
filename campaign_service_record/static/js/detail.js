@@ -374,16 +374,25 @@ const DetailPage = {
     renderMissionsStats(stats) {
         const container = document.createElement('div');
         
-        container.appendChild(this.createStat('Total Missions', stats.total_missions || 0));
-        
-        if (stats.successful_missions !== undefined) {
-            container.appendChild(this.createStat('Successful', stats.successful_missions));
+        const completed = stats.completed_missions ?? stats.total_missions ?? 0;
+        container.appendChild(this.createStat('Completed', completed));
+        container.appendChild(this.createStat('Total Flight Time', stats.total_flight_time || '00:00'));
+        container.appendChild(this.createStat('Average Duration', stats.average_duration || '00:00'));
+
+        if (Array.isArray(stats.landings) && stats.landings.length > 0) {
+            const landingHeader = document.createElement('div');
+            landingHeader.className = 'summary-subtitle';
+            landingHeader.textContent = 'Landings';
+            container.appendChild(landingHeader);
+
+            stats.landings.forEach(landing => {
+                if (!landing || landing.label === undefined) {
+                    return;
+                }
+                container.appendChild(this.createStat(landing.label, landing.value ?? 0));
+            });
         }
-        
-        if (stats.success_rate !== undefined) {
-            container.appendChild(this.createStat('Success Rate', `${stats.success_rate}%`));
-        }
-        
+
         return container;
     },
     

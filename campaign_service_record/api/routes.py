@@ -14,15 +14,17 @@ import logging
 import re
 import time
 import traceback
+from io import BytesIO
 from pathlib import Path
 from typing import Optional
 
-from flask import Blueprint, jsonify, request, current_app, send_from_directory
+from flask import Blueprint, jsonify, request, current_app, send_file, send_from_directory
 
 from core.data_loader import DataLoader
 from core.campaign_aggregator import CampaignAggregator
 from utils.formatting import safe_campaign_filename
 from utils.path_utils import get_game_directory
+from utils.image_utils import convert_dds_to_png_bytes, find_existing_image_path
 from utils.pilot_photo import pilot_photo_path, pilot_photo_filename
 
 
@@ -166,6 +168,12 @@ def save_pilot_photo():
     """Save a cropped pilot photo from the client."""
     desc = request.form.get('desc', _PILOT_DESC_DEFAULT)
     img_data = request.form.get('img_data')
+    logger.info(
+        "Pilot photo upload received: desc=%s content_type=%s content_length=%s",
+        desc,
+        request.content_type,
+        request.content_length
+    )
     if not img_data:
         return jsonify({'error': 'No image data'}), 400
 
@@ -186,11 +194,17 @@ def save_pilot_photo():
         return jsonify({'error': 'Photo storage not configured'}), 500
 
     photo_path = pilot_photo_path(Path(photo_dir), desc)
+    logger.info("Saving pilot photo to %s (bytes=%s)", photo_path, len(img_bytes))
     try:
         photo_path.parent.mkdir(parents=True, exist_ok=True)
         photo_path.write_bytes(img_bytes)
     except OSError as exc:
-        logger.error("Failed to save pilot photo: %s", exc, exc_info=True)
+        logger.error(
+            "Failed to save pilot photo to %s: %s",
+            photo_path,
+            exc,
+            exc_info=True
+        )
         return jsonify({'error': 'Failed to save photo'}), 500
 
     filename = pilot_photo_filename(desc)
@@ -379,9 +393,20 @@ def get_game_asset(asset_path: str):
         logger.warning("Blocked invalid asset path: %s", asset_path)
         return jsonify({'error': 'Invalid asset path'}), 400
 
-    if not requested.exists():
+    existing = find_existing_image_path(requested)
+    if not existing:
         logger.warning("Game asset not found: %s", requested)
         return jsonify({'error': 'Asset not found'}), 404
+
+    if existing.suffix.lower() == ".dds":
+        png_bytes = convert_dds_to_png_bytes(existing)
+        if not png_bytes:
+            return jsonify({'error': 'Failed to convert DDS asset'}), 500
+        return send_file(
+            BytesIO(png_bytes),
+            mimetype="image/png",
+            download_name=existing.with_suffix(".png").name
+        )
 
     return send_from_directory(swf_dir, asset_path)
 

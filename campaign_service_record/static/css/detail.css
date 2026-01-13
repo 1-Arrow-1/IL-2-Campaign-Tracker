@@ -12,7 +12,7 @@
    ============================================================================ */
 
 .detail-container {
-    max-width: 1400px;
+    max-width: 1700px;
 }
 
 /* ============================================================================
@@ -56,7 +56,7 @@
 
 .detail-columns {
     display: grid;
-    grid-template-columns: 340px 1fr 420px;
+    grid-template-columns: 1.1fr 1.6fr 1.1fr;
     gap: 2rem;
 }
 
@@ -255,6 +255,15 @@
 .summary-stat .stat-value {
     font-weight: 600;
     color: #2c3e50;
+}
+
+.summary-subtitle {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #555;
 }
 
 /* Combat Results */

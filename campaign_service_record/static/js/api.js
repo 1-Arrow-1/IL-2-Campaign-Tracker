@@ -90,6 +90,42 @@ const API = {
             return null;
         }
     },
+
+    /**
+     * Get pilot photo path
+     */
+    async getPilotPhoto(desc) {
+        const query = desc ? `?desc=${encodeURIComponent(desc)}` : '';
+        return this.get(`/pilot_photo${query}`);
+    },
+
+    /**
+     * Save pilot photo (multipart form)
+     */
+    async savePilotPhoto(desc, imageData) {
+        const formData = new FormData();
+        formData.append('desc', desc);
+        formData.append('img_data', imageData);
+
+        const response = await fetch(`${this.baseURL}/save_pilot_photo`, {
+            method: 'POST',
+            body: formData
+        });
+
+        let payload = null;
+        try {
+            payload = await response.json();
+        } catch (error) {
+            console.error('Failed to parse pilot photo response:', error);
+        }
+
+        if (!response.ok) {
+            console.error('Pilot photo save failed:', response.status, payload);
+            throw new Error(payload?.error || `HTTP ${response.status}`);
+        }
+
+        return payload;
+    },
     
     /**
      * Health check

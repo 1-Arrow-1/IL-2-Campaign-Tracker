@@ -11,6 +11,7 @@ Design:
 """
 
 import logging
+import re
 from typing import Dict, List, Optional, Any
 from pathlib import Path
 
@@ -23,9 +24,11 @@ try:
         KILL_MAPPING
     )
     from utils.sorting import smart_mission_sort_key
+    from utils.image_utils import build_dds_data_uri
     from utils.path_utils import (
         build_award_image_relative_path,
-        build_game_asset_url
+        build_game_asset_url,
+        get_game_directory
     )
 except ImportError:
     # Fallback if utils not yet available
@@ -51,6 +54,12 @@ except ImportError:
 
     def build_game_asset_url(relative_path):
         return ''
+
+    def get_game_directory(mission_dates):
+        return ''
+
+    def build_dds_data_uri(game_directory, relative_path):
+        return None
 
 
 
@@ -236,7 +245,8 @@ class CampaignAggregator:
             campaign_events.get('events', []),
             f"events[{campaign_name}].events"
         )
-        events = self._decorate_events(events, country)
+        game_directory = get_game_directory(mission_dates)
+        events = self._decorate_events(events, country, game_directory)
         debriefings_html = campaign_events.get('debriefings_html', '')
         
         # Calculate summary statistics
@@ -245,7 +255,8 @@ class CampaignAggregator:
             campaign_decoded,
             completed_missions,
             campaign_dates,
-            events
+            events,
+            debriefings_html
         )
         
         return {
@@ -264,7 +275,8 @@ class CampaignAggregator:
         decoded_data: Dict,
         completed_missions: List[str],
         mission_dates: Dict,
-        events: List[Dict]
+        events: List[Dict],
+        debriefings_html: str
     ) -> Dict:
         """
         Calculate campaign summary statistics.
@@ -328,7 +340,8 @@ class CampaignAggregator:
         summary['missions_stats'] = self._calculate_mission_stats(
             sorted_missions,
             per_mission_stats,
-            decoded_data
+            decoded_data,
+            debriefings_html
         )
         
         # Calculate aircraft usage
@@ -357,7 +370,8 @@ class CampaignAggregator:
         self,
         missions: List[str],
         per_mission_stats: Dict,
-        decoded_data: Dict
+        decoded_data: Dict,
+        debriefings_html: str
     ) -> Dict:
         """
         Calculate mission-level statistics.
@@ -382,15 +396,27 @@ class CampaignAggregator:
             1 for m in missions
             if self._mission_success(completed_by_filename, m)
         )
-        
+
+        total_flight_seconds = sum(
+            self._extract_flight_seconds(per_mission_stats.get(mission_id, {}))
+            for mission_id in missions
+        )
+
+        duration_seconds, statuses = self._parse_debriefings(debriefings_html)
+        if total_flight_seconds == 0 and duration_seconds:
+            total_flight_seconds = sum(duration_seconds)
+
+        average_seconds = int(total_flight_seconds / total_missions) if total_missions > 0 else 0
+        landings = self._aggregate_landing_outcomes(statuses)
+
         return {
             'total_missions': total_missions,
+            'completed_missions': total_missions,
             'successful_missions': successful,
             'success_rate': round(successful / total_missions * 100) if total_missions > 0 else 0,
-            # Note: Flight time not stored in save files
-            # Would need to parse mission logs for accurate time
-            'total_flight_time': 'N/A',
-            'average_duration': 'N/A'
+            'total_flight_time': self._format_duration(total_flight_seconds),
+            'average_duration': self._format_duration(average_seconds),
+            'landings': landings
         }
     
     def _calculate_aircraft_usage(
@@ -472,6 +498,91 @@ class CampaignAggregator:
         if not isinstance(mission_entry, dict):
             return False
         return mission_entry.get('isSuccess', 0) == 1
+
+    @staticmethod
+    def _extract_flight_seconds(mission_stats: Dict) -> int:
+        if not isinstance(mission_stats, dict):
+            return 0
+        for key in ('totalFlightTime', 'flightTime', 'total_flight_time', 'flight_time'):
+            value = mission_stats.get(key)
+            if value is None:
+                continue
+            try:
+                return int(value)
+            except (TypeError, ValueError):
+                continue
+        return 0
+
+    @staticmethod
+    def _format_duration(seconds: int) -> str:
+        if not seconds or seconds < 0:
+            return "00:00"
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
+        return f"{hours:02d}:{minutes:02d}"
+
+    @staticmethod
+    def _parse_debriefings(debriefings_html: str) -> tuple[List[int], List[str]]:
+        if not debriefings_html:
+            return [], []
+        durations: List[int] = []
+        statuses: List[str] = []
+        pattern = re.compile(
+            r"Duration:\s*(\d{2}:\d{2}:\d{2})\s*\|\s*Status:\s*([^<|]+)",
+            re.IGNORECASE
+        )
+        for duration_str, status in pattern.findall(debriefings_html):
+            parts = duration_str.split(":")
+            if len(parts) == 3:
+                try:
+                    hours, minutes, seconds = (int(part) for part in parts)
+                    durations.append(hours * 3600 + minutes * 60 + seconds)
+                except ValueError:
+                    continue
+            statuses.append(status.strip())
+        return durations, statuses
+
+    @staticmethod
+    def _aggregate_landing_outcomes(statuses: List[str]) -> List[Dict]:
+        base_order = [
+            "Safe Landings",
+            "Landings (wounded)",
+            "Hard Landings",
+            "Crash Landings",
+            "Bailouts",
+            "KIA / Died on landing",
+            "Forced Landings"
+        ]
+        counts = {label: 0 for label in base_order}
+        extras: List[str] = []
+
+        for status in statuses:
+            normalized = status.lower().strip()
+            label = None
+            if normalized in {"landed", "landed safely", "safe landing"}:
+                label = "Safe Landings"
+            elif "wound" in normalized:
+                label = "Landings (wounded)"
+            elif "hard" in normalized:
+                label = "Hard Landings"
+            elif "crash" in normalized:
+                label = "Crash Landings"
+            elif "bail" in normalized:
+                label = "Bailouts"
+            elif any(token in normalized for token in ("kia", "killed", "died", "dead")):
+                label = "KIA / Died on landing"
+            elif "forced" in normalized:
+                label = "Forced Landings"
+            else:
+                label = status.strip().title() or "Other"
+                if label not in counts:
+                    counts[label] = 0
+                    extras.append(label)
+
+            counts[label] = counts.get(label, 0) + 1
+
+        ordered_labels = base_order + extras
+        return [{'label': label, 'value': counts.get(label, 0)} for label in ordered_labels]
     
     def _extract_career_progression(self, events: List[Dict]) -> Dict:
         """
@@ -580,7 +691,12 @@ class CampaignAggregator:
 
         return mission_dates.get(mission_id, {}) if isinstance(mission_dates, dict) else {}
 
-    def _decorate_events(self, events: List[Dict], country: str) -> List[Dict]:
+    def _decorate_events(
+        self,
+        events: List[Dict],
+        country: str,
+        game_directory: str
+    ) -> List[Dict]:
         """Attach image URLs to events for display."""
         decorated = []
         for event in events:
@@ -590,7 +706,8 @@ class CampaignAggregator:
             image_name = event.get('image')
             if image_name:
                 relative_path = build_award_image_relative_path(country, image_name, event.get('date'))
-                enriched['image_url'] = build_game_asset_url(relative_path)
+                data_uri = build_dds_data_uri(game_directory, relative_path)
+                enriched['image_url'] = data_uri or build_game_asset_url(relative_path)
             decorated.append(enriched)
         return decorated
     
