@@ -202,8 +202,13 @@ const DetailPage = {
             return;
         }
         
+        const cleanedHtml = html.replace(
+            /^\s*<b>\s*Mission Debriefings\s*<\/b>\s*<br>\s*(?:<br>\s*)?/i,
+            ''
+        );
+
         // Direct HTML injection (safe - comes from Campaign Tracker)
-        this.elements.debriefingsContainer.innerHTML = html;
+        this.elements.debriefingsContainer.innerHTML = cleanedHtml;
     },
     
     /**
