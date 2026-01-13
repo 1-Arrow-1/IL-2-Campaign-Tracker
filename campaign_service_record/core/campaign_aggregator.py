@@ -124,7 +124,10 @@ class CampaignAggregator:
         """
         # Get completion state
         completion_state = self.loader.get_campaign_completion_state()
-        missions_completed = completion_state.get(campaign_name, [])
+        missions_completed = self._ensure_list(
+            completion_state.get(campaign_name, []),
+            f"completion_state[{campaign_name}]"
+        )
         
         if not missions_completed:
             # Should not happen (filtered by get_campaigns_with_progress)
@@ -135,8 +138,14 @@ class CampaignAggregator:
         country = campaign_dates.get('country', 'unknown')
         
         # Get events
-        campaign_events = events_data.get(campaign_name, {})
-        events = campaign_events.get('events', [])
+        campaign_events = self._ensure_dict(
+            events_data.get(campaign_name, {}),
+            f"events[{campaign_name}]"
+        )
+        events = self._ensure_list(
+            campaign_events.get('events', []),
+            f"events[{campaign_name}].events"
+        )
         
         # Count promotions and awards
         promotions = [e for e in events if e.get('type') == 'promotion']
@@ -182,7 +191,10 @@ class CampaignAggregator:
             logger.warning(f"Campaign not found: {campaign_name}")
             return None
         
-        completed_missions = completion_state[campaign_name]
+        completed_missions = self._ensure_list(
+            completion_state.get(campaign_name, []),
+            f"completion_state[{campaign_name}]"
+        )
         
         # Load all data sources
         events_data = self.loader.get_campaign_events()
@@ -190,13 +202,25 @@ class CampaignAggregator:
         mission_dates = self.loader.get_campaign_mission_dates()
         
         # Get campaign-specific data
-        campaign_events = events_data.get(campaign_name, {})
-        campaign_decoded = decoded_data.get(campaign_name, {})
-        campaign_dates = mission_dates.get(campaign_name, {})
+        campaign_events = self._ensure_dict(
+            events_data.get(campaign_name, {}),
+            f"events[{campaign_name}]"
+        )
+        campaign_decoded = self._ensure_dict(
+            decoded_data.get(campaign_name, {}),
+            f"decoded[{campaign_name}]"
+        )
+        campaign_dates = self._ensure_dict(
+            mission_dates.get(campaign_name, {}),
+            f"mission_dates[{campaign_name}]"
+        )
         
         # Extract components
         country = campaign_events.get('country') or campaign_dates.get('country', 'unknown')
-        events = campaign_events.get('events', [])
+        events = self._ensure_list(
+            campaign_events.get('events', []),
+            f"events[{campaign_name}].events"
+        )
         debriefings_html = campaign_events.get('debriefings_html', '')
         
         # Calculate summary statistics
@@ -256,6 +280,13 @@ class CampaignAggregator:
         
         # Get per-mission statistics
         per_mission_stats = decoded_data.get('characterStatisticsByFileName', {})
+        if not isinstance(per_mission_stats, dict):
+            logger.warning(
+                "Invalid per-mission statistics for %s: expected dict, got %s",
+                campaign_name,
+                type(per_mission_stats)
+            )
+            return summary
         
         if not per_mission_stats:
             logger.warning(f"No statistics available for {campaign_name}")
@@ -319,6 +350,8 @@ class CampaignAggregator:
         
         # Get completed missions data
         completed_by_filename = decoded_data.get('completedMissionsByFileName', {})
+        if not isinstance(completed_by_filename, dict):
+            completed_by_filename = {}
         
         # Count success/failure (if available)
         successful = sum(
@@ -505,3 +538,21 @@ class CampaignAggregator:
         formatted = campaign_name.replace('_', ' ').title()
         
         return formatted
+
+    def _ensure_dict(self, value: Any, label: str) -> Dict:
+        if isinstance(value, dict):
+            return value
+        if value is None:
+            return {}
+        logger.warning("Invalid %s: expected dict, got %s", label, type(value))
+        return {}
+
+    def _ensure_list(self, value: Any, label: str) -> List:
+        if isinstance(value, list):
+            return value
+        if value is None:
+            return []
+        if isinstance(value, dict):
+            return list(value.values())
+        logger.warning("Invalid %s: expected list, got %s", label, type(value))
+        return []
