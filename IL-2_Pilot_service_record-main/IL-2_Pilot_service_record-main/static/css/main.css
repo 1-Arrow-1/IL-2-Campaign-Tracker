@@ -1,0 +1,564 @@
+/* ==========================================================================
+   BASE & GLOBAL
+   ========================================================================== */
+body {
+  background: url('../images/background.jpg') repeat center center fixed;
+  background-size: cover;
+  font-family: 'Georgia', serif;
+  margin: 0;
+  padding: 0;
+  color: #2c2212;
+}
+
+/* Utility typewriter font */
+.typewriter {
+  font-family: 'Special Elite', 'Courier New', Courier, monospace;
+  font-size: 1.08em;
+  letter-spacing: 0.07em;
+  color: #2c2212;
+}
+
+/* ==========================================================================
+   CONTAINER / LAYOUT
+   ========================================================================== */
+#passport-container {
+    background-image: url('../images/old_paper_texture.jpg'), linear-gradient(#f8f2e0, #f8f2e0);
+    background-repeat: repeat, no-repeat;
+    background-position: top center, center;
+    background-size: auto, auto;
+    width: 90vw;
+    max-width: 1700px;
+    min-width: 300px;
+    margin: 3vw auto;
+    max-height: calc(100vh - 50px); /* adjust to leave space for the top selector bar */
+    box-shadow: 0 0 42px #4a342188;
+    border-radius: 11px;
+    display: flex;
+    overflow: hidden;
+    overflow-x: hidden;
+    border: 2px solid rgba(110, 94, 75, 0.33);
+    min-height: 540px;
+    position: relative;
+}
+
+.left {
+  flex: 0 0 25%;
+  min-width: 320px;
+  padding: 36px 26px 36px 32px;
+}
+
+/* Right-hand page container: fixed layout, no outer scroll */
+.right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 36px 40px 36px 42px;
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   FONTS / TITLES
+   ========================================================================== */
+.record-title {
+  text-align: center;
+  font-family: 'Cinzel', 'Georgia', serif;
+  font-size: 2.1em;
+  letter-spacing: 2px;
+  color: #3e3112;
+  margin-bottom: 22px;
+}
+
+
+/* ==========================================================================
+   PILOT DETAILS PANEL
+   ========================================================================== */
+#photo-frame {
+  width: 180px;
+  height: 220px;
+  background: #eae6d2;
+  position: relative;
+  margin-bottom: 18px;
+  margin-left: 5px;
+  box-shadow: 0 4px 12px #a6906c44;
+}
+
+#photo-frame img {
+  width: 180px;
+  height: 220px;
+  object-fit: cover;
+  display: block;
+}
+
+#photo-edge-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 180px;
+  height: 220px;
+  pointer-events: none;
+  z-index: 2;
+  background-color: transparent;
+  mix-blend-mode: multiply;
+}
+
+#photo-frame::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -10px;
+  width: calc(100% + 20px);
+  height: calc(93% + 20px);
+  background: url('../images/rivets_overlay.png') no-repeat center center;
+  background-size: contain;
+  pointer-events: none;
+  z-index: 5;
+}
+
+#stamp-overlay {
+  position: absolute;
+  left: 85px;
+  top: 110px;
+  width: 110px;
+  height: 110px;
+  opacity: 0.33;
+  pointer-events: none;
+  transform: rotate(-17deg);
+}
+#stamp-overlay1 {
+  position: absolute;
+  left: 85px;
+  top: 600px;
+  width: 220px;
+  height: 220px;
+  opacity: 0.33;
+  pointer-events: none;
+  transform: rotate(25deg);
+}
+
+#pilot-details {
+  margin-top: 10px;
+  margin-left: 2px;
+  font-size: 18px;
+  color: #251e12;
+  letter-spacing: 1.5px;
+}
+
+#pilot-details .detail-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+#pilot-details .label {
+  font-family: 'Cinzel', 'Georgia', serif;
+  min-width: 120px;
+  font-weight: bold;
+  letter-spacing: 0.4px;
+  color: #473914;
+  display: inline-block;
+  text-transform: uppercase;
+  font-size: 1.08em;
+  margin-right: 16px;
+}
+
+#pilot-details .value {
+  flex: 1;
+  margin-left: 8px;
+}
+
+#pilot-details span {
+  display: flex;
+  align-items: baseline;
+  margin-top: 12px;
+  font-size: 1.08em;
+  gap: 30px;
+}
+
+#pilot-details .typewriter {
+  font-family: 'Special Elite', 'Courier New', Courier, monospace;
+  font-size: 1.08em;
+  letter-spacing: 0.07em;
+  color: #2c2212;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+#pilot-photo {
+  filter: grayscale(100%);
+}
+
+/* ==========================================================================
+   CONTROLS / SELECTORS / BUTTONS
+   ========================================================================== */
+.styled-select,
+.btn,
+button {
+  font-family: inherit;
+  font-size: 15px;
+  background: #f2e8d5;
+  color: #4e432b;
+  border: 1.5px solid #a9906c;
+  border-radius: 6px;
+  padding: 7px 15px;
+  margin: 2px 0;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.styled-select:focus {
+  outline: 2px solid #917c5a;
+  background: #f6efdf;
+}
+
+.styled-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: #f2e8d5
+    url('data:image/svg+xml;utf8,<svg fill="gray" height="16" width="16" viewBox="0 0 20 20"><path d="M7.293 8.293a1 1 0 011.414 0L10 9.586l1.293-1.293a1 1 0 011.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z"/></svg>')
+    no-repeat right 12px center/18px 18px;
+  padding-right: 36px;
+}
+
+/* ==========================================================================
+   SERVICE RECORD / AWARDS / PROMOTIONS
+   ========================================================================== */
+#record-table {
+  display: flex;
+  gap: 32px;
+}
+
+#promotions,
+#awards {
+  margin-top: 10px;
+  flex: 1;
+}
+
+.record-section-title {
+  font-family: 'Cinzel', 'Georgia', serif;
+  margin-top: 0;
+  font-weight: bold;
+  font-size: 1.19em;
+  letter-spacing: 1.2px;
+  color: #503d18;
+  border-bottom: 1.2px solid #ccb890;
+  margin-bottom: 10px;
+}
+
+.record-list {
+  margin-left: 0px;
+}
+
+.record-list li {
+  font-size: 17px;
+  padding: 2px 0;
+  align-items: center;
+  gap: 15px;
+  color: #282013;
+  letter-spacing: 0.7px;
+  line-height: 1.6;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px dashed #2c2212;
+  padding-bottom: 5px;
+  margin-bottom: 5px;
+  transition: background 0.15s;
+}
+
+/* Hover for service record list items */
+.record-list li:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.record-list li span:first-child {
+  margin-right: 60px;
+  flex: 1;
+  word-break: break-word;
+}
+
+.record-list li:last-child {
+  border-bottom: none;
+}
+
+/* Icons */
+.award-icon {
+  height: 150px;
+  width: 150px;
+  object-fit: contain;
+  margin-right: 5px;
+  vertical-align: middle;
+  border-radius: 5px;
+  background: transparent;
+}
+
+.rank-icon {
+    height: 100px;
+    width: 100px;
+    object-fit: contain;
+    margin-right: 5px;
+    vertical-align: middle;
+    border-radius: 5px;
+    background: transparent;
+    /*transform: rotate(-90deg);*/
+    transform-origin: center center;
+}
+
+/* ==========================================================================
+   STATISTICS PANEL
+   ========================================================================== */
+#stats-table {
+  font-size: 1.17em;
+  line-height: 1.6;
+  max-width: 90%;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px dashed #2c2212;
+  margin-bottom: 7px;
+  padding-bottom: 3px;
+  transition: background 0.15s;
+}
+
+/* Hover for stats rows */
+.stats-row:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.stats-label {
+  font-weight: bold;
+  min-width: 180px;
+}
+
+.stats-value {
+  flex: 1;
+  text-align: right;
+  margin-left: 20px;
+}
+
+/* ==========================================================================
+   STAMPS / DECORATIVE
+   ========================================================================== */
+#approved-stamp {
+  position: absolute;
+  top: 50px;
+  right: 80px;
+  width: 180px;
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 2;
+  transform: rotate(-11deg);
+}
+
+#confidential-stamp {
+  position: absolute;
+  bottom: 100px;
+  right: 200px;
+  width: 210px;
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 2;
+  transform: rotate(7deg);
+}
+
+#details-watermark {
+  position: absolute;
+  left: 30px;
+  top: 600px;
+  width: 350px;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Debriefed stamp for Sortie Logbook */
+#debriefed-stamp {
+    position: absolute;
+    top: 0px; /* adjust vertical placement */
+    right: 50px; /* pull it inward so it sits nicely */
+    width: 180px; /* scale as needed */
+    opacity: 0.38; /* subtle, not overpowering */
+    pointer-events: none;
+    mix-blend-mode: multiply; /* helps it integrate with paper texture */
+    z-index: 5;
+}
+
+/* ==========================================================================
+   LOGBOOK (SORTIE) TABLE
+   ========================================================================== */
+#logbook-table {
+    font-size: 1.17em;
+    line-height: 1.6;
+    max-width: 100%;
+    scrollbar-gutter: stable;
+    /* remove width:105%; */
+}
+.header-icon {
+    height: 45px;
+    display: block;
+    margin: 0 auto;
+}
+
+.logbook-table {
+    width: 100%;
+    table-layout: auto; /* natural column sizing so nothing is artificially squeezed */
+    border-collapse: collapse;
+    font-family: 'Special Elite', monospace;
+    font-size: 0.9em; /* slightly smaller for better fit */
+    color: #1b140a;
+    background: transparent;
+    margin-right: 4px; /* give a little gap so last column isn’t flush under scrollbar */
+}
+
+/* Remove grid lines */
+.logbook-table th,
+.logbook-table td {
+    padding: 6px 10px;
+    border: none;
+    vertical-align: middle;
+    white-space: normal; /* allow wrapping except where overridden */
+}
+
+/* Alignment rules */
+.logbook-table th,
+.logbook-table td {
+  text-align: left;
+}
+.logbook-table th:nth-child(4),
+.logbook-table th:nth-child(5),
+.logbook-table th:nth-child(6),
+.logbook-table th:nth-child(7),
+.logbook-table th:nth-child(8),
+.logbook-table td:nth-child(4),
+.logbook-table td:nth-child(5),
+.logbook-table td:nth-child(6),
+.logbook-table td:nth-child(7),
+.logbook-table td:nth-child(8) {
+  text-align: center;
+}
+
+/* Header underline (consistent vertical alignment) */
+.logbook-table thead th {
+    position: relative;
+    padding-bottom: 8px;
+    font-size: 0.9em;
+    padding-right: 12px; /* bump from default if needed */
+}
+.logbook-table tbody td {
+    font-size: 0.9em;
+    padding: 10px 10px; /* slightly more vertical breathing room */
+}
+
+.logbook-table thead th::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Hover for logbook rows */
+.logbook-table tbody tr:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+/* Dashed separator between sortie rows like service record style */
+.logbook-table tbody tr {
+    border-bottom: 1px dashed #2c2212;
+}
+
+.logbook-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+
+/* Stacked header helper */
+.stacked-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+}
+
+.stacked-header .main {
+  display: block;
+  font-weight: 600;
+}
+
+.stacked-header .sub {
+  display: block;
+  font-size: 0.65em;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+./* ==========================================================================
+   CONTENT PANES / SCROLL ISOLATION
+   ========================================================================== */
+/* Right-hand page container: fixed layout, no outer scroll */
+.right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 36px 40px 36px 42px;
+  overflow: hidden; /* prevent container from growing/scrolling */
+}
+
+.right, .page-inner {
+  min-width: 0; /* allow flex children to shrink instead of causing horizontal scroll */
+}
+
+/* Inner scrollable pane so long content (like logbook) scrolls without
+   stretching the outer background container */
+.page-inner {
+    position: relative; /* needed so absolutely positioned stamps are relative here */
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden; /* disallow horizontal scrolling */
+    display: flex;
+    flex-direction: column;
+    padding-right: 16px; /* keep table content clear of scrollbar thumb */
+    box-sizing: border-box;
+    min-width: 0; /* allow flex childr */
+}
+
+.page-inner::-webkit-scrollbar {
+    width: 12px;
+}
+
+.page-inner::-webkit-scrollbar-track {
+    background: rgba(232, 218, 191, 0.6); /* light parchment-ish */
+    border-radius: 6px;
+}
+
+.page-inner::-webkit-scrollbar-thumb {
+    background-color: #5a4022; /* dark brown */
+    border-radius: 6px;
+    border: 3px solid rgba(232, 218, 191, 0.6); /* gives padding effect */
+}
+
+/* Firefox */
+.page-inner {
+    scrollbar-width: thin;
+    scrollbar-color: #5a4022 rgba(232, 218, 191, 0.6);
+    scrollbar-gutter: stable;
+}
+.page-inner::-webkit-scrollbar-thumb:hover {
+    background-color: #442f1a;
+}
+
+.page-inner::-webkit-scrollbar-thumb:active {
+    background-color: #322413;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+@media (max-width: 1200px) {
+  #passport-container {
+    width: 98vw;
+  }
+}

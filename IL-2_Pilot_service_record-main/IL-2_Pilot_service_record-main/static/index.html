@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pilot Passport</title>
+  <link rel="stylesheet" href="static/css/main.css" />
+  <link rel="stylesheet" href="static/css/cropper.min.css" />
+  <link href="https://fonts.googleapis.com/css?family=Special+Elite&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Cinzel:700&display=swap" rel="stylesheet">
+  <link rel="icon" href="favicon.ico">
+</head>
+<body>
+<!-- OUTSIDE: Pilot selector and Photo upload -->
+<div style="text-align:center;margin:18px 0 5px 0;">
+  <label for="pilot-select" style="font-size:1.15em;">Choose Pilot: </label>
+  <select id="pilot-select" class="styled-select" style="font-size:1.15em;padding:6px 10px;"></select>
+  <button onclick="changePhoto()" class="btn">Upload/Change Photo</button>
+</div>
+<div id="passport-container">
+  <button id="arrow-next"
+  title="Next"
+  style="
+    position:absolute;
+    right:10px;
+    top:12px;
+    z-index:20;
+    background:#e4dabf;
+    border-radius:50%;
+    border:none;
+    width:40px;
+    height:40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor:pointer;
+    padding:0;
+  ">
+  <!-- Geometrically centered SVG arrow -->
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="12" fill="#e4dabf"/>
+    <path d="M8 12h8m0 0l-4-4m4 4l-4 4" stroke="#3e3112" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  </button>
+  <button id="arrow-prev"
+  title="Back"
+  style="
+    display:none;
+    position:absolute;
+    right:60px;
+    top:12px;
+    z-index:20;
+    background:#e4dabf;
+    border-radius:50%;
+    border:none;
+    width:40px;
+    height:40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor:pointer;
+    padding:0;
+  ">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="12" fill="#e4dabf"/>
+    <path d="M16 12H8m0 0l4-4m-4 4l4 4" stroke="#3e3112" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  </button>
+    
+  
+  <div class="left">
+    <div id="photo-frame">
+      <img id="pilot-photo" src="static/images/sample_photo.jpg" alt="Pilot Photo">
+	  <img id="photo-edge-overlay" src="static/images/photo_edges.png" alt="Photo Edges Overlay">
+      <img id="stamp-overlay" src="static/images/stamp.png" alt="Stamp Overlay">
+    </div>
+    <div id="pilot-details">
+      <div class="detail-row"><span class="label">Name:</span><span class="typewriter" id="pilot-firstname"></span></div>
+      <div class="detail-row"><span class="label">Last Name:</span><span class="typewriter" id="pilot-lastname"></span></div>
+      <div class="detail-row"><span class="label">Date of Birth:</span><span class="typewriter" id="pilot-dob"></span></div>
+      <div class="detail-row"><span class="label">Place of Birth:</span><span class="typewriter" id="pilot-pob"></span></div>
+      <div class="detail-row"><span class="label">Pilot ID:</span><span class="typewriter" id="pilot-id"></span></div>
+      <div class="detail-row"><span class="label">Squadron:</span><span class="typewriter" id="pilot-sq"></span></div>
+	  <div class="detail-row"><span class="label">Rank:</span><span class="typewriter" id="pilot-rank"></span></div>
+	  <div class="detail-row" id="signature-row" style="flex-direction:column;align-items:flex-start;margin-top:20px;">
+	  <img src="static/images/signature.png" alt="Signature" style="height:90px; width:auto; margin-bottom:5px; margin-left:4px;">
+	  <img id="stamp-overlay1" src="static/images/stamp.png" alt="Stamp Overlay">
+      <span class="typewriter" style="font-size:1.04em; color:#1b140a; margin-left:6px; opacity:0.9;">Gen. Hunter A. Johnson</span>
+	</div>
+    </div>
+	
+  </div>
+<div class="divider"></div>
+
+  <!-- Service Record Page -->
+<div class="right" id="service-record-page">
+  <div class="page-inner">
+    <div class="record-title">SERVICE RECORD</div>
+    <img id="approved-stamp" src="static/images/stamp_extra.png" alt="Approved Stamp">
+    <div id="record-table">
+      <div id="promotions">
+        <div class="record-section-title">PROMOTIONS</div>
+        <div style="position:relative;">
+          <ul class="record-list typewriter" id="promotion-list" style="margin-bottom:0;"></ul>
+          <img id="promotion-watermark"
+               src="static/images/watermark_eagle.png"
+               alt="Watermark"
+               style="display:none; position:absolute; left:60%; top:110%; width:280px; opacity:0.4; pointer-events:none; transform:translateX(-50%) translateY(-15px);">
+        </div>
+      </div>
+      <div id="awards">
+        <div class="record-section-title">AWARDS</div>
+        <ul class="record-list typewriter" id="award-list"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Statistics Page -->
+<div class="right" id="stats-page" style="display:none;">
+  <div class="page-inner">
+    <div class="record-title">CURRENT STATISTICS</div>
+    <img id="confidential-stamp" src="static/images/stamp_extra_II.png" alt="Confidential Stamp">
+    <div id="stats-table" class="typewriter" style="margin-top:30px;">
+      <!-- Stats rows injected by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- Sorties Logbook Page -->
+<div class="right" id="logbook-page" style="display:none;">
+  <div class="page-inner">
+    <div class="record-title">MISSION LOGBOOK</div>
+	<img id="debriefed-stamp" src="static/images/debriefed.png" alt="Debriefed Stamp">
+    <div id="logbook-table" class="typewriter" style="margin-top:30px;"></div>
+  </div>
+</div>
+
+
+<!-- Modal for cropping -->
+<div id="cropper-modal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100vw; height:100vh; background:rgba(40,40,40,0.8)">
+  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;padding:16px;border-radius:8px;box-shadow:0 0 40px #222;">
+    <img id="cropper-img" style="max-width:450px;max-height:450px;display:block;margin-bottom:10px">
+    <div style="text-align:right;">
+      <button onclick="cancelCrop()">Cancel</button>
+      <button onclick="doCrop()">Crop & Save</button>
+    </div>
+  </div>
+</div>
+<!-- Modal for Game Path Input -->
+<div id="gamePathModal" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:1000; align-items:center; justify-content:center;">
+  <div style="background:#f8f4e6; padding:30px 25px; border-radius:12px; box-shadow:0 2px 20px #2228; max-width:400px; margin:auto; text-align:center;">
+    <h2>IL-2 Game Folder Required</h2>
+    <div style="margin:18px 0;">
+      <input id="gamePathInput" type="text" style="width:94%;padding:7px;border-radius:5px;border:1px solid #bbb;" placeholder="Enter IL-2 installation folder"/>
+    </div>
+    <div id="gamePathError" style="color:#c00;min-height:22px;margin-bottom:12px;"></div>
+    <button id="gamePathSubmit" style="padding:7px 18px;border:none;border-radius:4px;background:#26397d;color:#fff;cursor:pointer;">Set Path</button>
+  </div>
+</div>
+
+<script src="static/js/cropper.min.js"></script>
+<script src="static/js/main.js"></script>
+
+</body>
+</html>
