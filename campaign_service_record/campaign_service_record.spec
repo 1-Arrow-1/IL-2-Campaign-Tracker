@@ -27,6 +27,9 @@ hiddenimports = [
     'logging',
     'json',
     'pathlib',
+    'utils.path_utils',
+    'utils.pilot_photo',
+    'PIL',
 ]
 
 # Analysis
@@ -40,7 +43,6 @@ a = Analysis(
     hooksconfig={},
     runtime_hooks=[],
     excludes=[
-        'PIL',  # Pillow not needed
         'matplotlib',  # Matplotlib not needed
         'numpy',  # NumPy not needed unless used by utils
         'pandas',  # Pandas not needed
