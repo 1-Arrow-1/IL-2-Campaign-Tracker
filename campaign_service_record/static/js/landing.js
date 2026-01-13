@@ -21,8 +21,10 @@ const LandingPage = {
         pilotPhoto: null,
         pilotPhotoContainer: null,
         pilotPhotoBtn: null,
+        pilotName: null,
         cropperModal: null,
         cropperImg: null,
+        cropperNameInput: null,
         cropperCancel: null,
         cropperSave: null
     },
@@ -34,6 +36,7 @@ const LandingPage = {
 
     cropper: null,
     pilotPhotoDesc: 'campaign_pilot',
+    pilotNameDefault: 'Campaign Pilot',
     supportedImageTypes: [
         'image/png',
         'image/jpeg',
@@ -66,8 +69,10 @@ const LandingPage = {
         this.elements.pilotPhoto = document.getElementById('pilot-photo');
         this.elements.pilotPhotoContainer = document.querySelector('.pilot-photo-container');
         this.elements.pilotPhotoBtn = document.getElementById('pilot-photo-btn');
+        this.elements.pilotName = document.getElementById('pilot-name');
         this.elements.cropperModal = document.getElementById('cropper-modal');
         this.elements.cropperImg = document.getElementById('cropper-img');
+        this.elements.cropperNameInput = document.getElementById('pilot-name-input');
         this.elements.cropperCancel = document.getElementById('cropper-cancel');
         this.elements.cropperSave = document.getElementById('cropper-save');
     },
@@ -94,9 +99,11 @@ const LandingPage = {
             } else {
                 this.setPilotPhoto('static/images/placeholder_pilot.png');
             }
+            this.setPilotName(response?.name);
         } catch (error) {
             console.warn('Failed to load pilot photo:', error);
             this.setPilotPhoto('static/images/placeholder_pilot.png');
+            this.setPilotName();
         }
     },
 
@@ -108,6 +115,14 @@ const LandingPage = {
             this.elements.pilotPhoto.src = 'static/images/placeholder_pilot.png';
         };
         this.elements.pilotPhoto.src = src;
+    },
+
+    setPilotName(name) {
+        if (!this.elements.pilotName) {
+            return;
+        }
+        const trimmed = typeof name === 'string' ? name.trim() : '';
+        this.elements.pilotName.textContent = trimmed || this.pilotNameDefault;
     },
 
     handlePhotoSelection() {
@@ -138,6 +153,11 @@ const LandingPage = {
             return;
         }
         this.elements.cropperImg.src = imageSrc;
+        if (this.elements.cropperNameInput) {
+            const currentName = this.elements.pilotName?.textContent || '';
+            const isDefault = currentName === this.pilotNameDefault;
+            this.elements.cropperNameInput.value = isDefault ? '' : currentName;
+        }
         this.elements.cropperModal.style.display = 'flex';
 
         if (this.cropper) {
@@ -190,11 +210,13 @@ const LandingPage = {
         }
 
         const imageData = canvas.toDataURL('image/png');
+        const pilotName = this.elements.cropperNameInput?.value ?? '';
 
         try {
-            const response = await API.savePilotPhoto(this.pilotPhotoDesc, imageData);
+            const response = await API.savePilotPhoto(this.pilotPhotoDesc, imageData, pilotName);
             if (response && response.path) {
                 this.setPilotPhoto(`${response.path}?t=${Date.now()}`);
+                this.setPilotName(response?.name);
             } else {
                 console.error('Pilot photo save returned unexpected response:', response);
                 alert('Unable to save pilot photo. Please try again.');

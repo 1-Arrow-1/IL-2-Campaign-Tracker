@@ -25,7 +25,7 @@ from core.campaign_aggregator import CampaignAggregator
 from utils.formatting import safe_campaign_filename
 from utils.path_utils import get_game_directory
 from utils.image_utils import convert_dds_to_png_bytes, find_existing_image_path
-from utils.pilot_photo import pilot_photo_path, pilot_photo_filename
+from utils.pilot_photo import pilot_photo_path, pilot_photo_filename, pilot_name_path
 
 
 logger = logging.getLogger(__name__)
@@ -42,6 +42,13 @@ _reports_dir: Optional[Path] = None
 _last_ping = [time.time()]
 
 _PILOT_DESC_DEFAULT = "campaign_pilot"
+
+
+def _sanitize_pilot_name(name: Optional[str]) -> Optional[str]:
+    if name is None:
+        return None
+    cleaned = name.strip()
+    return cleaned or None
 
 
 def init_api(data_dir: Path, reports_dir: Optional[Path] = None):
@@ -151,16 +158,24 @@ def get_pilot_photo():
     frozen = current_app.config.get('FROZEN', False)
 
     if not photo_dir:
-        return jsonify({'path': None})
+        return jsonify({'path': None, 'name': None})
 
     photo_path = pilot_photo_path(Path(photo_dir), desc)
+    name_path = pilot_name_path(Path(photo_dir), desc)
+    name_value = None
+    if name_path.exists():
+        try:
+            name_value = _sanitize_pilot_name(name_path.read_text(encoding='utf-8'))
+        except OSError as exc:
+            logger.warning("Failed to read pilot name from %s: %s", name_path, exc)
+
     if not photo_path.exists():
-        return jsonify({'path': None})
+        return jsonify({'path': None, 'name': name_value})
 
     filename = pilot_photo_filename(desc)
     if frozen:
-        return jsonify({'path': f'/pilot_photos/{filename}'})
-    return jsonify({'path': f'/static/pilot_photos/{filename}'})
+        return jsonify({'path': f'/pilot_photos/{filename}', 'name': name_value})
+    return jsonify({'path': f'/static/pilot_photos/{filename}', 'name': name_value})
 
 
 @api_bp.route('/api/save_pilot_photo', methods=['POST'])
@@ -168,6 +183,7 @@ def save_pilot_photo():
     """Save a cropped pilot photo from the client."""
     desc = request.form.get('desc', _PILOT_DESC_DEFAULT)
     img_data = request.form.get('img_data')
+    pilot_name = request.form.get('pilot_name')
     logger.info(
         "Pilot photo upload received: desc=%s content_type=%s content_length=%s",
         desc,
@@ -217,9 +233,22 @@ def save_pilot_photo():
         return jsonify({'error': 'Failed to save photo'}), 500
 
     filename = pilot_photo_filename(desc)
+    name_path = pilot_name_path(Path(photo_dir), desc)
+    name_value = _sanitize_pilot_name(pilot_name)
+    if pilot_name is not None:
+        try:
+            if name_value:
+                name_path.parent.mkdir(parents=True, exist_ok=True)
+                name_path.write_text(name_value, encoding='utf-8')
+            elif name_path.exists():
+                name_path.unlink()
+        except OSError as exc:
+            logger.error("Failed to save pilot name to %s: %s", name_path, exc, exc_info=True)
+            return jsonify({'error': 'Failed to save pilot name'}), 500
+
     if frozen:
-        return jsonify({'path': f'/pilot_photos/{filename}'})
-    return jsonify({'path': f'/static/pilot_photos/{filename}'})
+        return jsonify({'path': f'/pilot_photos/{filename}', 'name': name_value})
+    return jsonify({'path': f'/static/pilot_photos/{filename}', 'name': name_value})
 
 
 # ============================================================================

@@ -158,14 +158,17 @@ class CampaignAggregator:
             return None
         
         # Get country
-        campaign_dates = mission_dates.get(campaign_name, {})
-        country = campaign_dates.get('country', 'unknown')
+        campaign_dates = self._ensure_dict(
+            mission_dates.get(campaign_name, {}),
+            f"mission_dates[{campaign_name}]"
+        )
         
         # Get events
         campaign_events = self._ensure_dict(
             events_data.get(campaign_name, {}),
             f"events[{campaign_name}]"
         )
+        country = self._resolve_country(campaign_events, campaign_dates)
         events = self._ensure_list(
             campaign_events.get('events', []),
             f"events[{campaign_name}].events"
@@ -240,7 +243,7 @@ class CampaignAggregator:
         )
         
         # Extract components
-        country = campaign_events.get('country') or campaign_dates.get('country', 'unknown')
+        country = self._resolve_country(campaign_events, campaign_dates)
         events = self._ensure_list(
             campaign_events.get('events', []),
             f"events[{campaign_name}].events"
@@ -725,6 +728,16 @@ class CampaignAggregator:
         formatted = campaign_name.replace('_', ' ').title()
         
         return formatted
+
+    @staticmethod
+    def _resolve_country(campaign_events: Dict, campaign_dates: Dict) -> str:
+        events_country = campaign_events.get('country')
+        if isinstance(events_country, str) and events_country.strip():
+            return events_country
+        dates_country = campaign_dates.get('country')
+        if isinstance(dates_country, str) and dates_country.strip():
+            return dates_country
+        return 'unknown'
 
     def _ensure_dict(self, value: Any, label: str) -> Dict:
         if isinstance(value, dict):

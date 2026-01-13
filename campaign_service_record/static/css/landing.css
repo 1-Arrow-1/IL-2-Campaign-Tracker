@@ -116,6 +116,30 @@
     display: block;
 }
 
+.pilot-name-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin: 0.75rem auto 1.25rem;
+    text-align: left;
+    font-weight: 600;
+    color: #2c3e50;
+    max-width: 360px;
+}
+
+.pilot-name-field input {
+    padding: 0.55rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #d0d7de;
+    font-size: 0.95rem;
+}
+
+.pilot-name-field input:focus {
+    outline: none;
+    border-color: #4c8ef7;
+    box-shadow: 0 0 0 2px rgba(76, 142, 247, 0.2);
+}
+
 .cropper-actions {
     display: flex;
     justify-content: center;

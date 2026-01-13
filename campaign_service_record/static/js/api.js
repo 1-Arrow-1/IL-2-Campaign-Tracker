@@ -102,10 +102,13 @@ const API = {
     /**
      * Save pilot photo (multipart form)
      */
-    async savePilotPhoto(desc, imageData) {
+    async savePilotPhoto(desc, imageData, pilotName) {
         const formData = new FormData();
         formData.append('desc', desc);
         formData.append('img_data', imageData);
+        if (pilotName !== undefined) {
+            formData.append('pilot_name', pilotName);
+        }
 
         const response = await fetch(`${this.baseURL}/save_pilot_photo`, {
             method: 'POST',
