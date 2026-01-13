@@ -1,4 +1,0 @@
-This is a placeholder for the pilot photo image.
-In production, replace with an actual PNG image (200x200px recommended).
-
-You can use any generic pilot silhouette or leave it as a gray placeholder.
