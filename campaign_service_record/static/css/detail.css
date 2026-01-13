@@ -1,0 +1,364 @@
+/**
+ * Detail Page Styles
+ * 
+ * Three-column layout:
+ * - Left: Promotions & Awards
+ * - Middle: Mission Debriefings
+ * - Right: Campaign Summary
+ */
+
+/* ============================================================================
+   Detail Container
+   ============================================================================ */
+
+.detail-container {
+    max-width: 1400px;
+}
+
+/* ============================================================================
+   Campaign Header
+   ============================================================================ */
+
+.campaign-header {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.campaign-header h2 {
+    margin-bottom: 0.75rem;
+    color: #2c3e50;
+    font-size: 1.75rem;
+}
+
+.campaign-meta {
+    display: flex;
+    gap: 2rem;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.meta-item {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.meta-item .label {
+    font-weight: 600;
+    color: #555;
+}
+
+/* ============================================================================
+   Three-Column Layout
+   ============================================================================ */
+
+.detail-columns {
+    display: grid;
+    grid-template-columns: 280px 1fr 320px;
+    gap: 2rem;
+}
+
+.column {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.column h3 {
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e0e0e0;
+    color: #2c3e50;
+    font-size: 1.125rem;
+}
+
+/* Left Column: Sticky positioning */
+.column-left {
+    height: fit-content;
+    position: sticky;
+    top: calc(60px + 2rem);
+    max-height: calc(100vh - 60px - 4rem);
+    overflow-y: auto;
+}
+
+/* Middle Column: Scrollable */
+.column-middle {
+    min-height: 400px;
+}
+
+/* Right Column: Sticky positioning */
+.column-right {
+    height: fit-content;
+    position: sticky;
+    top: calc(60px + 2rem);
+    max-height: calc(100vh - 60px - 4rem);
+    overflow-y: auto;
+}
+
+/* ============================================================================
+   Events List (Left Column)
+   ============================================================================ */
+
+.events-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.event-item {
+    padding: 0.75rem;
+    border-left: 3px solid #3498db;
+    background: #f9f9f9;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.event-item:hover {
+    background: #f0f7ff;
+    border-left-color: #2980b9;
+}
+
+.event-item.promotion {
+    border-left-color: #27ae60;
+}
+
+.event-item.promotion:hover {
+    background: #f0fff4;
+}
+
+.event-item.award {
+    border-left-color: #f39c12;
+}
+
+.event-item.award:hover {
+    background: #fffbf0;
+}
+
+.event-type {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: #7f8c8d;
+    margin-bottom: 0.25rem;
+}
+
+.event-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.event-date {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.event-reason {
+    font-size: 0.85rem;
+    color: #666;
+    font-style: italic;
+    margin-top: 0.25rem;
+}
+
+.event-icon {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+}
+
+/* ============================================================================
+   Debriefings Container (Middle Column)
+   ============================================================================ */
+
+.debriefings-container {
+    /* HTML content injected from Campaign Tracker */
+    /* Inherits styles from Campaign Tracker's HTML */
+}
+
+/* Override some Campaign Tracker styles if needed */
+.debriefings-container h4 {
+    color: #2c3e50;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.debriefings-container table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+.debriefings-container th,
+.debriefings-container td {
+    padding: 0.5rem;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.debriefings-container th {
+    background: #f5f5f5;
+    font-weight: 600;
+}
+
+/* ============================================================================
+   Summary Content (Right Column)
+   ============================================================================ */
+
+.summary-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.summary-section-inner {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.summary-section-inner:last-child {
+    border-bottom: none;
+}
+
+.summary-section-inner h4 {
+    font-size: 1rem;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+.summary-stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    font-size: 0.9rem;
+}
+
+.summary-stat .stat-label {
+    color: #555;
+}
+
+.summary-stat .stat-value {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+/* Combat Results Grid */
+.combat-results-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.combat-cell {
+    text-align: center;
+    padding: 0.5rem;
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+}
+
+.combat-cell .cell-label {
+    font-size: 0.75rem;
+    color: #666;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.combat-cell .cell-value {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+/* Awards List */
+.awards-list {
+    list-style: none;
+    padding: 0;
+}
+
+.awards-list li {
+    padding: 0.5rem 0;
+    padding-left: 1.25rem;
+    position: relative;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.awards-list li:before {
+    content: "★";
+    position: absolute;
+    left: 0;
+    color: #f39c12;
+    font-size: 1rem;
+}
+
+/* PDF Download Button */
+.pdf-download {
+    display: block;
+    width: 100%;
+    padding: 0.75rem;
+    background: #3498db;
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    margin-top: 1rem;
+}
+
+.pdf-download:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.pdf-download:active {
+    transform: translateY(0);
+}
+
+/* ============================================================================
+   Responsive
+   ============================================================================ */
+
+@media (max-width: 1200px) {
+    .detail-columns {
+        grid-template-columns: 1fr;
+    }
+    
+    .column-left,
+    .column-right {
+        position: static;
+        max-height: none;
+    }
+    
+    .campaign-header {
+        padding: 1rem 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .campaign-header {
+        padding: 1rem;
+    }
+    
+    .campaign-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .column {
+        padding: 1rem;
+    }
+    
+    .combat-results-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}

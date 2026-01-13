@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IL-2 Campaign Service Record</title>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/css/landing.css">
+    <link rel="stylesheet" href="static/css/detail.css">
+</head>
+<body>
+    <!-- Application Container -->
+    <div id="app">
+        <!-- Header (persistent) -->
+        <header id="app-header">
+            <div class="header-content">
+                <h1>IL-2 Campaign Service Record</h1>
+                <nav id="header-nav">
+                    <button id="back-btn" class="nav-btn" style="display: none;">
+                        ← Back to Campaigns
+                    </button>
+                </nav>
+            </div>
+        </header>
+        
+        <!-- Main Content Area -->
+        <main id="app-main">
+            <!-- Landing Page -->
+            <div id="landing-page" class="page">
+                <div class="landing-container">
+                    <!-- Left Column: Pilot Info -->
+                    <aside class="pilot-info">
+                        <div class="pilot-card">
+                            <div class="pilot-photo-container">
+                                <img id="pilot-photo" 
+                                     src="static/images/placeholder_pilot.png" 
+                                     alt="Pilot Photo"
+                                     class="pilot-photo">
+                            </div>
+                            <div class="pilot-details">
+                                <h2 id="pilot-name">Campaign Pilot</h2>
+                                <p class="pilot-meta">
+                                    <span class="label">Service:</span>
+                                    <span id="pilot-service">Multiple Campaigns</span>
+                                </p>
+                            </div>
+                        </div>
+                    </aside>
+                    
+                    <!-- Right Column: Campaign List -->
+                    <section class="campaigns-section">
+                        <h2>Campaigns Flown</h2>
+                        
+                        <!-- Loading State -->
+                        <div id="campaigns-loading" class="loading-state">
+                            <div class="spinner"></div>
+                            <p>Loading campaigns...</p>
+                        </div>
+                        
+                        <!-- Empty State -->
+                        <div id="campaigns-empty" class="empty-state" style="display: none;">
+                            <p class="empty-message">
+                                No campaigns found.<br>
+                                <small>Run Campaign Tracker first to generate data.</small>
+                            </p>
+                        </div>
+                        
+                        <!-- Error State -->
+                        <div id="campaigns-error" class="error-state" style="display: none;">
+                            <p class="error-message" id="error-text"></p>
+                        </div>
+                        
+                        <!-- Campaign List -->
+                        <div id="campaigns-list" class="campaigns-list" style="display: none;">
+                            <!-- Dynamically populated by JavaScript -->
+                        </div>
+                    </section>
+                </div>
+            </div>
+            
+            <!-- Detail Page -->
+            <div id="detail-page" class="page" style="display: none;">
+                <div class="detail-container">
+                    <!-- Campaign Header -->
+                    <header class="campaign-header">
+                        <h2 id="campaign-title">Campaign Name</h2>
+                        <div class="campaign-meta">
+                            <span class="meta-item">
+                                <span class="label">Country:</span>
+                                <span id="campaign-country">—</span>
+                            </span>
+                            <span class="meta-item">
+                                <span class="label">Missions:</span>
+                                <span id="campaign-missions">—</span>
+                            </span>
+                        </div>
+                    </header>
+                    
+                    <!-- 3-Column Layout -->
+                    <div class="detail-columns">
+                        <!-- Left Column: Promotions & Awards -->
+                        <aside class="column column-left">
+                            <section class="events-section">
+                                <h3>Promotions & Awards</h3>
+                                <div id="events-list" class="events-list">
+                                    <!-- Dynamically populated -->
+                                </div>
+                            </section>
+                        </aside>
+                        
+                        <!-- Middle Column: Debriefings -->
+                        <section class="column column-middle">
+                            <h3>Mission Debriefings</h3>
+                            <div id="debriefings-container" class="debriefings-container">
+                                <!-- HTML injected from campaign_events.json -->
+                            </div>
+                        </section>
+                        
+                        <!-- Right Column: Summary -->
+                        <aside class="column column-right">
+                            <section class="summary-section">
+                                <h3>Campaign Summary</h3>
+                                <div id="summary-content" class="summary-content">
+                                    <!-- Dynamically populated -->
+                                </div>
+                            </section>
+                        </aside>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="static/js/api.js?v=2"></script>
+    <script src="static/js/landing.js?v=2"></script>
+    <script src="static/js/detail.js?v=2"></script>
+    <script src="static/js/main.js?v=2"></script>
+</body>
+</html>
