@@ -182,7 +182,7 @@ def save_pilot_photo():
         return jsonify({'error': 'Unsupported image format'}), 400
 
     try:
-        img_str = re.sub(r'^data:image/\\w+;base64,', '', img_data)
+        img_str = re.sub(r'^data:image/\w+;base64,', '', img_data)
         img_str = ''.join(img_str.split())
         remainder = len(img_str) % 4
         if remainder == 1:
