@@ -183,10 +183,16 @@ def save_pilot_photo():
 
     try:
         img_str = re.sub(r'^data:image/\\w+;base64,', '', img_data)
-        img_bytes = base64.b64decode(img_str)
+        img_str = ''.join(img_str.split())
+        remainder = len(img_str) % 4
+        if remainder == 1:
+            raise ValueError("Invalid base64 length")
+        if remainder:
+            img_str += '=' * (4 - remainder)
+        img_bytes = base64.b64decode(img_str, validate=True)
     except (ValueError, base64.binascii.Error) as exc:
         logger.warning("Invalid image payload: %s", exc)
-        return jsonify({'error': 'Invalid image data'}), 400
+        return jsonify({'error': 'Invalid image data. Please choose a different image.'}), 400
 
     photo_dir = current_app.config.get('PILOT_PHOTO_DIR')
     frozen = current_app.config.get('FROZEN', False)
@@ -197,7 +203,10 @@ def save_pilot_photo():
     logger.info("Saving pilot photo to %s (bytes=%s)", photo_path, len(img_bytes))
     try:
         photo_path.parent.mkdir(parents=True, exist_ok=True)
-        photo_path.write_bytes(img_bytes)
+        tmp_path = photo_path.with_suffix(f"{photo_path.suffix}.tmp")
+        with open(tmp_path, 'wb') as tmp_file:
+            tmp_file.write(img_bytes)
+        tmp_path.replace(photo_path)
     except OSError as exc:
         logger.error(
             "Failed to save pilot photo to %s: %s",

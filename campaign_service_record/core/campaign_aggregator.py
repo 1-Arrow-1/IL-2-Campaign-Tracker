@@ -544,45 +544,32 @@ class CampaignAggregator:
 
     @staticmethod
     def _aggregate_landing_outcomes(statuses: List[str]) -> List[Dict]:
-        base_order = [
-            "Safe Landings",
-            "Landings (wounded)",
-            "Hard Landings",
-            "Crash Landings",
-            "Bailouts",
-            "KIA / Died on landing",
-            "Forced Landings"
-        ]
-        counts = {label: 0 for label in base_order}
-        extras: List[str] = []
+        safe_landings = 0
+        hard_landings = 0
+        wounded_landings = 0
+        bailouts = 0
+        kia_mia = 0
 
         for status in statuses:
             normalized = status.lower().strip()
-            label = None
-            if normalized in {"landed", "landed safely", "safe landing"}:
-                label = "Safe Landings"
-            elif "wound" in normalized:
-                label = "Landings (wounded)"
-            elif "hard" in normalized:
-                label = "Hard Landings"
-            elif "crash" in normalized:
-                label = "Crash Landings"
-            elif "bail" in normalized:
-                label = "Bailouts"
-            elif any(token in normalized for token in ("kia", "killed", "died", "dead")):
-                label = "KIA / Died on landing"
-            elif "forced" in normalized:
-                label = "Forced Landings"
-            else:
-                label = status.strip().title() or "Other"
-                if label not in counts:
-                    counts[label] = 0
-                    extras.append(label)
+            if "wound" in normalized:
+                wounded_landings += 1
+            elif "bail" in normalized or "bailed" in normalized:
+                bailouts += 1
+            elif any(token in normalized for token in ("kia", "mia", "killed")):
+                kia_mia += 1
+            elif "hard" in normalized or "crash" in normalized:
+                hard_landings += 1
+            elif "landed" in normalized:
+                safe_landings += 1
 
-            counts[label] = counts.get(label, 0) + 1
-
-        ordered_labels = base_order + extras
-        return [{'label': label, 'value': counts.get(label, 0)} for label in ordered_labels]
+        return [
+            {'label': 'Safe Landings', 'value': safe_landings},
+            {'label': 'Hard Landings / Crashes', 'value': hard_landings},
+            {'label': 'Wounded Landings', 'value': wounded_landings},
+            {'label': 'Bailouts', 'value': bailouts},
+            {'label': 'KIA / MIA', 'value': kia_mia}
+        ]
     
     def _extract_career_progression(self, events: List[Dict]) -> Dict:
         """

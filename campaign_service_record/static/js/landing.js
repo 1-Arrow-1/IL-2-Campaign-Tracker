@@ -19,6 +19,7 @@ const LandingPage = {
         errorText: null,
         campaignsList: null,
         pilotPhoto: null,
+        pilotPhotoContainer: null,
         pilotPhotoBtn: null,
         cropperModal: null,
         cropperImg: null,
@@ -63,6 +64,7 @@ const LandingPage = {
         this.elements.errorText = document.getElementById('error-text');
         this.elements.campaignsList = document.getElementById('campaigns-list');
         this.elements.pilotPhoto = document.getElementById('pilot-photo');
+        this.elements.pilotPhotoContainer = document.querySelector('.pilot-photo-container');
         this.elements.pilotPhotoBtn = document.getElementById('pilot-photo-btn');
         this.elements.cropperModal = document.getElementById('cropper-modal');
         this.elements.cropperImg = document.getElementById('cropper-img');
@@ -142,9 +144,12 @@ const LandingPage = {
             this.cropper.destroy();
         }
 
+        const frameDimensions = this.getPilotPhotoFrameDimensions();
+        this.cropperFrame = frameDimensions;
+
         this.elements.cropperImg.onload = () => {
             this.cropper = new Cropper(this.elements.cropperImg, {
-                aspectRatio: 180 / 220,
+                aspectRatio: frameDimensions.aspectRatio,
                 viewMode: 1,
                 autoCropArea: 1,
                 background: false,
@@ -173,7 +178,17 @@ const LandingPage = {
             return;
         }
 
-        const canvas = this.cropper.getCroppedCanvas({ width: 180, height: 220 });
+        const frame = this.cropperFrame || this.getPilotPhotoFrameDimensions();
+        const canvas = this.cropper.getCroppedCanvas({
+            width: frame.width,
+            height: frame.height
+        });
+
+        if (!canvas) {
+            alert('Unable to crop the selected image. Please try again.');
+            return;
+        }
+
         const imageData = canvas.toDataURL('image/png');
 
         try {
@@ -186,10 +201,24 @@ const LandingPage = {
             }
         } catch (error) {
             console.error('Failed to save pilot photo:', error);
-            alert('Unable to save pilot photo. Please try again.');
+            alert(error.message || 'Unable to save pilot photo. Please try again.');
         } finally {
             this.closeCropperModal();
         }
+    },
+
+    getPilotPhotoFrameDimensions() {
+        const fallback = { width: 200, height: 200 };
+        const container = this.elements.pilotPhotoContainer;
+        const width = Math.round(container?.clientWidth || fallback.width);
+        const height = Math.round(container?.clientHeight || fallback.height);
+        const safeWidth = width > 0 ? width : fallback.width;
+        const safeHeight = height > 0 ? height : fallback.height;
+        return {
+            width: safeWidth,
+            height: safeHeight,
+            aspectRatio: safeWidth / safeHeight
+        };
     },
     
     /**

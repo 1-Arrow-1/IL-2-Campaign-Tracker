@@ -56,7 +56,7 @@
 
 .detail-columns {
     display: grid;
-    grid-template-columns: 1.1fr 1.6fr 1.1fr;
+    grid-template-columns: 1.1fr 1.9fr 0.9fr;
     gap: 2rem;
 }
 
