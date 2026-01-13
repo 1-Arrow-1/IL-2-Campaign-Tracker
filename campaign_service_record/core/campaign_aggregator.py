@@ -19,9 +19,14 @@ try:
     from utils.combat_results import (
         calculate_kills_from_stats,
         calculate_total_air_kills_weighted,
+        aggregate_kills_from_missions,
         KILL_MAPPING
     )
     from utils.sorting import smart_mission_sort_key
+    from utils.path_utils import (
+        build_award_image_relative_path,
+        build_game_asset_url
+    )
 except ImportError:
     # Fallback if utils not yet available
     logger = logging.getLogger(__name__)
@@ -32,11 +37,21 @@ except ImportError:
     
     def calculate_total_air_kills_weighted(stats):
         return 0.0
+
+    def aggregate_kills_from_missions(stats_by_mission):
+        return {}
     
     def smart_mission_sort_key(mission_id):
         return mission_id
     
     KILL_MAPPING = {}
+
+    def build_award_image_relative_path(country, image_name, event_date):
+        return ''
+
+    def build_game_asset_url(relative_path):
+        return ''
+
 
 
 logger = logging.getLogger(__name__)
@@ -221,6 +236,7 @@ class CampaignAggregator:
             campaign_events.get('events', []),
             f"events[{campaign_name}].events"
         )
+        events = self._decorate_events(events, country)
         debriefings_html = campaign_events.get('debriefings_html', '')
         
         # Calculate summary statistics
@@ -294,23 +310,19 @@ class CampaignAggregator:
         
         # Sort missions chronologically
         sorted_missions = sorted(completed_missions, key=smart_mission_sort_key)
-        
-        # Get cumulative stats from last mission
-        if sorted_missions:
-            last_mission = sorted_missions[-1]
-            cumulative_stats = per_mission_stats.get(last_mission, {})
-            if not isinstance(cumulative_stats, dict):
-                logger.warning(
-                    "Invalid cumulative stats for %s mission %s: expected dict, got %s",
-                    campaign_name,
-                    last_mission,
-                    type(cumulative_stats)
-                )
-                cumulative_stats = {}
-            
-            # Calculate kills using Campaign Tracker logic
-            summary['combat_results'] = calculate_kills_from_stats(cumulative_stats)
-            summary['combat_results']['total_score'] = cumulative_stats.get('score', 0)
+
+        # Aggregate stats across all missions
+        stats_by_mission = {
+            mission_id: per_mission_stats.get(mission_id, {})
+            for mission_id in sorted_missions
+            if isinstance(per_mission_stats.get(mission_id, {}), dict)
+        }
+
+        if stats_by_mission:
+            summary['combat_results'] = aggregate_kills_from_missions(stats_by_mission)
+            summary['combat_results']['total_score'] = sum(
+                int(stats.get('score', 0)) for stats in stats_by_mission.values()
+            )
         
         # Calculate missions stats
         summary['missions_stats'] = self._calculate_mission_stats(
@@ -320,10 +332,13 @@ class CampaignAggregator:
         )
         
         # Calculate aircraft usage
+        mission_aircraft_map = self.loader.get_mission_aircraft_map(campaign_name)
         summary['aircraft_usage'] = self._calculate_aircraft_usage(
+            campaign_name,
             sorted_missions,
             mission_dates,
-            per_mission_stats
+            per_mission_stats,
+            mission_aircraft_map
         )
         
         # Extract career progression
@@ -331,6 +346,7 @@ class CampaignAggregator:
         
         # Calculate timeline
         summary['timeline'] = self._calculate_timeline(
+            campaign_name,
             sorted_missions,
             mission_dates
         )
@@ -379,9 +395,11 @@ class CampaignAggregator:
     
     def _calculate_aircraft_usage(
         self,
+        campaign_name: str,
         missions: List[str],
         mission_dates: Dict,
-        per_mission_stats: Dict
+        per_mission_stats: Dict,
+        mission_aircraft_map: Dict
     ) -> Dict:
         """
         Calculate aircraft usage and kills per aircraft.
@@ -397,9 +415,19 @@ class CampaignAggregator:
         aircraft_usage = {}
         
         for mission_id in missions:
-            # Get aircraft for this mission
-            mission_meta = mission_dates.get(mission_id, {})
-            aircraft = mission_meta.get('aircraft', 'Unknown')
+            # Get aircraft for this mission (prefer aircraft map)
+            aircraft_entry = mission_aircraft_map.get(mission_id, {})
+            aircraft = None
+            if isinstance(aircraft_entry, dict):
+                aircraft = aircraft_entry.get('aircraft')
+
+            if not aircraft:
+                mission_meta = self._get_mission_meta(campaign_name, mission_dates, mission_id)
+                if isinstance(mission_meta, dict):
+                    aircraft = mission_meta.get('aircraft')
+
+            if not aircraft:
+                aircraft = 'Unknown'
             
             # Initialize if not seen
             if aircraft not in aircraft_usage:
@@ -436,14 +464,8 @@ class CampaignAggregator:
         """
         if not isinstance(mission_stats, dict):
             return 0
-
-        # Air kills
-        air_kills = mission_stats.get('planesDestroyedAir', 0)
-        
-        # Ground kills (planes destroyed on ground)
-        ground_kills = mission_stats.get('planesDestroyed', 0) - air_kills
-        
-        return air_kills + ground_kills
+        kills = calculate_kills_from_stats(mission_stats)
+        return int(kills.get('total_kills', 0))
 
     def _mission_success(self, completed_by_filename: Dict, mission_id: str) -> bool:
         mission_entry = completed_by_filename.get(mission_id, {})
@@ -481,6 +503,7 @@ class CampaignAggregator:
     
     def _calculate_timeline(
         self,
+        campaign_name: str,
         missions: List[str],
         mission_dates: Dict
     ) -> Dict:
@@ -504,8 +527,8 @@ class CampaignAggregator:
         first_mission_id = missions[0]
         last_mission_id = missions[-1]
         
-        first_meta = mission_dates.get(first_mission_id, {})
-        last_meta = mission_dates.get(last_mission_id, {})
+        first_meta = self._get_mission_meta(campaign_name, mission_dates, first_mission_id)
+        last_meta = self._get_mission_meta(campaign_name, mission_dates, last_mission_id)
         
         first_date = first_meta.get('date')
         last_date = last_meta.get('date')
@@ -515,9 +538,16 @@ class CampaignAggregator:
         if first_date and last_date:
             try:
                 from datetime import datetime
-                # Dates in format: "1942.05.05"
-                first_dt = datetime.strptime(first_date, '%Y.%m.%d')
-                last_dt = datetime.strptime(last_date, '%Y.%m.%d')
+                # Dates in format: "1942.05.05" or "1942-05-05"
+                date_formats = ('%Y.%m.%d', '%Y-%m-%d')
+                first_dt = next(
+                    datetime.strptime(first_date, fmt) for fmt in date_formats
+                    if self._can_parse_date(first_date, fmt)
+                )
+                last_dt = next(
+                    datetime.strptime(last_date, fmt) for fmt in date_formats
+                    if self._can_parse_date(last_date, fmt)
+                )
                 duration_days = (last_dt - first_dt).days
             except:
                 pass
@@ -527,6 +557,42 @@ class CampaignAggregator:
             'last_mission_date': last_date,
             'duration_days': duration_days
         }
+
+    def _get_mission_meta(
+        self,
+        campaign_name: str,
+        mission_dates: Dict,
+        mission_id: str
+    ) -> Dict:
+        if not isinstance(mission_dates, dict):
+            return {}
+
+        # Campaign-specific structure
+        if isinstance(mission_dates.get('missions'), dict):
+            return mission_dates['missions'].get(mission_id, {})
+
+        # Full mission_dates.json structure
+        campaign_data = mission_dates.get(campaign_name, {})
+        if isinstance(campaign_data, dict):
+            missions = campaign_data.get('missions')
+            if isinstance(missions, dict):
+                return missions.get(mission_id, {})
+
+        return mission_dates.get(mission_id, {}) if isinstance(mission_dates, dict) else {}
+
+    def _decorate_events(self, events: List[Dict], country: str) -> List[Dict]:
+        """Attach image URLs to events for display."""
+        decorated = []
+        for event in events:
+            if not isinstance(event, dict):
+                continue
+            enriched = dict(event)
+            image_name = event.get('image')
+            if image_name:
+                relative_path = build_award_image_relative_path(country, image_name, event.get('date'))
+                enriched['image_url'] = build_game_asset_url(relative_path)
+            decorated.append(enriched)
+        return decorated
     
     def _get_display_name(self, campaign_name: str, mission_dates: Dict) -> str:
         """
@@ -573,3 +639,12 @@ class CampaignAggregator:
             return list(value.values())
         logger.warning("Invalid %s: expected list, got %s", label, type(value))
         return []
+
+    @staticmethod
+    def _can_parse_date(raw_date: str, fmt: str) -> bool:
+        try:
+            from datetime import datetime
+            datetime.strptime(raw_date, fmt)
+            return True
+        except ValueError:
+            return False

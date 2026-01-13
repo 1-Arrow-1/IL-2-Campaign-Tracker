@@ -73,6 +73,10 @@ def create_app():
         sys.exit(1)
     
     logger.info(f"Configuration: {config}")
+
+    # Ensure persistent directories exist
+    config.user_data_dir.mkdir(parents=True, exist_ok=True)
+    config.pilot_photo_dir.mkdir(parents=True, exist_ok=True)
     
     # Create Flask app with NO static_folder (we handle it manually)
     app = Flask(__name__, static_folder=None, static_url_path=None)
@@ -80,6 +84,8 @@ def create_app():
     # Configure Flask
     app.config['SECRET_KEY'] = 'campaign-service-record-secret'
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable caching in dev mode
+    app.config['PILOT_PHOTO_DIR'] = config.pilot_photo_dir
+    app.config['FROZEN'] = config.frozen
     
     # Initialize API
     init_api(config.data_dir, config.data_dir / 'reports')
@@ -115,6 +121,11 @@ def create_app():
             """Serve PDF reports."""
             reports_dir = config.data_dir / 'reports'
             return send_from_directory(reports_dir, filename)
+
+        @app.route('/pilot_photos/<path:filename>')
+        def serve_pilot_photo(filename):
+            """Serve pilot photos from user data directory."""
+            return send_from_directory(config.pilot_photo_dir, filename)
     
     @app.route('/favicon.ico')
     def favicon():

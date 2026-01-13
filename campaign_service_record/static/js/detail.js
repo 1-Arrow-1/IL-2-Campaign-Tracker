@@ -143,19 +143,53 @@ const DetailPage = {
     createEventItem(event) {
         const item = document.createElement('div');
         item.className = `event-item ${event.type}`;
-        
+
         const typeLabel = event.type === 'promotion' ? 'Promotion' : 'Award';
         const mainText = event.type === 'promotion' ? event.rank : event.name;
         const dateText = event.date || `Mission ${event.mission_number || '?'}`;
         const reasonText = event.reason || '';
-        
-        item.innerHTML = `
-            <div class="event-type">${typeLabel}</div>
-            <div class="event-name">${this.escapeHTML(mainText)}</div>
-            <div class="event-date">${this.escapeHTML(dateText)}</div>
-            ${reasonText ? `<div class="event-reason">${this.escapeHTML(reasonText)}</div>` : ''}
-        `;
-        
+
+        const header = document.createElement('div');
+        header.className = 'event-header';
+        header.textContent = typeLabel;
+        item.appendChild(header);
+
+        const content = document.createElement('div');
+        content.className = 'event-content';
+
+        if (event.image_url) {
+            const img = document.createElement('img');
+            img.className = 'event-image';
+            img.alt = `${mainText || 'Event'} icon`;
+            img.src = event.image_url;
+            img.onload = () => this.scaleEventImage(img);
+            img.onerror = () => img.remove();
+            content.appendChild(img);
+        }
+
+        const textBlock = document.createElement('div');
+        textBlock.className = 'event-text';
+
+        const name = document.createElement('div');
+        name.className = 'event-name';
+        name.textContent = mainText || '';
+        textBlock.appendChild(name);
+
+        const date = document.createElement('div');
+        date.className = 'event-date';
+        date.textContent = dateText;
+        textBlock.appendChild(date);
+
+        if (reasonText) {
+            const reason = document.createElement('div');
+            reason.className = 'event-reason';
+            reason.textContent = reasonText;
+            textBlock.appendChild(reason);
+        }
+
+        content.appendChild(textBlock);
+        item.appendChild(content);
+
         return item;
     },
     
@@ -183,45 +217,44 @@ const DetailPage = {
             return;
         }
         
-        // Combat Results
+        const sections = [];
+
         if (summary.combat_results) {
-            const section = this.createSummarySection('Combat Results', 
+            sections.push(this.createSummarySection(
+                'Combat Results',
                 this.renderCombatResults(summary.combat_results)
-            );
-            this.elements.summaryContent.appendChild(section);
+            ));
         }
-        
-        // Missions Stats
+
         if (summary.missions_stats) {
-            const section = this.createSummarySection('Missions Flown',
+            sections.push(this.createSummarySection(
+                'Missions Flown',
                 this.renderMissionsStats(summary.missions_stats)
-            );
-            this.elements.summaryContent.appendChild(section);
+            ));
         }
-        
-        // Aircraft Usage
+
         if (summary.aircraft_usage && Object.keys(summary.aircraft_usage).length > 0) {
-            const section = this.createSummarySection('Aircraft Flown',
+            sections.push(this.createSummarySection(
+                'Aircraft Flown',
                 this.renderAircraftUsage(summary.aircraft_usage)
-            );
-            this.elements.summaryContent.appendChild(section);
+            ));
         }
-        
-        // Career Progression
+
         if (summary.career_progression) {
-            const section = this.createSummarySection('Career Progression',
+            sections.push(this.createSummarySection(
+                'Career Progression',
                 this.renderCareerProgression(summary.career_progression)
-            );
-            this.elements.summaryContent.appendChild(section);
+            ));
         }
-        
-        // Timeline
+
         if (summary.timeline && summary.timeline.first_mission_date) {
-            const section = this.createSummarySection('Campaign Timeline',
+            sections.push(this.createSummarySection(
+                'Campaign Timeline',
                 this.renderTimeline(summary.timeline)
-            );
-            this.elements.summaryContent.appendChild(section);
+            ));
         }
+
+        sections.forEach(section => this.elements.summaryContent.appendChild(section));
     },
     
     /**
@@ -229,9 +262,10 @@ const DetailPage = {
      */
     createSummarySection(title, content) {
         const section = document.createElement('div');
-        section.className = 'summary-section-inner';
+        section.className = 'summary-block';
         
         const header = document.createElement('h4');
+        header.className = 'summary-block-title';
         header.textContent = title;
         section.appendChild(header);
         
@@ -245,27 +279,92 @@ const DetailPage = {
      */
     renderCombatResults(results) {
         const container = document.createElement('div');
-        
-        // Total score
-        if (results.total_score !== undefined) {
-            const stat = this.createStat('Total Score', results.total_score);
-            container.appendChild(stat);
-        }
-        
-        // Air kills
-        const airKills = results['Air'] || results['air_total'] || 0;
-        if (airKills > 0) {
-            const stat = this.createStat('Air Victories', airKills);
-            container.appendChild(stat);
-        }
-        
-        // Ground kills
-        const groundKills = results['Ground'] || results['ground_total'] || 0;
-        if (groundKills > 0) {
-            const stat = this.createStat('Ground Victories', groundKills);
-            container.appendChild(stat);
-        }
-        
+        container.className = 'combat-results';
+
+        const summaryStats = document.createElement('div');
+        summaryStats.className = 'combat-summary-stats';
+        summaryStats.appendChild(this.createInlineStat('Overall Score', results.total_score ?? 0));
+        summaryStats.appendChild(this.createInlineStat('Total Kills', results.total_kills ?? 0));
+        container.appendChild(summaryStats);
+
+        const categories = [
+            { key: 'Aircraft', icon: 'icon_aircraft.png' },
+            { key: 'Vehicles', icon: 'icon_vehicles.png' },
+            { key: 'Railroad', icon: 'icon_railroad.png' },
+            { key: 'Armaments', icon: 'icon_armaments.png' },
+            { key: 'Buildings', icon: 'icon_buildings.png' },
+            { key: 'Marine', icon: 'icon_marine.png' }
+        ];
+
+        const byCategory = results.by_category || {};
+
+        const iconRow = document.createElement('div');
+        iconRow.className = 'combat-results-icons';
+
+        categories.forEach(category => {
+            const total = this.sumCategory(byCategory[category.key] || {});
+            const cell = document.createElement('div');
+            cell.className = 'combat-icon-cell';
+
+            const img = document.createElement('img');
+            img.src = this.getGameAssetUrl(`CampaignRanksAwards/Misc/${category.icon}`);
+            img.alt = `${category.key} icon`;
+            img.onerror = () => img.remove();
+            cell.appendChild(img);
+
+            const count = document.createElement('div');
+            count.className = 'combat-icon-count';
+            count.textContent = total;
+            cell.appendChild(count);
+
+            const label = document.createElement('div');
+            label.className = 'combat-icon-label';
+            label.textContent = category.key;
+            cell.appendChild(label);
+
+            iconRow.appendChild(cell);
+        });
+
+        container.appendChild(iconRow);
+
+        const subcategoryColumns = document.createElement('div');
+        subcategoryColumns.className = 'combat-subcategory-columns';
+
+        const subcategoryMap = {
+            'Aircraft': ['Light', 'Medium', 'Heavy', 'Parked', 'Balloons'],
+            'Vehicles': ['Transport', 'Armored (Light)', 'Armored (Medium)', 'Armored (Heavy)'],
+            'Railroad': ['Locomotives', 'Railroad Cars', 'Station Facilities'],
+            'Armaments': ['Machine Guns', 'Cannons', 'AAA Guns', 'Rocket Launchers', 'Searchlights', 'Radars'],
+            'Buildings': ['Residential Buildings', 'Facilities', 'Bridges'],
+            'Marine': ['Light', 'Cargo', 'Submarines', 'Destroyers']
+        };
+
+        categories.forEach(category => {
+            const column = document.createElement('div');
+            column.className = 'combat-subcategory-column';
+
+            (subcategoryMap[category.key] || []).forEach(subcat => {
+                const row = document.createElement('div');
+                row.className = 'combat-subcategory-row';
+
+                const label = document.createElement('span');
+                label.className = 'combat-subcategory-label';
+                label.textContent = subcat;
+                row.appendChild(label);
+
+                const value = document.createElement('span');
+                value.className = 'combat-subcategory-value';
+                value.textContent = (byCategory[category.key] || {})[subcat] || 0;
+                row.appendChild(value);
+
+                column.appendChild(row);
+            });
+
+            subcategoryColumns.appendChild(column);
+        });
+
+        container.appendChild(subcategoryColumns);
+
         return container;
     },
     
@@ -364,6 +463,37 @@ const DetailPage = {
         `;
         
         return stat;
+    },
+
+    createInlineStat(label, value) {
+        const stat = document.createElement('div');
+        stat.className = 'summary-inline-stat';
+        stat.innerHTML = `
+            <span class="stat-label">${this.escapeHTML(label)}:</span>
+            <span class="stat-value">${this.escapeHTML(String(value))}</span>
+        `;
+        return stat;
+    },
+
+    sumCategory(categoryData) {
+        if (!categoryData) {
+            return 0;
+        }
+        return Object.values(categoryData).reduce((total, value) => total + Number(value || 0), 0);
+    },
+
+    getGameAssetUrl(relativePath) {
+        const normalized = String(relativePath || '').replace(/^[/\\\\]+/, '');
+        return `/api/game_assets/${normalized}`;
+    },
+
+    scaleEventImage(img) {
+        if (!img || !img.naturalWidth || !img.naturalHeight) {
+            return;
+        }
+        const scale = 0.35;
+        img.style.width = `${Math.round(img.naturalWidth * scale)}px`;
+        img.style.height = `${Math.round(img.naturalHeight * scale)}px`;
     },
     
     /**

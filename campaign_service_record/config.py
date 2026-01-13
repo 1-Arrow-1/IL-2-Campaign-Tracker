@@ -29,6 +29,8 @@ class Config:
         self.base_dir = self._resolve_base_dir()
         self.data_dir = self._resolve_data_dir()
         self.static_dir = self._resolve_static_dir()
+        self.user_data_dir = self._resolve_user_data_dir()
+        self.pilot_photo_dir = self._resolve_pilot_photo_dir()
         
         # Server configuration
         self.host = '127.0.0.1'
@@ -88,6 +90,27 @@ class Config:
             return Path(sys._MEIPASS) / 'static'
         else:
             return self.base_dir / 'static'
+
+    def _resolve_user_data_dir(self) -> Path:
+        """
+        Resolve user-specific data directory.
+
+        Used for persistent files when running as an EXE.
+        """
+        base = os.environ.get('LOCALAPPDATA') or str(Path.home())
+        return Path(base) / '.il2_campaign_service_record'
+
+    def _resolve_pilot_photo_dir(self) -> Path:
+        """
+        Resolve directory for pilot photo storage.
+
+        Mirrors IL-2 Pilot Service Record behavior:
+        - Frozen EXE: user data directory
+        - Source: static directory
+        """
+        if self.frozen:
+            return self.user_data_dir / 'pilot_photos'
+        return self.static_dir / 'pilot_photos'
     
     def get_json_path(self, filename: str) -> Path:
         """

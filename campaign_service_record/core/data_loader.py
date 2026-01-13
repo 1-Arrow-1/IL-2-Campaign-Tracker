@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
+from utils.formatting import safe_campaign_filename
 
 logger = logging.getLogger(__name__)
 
@@ -234,6 +235,32 @@ class DataLoader:
         
         logger.info(f"Found {len(campaigns)} campaigns with progress")
         return campaigns
+
+    def get_mission_aircraft_map(self, campaign_name: str) -> Dict[str, Dict]:
+        """
+        Load mission -> aircraft mapping for a campaign.
+
+        Source: reports/{campaign}/mission_aircraft_map.json
+        """
+        safe_name = safe_campaign_filename(campaign_name)
+        cache_path = self.data_dir / 'reports' / safe_name / 'mission_aircraft_map.json'
+
+        if not cache_path.exists():
+            logger.warning("mission_aircraft_map.json not found for %s", campaign_name)
+            return {}
+
+        try:
+            with open(cache_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError) as exc:
+            logger.error("Failed to read mission_aircraft_map.json for %s: %s", campaign_name, exc)
+            return {}
+
+        if isinstance(data, dict) and isinstance(data.get('missions'), dict):
+            return data['missions']
+        if isinstance(data, dict):
+            return data
+        return {}
     
     def get_campaign_data(self, campaign_name: str) -> Optional[Dict]:
         """

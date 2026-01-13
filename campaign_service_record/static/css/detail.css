@@ -3,8 +3,8 @@
  * 
  * Three-column layout:
  * - Left: Promotions & Awards
- * - Middle: Mission Debriefings
- * - Right: Campaign Summary
+ * - Middle: Campaign Summary
+ * - Right: Mission Debriefings
  */
 
 /* ============================================================================
@@ -56,7 +56,7 @@
 
 .detail-columns {
     display: grid;
-    grid-template-columns: 280px 1fr 320px;
+    grid-template-columns: 340px 1fr 420px;
     gap: 2rem;
 }
 
@@ -84,18 +84,18 @@
     overflow-y: auto;
 }
 
-/* Middle Column: Scrollable */
+/* Middle Column: Sticky summary */
 .column-middle {
-    min-height: 400px;
-}
-
-/* Right Column: Sticky positioning */
-.column-right {
     height: fit-content;
     position: sticky;
     top: calc(60px + 2rem);
     max-height: calc(100vh - 60px - 4rem);
     overflow-y: auto;
+}
+
+/* Right Column: Debriefings */
+.column-right {
+    min-height: 400px;
 }
 
 /* ============================================================================
@@ -137,12 +137,22 @@
     background: #fffbf0;
 }
 
-.event-type {
+.event-header {
     font-size: 0.75rem;
     text-transform: uppercase;
     font-weight: 600;
     color: #7f8c8d;
     margin-bottom: 0.25rem;
+}
+
+.event-content {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.event-text {
+    flex: 1;
 }
 
 .event-name {
@@ -164,12 +174,9 @@
     margin-top: 0.25rem;
 }
 
-.event-icon {
+.event-image {
     display: inline-block;
-    width: 24px;
-    height: 24px;
-    margin-right: 0.5rem;
-    vertical-align: middle;
+    flex-shrink: 0;
 }
 
 /* ============================================================================
@@ -213,23 +220,25 @@
 .summary-content {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.75rem;
 }
 
-.summary-section-inner {
+.summary-block {
     padding-bottom: 1rem;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 2px solid #222;
 }
 
-.summary-section-inner:last-child {
+.summary-block:last-child {
     border-bottom: none;
 }
 
-.summary-section-inner h4 {
-    font-size: 1rem;
-    color: #2c3e50;
+.summary-block-title {
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #1f2c3a;
     margin-bottom: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .summary-stat {
@@ -248,33 +257,87 @@
     color: #2c3e50;
 }
 
-/* Combat Results Grid */
-.combat-results-grid {
+/* Combat Results */
+.combat-results {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.combat-summary-stats {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.summary-inline-stat {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.summary-inline-stat .stat-label {
+    color: #555;
+    font-weight: 600;
+}
+
+.summary-inline-stat .stat-value {
+    font-weight: 700;
+}
+
+.combat-results-icons {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
-    gap: 0.5rem;
-    margin: 1rem 0;
+    gap: 1rem;
 }
 
-.combat-cell {
+.combat-icon-cell {
     text-align: center;
-    padding: 0.5rem;
-    background: #f9f9f9;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
+    padding: 0.5rem 0.25rem;
 }
 
-.combat-cell .cell-label {
-    font-size: 0.75rem;
-    color: #666;
-    display: block;
-    margin-bottom: 0.25rem;
+.combat-icon-cell img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    margin-bottom: 0.35rem;
 }
 
-.combat-cell .cell-value {
-    font-size: 1.125rem;
+.combat-icon-count {
+    font-size: 1.1rem;
     font-weight: 600;
     color: #2c3e50;
+}
+
+.combat-icon-label {
+    font-size: 0.75rem;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.combat-subcategory-columns {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1rem;
+    font-size: 0.8rem;
+}
+
+.combat-subcategory-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.2rem 0;
+    color: #444;
+}
+
+.combat-subcategory-label {
+    color: #555;
+}
+
+.combat-subcategory-value {
+    font-weight: 600;
+    color: #1f2c3a;
 }
 
 /* Awards List */
@@ -334,6 +397,7 @@
     }
     
     .column-left,
+    .column-middle,
     .column-right {
         position: static;
         max-height: none;
@@ -358,7 +422,8 @@
         padding: 1rem;
     }
     
-    .combat-results-grid {
+    .combat-results-icons,
+    .combat-subcategory-columns {
         grid-template-columns: repeat(3, 1fr);
     }
 }

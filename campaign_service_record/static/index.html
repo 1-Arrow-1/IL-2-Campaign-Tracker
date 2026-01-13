@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="static/css/main.css">
     <link rel="stylesheet" href="static/css/landing.css">
     <link rel="stylesheet" href="static/css/detail.css">
+    <link rel="stylesheet" href="static/css/cropper.min.css">
 </head>
 <body>
     <!-- Application Container -->
@@ -39,6 +40,9 @@
                                      alt="Pilot Photo"
                                      class="pilot-photo">
                             </div>
+                            <button id="pilot-photo-btn" class="pilot-photo-btn" type="button">
+                                Choose Pilot Photo
+                            </button>
                             <div class="pilot-details">
                                 <h2 id="pilot-name">Campaign Pilot</h2>
                                 <p class="pilot-meta">
@@ -110,31 +114,44 @@
                             </section>
                         </aside>
                         
-                        <!-- Middle Column: Debriefings -->
+                        <!-- Middle Column: Summary -->
                         <section class="column column-middle">
-                            <h3>Mission Debriefings</h3>
-                            <div id="debriefings-container" class="debriefings-container">
-                                <!-- HTML injected from campaign_events.json -->
-                            </div>
-                        </section>
-                        
-                        <!-- Right Column: Summary -->
-                        <aside class="column column-right">
                             <section class="summary-section">
                                 <h3>Campaign Summary</h3>
                                 <div id="summary-content" class="summary-content">
                                     <!-- Dynamically populated -->
                                 </div>
                             </section>
+                        </section>
+
+                        <!-- Right Column: Debriefings -->
+                        <aside class="column column-right">
+                            <h3>Mission Debriefings</h3>
+                            <div id="debriefings-container" class="debriefings-container">
+                                <!-- HTML injected from campaign_events.json -->
+                            </div>
                         </aside>
                     </div>
                 </div>
             </div>
         </main>
     </div>
+
+    <!-- Cropper Modal -->
+    <div id="cropper-modal" class="cropper-modal" style="display: none;">
+        <div class="cropper-modal-content">
+            <h3>Crop Pilot Photo</h3>
+            <img id="cropper-img" alt="Crop pilot photo">
+            <div class="cropper-actions">
+                <button id="cropper-save" type="button">Save</button>
+                <button id="cropper-cancel" type="button">Cancel</button>
+            </div>
+        </div>
+    </div>
     
     <!-- Scripts -->
     <script src="static/js/api.js?v=2"></script>
+    <script src="static/js/cropper.min.js"></script>
     <script src="static/js/landing.js?v=2"></script>
     <script src="static/js/detail.js?v=2"></script>
     <script src="static/js/main.js?v=2"></script>

@@ -9,16 +9,21 @@ Endpoints:
 - POST /api/ping - Keep-alive for idle shutdown
 """
 
+import base64
 import logging
+import re
 import time
 import traceback
 from pathlib import Path
-from flask import Blueprint, jsonify, request
 from typing import Optional
+
+from flask import Blueprint, jsonify, request, current_app, send_from_directory
 
 from core.data_loader import DataLoader
 from core.campaign_aggregator import CampaignAggregator
 from utils.formatting import safe_campaign_filename
+from utils.path_utils import get_game_directory
+from utils.pilot_photo import pilot_photo_path, pilot_photo_filename
 
 
 logger = logging.getLogger(__name__)
@@ -33,6 +38,8 @@ _reports_dir: Optional[Path] = None
 
 # Last activity timestamp (for idle shutdown)
 _last_ping = [time.time()]
+
+_PILOT_DESC_DEFAULT = "campaign_pilot"
 
 
 def init_api(data_dir: Path, reports_dir: Optional[Path] = None):
@@ -128,6 +135,68 @@ def ping():
     """
     _last_ping[0] = time.time()
     return jsonify({'ok': True})
+
+
+# ============================================================================
+# Pilot Photo Endpoints
+# ============================================================================
+
+@api_bp.route('/api/pilot_photo')
+def get_pilot_photo():
+    """Get the stored pilot photo path, if available."""
+    desc = request.args.get('desc', _PILOT_DESC_DEFAULT)
+    photo_dir = current_app.config.get('PILOT_PHOTO_DIR')
+    frozen = current_app.config.get('FROZEN', False)
+
+    if not photo_dir:
+        return jsonify({'path': None})
+
+    photo_path = pilot_photo_path(Path(photo_dir), desc)
+    if not photo_path.exists():
+        return jsonify({'path': None})
+
+    filename = pilot_photo_filename(desc)
+    if frozen:
+        return jsonify({'path': f'/pilot_photos/{filename}'})
+    return jsonify({'path': f'/static/pilot_photos/{filename}'})
+
+
+@api_bp.route('/api/save_pilot_photo', methods=['POST'])
+def save_pilot_photo():
+    """Save a cropped pilot photo from the client."""
+    desc = request.form.get('desc', _PILOT_DESC_DEFAULT)
+    img_data = request.form.get('img_data')
+    if not img_data:
+        return jsonify({'error': 'No image data'}), 400
+
+    match = re.match(r'^data:image/(png|jpeg|jpg|bmp|gif|webp);base64,', img_data)
+    if not match:
+        return jsonify({'error': 'Unsupported image format'}), 400
+
+    try:
+        img_str = re.sub(r'^data:image/\\w+;base64,', '', img_data)
+        img_bytes = base64.b64decode(img_str)
+    except (ValueError, base64.binascii.Error) as exc:
+        logger.warning("Invalid image payload: %s", exc)
+        return jsonify({'error': 'Invalid image data'}), 400
+
+    photo_dir = current_app.config.get('PILOT_PHOTO_DIR')
+    frozen = current_app.config.get('FROZEN', False)
+    if not photo_dir:
+        return jsonify({'error': 'Photo storage not configured'}), 500
+
+    photo_path = pilot_photo_path(Path(photo_dir), desc)
+    try:
+        photo_path.parent.mkdir(parents=True, exist_ok=True)
+        photo_path.write_bytes(img_bytes)
+    except OSError as exc:
+        logger.error("Failed to save pilot photo: %s", exc, exc_info=True)
+        return jsonify({'error': 'Failed to save photo'}), 500
+
+    filename = pilot_photo_filename(desc)
+    if frozen:
+        return jsonify({'path': f'/pilot_photos/{filename}'})
+    return jsonify({'path': f'/static/pilot_photos/{filename}'})
 
 
 # ============================================================================
@@ -282,10 +351,39 @@ def check_pdf_exists(campaign_name: str):
             
     except Exception as e:
         logger.error(f"Error checking PDF for {campaign_name}: {e}", exc_info=True)
-        return jsonify({
-            'error': 'Failed to check PDF availability',
-            'detail': str(e)
-        }), 500
+    return jsonify({
+        'error': 'Failed to check PDF availability',
+        'detail': str(e)
+    }), 500
+
+
+# ============================================================================
+# Game Assets Endpoint
+# ============================================================================
+
+@api_bp.route('/api/game_assets/<path:asset_path>')
+def get_game_asset(asset_path: str):
+    """Serve game assets from the IL-2 installation swf directory."""
+    if not _data_loader:
+        return jsonify({'error': 'API not initialized'}), 500
+
+    mission_dates = _data_loader.get_campaign_mission_dates()
+    game_directory = get_game_directory(mission_dates)
+    if not game_directory:
+        return jsonify({'error': 'Game directory not configured'}), 404
+
+    swf_dir = Path(game_directory) / 'swf'
+    requested = (swf_dir / asset_path).resolve()
+
+    if swf_dir not in requested.parents and swf_dir != requested:
+        logger.warning("Blocked invalid asset path: %s", asset_path)
+        return jsonify({'error': 'Invalid asset path'}), 400
+
+    if not requested.exists():
+        logger.warning("Game asset not found: %s", requested)
+        return jsonify({'error': 'Asset not found'}), 404
+
+    return send_from_directory(swf_dir, asset_path)
 
 
 # ============================================================================
