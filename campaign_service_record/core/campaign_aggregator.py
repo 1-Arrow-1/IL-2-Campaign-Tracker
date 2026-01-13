@@ -364,7 +364,7 @@ class CampaignAggregator:
         # Count success/failure (if available)
         successful = sum(
             1 for m in missions
-            if completed_by_filename.get(m, {}).get('isSuccess', 0) == 1
+            if self._mission_success(completed_by_filename, m)
         )
         
         return {
@@ -444,6 +444,12 @@ class CampaignAggregator:
         ground_kills = mission_stats.get('planesDestroyed', 0) - air_kills
         
         return air_kills + ground_kills
+
+    def _mission_success(self, completed_by_filename: Dict, mission_id: str) -> bool:
+        mission_entry = completed_by_filename.get(mission_id, {})
+        if not isinstance(mission_entry, dict):
+            return False
+        return mission_entry.get('isSuccess', 0) == 1
     
     def _extract_career_progression(self, events: List[Dict]) -> Dict:
         """
