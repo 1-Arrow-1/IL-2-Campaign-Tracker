@@ -7,6 +7,89 @@
  * - PDF download button
  */
 
+const PreviewModal = {
+    elements: {
+        overlay: null,
+        title: null,
+        image: null,
+        close: null
+    },
+    isOpen: false,
+
+    init() {
+        if (this.elements.overlay) {
+            return;
+        }
+
+        const overlay = document.createElement('div');
+        overlay.className = 'preview-modal';
+        overlay.setAttribute('aria-hidden', 'true');
+
+        const content = document.createElement('div');
+        content.className = 'preview-modal__content';
+
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'preview-modal__close';
+        close.setAttribute('aria-label', 'Close');
+        close.textContent = '×';
+
+        const title = document.createElement('div');
+        title.className = 'preview-modal__title';
+
+        const image = document.createElement('img');
+        image.className = 'preview-modal__image';
+        image.alt = '';
+
+        close.addEventListener('click', () => this.close());
+
+        content.appendChild(close);
+        content.appendChild(title);
+        content.appendChild(image);
+        overlay.appendChild(content);
+        document.body.appendChild(overlay);
+
+        document.addEventListener('keydown', (event) => {
+            if (this.isOpen && event.key === 'Escape') {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        }, true);
+
+        this.elements.overlay = overlay;
+        this.elements.title = title;
+        this.elements.image = image;
+        this.elements.close = close;
+    },
+
+    open({ title, imageUrl, imageAlt, width, height }) {
+        if (!imageUrl) {
+            return;
+        }
+        this.elements.title.textContent = title || '';
+        this.elements.image.alt = imageAlt || title || 'Event preview';
+        this.elements.image.src = imageUrl;
+        this.elements.image.style.width = width ? `${Math.round(width)}px` : '';
+        this.elements.image.style.height = height ? `${Math.round(height)}px` : '';
+
+        this.elements.overlay.classList.add('is-open');
+        this.elements.overlay.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+        this.isOpen = true;
+    },
+
+    close() {
+        if (!this.isOpen) {
+            return;
+        }
+        this.elements.overlay.classList.remove('is-open');
+        this.elements.overlay.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+        this.elements.image.src = '';
+        this.isOpen = false;
+    }
+};
+
 const DetailPage = {
     /**
      * DOM elements
@@ -20,6 +103,9 @@ const DetailPage = {
         debriefingsContainer: null,
         summaryContent: null
     },
+
+    eventImageScale: 0.35,
+    promotionPreviewScale: 1.2,
     
     /**
      * Current campaign data
@@ -31,6 +117,7 @@ const DetailPage = {
      */
     init() {
         this.cacheElements();
+        PreviewModal.init();
     },
     
     /**
@@ -157,13 +244,18 @@ const DetailPage = {
         const content = document.createElement('div');
         content.className = 'event-content';
 
+        let img = null;
         if (event.image_url) {
-            const img = document.createElement('img');
+            img = document.createElement('img');
             img.className = 'event-image';
             img.alt = `${mainText || 'Event'} icon`;
             img.src = event.image_url;
             img.onload = () => this.scaleEventImage(img);
-            img.onerror = () => img.remove();
+            img.onerror = () => {
+                img.remove();
+                item.dataset.previewDisabled = 'true';
+                item.classList.remove('event-item--clickable');
+            };
             content.appendChild(img);
         }
 
@@ -190,7 +282,36 @@ const DetailPage = {
         content.appendChild(textBlock);
         item.appendChild(content);
 
+        this.bindPreviewModal(item, event, img, mainText);
+
         return item;
+    },
+
+    bindPreviewModal(item, event, img, mainText) {
+        const previewUrl = event.type === 'award'
+            ? (event.modal_image_url || event.image_url)
+            : event.image_url;
+
+        if (!previewUrl) {
+            return;
+        }
+
+        item.classList.add('event-item--clickable');
+
+        item.addEventListener('click', () => {
+            if (item.dataset.previewDisabled === 'true') {
+                return;
+            }
+            const title = event.type === 'promotion' ? event.rank : event.name;
+            const size = event.type === 'promotion' ? this.getPromotionPreviewSize(img) : null;
+            PreviewModal.open({
+                title: title || mainText || '',
+                imageUrl: previewUrl,
+                imageAlt: title || mainText || 'Event preview',
+                width: size ? size.width : null,
+                height: size ? size.height : null
+            });
+        });
     },
     
     /**
@@ -510,9 +631,30 @@ const DetailPage = {
         if (!img || !img.naturalWidth || !img.naturalHeight) {
             return;
         }
-        const scale = 0.35;
-        img.style.width = `${Math.round(img.naturalWidth * scale)}px`;
-        img.style.height = `${Math.round(img.naturalHeight * scale)}px`;
+        img.style.width = `${Math.round(img.naturalWidth * this.eventImageScale)}px`;
+        img.style.height = `${Math.round(img.naturalHeight * this.eventImageScale)}px`;
+    },
+
+    getPromotionPreviewSize(img) {
+        if (!img) {
+            return null;
+        }
+        let width = img.getBoundingClientRect().width;
+        let height = img.getBoundingClientRect().height;
+
+        if ((!width || !height) && img.naturalWidth && img.naturalHeight) {
+            width = img.naturalWidth * this.eventImageScale;
+            height = img.naturalHeight * this.eventImageScale;
+        }
+
+        if (!width || !height) {
+            return null;
+        }
+
+        return {
+            width: width * this.promotionPreviewScale,
+            height: height * this.promotionPreviewScale
+        };
     },
     
     /**

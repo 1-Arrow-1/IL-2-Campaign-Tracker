@@ -27,6 +27,7 @@ try:
     from utils.image_utils import build_dds_data_uri
     from utils.path_utils import (
         build_award_image_relative_path,
+        build_award_large_image_relative_path,
         build_game_asset_url,
         get_game_directory
     )
@@ -50,6 +51,9 @@ except ImportError:
     KILL_MAPPING = {}
 
     def build_award_image_relative_path(country, image_name, event_date):
+        return ''
+
+    def build_award_large_image_relative_path(country, image_name, event_date):
         return ''
 
     def build_game_asset_url(relative_path):
@@ -698,6 +702,14 @@ class CampaignAggregator:
                 relative_path = build_award_image_relative_path(country, image_name, event.get('date'))
                 data_uri = build_dds_data_uri(game_directory, relative_path)
                 enriched['image_url'] = data_uri or build_game_asset_url(relative_path)
+                if event.get('type') == 'award':
+                    large_relative_path = build_award_large_image_relative_path(
+                        country,
+                        image_name,
+                        event.get('date')
+                    )
+                    large_data_uri = build_dds_data_uri(game_directory, large_relative_path)
+                    enriched['modal_image_url'] = large_data_uri or build_game_asset_url(large_relative_path)
             decorated.append(enriched)
         return decorated
     

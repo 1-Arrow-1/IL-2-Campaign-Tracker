@@ -218,6 +218,76 @@
     flex-shrink: 0;
 }
 
+.event-item--clickable {
+    cursor: pointer;
+}
+
+.modal-open {
+    overflow: hidden;
+}
+
+.preview-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(24, 18, 10, 0.65);
+    z-index: 2000;
+}
+
+.preview-modal.is-open {
+    display: flex;
+}
+
+.preview-modal__content {
+    position: relative;
+    background: rgba(243, 232, 210, 0.98);
+    border-radius: 6px;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.preview-modal__title {
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: var(--ink-strong);
+    text-align: center;
+}
+
+.preview-modal__image {
+    max-width: 80vw;
+    max-height: 70vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+
+.preview-modal__close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 4px;
+    background: rgba(224, 210, 182, 0.9);
+    color: #3e2c1a;
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.preview-modal__close:hover {
+    background: rgba(210, 193, 162, 0.95);
+}
+
 /* ============================================================================
    Debriefings Container (Middle Column)
    ============================================================================ */

@@ -10,6 +10,7 @@ Provides shared logic for:
 from __future__ import annotations
 
 from datetime import date, datetime
+from pathlib import Path
 from typing import Optional
 
 USSR_TRANSITION_DATE = date(1943, 1, 6)
@@ -63,6 +64,25 @@ def build_award_image_relative_path(country: str, image_name: Optional[str], eve
         return ''
     country_folder = resolve_country_folder(country, event_date)
     return f"CampaignRanksAwards/{country_folder}/{image_name}"
+
+
+def build_award_large_image_relative_path(
+    country: str,
+    image_name: Optional[str],
+    event_date: Optional[str]
+) -> str:
+    """Build relative path for large award images under CampaignRanksAwards."""
+    if not image_name:
+        return ''
+    image_path = Path(image_name)
+    suffix = image_path.suffix
+    stem = image_path.stem if image_path.stem else image_name
+    if stem.endswith('_big'):
+        large_name = f"{stem}{suffix}"
+    else:
+        large_name = f"{stem}_big{suffix}"
+    country_folder = resolve_country_folder(country, event_date)
+    return f"CampaignRanksAwards/{country_folder}/{large_name}"
 
 
 def build_misc_icon_relative_path(icon_filename: str) -> str:
