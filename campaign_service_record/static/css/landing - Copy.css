@@ -20,16 +20,13 @@
    ============================================================================ */
 
 .pilot-info {
-    background-color: rgba(248, 242, 224, 0.92);
-    background-image: url('../images/old_paper_texture.jpg');
-    background-repeat: repeat;
+    background: white;
     border-radius: 8px;
     padding: 2rem;
-    box-shadow: var(--shadow-soft);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     height: fit-content;
     position: sticky;
     top: calc(60px + 2rem); /* Header height + padding */
-    border: 1px solid var(--border);
 }
 
 .pilot-card {
@@ -42,8 +39,8 @@
     margin: 0 auto 1.5rem;
     border-radius: 8px;
     overflow: hidden;
-    background: #e7dcc6;
-    border: 3px solid #cbb999;
+    background: #f0f0f0;
+    border: 3px solid #e0e0e0;
 }
 
 .pilot-photo {
@@ -58,29 +55,28 @@
     justify-content: center;
     margin-bottom: 1.5rem;
     padding: 0.5rem 1rem;
-    border: 1px solid #b59e7a;
+    border: none;
     border-radius: 4px;
-    background: #7a5a36;
-    color: #f6edd9;
+    background: #2c3e50;
+    color: #fff;
     font-size: 0.85rem;
     cursor: pointer;
     transition: background 0.2s ease;
 }
 
 .pilot-photo-btn:hover {
-    background: #5f4528;
+    background: #1f2c3a;
 }
 
 .pilot-details h2 {
     margin-bottom: 1rem;
     font-size: 1.5rem;
-    color: var(--ink);
-    letter-spacing: 0.03em;
+    color: #2c3e50;
 }
 
 .pilot-meta {
     margin-bottom: 0.75rem;
-    color: #6b5b44;
+    color: #666;
     font-size: 0.95rem;
 }
 
@@ -88,7 +84,7 @@
     display: inline-block;
     min-width: 80px;
     font-weight: 600;
-    color: #5a4a33;
+    color: #555;
 }
 
 /* Cropper modal */
@@ -98,20 +94,19 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(30, 22, 14, 0.85);
+    background: rgba(40, 40, 40, 0.8);
     opacity: 1;
     z-index: 1000;
 }
 
 .cropper-modal-content {
-    background: #f8f2e0;
+    background: #fff;
     padding: 1.5rem;
     border-radius: 8px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     text-align: center;
     max-width: 520px;
     width: 90%;
-    border: 1px solid var(--border);
 }
 
 .cropper-modal-content img {
@@ -128,22 +123,21 @@
     margin: 0.75rem auto 1.25rem;
     text-align: left;
     font-weight: 600;
-    color: var(--ink);
+    color: #2c3e50;
     max-width: 360px;
 }
 
 .pilot-name-field input {
     padding: 0.55rem 0.75rem;
     border-radius: 6px;
-    border: 1px solid #cbb999;
+    border: 1px solid #d0d7de;
     font-size: 0.95rem;
-    background: #f6efdf;
 }
 
 .pilot-name-field input:focus {
     outline: none;
-    border-color: #9a7b55;
-    box-shadow: 0 0 0 2px rgba(154, 123, 85, 0.2);
+    border-color: #4c8ef7;
+    box-shadow: 0 0 0 2px rgba(76, 142, 247, 0.2);
 }
 
 .cropper-actions {
@@ -161,12 +155,12 @@
 }
 
 #cropper-save {
-    background: #6f8b4a;
+    background: #27ae60;
     color: #fff;
 }
 
 #cropper-cancel {
-    background: #8f3a2b;
+    background: #c0392b;
     color: #fff;
 }
 
@@ -175,20 +169,17 @@
    ============================================================================ */
 
 .campaigns-section {
-    background-color: rgba(248, 242, 224, 0.92);
-    background-image: url('../images/old_paper_texture.jpg');
-    background-repeat: repeat;
+    background: white;
     border-radius: 8px;
     padding: 2rem;
-    box-shadow: var(--shadow-soft);
-    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .campaigns-section h2 {
     margin-bottom: 1.5rem;
     padding-bottom: 0.75rem;
-    border-bottom: 2px solid #cbb999;
-    color: var(--ink);
+    border-bottom: 2px solid #e0e0e0;
+    color: #2c3e50;
 }
 
 /* ============================================================================
@@ -202,8 +193,8 @@
 }
 
 .campaign-item {
-    background: rgba(250, 244, 232, 0.7);
-    border: 1px solid rgba(203, 185, 153, 0.7);
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
     border-radius: 6px;
     padding: 1.25rem;
     cursor: pointer;
@@ -211,10 +202,10 @@
 }
 
 .campaign-item:hover {
-    background: rgba(242, 231, 209, 0.9);
-    border-color: #b59e7a;
+    background: #f0f7ff;
+    border-color: #3498db;
     transform: translateX(4px);
-    box-shadow: 0 2px 8px rgba(122, 90, 54, 0.2);
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.15);
 }
 
 .campaign-item:active {
@@ -224,7 +215,7 @@
 .campaign-name {
     font-size: 1.125rem;
     font-weight: 600;
-    color: var(--ink);
+    color: #2c3e50;
     margin-bottom: 0.5rem;
 }
 
@@ -232,7 +223,7 @@
     display: flex;
     gap: 1.5rem;
     font-size: 0.9rem;
-    color: #6b5b44;
+    color: #666;
 }
 
 .campaign-stats .stat-item {
@@ -243,11 +234,11 @@
 
 .campaign-stats .stat-label {
     font-weight: 600;
-    color: #5a4a33;
+    color: #555;
 }
 
 .campaign-stats .stat-value {
-    color: #7a5a36;
+    color: #3498db;
     font-weight: 600;
 }
 
@@ -255,12 +246,12 @@
 .campaign-country {
     display: inline-block;
     padding: 0.25rem 0.5rem;
-    background: #e6d8be;
+    background: #ecf0f1;
     border-radius: 3px;
     font-size: 0.8rem;
     text-transform: uppercase;
     font-weight: 600;
-    color: #6b5b44;
+    color: #7f8c8d;
     margin-left: 0.5rem;
 }
 
