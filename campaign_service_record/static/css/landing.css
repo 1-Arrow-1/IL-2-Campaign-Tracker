@@ -38,18 +38,31 @@
 
 .pilot-photo-container {
     width: 200px;
-    height: 200px;
+    height: 245px;
     margin: 0 auto 1.5rem;
-    border-radius: 8px;
+    border-radius: 6px;
     overflow: hidden;
     background: #e7dcc6;
-    border: 3px solid #cbb999;
+    position: relative;
 }
 
 .pilot-photo {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
+    position: relative;
+    z-index: 1;
+}
+
+.pilot-photo-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    z-index: 2;
 }
 
 .pilot-photo-btn {
@@ -286,7 +299,7 @@
     
     .pilot-photo-container {
         width: 150px;
-        height: 150px;
+        height: 184px;
     }
     
     .campaign-stats {

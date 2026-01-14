@@ -168,6 +168,8 @@ const LandingPage = {
         this.cropperFrame = frameDimensions;
 
         this.elements.cropperImg.onload = () => {
+            const minCropBoxWidth = Math.round(frameDimensions.width * 0.6);
+            const minCropBoxHeight = Math.round(frameDimensions.height * 0.6);
             this.cropper = new Cropper(this.elements.cropperImg, {
                 aspectRatio: frameDimensions.aspectRatio,
                 viewMode: 1,
@@ -177,8 +179,8 @@ const LandingPage = {
                 zoomable: true,
                 rotatable: false,
                 scalable: false,
-                minCropBoxWidth: 90,
-                minCropBoxHeight: 110
+                minCropBoxWidth,
+                minCropBoxHeight
             });
         };
     },
@@ -302,7 +304,7 @@ const LandingPage = {
                 <span class="stat-label">Awards:</span>
                 <span class="stat-value">${campaign.awards_count}</span>
             </span>
-        `;
+        `;    
         
         item.innerHTML = `
             <div class="campaign-name">
