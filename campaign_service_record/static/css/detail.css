@@ -132,13 +132,13 @@
 .event-item {
     padding: 0.75rem;
     border-left: 3px solid #8f6f4a;
-    background: rgba(231, 220, 198, 0.78);
+    background: rgba(219, 205, 176, 0.86);
     border-radius: 4px;
     transition: all 0.2s ease;
 }
 
 .event-item:hover {
-    background: rgba(219, 205, 176, 0.92);
+    background: rgba(205, 188, 158, 0.94);
     border-left-color: #6f5437;
 }
 
@@ -147,7 +147,7 @@
 }
 
 .event-item.promotion:hover {
-    background: rgba(216, 202, 176, 0.92);
+    background: rgba(205, 188, 158, 0.94);
 }
 
 .event-item.award {
@@ -155,7 +155,7 @@
 }
 
 .event-item.award:hover {
-    background: rgba(214, 199, 172, 0.92);
+    background: rgba(203, 186, 155, 0.94);
 }
 
 .event-header {
@@ -164,6 +164,17 @@
     font-weight: 600;
     color: #7a6a50;
     margin-bottom: 0.25rem;
+}
+
+.event-section-title {
+    color: #4a3620;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.event-section-title--promotion,
+.event-section-title--award {
+    color: #4a3620;
 }
 
 .event-content {

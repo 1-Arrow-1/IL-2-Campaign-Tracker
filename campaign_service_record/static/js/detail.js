@@ -112,7 +112,7 @@ const DetailPage = {
             const header = document.createElement('h4');
             header.textContent = 'Promotions';
             header.style.marginBottom = '0.75rem';
-            header.style.color = '#27ae60';
+            header.classList.add('event-section-title', 'event-section-title--promotion');
             this.elements.eventsList.appendChild(header);
             
             promotions.forEach(promo => {
@@ -127,7 +127,7 @@ const DetailPage = {
             header.textContent = 'Awards';
             header.style.marginTop = '1.5rem';
             header.style.marginBottom = '0.75rem';
-            header.style.color = '#f39c12';
+            header.classList.add('event-section-title', 'event-section-title--award');
             this.elements.eventsList.appendChild(header);
             
             awards.forEach(award => {
