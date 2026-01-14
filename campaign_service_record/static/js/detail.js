@@ -378,6 +378,13 @@ const DetailPage = {
      */
     renderMissionsStats(stats) {
         const container = document.createElement('div');
+        const totalMissions = stats.total_missions ?? stats.completed_missions ?? 0;
+        const totalFlightTime = stats.total_flight_time ?? '0m';
+        const averageDuration = stats.average_duration ?? '0m';
+
+        container.appendChild(this.createStat('Missions Completed', totalMissions));
+        container.appendChild(this.createStat('Flight Time', totalFlightTime));
+        container.appendChild(this.createStat('Average Flight Time', averageDuration));
 
         const landingStats = Array.isArray(stats.landings) ? stats.landings : [];
         const filteredLandings = landingStats.filter(
