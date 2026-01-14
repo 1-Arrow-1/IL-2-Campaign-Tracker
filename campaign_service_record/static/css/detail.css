@@ -78,7 +78,7 @@
 }
 
 .debriefings-container {
-    overflow-x: auto;
+    overflow-x: hidden;
 }
 
 .debriefings-container pre,
@@ -86,6 +86,13 @@
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     word-break: break-word;
+}
+
+.debriefings-container hr {
+    width: calc(100% - 1.5rem);
+    max-width: 100%;
+    margin: 0.75rem auto;
+    box-sizing: border-box;
 }
 
 .column h3 {
