@@ -100,6 +100,8 @@ const DetailPage = {
         country: null,
         missions: null,
         plane: null,
+        insigniaLeft: null,
+        insigniaRight: null,
         eventsList: null,
         debriefingsContainer: null,
         summaryContent: null
@@ -130,6 +132,8 @@ const DetailPage = {
         this.elements.country = document.getElementById('campaign-country');
         this.elements.missions = document.getElementById('campaign-missions');
         this.elements.plane = document.getElementById('campaign-plane');
+        this.elements.insigniaLeft = document.getElementById('campaign-insignia-left');
+        this.elements.insigniaRight = document.getElementById('campaign-insignia-right');
         this.elements.eventsList = document.getElementById('events-list');
         this.elements.debriefingsContainer = document.getElementById('debriefings-container');
         this.elements.summaryContent = document.getElementById('summary-content');
@@ -180,6 +184,7 @@ const DetailPage = {
         this.elements.country.textContent = campaign.country.toUpperCase();
         this.elements.missions.textContent = `${campaign.missions_completed} completed`;
         this.updatePlaneImage(campaign.country);
+        this.updateInsigniaImages(campaign.country);
     },
 
     updatePlaneImage(country) {
@@ -210,6 +215,40 @@ const DetailPage = {
             this.elements.plane.alt = '';
             this.elements.plane.style.display = 'none';
         }
+    },
+
+    updateInsigniaImages(country) {
+        const insigniaElements = [this.elements.insigniaLeft, this.elements.insigniaRight];
+
+        if (insigniaElements.some(element => !element)) {
+            return;
+        }
+
+        const normalized = (country || '').trim().toLowerCase();
+        const insigniaImages = {
+            germany: 'static/images/German_airforce_1.png',
+            britain: 'static/images/British_airforce_1.png',
+            uk: 'static/images/British_airforce_1.png',
+            ussr: 'static/images/USSR_Airforce_1.png',
+            'soviet union': 'static/images/USSR_Airforce_1.png',
+            us: 'static/images/US_airforce_1.png',
+            usa: 'static/images/US_airforce_1.png',
+            'united states': 'static/images/US_airforce_1.png'
+        };
+
+        const imageSrc = insigniaImages[normalized];
+
+        insigniaElements.forEach(element => {
+            if (imageSrc) {
+                element.src = imageSrc;
+                element.alt = `${country} air force insignia`;
+                element.style.display = '';
+            } else {
+                element.removeAttribute('src');
+                element.alt = '';
+                element.style.display = 'none';
+            }
+        });
     },
     
     /**
