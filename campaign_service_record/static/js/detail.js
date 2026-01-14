@@ -639,21 +639,13 @@ const DetailPage = {
         if (!img) {
             return null;
         }
-        let width = img.getBoundingClientRect().width;
-        let height = img.getBoundingClientRect().height;
-
-        if ((!width || !height) && img.naturalWidth && img.naturalHeight) {
-            width = img.naturalWidth * this.eventImageScale;
-            height = img.naturalHeight * this.eventImageScale;
-        }
-
-        if (!width || !height) {
+        if (!img.naturalWidth || !img.naturalHeight) {
             return null;
         }
 
         return {
-            width: width * this.promotionPreviewScale,
-            height: height * this.promotionPreviewScale
+            width: img.naturalWidth * this.promotionPreviewScale,
+            height: img.naturalHeight * this.promotionPreviewScale
         };
     },
     
