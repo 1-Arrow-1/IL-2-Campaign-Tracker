@@ -32,14 +32,14 @@
 
 .campaign-header h2 {
     margin-bottom: 0.75rem;
-    color: var(--ink);
+    color: var(--ink-strong);
     font-size: 1.75rem;
 }
 
 .campaign-meta {
     display: flex;
     gap: 2rem;
-    color: #6b5b44;
+    color: #3b2a18;
     font-size: 0.95rem;
 }
 
@@ -50,7 +50,7 @@
 
 .meta-item .label {
     font-weight: 600;
-    color: #5a4a33;
+    color: #2f1f12;
 }
 
 /* ============================================================================
@@ -131,31 +131,31 @@
 
 .event-item {
     padding: 0.75rem;
-    border-left: 3px solid #b59e7a;
-    background: rgba(250, 244, 232, 0.7);
+    border-left: 3px solid #8f6f4a;
+    background: rgba(231, 220, 198, 0.78);
     border-radius: 4px;
     transition: all 0.2s ease;
 }
 
 .event-item:hover {
-    background: rgba(242, 231, 209, 0.9);
-    border-left-color: #8b6f4a;
+    background: rgba(219, 205, 176, 0.92);
+    border-left-color: #6f5437;
 }
 
 .event-item.promotion {
-    border-left-color: #6f8b4a;
+    border-left-color: #7b5b3a;
 }
 
 .event-item.promotion:hover {
-    background: rgba(230, 238, 215, 0.9);
+    background: rgba(216, 202, 176, 0.92);
 }
 
 .event-item.award {
-    border-left-color: #b07d2d;
+    border-left-color: #6b4b2c;
 }
 
 .event-item.award:hover {
-    background: rgba(245, 236, 214, 0.95);
+    background: rgba(214, 199, 172, 0.92);
 }
 
 .event-header {
@@ -179,7 +179,7 @@
 .event-name {
     font-weight: 600;
     font-size: 1rem;
-    color: var(--ink);
+    color: var(--ink-strong);
     margin-bottom: 0.25rem;
 }
 
@@ -270,12 +270,12 @@
 }
 
 .summary-stat .stat-label {
-    color: #5a4a33;
+    color: #2f1f12;
 }
 
 .summary-stat .stat-value {
     font-weight: 600;
-    color: var(--ink);
+    color: var(--ink-strong);
 }
 
 .summary-subtitle {
@@ -284,7 +284,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: #5a4a33;
+    color: #2f1f12;
 }
 
 /* Combat Results */
@@ -308,13 +308,13 @@
 }
 
 .summary-inline-stat .stat-label {
-    color: #5a4a33;
+    color: #2f1f12;
     font-weight: 600;
 }
 
 .summary-inline-stat .stat-value {
     font-weight: 700;
-    color: var(--ink);
+    color: var(--ink-strong);
 }
 
 .combat-results-icons {
@@ -338,7 +338,7 @@
 .combat-icon-count {
     font-size: 1.1rem;
     font-weight: 600;
-    color: var(--ink);
+    color: var(--ink-strong);
 }
 
 .combat-icon-label {
@@ -389,7 +389,7 @@
     content: "★";
     position: absolute;
     left: 0;
-    color: #b07d2d;
+    color: #3a2616;
     font-size: 1rem;
 }
 

@@ -17,12 +17,15 @@
 :root {
     --ink: #2c2212;
     --ink-muted: #4a3a24;
+    --ink-strong: #1f140a;
     --paper: #f8f2e0;
     --paper-deep: #efe4cc;
     --accent: #8b6f4a;
     --accent-dark: #5a4022;
     --border: #cbb999;
     --shadow-soft: 0 6px 18px rgba(74, 52, 33, 0.18);
+    --scrollbar-thumb: #5a4022;
+    --scrollbar-track: #e8dbc3;
 }
 
 html, body {
@@ -41,6 +44,32 @@ html, body {
 
 body {
     overflow-x: hidden;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+    border-radius: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 8px;
+    border: 2px solid var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: #4a2f18;
 }
 
 /* ============================================================================
@@ -114,6 +143,7 @@ small {
     color: #f6edd9;
     letter-spacing: 1.2px;
     text-transform: uppercase;
+    text-shadow: 0 1px 0 rgba(25, 16, 8, 0.6);
 }
 
 #app-main {
