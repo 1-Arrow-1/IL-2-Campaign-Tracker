@@ -27,14 +27,37 @@
     position: relative;
     padding: 1.5rem 2rem;
     margin-bottom: 2rem;
+    min-height: 140px;
     box-shadow: var(--shadow-soft);
     border: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.campaign-header__plane {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.campaign-header__plane-image {
+    max-height: 110px;
+    max-width: min(75%, 420px);
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    opacity: 0.4;
 }
 
 .campaign-header h2 {
     margin-bottom: 0.75rem;
     color: var(--ink-strong);
     font-size: 1.75rem;
+    position: relative;
+    z-index: 2;
 }
 
 .campaign-meta {
@@ -42,6 +65,8 @@
     gap: 2rem;
     color: #3b2a18;
     font-size: 0.95rem;
+    position: relative;
+    z-index: 2;
 }
 
 .meta-item {
@@ -64,6 +89,7 @@
     transform: scale(0.9)translateY(-2.4rem) rotate(-8deg);
     filter: drop-shadow(0 6px 6px rgba(66, 41, 19, 0.35));
     pointer-events: none;
+    z-index: 3;
 }
 
 /* ============================================================================

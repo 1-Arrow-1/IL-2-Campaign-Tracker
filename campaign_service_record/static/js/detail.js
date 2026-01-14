@@ -99,6 +99,7 @@ const DetailPage = {
         title: null,
         country: null,
         missions: null,
+        plane: null,
         eventsList: null,
         debriefingsContainer: null,
         summaryContent: null
@@ -128,6 +129,7 @@ const DetailPage = {
         this.elements.title = document.getElementById('campaign-title');
         this.elements.country = document.getElementById('campaign-country');
         this.elements.missions = document.getElementById('campaign-missions');
+        this.elements.plane = document.getElementById('campaign-plane');
         this.elements.eventsList = document.getElementById('events-list');
         this.elements.debriefingsContainer = document.getElementById('debriefings-container');
         this.elements.summaryContent = document.getElementById('summary-content');
@@ -177,6 +179,37 @@ const DetailPage = {
         this.elements.title.textContent = campaign.display_name;
         this.elements.country.textContent = campaign.country.toUpperCase();
         this.elements.missions.textContent = `${campaign.missions_completed} completed`;
+        this.updatePlaneImage(campaign.country);
+    },
+
+    updatePlaneImage(country) {
+        if (!this.elements.plane) {
+            return;
+        }
+
+        const normalized = (country || '').trim().toLowerCase();
+        const planeImages = {
+            germany: 'static/images/BF109_1.png',
+            us: 'static/images/P51_1.png',
+            usa: 'static/images/P51_1.png',
+            'united states': 'static/images/P51_1.png',
+            britain: 'static/images/Spitfire_1.png',
+            uk: 'static/images/Spitfire_1.png',
+            ussr: 'static/images/yak3_1.png',
+            'soviet union': 'static/images/yak3_1.png'
+        };
+
+        const imageSrc = planeImages[normalized];
+
+        if (imageSrc) {
+            this.elements.plane.src = imageSrc;
+            this.elements.plane.alt = `${country} aircraft`;
+            this.elements.plane.style.display = '';
+        } else {
+            this.elements.plane.removeAttribute('src');
+            this.elements.plane.alt = '';
+            this.elements.plane.style.display = 'none';
+        }
     },
     
     /**
