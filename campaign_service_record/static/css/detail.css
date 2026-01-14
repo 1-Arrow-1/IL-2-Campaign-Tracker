@@ -55,7 +55,7 @@
 }
 
 .campaign-header__stamp {
-    position: relative;
+    position: absolute;
     top: -0.4rem;
     right: 2rem;
     width: 190px;
