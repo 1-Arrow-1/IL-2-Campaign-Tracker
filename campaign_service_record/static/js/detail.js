@@ -454,33 +454,38 @@ const DetailPage = {
         }
 
         const columnSelectors = ['.column-left', '.column-middle', '.column-right'];
-        columnSelectors
+        const columns = columnSelectors
             .map(selector => page.querySelector(selector))
-            .filter(Boolean)
-            .forEach(column => {
-                if (column.parentElement !== columnsContainer) {
-                    columnsContainer.appendChild(column);
-                }
-            });
+            .filter(Boolean);
+
+        columns.forEach(column => {
+            if (column.parentElement !== columnsContainer) {
+                columnsContainer.appendChild(column);
+            }
+        });
+
+        const leftColumn = columns.find(column => column.classList.contains('column-left'));
+        if (!leftColumn) {
+            return;
+        }
+
+        const eventsSection = page.querySelector('.events-section');
+        if (!eventsSection) {
+            return;
+        }
+
+        if (eventsSection.parentElement !== leftColumn) {
+            const personalSection = leftColumn.querySelector('.personal-data-section');
+            if (personalSection && personalSection.nextSibling) {
+                leftColumn.insertBefore(eventsSection, personalSection.nextSibling);
+            } else if (personalSection) {
+                leftColumn.appendChild(eventsSection);
+            } else {
+                leftColumn.appendChild(eventsSection);
+            }
+        }
     },
 
-    setupPhotoHandlers() {
-        if (this.elements.pilotPhotoBtn) {
-            this.elements.pilotPhotoBtn.addEventListener('click', () => this.openPhotoModal());
-        }
-
-        if (this.elements.cropperPhotoSelect) {
-            this.elements.cropperPhotoSelect.addEventListener('click', () => this.handlePhotoSelection());
-        }
-
-        if (this.elements.cropperCancel) {
-            this.elements.cropperCancel.addEventListener('click', () => this.closeCropperModal());
-        }
-
-        if (this.elements.cropperSave) {
-            this.elements.cropperSave.addEventListener('click', () => this.applyPhotoAndPersonalData());
-        }
-    },
 
     /**
      * Load and display campaign details
