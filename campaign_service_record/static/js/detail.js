@@ -354,6 +354,11 @@ const DetailPage = {
         personalBirthday: null,
         personalBirthPlace: null,
         personalBirthCountry: null,
+        personalDisplayName: null,
+        personalDisplayFirstName: null,
+        personalDisplayBirthday: null,
+        personalDisplayBirthPlace: null,
+        personalDisplayBirthCountry: null,
         personalStatus: null,
         cropperModal: null,
         cropperImg: null,
@@ -422,6 +427,11 @@ const DetailPage = {
         this.elements.personalBirthday = document.getElementById('personal-birthday');
         this.elements.personalBirthPlace = document.getElementById('personal-birth-place');
         this.elements.personalBirthCountry = document.getElementById('personal-birth-country');
+        this.elements.personalDisplayName = document.getElementById('personal-display-name');
+        this.elements.personalDisplayFirstName = document.getElementById('personal-display-first-name');
+        this.elements.personalDisplayBirthday = document.getElementById('personal-display-birthday');
+        this.elements.personalDisplayBirthPlace = document.getElementById('personal-display-birth-place');
+        this.elements.personalDisplayBirthCountry = document.getElementById('personal-display-birth-country');
         this.elements.personalStatus = document.getElementById('personal-data-status');
         this.elements.cropperModal = document.getElementById('cropper-modal');
         this.elements.cropperImg = document.getElementById('cropper-img');
@@ -664,6 +674,7 @@ const DetailPage = {
 
         let photoError = null;
         let dataError = null;
+        let savedData = null;
 
         if (this.cropper) {
             try {
@@ -675,10 +686,15 @@ const DetailPage = {
         }
 
         try {
-            await API.saveCampaignPersonalData(this.currentCampaign.name, payload);
+            savedData = await API.saveCampaignPersonalData(this.currentCampaign.name, payload);
         } catch (error) {
             dataError = error;
             console.error('Failed to save personal data:', error);
+        }
+
+        if (savedData) {
+            this.setPersonalDataFields(savedData);
+            this.setPersonalDataDisplay(savedData);
         }
 
         if (photoError || dataError) {
@@ -717,11 +733,13 @@ const DetailPage = {
         try {
             const data = await API.getCampaignPersonalData(campaignName);
             this.setPersonalDataFields(data || {});
+            this.setPersonalDataDisplay(data || {});
             this.showPersonalDataStatus('');
         } catch (error) {
             console.error('Failed to load personal data:', error);
             this.showPersonalDataStatus('Unable to load personal data.');
             this.setPersonalDataFields({});
+            this.setPersonalDataDisplay({});
         }
     },
 
@@ -740,6 +758,29 @@ const DetailPage = {
         }
         if (this.elements.personalBirthCountry) {
             this.elements.personalBirthCountry.value = data.birth_country || '';
+        }
+    },
+
+    formatPersonalDataValue(value) {
+        const trimmed = typeof value === 'string' ? value.trim() : '';
+        return trimmed ? trimmed : '—';
+    },
+
+    setPersonalDataDisplay(data) {
+        if (this.elements.personalDisplayName) {
+            this.elements.personalDisplayName.textContent = this.formatPersonalDataValue(data.name);
+        }
+        if (this.elements.personalDisplayFirstName) {
+            this.elements.personalDisplayFirstName.textContent = this.formatPersonalDataValue(data.first_name);
+        }
+        if (this.elements.personalDisplayBirthday) {
+            this.elements.personalDisplayBirthday.textContent = this.formatPersonalDataValue(data.birthday);
+        }
+        if (this.elements.personalDisplayBirthPlace) {
+            this.elements.personalDisplayBirthPlace.textContent = this.formatPersonalDataValue(data.birth_place);
+        }
+        if (this.elements.personalDisplayBirthCountry) {
+            this.elements.personalDisplayBirthCountry.textContent = this.formatPersonalDataValue(data.birth_country);
         }
     },
 

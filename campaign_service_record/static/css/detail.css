@@ -226,6 +226,30 @@
     gap: 0.75rem;
 }
 
+.personal-data-summary {
+    display: grid;
+    gap: 0.55rem;
+    width: 100%;
+}
+
+.personal-data-row {
+    display: grid;
+    grid-template-columns: minmax(110px, auto) 1fr;
+    gap: 0.5rem;
+    align-items: baseline;
+    font-size: 0.9rem;
+    color: var(--ink);
+}
+
+.personal-data-label {
+    font-weight: 600;
+}
+
+.personal-data-value {
+    justify-self: start;
+    color: #5f503c;
+}
+
 .personal-data-fields {
     display: grid;
     gap: 0.75rem;
