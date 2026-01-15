@@ -401,6 +401,7 @@ const DetailPage = {
      */
     init() {
         this.cacheElements();
+        this.ensureDetailColumns();
         this.setupPhotoHandlers();
         PreviewModal.init();
     },
@@ -439,6 +440,28 @@ const DetailPage = {
         this.elements.cropperCancel = document.getElementById('cropper-cancel');
         this.elements.cropperSave = document.getElementById('cropper-save');
         this.elements.cropperPhotoSelect = document.getElementById('cropper-photo-select');
+    },
+
+    ensureDetailColumns() {
+        const page = this.elements.page;
+        if (!page) {
+            return;
+        }
+
+        const columnsContainer = page.querySelector('.detail-columns');
+        if (!columnsContainer) {
+            return;
+        }
+
+        const columnSelectors = ['.column-left', '.column-middle', '.column-right'];
+        columnSelectors
+            .map(selector => page.querySelector(selector))
+            .filter(Boolean)
+            .forEach(column => {
+                if (column.parentElement !== columnsContainer) {
+                    columnsContainer.appendChild(column);
+                }
+            });
     },
 
     setupPhotoHandlers() {
