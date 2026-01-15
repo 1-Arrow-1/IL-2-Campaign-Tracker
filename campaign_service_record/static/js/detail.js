@@ -12,6 +12,7 @@ const PreviewModal = {
         overlay: null,
         title: null,
         image: null,
+        description: null,
         close: null
     },
     isOpen: false,
@@ -41,11 +42,15 @@ const PreviewModal = {
         image.className = 'preview-modal__image';
         image.alt = '';
 
+        const description = document.createElement('div');
+        description.className = 'preview-modal__description';
+
         close.addEventListener('click', () => this.close());
 
         content.appendChild(close);
         content.appendChild(title);
         content.appendChild(image);
+        content.appendChild(description);
         overlay.appendChild(content);
         document.body.appendChild(overlay);
 
@@ -59,10 +64,11 @@ const PreviewModal = {
         this.elements.overlay = overlay;
         this.elements.title = title;
         this.elements.image = image;
+        this.elements.description = description;
         this.elements.close = close;
     },
 
-    open({ title, imageUrl, imageAlt, width, height }) {
+    open({ title, imageUrl, imageAlt, width, height, description }) {
         if (!imageUrl) {
             return;
         }
@@ -71,6 +77,8 @@ const PreviewModal = {
         this.elements.image.src = imageUrl;
         this.elements.image.style.width = width ? `${Math.round(width)}px` : '';
         this.elements.image.style.height = height ? `${Math.round(height)}px` : '';
+        this.elements.description.textContent = description || '';
+        this.elements.description.classList.toggle('is-hidden', !description);
 
         this.elements.overlay.classList.add('is-open');
         this.elements.overlay.setAttribute('aria-hidden', 'false');
@@ -86,8 +94,241 @@ const PreviewModal = {
         this.elements.overlay.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('modal-open');
         this.elements.image.src = '';
+        this.elements.description.textContent = '';
+        this.elements.description.classList.add('is-hidden');
         this.isOpen = false;
     }
+};
+
+const EVENT_DESCRIPTIONS = {
+    germany: {
+        ranks: {
+            Unteroffizier: 'New to the line, you fly tight on a leader’s wing and learn fast or die fast. Your logbook fills one sortie at a time.',
+            Feldwebel: 'You’ve seen flak and fighters up close and you don’t flinch. Men follow your turns because they’ve learned you bring them home.',
+            Oberfeldwebel: 'Veteran hands, tired eyes—still climbing into the cockpit. You lead by example and the rookies copy everything you do.',
+            Leutnant: 'Now you carry a commission and the weight that comes with it. You still fly the same sky, just with more eyes depending on you.',
+            Oberleutnant: 'You lead flights into weather, flak, and bad odds. The Staffel watches how you handle the first burst and the last decision.',
+            Hauptmann: 'Command and combat collide: paperwork at dawn, engine heat by noon. You fly when it matters and your name rides every outcome.',
+            Major: 'Your map table is larger than your cockpit time now. When you do fly, it’s because the mission can’t afford mistakes.',
+            Oberstleutnant: 'You keep the unit running and the losses bear your signature. You fly rarely—usually to see the front with your own eyes.',
+            Oberst: 'A commander with a pilot’s past and a war on his desk. If you take off, it’s for a reason everyone remembers.',
+            Generalmajor: 'You move squadrons like chess pieces and count fuel like blood. Flight time is rare; responsibility is constant.',
+            Generalleutnant: 'The war looks different from this altitude—briefings, orders, consequences. You earned wings once; now you carry a theater.'
+        },
+        awards: {
+            "Pilot's Badge": 'You’ve earned the right to wear wings—and to be sent back up tomorrow. Training is over; the war starts now.',
+            'Iron Cross 2nd Class': 'A first hard mark of combat service. Not glory—just proof you were there when it counted.',
+            'Iron Cross 1st Class': 'You didn’t just survive; you delivered results. The unit knows you’re the one to call when it’s hot.',
+            'Honor Goblet': 'A Luftwaffe trophy for men who fly beyond “enough.” It’s handed to those who keep coming back with victories and scars.',
+            'German Cross in Gold': 'Sustained combat success, the long grind turned into metal. You’ve been tested—repeatedly—and held.',
+            "Knight's Cross of the Iron Cross": 'The kind of award that changes how people look at you. Fame is loud; the war is louder.',
+            '…with Oak Leaves': 'More proof, more pressure. They expect miracles now—and they write your name in bigger letters.',
+            '…with Oak Leaves and Swords': 'A mark for relentless frontline achievement. You’re not just fighting—you’re shaping the fight.',
+            '…with Oak Leaves, Swords and Diamonds': 'Rare, heavy, and impossible to ignore. Your record is legend; your risk stays real.',
+            '…with Golden Oak Leaves, Swords and Diamonds': 'The top shelf, almost unheard of. You’ve become a symbol—and symbols still bleed.',
+            'Front Flying Clasp (Fighters) Bronze': 'You’ve logged enough combat sorties to know the routine is deadly. The front doesn’t care how brave you feel.',
+            'Front Flying Clasp (Fighters) Silver': 'A long run of sorties under pressure. You’ve outlasted luck and learned discipline.',
+            'Front Flying Clasp (Fighters) Gold': 'Heavy operational time at the sharp end. You’ve lived where the sky is full of fire.',
+            '…Gold with Pendant': 'An extreme tally of frontline sorties. You’ve been to war so often it feels like home—and that’s the danger.',
+            'Wound Badge in Black': 'First blood paid to the front. You came back—this time.',
+            'Wound Badge in Silver': 'More wounds, fewer illusions. You’re still flying, but you’ve started counting what it costs.',
+            'Wound Badge in Gold': 'You’ve been hit again and again and kept returning. The badge shines; the damage doesn’t.'
+        }
+    },
+    britain: {
+        ranks: {
+            Sergeant: 'Fresh wings, cold cockpit, and the Channel wind cutting through everything. Stay with your leader and keep your eyes moving.',
+            'Flight Sergeant': 'You’ve learned the sound of trouble before you see it. In the air, you’re steady—because panic kills.',
+            'Warrant Officer': 'A hard veteran in a soft uniform. You fly like you’ve paid for every lesson—and you have.',
+            'Pilot Officer': 'Commissioned, but still proving yourself every sortie. The squadron judges you by the way you hold formation under fire.',
+            'Flying Officer': 'You can lead a section and make it stick. When the radio goes quiet, your decisions speak loudest.',
+            'Flight Lieutenant': 'You balance duty rosters and deadly skies. You still fly—because you won’t ask men to do what you won’t.',
+            'Squadron Leader': 'The squadron’s tempo is yours to set: push too hard and you break it. You fly when the moment needs a steady hand.',
+            'Wing Commander': 'You command wings and you feel every loss. You go up sometimes—enough to keep the war honest.',
+            'Group Captain': 'A commander with a pilot’s instincts and a strategist’s burden. You fly rarely now, but you never stop listening to the engines.',
+            'Air Commodore': 'You direct whole air battles from reports and maps. If you fly, it’s exceptional—and everyone notices.',
+            'Air Vice Marshal': 'The air war runs through your desk and into the sky. Flight is rare; command is relentless.'
+        },
+        awards: {
+            "RAF Pilot's Badge": 'Your wings are sewn on, and your life is scheduled around sorties. Welcome to the line.',
+            'Mentioned in Despatches': 'Your name made it into the official reports. Quiet recognition for work done when it was most dangerous.',
+            'Distinguished Flying Medal (DFM)': 'Courage and grit from an airman who kept flying. Earned the hard way, one operation after another.',
+            'Bar to the DFM': 'They’re saying you did it again. Same sky, same risk—more proof you don’t quit.',
+            'Second Bar to the DFM': 'Rare repeat recognition for relentless operations. You’re becoming the kind of flyer the squadron leans on.',
+            'Distinguished Flying Cross (DFC)': 'Gallantry in the air, the kind that holds a formation together. The ribbon looks clean; the sorties weren’t.',
+            'Bar to the DFC': 'Another round of hard flying that stood out. You’ve made danger a habit—and lived through it.',
+            'Second Bar to the DFC': 'Almost unheard of. You’ve repeatedly done what shouldn’t be survivable.',
+            'Distinguished Service Order (DSO)': 'Leadership under fire, not just bravery. You kept men fighting when the odds went ugly.',
+            'Bar to the DSO': 'A second time they credit your command in combat. You’ve carried responsibility where it hurts.',
+            'Second Bar to the DSO': 'Exceptionally rare and hard-won. You’ve led through repeated crisis and come out standing.',
+            'Victoria Cross (VC)': 'The highest kind of courage—beyond orders, beyond reason. A moment that becomes history.',
+            'Bar to the VC': 'A second VC is almost myth. It means you faced the impossible twice and refused to yield.',
+            'Wound Stripe': 'Proof the war reached you personally. The body keeps the receipt.',
+            'Second Wound Stripe': 'Hit again, still flying. Survival isn’t luck anymore—it’s endurance.',
+            'Third Wound Stripe': 'Three wounds and still on the roster. The squadron sees you and knows what it costs.'
+        }
+    },
+    usa: {
+        ranks: {
+            'First Sergeant': 'You keep the unit stitched together when the mission tears it apart. If you fly, it’s to share the risk, not the glory.',
+            'Flight Officer': 'You’re rated to fly and thrown into the grinder. Learn fast, hit hard, and don’t waste luck.',
+            'Chief Warrant Officer': 'You’re the quiet expert—engines, tactics, nerves of steel. When it gets ugly, they want you in the formation.',
+            '2nd Lieutenant': 'Brand-new bars, same flak and same fear. Your lead is light, but the war doesn’t care.',
+            '1st Lieutenant': 'You’ve seen enough to stop pretending it’s easy. Now you lead flights and carry men through bad weather and worse skies.',
+            Captain: 'You’re a leader and a target both. You still fly—because credibility is earned at altitude.',
+            Major: 'Plans, briefings, and harder calls than trigger pulls. You fly selectively now, usually when the mission needs a proven hand.',
+            'Lt. Colonel': 'Bigger command, fewer takeoffs. When you do fly, it’s to see the truth beyond the paperwork.',
+            Colonel: 'You command from the top but you’ve flown the hard miles. Flight is rare—your war is coordination and consequence.',
+            'Brigadier General': 'You shape operations across units and bases. If you take the air, it’s a statement—and a risk you don’t take lightly.',
+            'Major General': 'Strategy, logistics, and the weight of whole formations. Your flying days are mostly memory, but the sky is still yours.'
+        },
+        awards: {
+            "Pilot's Badge": 'Your wings say you’re rated and ready. Now the mission board tells you where you’ll bleed for them.',
+            'Air Medal': 'Meritorious flying under combat conditions. It’s the war’s way of saying you kept delivering.',
+            'Air Medal + One Oak Leaf Cluster': 'You’ve earned it again. Same sky, more missions, more proof.',
+            'Air Medal + Two Oak Leaf Clusters': 'A steady record of combat flying. You’re becoming a veteran by accumulation.',
+            'Air Medal + Three Oak Leaf Clusters': 'Repeated awards for repeated sorties. The ribbon stack grows as the risks don’t stop.',
+            'Bronze Star Medal': 'Combat merit and hard service recognized. Not glamorous—just earned where it’s dangerous.',
+            'Bronze Star + One Oak Leaf Cluster': 'Another round of meritorious service under fire. They’re counting what you’ve carried.',
+            'Bronze Star + Two Oak Leaf Clusters': 'A third recognition for staying effective in the long grind. You’ve become dependable the hard way.',
+            'Distinguished Flying Cross': 'Heroism or extraordinary achievement in the air. The kind of sortie people talk about afterward.',
+            'DFC + One Oak Leaf Cluster': 'You’ve done it again—another exceptional mission, another line in the record.',
+            'DFC + Two Oak Leaf Clusters': 'A sustained pattern of standout flying. The enemy isn’t the only thing watching you now.',
+            'DFC + Three Oak Leaf Clusters': 'Repeated extraordinary performance. Your reputation is built on missions that should’ve gone wrong.',
+            'DFC + Four Oak Leaf Clusters': 'More than most ever see in a lifetime. It means you keep walking into the worst and coming out.',
+            'DFC + One Silver Oak Leaf Cluster': 'A higher-count mark of repeat awards. You’ve stacked extraordinary sorties like normal work.',
+            'Legion of Merit': 'Outstanding service over time, beyond a single fight. You’ve carried the war on your shoulders and kept it moving.',
+            'Silver Star Medal': 'Gallantry in action. A moment of courage that refused to break.',
+            'Silver Star + One Oak Leaf Cluster': 'Again, you stood when others might not. Repeated bravery under fire.',
+            'Silver Star + Two Oak Leaf Clusters': 'A third gallantry award is a hard statement. You don’t just survive trouble—you face it.',
+            'Distinguished Service Cross': 'Extraordinary heroism in combat. The kind of action that becomes a unit legend.',
+            'DSC + One Oak Leaf Cluster': 'A second time for extreme heroism. That’s not luck—that’s a pattern of risk.',
+            'DSC + Two Oak Leaf Clusters': 'A third award for extraordinary heroism. Few ever reach this—and fewer live through it.',
+            'DSC + Three Oak Leaf Clusters': 'Repeated actions at the edge of survivability. Your record reads like a warning label.',
+            'DSC + Four Oak Leaf Clusters': 'Almost unheard of. You’ve done the impossible too many times to count.',
+            'Medal of Honor': 'Valor above and beyond—an act that rewrites what “duty” means. The highest recognition for the darkest moment.',
+            'Medal of Honor + One Oak Leaf Cluster': 'A second Medal of Honor is nearly unimaginable. It means you faced that line twice and crossed it.',
+            'Purple Heart': 'You were hit by the enemy and paid in blood. The medal is quiet; the memory isn’t.',
+            'Purple Heart + One Oak Leaf Cluster': 'Wounded again. You carry the damage and keep flying anyway.',
+            'Purple Heart + Two Oak Leaf Clusters': 'Three wounds and still operational. The body keeps score even if the medal does not.'
+        }
+    },
+    soviet: {
+        ranks: {
+            Sergeant: 'A frontline pilot with little margin and no illusions. You fly, you fight, you hope the engine holds.',
+            'Senior Sergeant': 'You’ve survived enough to teach others how to. The new men watch your hands more than they hear your words.',
+            'Junior Lieutenant': 'You’ve got a commission and a rifleman’s war in the air. Lead tight, strike fast, and don’t linger.',
+            Lieutenant: 'You’re trusted to bring a pair home and still finish the job. The sky is crowded and mercy is scarce.',
+            'Senior Lieutenant': 'You lead sorties into flak and weather like it’s routine. Your squadron runs on discipline and stubbornness.',
+            Captain: 'You command and you still fly hard. The best orders are the ones you’ve tested in your own cockpit.',
+            Major: 'You fly less, plan more, and sleep even less. When you do climb out, it’s for missions that must succeed.',
+            'Sub-Colonel': 'Command pulls you away from the line, but you return when it matters. A rare sortie, a familiar smell of fuel and frost.',
+            Colonel: 'You carry an air regiment’s fate in your notes and your voice. Flying is occasional; responsibility never is.',
+            'Major General': 'You command formations and watch losses like a ledger of steel. If you fly, it’s exceptional—and never for sport.',
+            'Lieutenant General': 'The front is vast, the demands endless. You’re a pilot by training, a commander by necessity.'
+        },
+        awards: {
+            'Aviation Badge': 'You’re marked as aircrew now. The front will use you until the machine or the man breaks.',
+            'Medal "For Battle Merit"': 'Solid service under fire. You did the work, took the risk, and brought results back.',
+            'Medal for Courage': 'Personal bravery, close and undeniable. You held your nerve when the sky turned violent.',
+            'Order of the Red Star': 'A serious combat award for real results. Not for talk—only for what you did at the front.',
+            'Order of the Red Star (2nd awarding)': 'They’re recognizing you again. Same war, higher stakes, more proof you’re still delivering.',
+            'Order of the Red Star (3rd awarding)': 'A third time is no accident. You’ve made a career out of surviving—and winning.',
+            'Order of the Patriotic War 2nd Class': 'Combat merit that mattered to the Motherland. Earned in the grind, not the parade.',
+            'Order of the Patriotic War 1st Class': 'A higher grade for standout performance in battle. Your name is being noticed beyond the regiment.',
+            'Order of Alexander Nevsky': 'For leaders who win while outnumbered and under fire. A commander’s award, earned in the air.',
+            'Order of Suvorov 3rd Class': 'Recognition for effective command and successful operations. You made plans work in a world that hates plans.',
+            'Order of the Red Banner': 'A major mark of courage and achievement. The kind of ribbon earned only at the sharp end.',
+            'Order of the Red Banner (2nd awarding)': 'They say you’ve done it again. Results repeated, losses endured, mission accomplished.',
+            'Order of the Red Banner (3rd awarding)': 'A third award speaks of a brutal record. You’ve fought hard, long, and successfully.',
+            'Hero of the Soviet Union': 'The highest title—heroism carved into the record. It doesn’t make the next sortie easier.',
+            'Hero of the Soviet Union (2nd awarding)': 'A rare second title for extraordinary repeat heroism. Even comrades look twice when your name is read.',
+            'Hero of the Soviet Union (3rd awarding)': 'Almost legendary. You’re a symbol now—and symbols are still sent into combat.',
+            'Order of Lenin': 'One of the highest honors, often paired with major heroism. A decoration that carries political weight and frontline respect.',
+            'Order of Lenin (2nd awarding)': 'They’re elevating you again for continued distinction. Your war record is becoming impossible to ignore.',
+            'Order of Lenin (3rd awarding)': 'A third time is exceptional. It marks a sustained level of achievement few ever reach.',
+            '5 Combat Sorties Bonus (1500 rubles)': 'A small reward for staying on the roster. The money is nice; the survival is the real prize.',
+            '15 Combat Sorties Bonus (2000 rubles)': 'You’ve kept flying while others vanish. The state notices endurance.',
+            '25 Combat Sorties Bonus (3000 rubles)': 'A real milestone at the front. You’ve stacked sorties like cordwood and kept moving.',
+            '40 Combat Sorties Bonus (5000 rubles)': 'Heavy operational time—hard-earned and rarely clean. You’ve stayed in the fight long enough to be feared.',
+            'Red Wound Stripe': 'You were wounded and still came back. The stripe is simple; the story isn’t.',
+            'Yellow Wound Stripe': 'Another mark of injury carried forward. You flew hurt, landed alive, and returned to duty.'
+        }
+    }
+};
+
+const normalizeEventName = (value) => (value || '')
+    .replace(/[’‘]/g, "'")
+    .replace(/[“”]/g, '"')
+    .trim();
+
+const NORMALIZED_EVENT_DESCRIPTIONS = Object.fromEntries(
+    Object.entries(EVENT_DESCRIPTIONS).map(([key, data]) => {
+        const normalizeMap = (map) => Object.fromEntries(
+            Object.entries(map).map(([name, description]) => [
+                normalizeEventName(name),
+                description
+            ])
+        );
+        return [key, {
+            ranks: normalizeMap(data.ranks),
+            awards: normalizeMap(data.awards)
+        }];
+    })
+);
+
+const getCountryKey = (country) => {
+    const normalized = (country || '').trim().toLowerCase();
+    if (['germany', 'deutschland'].includes(normalized)) {
+        return 'germany';
+    }
+    if (['britain', 'uk', 'united kingdom', 'england'].includes(normalized)) {
+        return 'britain';
+    }
+    if (['usa', 'us', 'united states', 'united states of america'].includes(normalized)) {
+        return 'usa';
+    }
+    if (['soviet union', 'ussr', 'russia'].includes(normalized)) {
+        return 'soviet';
+    }
+    return '';
+};
+
+const getAwardDescription = (awards, name) => {
+    if (!name) {
+        return '';
+    }
+    const normalizedName = normalizeEventName(name);
+    if (awards[normalizedName]) {
+        return awards[normalizedName];
+    }
+    const awardingMatch = normalizedName.match(/^(.*)\s+\((2nd|3rd) awarding\)$/i);
+    if (awardingMatch) {
+        const base = awardingMatch[1];
+        const ordinal = awardingMatch[2];
+        const key = normalizeEventName(`${base} (${ordinal} awarding)`);
+        if (awards[key]) {
+            return awards[key];
+        }
+    }
+    if (normalizedName.startsWith("Knight's Cross of the Iron Cross")) {
+        if (normalizedName.includes('Golden Oak Leaves')) {
+            return awards[normalizeEventName('…with Golden Oak Leaves, Swords and Diamonds')] || '';
+        }
+        if (normalizedName.includes('Diamonds')) {
+            return awards[normalizeEventName('…with Oak Leaves, Swords and Diamonds')] || '';
+        }
+        if (normalizedName.includes('Swords')) {
+            return awards[normalizeEventName('…with Oak Leaves and Swords')] || '';
+        }
+        if (normalizedName.includes('Oak Leaves')) {
+            return awards[normalizeEventName('…with Oak Leaves')] || '';
+        }
+    }
+    if (normalizedName.includes('Front Flying Clasp') && normalizedName.includes('Gold with Pendant')) {
+        return awards[normalizeEventName('…Gold with Pendant')] || '';
+    }
+    return '';
 };
 
 const DetailPage = {
@@ -359,6 +600,25 @@ const DetailPage = {
         return item;
     },
 
+    getEventDescription(event) {
+        const countryKey = getCountryKey(this.currentCampaign?.country);
+        if (!countryKey) {
+            return '';
+        }
+        const descriptions = NORMALIZED_EVENT_DESCRIPTIONS[countryKey];
+        if (!descriptions) {
+            return '';
+        }
+        if (event.type === 'promotion') {
+            const rankName = normalizeEventName(event.rank);
+            return descriptions.ranks[rankName] || '';
+        }
+        if (event.type === 'award') {
+            return getAwardDescription(descriptions.awards, event.name);
+        }
+        return '';
+    },
+
     bindPreviewModal(item, event, img, mainText) {
         const previewUrl = event.type === 'award'
             ? (event.modal_image_url || event.image_url)
@@ -376,12 +636,14 @@ const DetailPage = {
             }
             const title = event.type === 'promotion' ? event.rank : event.name;
             const size = event.type === 'promotion' ? this.getPromotionPreviewSize(img) : null;
+            const description = this.getEventDescription(event);
             PreviewModal.open({
                 title: title || mainText || '',
                 imageUrl: previewUrl,
                 imageAlt: title || mainText || 'Event preview',
                 width: size ? size.width : null,
-                height: size ? size.height : null
+                height: size ? size.height : null,
+                description
             });
         });
     },
