@@ -94,8 +94,13 @@ const App = {
         
         // Update page title
         document.title = 'IL-2 Campaign Service Record';
-        
-        LandingPage.applyBackground();
+
+        const fallbackBackground = LandingPage.getFallbackBackground();
+        if (fallbackBackground) {
+            document.body.style.backgroundImage = `url('${fallbackBackground}')`;
+        }
+
+        LandingPage.applyBackground({ defer: true });
     },
     
     /**

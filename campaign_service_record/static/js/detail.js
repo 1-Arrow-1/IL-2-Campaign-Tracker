@@ -382,14 +382,15 @@ const DetailPage = {
     ],
     backgroundByCountry: {
         germany: 'static/images/background_Germany.png',
-        britain: 'static/images/backgroound_Britain.png',
-        uk: 'static/images/backgroound_Britain.png',
+        britain: 'static/images/background_Britain.png',
+        uk: 'static/images/background_Britain.png',
         'soviet union': 'static/images/background_USSR.png',
         ussr: 'static/images/background_USSR.png',
         us: 'static/images/background_US.png',
         usa: 'static/images/background_US.png',
         'united states': 'static/images/background_US.png'
     },
+    currentBackground: null,
     
     /**
      * Current campaign data
@@ -565,10 +566,14 @@ const DetailPage = {
     },
 
     applyBackgroundForCountry(country) {
+        if (!this.elements.page || this.elements.page.offsetParent === null) {
+            return;
+        }
         const normalized = (country || '').trim().toLowerCase();
         const background = this.backgroundByCountry[normalized];
-        if (background) {
+        if (background && background !== this.currentBackground) {
             document.body.style.backgroundImage = `url('${background}')`;
+            this.currentBackground = background;
         }
     },
 

@@ -27,7 +27,7 @@ const LandingPage = {
     campaigns: [],
 
     backgroundImages: [
-        'static/images/backgroound_Britain.png',
+        'static/images/background_Britain.png',
         'static/images/background_Germany.png',
         'static/images/background_USSR.png',
         'static/images/background_US.png'
@@ -40,7 +40,6 @@ const LandingPage = {
     init() {
         this.cacheElements();
         this.selectBackground();
-        this.applyBackground();
         this.loadCampaigns();
     },
     
@@ -64,11 +63,33 @@ const LandingPage = {
         this.selectedBackground = this.backgroundImages[index];
     },
 
-    applyBackground() {
-        if (!this.selectedBackground) {
+    getFallbackBackground() {
+        return this.backgroundImages[0] || '';
+    },
+
+    isLandingVisible() {
+        if (!this.elements.page) {
+            return false;
+        }
+        return this.elements.page.offsetParent !== null;
+    },
+
+    applyBackground({ defer = false } = {}) {
+        if (defer) {
+            window.requestAnimationFrame(() => this.applyBackground());
             return;
         }
-        document.body.style.backgroundImage = `url('${this.selectedBackground}')`;
+
+        if (!this.selectedBackground) {
+            this.selectBackground();
+        }
+
+        const background = this.selectedBackground || this.getFallbackBackground();
+        if (!background || !this.isLandingVisible()) {
+            return;
+        }
+
+        document.body.style.backgroundImage = `url('${background}')`;
     },
     
     /**
