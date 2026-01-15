@@ -85,6 +85,7 @@ def create_app():
     app.config['SECRET_KEY'] = 'campaign-service-record-secret'
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable caching in dev mode
     app.config['PILOT_PHOTO_DIR'] = config.pilot_photo_dir
+    app.config['PERSONAL_DATA_DIR'] = config.user_data_dir
     app.config['FROZEN'] = config.frozen
     
     # Initialize API

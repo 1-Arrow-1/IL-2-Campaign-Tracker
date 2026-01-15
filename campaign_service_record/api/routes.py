@@ -10,6 +10,7 @@ Endpoints:
 """
 
 import base64
+import json
 import logging
 import re
 import time
@@ -42,6 +43,7 @@ _reports_dir: Optional[Path] = None
 _last_ping = [time.time()]
 
 _PILOT_DESC_DEFAULT = "campaign_pilot"
+_PERSONAL_DATA_FILENAME = "campaign_personal_data.json"
 
 
 def _sanitize_pilot_name(name: Optional[str]) -> Optional[str]:
@@ -49,6 +51,51 @@ def _sanitize_pilot_name(name: Optional[str]) -> Optional[str]:
         return None
     cleaned = name.strip()
     return cleaned or None
+
+
+def _get_personal_data_path() -> Optional[Path]:
+    base_dir = current_app.config.get('PERSONAL_DATA_DIR')
+    if not base_dir:
+        return None
+    return Path(base_dir) / _PERSONAL_DATA_FILENAME
+
+
+def _load_personal_data() -> dict:
+    data_path = _get_personal_data_path()
+    if not data_path or not data_path.exists():
+        return {}
+    try:
+        with open(data_path, 'r', encoding='utf-8') as file:
+            payload = json.load(file)
+    except (OSError, json.JSONDecodeError) as exc:
+        logger.error("Failed to read personal data file %s: %s", data_path, exc)
+        return {}
+    if isinstance(payload, dict):
+        return payload
+    logger.error("Invalid personal data format in %s", data_path)
+    return {}
+
+
+def _save_personal_data(data: dict) -> bool:
+    data_path = _get_personal_data_path()
+    if not data_path:
+        return False
+    try:
+        data_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path = data_path.with_suffix(f"{data_path.suffix}.tmp")
+        with open(tmp_path, 'w', encoding='utf-8') as file:
+            json.dump(data, file, indent=2, ensure_ascii=False)
+        tmp_path.replace(data_path)
+        return True
+    except OSError as exc:
+        logger.error("Failed to save personal data to %s: %s", data_path, exc, exc_info=True)
+        return False
+
+
+def _sanitize_personal_data_value(value: Optional[str]) -> str:
+    if value is None:
+        return ''
+    return str(value).strip()
 
 
 def init_api(data_dir: Path, reports_dir: Optional[Path] = None):
@@ -249,6 +296,41 @@ def save_pilot_photo():
     if frozen:
         return jsonify({'path': f'/pilot_photos/{filename}', 'name': name_value})
     return jsonify({'path': f'/static/pilot_photos/{filename}', 'name': name_value})
+
+
+# ============================================================================
+# Campaign Personal Data Endpoints
+# ============================================================================
+
+@api_bp.route('/api/campaign/<campaign_name>/personal_data')
+def get_campaign_personal_data(campaign_name: str):
+    """Get stored personal data for a campaign."""
+    data = _load_personal_data()
+    return jsonify(data.get(campaign_name, {}))
+
+
+@api_bp.route('/api/campaign/<campaign_name>/personal_data', methods=['POST'])
+def save_campaign_personal_data(campaign_name: str):
+    """Save personal data for a campaign."""
+    if not request.is_json:
+        return jsonify({'error': 'Invalid payload'}), 400
+    payload = request.get_json(silent=True) or {}
+    if not isinstance(payload, dict):
+        return jsonify({'error': 'Invalid payload'}), 400
+
+    cleaned = {
+        'name': _sanitize_personal_data_value(payload.get('name')),
+        'first_name': _sanitize_personal_data_value(payload.get('first_name')),
+        'birthday': _sanitize_personal_data_value(payload.get('birthday')),
+        'birth_place': _sanitize_personal_data_value(payload.get('birth_place')),
+        'birth_country': _sanitize_personal_data_value(payload.get('birth_country'))
+    }
+
+    data = _load_personal_data()
+    data[campaign_name] = cleaned
+    if not _save_personal_data(data):
+        return jsonify({'error': 'Failed to save personal data'}), 500
+    return jsonify(cleaned)
 
 
 # ============================================================================

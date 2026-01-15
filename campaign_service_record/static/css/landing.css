@@ -1,7 +1,7 @@
 /**
  * Landing Page Styles
  * 
- * Two-column layout: Pilot info (left) + Campaign list (right)
+ * Single-column layout: Campaign list
  */
 
 /* ============================================================================
@@ -10,30 +10,9 @@
 
 .landing-container {
     display: grid;
-    grid-template-columns: 320px 1fr;
+    grid-template-columns: 1fr;
     gap: 2rem;
     max-width: 1700px;
-}
-
-/* ============================================================================
-   Pilot Info (Left Column)
-   ============================================================================ */
-
-.pilot-info {
-    background-color: rgba(248, 242, 224, 0.92);
-    background-image: url('../images/old_paper_texture.jpg');
-    background-repeat: repeat;
-    border-radius: 8px;
-    padding: 2rem;
-    box-shadow: var(--shadow-soft);
-    height: fit-content;
-    position: sticky;
-    top: calc(60px + 2rem); /* Header height + padding */
-    border: 1px solid var(--border);
-}
-
-.pilot-card {
-    text-align: center;
 }
 
 .pilot-photo-container {
@@ -84,26 +63,6 @@
     background: #5f4528;
 }
 
-.pilot-details h2 {
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
-    color: var(--ink);
-    letter-spacing: 0.03em;
-}
-
-.pilot-meta {
-    margin-bottom: 0.75rem;
-    color: #6b5b44;
-    font-size: 0.95rem;
-}
-
-.pilot-meta .label {
-    display: inline-block;
-    min-width: 80px;
-    font-weight: 600;
-    color: #5a4a33;
-}
-
 /* Cropper modal */
 #cropper-modal {
     position: fixed;
@@ -132,31 +91,6 @@
     max-height: 450px;
     margin: 1rem auto;
     display: block;
-}
-
-.pilot-name-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    margin: 0.75rem auto 1.25rem;
-    text-align: left;
-    font-weight: 600;
-    color: var(--ink);
-    max-width: 360px;
-}
-
-.pilot-name-field input {
-    padding: 0.55rem 0.75rem;
-    border-radius: 6px;
-    border: 1px solid #cbb999;
-    font-size: 0.95rem;
-    background: #f6efdf;
-}
-
-.pilot-name-field input:focus {
-    outline: none;
-    border-color: #9a7b55;
-    box-shadow: 0 0 0 2px rgba(154, 123, 85, 0.2);
 }
 
 .cropper-actions {
@@ -285,14 +219,9 @@
     .landing-container {
         grid-template-columns: 1fr;
     }
-    
-    .pilot-info {
-        position: static;
-    }
 }
 
 @media (max-width: 768px) {
-    .pilot-info,
     .campaigns-section {
         padding: 1.5rem;
     }

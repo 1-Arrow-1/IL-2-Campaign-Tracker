@@ -129,6 +129,20 @@ const API = {
 
         return payload;
     },
+
+    /**
+     * Get campaign personal data
+     */
+    async getCampaignPersonalData(campaignName) {
+        return this.get(`/campaign/${encodeURIComponent(campaignName)}/personal_data`);
+    },
+
+    /**
+     * Save campaign personal data
+     */
+    async saveCampaignPersonalData(campaignName, data) {
+        return this.post(`/campaign/${encodeURIComponent(campaignName)}/personal_data`, data);
+    },
     
     /**
      * Health check

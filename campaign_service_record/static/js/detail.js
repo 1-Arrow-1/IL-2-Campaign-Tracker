@@ -345,11 +345,45 @@ const DetailPage = {
         insigniaRight: null,
         eventsList: null,
         debriefingsContainer: null,
-        summaryContent: null
+        summaryContent: null,
+        pilotPhoto: null,
+        pilotPhotoContainer: null,
+        pilotPhotoBtn: null,
+        personalName: null,
+        personalFirstName: null,
+        personalBirthday: null,
+        personalBirthPlace: null,
+        personalBirthCountry: null,
+        personalSave: null,
+        personalStatus: null,
+        cropperModal: null,
+        cropperImg: null,
+        cropperCancel: null,
+        cropperSave: null
     },
 
     eventImageScale: 0.35,
     promotionPreviewScale: 1.2,
+    cropper: null,
+    cropperFrame: null,
+    supportedImageTypes: [
+        'image/png',
+        'image/jpeg',
+        'image/jpg',
+        'image/gif',
+        'image/bmp',
+        'image/webp'
+    ],
+    backgroundByCountry: {
+        germany: 'static/images/background_Germany.png',
+        britain: 'static/images/backgroound_Britain.png',
+        uk: 'static/images/backgroound_Britain.png',
+        'soviet union': 'static/images/background_USSR.png',
+        ussr: 'static/images/background_USSR.png',
+        us: 'static/images/background_US.png',
+        usa: 'static/images/background_US.png',
+        'united states': 'static/images/background_US.png'
+    },
     
     /**
      * Current campaign data
@@ -361,6 +395,8 @@ const DetailPage = {
      */
     init() {
         this.cacheElements();
+        this.setupPersonalDataHandlers();
+        this.setupPhotoHandlers();
         PreviewModal.init();
     },
     
@@ -378,6 +414,40 @@ const DetailPage = {
         this.elements.eventsList = document.getElementById('events-list');
         this.elements.debriefingsContainer = document.getElementById('debriefings-container');
         this.elements.summaryContent = document.getElementById('summary-content');
+        this.elements.pilotPhoto = document.getElementById('detail-pilot-photo');
+        this.elements.pilotPhotoContainer = document.querySelector('.personal-data-photo .pilot-photo-container');
+        this.elements.pilotPhotoBtn = document.getElementById('detail-pilot-photo-btn');
+        this.elements.personalName = document.getElementById('personal-name');
+        this.elements.personalFirstName = document.getElementById('personal-first-name');
+        this.elements.personalBirthday = document.getElementById('personal-birthday');
+        this.elements.personalBirthPlace = document.getElementById('personal-birth-place');
+        this.elements.personalBirthCountry = document.getElementById('personal-birth-country');
+        this.elements.personalSave = document.getElementById('personal-data-save');
+        this.elements.personalStatus = document.getElementById('personal-data-status');
+        this.elements.cropperModal = document.getElementById('cropper-modal');
+        this.elements.cropperImg = document.getElementById('cropper-img');
+        this.elements.cropperCancel = document.getElementById('cropper-cancel');
+        this.elements.cropperSave = document.getElementById('cropper-save');
+    },
+
+    setupPersonalDataHandlers() {
+        if (this.elements.personalSave) {
+            this.elements.personalSave.addEventListener('click', () => this.savePersonalData());
+        }
+    },
+
+    setupPhotoHandlers() {
+        if (this.elements.pilotPhotoBtn) {
+            this.elements.pilotPhotoBtn.addEventListener('click', () => this.handlePhotoSelection());
+        }
+
+        if (this.elements.cropperCancel) {
+            this.elements.cropperCancel.addEventListener('click', () => this.closeCropperModal());
+        }
+
+        if (this.elements.cropperSave) {
+            this.elements.cropperSave.addEventListener('click', () => this.saveCroppedPhoto());
+        }
     },
     
     /**
@@ -407,6 +477,9 @@ const DetailPage = {
             this.renderEvents(campaign.events);
             this.renderDebriefings(campaign.debriefings_html);
             this.renderSummary(campaign.summary);
+            this.applyBackgroundForCountry(campaign.country);
+            await this.loadPersonalData(campaign.name);
+            await this.loadPilotPhoto(campaign.name);
             
             // Check for PDF
             this.checkPDF(campaign.name);
@@ -426,6 +499,224 @@ const DetailPage = {
         this.elements.missions.textContent = `${campaign.missions_completed} completed`;
         this.updatePlaneImage(campaign.country);
         this.updateInsigniaImages(campaign.country);
+    },
+
+    applyBackgroundForCountry(country) {
+        const normalized = (country || '').trim().toLowerCase();
+        const background = this.backgroundByCountry[normalized];
+        if (background) {
+            document.body.style.backgroundImage = `url('${background}')`;
+        }
+    },
+
+    getPilotPhotoDesc(campaignName) {
+        return `campaign:${campaignName}`;
+    },
+
+    async loadPilotPhoto(campaignName) {
+        if (!campaignName) {
+            return;
+        }
+        const desc = this.getPilotPhotoDesc(campaignName);
+        try {
+            const response = await API.getPilotPhoto(desc);
+            if (response && response.path) {
+                this.setPilotPhoto(`${response.path}?t=${Date.now()}`);
+            } else {
+                this.setPilotPhoto('static/images/placeholder_pilot.png');
+            }
+        } catch (error) {
+            console.warn('Failed to load pilot photo:', error);
+            this.setPilotPhoto('static/images/placeholder_pilot.png');
+        }
+    },
+
+    setPilotPhoto(src) {
+        if (!this.elements.pilotPhoto) {
+            return;
+        }
+        this.elements.pilotPhoto.onerror = () => {
+            this.elements.pilotPhoto.src = 'static/images/placeholder_pilot.png';
+        };
+        this.elements.pilotPhoto.src = src;
+    },
+
+    handlePhotoSelection() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = this.supportedImageTypes.join(',');
+        input.onchange = event => {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
+            if (!this.supportedImageTypes.includes(file.type)) {
+                alert('Unsupported image format. Please select a PNG, JPG, GIF, BMP, or WebP file.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = evt => {
+                this.openCropperModal(evt.target.result);
+            };
+            reader.readAsDataURL(file);
+        };
+        input.click();
+    },
+
+    openCropperModal(imageSrc) {
+        if (!this.elements.cropperModal || !this.elements.cropperImg) {
+            return;
+        }
+        this.elements.cropperImg.src = imageSrc;
+        this.elements.cropperModal.style.display = 'flex';
+
+        if (this.cropper) {
+            this.cropper.destroy();
+        }
+
+        const frameDimensions = this.getPilotPhotoFrameDimensions();
+        this.cropperFrame = frameDimensions;
+
+        this.elements.cropperImg.onload = () => {
+            const minCropBoxWidth = Math.round(frameDimensions.width * 0.6);
+            const minCropBoxHeight = Math.round(frameDimensions.height * 0.6);
+            this.cropper = new Cropper(this.elements.cropperImg, {
+                aspectRatio: frameDimensions.aspectRatio,
+                viewMode: 1,
+                autoCropArea: 1,
+                background: false,
+                movable: true,
+                zoomable: true,
+                rotatable: false,
+                scalable: false,
+                minCropBoxWidth,
+                minCropBoxHeight
+            });
+        };
+    },
+
+    closeCropperModal() {
+        if (this.cropper) {
+            this.cropper.destroy();
+            this.cropper = null;
+        }
+        if (this.elements.cropperModal) {
+            this.elements.cropperModal.style.display = 'none';
+        }
+    },
+
+    async saveCroppedPhoto() {
+        if (!this.cropper || !this.currentCampaign) {
+            return;
+        }
+
+        const frame = this.cropperFrame || this.getPilotPhotoFrameDimensions();
+        const canvas = this.cropper.getCroppedCanvas({
+            width: frame.width,
+            height: frame.height
+        });
+
+        if (!canvas) {
+            alert('Unable to crop the selected image. Please try again.');
+            return;
+        }
+
+        const imageData = canvas.toDataURL('image/png');
+        const desc = this.getPilotPhotoDesc(this.currentCampaign.name);
+
+        try {
+            const response = await API.savePilotPhoto(desc, imageData);
+            if (response && response.path) {
+                this.setPilotPhoto(`${response.path}?t=${Date.now()}`);
+            } else {
+                console.error('Pilot photo save returned unexpected response:', response);
+                alert('Unable to save pilot photo. Please try again.');
+            }
+        } catch (error) {
+            console.error('Failed to save pilot photo:', error);
+            alert(error.message || 'Unable to save pilot photo. Please try again.');
+        } finally {
+            this.closeCropperModal();
+        }
+    },
+
+    getPilotPhotoFrameDimensions() {
+        const fallback = { width: 200, height: 200 };
+        const container = this.elements.pilotPhotoContainer;
+        const width = Math.round(container?.clientWidth || fallback.width);
+        const height = Math.round(container?.clientHeight || fallback.height);
+        const safeWidth = width > 0 ? width : fallback.width;
+        const safeHeight = height > 0 ? height : fallback.height;
+        return {
+            width: safeWidth,
+            height: safeHeight,
+            aspectRatio: safeWidth / safeHeight
+        };
+    },
+
+    async loadPersonalData(campaignName) {
+        if (!campaignName) {
+            return;
+        }
+        try {
+            const data = await API.getCampaignPersonalData(campaignName);
+            this.setPersonalDataFields(data || {});
+            this.showPersonalDataStatus('');
+        } catch (error) {
+            console.error('Failed to load personal data:', error);
+            this.showPersonalDataStatus('Unable to load personal data.');
+            this.setPersonalDataFields({});
+        }
+    },
+
+    setPersonalDataFields(data) {
+        if (this.elements.personalName) {
+            this.elements.personalName.value = data.name || '';
+        }
+        if (this.elements.personalFirstName) {
+            this.elements.personalFirstName.value = data.first_name || '';
+        }
+        if (this.elements.personalBirthday) {
+            this.elements.personalBirthday.value = data.birthday || '';
+        }
+        if (this.elements.personalBirthPlace) {
+            this.elements.personalBirthPlace.value = data.birth_place || '';
+        }
+        if (this.elements.personalBirthCountry) {
+            this.elements.personalBirthCountry.value = data.birth_country || '';
+        }
+    },
+
+    getPersonalDataPayload() {
+        return {
+            name: this.elements.personalName?.value?.trim() || '',
+            first_name: this.elements.personalFirstName?.value?.trim() || '',
+            birthday: this.elements.personalBirthday?.value?.trim() || '',
+            birth_place: this.elements.personalBirthPlace?.value?.trim() || '',
+            birth_country: this.elements.personalBirthCountry?.value?.trim() || ''
+        };
+    },
+
+    async savePersonalData() {
+        if (!this.currentCampaign) {
+            return;
+        }
+        const payload = this.getPersonalDataPayload();
+        try {
+            await API.saveCampaignPersonalData(this.currentCampaign.name, payload);
+            this.showPersonalDataStatus('Saved.');
+        } catch (error) {
+            console.error('Failed to save personal data:', error);
+            this.showPersonalDataStatus('Unable to save personal data.');
+        }
+    },
+
+    showPersonalDataStatus(message) {
+        if (!this.elements.personalStatus) {
+            return;
+        }
+        this.elements.personalStatus.textContent = message || '';
     },
 
     updatePlaneImage(country) {

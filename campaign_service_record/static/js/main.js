@@ -94,6 +94,8 @@ const App = {
         
         // Update page title
         document.title = 'IL-2 Campaign Service Record';
+        
+        LandingPage.applyBackground();
     },
     
     /**

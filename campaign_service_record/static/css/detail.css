@@ -202,6 +202,69 @@
     font-size: 1.125rem;
 }
 
+.detail-panel {
+    background: rgba(250, 244, 232, 0.7);
+    border: 1px solid rgba(203, 185, 153, 0.75);
+    border-radius: 6px;
+    padding: 1rem;
+}
+
+.detail-panel + .detail-panel {
+    margin-top: 1.5rem;
+}
+
+.personal-data-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.personal-data-photo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.personal-data-fields {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.personal-data-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.personal-data-field input {
+    padding: 0.55rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #cbb999;
+    font-size: 0.95rem;
+    background: #f6efdf;
+}
+
+.personal-data-field input:focus {
+    outline: none;
+    border-color: #9a7b55;
+    box-shadow: 0 0 0 2px rgba(154, 123, 85, 0.2);
+}
+
+.personal-data-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.personal-data-status {
+    font-size: 0.85rem;
+    color: #6b5b44;
+}
+
 /* Left Column: Sticky positioning */
 .column-left {
     height: fit-content;
