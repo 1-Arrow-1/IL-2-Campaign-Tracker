@@ -1241,7 +1241,10 @@ const DetailPage = {
 
                 const label = document.createElement('span');
                 label.className = 'combat-subcategory-label';
-                label.textContent = subcat;
+                const formattedLabel = subcat.startsWith('Armored ')
+                    ? subcat.replace('Armored ', 'Armored\n')
+                    : subcat;
+                label.textContent = formattedLabel;
                 row.appendChild(label);
 
                 const value = document.createElement('span');

@@ -660,6 +660,7 @@
 
 .combat-subcategory-label {
     color: #5a4a33;
+    white-space: pre-line;
 }
 
 .combat-subcategory-value {
