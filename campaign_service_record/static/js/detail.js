@@ -354,12 +354,13 @@ const DetailPage = {
         personalBirthday: null,
         personalBirthPlace: null,
         personalBirthCountry: null,
-        personalSave: null,
         personalStatus: null,
         cropperModal: null,
         cropperImg: null,
+        cropperPlaceholder: null,
         cropperCancel: null,
-        cropperSave: null
+        cropperSave: null,
+        cropperPhotoSelect: null
     },
 
     eventImageScale: 0.35,
@@ -395,11 +396,10 @@ const DetailPage = {
      */
     init() {
         this.cacheElements();
-        this.setupPersonalDataHandlers();
         this.setupPhotoHandlers();
         PreviewModal.init();
     },
-    
+
     /**
      * Cache DOM elements
      */
@@ -422,23 +422,22 @@ const DetailPage = {
         this.elements.personalBirthday = document.getElementById('personal-birthday');
         this.elements.personalBirthPlace = document.getElementById('personal-birth-place');
         this.elements.personalBirthCountry = document.getElementById('personal-birth-country');
-        this.elements.personalSave = document.getElementById('personal-data-save');
         this.elements.personalStatus = document.getElementById('personal-data-status');
         this.elements.cropperModal = document.getElementById('cropper-modal');
         this.elements.cropperImg = document.getElementById('cropper-img');
+        this.elements.cropperPlaceholder = document.getElementById('cropper-placeholder');
         this.elements.cropperCancel = document.getElementById('cropper-cancel');
         this.elements.cropperSave = document.getElementById('cropper-save');
-    },
-
-    setupPersonalDataHandlers() {
-        if (this.elements.personalSave) {
-            this.elements.personalSave.addEventListener('click', () => this.savePersonalData());
-        }
+        this.elements.cropperPhotoSelect = document.getElementById('cropper-photo-select');
     },
 
     setupPhotoHandlers() {
         if (this.elements.pilotPhotoBtn) {
-            this.elements.pilotPhotoBtn.addEventListener('click', () => this.handlePhotoSelection());
+            this.elements.pilotPhotoBtn.addEventListener('click', () => this.openPhotoModal());
+        }
+
+        if (this.elements.cropperPhotoSelect) {
+            this.elements.cropperPhotoSelect.addEventListener('click', () => this.handlePhotoSelection());
         }
 
         if (this.elements.cropperCancel) {
@@ -446,10 +445,10 @@ const DetailPage = {
         }
 
         if (this.elements.cropperSave) {
-            this.elements.cropperSave.addEventListener('click', () => this.saveCroppedPhoto());
+            this.elements.cropperSave.addEventListener('click', () => this.applyPhotoAndPersonalData());
         }
     },
-    
+
     /**
      * Load and display campaign details
      */
@@ -541,6 +540,30 @@ const DetailPage = {
         this.elements.pilotPhoto.src = src;
     },
 
+    openPhotoModal() {
+        if (!this.elements.cropperModal) {
+            return;
+        }
+        this.resetCropperPreview();
+        this.showPersonalDataStatus('');
+        this.elements.cropperModal.style.display = 'flex';
+    },
+
+    resetCropperPreview() {
+        if (this.cropper) {
+            this.cropper.destroy();
+            this.cropper = null;
+        }
+        if (this.elements.cropperImg) {
+            this.elements.cropperImg.removeAttribute('src');
+            this.elements.cropperImg.style.display = 'none';
+        }
+        if (this.elements.cropperPlaceholder) {
+            this.elements.cropperPlaceholder.style.display = 'block';
+        }
+        this.cropperFrame = null;
+    },
+
     handlePhotoSelection() {
         const input = document.createElement('input');
         input.type = 'file';
@@ -557,19 +580,22 @@ const DetailPage = {
 
             const reader = new FileReader();
             reader.onload = evt => {
-                this.openCropperModal(evt.target.result);
+                this.openCropperPreview(evt.target.result);
             };
             reader.readAsDataURL(file);
         };
         input.click();
     },
 
-    openCropperModal(imageSrc) {
-        if (!this.elements.cropperModal || !this.elements.cropperImg) {
+    openCropperPreview(imageSrc) {
+        if (!this.elements.cropperImg) {
             return;
         }
+        this.elements.cropperImg.style.display = 'block';
+        if (this.elements.cropperPlaceholder) {
+            this.elements.cropperPlaceholder.style.display = 'none';
+        }
         this.elements.cropperImg.src = imageSrc;
-        this.elements.cropperModal.style.display = 'flex';
 
         if (this.cropper) {
             this.cropper.destroy();
@@ -597,10 +623,7 @@ const DetailPage = {
     },
 
     closeCropperModal() {
-        if (this.cropper) {
-            this.cropper.destroy();
-            this.cropper = null;
-        }
+        this.resetCropperPreview();
         if (this.elements.cropperModal) {
             this.elements.cropperModal.style.display = 'none';
         }
@@ -608,7 +631,7 @@ const DetailPage = {
 
     async saveCroppedPhoto() {
         if (!this.cropper || !this.currentCampaign) {
-            return;
+            return false;
         }
 
         const frame = this.cropperFrame || this.getPilotPhotoFrameDimensions();
@@ -618,27 +641,59 @@ const DetailPage = {
         });
 
         if (!canvas) {
-            alert('Unable to crop the selected image. Please try again.');
-            return;
+            throw new Error('Unable to crop the selected image. Please try again.');
         }
 
         const imageData = canvas.toDataURL('image/png');
         const desc = this.getPilotPhotoDesc(this.currentCampaign.name);
+        const response = await API.savePilotPhoto(desc, imageData);
+        if (response && response.path) {
+            this.setPilotPhoto(`${response.path}?t=${Date.now()}`);
+            return true;
+        }
+        throw new Error('Unable to save pilot photo. Please try again.');
+    },
+
+    async applyPhotoAndPersonalData() {
+        if (!this.currentCampaign) {
+            return;
+        }
+
+        const payload = this.getPersonalDataPayload();
+        this.showPersonalDataStatus('Saving...');
+
+        let photoError = null;
+        let dataError = null;
+
+        if (this.cropper) {
+            try {
+                await this.saveCroppedPhoto();
+            } catch (error) {
+                photoError = error;
+                console.error('Failed to save pilot photo:', error);
+            }
+        }
 
         try {
-            const response = await API.savePilotPhoto(desc, imageData);
-            if (response && response.path) {
-                this.setPilotPhoto(`${response.path}?t=${Date.now()}`);
-            } else {
-                console.error('Pilot photo save returned unexpected response:', response);
-                alert('Unable to save pilot photo. Please try again.');
-            }
+            await API.saveCampaignPersonalData(this.currentCampaign.name, payload);
         } catch (error) {
-            console.error('Failed to save pilot photo:', error);
-            alert(error.message || 'Unable to save pilot photo. Please try again.');
-        } finally {
-            this.closeCropperModal();
+            dataError = error;
+            console.error('Failed to save personal data:', error);
         }
+
+        if (photoError || dataError) {
+            if (photoError && dataError) {
+                this.showPersonalDataStatus('Unable to save photo or personal data.');
+            } else if (photoError) {
+                this.showPersonalDataStatus('Unable to save photo.');
+            } else {
+                this.showPersonalDataStatus('Unable to save personal data.');
+            }
+            return;
+        }
+
+        this.showPersonalDataStatus('Saved.');
+        this.closeCropperModal();
     },
 
     getPilotPhotoFrameDimensions() {
@@ -696,20 +751,6 @@ const DetailPage = {
             birth_place: this.elements.personalBirthPlace?.value?.trim() || '',
             birth_country: this.elements.personalBirthCountry?.value?.trim() || ''
         };
-    },
-
-    async savePersonalData() {
-        if (!this.currentCampaign) {
-            return;
-        }
-        const payload = this.getPersonalDataPayload();
-        try {
-            await API.saveCampaignPersonalData(this.currentCampaign.name, payload);
-            this.showPersonalDataStatus('Saved.');
-        } catch (error) {
-            console.error('Failed to save personal data:', error);
-            this.showPersonalDataStatus('Unable to save personal data.');
-        }
     },
 
     showPersonalDataStatus(message) {

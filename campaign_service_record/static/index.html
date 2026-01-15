@@ -91,7 +91,7 @@
                         <!-- Left Column: Promotions & Awards -->
                         <aside class="column column-left">
                             <section class="personal-data-section detail-panel">
-                                <h3>Personal Data</h3>
+                                <h3>Pilot Photo</h3>
                                 <div class="personal-data-body">
                                     <div class="personal-data-photo">
                                         <div class="pilot-photo-container">
@@ -109,34 +109,8 @@
                                                  aria-hidden="true">
                                         </div>
                                         <button id="detail-pilot-photo-btn" class="pilot-photo-btn" type="button">
-                                            Choose Pilot Photo
+                                            Change Pilot Photo
                                         </button>
-                                    </div>
-                                    <div class="personal-data-fields">
-                                        <label class="personal-data-field" for="personal-name">
-                                            Name
-                                            <input id="personal-name" type="text" maxlength="60" placeholder="Last name">
-                                        </label>
-                                        <label class="personal-data-field" for="personal-first-name">
-                                            First Name
-                                            <input id="personal-first-name" type="text" maxlength="60" placeholder="First name">
-                                        </label>
-                                        <label class="personal-data-field" for="personal-birthday">
-                                            Birthday
-                                            <input id="personal-birthday" type="text" maxlength="40" placeholder="DD Month YYYY">
-                                        </label>
-                                        <label class="personal-data-field" for="personal-birth-place">
-                                            Place of Birth
-                                            <input id="personal-birth-place" type="text" maxlength="80" placeholder="City or region">
-                                        </label>
-                                        <label class="personal-data-field" for="personal-birth-country">
-                                            Country of Birth
-                                            <input id="personal-birth-country" type="text" maxlength="60" placeholder="Country">
-                                        </label>
-                                        <div class="personal-data-actions">
-                                            <button id="personal-data-save" type="button">Save Personal Data</button>
-                                            <span id="personal-data-status" class="personal-data-status" aria-live="polite"></span>
-                                        </div>
                                     </div>
                                 </div>
                             </section>
@@ -174,10 +148,44 @@
     <!-- Cropper Modal -->
     <div id="cropper-modal" class="cropper-modal" style="display: none;">
         <div class="cropper-modal-content">
-            <h3>Crop Pilot Photo</h3>
-            <img id="cropper-img" alt="Crop pilot photo">
+            <h3>Update Pilot Photo &amp; Personal Data</h3>
+            <div class="cropper-modal-body">
+                <div class="cropper-modal-form">
+                    <h4>Personal Data</h4>
+                    <div class="personal-data-fields">
+                        <label class="personal-data-field" for="personal-name">
+                            Name
+                            <input id="personal-name" type="text" maxlength="60" placeholder="Last name">
+                        </label>
+                        <label class="personal-data-field" for="personal-first-name">
+                            First Name
+                            <input id="personal-first-name" type="text" maxlength="60" placeholder="First name">
+                        </label>
+                        <label class="personal-data-field" for="personal-birthday">
+                            Birthday
+                            <input id="personal-birthday" type="text" maxlength="40" placeholder="DD Month YYYY">
+                        </label>
+                        <label class="personal-data-field" for="personal-birth-place">
+                            Place of Birth
+                            <input id="personal-birth-place" type="text" maxlength="80" placeholder="City or region">
+                        </label>
+                        <label class="personal-data-field" for="personal-birth-country">
+                            Country of Birth
+                            <input id="personal-birth-country" type="text" maxlength="60" placeholder="Country">
+                        </label>
+                    </div>
+                    <span id="personal-data-status" class="personal-data-status" aria-live="polite"></span>
+                </div>
+                <div class="cropper-modal-photo">
+                    <div class="cropper-preview">
+                        <p id="cropper-placeholder" class="cropper-placeholder">No new photo selected.</p>
+                        <img id="cropper-img" alt="Crop pilot photo">
+                    </div>
+                    <button id="cropper-photo-select" class="pilot-photo-btn" type="button">Choose Photo</button>
+                </div>
+            </div>
             <div class="cropper-actions">
-                <button id="cropper-save" type="button">Save</button>
+                <button id="cropper-save" type="button">Apply</button>
                 <button id="cropper-cancel" type="button">Cancel</button>
             </div>
         </div>

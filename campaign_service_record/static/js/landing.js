@@ -115,7 +115,7 @@ const LandingPage = {
         const item = document.createElement('div');
         item.className = 'campaign-item';
         item.dataset.campaignName = campaign.name;
-        
+
         // Build stats HTML
         const statsHTML = `
             <span class="stat-item">
@@ -130,9 +130,11 @@ const LandingPage = {
                 <span class="stat-label">Awards:</span>
                 <span class="stat-value">${campaign.awards_count}</span>
             </span>
-        `;    
-        
-        item.innerHTML = `
+        `;
+
+        const content = document.createElement('div');
+        content.className = 'campaign-item__content';
+        content.innerHTML = `
             <div class="campaign-name">
                 ${this.escapeHTML(campaign.display_name)}
                 <span class="campaign-country">${this.escapeHTML(campaign.country)}</span>
@@ -141,15 +143,44 @@ const LandingPage = {
                 ${statsHTML}
             </div>
         `;
-        
+
+        const flagContainer = document.createElement('div');
+        flagContainer.className = 'campaign-flag';
+        const flagSrc = this.getFlagForCountry(campaign.country);
+        if (flagSrc) {
+            const flagImg = document.createElement('img');
+            flagImg.src = flagSrc;
+            flagImg.alt = `${campaign.country} flag`;
+            flagContainer.appendChild(flagImg);
+        }
+
+        item.appendChild(content);
+        item.appendChild(flagContainer);
+
         // Click handler
         item.addEventListener('click', () => {
             this.navigateToDetail(campaign.name);
         });
-        
+
         return item;
     },
     
+    getFlagForCountry(country) {
+        const normalized = (country || '').trim().toLowerCase();
+        const flagMap = {
+            germany: 'static/images/Germany_flag.png',
+            britain: 'static/images/UK_flag.png',
+            uk: 'static/images/UK_flag.png',
+            'united kingdom': 'static/images/UK_flag.png',
+            'soviet union': 'static/images/USSR_flag.png',
+            ussr: 'static/images/USSR_flag.png',
+            us: 'static/images/US_flag.png',
+            usa: 'static/images/US_flag.png',
+            'united states': 'static/images/US_flag.png'
+        };
+        return flagMap[normalized] || '';
+    },
+
     /**
      * Navigate to campaign detail page
      */
