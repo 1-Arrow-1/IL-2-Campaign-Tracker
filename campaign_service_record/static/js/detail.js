@@ -442,6 +442,32 @@ const DetailPage = {
         this.elements.cropperPhotoSelect = document.getElementById('cropper-photo-select');
     },
 
+    setupPhotoHandlers() {
+        if (this.elements.pilotPhotoBtn) {
+            this.elements.pilotPhotoBtn.addEventListener('click', () => this.openPhotoModal());
+        }
+
+        if (this.elements.cropperPhotoSelect) {
+            this.elements.cropperPhotoSelect.addEventListener('click', () => this.handlePhotoSelection());
+        }
+
+        if (this.elements.cropperCancel) {
+            this.elements.cropperCancel.addEventListener('click', () => this.closeCropperModal());
+        }
+
+        if (this.elements.cropperSave) {
+            this.elements.cropperSave.addEventListener('click', () => this.applyPhotoAndPersonalData());
+        }
+
+        if (this.elements.cropperModal) {
+            this.elements.cropperModal.addEventListener('click', event => {
+                if (event.target === this.elements.cropperModal) {
+                    this.closeCropperModal();
+                }
+            });
+        }
+    },
+    
     ensureDetailColumns() {
         const page = this.elements.page;
         if (!page) {
