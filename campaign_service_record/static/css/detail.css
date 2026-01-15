@@ -238,9 +238,9 @@
 
 .personal-data-row {
     display: grid;
-    grid-template-columns: minmax(110px, auto) 1fr;
-    gap: 0.5rem;
-    align-items: baseline;
+    grid-template-columns: 140px 1fr;
+    gap: 0.75rem;
+    align-items: start;
     font-size: 0.9rem;
     color: var(--ink);
     min-width: 0;
@@ -248,10 +248,12 @@
 
 .personal-data-label {
     font-weight: 600;
+    text-align: left;
 }
 
 .personal-data-value {
     justify-self: start;
+    text-align: left;
     color: #5f503c;
     min-width: 0;
     overflow-wrap: anywhere;
