@@ -712,9 +712,9 @@
    Responsive
    ============================================================================ */
 
-@media (max-width: 1200px) {
+@media (max-width: 768px) {
     .detail-columns {
-        grid-template-columns: 1fr;
+        /*grid-template-columns: 1fr;*/
     }
     
     .column-left,
