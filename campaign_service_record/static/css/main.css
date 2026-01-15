@@ -28,22 +28,24 @@
     --scrollbar-track: #e8dbc3;
 }
 
-html, body {
-    height: 100%;
+html {
+    min-height: 100%;
     font-family: 'Georgia', 'Times New Roman', serif;
     font-size: 16px;
     line-height: 1.6;
     color: var(--ink);
     background-color: var(--paper);
-    background-image: url('../images/background.jpg');
-    background-repeat: repeat;
-    background-position: center;
-    background-attachment: fixed;
-    background-size: cover;
 }
 
 body {
+    min-height: 100vh;
     overflow-x: hidden;
+    background-color: var(--paper);
+    background-image: url('../images/background.jpg');
+    background-repeat: no-repeat;
+    background-position: center top;
+    background-attachment: fixed;
+    background-size: cover;
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
