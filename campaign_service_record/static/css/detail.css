@@ -364,6 +364,19 @@
     object-fit: contain;
 }
 
+.preview-modal__description {
+    max-width: 520px;
+    text-align: center;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--ink-muted);
+    white-space: pre-line;
+}
+
+.preview-modal__description.is-hidden {
+    display: none;
+}
+
 .preview-modal__close {
     position: absolute;
     top: 0.5rem;
