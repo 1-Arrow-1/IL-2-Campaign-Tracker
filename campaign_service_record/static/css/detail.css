@@ -239,6 +239,7 @@
     align-items: baseline;
     font-size: 0.9rem;
     color: var(--ink);
+    min-width: 0;
 }
 
 .personal-data-label {
@@ -248,6 +249,8 @@
 .personal-data-value {
     justify-self: start;
     color: #5f503c;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .personal-data-fields {
