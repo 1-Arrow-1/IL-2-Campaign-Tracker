@@ -607,11 +607,23 @@ Click on the pilot photo or name fields to customize:
 - Manually open your browser and navigate to `http://127.0.0.1:5000`
 - Keep the browser tab active to prevent automatic shutdown
 
-#### Problem: German awards and pictures don't show the swastika
+#### Problem: German awards and pictures don't show the swastika  
 
-**Cause**: I do not support, endorse, or promote National Socialist ideology or symbols in any form.
-**Solution**: Exchange awards pictures in the `<path to IL-2 BoS>\data\swf\CampaignRanksAwards\Germany`. Make sure to keep the exact filename after replacing the image content.
-Exchange German flag and background picture in `<tracker installation folder>\_internal\static\images\background_Germany.png` and `<tracker installation folder>\_internal\static\images\german_flag_png`. Also make sure here to keep the exact filename after changing the image content.
+**Cause:**  
+The Campaign Tracker does not support, endorse, or promote National Socialist ideology or symbols in any form.  
+To comply with legal regulations in multiple countries and to respect community standards, swastikas and other related symbols have been removed from the default images shipped with this software.<br>
+
+**Solution:**  
+Users who require historically accurate imagery may replace the images locally:
+
+- Replace award images in  
+  `<path to IL-2 BoS>\data\swf\CampaignRanksAwards\Germany`  
+ 
+- Replace the German background and flag images in  
+  `<tracker installation folder>\_internal\static\images\background_Germany.png`  
+  `<tracker installation folder>\_internal\static\images\german_flag.png`  
+
+⚠️ The original filenames and filetypes **must be preserved** after replacing the image content.
 
 ### Technical Information
 

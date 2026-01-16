@@ -45,6 +45,10 @@ Source: "mlg2txt.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "QUICK_START.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README.html"; DestDir: "{app}"; Flags: ignoreversion
 
+; --- Campaign Service Record ---
+Source: "Campaign_Service_Record.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "_internal\*"; DestDir: "{app}\_internal"; Flags: recursesubdirs createallsubdirs ignoreversion
+
 ; --- Cleanup utility for uninstaller ---
 Source: "cleanup_tracker_content.exe"; DestDir: "{app}"; Flags: ignoreversion
 
@@ -71,6 +75,7 @@ var
   { Uninstall options }
   RemoveConfigFiles: Boolean;
   RemoveBackupFiles: Boolean;
+  RemoveServiceRecordData: Boolean;
 
 { ----------------------------
   Helpers
@@ -197,9 +202,10 @@ var
 begin
   Result := True;
   
-  { Default: keep configuration and backup files }
+  { Default: keep configuration, backup files, and Service Record data }
   RemoveConfigFiles := False;
   RemoveBackupFiles := False;
+  RemoveServiceRecordData := False;
   
   { Ask about configuration files }
   MsgResult := MsgBox(
@@ -226,6 +232,20 @@ begin
     MB_YESNO
   );
   RemoveBackupFiles := (MsgResult = IDYES);
+  
+  { Ask about Campaign Service Record data }
+  MsgResult := MsgBox(
+    'Do you want to REMOVE your Campaign Service Record data?' + #13#10 + #13#10 +
+    'This includes:' + #13#10 +
+    '  - Pilot photos' + #13#10 +
+    '  - Personal information (name, birthday, birthplace)' + #13#10 + #13#10 +
+    'Location: %LOCALAPPDATA%\.il2_campaign_service_record' + #13#10 + #13#10 +
+    'Click YES to remove Service Record data.' + #13#10 +
+    'Click NO to keep it.',
+    mbConfirmation,
+    MB_YESNO
+  );
+  RemoveServiceRecordData := (MsgResult = IDYES);
 end;
 
 // ----------------------------
@@ -239,6 +259,10 @@ end;
 //         - campaignsstates_*.backup
 //         - campaign_popups_seen_*.backup
 //         - campaignsstates_hash_index.json
+//    4) Campaign Service Record data:
+//       %LOCALAPPDATA%\.il2_campaign_service_record\
+//         - pilot_photos\
+//         - campaign_personal_data.json
 //  ---------------------------- 
 
 procedure DeleteUserSaveCampaignFiles(const IL2Root: string);
@@ -281,6 +305,28 @@ begin
     until not FindNext(FindRec);
   finally
     FindClose(FindRec);
+  end;
+end;
+
+procedure DeleteServiceRecordData();
+var
+  ServiceRecordDir: string;
+begin
+  if not RemoveServiceRecordData then
+  begin
+    { User wants to keep Service Record data - skip this step }
+    Exit;
+  end;
+
+  { Get %LOCALAPPDATA%\.il2_campaign_service_record }
+  ServiceRecordDir := ExpandConstant('{localappdata}\.il2_campaign_service_record');
+  
+  if DirExists(ServiceRecordDir) then
+  begin
+    { Delete entire directory including:
+      - pilot_photos/
+      - campaign_personal_data.json }
+    DelTree(ServiceRecordDir, True, True, True);
   end;
 end;
 
@@ -336,8 +382,9 @@ begin
     FindClose(FindRec);
   end;
   
-  { Delete subdirectories (like reports/) }
+  { Delete subdirectories }
   DelTree(AppDir + '\reports', True, True, True);
+  DelTree(AppDir + '\_internal', True, True, True);
   
   { Try to remove the app directory if empty (will fail if config files kept) }
   RemoveDir(AppDir);
@@ -366,8 +413,12 @@ begin
       DeleteUserSaveCampaignFiles(IL2Root);
     end;
     
-    { Step 4: Delete app files (respects RemoveConfigFiles setting) }
-    { Deletes: *.json, *.log, *.exe, *.txt, *.html }
+    { Step 4: Delete Campaign Service Record data }
+    { (respects RemoveServiceRecordData setting) }
+    DeleteServiceRecordData();
+    
+    { Step 5: Delete app files (respects RemoveConfigFiles setting) }
+    { Deletes: *.json, *.log, *.exe, *.txt, *.html, _internal\ }
     { Keeps: *.yaml (unless RemoveConfigFiles = True) }
     DeleteAppFiles();
   end;
