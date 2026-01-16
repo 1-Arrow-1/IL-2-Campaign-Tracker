@@ -63,8 +63,8 @@ const App = {
         
         // Custom navigation event from landing page
         document.addEventListener('navigate-to-detail', (event) => {
-            const { campaignName } = event.detail;
-            this.showDetail(campaignName);
+            const { campaignName, campaignCountry } = event.detail;
+            this.showDetail(campaignName, campaignCountry);
         });
     },
     
@@ -91,6 +91,7 @@ const App = {
         this.elements.backBtn.style.display = 'none';
         
         this.currentPage = 'landing';
+        DetailPage.clearBackgroundState();
         
         // Update page title
         document.title = 'IL-2 Campaign Service Record';
@@ -106,7 +107,7 @@ const App = {
     /**
      * Show detail page
      */
-    async showDetail(campaignName) {
+    async showDetail(campaignName, campaignCountry) {
         console.log('Navigating to detail page:', campaignName);
         
         this.elements.landingPage.style.display = 'none';
@@ -114,6 +115,9 @@ const App = {
         this.elements.backBtn.style.display = 'inline-block';
         
         this.currentPage = 'detail';
+
+        DetailPage.clearBackgroundState();
+        DetailPage.applyBackgroundForCountry(campaignCountry, { force: true });
         
         // Update page title
         document.title = `${campaignName} - Campaign Service Record`;

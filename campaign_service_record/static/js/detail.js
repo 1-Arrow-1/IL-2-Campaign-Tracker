@@ -535,13 +535,14 @@ const DetailPage = {
             }
             
             this.currentCampaign = campaign;
+
+            this.applyBackgroundForCountry(campaign.country, { force: true });
             
             // Render components
             this.renderHeader(campaign);
             this.renderEvents(campaign.events);
             this.renderDebriefings(campaign.debriefings_html);
             this.renderSummary(campaign.summary);
-            this.applyBackgroundForCountry(campaign.country);
             await this.loadPersonalData(campaign.name);
             await this.loadPilotPhoto(campaign.name);
             
@@ -565,13 +566,17 @@ const DetailPage = {
         this.updateInsigniaImages(campaign.country);
     },
 
-    applyBackgroundForCountry(country) {
+    clearBackgroundState() {
+        this.currentBackground = null;
+    },
+
+    applyBackgroundForCountry(country, { force = false } = {}) {
         if (!this.elements.page || this.elements.page.offsetParent === null) {
             return;
         }
         const normalized = (country || '').trim().toLowerCase();
         const background = this.backgroundByCountry[normalized];
-        if (background && background !== this.currentBackground) {
+        if (background && (force || background !== this.currentBackground)) {
             document.body.style.backgroundImage = `url('${background}')`;
             this.currentBackground = background;
         }

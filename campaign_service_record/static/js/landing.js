@@ -80,6 +80,10 @@ const LandingPage = {
             return;
         }
 
+        if (window.App && App.currentPage !== 'landing') {
+            return;
+        }
+
         if (!this.selectedBackground) {
             this.selectBackground();
         }
@@ -180,7 +184,7 @@ const LandingPage = {
 
         // Click handler
         item.addEventListener('click', () => {
-            this.navigateToDetail(campaign.name);
+            this.navigateToDetail(campaign.name, campaign.country);
         });
 
         return item;
@@ -205,12 +209,12 @@ const LandingPage = {
     /**
      * Navigate to campaign detail page
      */
-    navigateToDetail(campaignName) {
+    navigateToDetail(campaignName, campaignCountry) {
         console.log('Navigating to campaign:', campaignName);
         
         // Dispatch custom event for app-level navigation
         const event = new CustomEvent('navigate-to-detail', {
-            detail: { campaignName }
+            detail: { campaignName, campaignCountry }
         });
         document.dispatchEvent(event);
     },
