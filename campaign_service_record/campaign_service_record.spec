@@ -76,7 +76,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None  # Add icon file path here if available
+    icon='Campaign_Service_Record.ico'
 )
 
 # Collect

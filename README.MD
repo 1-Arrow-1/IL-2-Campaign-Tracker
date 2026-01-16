@@ -21,6 +21,7 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **W
 - [Mission Debriefings](#mission-debriefings)
 - [Mission Cleanup](#mission-cleanup)
 - [Backup & Restore System](#backup--restore-system)
+- [Campaign Service Record](#camapign-service-record)
 - [File Reference](#file-reference)
 - [Troubleshooting](#troubleshooting)
 - [FAQ](#faq)
@@ -89,12 +90,12 @@ Note: The intention of the extraction of the standard official campaigns is ONLY
 - **Goto** `<Path to Il-2 BoS>\data\(null)\campaigns`.  
 - **Copy** the subfolders of `<Path to Il-2 BoS>\data\(null)\campaigns` to `<Path to Il-2 BoS>\data\campaigns`  
 
-5. **Run** `IL2_Campaign_Tracker_v2.0.exe` from your Tracker installation directory.
+1. **Run** `IL2_Campaign_Tracker_v2.0.exe` from your Tracker installation directory.
 
 ℹ️ **NOTE**: By default, the tracker shuts down automatically when IL-2 BoS is closed. To continue using the tracker, you must either restart it manually or configure a Windows Task Scheduler task to launch it automatically when Windows starts.
 
 A general setup guide can be found here:
-https://forum.il2-series.com/topic/772-expanded-career-rank-mod/#findComment-4176
+<https://forum.il2-series.com/topic/772-expanded-career-rank-mod/#findComment-4176>
 
 Please adjust the executable names and file paths according to your local installation.
 
@@ -115,6 +116,8 @@ IL2_Campaign_Tracker_v2.0/
 ├── campaign_progress_config.yaml        # Ranks & awards configuration
 ├── stock_campaigns.yaml                 # Campaign to Country allocation 
 ├── object_categories.yaml               # Needed for mission debriefing
+├── Campaign_Service_Record.exe          # Main executable for the Service Record
+├── _internal (folder)                   # Needed for the Service Record (contains images, css, js, etc.)
 └──(other files created automatically on first run)
 ```
 
@@ -158,6 +161,7 @@ After setup, the tracker:
 3. Starts monitoring for changes
 
 **Uninstall**
+
 1. **Delete** the tracker folder manually
 2. **Delete** the folder `<Path to IL-2 BoS>\data\swf\CampaignRanksAwards` manually
 3. **Delete** the following files (if existent) from your IL-2 usersave folder `<Path to IL-2 BoS>\data\swf\usersave\{UUID}\campaign` (if you want to remove all tracker data):
@@ -200,9 +204,10 @@ Flying Circus (WW1) campaigns are detected and excluded by default because the t
 5. **Run** `IL2_Campaign_Tracker_v2.0.exe` from Tracker installation path.
 
 ℹ️ Rest of the setup is the same as the manual installation method. You will have addional files:
- - `unins000.exe` - uninstaller
- - `unins000.dat` - uninstaller data
- - `cleanup_tracker_content.exe` - helper for `unins000.exe` (removes all tracker generated content from in-game debriefings/events)
+
+- `unins000.exe` - uninstaller
+- `unins000.dat` - uninstaller data
+- `cleanup_tracker_content.exe` - helper for `unins000.exe` (removes all tracker generated content from in-game debriefings/events)
 
 **Uninstall**
 
@@ -215,9 +220,6 @@ Flying Circus (WW1) campaigns are detected and excluded by default because the t
 If you choose to keep the configuration files during uninstallation and later reinstall the tracker into the same folder, those files will not be overwritten. Your previously saved configuration will be retained.
 
 ---
-
-
-
 
 ## ⚙️ How It Works <a id="how-it-works"></a>
 
@@ -487,6 +489,137 @@ Later, if needed:
 9. Select the backup from before removal
 10. Campaign restored to state WITH Mission 05 (incomplete)
 ```
+
+---
+
+## 📋 Campaign Service Record <a id="camapign-service-record"></a>
+
+The **Campaign Service Record** is a web-based application that provides an elegant, read-only view of your pilot’s career across all ongoing and completed campaigns. It presents your service history in a clean, professional format—ideal for reviewing achievements or sharing your combat record.
+
+⚠️ **IMPORTANT**: The Campaign Service Record is not a standalone system. It operates exclusively in conjunction with the tracker and its associated files, which supply the required campaign data.
+
+### Features
+
+- **Campaign Overview**: Browse all campaigns you've flown, showing missions completed, promotions earned, and awards received
+- **Detailed Service Record**: Click any campaign to view:
+  - Complete mission history with debriefings
+  - Chronological timeline of promotions and awards
+  - Career statistics (air kills, ground kills, mission success rates)
+  - Aircraft usage and performance breakdown
+- **Pilot Profile**: Display and customize pilot name, photo, and personal information per campaign
+- **Responsive Design**: Clean, modern interface that works on any screen size
+- **Auto-Generated**: Automatically reads data from your Campaign Tracker files - no manual input required
+
+### How to Use
+
+1. Locate `Campaign_Service_Record.exe` in your Campaign Tracker installation directory (see Installation section above)
+2. Double-click `Campaign_Service_Record.exe` to start the application
+3. Your default web browser will open automatically and display your service record
+4. Browse your campaigns and click on any campaign to view detailed statistics
+5. The server will shut down automatically after 60 seconds of inactivity
+
+**Note**: The Campaign Service Record requires data from the Campaign Tracker. You must run the Campaign Tracker at least once and complete at least one mission before campaigns will appear in the Service Record.
+
+### Interface Overview
+
+#### Landing Page
+
+- **Left Panel**: Pilot information (photo, name, service overview)
+- **Right Panel**: List of all campaigns with completed missions
+  - Shows mission count, promotions earned, and awards received per campaign
+  - Click any campaign to view detailed service record
+
+#### Campaign Detail Page
+
+- **Left Column**: Pilot information (Customizable photo & personal data), Chronological timeline of promotions and awards
+- **Middle Column**: Career statistics including:
+  - Total air and ground kills
+  - Mission outcomes
+  - Aircraft usage breakdown
+  - and more
+- **Right Column**: Mission debriefings with detailed combat results
+- **Back Button**: Return to campaign overview
+
+### Customizing Pilot Information
+
+Click on the pilot photo or name fields to customize:
+
+- **Pilot Photo**: Click to upload a new photo (supports common image formats)
+- **Personal Information**: Edit name, first name, birthday, birthplace and birth country
+- All changes are saved automatically and persist across sessions
+
+### Troubleshooting
+
+#### Problem: "Loading campaigns..." appears forever
+
+**Cause**: No campaign data available or JSON files are empty  
+**Solution**:
+
+- Ensure you have run the Campaign Tracker at least once
+- Complete at least one mission in any campaign
+- Check that your Campaign Tracker installation contains these files:
+  - `campaign_completion_state.json`
+  - `campaign_events.json`
+  - `campaigns_decoded.json`
+  - `campaign_mission_dates.json`
+
+#### Problem: Campaign Service Record won't start
+
+**Cause**: Port 5000 is already in use by another application  
+**Solution**:
+
+- Close any other web servers or applications using port 5000
+- If the issue persists, restart your computer to free up the port
+
+#### Problem: Browser shows "Cannot connect" or "Page not found"
+
+**Cause**: The application server failed to start  
+**Solution**:
+
+- Check that both `Campaign_Service_Record.exe` and the `_internal` folder are present in the installation directory
+- Ensure your antivirus is not blocking the application
+- Try running `Campaign_Service_Record.exe` as administrator
+
+#### Problem: Clicking a campaign shows "Failed to load campaign details"
+
+**Cause**: Missing or corrupted campaign data  
+**Solution**:
+
+- Run the Campaign Tracker again to regenerate JSON files
+- Ensure the campaign has at least one completed mission
+- Check that campaign names in JSON files are consistent
+
+#### Problem: Pilot photo won't upload
+
+**Cause**: File format not supported or file is too large  
+**Solution**:
+
+- Use common image formats (JPG, PNG, BMP)
+- Ensure image file is smaller than 5MB
+- Try converting the image to PNG format
+
+#### Problem: Application closes immediately after starting
+
+**Cause**: The 60-second idle timeout may be too short, or browser didn't open  
+**Solution**:
+
+- Double-click `Campaign_Service_Record.exe` again
+- Manually open your browser and navigate to `http://127.0.0.1:5000`
+- Keep the browser tab active to prevent automatic shutdown
+
+#### Problem: German awards and pictures don't show the swastika
+
+**Cause**: I do not support, endorse, or promote National Socialist ideology or symbols in any form.
+**Solution**: Exchange awards pictures in the `<path to IL-2 BoS>\data\swf\CampaignRanksAwards\Germany`. Make sure to keep the exact filename after replacing the image content.
+Exchange German flag and background picture in `<tracker installation folder>\_internal\static\images\background_Germany.png` and `<tracker installation folder>\_internal\static\images\german_flag_png`. Also make sure here to keep the exact filename after changing the image content.
+
+### Technical Information
+
+- **Server Address**: `http://127.0.0.1:5000` (local machine only)
+- **Auto-Shutdown**: Server automatically stops after 60 seconds of inactivity
+- **Data Location**: Reads JSON files from the same directory as the executable
+- **Browser Compatibility**: Works with all modern browsers (Chrome, Firefox, Edge)
+- **Network**: Does not require internet connection; runs entirely on your local machine
 
 ---
 
