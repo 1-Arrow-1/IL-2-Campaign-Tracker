@@ -141,6 +141,11 @@ def create_app():
                 return send_from_directory(locales_dir, filename)
         return f"Locale not found: {filename}", 404
     
+    @app.route('/pilot_photos/<path:filename>')
+    def serve_pilot_photo(filename):
+        """Serve pilot photos from user data directory."""
+        return send_from_directory(config.pilot_photo_dir, filename)
+
     if config.frozen:
         # In frozen mode, serve reports from data directory
         @app.route('/reports/<path:filename>')
@@ -148,11 +153,6 @@ def create_app():
             """Serve PDF reports."""
             reports_dir = config.data_dir / 'reports'
             return send_from_directory(reports_dir, filename)
-
-        @app.route('/pilot_photos/<path:filename>')
-        def serve_pilot_photo(filename):
-            """Serve pilot photos from user data directory."""
-            return send_from_directory(config.pilot_photo_dir, filename)
     
     @app.route('/favicon.ico')
     def favicon():

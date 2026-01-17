@@ -31,10 +31,10 @@ const LandingPage = {
     campaigns: [],
 
     backgroundImages: [
-        'static/images/background_Britain.png',
-        'static/images/background_Germany.png',
-        'static/images/background_USSR.png',
-        'static/images/background_US.png'
+        '/static/images/background_Britain.png',
+        '/static/images/background_Germany.png',
+        '/static/images/background_USSR.png',
+        '/static/images/background_US.png'
     ],
     selectedBackground: null,
     
@@ -43,7 +43,7 @@ const LandingPage = {
      */
     init() {
         this.cacheElements();
-        this.selectBackground();
+        this.loadBackground();
         this.loadCampaigns();
     },
     
@@ -65,6 +65,22 @@ const LandingPage = {
         }
         const index = Math.floor(Math.random() * this.backgroundImages.length);
         this.selectedBackground = this.backgroundImages[index];
+    },
+
+    async loadBackground() {
+        try {
+            const response = await API.getLandingBackground();
+            if (response && response.background) {
+                this.selectedBackground = response.background;
+                this.applyBackground({ defer: true });
+                return;
+            }
+        } catch (error) {
+            console.warn('Failed to load landing background:', error);
+        }
+
+        this.selectBackground();
+        this.applyBackground({ defer: true });
     },
 
     getFallbackBackground() {
@@ -197,15 +213,15 @@ const LandingPage = {
     getFlagForCountry(country) {
         const normalized = (country || '').trim().toLowerCase();
         const flagMap = {
-            germany: 'static/images/Germany_flag.png',
-            britain: 'static/images/UK_flag.png',
-            uk: 'static/images/UK_flag.png',
-            'united kingdom': 'static/images/UK_flag.png',
-            'soviet union': 'static/images/USSR_flag.png',
-            ussr: 'static/images/USSR_flag.png',
-            us: 'static/images/US_flag.png',
-            usa: 'static/images/US_flag.png',
-            'united states': 'static/images/US_flag.png'
+            germany: '/static/images/Germany_flag.png',
+            britain: '/static/images/UK_flag.png',
+            uk: '/static/images/UK_flag.png',
+            'united kingdom': '/static/images/UK_flag.png',
+            'soviet union': '/static/images/USSR_flag.png',
+            ussr: '/static/images/USSR_flag.png',
+            us: '/static/images/US_flag.png',
+            usa: '/static/images/US_flag.png',
+            'united states': '/static/images/US_flag.png'
         };
         return flagMap[normalized] || '';
     },

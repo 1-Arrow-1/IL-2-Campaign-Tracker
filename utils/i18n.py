@@ -51,21 +51,27 @@ def _select_locale(settings: Settings) -> str:
     return locale or fallback or "en"
 
 
-def load_locale(base_dir: Path | None = None) -> None:
+def load_locale(base_dir: Path | None = None, locale: str | None = None) -> None:
     global _LOCALE, _TRANSLATIONS, _FALLBACK, _SETTINGS
 
     _SETTINGS = load_settings(base_dir)
-    locale = _select_locale(_SETTINGS)
+    selected_locale = locale or _select_locale(_SETTINGS)
     locales_dir = resolve_locales_dir()
 
     _FALLBACK = _load_json(locales_dir / "en.json")
-    _LOCALE = locale
+    _LOCALE = selected_locale
 
-    if locale == "en":
+    if selected_locale == "en":
         _TRANSLATIONS = _FALLBACK
         return
 
-    selected = _load_json(locales_dir / f"{locale}.json")
+    locale_path = locales_dir / f"{selected_locale}.json"
+    if not locale_path.exists():
+        for candidate in locales_dir.glob("*.json"):
+            if candidate.stem.lower() == str(selected_locale).lower():
+                locale_path = candidate
+                break
+    selected = _load_json(locale_path)
     _TRANSLATIONS = _merge(_FALLBACK, selected)
 
 

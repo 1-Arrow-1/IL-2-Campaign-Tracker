@@ -385,14 +385,14 @@ const DetailPage = {
         'image/webp'
     ],
     backgroundByCountry: {
-        germany: 'static/images/background_Germany.png',
-        britain: 'static/images/background_Britain.png',
-        uk: 'static/images/background_Britain.png',
-        'soviet union': 'static/images/background_USSR.png',
-        ussr: 'static/images/background_USSR.png',
-        us: 'static/images/background_US.png',
-        usa: 'static/images/background_US.png',
-        'united states': 'static/images/background_US.png'
+        germany: '/static/images/background_Germany.png',
+        britain: '/static/images/background_Britain.png',
+        uk: '/static/images/background_Britain.png',
+        'soviet union': '/static/images/background_USSR.png',
+        ussr: '/static/images/background_USSR.png',
+        us: '/static/images/background_US.png',
+        usa: '/static/images/background_US.png',
+        'united states': '/static/images/background_US.png'
     },
     currentBackground: null,
     
@@ -449,7 +449,12 @@ const DetailPage = {
 
     setupPhotoHandlers() {
         if (this.elements.pilotPhotoBtn) {
-            this.elements.pilotPhotoBtn.addEventListener('click', () => this.openPhotoModal());
+            this.elements.pilotPhotoBtn.addEventListener('click', () => {
+                console.info('Pilot photo edit clicked', {
+                    campaign: this.currentCampaign?.name || null
+                });
+                this.openPhotoModal();
+            });
         }
 
         if (this.elements.cropperPhotoSelect) {
@@ -523,6 +528,10 @@ const DetailPage = {
      */
     async load(campaignName) {
         console.log('Loading campaign details:', campaignName);
+        if (!campaignName) {
+            this.showError(t('service_record.detail.error_not_found'));
+            return;
+        }
         
         try {
             // Show loading state
@@ -600,11 +609,11 @@ const DetailPage = {
             if (response && response.path) {
                 this.setPilotPhoto(`${response.path}?t=${Date.now()}`);
             } else {
-                this.setPilotPhoto('static/images/placeholder_pilot.png');
+                this.setPilotPhoto('/static/images/placeholder_pilot.png');
             }
         } catch (error) {
             console.warn('Failed to load pilot photo:', error);
-            this.setPilotPhoto('static/images/placeholder_pilot.png');
+            this.setPilotPhoto('/static/images/placeholder_pilot.png');
         }
     },
 
@@ -613,7 +622,7 @@ const DetailPage = {
             return;
         }
         this.elements.pilotPhoto.onerror = () => {
-        this.elements.pilotPhoto.src = 'static/images/placeholder_pilot.png';
+        this.elements.pilotPhoto.src = '/static/images/placeholder_pilot.png';
         };
         this.elements.pilotPhoto.src = src;
     },
@@ -724,6 +733,7 @@ const DetailPage = {
 
         const imageData = canvas.toDataURL('image/png');
         const desc = this.getPilotPhotoDesc(this.currentCampaign.name);
+        console.info('Uploading pilot photo', { desc });
         const response = await API.savePilotPhoto(desc, imageData);
         if (response && response.path) {
             this.setPilotPhoto(`${response.path}?t=${Date.now()}`);
@@ -876,14 +886,14 @@ const DetailPage = {
 
         const normalized = (country || '').trim().toLowerCase();
         const planeImages = {
-            germany: 'static/images/BF109_1.png',
-            us: 'static/images/P51_1.png',
-            usa: 'static/images/P51_1.png',
-            'united states': 'static/images/P51_1.png',
-            britain: 'static/images/Spitfire_1.png',
-            uk: 'static/images/Spitfire_1.png',
-            ussr: 'static/images/yak3_1.png',
-            'soviet union': 'static/images/yak3_1.png'
+            germany: '/static/images/BF109_1.png',
+            us: '/static/images/P51_1.png',
+            usa: '/static/images/P51_1.png',
+            'united states': '/static/images/P51_1.png',
+            britain: '/static/images/Spitfire_1.png',
+            uk: '/static/images/Spitfire_1.png',
+            ussr: '/static/images/yak3_1.png',
+            'soviet union': '/static/images/yak3_1.png'
         };
 
         const imageSrc = planeImages[normalized];
@@ -908,14 +918,14 @@ const DetailPage = {
 
         const normalized = (country || '').trim().toLowerCase();
         const insigniaImages = {
-            germany: 'static/images/German_airforce_1.png',
-            britain: 'static/images/British_airforce_1.png',
-            uk: 'static/images/British_airforce_1.png',
-            ussr: 'static/images/USSR_Airforce_1.png',
-            'soviet union': 'static/images/USSR_Airforce_1.png',
-            us: 'static/images/US_airforce_1.png',
-            usa: 'static/images/US_airforce_1.png',
-            'united states': 'static/images/US_airforce_1.png'
+            germany: '/static/images/German_airforce_1.png',
+            britain: '/static/images/British_airforce_1.png',
+            uk: '/static/images/British_airforce_1.png',
+            ussr: '/static/images/USSR_Airforce_1.png',
+            'soviet union': '/static/images/USSR_Airforce_1.png',
+            us: '/static/images/US_airforce_1.png',
+            usa: '/static/images/US_airforce_1.png',
+            'united states': '/static/images/US_airforce_1.png'
         };
 
         const imageSrc = insigniaImages[normalized];

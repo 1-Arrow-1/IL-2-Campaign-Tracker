@@ -13,6 +13,7 @@ import base64
 import json
 import logging
 import os
+import random
 import re
 import time
 import traceback
@@ -20,7 +21,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import Optional
 
-from flask import Blueprint, jsonify, request, current_app, send_file, send_from_directory
+from flask import Blueprint, jsonify, request, current_app, send_file, send_from_directory, session
 
 from core.data_loader import DataLoader
 from core.campaign_aggregator import CampaignAggregator
@@ -46,6 +47,12 @@ _last_ping = [time.time()]
 _PILOT_DESC_DEFAULT = "campaign_pilot"
 _PERSONAL_DATA_FILENAME = "campaign_personal_data.json"
 _DEFAULT_LOCALE = "en"
+_LANDING_BACKGROUNDS = [
+    "images/background_Britain.png",
+    "images/background_Germany.png",
+    "images/background_US.png",
+    "images/background_USSR.png",
+]
 
 
 def _sanitize_pilot_name(name: Optional[str]) -> Optional[str]:
@@ -119,6 +126,19 @@ def _load_tracker_settings() -> dict:
         return payload
     logger.warning("Invalid settings payload in %s", settings_path)
     return {}
+
+
+def _resolve_campaign_name(campaign_name: str) -> str:
+    if not _data_loader:
+        return campaign_name
+    completion_state = _data_loader.get_campaign_completion_state()
+    if campaign_name in completion_state:
+        return campaign_name
+    normalized = campaign_name.lower()
+    for key in completion_state.keys():
+        if key.lower() == normalized:
+            return key
+    return campaign_name
 
 
 def init_api(data_dir: Path, reports_dir: Optional[Path] = None):
@@ -233,6 +253,20 @@ def get_settings():
 
 
 # ============================================================================
+# Landing Background Endpoint
+# ============================================================================
+
+@api_bp.route('/api/landing_background')
+def get_landing_background():
+    """Select a random landing background per session."""
+    selected = session.get('landing_background')
+    if selected not in _LANDING_BACKGROUNDS:
+        selected = random.choice(_LANDING_BACKGROUNDS)
+        session['landing_background'] = selected
+    return jsonify({'background': f'/static/{selected}', 'filename': selected})
+
+
+# ============================================================================
 # Pilot Photo Endpoints
 # ============================================================================
 
@@ -241,7 +275,6 @@ def get_pilot_photo():
     """Get the stored pilot photo path, if available."""
     desc = request.args.get('desc', _PILOT_DESC_DEFAULT)
     photo_dir = current_app.config.get('PILOT_PHOTO_DIR')
-    frozen = current_app.config.get('FROZEN', False)
 
     if not photo_dir:
         return jsonify({'path': None, 'name': None})
@@ -259,9 +292,7 @@ def get_pilot_photo():
         return jsonify({'path': None, 'name': name_value})
 
     filename = pilot_photo_filename(desc)
-    if frozen:
-        return jsonify({'path': f'/pilot_photos/{filename}', 'name': name_value})
-    return jsonify({'path': f'/static/pilot_photos/{filename}', 'name': name_value})
+    return jsonify({'path': f'/pilot_photos/{filename}', 'name': name_value})
 
 
 @api_bp.route('/api/save_pilot_photo', methods=['POST'])
@@ -297,7 +328,6 @@ def save_pilot_photo():
         return jsonify({'error': 'Invalid image data. Please choose a different image.'}), 400
 
     photo_dir = current_app.config.get('PILOT_PHOTO_DIR')
-    frozen = current_app.config.get('FROZEN', False)
     if not photo_dir:
         return jsonify({'error': 'Photo storage not configured'}), 500
 
@@ -332,9 +362,7 @@ def save_pilot_photo():
             logger.error("Failed to save pilot name to %s: %s", name_path, exc, exc_info=True)
             return jsonify({'error': 'Failed to save pilot name'}), 500
 
-    if frozen:
-        return jsonify({'path': f'/pilot_photos/{filename}', 'name': name_value})
-    return jsonify({'path': f'/static/pilot_photos/{filename}', 'name': name_value})
+    return jsonify({'path': f'/pilot_photos/{filename}', 'name': name_value})
 
 
 # ============================================================================
@@ -344,13 +372,17 @@ def save_pilot_photo():
 @api_bp.route('/api/campaign/<campaign_name>/personal_data')
 def get_campaign_personal_data(campaign_name: str):
     """Get stored personal data for a campaign."""
+    resolved = _resolve_campaign_name(campaign_name)
+    logger.info("Personal data read requested for campaign=%s resolved=%s", campaign_name, resolved)
     data = _load_personal_data()
-    return jsonify(data.get(campaign_name, {}))
+    return jsonify(data.get(resolved, {}))
 
 
 @api_bp.route('/api/campaign/<campaign_name>/personal_data', methods=['POST'])
 def save_campaign_personal_data(campaign_name: str):
     """Save personal data for a campaign."""
+    resolved = _resolve_campaign_name(campaign_name)
+    logger.info("Personal data save requested for campaign=%s resolved=%s", campaign_name, resolved)
     if not request.is_json:
         return jsonify({'error': 'Invalid payload'}), 400
     payload = request.get_json(silent=True) or {}
@@ -366,7 +398,7 @@ def save_campaign_personal_data(campaign_name: str):
     }
 
     data = _load_personal_data()
-    data[campaign_name] = cleaned
+    data[resolved] = cleaned
     if not _save_personal_data(data):
         return jsonify({'error': 'Failed to save personal data'}), 500
     return jsonify(cleaned)
@@ -453,11 +485,8 @@ def get_campaign_detail(campaign_name: str):
                 'error': 'API not initialized'
             }), 500
         
-        # Use campaign name directly (Flask already URL-decodes it safely)
-        # Note: Campaign names come from JSON keys, so they're trusted
-        # 🔧 Normalize case for consistency
-        campaign_name = campaign_name.lower()# 🔧 Normalize case for consistency
-        campaign_data = _aggregator.get_campaign_detail(campaign_name)
+        resolved = _resolve_campaign_name(campaign_name)
+        campaign_data = _aggregator.get_campaign_detail(resolved)
         
         if not campaign_data:
             logger.warning(f"Campaign not found: {campaign_name}")
@@ -466,7 +495,7 @@ def get_campaign_detail(campaign_name: str):
                 'campaign': campaign_name
             }), 404
         
-        logger.info(f"Served campaign detail: {campaign_name}")
+        logger.info(f"Served campaign detail: {resolved}")
         return jsonify(campaign_data)
         
     except Exception as e:
@@ -503,9 +532,8 @@ def check_pdf_exists(campaign_name: str):
                 'error': 'Reports directory not configured'
             }), 404
         
-        # Generate expected PDF filename using campaign name directly
-        campaign_name = campaign_name.lower()
-        pdf_filename = f"{safe_campaign_filename(campaign_name)}.pdf"
+        resolved = _resolve_campaign_name(campaign_name)
+        pdf_filename = f"{safe_campaign_filename(resolved)}.pdf"
         pdf_path = _reports_dir / pdf_filename
         
         if pdf_path.exists():

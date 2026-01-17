@@ -71,6 +71,13 @@ const API = {
     async getCampaigns() {
         return this.get('/campaigns');
     },
+
+    /**
+     * Get landing background selection (session scoped)
+     */
+    async getLandingBackground() {
+        return this.get('/landing_background');
+    },
     
     /**
      * Get detailed campaign data

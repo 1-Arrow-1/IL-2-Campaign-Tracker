@@ -41,7 +41,6 @@ body {
     min-height: 100vh;
     overflow-x: hidden;
     background-color: var(--paper);
-    background-image: url('../images/background.jpg');
     background-repeat: no-repeat;
     background-position: center top;
     background-attachment: fixed;

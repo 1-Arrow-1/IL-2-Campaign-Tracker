@@ -32,6 +32,11 @@ import argparse
 from utils.info_locale import (
     TRACKER_SECTION_HEADER_PATTERN,
     decode_and_clean_info_locale,
+    get_info_locale_code,
+    get_supported_locales,
+    map_info_locale_to_i18n,
+    normalize_locale_code,
+    verify_info_locale_files,
 )
 from utils.pathing import get_base_path
 from utils.formatting import safe_campaign_filename
@@ -47,7 +52,8 @@ from utils.combat_results_html import (
     generate_mission_combat_results_html,
 )
 from utils.filesystem import is_file_locked
-from utils.i18n import load_locale, t, tp
+from utils.i18n import get_locale, load_locale, t, tp
+from utils.resources import resolve_locales_dir
 from utils.popup_state import load_popup_seen, save_popup_seen, make_event_key, get_seen_keys, set_seen_keys
 from utils.rank_scaling import check_and_cleanup_rank_scaling
 from utils.process import is_il2_running
@@ -1764,7 +1770,13 @@ class EventGenerator:
         
         return "\n".join(html_lines)
     
-    def update_campaign_info_file(self, campaign_name: str, events_html: str) -> bool:
+    def update_campaign_info_file(
+        self,
+        campaign_name: str,
+        events: List[Dict],
+        country: Optional[str],
+        completed_missions: List[str],
+    ) -> bool:
         """
         Update all campaign info.locale=*.txt files with Events section.
         
@@ -1776,7 +1788,7 @@ class EventGenerator:
         if not self.game_directory:
             log_message(LOGGER, f"  Error: No game directory configured")
             return False
-        
+
         campaign_path = Path(self.game_directory) / "data" / "Campaigns" / campaign_name
         
         if not campaign_path.exists():
@@ -1797,6 +1809,28 @@ class EventGenerator:
         if self.dry_run:
             log_message(LOGGER, f"  [DRY RUN] Would update {len(locale_files)} locale file(s): {[f.name for f in locale_files]}")
             return True
+
+        locales_dir = resolve_locales_dir()
+        supported_locales = get_supported_locales(locales_dir)
+        if "en" not in supported_locales:
+            supported_locales.append("en")
+
+        previous_locale = get_locale()
+        locale_html_map: dict[str, str] = {}
+        try:
+            for locale_code in supported_locales:
+                load_locale(locale=locale_code)
+                events_html = self.generate_events_html(events, country)
+                debriefings_html = ""
+                if self.log_processor and completed_missions:
+                    debriefings_html, _ = self.generate_debriefings_html(campaign_name, completed_missions)
+                if debriefings_html:
+                    combined_html = debriefings_html + "\n" + events_html
+                else:
+                    combined_html = events_html
+                locale_html_map[normalize_locale_code(locale_code)] = combined_html
+        finally:
+            load_locale(locale=previous_locale)
         
         success_count = 0
         
@@ -1826,8 +1860,16 @@ class EventGenerator:
                     for h in headers:
                         cleaned = cleaned.replace(f'{h}<br>', f'<b>{h}</b><br>', 1)
                 
+                locale_suffix = get_info_locale_code(info_file)
+                target_locale = normalize_locale_code(map_info_locale_to_i18n(locale_suffix))
+                localized_html = (
+                    locale_html_map.get(target_locale)
+                    or locale_html_map.get("en")
+                    or next(iter(locale_html_map.values()), "")
+                )
+
                 # Build final content
-                updated = cleaned + '<br><br>' + events_html
+                updated = cleaned + '<br><br>' + localized_html
                 
                 # Verification: Count sections in final content
                 matches = list(re.finditer(TRACKER_SECTION_HEADER_PATTERN, updated, re.IGNORECASE))
@@ -2857,7 +2899,12 @@ class EventGenerator:
                 }
                 
                 # Update the campaign info file
-                if self.update_campaign_info_file(campaign_name, combined_html):
+                if self.update_campaign_info_file(
+                    campaign_name,
+                    events,
+                    country,
+                    completed_missions,
+                ):
                     files_updated += 1
                 
                 # Export to PDF (only if campaign has completed missions)
@@ -2946,6 +2993,32 @@ class EventGenerator:
         # (see loop above - no longer deferred to end of processing)
         
         return results
+
+
+def regenerate_and_verify_locale_info_files(campaign_name: str) -> dict[str, bool]:
+    """
+    Regenerate locale info files for a campaign and verify localized content.
+
+    Returns:
+        Mapping of info.locale filename -> verification result.
+    """
+    load_locale()
+    generator = EventGenerator(dry_run=False, show_popups=False)
+    events = generator.generate_events_for_campaign(campaign_name)
+    if not events:
+        return {}
+    country = generator.mission_dates.get(campaign_name, {}).get("country")
+    completed_missions = list(
+        generator.save_data.get(campaign_name, {}).get("completedMissionsByFileName", {}).keys()
+    )
+    generator.update_campaign_info_file(
+        campaign_name,
+        events,
+        country,
+        completed_missions,
+    )
+    campaign_path = Path(generator.game_directory) / "data" / "Campaigns" / campaign_name
+    return verify_info_locale_files(campaign_path)
 
 
 def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bool = None, test_popups:  bool = False) -> bool:
@@ -3059,9 +3132,18 @@ def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bo
             country = generator.mission_dates[parsed_args.campaign].get('country')
             html = generator.generate_events_html(events, country)
             log_message(LOGGER, f"\n{'='*70}\nGenerated HTML:\n{'='*70}\n{html}")
-            
+
+            completed_missions = list(
+                generator.save_data.get(parsed_args.campaign, {}).get('completedMissionsByFileName', {}).keys()
+            )
+
             if not parsed_args.dry_run:
-                generator.update_campaign_info_file(parsed_args.campaign, html)
+                generator.update_campaign_info_file(
+                    parsed_args.campaign,
+                    events,
+                    country,
+                    completed_missions,
+                )
         return True
     else:
         # Process all campaigns
