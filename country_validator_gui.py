@@ -16,6 +16,7 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from utils.i18n import load_locale, t
 from utils.logging import get_logger, log_message
 
 logger = get_logger(__name__)
@@ -45,9 +46,11 @@ class CountryValidatorGUI:
         self.dropdowns = {}  # Store dropdown references
         self.ww1_flags = {}  # Store WW1 ignore checkbox states
         
+        load_locale()
+
         # Create main window
         self.root = tk.Tk()
-        self.root.title("IL-2 Campaign Tracker - Verify Countries")
+        self.root.title(t("country_validator.window.title"))
         self.root.geometry("700x500")
         self.root.resizable(True, True)
         
@@ -63,7 +66,7 @@ class CountryValidatorGUI:
         
         title_label = tk.Label(
             header_frame,
-            text="Campaign Country Detection - Please Verify",
+            text=t("country_validator.header.title"),
             font=('Arial', 14, 'bold'),
             bg='#2c3e50',
             fg='white'
@@ -72,7 +75,7 @@ class CountryValidatorGUI:
         
         subtitle_label = tk.Label(
             header_frame,
-            text="Review and correct the automatically detected countries for your campaigns",
+            text=t("country_validator.header.subtitle"),
             font=('Arial', 9),
             bg='#2c3e50',
             fg='#ecf0f1'
@@ -112,7 +115,7 @@ class CountryValidatorGUI:
         
         cancel_btn = tk.Button(
             button_frame,
-            text="Cancel",
+            text=t("country_validator.button.cancel"),
             command=self._on_cancel,
             width=15,
             bg='#95a5a6',
@@ -125,7 +128,7 @@ class CountryValidatorGUI:
         
         save_btn = tk.Button(
             button_frame,
-            text="Save & Continue",
+            text=t("country_validator.button.save"),
             command=self._on_save,
             width=15,
             bg='#27ae60',
@@ -164,7 +167,7 @@ class CountryValidatorGUI:
         mission_count = campaign_data.get('mission_count', 0)
         missions_label = tk.Label(
             campaign_frame,
-            text=f"Missions: {mission_count}",
+            text=t("country_validator.missions_label", count=mission_count),
             font=('Arial', 9),
             fg='#7f8c8d',
             bg=bg_color,
@@ -178,7 +181,7 @@ class CountryValidatorGUI:
         
         country_label = tk.Label(
             country_frame,
-            text="Country:",
+            text=t("country_validator.country_label"),
             font=('Arial', 9),
             bg=bg_color
         )
@@ -202,7 +205,7 @@ class CountryValidatorGUI:
         ww1_var = tk.BooleanVar(value=is_ww1)
         ww1_checkbox = tk.Checkbutton(
             campaign_frame,
-            text="WW1 Campaign (ignore)",
+            text=t("country_validator.ww1_label"),
             variable=ww1_var,
             bg=bg_color
         )

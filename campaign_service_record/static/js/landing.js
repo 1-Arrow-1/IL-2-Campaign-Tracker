@@ -8,6 +8,10 @@
  * - Background selection per session
  */
 
+const t = (key, params = {}) => (
+    window.I18N ? window.I18N.t(key, params) : key
+);
+
 const LandingPage = {
     /**
      * DOM elements
@@ -144,15 +148,15 @@ const LandingPage = {
         // Build stats HTML
         const statsHTML = `
             <span class="stat-item">
-                <span class="stat-label">Missions:</span>
+                <span class="stat-label">${this.escapeHTML(t('service_record.landing.stats.missions_label'))}</span>
                 <span class="stat-value">${campaign.missions_completed}</span>
             </span>
             <span class="stat-item">
-                <span class="stat-label">Promotions:</span>
+                <span class="stat-label">${this.escapeHTML(t('service_record.landing.stats.promotions_label'))}</span>
                 <span class="stat-value">${campaign.promotions_count}</span>
             </span>
             <span class="stat-item">
-                <span class="stat-label">Awards:</span>
+                <span class="stat-label">${this.escapeHTML(t('service_record.landing.stats.awards_label'))}</span>
                 <span class="stat-value">${campaign.awards_count}</span>
             </span>
         `;
@@ -175,7 +179,7 @@ const LandingPage = {
         if (flagSrc) {
             const flagImg = document.createElement('img');
             flagImg.src = flagSrc;
-            flagImg.alt = `${campaign.country} flag`;
+            flagImg.alt = t('service_record.landing.flag_alt', { country: campaign.country });
             flagContainer.appendChild(flagImg);
         }
 

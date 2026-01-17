@@ -20,6 +20,7 @@ const I18N = {
         });
     }
 };
+window.I18N = I18N;
 
 async function loadI18n() {
     try {
@@ -35,6 +36,28 @@ async function loadI18n() {
     } catch (error) {
         console.warn('Unable to load locale file:', error);
     }
+}
+
+function applyI18n() {
+    document.querySelectorAll('[data-i18n]').forEach(element => {
+        element.textContent = I18N.t(element.dataset.i18n);
+    });
+
+    document.querySelectorAll('[data-i18n-html]').forEach(element => {
+        element.innerHTML = I18N.t(element.dataset.i18nHtml);
+    });
+
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+        element.setAttribute('placeholder', I18N.t(element.dataset.i18nPlaceholder));
+    });
+
+    document.querySelectorAll('[data-i18n-alt]').forEach(element => {
+        element.setAttribute('alt', I18N.t(element.dataset.i18nAlt));
+    });
+
+    document.querySelectorAll('[data-i18n-aria-label]').forEach(element => {
+        element.setAttribute('aria-label', I18N.t(element.dataset.i18nAriaLabel));
+    });
 }
 
 const App = {
@@ -162,6 +185,7 @@ const App = {
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     loadI18n().finally(() => {
+        applyI18n();
         App.init();
     });
 });

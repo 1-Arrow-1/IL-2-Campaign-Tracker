@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IL-2 Campaign Service Record</title>
+    <title data-i18n="service_record.title">IL-2 Campaign Service Record</title>
     
     <!-- Styles -->
     <link rel="stylesheet" href="static/css/main.css">
@@ -17,9 +17,9 @@
         <!-- Header (persistent) -->
         <header id="app-header">
             <div class="header-content">
-                <h1>IL-2 Campaign Service Record</h1>
+                <h1 data-i18n="service_record.title">IL-2 Campaign Service Record</h1>
                 <nav id="header-nav">
-                    <button id="back-btn" class="nav-btn" style="display: none;">
+                    <button id="back-btn" class="nav-btn" style="display: none;" data-i18n="service_record.back_button">
                         ← Back to Campaigns
                     </button>
                 </nav>
@@ -33,20 +33,17 @@
                 <div class="landing-container">
                     <!-- Campaign List -->
                     <section class="campaigns-section">
-                        <h2>Campaigns Flown</h2>
+                        <h2 data-i18n="service_record.landing.heading">Campaigns Flown</h2>
                         
                         <!-- Loading State -->
                         <div id="campaigns-loading" class="loading-state">
                             <div class="spinner"></div>
-                            <p>Loading campaigns...</p>
+                            <p data-i18n="service_record.landing.loading">Loading campaigns...</p>
                         </div>
                         
                         <!-- Empty State -->
                         <div id="campaigns-empty" class="empty-state" style="display: none;">
-                            <p class="empty-message">
-                                No campaigns found.<br>
-                                <small>Run Campaign Tracker first to generate data.</small>
-                            </p>
+                            <p class="empty-message" data-i18n-html="service_record.landing.empty_html"></p>
                         </div>
                         
                         <!-- Error State -->
@@ -72,15 +69,15 @@
                             <img id="campaign-plane" class="campaign-header__plane-image" alt="">
                             <!--img id="campaign-insignia-right" class="campaign-header__insignia campaign-header__insignia--right" alt=""!-->
                         </div>
-                        <h2 id="campaign-title">Campaign Name</h2>                   
-                        <img class="campaign-header__stamp" src="static/images/stamp_extra_II.png" alt="Campaign stamp">
+                        <h2 id="campaign-title" data-i18n="service_record.detail.placeholder_campaign_name">Campaign Name</h2>                   
+                        <img class="campaign-header__stamp" src="static/images/stamp_extra_II.png" alt="Campaign stamp" data-i18n-alt="service_record.detail.stamp_alt">
                         <div class="campaign-meta">
                             <span class="meta-item">
-                                <span class="label">Country:</span>
+                                <span class="label" data-i18n="service_record.detail.country_label">Country:</span>
                                 <span id="campaign-country">—</span>
                             </span>
                             <span class="meta-item">
-                                <span class="label">Missions:</span>
+                                <span class="label" data-i18n="service_record.detail.missions_label">Missions:</span>
                                 <span id="campaign-missions">—</span>
                             </span>
                         </div>
@@ -91,13 +88,14 @@
                         <!-- Left Column: Promotions & Awards -->
                         <aside class="column column-left">
                             <section class="personal-data-section detail-panel">
-                                <h3>Pilot Information</h3>
+                                <h3 data-i18n="service_record.pilot.heading">Pilot Information</h3>
                                 <div class="personal-data-body">
                                     <div class="personal-data-photo">
                                         <div class="pilot-photo-container">
                                             <img id="detail-pilot-photo"
                                                  src="static/images/placeholder_pilot.png"
                                                  alt="Pilot Photo"
+                                                 data-i18n-alt="service_record.pilot.photo_alt"
                                                  class="pilot-photo">
                                             <img class="pilot-photo-overlay pilot-photo-overlay--edges"
                                                  src="static/images/photo_edges.png"
@@ -108,37 +106,37 @@
                                                  alt=""
                                                  aria-hidden="true">
                                         </div>
-                                        <button id="detail-pilot-photo-btn" class="pilot-photo-btn" type="button">
+                                        <button id="detail-pilot-photo-btn" class="pilot-photo-btn" type="button" data-i18n="service_record.pilot.change_button">
                                             Change Pilot Photo & Data
                                         </button>
                                     </div>
                                 </div>
-                                <div class="personal-data-summary" aria-label="Pilot personal data">
+                                <div class="personal-data-summary" aria-label="Pilot personal data" data-i18n-aria-label="service_record.pilot.summary_aria">
                                         <div class="personal-data-row">
-                                            <span class="personal-data-label">Name</span>
+                                            <span class="personal-data-label" data-i18n="service_record.pilot.name_label">Name</span>
                                             <span id="personal-display-name" class="personal-data-value">—</span>
                                         </div>
                                         <div class="personal-data-row">
-                                            <span class="personal-data-label">First Name</span>
+                                            <span class="personal-data-label" data-i18n="service_record.pilot.first_name_label">First Name</span>
                                             <span id="personal-display-first-name" class="personal-data-value">—</span>
                                         </div>
                                         <div class="personal-data-row">
-                                            <span class="personal-data-label">Birthday</span>
+                                            <span class="personal-data-label" data-i18n="service_record.pilot.birthday_label">Birthday</span>
                                             <span id="personal-display-birthday" class="personal-data-value">—</span>
                                         </div>
                                         <div class="personal-data-row">
-                                            <span class="personal-data-label">Place of Birth</span>
+                                            <span class="personal-data-label" data-i18n="service_record.pilot.birth_place_label">Place of Birth</span>
                                             <span id="personal-display-birth-place" class="personal-data-value">—</span>
                                         </div>
                                         <div class="personal-data-row">
-                                            <span class="personal-data-label">Country of Birth</span>
+                                            <span class="personal-data-label" data-i18n="service_record.pilot.birth_country_label">Country of Birth</span>
                                             <span id="personal-display-birth-country" class="personal-data-value">—</span>
                                         </div>
                                     </div>
                                 </div>    
                             </section>
                             <section class="events-section detail-panel">
-                                <h3>Promotions & Awards</h3>
+                                <h3 data-i18n="service_record.events.heading">Promotions & Awards</h3>
                                 <div id="events-list" class="events-list">
                                     <!-- Dynamically populated -->
                                 </div>
@@ -148,7 +146,7 @@
                         <!-- Middle Column: Summary -->
                         <section class="column column-middle">
                             <section class="summary-section">
-                                <h3>Campaign Summary</h3>
+                                <h3 data-i18n="service_record.summary.heading">Campaign Summary</h3>
                                 <div id="summary-content" class="summary-content">
                                     <!-- Dynamically populated -->
                                 </div>
@@ -157,7 +155,7 @@
 
                         <!-- Right Column: Debriefings -->
                         <aside class="column column-right">
-                            <h3>Mission Debriefings</h3>
+                            <h3 data-i18n="service_record.debriefings.heading">Mission Debriefings</h3>
                             <div id="debriefings-container" class="debriefings-container">
                                 <!-- HTML injected from campaign_events.json -->
                             </div>
@@ -171,45 +169,45 @@
     <!-- Cropper Modal -->
     <div id="cropper-modal" class="cropper-modal" style="display: none;">
         <div class="cropper-modal-content">
-            <h3>Update Pilot Photo &amp; Personal Data</h3>
+            <h3 data-i18n="service_record.modal.title">Update Pilot Photo &amp; Personal Data</h3>
             <div class="cropper-modal-body">
                 <div class="cropper-modal-form">
-                    <h4>Personal Data</h4>
+                    <h4 data-i18n="service_record.modal.personal_data_heading">Personal Data</h4>
                     <div class="personal-data-fields">
                         <label class="personal-data-field" for="personal-name">
-                            Name
-                            <input id="personal-name" type="text" maxlength="60" placeholder="Last name">
+                            <span data-i18n="service_record.modal.last_name_label">Name</span>
+                            <input id="personal-name" type="text" maxlength="60" placeholder="Last name" data-i18n-placeholder="service_record.modal.last_name_placeholder">
                         </label>
                         <label class="personal-data-field" for="personal-first-name">
-                            First Name
-                            <input id="personal-first-name" type="text" maxlength="60" placeholder="First name">
+                            <span data-i18n="service_record.modal.first_name_label">First Name</span>
+                            <input id="personal-first-name" type="text" maxlength="60" placeholder="First name" data-i18n-placeholder="service_record.modal.first_name_placeholder">
                         </label>
                         <label class="personal-data-field" for="personal-birthday">
-                            Birthday
-                            <input id="personal-birthday" type="text" maxlength="40" placeholder="DD Month YYYY">
+                            <span data-i18n="service_record.modal.birthday_label">Birthday</span>
+                            <input id="personal-birthday" type="text" maxlength="40" placeholder="DD Month YYYY" data-i18n-placeholder="service_record.modal.birthday_placeholder">
                         </label>
                         <label class="personal-data-field" for="personal-birth-place">
-                            Place of Birth
-                            <input id="personal-birth-place" type="text" maxlength="80" placeholder="City or region">
+                            <span data-i18n="service_record.modal.birth_place_label">Place of Birth</span>
+                            <input id="personal-birth-place" type="text" maxlength="80" placeholder="City or region" data-i18n-placeholder="service_record.modal.birth_place_placeholder">
                         </label>
                         <label class="personal-data-field" for="personal-birth-country">
-                            Country of Birth
-                            <input id="personal-birth-country" type="text" maxlength="60" placeholder="Country">
+                            <span data-i18n="service_record.modal.birth_country_label">Country of Birth</span>
+                            <input id="personal-birth-country" type="text" maxlength="60" placeholder="Country" data-i18n-placeholder="service_record.modal.birth_country_placeholder">
                         </label>
                     </div>
                     <span id="personal-data-status" class="personal-data-status" aria-live="polite"></span>
                 </div>
                 <div class="cropper-modal-photo">
                     <div class="cropper-preview">
-                        <p id="cropper-placeholder" class="cropper-placeholder">No new photo selected.</p>
-                        <img id="cropper-img" alt="Crop pilot photo">
+                        <p id="cropper-placeholder" class="cropper-placeholder" data-i18n="service_record.modal.photo_placeholder">No new photo selected.</p>
+                        <img id="cropper-img" alt="Crop pilot photo" data-i18n-alt="service_record.modal.photo_crop_alt">
                     </div>
-                    <button id="cropper-photo-select" class="pilot-photo-btn" type="button">Choose Photo</button>
+                    <button id="cropper-photo-select" class="pilot-photo-btn" type="button" data-i18n="service_record.modal.choose_photo">Choose Photo</button>
                 </div>
             </div>
             <div class="cropper-actions">
-                <button id="cropper-save" type="button">Apply</button>
-                <button id="cropper-cancel" type="button">Cancel</button>
+                <button id="cropper-save" type="button" data-i18n="service_record.modal.apply_button">Apply</button>
+                <button id="cropper-cancel" type="button" data-i18n="service_record.modal.cancel_button">Cancel</button>
             </div>
         </div>
     </div>

@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 
+from utils.i18n import load_locale, t
 from utils.logging import get_logger, log_message
 from utils.pathing import get_base_path
 from utils.il2_paths import find_campaignsstates_path
@@ -1617,6 +1618,8 @@ def select_game_directory_gui():
     from tkinter import filedialog
     import os
     
+    load_locale()
+
     log_message(logger, "\n" + "="*70)
     log_message(logger, "FIRST TIME SETUP - Select IL-2 Game Directory")
     log_message(logger, "="*70)
@@ -1647,7 +1650,7 @@ def select_game_directory_gui():
     
     # Open folder dialog
     selected_path = filedialog.askdirectory(
-        title="Select IL-2 Sturmovik Game Directory",
+        title=t("select_game_directory.dialog_title"),
         initialdir=initial_dir,
         mustexist=True
     )

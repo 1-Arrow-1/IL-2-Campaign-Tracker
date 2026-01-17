@@ -7,6 +7,10 @@
  * - PDF download button
  */
 
+const t = (key, params = {}) => (
+    window.I18N ? window.I18N.t(key, params) : key
+);
+
 const PreviewModal = {
     elements: {
         overlay: null,
@@ -32,7 +36,7 @@ const PreviewModal = {
         const close = document.createElement('button');
         close.type = 'button';
         close.className = 'preview-modal__close';
-        close.setAttribute('aria-label', 'Close');
+        close.setAttribute('aria-label', t('service_record.preview.close_aria'));
         close.textContent = '×';
 
         const title = document.createElement('div');
@@ -73,7 +77,7 @@ const PreviewModal = {
             return;
         }
         this.elements.title.textContent = title || '';
-        this.elements.image.alt = imageAlt || title || 'Event preview';
+        this.elements.image.alt = imageAlt || title || t('service_record.preview.default_alt');
         this.elements.image.src = imageUrl;
         this.elements.image.style.width = width ? `${Math.round(width)}px` : '';
         this.elements.image.style.height = height ? `${Math.round(height)}px` : '';
@@ -103,156 +107,156 @@ const PreviewModal = {
 const EVENT_DESCRIPTIONS = {
     germany: {
         ranks: {
-            Unteroffizier: 'New to the line, you fly tight on a leader’s wing and learn fast or die fast. Your logbook fills one sortie at a time.',
-            Feldwebel: 'You’ve seen flak and fighters up close and you don’t flinch. Men follow your turns because they’ve learned you bring them home.',
-            Oberfeldwebel: 'Veteran hands, tired eyes—still climbing into the cockpit. You lead by example and the rookies copy everything you do.',
-            Leutnant: 'Now you carry a commission and the weight that comes with it. You still fly the same sky, just with more eyes depending on you.',
-            Oberleutnant: 'You lead flights into weather, flak, and bad odds. The Staffel watches how you handle the first burst and the last decision.',
-            Hauptmann: 'Command and combat collide: paperwork at dawn, engine heat by noon. You fly when it matters and your name rides every outcome.',
-            Major: 'Your map table is larger than your cockpit time now. When you do fly, it’s because the mission can’t afford mistakes.',
-            Oberstleutnant: 'You keep the unit running and the losses bear your signature. You fly rarely—usually to see the front with your own eyes.',
-            Oberst: 'A commander with a pilot’s past and a war on his desk. If you take off, it’s for a reason everyone remembers.',
-            Generalmajor: 'You move squadrons like chess pieces and count fuel like blood. Flight time is rare; responsibility is constant.',
-            Generalleutnant: 'The war looks different from this altitude—briefings, orders, consequences. You earned wings once; now you carry a theater.'
+            Unteroffizier: 'service_record.event_desc.germany.rank.unteroffizier',
+            Feldwebel: 'service_record.event_desc.germany.rank.feldwebel',
+            Oberfeldwebel: 'service_record.event_desc.germany.rank.oberfeldwebel',
+            Leutnant: 'service_record.event_desc.germany.rank.leutnant',
+            Oberleutnant: 'service_record.event_desc.germany.rank.oberleutnant',
+            Hauptmann: 'service_record.event_desc.germany.rank.hauptmann',
+            Major: 'service_record.event_desc.germany.rank.major',
+            Oberstleutnant: 'service_record.event_desc.germany.rank.oberstleutnant',
+            Oberst: 'service_record.event_desc.germany.rank.oberst',
+            Generalmajor: 'service_record.event_desc.germany.rank.generalmajor',
+            Generalleutnant: 'service_record.event_desc.germany.rank.generalleutnant'
         },
         awards: {
-            "Pilot's Badge": 'You’ve earned the right to wear wings—and to be sent back up tomorrow. Training is over; the war starts now.',
-            'Iron Cross 2nd Class': 'A first hard mark of combat service. Not glory—just proof you were there when it counted.',
-            'Iron Cross 1st Class': 'You didn’t just survive; you delivered results. The unit knows you’re the one to call when it’s hot.',
-            'Honor Goblet': 'A Luftwaffe trophy for men who fly beyond “enough.” It’s handed to those who keep coming back with victories and scars.',
-            'German Cross in Gold': 'Sustained combat success, the long grind turned into metal. You’ve been tested—repeatedly—and held.',
-            "Knight's Cross of the Iron Cross": 'The kind of award that changes how people look at you. Fame is loud; the war is louder.',
-            '…with Oak Leaves': 'More proof, more pressure. They expect miracles now—and they write your name in bigger letters.',
-            '…with Oak Leaves and Swords': 'A mark for relentless frontline achievement. You’re not just fighting—you’re shaping the fight.',
-            '…with Oak Leaves, Swords and Diamonds': 'Rare, heavy, and impossible to ignore. Your record is legend; your risk stays real.',
-            '…with Golden Oak Leaves, Swords and Diamonds': 'The top shelf, almost unheard of. You’ve become a symbol—and symbols still bleed.',
-            'Front Flying Clasp (Fighters) Bronze': 'You’ve logged enough combat sorties to know the routine is deadly. The front doesn’t care how brave you feel.',
-            'Front Flying Clasp (Fighters) Silver': 'A long run of sorties under pressure. You’ve outlasted luck and learned discipline.',
-            'Front Flying Clasp (Fighters) Gold': 'Heavy operational time at the sharp end. You’ve lived where the sky is full of fire.',
-            '…Gold with Pendant': 'An extreme tally of frontline sorties. You’ve been to war so often it feels like home—and that’s the danger.',
-            'Wound Badge in Black': 'First blood paid to the front. You came back—this time.',
-            'Wound Badge in Silver': 'More wounds, fewer illusions. You’re still flying, but you’ve started counting what it costs.',
-            'Wound Badge in Gold': 'You’ve been hit again and again and kept returning. The badge shines; the damage doesn’t.'
+            "Pilot's Badge": 'service_record.event_desc.germany.award.pilots_badge',
+            'Iron Cross 2nd Class': 'service_record.event_desc.germany.award.iron_cross_2nd_class',
+            'Iron Cross 1st Class': 'service_record.event_desc.germany.award.iron_cross_1st_class',
+            'Honor Goblet': 'service_record.event_desc.germany.award.honor_goblet',
+            'German Cross in Gold': 'service_record.event_desc.germany.award.german_cross_in_gold',
+            "Knight's Cross of the Iron Cross": 'service_record.event_desc.germany.award.knights_cross',
+            '…with Oak Leaves': 'service_record.event_desc.germany.award.knights_cross_oak_leaves',
+            '…with Oak Leaves and Swords': 'service_record.event_desc.germany.award.knights_cross_oak_leaves_swords',
+            '…with Oak Leaves, Swords and Diamonds': 'service_record.event_desc.germany.award.knights_cross_oak_leaves_swords_diamonds',
+            '…with Golden Oak Leaves, Swords and Diamonds': 'service_record.event_desc.germany.award.knights_cross_golden_oak_leaves',
+            'Front Flying Clasp (Fighters) Bronze': 'service_record.event_desc.germany.award.front_flying_clasp_bronze',
+            'Front Flying Clasp (Fighters) Silver': 'service_record.event_desc.germany.award.front_flying_clasp_silver',
+            'Front Flying Clasp (Fighters) Gold': 'service_record.event_desc.germany.award.front_flying_clasp_gold',
+            '…Gold with Pendant': 'service_record.event_desc.germany.award.front_flying_clasp_gold_pendant',
+            'Wound Badge in Black': 'service_record.event_desc.germany.award.wound_badge_black',
+            'Wound Badge in Silver': 'service_record.event_desc.germany.award.wound_badge_silver',
+            'Wound Badge in Gold': 'service_record.event_desc.germany.award.wound_badge_gold'
         }
     },
     britain: {
         ranks: {
-            Sergeant: 'Fresh wings, cold cockpit, and the Channel wind cutting through everything. Stay with your leader and keep your eyes moving.',
-            'Flight Sergeant': 'You’ve learned the sound of trouble before you see it. In the air, you’re steady—because panic kills.',
-            'Warrant Officer': 'A hard veteran in a soft uniform. You fly like you’ve paid for every lesson—and you have.',
-            'Pilot Officer': 'Commissioned, but still proving yourself every sortie. The squadron judges you by the way you hold formation under fire.',
-            'Flying Officer': 'You can lead a section and make it stick. When the radio goes quiet, your decisions speak loudest.',
-            'Flight Lieutenant': 'You balance duty rosters and deadly skies. You still fly—because you won’t ask men to do what you won’t.',
-            'Squadron Leader': 'The squadron’s tempo is yours to set: push too hard and you break it. You fly when the moment needs a steady hand.',
-            'Wing Commander': 'You command wings and you feel every loss. You go up sometimes—enough to keep the war honest.',
-            'Group Captain': 'A commander with a pilot’s instincts and a strategist’s burden. You fly rarely now, but you never stop listening to the engines.',
-            'Air Commodore': 'You direct whole air battles from reports and maps. If you fly, it’s exceptional—and everyone notices.',
-            'Air Vice Marshal': 'The air war runs through your desk and into the sky. Flight is rare; command is relentless.'
+            Sergeant: 'service_record.event_desc.britain.rank.sergeant',
+            'Flight Sergeant': 'service_record.event_desc.britain.rank.flight_sergeant',
+            'Warrant Officer': 'service_record.event_desc.britain.rank.warrant_officer',
+            'Pilot Officer': 'service_record.event_desc.britain.rank.pilot_officer',
+            'Flying Officer': 'service_record.event_desc.britain.rank.flying_officer',
+            'Flight Lieutenant': 'service_record.event_desc.britain.rank.flight_lieutenant',
+            'Squadron Leader': 'service_record.event_desc.britain.rank.squadron_leader',
+            'Wing Commander': 'service_record.event_desc.britain.rank.wing_commander',
+            'Group Captain': 'service_record.event_desc.britain.rank.group_captain',
+            'Air Commodore': 'service_record.event_desc.britain.rank.air_commodore',
+            'Air Vice Marshal': 'service_record.event_desc.britain.rank.air_vice_marshal'
         },
         awards: {
-            "RAF Pilot's Badge": 'Your wings are sewn on, and your life is scheduled around sorties. Welcome to the line.',
-            'Mentioned in Despatches': 'Your name made it into the official reports. Quiet recognition for work done when it was most dangerous.',
-            'Distinguished Flying Medal (DFM)': 'Courage and grit from an airman who kept flying. Earned the hard way, one operation after another.',
-            'Bar to the DFM': 'They’re saying you did it again. Same sky, same risk—more proof you don’t quit.',
-            'Second Bar to the DFM': 'Rare repeat recognition for relentless operations. You’re becoming the kind of flyer the squadron leans on.',
-            'Distinguished Flying Cross (DFC)': 'Gallantry in the air, the kind that holds a formation together. The ribbon looks clean; the sorties weren’t.',
-            'Bar to the DFC': 'Another round of hard flying that stood out. You’ve made danger a habit—and lived through it.',
-            'Second Bar to the DFC': 'Almost unheard of. You’ve repeatedly done what shouldn’t be survivable.',
-            'Distinguished Service Order (DSO)': 'Leadership under fire, not just bravery. You kept men fighting when the odds went ugly.',
-            'Bar to the DSO': 'A second time they credit your command in combat. You’ve carried responsibility where it hurts.',
-            'Second Bar to the DSO': 'Exceptionally rare and hard-won. You’ve led through repeated crisis and come out standing.',
-            'Victoria Cross (VC)': 'The highest kind of courage—beyond orders, beyond reason. A moment that becomes history.',
-            'Bar to the VC': 'A second VC is almost myth. It means you faced the impossible twice and refused to yield.',
-            'Wound Stripe': 'Proof the war reached you personally. The body keeps the receipt.',
-            'Second Wound Stripe': 'Hit again, still flying. Survival isn’t luck anymore—it’s endurance.',
-            'Third Wound Stripe': 'Three wounds and still on the roster. The squadron sees you and knows what it costs.'
+            "RAF Pilot's Badge": 'service_record.event_desc.britain.award.raf_pilots_badge',
+            'Mentioned in Despatches': 'service_record.event_desc.britain.award.mentioned_in_despatches',
+            'Distinguished Flying Medal (DFM)': 'service_record.event_desc.britain.award.dfm',
+            'Bar to the DFM': 'service_record.event_desc.britain.award.dfm_bar',
+            'Second Bar to the DFM': 'service_record.event_desc.britain.award.dfm_second_bar',
+            'Distinguished Flying Cross (DFC)': 'service_record.event_desc.britain.award.dfc',
+            'Bar to the DFC': 'service_record.event_desc.britain.award.dfc_bar',
+            'Second Bar to the DFC': 'service_record.event_desc.britain.award.dfc_second_bar',
+            'Distinguished Service Order (DSO)': 'service_record.event_desc.britain.award.dso',
+            'Bar to the DSO': 'service_record.event_desc.britain.award.dso_bar',
+            'Second Bar to the DSO': 'service_record.event_desc.britain.award.dso_second_bar',
+            'Victoria Cross (VC)': 'service_record.event_desc.britain.award.vc',
+            'Bar to the VC': 'service_record.event_desc.britain.award.vc_bar',
+            'Wound Stripe': 'service_record.event_desc.britain.award.wound_stripe',
+            'Second Wound Stripe': 'service_record.event_desc.britain.award.wound_stripe_second',
+            'Third Wound Stripe': 'service_record.event_desc.britain.award.wound_stripe_third'
         }
     },
     usa: {
         ranks: {
-            'First Sergeant': 'You keep the unit stitched together when the mission tears it apart. If you fly, it’s to share the risk, not the glory.',
-            'Flight Officer': 'You’re rated to fly and thrown into the grinder. Learn fast, hit hard, and don’t waste luck.',
-            'Chief Warrant Officer': 'You’re the quiet expert—engines, tactics, nerves of steel. When it gets ugly, they want you in the formation.',
-            '2nd Lieutenant': 'Brand-new bars, same flak and same fear. Your lead is light, but the war doesn’t care.',
-            '1st Lieutenant': 'You’ve seen enough to stop pretending it’s easy. Now you lead flights and carry men through bad weather and worse skies.',
-            Captain: 'You’re a leader and a target both. You still fly—because credibility is earned at altitude.',
-            Major: 'Plans, briefings, and harder calls than trigger pulls. You fly selectively now, usually when the mission needs a proven hand.',
-            'Lt. Colonel': 'Bigger command, fewer takeoffs. When you do fly, it’s to see the truth beyond the paperwork.',
-            Colonel: 'You command from the top but you’ve flown the hard miles. Flight is rare—your war is coordination and consequence.',
-            'Brigadier General': 'You shape operations across units and bases. If you take the air, it’s a statement—and a risk you don’t take lightly.',
-            'Major General': 'Strategy, logistics, and the weight of whole formations. Your flying days are mostly memory, but the sky is still yours.'
+            'First Sergeant': 'service_record.event_desc.usa.rank.first_sergeant',
+            'Flight Officer': 'service_record.event_desc.usa.rank.flight_officer',
+            'Chief Warrant Officer': 'service_record.event_desc.usa.rank.chief_warrant_officer',
+            '2nd Lieutenant': 'service_record.event_desc.usa.rank.second_lieutenant',
+            '1st Lieutenant': 'service_record.event_desc.usa.rank.first_lieutenant',
+            Captain: 'service_record.event_desc.usa.rank.captain',
+            Major: 'service_record.event_desc.usa.rank.major',
+            'Lt. Colonel': 'service_record.event_desc.usa.rank.lieutenant_colonel',
+            Colonel: 'service_record.event_desc.usa.rank.colonel',
+            'Brigadier General': 'service_record.event_desc.usa.rank.brigadier_general',
+            'Major General': 'service_record.event_desc.usa.rank.major_general'
         },
         awards: {
-            "Pilot's Badge": 'Your wings say you’re rated and ready. Now the mission board tells you where you’ll bleed for them.',
-            'Air Medal': 'Meritorious flying under combat conditions. It’s the war’s way of saying you kept delivering.',
-            'Air Medal + One Oak Leaf Cluster': 'You’ve earned it again. Same sky, more missions, more proof.',
-            'Air Medal + Two Oak Leaf Clusters': 'A steady record of combat flying. You’re becoming a veteran by accumulation.',
-            'Air Medal + Three Oak Leaf Clusters': 'Repeated awards for repeated sorties. The ribbon stack grows as the risks don’t stop.',
-            'Bronze Star Medal': 'Combat merit and hard service recognized. Not glamorous—just earned where it’s dangerous.',
-            'Bronze Star + One Oak Leaf Cluster': 'Another round of meritorious service under fire. They’re counting what you’ve carried.',
-            'Bronze Star + Two Oak Leaf Clusters': 'A third recognition for staying effective in the long grind. You’ve become dependable the hard way.',
-            'Distinguished Flying Cross': 'Heroism or extraordinary achievement in the air. The kind of sortie people talk about afterward.',
-            'DFC + One Oak Leaf Cluster': 'You’ve done it again—another exceptional mission, another line in the record.',
-            'DFC + Two Oak Leaf Clusters': 'A sustained pattern of standout flying. The enemy isn’t the only thing watching you now.',
-            'DFC + Three Oak Leaf Clusters': 'Repeated extraordinary performance. Your reputation is built on missions that should’ve gone wrong.',
-            'DFC + Four Oak Leaf Clusters': 'More than most ever see in a lifetime. It means you keep walking into the worst and coming out.',
-            'DFC + One Silver Oak Leaf Cluster': 'A higher-count mark of repeat awards. You’ve stacked extraordinary sorties like normal work.',
-            'Legion of Merit': 'Outstanding service over time, beyond a single fight. You’ve carried the war on your shoulders and kept it moving.',
-            'Silver Star Medal': 'Gallantry in action. A moment of courage that refused to break.',
-            'Silver Star + One Oak Leaf Cluster': 'Again, you stood when others might not. Repeated bravery under fire.',
-            'Silver Star + Two Oak Leaf Clusters': 'A third gallantry award is a hard statement. You don’t just survive trouble—you face it.',
-            'Distinguished Service Cross': 'Extraordinary heroism in combat. The kind of action that becomes a unit legend.',
-            'DSC + One Oak Leaf Cluster': 'A second time for extreme heroism. That’s not luck—that’s a pattern of risk.',
-            'DSC + Two Oak Leaf Clusters': 'A third award for extraordinary heroism. Few ever reach this—and fewer live through it.',
-            'DSC + Three Oak Leaf Clusters': 'Repeated actions at the edge of survivability. Your record reads like a warning label.',
-            'DSC + Four Oak Leaf Clusters': 'Almost unheard of. You’ve done the impossible too many times to count.',
-            'Medal of Honor': 'Valor above and beyond—an act that rewrites what “duty” means. The highest recognition for the darkest moment.',
-            'Medal of Honor + One Oak Leaf Cluster': 'A second Medal of Honor is nearly unimaginable. It means you faced that line twice and crossed it.',
-            'Purple Heart': 'You were hit by the enemy and paid in blood. The medal is quiet; the memory isn’t.',
-            'Purple Heart + One Oak Leaf Cluster': 'Wounded again. You carry the damage and keep flying anyway.',
-            'Purple Heart + Two Oak Leaf Clusters': 'Three wounds and still operational. The body keeps score even if the medal does not.'
+            "Pilot's Badge": 'service_record.event_desc.usa.award.pilots_badge',
+            'Air Medal': 'service_record.event_desc.usa.award.air_medal',
+            'Air Medal + One Oak Leaf Cluster': 'service_record.event_desc.usa.award.air_medal_one_olc',
+            'Air Medal + Two Oak Leaf Clusters': 'service_record.event_desc.usa.award.air_medal_two_olc',
+            'Air Medal + Three Oak Leaf Clusters': 'service_record.event_desc.usa.award.air_medal_three_olc',
+            'Bronze Star Medal': 'service_record.event_desc.usa.award.bronze_star',
+            'Bronze Star + One Oak Leaf Cluster': 'service_record.event_desc.usa.award.bronze_star_one_olc',
+            'Bronze Star + Two Oak Leaf Clusters': 'service_record.event_desc.usa.award.bronze_star_two_olc',
+            'Distinguished Flying Cross': 'service_record.event_desc.usa.award.dfc',
+            'DFC + One Oak Leaf Cluster': 'service_record.event_desc.usa.award.dfc_one_olc',
+            'DFC + Two Oak Leaf Clusters': 'service_record.event_desc.usa.award.dfc_two_olc',
+            'DFC + Three Oak Leaf Clusters': 'service_record.event_desc.usa.award.dfc_three_olc',
+            'DFC + Four Oak Leaf Clusters': 'service_record.event_desc.usa.award.dfc_four_olc',
+            'DFC + One Silver Oak Leaf Cluster': 'service_record.event_desc.usa.award.dfc_one_silver_olc',
+            'Legion of Merit': 'service_record.event_desc.usa.award.legion_of_merit',
+            'Silver Star Medal': 'service_record.event_desc.usa.award.silver_star',
+            'Silver Star + One Oak Leaf Cluster': 'service_record.event_desc.usa.award.silver_star_one_olc',
+            'Silver Star + Two Oak Leaf Clusters': 'service_record.event_desc.usa.award.silver_star_two_olc',
+            'Distinguished Service Cross': 'service_record.event_desc.usa.award.dsc',
+            'DSC + One Oak Leaf Cluster': 'service_record.event_desc.usa.award.dsc_one_olc',
+            'DSC + Two Oak Leaf Clusters': 'service_record.event_desc.usa.award.dsc_two_olc',
+            'DSC + Three Oak Leaf Clusters': 'service_record.event_desc.usa.award.dsc_three_olc',
+            'DSC + Four Oak Leaf Clusters': 'service_record.event_desc.usa.award.dsc_four_olc',
+            'Medal of Honor': 'service_record.event_desc.usa.award.medal_of_honor',
+            'Medal of Honor + One Oak Leaf Cluster': 'service_record.event_desc.usa.award.medal_of_honor_one_olc',
+            'Purple Heart': 'service_record.event_desc.usa.award.purple_heart',
+            'Purple Heart + One Oak Leaf Cluster': 'service_record.event_desc.usa.award.purple_heart_one_olc',
+            'Purple Heart + Two Oak Leaf Clusters': 'service_record.event_desc.usa.award.purple_heart_two_olc'
         }
     },
     soviet: {
         ranks: {
-            Sergeant: 'A frontline pilot with little margin and no illusions. You fly, you fight, you hope the engine holds.',
-            'Senior Sergeant': 'You’ve survived enough to teach others how to. The new men watch your hands more than they hear your words.',
-            'Junior Lieutenant': 'You’ve got a commission and a rifleman’s war in the air. Lead tight, strike fast, and don’t linger.',
-            Lieutenant: 'You’re trusted to bring a pair home and still finish the job. The sky is crowded and mercy is scarce.',
-            'Senior Lieutenant': 'You lead sorties into flak and weather like it’s routine. Your squadron runs on discipline and stubbornness.',
-            Captain: 'You command and you still fly hard. The best orders are the ones you’ve tested in your own cockpit.',
-            Major: 'You fly less, plan more, and sleep even less. When you do climb out, it’s for missions that must succeed.',
-            'Sub-Colonel': 'Command pulls you away from the line, but you return when it matters. A rare sortie, a familiar smell of fuel and frost.',
-            Colonel: 'You carry an air regiment’s fate in your notes and your voice. Flying is occasional; responsibility never is.',
-            'Major General': 'You command formations and watch losses like a ledger of steel. If you fly, it’s exceptional—and never for sport.',
-            'Lieutenant General': 'The front is vast, the demands endless. You’re a pilot by training, a commander by necessity.'
+            Sergeant: 'service_record.event_desc.soviet.rank.sergeant',
+            'Senior Sergeant': 'service_record.event_desc.soviet.rank.senior_sergeant',
+            'Junior Lieutenant': 'service_record.event_desc.soviet.rank.junior_lieutenant',
+            Lieutenant: 'service_record.event_desc.soviet.rank.lieutenant',
+            'Senior Lieutenant': 'service_record.event_desc.soviet.rank.senior_lieutenant',
+            Captain: 'service_record.event_desc.soviet.rank.captain',
+            Major: 'service_record.event_desc.soviet.rank.major',
+            'Sub-Colonel': 'service_record.event_desc.soviet.rank.sub_colonel',
+            Colonel: 'service_record.event_desc.soviet.rank.colonel',
+            'Major General': 'service_record.event_desc.soviet.rank.major_general',
+            'Lieutenant General': 'service_record.event_desc.soviet.rank.lieutenant_general'
         },
         awards: {
-            'Aviation Badge': 'You’re marked as aircrew now. The front will use you until the machine or the man breaks.',
-            'Medal "For Battle Merit"': 'Solid service under fire. You did the work, took the risk, and brought results back.',
-            'Medal for Courage': 'Personal bravery, close and undeniable. You held your nerve when the sky turned violent.',
-            'Order of the Red Star': 'A serious combat award for real results. Not for talk—only for what you did at the front.',
-            'Order of the Red Star (2nd awarding)': 'They’re recognizing you again. Same war, higher stakes, more proof you’re still delivering.',
-            'Order of the Red Star (3rd awarding)': 'A third time is no accident. You’ve made a career out of surviving—and winning.',
-            'Order of the Patriotic War 2nd Class': 'Combat merit that mattered to the Motherland. Earned in the grind, not the parade.',
-            'Order of the Patriotic War 1st Class': 'A higher grade for standout performance in battle. Your name is being noticed beyond the regiment.',
-            'Order of Alexander Nevsky': 'For leaders who win while outnumbered and under fire. A commander’s award, earned in the air.',
-            'Order of Suvorov 3rd Class': 'Recognition for effective command and successful operations. You made plans work in a world that hates plans.',
-            'Order of the Red Banner': 'A major mark of courage and achievement. The kind of ribbon earned only at the sharp end.',
-            'Order of the Red Banner (2nd awarding)': 'They say you’ve done it again. Results repeated, losses endured, mission accomplished.',
-            'Order of the Red Banner (3rd awarding)': 'A third award speaks of a brutal record. You’ve fought hard, long, and successfully.',
-            'Hero of the Soviet Union': 'The highest title—heroism carved into the record. It doesn’t make the next sortie easier.',
-            'Hero of the Soviet Union (2nd awarding)': 'A rare second title for extraordinary repeat heroism. Even comrades look twice when your name is read.',
-            'Hero of the Soviet Union (3rd awarding)': 'Almost legendary. You’re a symbol now—and symbols are still sent into combat.',
-            'Order of Lenin': 'One of the highest honors, often paired with major heroism. A decoration that carries political weight and frontline respect.',
-            'Order of Lenin (2nd awarding)': 'They’re elevating you again for continued distinction. Your war record is becoming impossible to ignore.',
-            'Order of Lenin (3rd awarding)': 'A third time is exceptional. It marks a sustained level of achievement few ever reach.',
-            '5 Combat Sorties Bonus (1500 rubles)': 'A small reward for staying on the roster. The money is nice; the survival is the real prize.',
-            '15 Combat Sorties Bonus (2000 rubles)': 'You’ve kept flying while others vanish. The state notices endurance.',
-            '25 Combat Sorties Bonus (3000 rubles)': 'A real milestone at the front. You’ve stacked sorties like cordwood and kept moving.',
-            '40 Combat Sorties Bonus (5000 rubles)': 'Heavy operational time—hard-earned and rarely clean. You’ve stayed in the fight long enough to be feared.',
-            'Red Wound Stripe': 'You were wounded and still came back. The stripe is simple; the story isn’t.',
-            'Yellow Wound Stripe': 'Another mark of injury carried forward. You flew hurt, landed alive, and returned to duty.'
+            'Aviation Badge': 'service_record.event_desc.soviet.award.aviation_badge',
+            'Medal "For Battle Merit"': 'service_record.event_desc.soviet.award.medal_battle_merit',
+            'Medal for Courage': 'service_record.event_desc.soviet.award.medal_courage',
+            'Order of the Red Star': 'service_record.event_desc.soviet.award.order_red_star',
+            'Order of the Red Star (2nd awarding)': 'service_record.event_desc.soviet.award.order_red_star_2',
+            'Order of the Red Star (3rd awarding)': 'service_record.event_desc.soviet.award.order_red_star_3',
+            'Order of the Patriotic War 2nd Class': 'service_record.event_desc.soviet.award.order_patriotic_war_2',
+            'Order of the Patriotic War 1st Class': 'service_record.event_desc.soviet.award.order_patriotic_war_1',
+            'Order of Alexander Nevsky': 'service_record.event_desc.soviet.award.order_alexander_nevsky',
+            'Order of Suvorov 3rd Class': 'service_record.event_desc.soviet.award.order_suvorov_3',
+            'Order of the Red Banner': 'service_record.event_desc.soviet.award.order_red_banner',
+            'Order of the Red Banner (2nd awarding)': 'service_record.event_desc.soviet.award.order_red_banner_2',
+            'Order of the Red Banner (3rd awarding)': 'service_record.event_desc.soviet.award.order_red_banner_3',
+            'Hero of the Soviet Union': 'service_record.event_desc.soviet.award.hero_soviet_union',
+            'Hero of the Soviet Union (2nd awarding)': 'service_record.event_desc.soviet.award.hero_soviet_union_2',
+            'Hero of the Soviet Union (3rd awarding)': 'service_record.event_desc.soviet.award.hero_soviet_union_3',
+            'Order of Lenin': 'service_record.event_desc.soviet.award.order_lenin',
+            'Order of Lenin (2nd awarding)': 'service_record.event_desc.soviet.award.order_lenin_2',
+            'Order of Lenin (3rd awarding)': 'service_record.event_desc.soviet.award.order_lenin_3',
+            '5 Combat Sorties Bonus (1500 rubles)': 'service_record.event_desc.soviet.award.bonus_sorties_5',
+            '15 Combat Sorties Bonus (2000 rubles)': 'service_record.event_desc.soviet.award.bonus_sorties_15',
+            '25 Combat Sorties Bonus (3000 rubles)': 'service_record.event_desc.soviet.award.bonus_sorties_25',
+            '40 Combat Sorties Bonus (5000 rubles)': 'service_record.event_desc.soviet.award.bonus_sorties_40',
+            'Red Wound Stripe': 'service_record.event_desc.soviet.award.wound_stripe_red',
+            'Yellow Wound Stripe': 'service_record.event_desc.soviet.award.wound_stripe_yellow'
         }
     }
 };
@@ -522,16 +526,16 @@ const DetailPage = {
         
         try {
             // Show loading state
-            this.elements.title.textContent = 'Loading...';
-            this.elements.eventsList.innerHTML = '<p>Loading events...</p>';
-            this.elements.debriefingsContainer.innerHTML = '<p>Loading debriefings...</p>';
-            this.elements.summaryContent.innerHTML = '<p>Loading summary...</p>';
+            this.elements.title.textContent = t('service_record.detail.loading_title');
+            this.elements.eventsList.innerHTML = `<p>${this.escapeHTML(t('service_record.detail.loading_events'))}</p>`;
+            this.elements.debriefingsContainer.innerHTML = `<p>${this.escapeHTML(t('service_record.detail.loading_debriefings'))}</p>`;
+            this.elements.summaryContent.innerHTML = `<p>${this.escapeHTML(t('service_record.detail.loading_summary'))}</p>`;
             
             // Fetch campaign data
             const campaign = await API.getCampaignDetail(campaignName);
             
             if (!campaign) {
-                throw new Error('Campaign not found');
+                throw new Error(t('service_record.detail.error_not_found'));
             }
             
             this.currentCampaign = campaign;
@@ -609,7 +613,7 @@ const DetailPage = {
             return;
         }
         this.elements.pilotPhoto.onerror = () => {
-            this.elements.pilotPhoto.src = 'static/images/placeholder_pilot.png';
+        this.elements.pilotPhoto.src = 'static/images/placeholder_pilot.png';
         };
         this.elements.pilotPhoto.src = src;
     },
@@ -648,7 +652,7 @@ const DetailPage = {
                 return;
             }
             if (!this.supportedImageTypes.includes(file.type)) {
-                alert('Unsupported image format. Please select a PNG, JPG, GIF, BMP, or WebP file.');
+                alert(t('service_record.modal.unsupported_format'));
                 return;
             }
 
@@ -715,7 +719,7 @@ const DetailPage = {
         });
 
         if (!canvas) {
-            throw new Error('Unable to crop the selected image. Please try again.');
+            throw new Error(t('service_record.modal.crop_error'));
         }
 
         const imageData = canvas.toDataURL('image/png');
@@ -725,7 +729,7 @@ const DetailPage = {
             this.setPilotPhoto(`${response.path}?t=${Date.now()}`);
             return true;
         }
-        throw new Error('Unable to save pilot photo. Please try again.');
+        throw new Error(t('service_record.modal.save_photo_error'));
     },
 
     async applyPhotoAndPersonalData() {
@@ -734,7 +738,7 @@ const DetailPage = {
         }
 
         const payload = this.getPersonalDataPayload();
-        this.showPersonalDataStatus('Saving...');
+        this.showPersonalDataStatus(t('service_record.modal.status_saving'));
 
         let photoError = null;
         let dataError = null;
@@ -763,16 +767,16 @@ const DetailPage = {
 
         if (photoError || dataError) {
             if (photoError && dataError) {
-                this.showPersonalDataStatus('Unable to save photo or personal data.');
+                this.showPersonalDataStatus(t('service_record.modal.status_save_failed_both'));
             } else if (photoError) {
-                this.showPersonalDataStatus('Unable to save photo.');
+                this.showPersonalDataStatus(t('service_record.modal.status_save_failed_photo'));
             } else {
-                this.showPersonalDataStatus('Unable to save personal data.');
+                this.showPersonalDataStatus(t('service_record.modal.status_save_failed_data'));
             }
             return;
         }
 
-        this.showPersonalDataStatus('Saved.');
+        this.showPersonalDataStatus(t('service_record.modal.status_saved'));
         this.closeCropperModal();
     },
 
@@ -801,7 +805,7 @@ const DetailPage = {
             this.showPersonalDataStatus('');
         } catch (error) {
             console.error('Failed to load personal data:', error);
-            this.showPersonalDataStatus('Unable to load personal data.');
+            this.showPersonalDataStatus(t('service_record.modal.status_load_failed'));
             this.setPersonalDataFields({});
             this.setPersonalDataDisplay({});
         }
@@ -919,7 +923,7 @@ const DetailPage = {
         insigniaElements.forEach(element => {
             if (imageSrc) {
                 element.src = imageSrc;
-                element.alt = `${country} air force insignia`;
+                element.alt = t('service_record.detail.insignia_alt', { country });
                 element.style.display = '';
             } else {
                 element.removeAttribute('src');
@@ -936,7 +940,7 @@ const DetailPage = {
         this.elements.eventsList.innerHTML = '';
         
         if (!events || events.length === 0) {
-            this.elements.eventsList.innerHTML = '<p class="empty-message">No events recorded</p>';
+            this.elements.eventsList.innerHTML = `<p class="empty-message">${this.escapeHTML(t('service_record.events.empty'))}</p>`;
             return;
         }
         
@@ -947,7 +951,7 @@ const DetailPage = {
         // Render promotions
         if (promotions.length > 0) {
             const header = document.createElement('h4');
-            header.textContent = 'Promotions';
+            header.textContent = t('service_record.events.promotions_heading');
             header.style.marginBottom = '0.75rem';
             header.classList.add('event-section-title', 'event-section-title--promotion');
             this.elements.eventsList.appendChild(header);
@@ -961,7 +965,7 @@ const DetailPage = {
         // Render awards
         if (awards.length > 0) {
             const header = document.createElement('h4');
-            header.textContent = 'Awards';
+            header.textContent = t('service_record.events.awards_heading');
             header.style.marginTop = '1.5rem';
             header.style.marginBottom = '0.75rem';
             header.classList.add('event-section-title', 'event-section-title--award');
@@ -981,9 +985,13 @@ const DetailPage = {
         const item = document.createElement('div');
         item.className = `event-item ${event.type}`;
 
-        const typeLabel = event.type === 'promotion' ? 'Promotion' : 'Award';
+        const typeLabel = event.type === 'promotion'
+            ? t('service_record.events.type_promotion')
+            : t('service_record.events.type_award');
         const mainText = event.type === 'promotion' ? event.rank : event.name;
-        const dateText = event.date || `Mission ${event.mission_number || '?'}`;
+        const dateText = event.date || t('service_record.events.mission_fallback', {
+            number: event.mission_number || '?'
+        });
         const reasonText = event.reason || '';
 
         const header = document.createElement('div');
@@ -998,7 +1006,9 @@ const DetailPage = {
         if (event.image_url) {
             img = document.createElement('img');
             img.className = 'event-image';
-            img.alt = `${mainText || 'Event'} icon`;
+            img.alt = t('service_record.events.icon_alt', {
+                name: mainText || t('service_record.events.default_name')
+            });
             img.src = event.image_url;
             img.onload = () => this.scaleEventImage(img);
             img.onerror = () => {
@@ -1048,10 +1058,12 @@ const DetailPage = {
         }
         if (event.type === 'promotion') {
             const rankName = normalizeEventName(event.rank);
-            return descriptions.ranks[rankName] || '';
+            const key = descriptions.ranks[rankName];
+            return key ? t(key) : '';
         }
         if (event.type === 'award') {
-            return getAwardDescription(descriptions.awards, event.name);
+            const key = getAwardDescription(descriptions.awards, event.name);
+            return key ? t(key) : '';
         }
         return '';
     },
@@ -1077,7 +1089,7 @@ const DetailPage = {
             PreviewModal.open({
                 title: title || mainText || '',
                 imageUrl: previewUrl,
-                imageAlt: title || mainText || 'Event preview',
+                imageAlt: title || mainText || t('service_record.preview.default_alt'),
                 width: size ? size.width : null,
                 height: size ? size.height : null,
                 description
@@ -1090,7 +1102,7 @@ const DetailPage = {
      */
     renderDebriefings(html) {
         if (!html || html.trim() === '') {
-            this.elements.debriefingsContainer.innerHTML = '<p class="empty-message">No debriefings available</p>';
+            this.elements.debriefingsContainer.innerHTML = `<p class="empty-message">${this.escapeHTML(t('service_record.debriefings.empty'))}</p>`;
             return;
         }
         
@@ -1110,7 +1122,7 @@ const DetailPage = {
         this.elements.summaryContent.innerHTML = '';
         
         if (!summary) {
-            this.elements.summaryContent.innerHTML = '<p class="empty-message">No summary available</p>';
+            this.elements.summaryContent.innerHTML = `<p class="empty-message">${this.escapeHTML(t('service_record.summary.empty'))}</p>`;
             return;
         }
         
@@ -1118,35 +1130,35 @@ const DetailPage = {
 
         if (summary.combat_results) {
             sections.push(this.createSummarySection(
-                'Combat Results',
+                t('service_record.summary.combat_results'),
                 this.renderCombatResults(summary.combat_results)
             ));
         }
 
         if (summary.missions_stats) {
             sections.push(this.createSummarySection(
-                'Missions Flown',
+                t('service_record.summary.missions_flown'),
                 this.renderMissionsStats(summary.missions_stats)
             ));
         }
 
         if (summary.aircraft_usage && Object.keys(summary.aircraft_usage).length > 0) {
             sections.push(this.createSummarySection(
-                'Aircraft Flown',
+                t('service_record.summary.aircraft_flown'),
                 this.renderAircraftUsage(summary.aircraft_usage)
             ));
         }
 
         if (summary.career_progression) {
             sections.push(this.createSummarySection(
-                'Career Progression',
+                t('service_record.summary.career_progression'),
                 this.renderCareerProgression(summary.career_progression)
             ));
         }
 
         if (summary.timeline && summary.timeline.first_mission_date) {
             sections.push(this.createSummarySection(
-                'Campaign Timeline',
+                t('service_record.summary.campaign_timeline'),
                 this.renderTimeline(summary.timeline)
             ));
         }
@@ -1180,17 +1192,17 @@ const DetailPage = {
 
         const summaryStats = document.createElement('div');
         summaryStats.className = 'combat-summary-stats';
-        summaryStats.appendChild(this.createInlineStat('Overall Score', results.total_score ?? 0));
-        summaryStats.appendChild(this.createInlineStat('Total Kills', results.total_kills ?? 0));
+        summaryStats.appendChild(this.createInlineStat(t('service_record.combat.overall_score'), results.total_score ?? 0));
+        summaryStats.appendChild(this.createInlineStat(t('service_record.combat.total_kills'), results.total_kills ?? 0));
         container.appendChild(summaryStats);
 
         const categories = [
-            { key: 'Aircraft', icon: 'icon_aircraft.png' },
-            { key: 'Vehicles', icon: 'icon_vehicles.png' },
-            { key: 'Railroad', icon: 'icon_railroad.png' },
-            { key: 'Armaments', icon: 'icon_armaments.png' },
-            { key: 'Buildings', icon: 'icon_buildings.png' },
-            { key: 'Marine', icon: 'icon_marine.png' }
+            { key: 'Aircraft', icon: 'icon_aircraft.png', label: t('service_record.combat.category.aircraft') },
+            { key: 'Vehicles', icon: 'icon_vehicles.png', label: t('service_record.combat.category.vehicles') },
+            { key: 'Railroad', icon: 'icon_railroad.png', label: t('service_record.combat.category.railroad') },
+            { key: 'Armaments', icon: 'icon_armaments.png', label: t('service_record.combat.category.armaments') },
+            { key: 'Buildings', icon: 'icon_buildings.png', label: t('service_record.combat.category.buildings') },
+            { key: 'Marine', icon: 'icon_marine.png', label: t('service_record.combat.category.marine') }
         ];
 
         const byCategory = results.by_category || {};
@@ -1205,7 +1217,7 @@ const DetailPage = {
 
             const img = document.createElement('img');
             img.src = this.getGameAssetUrl(`CampaignRanksAwards/Misc/${category.icon}`);
-            img.alt = `${category.key} icon`;
+            img.alt = t('service_record.combat.icon_alt', { category: category.label });
             img.onerror = () => img.remove();
             cell.appendChild(img);
 
@@ -1216,7 +1228,7 @@ const DetailPage = {
 
             const label = document.createElement('div');
             label.className = 'combat-icon-label';
-            label.textContent = category.key;
+            label.textContent = category.label;
             cell.appendChild(label);
 
             iconRow.appendChild(cell);
@@ -1228,12 +1240,43 @@ const DetailPage = {
         subcategoryColumns.className = 'combat-subcategory-columns';
 
         const subcategoryMap = {
-            'Aircraft': ['Light', 'Medium', 'Heavy', 'Parked', 'Balloons'],
-            'Vehicles': ['Transport', 'Armored (Light)', 'Armored (Medium)', 'Armored (Heavy)'],
-            'Railroad': ['Locomotives', 'Railroad Cars', 'Station Facilities'],
-            'Armaments': ['Machine Guns', 'Cannons', 'AAA Guns', 'Rocket Launchers', 'Searchlights', 'Radars'],
-            'Buildings': ['Residential Buildings', 'Facilities', 'Bridges'],
-            'Marine': ['Light', 'Cargo', 'Submarines', 'Destroyers']
+            'Aircraft': [
+                { key: 'Light', label: t('service_record.combat.subcategory.aircraft.light') },
+                { key: 'Medium', label: t('service_record.combat.subcategory.aircraft.medium') },
+                { key: 'Heavy', label: t('service_record.combat.subcategory.aircraft.heavy') },
+                { key: 'Parked', label: t('service_record.combat.subcategory.aircraft.parked') },
+                { key: 'Balloons', label: t('service_record.combat.subcategory.aircraft.balloons') }
+            ],
+            'Vehicles': [
+                { key: 'Transport', label: t('service_record.combat.subcategory.vehicles.transport') },
+                { key: 'Armored (Light)', label: t('service_record.combat.subcategory.vehicles.armored_light') },
+                { key: 'Armored (Medium)', label: t('service_record.combat.subcategory.vehicles.armored_medium') },
+                { key: 'Armored (Heavy)', label: t('service_record.combat.subcategory.vehicles.armored_heavy') }
+            ],
+            'Railroad': [
+                { key: 'Locomotives', label: t('service_record.combat.subcategory.railroad.locomotives') },
+                { key: 'Railroad Cars', label: t('service_record.combat.subcategory.railroad.cars') },
+                { key: 'Station Facilities', label: t('service_record.combat.subcategory.railroad.facilities') }
+            ],
+            'Armaments': [
+                { key: 'Machine Guns', label: t('service_record.combat.subcategory.armaments.machine_guns') },
+                { key: 'Cannons', label: t('service_record.combat.subcategory.armaments.cannons') },
+                { key: 'AAA Guns', label: t('service_record.combat.subcategory.armaments.aaa_guns') },
+                { key: 'Rocket Launchers', label: t('service_record.combat.subcategory.armaments.rocket_launchers') },
+                { key: 'Searchlights', label: t('service_record.combat.subcategory.armaments.searchlights') },
+                { key: 'Radars', label: t('service_record.combat.subcategory.armaments.radars') }
+            ],
+            'Buildings': [
+                { key: 'Residential Buildings', label: t('service_record.combat.subcategory.buildings.residential') },
+                { key: 'Facilities', label: t('service_record.combat.subcategory.buildings.facilities') },
+                { key: 'Bridges', label: t('service_record.combat.subcategory.buildings.bridges') }
+            ],
+            'Marine': [
+                { key: 'Light', label: t('service_record.combat.subcategory.marine.light') },
+                { key: 'Cargo', label: t('service_record.combat.subcategory.marine.cargo') },
+                { key: 'Submarines', label: t('service_record.combat.subcategory.marine.submarines') },
+                { key: 'Destroyers', label: t('service_record.combat.subcategory.marine.destroyers') }
+            ]
         };
 
         categories.forEach(category => {
@@ -1246,15 +1289,16 @@ const DetailPage = {
 
                 const label = document.createElement('span');
                 label.className = 'combat-subcategory-label';
-                const formattedLabel = subcat.startsWith('Armored ')
-                    ? subcat.replace('Armored ', 'Armored\n')
-                    : subcat;
+                const armoredPrefix = t('service_record.combat.subcategory.armored_prefix');
+                const formattedLabel = subcat.label.startsWith(armoredPrefix)
+                    ? subcat.label.replace(armoredPrefix, `${armoredPrefix}\n`)
+                    : subcat.label;
                 label.textContent = formattedLabel;
                 row.appendChild(label);
 
                 const value = document.createElement('span');
                 value.className = 'combat-subcategory-value';
-                value.textContent = (byCategory[category.key] || {})[subcat] || 0;
+                value.textContent = (byCategory[category.key] || {})[subcat.key] || 0;
                 row.appendChild(value);
 
                 column.appendChild(row);
@@ -1277,9 +1321,9 @@ const DetailPage = {
         const totalFlightTime = stats.total_flight_time ?? '0m';
         const averageDuration = stats.average_duration ?? '0m';
 
-        container.appendChild(this.createStat('Missions Completed', totalMissions));
-        container.appendChild(this.createStat('Flight Time', totalFlightTime));
-        container.appendChild(this.createStat('Average Flight Time', averageDuration));
+        container.appendChild(this.createStat(t('service_record.summary.missions_completed'), totalMissions));
+        container.appendChild(this.createStat(t('service_record.summary.flight_time'), totalFlightTime));
+        container.appendChild(this.createStat(t('service_record.summary.average_flight_time'), averageDuration));
 
         const landingStats = Array.isArray(stats.landings) ? stats.landings : [];
         const filteredLandings = landingStats.filter(
@@ -1289,7 +1333,7 @@ const DetailPage = {
         if (filteredLandings.length === 0) {
             const empty = document.createElement('p');
             empty.className = 'empty-message';
-            empty.textContent = 'No status data available';
+            empty.textContent = t('service_record.summary.no_status_data');
             container.appendChild(empty);
             return container;
         }
@@ -1308,7 +1352,10 @@ const DetailPage = {
         const container = document.createElement('div');
         
         for (const [aircraft, data] of Object.entries(usage)) {
-            const value = `${data.missions} missions (${data.kills} kills)`;
+            const value = t('service_record.summary.aircraft_usage', {
+                missions: data.missions,
+                kills: data.kills
+            });
             container.appendChild(this.createStat(aircraft, value));
         }
         
@@ -1321,10 +1368,10 @@ const DetailPage = {
     renderCareerProgression(progression) {
         const container = document.createElement('div');
         
-        container.appendChild(this.createStat('Starting Rank', progression.starting_rank));
-        container.appendChild(this.createStat('Final Rank', progression.final_rank));
-        container.appendChild(this.createStat('Promotions', progression.promotions_count));
-        container.appendChild(this.createStat('Awards', progression.awards_count));
+        container.appendChild(this.createStat(t('service_record.summary.starting_rank'), progression.starting_rank));
+        container.appendChild(this.createStat(t('service_record.summary.final_rank'), progression.final_rank));
+        container.appendChild(this.createStat(t('service_record.summary.promotions'), progression.promotions_count));
+        container.appendChild(this.createStat(t('service_record.summary.awards'), progression.awards_count));
         
         // Awards list
         if (progression.awards_list && progression.awards_list.length > 0) {
@@ -1350,15 +1397,18 @@ const DetailPage = {
         const container = document.createElement('div');
         
         if (timeline.first_mission_date) {
-            container.appendChild(this.createStat('First Mission', timeline.first_mission_date));
+            container.appendChild(this.createStat(t('service_record.summary.first_mission'), timeline.first_mission_date));
         }
         
         if (timeline.last_mission_date) {
-            container.appendChild(this.createStat('Last Mission', timeline.last_mission_date));
+            container.appendChild(this.createStat(t('service_record.summary.last_mission'), timeline.last_mission_date));
         }
         
         if (timeline.duration_days !== null && timeline.duration_days !== undefined) {
-            container.appendChild(this.createStat('Duration', `${timeline.duration_days} days`));
+            container.appendChild(this.createStat(
+                t('service_record.summary.duration'),
+                t('service_record.summary.duration_days', { days: timeline.duration_days })
+            ));
         }
         
         return container;
@@ -1446,7 +1496,7 @@ const DetailPage = {
         const link = document.createElement('a');
         link.href = `/${pdfPath}`;
         link.className = 'pdf-download';
-        link.textContent = '📄 Download PDF Report';
+        link.textContent = t('service_record.summary.pdf_download');
         link.target = '_blank';
         
         this.elements.summaryContent.appendChild(link);
@@ -1456,7 +1506,7 @@ const DetailPage = {
      * Show error state
      */
     showError(message) {
-        this.elements.title.textContent = 'Error';
+        this.elements.title.textContent = t('service_record.detail.error_title');
         this.elements.eventsList.innerHTML = `<p class="error-message">${this.escapeHTML(message)}</p>`;
         this.elements.debriefingsContainer.innerHTML = '';
         this.elements.summaryContent.innerHTML = '';

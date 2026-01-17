@@ -114,6 +114,19 @@ def create_app():
             return f"File not found: {path}", 404
         
         return send_from_directory(config.static_dir, path)
+
+    @app.route('/locales/<path:filename>')
+    def serve_locales(filename):
+        """Serve locale JSON files."""
+        candidate_dirs = [
+            config.base_dir / 'locales',
+            config.base_dir.parent / 'locales'
+        ]
+        for locales_dir in candidate_dirs:
+            locale_path = locales_dir / filename
+            if locale_path.exists():
+                return send_from_directory(locales_dir, filename)
+        return f"Locale not found: {filename}", 404
     
     if config.frozen:
         # In frozen mode, serve reports from data directory
