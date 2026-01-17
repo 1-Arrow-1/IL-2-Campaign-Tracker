@@ -6,6 +6,7 @@ import tkinter as tk
 import os, json
 
 from utils.il2_paths import read_game_directory
+from utils.i18n import load_locale, t
 from utils.logging import get_logger, log_message
 from utils.pathing import get_base_path
 
@@ -302,6 +303,8 @@ def show_event_popups(
     popup_events: list of (campaign_name, event_dict)
     campaign_country_map: dict campaign_name -> country folder name (Germany/Britain/US/USSR)
     """
+    load_locale()
+
     if not popup_events:
         log_message(logger, "[popups] Keine Popup-Events gefunden – nichts zu tun.")
         return
@@ -370,17 +373,17 @@ def show_event_popups(
         # Titel und Text je nach Eventtyp
         if ev_type == "promotion":
             rank = str(ev.get("rank", "")).strip()
-            line1 = f"You have been promoted to {rank}" if rank else "You have been promoted!"
-            title = "Promotion"
+            line1 = t("popups.line.promoted", rank=rank) if rank else t("popups.line.promoted_generic")
+            title = t("popups.title.promotion")
             img_max = (308, 308)  # 20% larger for promotions
         elif ev_type == "award":
             name = str(ev.get("name", "")).strip()
-            line1 = f"You have been awarded with {name}" if name else "You have received an award!"
-            title = "Award"
+            line1 = t("popups.line.awarded", name=name) if name else t("popups.line.awarded_generic")
+            title = t("popups.title.award")
             img_max = (512, 512)
         else:
-            line1 = "New campaign event"
-            title = "Event"
+            line1 = t("popups.line.event")
+            title = t("popups.title.event")
             img_max = (256, 256)
 
         # Untertitel (Mission + Datum)
@@ -388,10 +391,10 @@ def show_event_popups(
         date = str(ev.get("date", "")).strip()
         parts = [campaign_name]
         if mission:
-            parts.append(f"Mission {mission}")
+            parts.append(t("popups.subtitle.mission", mission=mission))
         if date:
             parts.append(date)
-        subtitle = "  •  ".join(parts)
+        subtitle = t("popups.subtitle.separator").join(parts)
 
         # Einzelnes Popup erzeugen
         def _show_one(line1=line1, title=title, img_path=img_path, subtitle=subtitle, img_max=img_max):
@@ -420,5 +423,3 @@ def show_event_popups(
 
     _next()
     root.mainloop()
-
-

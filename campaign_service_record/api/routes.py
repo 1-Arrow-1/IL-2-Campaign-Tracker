@@ -12,6 +12,7 @@ Endpoints:
 import base64
 import json
 import logging
+import os
 import re
 import time
 import traceback
@@ -44,6 +45,7 @@ _last_ping = [time.time()]
 
 _PILOT_DESC_DEFAULT = "campaign_pilot"
 _PERSONAL_DATA_FILENAME = "campaign_personal_data.json"
+_DEFAULT_LOCALE = "en"
 
 
 def _sanitize_pilot_name(name: Optional[str]) -> Optional[str]:
@@ -96,6 +98,27 @@ def _sanitize_personal_data_value(value: Optional[str]) -> str:
     if value is None:
         return ''
     return str(value).strip()
+
+
+def _get_tracker_settings_path() -> Path:
+    base = os.environ.get('LOCALAPPDATA') or str(Path.home())
+    return Path(base) / '.il2_campaign_tracker' / 'settings.json'
+
+
+def _load_tracker_settings() -> dict:
+    settings_path = _get_tracker_settings_path()
+    if not settings_path.exists():
+        return {}
+    try:
+        with open(settings_path, 'r', encoding='utf-8') as file:
+            payload = json.load(file)
+    except (OSError, json.JSONDecodeError) as exc:
+        logger.warning("Failed to read settings from %s: %s", settings_path, exc)
+        return {}
+    if isinstance(payload, dict):
+        return payload
+    logger.warning("Invalid settings payload in %s", settings_path)
+    return {}
 
 
 def init_api(data_dir: Path, reports_dir: Optional[Path] = None):
@@ -191,6 +214,22 @@ def ping():
     """
     _last_ping[0] = time.time()
     return jsonify({'ok': True})
+
+
+# ============================================================================
+# Settings Endpoint
+# ============================================================================
+
+@api_bp.route('/api/settings')
+def get_settings():
+    """Expose locale settings for the frontend i18n loader."""
+    payload = _load_tracker_settings()
+    locale = str(payload.get('locale') or _DEFAULT_LOCALE)
+    fallback = str(payload.get('fallback_locale') or _DEFAULT_LOCALE)
+    return jsonify({
+        'locale': locale,
+        'fallback_locale': fallback,
+    })
 
 
 # ============================================================================

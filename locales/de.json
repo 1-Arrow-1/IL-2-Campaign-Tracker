@@ -413,5 +413,15 @@
   "tracker.combat.subcategory.marine.light": "Leicht",
   "tracker.combat.subcategory.marine.cargo": "Fracht",
   "tracker.combat.subcategory.marine.submarines": "U-Boote",
-  "tracker.combat.subcategory.marine.destroyers": "Zerstörer"
+  "tracker.combat.subcategory.marine.destroyers": "Zerstörer",
+  "popups.title.promotion": "Beförderung",
+  "popups.title.award": "Auszeichnung",
+  "popups.title.event": "Ereignis",
+  "popups.line.promoted": "Sie wurden zu {rank} befördert",
+  "popups.line.promoted_generic": "Sie wurden befördert!",
+  "popups.line.awarded": "Sie wurden mit {name} ausgezeichnet",
+  "popups.line.awarded_generic": "Sie haben eine Auszeichnung erhalten!",
+  "popups.line.event": "Neues Kampagnenereignis",
+  "popups.subtitle.mission": "Mission {mission}",
+  "popups.subtitle.separator": "  •  "
 }

@@ -413,5 +413,16 @@
   "tracker.combat.subcategory.marine.light": "Light",
   "tracker.combat.subcategory.marine.cargo": "Cargo",
   "tracker.combat.subcategory.marine.submarines": "Submarines",
-  "tracker.combat.subcategory.marine.destroyers": "Destroyers"
+  "tracker.combat.subcategory.marine.destroyers": "Destroyers",
+  "popups.title.promotion": "Promotion",
+  "popups.title.award": "Award",
+  "popups.title.event": "Event",
+  "popups.line.promoted": "You have been promoted to {rank}",
+  "popups.line.promoted_generic": "You have been promoted!",
+  "popups.line.awarded": "You have been awarded with {name}",
+  "popups.line.awarded_generic": "You have received an award!",
+  "popups.line.event": "New campaign event",
+  "popups.subtitle.mission": "Mission {mission}",
+  "popups.subtitle.separator": "  •  "
+}
 }

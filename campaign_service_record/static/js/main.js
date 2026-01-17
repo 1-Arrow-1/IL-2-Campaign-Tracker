@@ -22,20 +22,53 @@ const I18N = {
 };
 window.I18N = I18N;
 
-async function loadI18n() {
+async function fetchSettings() {
     try {
-        const response = await fetch('locales/en.json', { cache: 'no-store' });
+        const response = await fetch('/api/settings', { cache: 'no-store' });
+        if (!response.ok) {
+            return { locale: 'en', fallback_locale: 'en' };
+        }
+        const data = await response.json();
+        return {
+            locale: typeof data.locale === 'string' ? data.locale : 'en',
+            fallback_locale: typeof data.fallback_locale === 'string' ? data.fallback_locale : 'en'
+        };
+    } catch (error) {
+        console.warn('Unable to load settings:', error);
+        return { locale: 'en', fallback_locale: 'en' };
+    }
+}
+
+async function loadLocaleFile(path) {
+    try {
+        const response = await fetch(path, { cache: 'no-store' });
         if (!response.ok) {
             console.warn('Failed to load locale file:', response.status);
-            return;
+            return {};
         }
         const data = await response.json();
         if (data && typeof data === 'object') {
-            I18N.messages = data;
+            return data;
         }
+        return {};
     } catch (error) {
         console.warn('Unable to load locale file:', error);
+        return {};
     }
+}
+
+async function loadI18n() {
+    const settings = await fetchSettings();
+    const preferred = (settings.locale || settings.fallback_locale || 'en').trim().toLowerCase();
+    const baseMessages = await loadLocaleFile('/static/locales/en.json');
+    let merged = { ...baseMessages };
+
+    if (preferred && preferred !== 'en') {
+        const overrides = await loadLocaleFile(`/static/locales/${preferred}.json`);
+        merged = { ...baseMessages, ...overrides };
+    }
+
+    I18N.messages = merged;
 }
 
 function applyI18n() {
@@ -184,8 +217,10 @@ const App = {
 
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    loadI18n().finally(() => {
+    const init = async () => {
+        await loadI18n();
         applyI18n();
         App.init();
-    });
+    };
+    init();
 });
