@@ -8,6 +8,35 @@
  * - Keyboard shortcuts
  */
 
+const I18N = {
+    messages: {},
+    t(key, params = {}) {
+        const template = this.messages[key] || key;
+        return template.replace(/\{(\w+)\}/g, (match, name) => {
+            if (Object.prototype.hasOwnProperty.call(params, name)) {
+                return String(params[name]);
+            }
+            return match;
+        });
+    }
+};
+
+async function loadI18n() {
+    try {
+        const response = await fetch('locales/en.json', { cache: 'no-store' });
+        if (!response.ok) {
+            console.warn('Failed to load locale file:', response.status);
+            return;
+        }
+        const data = await response.json();
+        if (data && typeof data === 'object') {
+            I18N.messages = data;
+        }
+    } catch (error) {
+        console.warn('Unable to load locale file:', error);
+    }
+}
+
 const App = {
     /**
      * Current page
@@ -94,7 +123,7 @@ const App = {
         DetailPage.clearBackgroundState();
         
         // Update page title
-        document.title = 'IL-2 Campaign Service Record';
+        document.title = I18N.t('service_record.title');
 
         const fallbackBackground = LandingPage.getFallbackBackground();
         if (fallbackBackground) {
@@ -120,7 +149,7 @@ const App = {
         DetailPage.applyBackgroundForCountry(campaignCountry, { force: true });
         
         // Update page title
-        document.title = `${campaignName} - Campaign Service Record`;
+        document.title = I18N.t('service_record.detail_title', { campaign: campaignName });
         
         // Load campaign details
         await DetailPage.load(campaignName);
@@ -132,5 +161,7 @@ const App = {
 
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    App.init();
+    loadI18n().finally(() => {
+        App.init();
+    });
 });

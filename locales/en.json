@@ -1,1 +1,27 @@
-{}
+{
+  "backup_restore.window.title": "IL-2 Campaign Tracker - Restore Backup",
+  "backup_restore.header.title": "🔄 Restore Campaign Backup",
+  "backup_restore.header.subtitle": "Select a backup to restore your campaign progress to a previous state",
+  "backup_restore.info.warning": "⚠️ Restoring a backup will replace your current campaign progress.  The tracker will restart automatically after restore.  Your popup states will also be restored if available.",
+  "backup_restore.table.date": "Backup Date & Time",
+  "backup_restore.table.size": "Size",
+  "backup_restore.table.status": "Status",
+  "backup_restore.table.popups": "Popup State",
+  "backup_restore.status.active": "✅ Currently Active",
+  "backup_restore.popups.included": "✓ Included",
+  "backup_restore.popups.not_available": "✗ Not available",
+  "backup_restore.button.restore": "🔄 Restore Selected Backup",
+  "backup_restore.button.skip": "▶ Continue Without Restore",
+  "backup_restore.button.exit": "✕ Exit",
+  "backup_restore.footer.summary": "📁 {count} backup(s) found in:  {path}",
+  "backup_restore.size.unknown": "Unknown",
+  "backup_restore.size.bytes": "B",
+  "backup_restore.size.kilobytes": "KB",
+  "backup_restore.size.megabytes": "MB",
+  "backup_restore.error.title": "Error",
+  "backup_restore.error.not_found": "Could not find backup information.",
+  "backup_restore.confirm.title": "Confirm Restore",
+  "backup_restore.confirm.message": "Are you sure you want to restore this backup?\n\n📅 Date: {date}\n📦 Size: {size}\n💾 Popup State: {popups}\n\nYour current campaign progress will be replaced.\nThe tracker will restart automatically.",
+  "service_record.title": "IL-2 Campaign Service Record",
+  "service_record.detail_title": "{campaign} - Campaign Service Record"
+}

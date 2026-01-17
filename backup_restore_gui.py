@@ -18,6 +18,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from typing import Optional, Dict, List
 
+from utils.i18n import load_locale, t
 from utils.logging import get_logger, log_message
 
 logger = get_logger(__name__)
@@ -38,7 +39,9 @@ class BackupRestoreGUI:
         self. backup_dir = il2_states_path.parent
         self.selected_backup = None
         self. result = None  # 'restored', 'skipped', or 'cancelled'
-        
+
+        load_locale()
+
         # Load backup index
         self. backups = self._load_backups()
         
@@ -51,7 +54,7 @@ class BackupRestoreGUI:
         
         # Create GUI
         self. root = tk. Tk()
-        self.root.title("IL-2 Campaign Tracker - Restore Backup")
+        self.root.title(t("backup_restore.window.title"))
         self.root.geometry("750x500")
         self.root.resizable(True, True)
         
@@ -110,7 +113,7 @@ class BackupRestoreGUI:
                     file_size = backup_path.stat().st_size
                     size_str = self._format_size(file_size)
                 except:
-                    size_str = "Unknown"
+                    size_str = t("backup_restore.size.unknown")
                 
                 backups.append({
                     'hash': hash_key,
@@ -135,11 +138,11 @@ class BackupRestoreGUI:
     def _format_size(self, size_bytes: int) -> str:
         """Format file size in human-readable format"""
         if size_bytes < 1024:
-            return f"{size_bytes} B"
+            return f"{size_bytes} {t('backup_restore.size.bytes')}"
         elif size_bytes < 1024 * 1024:
-            return f"{size_bytes / 1024:.1f} KB"
+            return f"{size_bytes / 1024:.1f} {t('backup_restore.size.kilobytes')}"
         else:
-            return f"{size_bytes / (1024 * 1024):.1f} MB"
+            return f"{size_bytes / (1024 * 1024):.1f} {t('backup_restore.size.megabytes')}"
     
     def _get_current_hash(self) -> Optional[str]:
         """Calculate hash of current campaignsstates.txt"""
@@ -161,7 +164,7 @@ class BackupRestoreGUI:
         
         title_label = tk. Label(
             header_frame,
-            text="🔄 Restore Campaign Backup",
+            text=t("backup_restore.header.title"),
             font=('Arial', 16, 'bold'),
             bg='#2c3e50',
             fg='white'
@@ -170,7 +173,7 @@ class BackupRestoreGUI:
         
         subtitle_label = tk. Label(
             header_frame,
-            text="Select a backup to restore your campaign progress to a previous state",
+            text=t("backup_restore.header.subtitle"),
             font=('Arial', 10),
             bg='#2c3e50',
             fg='#ecf0f1'
@@ -183,9 +186,7 @@ class BackupRestoreGUI:
         
         info_label = tk.Label(
             info_frame,
-            text="⚠️ Restoring a backup will replace your current campaign progress.  "
-                 "The tracker will restart automatically after restore.  "
-                 "Your popup states will also be restored if available.",
+            text=t("backup_restore.info.warning"),
             font=('Arial', 9),
             bg='#ffeaa7',
             fg='#2d3436',
@@ -202,10 +203,10 @@ class BackupRestoreGUI:
         columns = ('date', 'size', 'status', 'popups')
         self.tree = ttk.Treeview(list_frame, columns=columns, show='headings', height=12)
         
-        self.tree.heading('date', text='Backup Date & Time')
-        self.tree.heading('size', text='Size')
-        self.tree.heading('status', text='Status')
-        self.tree.heading('popups', text='Popup State')
+        self.tree.heading('date', text=t("backup_restore.table.date"))
+        self.tree.heading('size', text=t("backup_restore.table.size"))
+        self.tree.heading('status', text=t("backup_restore.table.status"))
+        self.tree.heading('popups', text=t("backup_restore.table.popups"))
         
         self.tree.column('date', width=200, anchor='w')
         self.tree.column('size', width=80, anchor='center')
@@ -223,14 +224,18 @@ class BackupRestoreGUI:
         for i, backup in enumerate(self.backups):
             # Determine status
             if backup['hash'] == self.current_hash:
-                status = "✅ Currently Active"
+                status = t("backup_restore.status.active")
                 tags = ('active',)
             else:
                 status = ""
                 tags = ('normal',) if i % 2 == 0 else ('alternate',)
             
             # Popup backup indicator
-            popups = "✓ Included" if backup['has_popups'] else "✗ Not available"
+            popups = (
+                t("backup_restore.popups.included")
+                if backup['has_popups']
+                else t("backup_restore.popups.not_available")
+            )
             
             self.tree.insert('', 'end',
                            iid=backup['hash'],
@@ -255,7 +260,7 @@ class BackupRestoreGUI:
         
         self. restore_btn = ttk.Button(
             left_buttons,
-            text="🔄 Restore Selected Backup",
+            text=t("backup_restore.button.restore"),
             command=self._on_restore,
             state='disabled',
             width=28
@@ -264,7 +269,7 @@ class BackupRestoreGUI:
         
         skip_btn = ttk.Button(
             left_buttons,
-            text="▶ Continue Without Restore",
+            text=t("backup_restore.button.skip"),
             command=self._on_skip,
             width=25
         )
@@ -273,7 +278,7 @@ class BackupRestoreGUI:
         # Right side button
         cancel_btn = ttk.Button(
             button_frame,
-            text="✕ Exit",
+            text=t("backup_restore.button.exit"),
             command=self._on_cancel,
             width=12
         )
@@ -286,7 +291,11 @@ class BackupRestoreGUI:
         backup_count = len(self.backups)
         footer_label = tk. Label(
             footer_frame,
-            text=f"📁 {backup_count} backup(s) found in:  {self.backup_dir}",
+            text=t(
+                "backup_restore.footer.summary",
+                count=backup_count,
+                path=self.backup_dir,
+            ),
             font=('Arial', 8),
             bg='#ecf0f1',
             fg='#7f8c8d'
@@ -327,20 +336,26 @@ class BackupRestoreGUI:
                 break
         
         if not backup_info: 
-            messagebox.showerror("Error", "Could not find backup information.")
+            messagebox.showerror(
+                t("backup_restore.error.title"),
+                t("backup_restore.error.not_found"),
+            )
             return
         
         # Build confirmation message
-        msg = (
-            f"Are you sure you want to restore this backup?\n\n"
-            f"📅 Date: {backup_info['display_date']}\n"
-            f"📦 Size: {backup_info['size']}\n"
-            f"💾 Popup State: {'Will be restored' if backup_info['has_popups'] else 'Not available'}\n\n"
-            f"Your current campaign progress will be replaced.\n"
-            f"The tracker will restart automatically."
+        popups_state = (
+            t("backup_restore.popups.included")
+            if backup_info['has_popups']
+            else t("backup_restore.popups.not_available")
+        )
+        msg = t(
+            "backup_restore.confirm.message",
+            date=backup_info['display_date'],
+            size=backup_info['size'],
+            popups=popups_state,
         )
         
-        confirm = messagebox.askyesno("Confirm Restore", msg)
+        confirm = messagebox.askyesno(t("backup_restore.confirm.title"), msg)
         
         if not confirm: 
             return
