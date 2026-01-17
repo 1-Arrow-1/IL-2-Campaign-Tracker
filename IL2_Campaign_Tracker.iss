@@ -28,8 +28,13 @@ UninstallDisplayName=IL-2 Great Battles SP Campaign Tracker Uninstaller
 UninstallDisplayIcon={app}\IL2_CampaignTracker_v2.0.exe
 
 [Languages]
-Name: "english"; MessagesFile: "compiler:Default.isl"
-Name: "german"; MessagesFile: "compiler:Languages\\German.isl"
+Name: "english"; MessagesFile: "compiler:Default.isl"; LanguageName: "English"
+Name: "german"; MessagesFile: "compiler:Languages\\German.isl"; LanguageName: "Deutsch"
+Name: "spanish"; MessagesFile: "compiler:Languages\\Spanish.isl"; LanguageName: "Español"
+Name: "french"; MessagesFile: "compiler:Languages\\French.isl"; LanguageName: "Français"
+Name: "polish"; MessagesFile: "compiler:Languages\\Polish.isl"; LanguageName: "Polski"
+Name: "russian"; MessagesFile: "compiler:Languages\\Russian.isl"; LanguageName: "Русский"
+Name: "chinesesimplified"; MessagesFile: "compiler:Languages\\ChineseSimplified.isl"; LanguageName: "简体中文"
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"; Flags: unchecked
@@ -132,6 +137,16 @@ begin
   LanguageName := LowerCase(ExpandConstant('{language}'));
   if LanguageName = 'german' then
     Result := 'de'
+  else if LanguageName = 'french' then
+    Result := 'fr'
+  else if LanguageName = 'spanish' then
+    Result := 'es'
+  else if LanguageName = 'polish' then
+    Result := 'pl'
+  else if LanguageName = 'russian' then
+    Result := 'ru'
+  else if LanguageName = 'chinesesimplified' then
+    Result := 'zh-Hans'  
   else
     Result := 'en';
 end;
