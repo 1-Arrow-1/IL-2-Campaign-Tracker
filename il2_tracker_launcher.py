@@ -560,10 +560,9 @@ def run_tracker() -> int:
                     # 1. Re-decode the campaigns
                     # 2. Regenerate events
                     # 3. Continue monitoring
-                    log_section_header(logger, "ℹ️  CONTINUING WITH RESTORED BACKUP")
-                    log_message(logger, "  The tracker will now re-process the restored state...")
-                    log_message(logger, "  (This is faster than restarting!)")
-                    log_message(logger)
+                    log_section_header(logger, "CONTINUING WITH RESTORED BACKUP")
+                    log_info(logger, "The tracker will now re-process the restored state...")
+                    log_info(logger, "(This is faster than restarting!)")
                     
                     # ✅ CRITICAL: Clean up derived state files that may be inconsistent
                     cleanup_after_restore()
@@ -572,8 +571,7 @@ def run_tracker() -> int:
                     # This ensures that PDFs, events, and all derived files
                     # are regenerated from the restored campaignsstates.txt
                     os.environ["FORCE_REGENERATE"] = "1"
-                    log_message(logger, "  ⚡ Force regeneration enabled")
-                    log_message(logger)
+                    log_info(logger, "⚡ Force regeneration enabled")
                     
                     # DON'T call restart_tracker()! Just continue to next step!
                     
@@ -641,11 +639,10 @@ def main() -> int:
         return 0
         
     except Exception as e:
-        log_message(logger)
-        log_section_header(logger, f"ERROR: {e}")
+        log_section_header(logger, "EXCEPTION OCCURRED")
+        log_error(logger, str(e))
         import traceback
         traceback.print_exc()
-        log_message(logger)
         if sys.stdin.isatty() or DEBUG_ENABLED:
             input("Press Enter to exit...")
         return 1
