@@ -16,6 +16,7 @@ a = Analysis(
     ] + psutil_binaries,
     datas=[
         ('IBMPlexSans-Light.ttf', '.'),
+        ('locales', 'locales'),
     ],
     hiddenimports=[
         'tkinter',

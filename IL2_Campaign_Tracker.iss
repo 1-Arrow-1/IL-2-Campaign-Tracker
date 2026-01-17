@@ -44,6 +44,7 @@ Source: "IL2_CampaignTracker_v2.0.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "mlg2txt.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "QUICK_START.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README.html"; DestDir: "{app}"; Flags: ignoreversion
+Source: "locales\*"; DestDir: "{app}\locales"; Flags: recursesubdirs createallsubdirs ignoreversion
 
 ; --- Campaign Service Record ---
 Source: "Campaign_Service_Record.exe"; DestDir: "{app}"; Flags: ignoreversion

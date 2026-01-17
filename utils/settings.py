@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import json
 import os
+import sys
 
 from utils.logging import get_logger
 
@@ -56,9 +57,16 @@ def get_portable_settings_path(base_dir: Path) -> Path:
     return base_dir / "settings.json"
 
 
+def _resolve_base_dir(base_dir: Path | None = None) -> Path:
+    if base_dir is not None:
+        return base_dir
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parents[1]
+
+
 def resolve_settings_path(base_dir: Path | None = None) -> Path:
-    if base_dir is None:
-        base_dir = Path.cwd()
+    base_dir = _resolve_base_dir(base_dir)
 
     if get_portable_flag_path(base_dir).exists():
         return get_portable_settings_path(base_dir)
@@ -91,8 +99,14 @@ def _migrate_settings(payload: dict) -> tuple[dict, bool]:
     if not isinstance(config_version, int) or config_version <= 0:
         payload["config_version"] = CURRENT_CONFIG_VERSION
         updated = True
-
-    if payload.get("config_version") < CURRENT_CONFIG_VERSION:
+    elif config_version > CURRENT_CONFIG_VERSION:
+        logger.warning(
+            "Settings config_version %s is newer than supported %s",
+            config_version,
+            CURRENT_CONFIG_VERSION,
+        )
+        return payload, False
+    elif config_version < CURRENT_CONFIG_VERSION:
         payload["config_version"] = CURRENT_CONFIG_VERSION
         updated = True
 
