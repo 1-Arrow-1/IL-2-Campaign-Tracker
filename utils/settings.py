@@ -19,6 +19,13 @@ DEFAULT_SETTINGS = {
 }
 
 
+def get_default_settings(locale: str | None = None) -> dict:
+    payload = DEFAULT_SETTINGS.copy()
+    if locale:
+        payload["locale"] = locale
+    return payload
+
+
 @dataclass
 class Settings:
     config_version: int
@@ -133,7 +140,7 @@ def load_settings(base_dir: Path | None = None) -> Settings:
     payload = _read_settings(settings_path)
 
     if payload is None:
-        return Settings.from_dict(DEFAULT_SETTINGS)
+        return Settings.from_dict(get_default_settings())
 
     payload, updated = _migrate_settings(payload)
     settings = Settings.from_dict(payload)

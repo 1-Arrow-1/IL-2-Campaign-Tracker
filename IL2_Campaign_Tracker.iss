@@ -16,6 +16,7 @@ PrivilegesRequired=admin
 DefaultDirName={localappdata}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
+ShowLanguageDialog=yes
 
 OutputBaseFilename=IL2_CampaignTracker_Setup_v{#MyAppVersion}
 Compression=lzma
@@ -28,6 +29,7 @@ UninstallDisplayIcon={app}\IL2_CampaignTracker_v2.0.exe
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
+Name: "german"; MessagesFile: "compiler:Languages\\German.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"; Flags: unchecked
@@ -78,6 +80,9 @@ var
   RemoveBackupFiles: Boolean;
   RemoveServiceRecordData: Boolean;
 
+const
+  SettingsConfigVersion = 1;
+
 { ----------------------------
   Helpers
   ---------------------------- }
@@ -120,6 +125,42 @@ begin
     Result := GetStoredIL2Path();
 end;
 
+function GetSelectedLocale(): string;
+var
+  LanguageName: string;
+begin
+  LanguageName := LowerCase(ExpandConstant('{language}'));
+  if LanguageName = 'german' then
+    Result := 'de'
+  else
+    Result := 'en';
+end;
+
+function BuildSettingsJson(const LocaleCode: string): string;
+begin
+  Result :=
+    '{' + #13#10 +
+    '  "config_version": ' + IntToStr(SettingsConfigVersion) + ',' + #13#10 +
+    '  "locale": "' + LocaleCode + '",' + #13#10 +
+    '  "fallback_locale": "en",' + #13#10 +
+    '  "enable_missing_key_logs": false' + #13#10 +
+    '}';
+end;
+
+procedure WriteSettingsFile(const LocaleCode: string);
+var
+  SettingsDir: string;
+  SettingsPath: string;
+  Payload: string;
+begin
+  SettingsDir := ExpandConstant('{localappdata}\.il2_campaign_tracker');
+  if not DirExists(SettingsDir) then
+    ForceDirectories(SettingsDir);
+  SettingsPath := SettingsDir + '\settings.json';
+  Payload := BuildSettingsJson(LocaleCode);
+  SaveStringToFile(SettingsPath, Payload, False);
+end;
+
 procedure PrefillIL2Dir;
 var
   Prev: string;
@@ -156,6 +197,17 @@ begin
   IL2DirPage.Add('');
 
   PrefillIL2Dir();
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  LocaleCode: string;
+begin
+  if CurStep = ssPostInstall then
+  begin
+    LocaleCode := GetSelectedLocale();
+    WriteSettingsFile(LocaleCode);
+  end;
 end;
 
 
