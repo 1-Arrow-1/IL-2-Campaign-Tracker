@@ -70,3 +70,35 @@ def log_message(
 
     log_fn = getattr(logger, level, logger.info)
     log_fn(message)
+
+
+def log_info(logger: logging.Logger, *args: object) -> None:
+    """Log an informational message."""
+    log_message(logger, *args, level="info")
+
+
+def log_warning(logger: logging.Logger, *args: object) -> None:
+    """Log a warning message."""
+    log_message(logger, *args, level="warning")
+
+
+def log_error(logger: logging.Logger, *args: object) -> None:
+    """Log an error message."""
+    log_message(logger, *args, level="error")
+
+
+def log_success(logger: logging.Logger, *args: object) -> None:
+    """Log a success message with a checkmark prefix."""
+    if args:
+        message = "✅ " + " ".join(str(arg) for arg in args)
+    else:
+        message = "✅"
+    log_message(logger, message, level="info")
+
+
+def log_section_header(logger: logging.Logger, title: str) -> None:
+    """Log a section header with divider lines."""
+    divider = "=" * 60
+    log_message(logger, divider, level="info")
+    log_message(logger, title, level="info")
+    log_message(logger, divider, level="info")

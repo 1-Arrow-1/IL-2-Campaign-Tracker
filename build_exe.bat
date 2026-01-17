@@ -197,6 +197,61 @@ if not exist "cleanup_tracker_content.spec" (
     pause
     exit /b 1
 )
+if not exist "utils\settings.py" (
+    echo ERROR: settings.py not found!
+    pause
+    exit /b 1
+)
+if not exist "utils\locale_key_sync.py" (
+    echo ERROR: locale_key_sync.py not found!
+    pause
+    exit /b 1
+)
+if not exist "utils\resources.py" (
+    echo ERROR: resources.py not found!
+    pause
+    exit /b 1
+)
+if not exist "utils\i18n.py" (
+    echo ERROR: i18n.py not found!
+    pause
+    exit /b 1
+)
+if not exist "locales\de.json" (
+    echo ERROR: locales\de.json not found!
+    pause
+    exit /b 1
+)
+if not exist "locales\en.json" (
+    echo ERROR: locales\en.json not found!
+    pause
+    exit /b 1
+)
+if not exist "locales\es.json" (
+    echo ERROR: locales\es.json not found!
+    pause
+    exit /b 1
+)
+if not exist "locales\fr.json" (
+    echo ERROR: locales\fr.json not found!
+    pause
+    exit /b 1
+)
+if not exist "locales\pl.json" (
+    echo ERROR: locales\pl.json not found!
+    pause
+    exit /b 1
+)
+if not exist "locales\ru.json" (
+    echo ERROR: locales\ru.json not found!
+    pause
+    exit /b 1
+)
+if not exist "locales\zh_Hans.json" (
+    echo ERROR: locales\zh_Hans.json not found!
+    pause
+    exit /b 1
+)
 echo OK
 echo.
 
@@ -231,7 +286,11 @@ for %%F in (
         "utils\combat_results.py"
 		"utils\filesystem.py"
 		"utils\logging.py"
-        "utils\rank_scaling.py"
+        "utils\settings.py.py"
+		"utils\locale_key_sync.py.py"
+		"utils\resources.py"
+		"utils\i18n.py"
+
 ) do (
     if exist %%F (
         echo Testing %%F ...
