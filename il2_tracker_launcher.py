@@ -12,7 +12,15 @@ import json
 import shutil
 
 from utils.il2_paths import resolve_il2_paths
-from utils.logging import get_logger, log_message
+from utils.logging import (
+    get_logger,
+    log_error,
+    log_info,
+    log_message,
+    log_section_header,
+    log_success,
+    log_warning,
+)
 from utils.pathing import get_base_path
 
 # Determine script directory (works for both script and EXE)
@@ -34,15 +42,6 @@ def is_debug_enabled(args_debug: bool = False) -> bool:
     return args_debug or env_enabled
 
 
-def print_header(title: str):
-    """Print a formatted section header."""
-    log_message(logger)
-    log_message(logger, "=" * 70)
-    log_message(logger, title)
-    log_message(logger, "=" * 70)
-    log_message(logger)
-
-
 def check_config() -> bool:
     """
     Check for required config file. 
@@ -52,7 +51,7 @@ def check_config() -> bool:
     """
     config_file = SCRIPT_DIR / "campaign_progress_config.yaml"
     if not config_file.exists():
-        log_message(logger, "ERROR: campaign_progress_config.yaml not found!")
+        log_error(logger, "campaign_progress_config.yaml not found!")
         log_message(logger, f"Expected location: {config_file}")
         log_message(logger)
         log_message(logger, "Please place campaign_progress_config.yaml in the same folder")
@@ -73,9 +72,7 @@ def run_first_time_setup() -> bool:
     if mission_dates_file.exists():
         return True  # No setup needed
     
-    log_message(logger, "FIRST RUN SETUP")
-    log_message(logger, "=" * 70)
-    log_message(logger)
+    log_section_header(logger, "FIRST RUN SETUP")
     
     # Import and run step 1
     import step1_extract_mission_dates
@@ -83,11 +80,11 @@ def run_first_time_setup() -> bool:
     
     if not mission_dates_file.exists():
         log_message(logger)
-        log_message(logger, "ERROR: Setup incomplete.  Mission dates not created.")
+        log_error(logger, "Setup incomplete. Mission dates not created.")
         return False
     
     # Show country validation GUI
-    print_header("COUNTRY VALIDATION")
+    log_section_header(logger, "COUNTRY VALIDATION")
     log_message(logger, "Please verify the automatically detected countries...")
     log_message(logger)
     
@@ -103,7 +100,7 @@ def run_first_time_setup() -> bool:
             log_message(logger)
             input("Press Enter to continue anyway...")
     except Exception as e: 
-        log_message(logger, f"Warning: Could not show country validation GUI: {e}")
+        log_warning(logger, f"Could not show country validation GUI: {e}")
         log_message(logger, "You can manually edit campaign_mission_dates.json")
         log_message(logger)
         input("Press Enter to continue...")
@@ -156,7 +153,7 @@ def sync_campaign_structure() -> bool:
         added_campaigns = new_campaigns - old_campaigns
         
         if added_campaigns:
-            log_message(logger, f"✅ Found {len(added_campaigns)} new campaign(s):")
+            log_success(logger, f"Found {len(added_campaigns)} new campaign(s):")
             for name in sorted(added_campaigns):
                 log_message(logger, f"   - {name}")
             log_message(logger)
@@ -171,10 +168,10 @@ def sync_campaign_structure() -> bool:
                     log_message(logger, "Country validation was cancelled.")
                     log_message(logger, "You can manually edit campaign_mission_dates.json later.")
             except Exception as e:
-                log_message(logger, f"⚠️ Could not show country validation GUI: {e}")
+                log_warning(logger, f"Could not show country validation GUI: {e}")
                 log_message(logger, "You can manually edit campaign_mission_dates.json later.")
         else:
-            log_message(logger, "✅ Campaign structure synced (no new campaigns)")
+            log_success(logger, "Campaign structure synced (no new campaigns)")
         
         # Check for deleted campaigns and clean up orphaned data
         deleted_campaigns = old_campaigns - new_campaigns
@@ -189,12 +186,12 @@ def sync_campaign_structure() -> bool:
                 existing_lower = {name.lower() for name in new_campaigns}
                 cleanup_orphaned_campaigns(existing_lower, SCRIPT_DIR)
             except Exception as e:
-                log_message(logger, f"⚠️ Could not clean up orphaned campaign data: {e}")
+                log_warning(logger, f"Could not clean up orphaned campaign data: {e}")
         
         return True
         
     except Exception as e:
-        log_message(logger, f"⚠️ Warning: Campaign sync failed: {e}")
+        log_warning(logger, f"Campaign sync failed: {e}")
         return False
 
 
@@ -208,19 +205,19 @@ def find_il2_states_path() -> Path | None:
     try:
         paths = resolve_il2_paths(SCRIPT_DIR)
         if paths.campaignsstates_path:
-            log_message(logger, f"✓ Found campaign save:  {paths.campaignsstates_path}")
+            log_success(logger, f"Found campaign save:  {paths.campaignsstates_path}")
             return paths.campaignsstates_path
         if paths.game_directory:
             usersave_dir = paths.game_directory / "data" / "swf" / "il2" / "usersave"
             if usersave_dir.exists():
-                log_message(logger, f"⚠️ No campaignsstates.txt found under {usersave_dir}")
+                log_warning(logger, f"No campaignsstates.txt found under {usersave_dir}")
             else:
-                log_message(logger, f"⚠️ usersave directory not found:  {usersave_dir}")
+                log_warning(logger, f"usersave directory not found:  {usersave_dir}")
         else:
-            log_message(logger, "⚠️ Game directory not found in campaign_mission_dates.json")
+            log_warning(logger, "Game directory not found in campaign_mission_dates.json")
             
     except Exception as e:
-        log_message(logger, f"❌ Could not locate campaign save:  {e}")
+        log_error(logger, f"Could not locate campaign save:  {e}")
         import traceback
         traceback.print_exc()
     
@@ -246,7 +243,7 @@ def cleanup_after_restore():
             completion_state.unlink()
             log_message(logger, "  ✓ Removed campaign_completion_state.json")
         except Exception as e:
-            log_message(logger, f"  ⚠️ Could not remove campaign_completion_state.json: {e}")
+            log_warning(logger, f"  Could not remove campaign_completion_state.json: {e}")
     
     # 2. Remove all mission_aircraft_map.json files
     reports_dir = SCRIPT_DIR / "reports"
@@ -260,12 +257,12 @@ def cleanup_after_restore():
                         aircraft_cache.unlink()
                         removed_count += 1
                     except Exception as e:
-                        log_message(logger, f"  ⚠️ Could not remove {aircraft_cache}: {e}")
+                        log_warning(logger, f"  Could not remove {aircraft_cache}: {e}")
         
         if removed_count > 0:
             log_message(logger, f"  ✓ Removed {removed_count} aircraft cache file(s)")
     
-    log_message(logger, "  ✅ Cleanup complete - files will be regenerated")
+    log_success(logger, "  Cleanup complete - files will be regenerated")
 
 
 
@@ -319,11 +316,11 @@ def restore_popup_backup(il2_states_path:  Path) -> bool:
             log_message(logger, "⚡ Backup restore detected — forcing event regeneration...")
             return True
         else:
-            log_message(logger, "ℹ️ No backup restore needed")
+            log_info(logger, "No backup restore needed")
             return False
             
     except Exception as e: 
-        log_message(logger, f"⚠️ Popup restore check failed: {e}")
+        log_warning(logger, f"Popup restore check failed: {e}")
         return False
 
 
@@ -341,7 +338,7 @@ def generate_initial_events() -> bool:
     is_first_run = (not popup_path.exists()) or (popup_path.stat().st_size == 0)
     
     if not is_first_run and not force_regenerate: 
-        log_message(logger, "✅ Popup state exists - skipping initial event generation")
+        log_success(logger, "Popup state exists - skipping initial event generation")
         log_message(logger, f"   (File size: {popup_path.stat().st_size} bytes)")
         return False
     
@@ -352,7 +349,7 @@ def generate_initial_events() -> bool:
             import step1_extract_mission_dates
             step1_extract_mission_dates.main(args=["--auto"])
         except Exception as e:
-            log_message(logger, f"⚠️ Failed to refresh campaign mission dates: {e}")
+            log_warning(logger, f"Failed to refresh campaign mission dates: {e}")
     else:
         log_message(logger, "🎯 First run detected - generating initial events...")
         log_message(logger, "   (This fills campaign_popups_seen.json with baseline)")
@@ -364,18 +361,18 @@ def generate_initial_events() -> bool:
         step3_generate_events.main(args=["--auto"], show_popups=False)
         
         if popup_path.exists() and popup_path.stat().st_size > 0:
-            log_message(logger, f"✅ Events generated, popup state initialized ({popup_path.stat().st_size} bytes)")
+            log_success(logger, f"Events generated, popup state initialized ({popup_path.stat().st_size} bytes)")
             return True
         else: 
-            log_message(logger, "⚠️ Warning: Event generation completed but popup state empty")
+            log_warning(logger, "Event generation completed but popup state empty")
             # Create empty state as fallback
             with open(popup_path, 'w', encoding='utf-8') as f:
                 json.dump({}, f, indent=2)
-            log_message(logger, "✅ Created empty popup state as fallback")
+            log_success(logger, "Created empty popup state as fallback")
             return True
             
     except Exception as e: 
-        log_message(logger, f"❌ Error during event generation: {e}")
+        log_error(logger, f"Error during event generation: {e}")
         import traceback
         traceback.print_exc()
         
@@ -383,7 +380,7 @@ def generate_initial_events() -> bool:
         if not popup_path.exists():
             with open(popup_path, 'w', encoding='utf-8') as f:
                 json.dump({}, f, indent=2)
-            log_message(logger, "✅ Created empty popup state after error")
+            log_success(logger, "Created empty popup state after error")
         return False
 
 
@@ -423,18 +420,14 @@ def run_popup_reset_cleanup() -> bool:
         from campaign_reset_checker import cleanup_popups_for_reset_campaigns
         return cleanup_popups_for_reset_campaigns()
     except Exception as e: 
-        log_message(logger, f"⚠️ Popup cleanup check failed: {e}")
+        log_warning(logger, f"Popup cleanup check failed: {e}")
         return False
 
 
 def show_campaign_not_found_message(game_dir: Path = None):
     """Display helpful message when campaign file is not found."""
-    log_message(logger)
-    log_message(logger, "=" * 70)
-    log_message(logger, "CAMPAIGN FILE NOT FOUND")
-    log_message(logger, "=" * 70)
-    log_message(logger)
-    log_message(logger, "⚠️  Could not locate campaignsstates.txt in IL-2 installation.")
+    log_section_header(logger, "CAMPAIGN FILE NOT FOUND")
+    log_warning(logger, "Could not locate campaignsstates.txt in IL-2 installation.")
     log_message(logger)
     log_message(logger, "Possible reasons:")
     log_message(logger, "  1. No campaign started in IL-2 yet")
@@ -461,7 +454,7 @@ def start_monitoring(il2_states_path: Path = None, exit_with_il2: bool = True) -
     Returns:
         Exit code:  0 = normal exit, 1 = error
     """
-    print_header("MONITORING ACTIVE")
+    log_section_header(logger, "MONITORING ACTIVE")
     log_message(logger, "Checking for changes every second...")
     log_message(logger)
     log_message(logger, "This window will stay open - you can minimize it.")
@@ -489,7 +482,7 @@ def start_monitoring(il2_states_path: Path = None, exit_with_il2: bool = True) -
         return 0
         
     except Exception as e:
-        log_message(logger, f"❌ Monitor error:  {e}")
+        log_error(logger, f"Monitor error:  {e}")
         import traceback
         traceback.print_exc()
         return 1
@@ -521,10 +514,7 @@ def run_tracker() -> int:
     logger.debug("Working directory = %s", os.getcwd())
     logger.debug("--skip-backup-gui = %s", args.skip_backup_gui)
     logger.debug("Unknown args = %s", unknown)
-    log_message(logger, "=" * 70)
-    log_message(logger, "IL-2 CAMPAIGN PROGRESS TRACKER v1.7")
-    log_message(logger, "=" * 70)
-    log_message(logger)
+    log_section_header(logger, "IL-2 CAMPAIGN PROGRESS TRACKER v1.7")
     
     # Change to script directory
     os.chdir(SCRIPT_DIR)
@@ -540,11 +530,11 @@ def run_tracker() -> int:
         return 1
     
     # Step 1.5: Sync campaign structure (detect new/deleted campaigns/missions)
-    print_header("SYNCING CAMPAIGN STRUCTURE")
+    log_section_header(logger, "SYNCING CAMPAIGN STRUCTURE")
     sync_campaign_structure()
     
     # Step 2: Find IL-2 states path
-    print_header("LOCATING IL-2 CAMPAIGN SAVE FILE")
+    log_section_header(logger, "LOCATING IL-2 CAMPAIGN SAVE FILE")
     il2_states_path = find_il2_states_path()
     
     if il2_states_path and il2_states_path.exists():
@@ -556,12 +546,12 @@ def run_tracker() -> int:
         # ================================================================
         if args.skip_backup_gui:
             log_message(logger)
-            log_message(logger, "ℹ️ Backup GUI skipped (automatic restart after restore)")
+            log_info(logger, "Backup GUI skipped (automatic restart after restore)")
         else:
             try:
                 from backup_restore_gui import check_and_show_backup_gui, restart_tracker
                 
-                print_header("CHECKING FOR AVAILABLE BACKUPS")
+                log_section_header(logger, "CHECKING FOR AVAILABLE BACKUPS")
                 backup_result = check_and_show_backup_gui(il2_states_path)
                 
                 if backup_result == 'restored':
@@ -570,11 +560,7 @@ def run_tracker() -> int:
                     # 1. Re-decode the campaigns
                     # 2. Regenerate events
                     # 3. Continue monitoring
-                    log_message(logger)
-                    log_message(logger, "=" * 70)
-                    log_message(logger, "ℹ️  CONTINUING WITH RESTORED BACKUP")
-                    log_message(logger, "=" * 70)
-                    log_message(logger)
+                    log_section_header(logger, "ℹ️  CONTINUING WITH RESTORED BACKUP")
                     log_message(logger, "  The tracker will now re-process the restored state...")
                     log_message(logger, "  (This is faster than restarting!)")
                     log_message(logger)
@@ -593,20 +579,20 @@ def run_tracker() -> int:
                     
                 elif backup_result == 'cancelled': 
                     log_message(logger)
-                    log_message(logger, "❌ Cancelled by user")
+                    log_error(logger, "Cancelled by user")
                     input("Press Enter to exit...")
                     return 2
                     
                 elif backup_result == 'skipped':
-                    log_message(logger, "ℹ️ Backup restore skipped - continuing normally...")
+                    log_info(logger, "Backup restore skipped - continuing normally...")
                     
                 elif backup_result == 'no_backups':
-                    log_message(logger, "ℹ️ No backups available yet")
+                    log_info(logger, "No backups available yet")
                     
             except ImportError as e:
-                log_message(logger, f"ℹ️ Backup restore GUI not available: {e}")
+                log_info(logger, f"Backup restore GUI not available: {e}")
             except Exception as e: 
-                log_message(logger, f"⚠️ Backup GUI error: {e}")
+                log_warning(logger, f"Backup GUI error: {e}")
                 import traceback
                 traceback.print_exc()
                 log_message(logger)
@@ -614,23 +600,23 @@ def run_tracker() -> int:
                 input("Press Enter to continue...")
         
         # Step 3: Decode campaign save
-        print_header("DECODING CAMPAIGN SAVE")
+        log_section_header(logger, "DECODING CAMPAIGN SAVE")
         decode_campaign_save(il2_states_path)
         
         # Step 4: Popup restore check (automatic hash-based restore)
-        print_header("CHECKING FOR MATCHING POPUP BACKUP (STATE RESTORE)")
+        log_section_header(logger, "CHECKING FOR MATCHING POPUP BACKUP (STATE RESTORE)")
         restore_popup_backup(il2_states_path)
         
         # Step 5: Event generation
-        print_header("EVENT GENERATION CHECK")
+        log_section_header(logger, "EVENT GENERATION CHECK")
         generate_initial_events()
         
         # Step 6: Cleanup check
-        print_header("CHECKING FOR UNSUCCESSFUL MISSIONS")
+        log_section_header(logger, "CHECKING FOR UNSUCCESSFUL MISSIONS")
         run_cleanup_check(il2_states_path)
         
         # Step 7: Popup reset cleanup
-        print_header("CHECKING FOR RESET CAMPAIGNS (POPUP CLEANUP)")
+        log_section_header(logger, "CHECKING FOR RESET CAMPAIGNS (POPUP CLEANUP)")
         run_popup_reset_cleanup()
         
     else:
@@ -651,17 +637,12 @@ def main() -> int:
         return run_tracker()
         
     except KeyboardInterrupt:
-        log_message(logger)
-        log_message(logger, "=" * 70)
-        log_message(logger, "TRACKER STOPPED BY USER")
-        log_message(logger, "=" * 70)
+        log_section_header(logger, "TRACKER STOPPED BY USER")
         return 0
         
     except Exception as e:
         log_message(logger)
-        log_message(logger, "=" * 70)
-        log_message(logger, f"ERROR: {e}")
-        log_message(logger, "=" * 70)
+        log_section_header(logger, f"ERROR: {e}")
         import traceback
         traceback.print_exc()
         log_message(logger)
