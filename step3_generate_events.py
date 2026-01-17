@@ -23,6 +23,7 @@ import yaml
 import sys
 import re
 import shutil
+import tempfile
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
@@ -1834,9 +1835,29 @@ class EventGenerator:
                 if len(matches) > 2:
                     log_message(LOGGER, f"  ⚠️  [{info_file.name}] WARNING: {len(matches)} sections (expected 2)!")
                 
-                # Write with original encoding
-                with open(info_file, "w", encoding=detected_encoding, newline="") as f:
-                    f.write(updated)
+                # Write with original encoding (atomic write + flush)
+                temp_path = None
+                try:
+                    with tempfile.NamedTemporaryFile(
+                        "w",
+                        encoding=detected_encoding,
+                        newline="",
+                        delete=False,
+                        dir=info_file.parent,
+                        prefix=f"{info_file.name}.",
+                        suffix=".tmp",
+                    ) as tmp_file:
+                        temp_path = Path(tmp_file.name)
+                        tmp_file.write(updated)
+                        tmp_file.flush()
+                        os.fsync(tmp_file.fileno())
+                    os.replace(temp_path, info_file)
+                finally:
+                    if temp_path and temp_path.exists():
+                        try:
+                            temp_path.unlink()
+                        except Exception:
+                            pass
                 
                 success_count += 1
                 
@@ -2050,7 +2071,7 @@ class EventGenerator:
         html.append(f'<table style="width: 100%; margin: 10px 0;">')
         html.append(
             f'<tr><td style="padding: 5px 0;"><b>{t("tracker.summary.completed")}</b></td>'
-            f'<td style="text-align: right;">{tp("tracker.summary.missions_count", mission_count, count=mission_count)}</td></tr>'
+            f'<td style="text-align: right;">{tp("tracker.summary.missions_count", count=mission_count)}</td></tr>'
         )
         html.append(
             f'<tr><td style="padding: 5px 0;"><b>{t("tracker.summary.total_flight_time")}</b></td>'
@@ -2857,32 +2878,46 @@ class EventGenerator:
                     
                     # *** CRITICAL: Switch to PDF mode before regenerating debriefings ***
                     self.set_mode("pdf")
-                    
-                    # Regenerate debriefings in PDF mode (with Combat Results instead of Flight Log)
-                    log_message(LOGGER, f"  Regenerating debriefings in PDF mode...")
-                    debriefings_html_pdf, debriefings_pdf = self.generate_debriefings_html(campaign_name, completed_missions)
-                    
-                    # Generate PDF-specific HTML with base64-embedded images
-                    events_html_pdf = self.generate_events_html(events, country, for_pdf=True)
-                    
-                    # Combine debriefings + events for PDF
-                    if debriefings_html_pdf:
-                        combined_html_pdf = debriefings_html_pdf + "\n" + events_html_pdf
-                    else:
-                        combined_html_pdf = events_html_pdf
-                    
-                    # Generate campaign summary (PDF only!)
-                    # Use the PDF debriefings we just generated
-                    summary_html = self.generate_campaign_summary_html(campaign_name, events, debriefings_pdf, country, cumulative_stats, decoded_data.get(campaign_name) if decoded_data else None)
-                    
-                    # Add summary at the end
-                    if summary_html:
-                        combined_html_pdf += "\n" + summary_html
-                    
-                    self.export_campaign_to_pdf(campaign_name, combined_html_pdf)
-                    
-                    # *** CRITICAL: Switch back to ingame mode for subsequent campaigns ***
-                    self.set_mode("ingame")
+                    try:
+                        # Regenerate debriefings in PDF mode (with Combat Results instead of Flight Log)
+                        log_message(LOGGER, f"  Regenerating debriefings in PDF mode...")
+                        debriefings_html_pdf, debriefings_pdf = self.generate_debriefings_html(campaign_name, completed_missions)
+                        
+                        # Generate PDF-specific HTML with base64-embedded images
+                        events_html_pdf = self.generate_events_html(events, country, for_pdf=True)
+                        
+                        # Combine debriefings + events for PDF
+                        if debriefings_html_pdf:
+                            combined_html_pdf = debriefings_html_pdf + "\n" + events_html_pdf
+                        else:
+                            combined_html_pdf = events_html_pdf
+                        
+                        # Generate campaign summary (PDF only!)
+                        # Use the PDF debriefings we just generated
+                        summary_html = ""
+                        try:
+                            summary_html = self.generate_campaign_summary_html(
+                                campaign_name,
+                                events,
+                                debriefings_pdf,
+                                country,
+                                cumulative_stats,
+                                decoded_data.get(campaign_name) if decoded_data else None,
+                            )
+                        except Exception:
+                            LOGGER.exception(
+                                "Campaign summary generation failed for %s; continuing without summary.",
+                                campaign_name,
+                            )
+                        
+                        # Add summary at the end
+                        if summary_html:
+                            combined_html_pdf += "\n" + summary_html
+                        
+                        self.export_campaign_to_pdf(campaign_name, combined_html_pdf)
+                    finally:
+                        # *** CRITICAL: Switch back to ingame mode for subsequent campaigns ***
+                        self.set_mode("ingame")
         
         # Save results
         with open(CAMPAIGN_EVENTS_FILE, 'w', encoding='utf-8') as f:
