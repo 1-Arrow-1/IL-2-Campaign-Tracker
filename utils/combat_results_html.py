@@ -7,6 +7,66 @@ Provides:
 """
 
 from utils.combat_results import KILL_MAPPING, aggregate_kills_from_missions
+from utils.i18n import t
+
+CATEGORY_I18N_KEYS = {
+    "Aircraft": "tracker.combat.category.aircraft",
+    "Vehicles": "tracker.combat.category.vehicles",
+    "Railroad": "tracker.combat.category.railroad",
+    "Armaments": "tracker.combat.category.armaments",
+    "Buildings": "tracker.combat.category.buildings",
+    "Marine": "tracker.combat.category.marine",
+}
+
+SUBCATEGORY_I18N_KEYS = {
+    "Aircraft": {
+        "Light": "tracker.combat.subcategory.aircraft.light",
+        "Medium": "tracker.combat.subcategory.aircraft.medium",
+        "Heavy": "tracker.combat.subcategory.aircraft.heavy",
+        "Parked": "tracker.combat.subcategory.aircraft.parked",
+        "Balloons": "tracker.combat.subcategory.aircraft.balloons",
+    },
+    "Vehicles": {
+        "Transport": "tracker.combat.subcategory.vehicles.transport",
+        "Armored (Light)": "tracker.combat.subcategory.vehicles.armored_light",
+        "Armored (Medium)": "tracker.combat.subcategory.vehicles.armored_medium",
+        "Armored (Heavy)": "tracker.combat.subcategory.vehicles.armored_heavy",
+    },
+    "Railroad": {
+        "Locomotives": "tracker.combat.subcategory.railroad.locomotives",
+        "Railroad Cars": "tracker.combat.subcategory.railroad.cars",
+        "Station Facilities": "tracker.combat.subcategory.railroad.facilities",
+    },
+    "Armaments": {
+        "Machine Guns": "tracker.combat.subcategory.armaments.machine_guns",
+        "Cannons": "tracker.combat.subcategory.armaments.cannons",
+        "AAA Guns": "tracker.combat.subcategory.armaments.aaa_guns",
+        "Rocket Launchers": "tracker.combat.subcategory.armaments.rocket_launchers",
+        "Searchlights": "tracker.combat.subcategory.armaments.searchlights",
+        "Radars": "tracker.combat.subcategory.armaments.radars",
+    },
+    "Buildings": {
+        "Residential Buildings": "tracker.combat.subcategory.buildings.residential",
+        "Facilities": "tracker.combat.subcategory.buildings.facilities",
+        "Bridges": "tracker.combat.subcategory.buildings.bridges",
+    },
+    "Marine": {
+        "Light": "tracker.combat.subcategory.marine.light",
+        "Cargo": "tracker.combat.subcategory.marine.cargo",
+        "Submarines": "tracker.combat.subcategory.marine.submarines",
+        "Destroyers": "tracker.combat.subcategory.marine.destroyers",
+    },
+}
+
+
+def _category_label(category: str) -> str:
+    key = CATEGORY_I18N_KEYS.get(category)
+    return t(key) if key else category
+
+
+def _subcategory_label(category: str, subcategory: str) -> str:
+    key = SUBCATEGORY_I18N_KEYS.get(category, {}).get(subcategory)
+    return t(key) if key else subcategory
 
 
 # =============================================================================
@@ -28,7 +88,7 @@ def generate_mission_combat_results_html(mission_id: str, decoded_data: dict, ga
     """
     stats = decoded_data.get("characterStatisticsByFileName", {}).get(mission_id, {})
     if not stats:
-        return "<p>Combat data not available for this mission.</p>"
+        return f"<p>{t('tracker.combat.mission_unavailable')}</p>"
 
     # Calculate totals per category using central mapping
     category_totals = {}
@@ -53,7 +113,7 @@ def generate_campaign_summary_combat_results_html(decoded_campaign_data: dict, g
     stats_by_mission = decoded_campaign_data.get("characterStatisticsByFileName", {})
 
     if not stats_by_mission:
-        return "<p>No combat data available.</p>"
+        return f"<p>{t('tracker.combat.campaign_unavailable')}</p>"
 
     aggregated_kills = aggregate_kills_from_missions(stats_by_mission)
     by_category = aggregated_kills.get("by_category", {})
@@ -98,10 +158,11 @@ def _build_combat_results_html(stats: dict, category_totals: dict, game_director
             icon_path = f"data/swf/CampaignRanksAwards/Misc/{icon_file}"
 
         total = category_totals.get(category, 0)
+        category_label = _category_label(category)
         html.append(f'<div class="category-col">')
         html.append(f'  <div class="category-icon"><img src="{icon_path}" width="48" height="48"/></div>')
         html.append(f'  <div class="category-total">{total}</div>')
-        html.append(f'  <div class="category-name">{category}</div>')
+        html.append(f'  <div class="category-name">{category_label}</div>')
         html.append(f'</div>')
     html.append('</div>')
 
@@ -112,8 +173,9 @@ def _build_combat_results_html(stats: dict, category_totals: dict, game_director
         html.append('<div class="subcat-column">')
         for subcat, key in subcats.items():
             count = int(stats.get(key, 0))
+            subcat_label = _subcategory_label(category, subcat)
             html.append(f'<div class="subcat-row">')
-            html.append(f'  <span class="subcat-name">{subcat}</span>')
+            html.append(f'  <span class="subcat-name">{subcat_label}</span>')
             html.append(f'  <span class="subcat-value">{count}</span>')
             html.append(f'</div>')
         html.append('</div>')

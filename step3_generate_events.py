@@ -46,6 +46,7 @@ from utils.combat_results_html import (
     generate_mission_combat_results_html,
 )
 from utils.filesystem import is_file_locked
+from utils.i18n import load_locale, t, tp
 from utils.popup_state import load_popup_seen, save_popup_seen, make_event_key, get_seen_keys, set_seen_keys
 from utils.rank_scaling import check_and_cleanup_rank_scaling
 from utils.process import is_il2_running
@@ -1559,9 +1560,9 @@ class EventGenerator:
                     date_obj = datetime.strptime(event['date'], '%Y-%m-%d')
                     date_str = date_obj.strftime('%d %B, %Y')
                 except:
-                    date_str = "Before First Mission"
+                    date_str = t("tracker.events.before_first_mission")
             else:
-                date_str = "Before First Mission"
+                date_str = t("tracker.events.before_first_mission")
         elif event.get('date'):
             try:
                 date_obj = datetime.strptime(event['date'], '%Y-%m-%d')
@@ -1569,19 +1570,16 @@ class EventGenerator:
             except:
                 date_str = event['date']
         else:
-            date_str = f"After Mission {event['mission']}"
+            date_str = t("tracker.events.after_mission", mission=event["mission"])
         
         # Format description
         if event['type'] == 'promotion':
             if event.get('mission') == 'Initial':
-                description = f"Started as {event['rank']}"
+                description = t("tracker.events.started_as", rank=event["rank"])
             else:
-                description = f"Promoted to {event['rank']}"
+                description = t("tracker.events.promoted_to", rank=event["rank"])
         else:
-            if event.get('mission') == 'Initial':
-                description = f"Awarded {event['name']}"
-            else:
-                description = f"Awarded {event['name']}"
+            description = t("tracker.events.awarded", name=event["name"])
         
         # Apply rotation:
         # - For PDF: Image is rotated via PIL in image_to_base64()
@@ -1647,7 +1645,7 @@ class EventGenerator:
             else:
                 log_message(LOGGER, f"  ⚠️  Warning: campaigns_decoded.json not found at: {decoded_path}")
         
-        html_lines = ["<b>Mission Debriefings</b><br>", "<br>"]
+        html_lines = [f"<b>{t('tracker.debriefings.heading')}</b><br>", "<br>"]
         
         # Sort missions in order
         sorted_missions = sorted(debriefings.keys(), key=smart_mission_sort_key)
@@ -1672,16 +1670,20 @@ class EventGenerator:
             html_lines.append(f'<div class="mission-box">')
             html_lines.append(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>")
             if date_str:
-                html_lines.append(f"<b>MISSION {mission_id} | {date_str}</b><br>")
+                html_lines.append(f"<b>{t('tracker.debriefings.mission_header', mission_id=mission_id, date=date_str)}</b><br>")
             else:
-                html_lines.append(f"<b>MISSION {mission_id}</b><br>")
+                html_lines.append(f"<b>{t('tracker.debriefings.mission_header_no_date', mission_id=mission_id)}</b><br>")
             html_lines.append(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>")
             
-            summary_parts = [f"Aircraft: {aircraft}", f"Duration: {duration}", f"Status: {status}"]
+            summary_parts = [
+                t("tracker.debriefings.summary_aircraft", aircraft=aircraft),
+                t("tracker.debriefings.summary_duration", duration=duration),
+                t("tracker.debriefings.summary_status", status=status),
+            ]
             if aircraft_dmg > 0:
-                summary_parts.append(f"Aircraft Dmg: {aircraft_dmg}%")
+                summary_parts.append(t("tracker.debriefings.summary_aircraft_damage", damage=aircraft_dmg))
             if pilot_dmg > 0:
-                summary_parts.append(f"Pilot Dmg: {pilot_dmg}%")
+                summary_parts.append(t("tracker.debriefings.summary_pilot_damage", damage=pilot_dmg))
             html_lines.append(f"{' | '.join(summary_parts)}<br>")
             html_lines.append(f"<br>")
             
@@ -1693,11 +1695,20 @@ class EventGenerator:
                 if decoded_data:
                     html_lines.append(generate_mission_combat_results_html(mission_id, decoded_data, self.game_directory))
                 else:
-                    html_lines.append(f"<p><i>Combat data not available for Mission {mission_id}</i></p>")
+                    html_lines.append(
+                        f"<p><i>{t('tracker.debriefings.combat_unavailable', mission_id=mission_id)}</i></p>"
+                    )
             else:
                 # In-Game mode → show Flight Log instead of Combat Results
-                html_lines.append(f"<b>FLIGHT LOG</b><br>")
+                html_lines.append(f"<b>{t('tracker.debriefings.flight_log')}</b><br>")
                 mission_ended_in_bailout = "Bailout" in status
+
+                event_type_labels = {
+                    "Takeoff": t("tracker.debriefings.event.takeoff"),
+                    "Landing": t("tracker.debriefings.event.landing"),
+                    "Crash": t("tracker.debriefings.event.crash"),
+                    "Bailout": t("tracker.debriefings.event.bailout"),
+                }
 
                 for event in data.get('events', [])[:25]:  # Max 25 events
                     time = event.get('time', '')
@@ -1707,16 +1718,25 @@ class EventGenerator:
                     damage = event.get('damage')
 
                     if event_type == "Kill":
-                        details = f" (Alt: {altitude}m)" if altitude else ""
-                        html_lines.append(f"{time}  {target} destroyed{details}<br>")
+                        details = t("tracker.debriefings.event.altitude_details", altitude=altitude) if altitude else ""
+                        html_lines.append(
+                            f"{t('tracker.debriefings.event.destroyed', time=time, target=target, details=details)}<br>"
+                        )
                     elif event_type == "Damage Taken":
                         if mission_ended_in_bailout:
                             continue
-                        html_lines.append(f"{time}  Hit by {target}<br>")
+                        html_lines.append(
+                            f"{t('tracker.debriefings.event.hit_by', time=time, target=target)}<br>"
+                        )
                     elif event_type in ["Takeoff", "Landing", "Crash", "Bailout"]:
-                        html_lines.append(f"{time}  {event_type}<br>")
+                        event_label = event_type_labels.get(event_type, event_type)
+                        html_lines.append(
+                            f"{t('tracker.debriefings.event.generic', time=time, event=event_label)}<br>"
+                        )
                     else:
-                        html_lines.append(f"{time}  {event_type}<br>")
+                        html_lines.append(
+                            f"{t('tracker.debriefings.event.generic', time=time, event=event_type)}<br>"
+                        )
             
             # ======================================================================
             # End of mission box
@@ -1734,9 +1754,9 @@ class EventGenerator:
         
         # Page break before events in PDF mode
         if for_pdf:
-            html_lines = ['<div style="page-break-before: always;"></div>', "<b>Events</b><br>"]
+            html_lines = ['<div style="page-break-before: always;"></div>', f"<b>{t('tracker.events.heading')}</b><br>"]
         else:
-            html_lines = ["<b>Events</b><br>"]
+            html_lines = [f"<b>{t('tracker.events.heading')}</b><br>"]
         
         for event in events:
             html_lines.append(self.format_event_html(event, country, for_pdf=for_pdf))
@@ -1921,7 +1941,7 @@ class EventGenerator:
                     pass
             
             # Aircraft usage (from player)
-            aircraft = player.get('aircraft', 'Unknown')
+            aircraft = player.get('aircraft') or t("tracker.summary.unknown")
             if aircraft not in aircraft_usage:
                 aircraft_usage[aircraft] = {'missions': 0}
             aircraft_usage[aircraft]['missions'] += 1
@@ -1989,7 +2009,7 @@ class EventGenerator:
                     aircraft_name = aircraft_entry
 
                 if not aircraft_name:
-                    aircraft_name = "Unknown"
+                    aircraft_name = t("tracker.summary.unknown")
 
                 aircraft_kills[aircraft_name] = aircraft_kills.get(aircraft_name, 0) + totals.get("total_kills", 0)
 
@@ -1999,7 +2019,7 @@ class EventGenerator:
             except (TypeError, ValueError):
                 return "0"
         
-        starting_rank = promotions[0]['rank'] if promotions else 'Unknown'
+        starting_rank = promotions[0]['rank'] if promotions else t("tracker.summary.unknown")
         final_rank = promotions[-1]['rank'] if promotions else starting_rank
         
         # Generate HTML
@@ -2007,7 +2027,7 @@ class EventGenerator:
         html.append('<div style="page-break-before: always;"></div>')
         html.append('<div style="text-align: center; margin: 40px 0 30px 0;">')
         html.append('<div style="border-top: 3px double #333; border-bottom: 3px double #333; padding: 20px 0; margin: 0 50px;">')
-        html.append('<h1 style="margin: 0; font-size: 24pt;">CAMPAIGN SUMMARY</h1>')
+        html.append(f'<h1 style="margin: 0; font-size: 24pt;">{t("tracker.summary.heading")}</h1>')
         
         campaign_display_name = self.get_campaign_display_name(campaign_name)
         html.append(f'<p style="margin: 10px 0 0 0; font-size: 14pt; font-style: italic;">{campaign_display_name}</p>')
@@ -2015,46 +2035,76 @@ class EventGenerator:
         html.append('</div>')
         
         # Combat Results
-        html.append('<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">COMBAT RESULTS</h2>')
+        html.append(
+            f'<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">{t("tracker.summary.combat_results")}</h2>'
+        )
         if decoded_data:
             html.append(generate_campaign_summary_combat_results_html(decoded_data, self.game_directory))
         else:
-            html.append('<p>No combat data available.</p>')
+            html.append(f'<p>{t("tracker.summary.combat_unavailable")}</p>')
                 
         # Missions Flown
-        html.append('<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">MISSIONS FLOWN</h2>')
+        html.append(
+            f'<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">{t("tracker.summary.missions_flown")}</h2>'
+        )
         html.append(f'<table style="width: 100%; margin: 10px 0;">')
-        html.append(f'<tr><td style="padding: 5px 0;"><b>Completed:</b></td><td style="text-align: right;">{mission_count} missions</td></tr>')
-        html.append(f'<tr><td style="padding: 5px 0;"><b>Total Flight Time:</b></td><td style="text-align: right;">{total_hours}h {total_minutes}m</td></tr>')
-        html.append(f'<tr><td style="padding: 5px 0;"><b>Average Duration:</b></td><td style="text-align: right;">{avg_minutes}m</td></tr>')
+        html.append(
+            f'<tr><td style="padding: 5px 0;"><b>{t("tracker.summary.completed")}</b></td>'
+            f'<td style="text-align: right;">{tp("tracker.summary.missions_count", mission_count, count=mission_count)}</td></tr>'
+        )
+        html.append(
+            f'<tr><td style="padding: 5px 0;"><b>{t("tracker.summary.total_flight_time")}</b></td>'
+            f'<td style="text-align: right;">{t("tracker.summary.flight_time", hours=total_hours, minutes=total_minutes)}</td></tr>'
+        )
+        html.append(
+            f'<tr><td style="padding: 5px 0;"><b>{t("tracker.summary.average_duration_label")}</b></td>'
+            f'<td style="text-align: right;">{t("tracker.summary.average_duration", minutes=avg_minutes)}</td></tr>'
+        )
         html.append(f'<tr><td colspan="2" style="padding: 10px 0 5px 0;"></td></tr>')
         
         total_outcomes = safe_landings + hard_landings + wounded_landings + bailouts + kia_mia
         if total_outcomes > 0:
             safe_pct = int(safe_landings / total_outcomes * 100)
-            html.append(f'<tr><td style="padding: 5px 0;"><b>Safe Landings:</b></td><td style="text-align: right;">{safe_landings} ({safe_pct}%)</td></tr>')
+            html.append(
+                f'<tr><td style="padding: 5px 0;"><b>{t("tracker.summary.safe_landings")}</b></td>'
+                f'<td style="text-align: right;">{t("tracker.summary.count_with_pct", count=safe_landings, pct=safe_pct)}</td></tr>'
+            )
             
             if hard_landings > 0:
                 hard_pct = int(hard_landings / total_outcomes * 100)
-                html.append(f'<tr><td style="padding: 5px 0;"><b>Hard Landings / Crashes:</b></td><td style="text-align: right;">{hard_landings} ({hard_pct}%)</td></tr>')
+                html.append(
+                    f'<tr><td style="padding: 5px 0;"><b>{t("tracker.summary.hard_landings")}</b></td>'
+                    f'<td style="text-align: right;">{t("tracker.summary.count_with_pct", count=hard_landings, pct=hard_pct)}</td></tr>'
+                )
             
             if wounded_landings > 0:
                 wounded_pct = int(wounded_landings / total_outcomes * 100)
-                html.append(f'<tr><td style="padding: 5px 0;"><b>Wounded Landings:</b></td><td style="text-align: right;">{wounded_landings} ({wounded_pct}%)</td></tr>')
+                html.append(
+                    f'<tr><td style="padding: 5px 0;"><b>{t("tracker.summary.wounded_landings")}</b></td>'
+                    f'<td style="text-align: right;">{t("tracker.summary.count_with_pct", count=wounded_landings, pct=wounded_pct)}</td></tr>'
+                )
             
             if bailouts > 0:
                 bailout_pct = int(bailouts / total_outcomes * 100)
-                html.append(f'<tr><td style="padding: 5px 0;"><b>Bailouts:</b></td><td style="text-align: right;">{bailouts} ({bailout_pct}%)</td></tr>')
+                html.append(
+                    f'<tr><td style="padding: 5px 0;"><b>{t("tracker.summary.bailouts")}</b></td>'
+                    f'<td style="text-align: right;">{t("tracker.summary.count_with_pct", count=bailouts, pct=bailout_pct)}</td></tr>'
+                )
             
             if kia_mia > 0:
                 kia_pct = int(kia_mia / total_outcomes * 100)
-                html.append(f'<tr><td style="padding: 5px 0;"><b>KIA / MIA:</b></td><td style="text-align: right;">{kia_mia} ({kia_pct}%)</td></tr>')
+                html.append(
+                    f'<tr><td style="padding: 5px 0;"><b>{t("tracker.summary.kia_mia")}</b></td>'
+                    f'<td style="text-align: right;">{t("tracker.summary.count_with_pct", count=kia_mia, pct=kia_pct)}</td></tr>'
+                )
         
         html.append('</table>')
         
         # Aircraft Flown
         if aircraft_usage:
-            html.append('<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">AIRCRAFT FLOWN</h2>')
+            html.append(
+                f'<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">{t("tracker.summary.aircraft_flown")}</h2>'
+            )
             html.append(f'<table style="width: 100%; margin: 10px 0;">')
             aircraft_names = set(aircraft_usage.keys()) | set(aircraft_kills.keys())
             aircraft_rows = []
@@ -2068,18 +2118,32 @@ class EventGenerator:
                      continue  # Skip "Unknown: 0 missions (0 kills)"
                 html.append(
                     f'<tr><td style="padding: 5px 0;"><b>{aircraft}:</b></td>'
-                    f'<td style="text-align: right;">{missions} missions ({format_kill_count(kills)} kills)</td></tr>'
+                    f'<td style="text-align: right;">{t("tracker.summary.aircraft_usage", missions=missions, kills=format_kill_count(kills))}</td></tr>'
                 )
             html.append('</table>')
         
         # Career Progression
-        html.append('<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">CAREER PROGRESSION</h2>')
+        html.append(
+            f'<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">{t("tracker.summary.career_progression")}</h2>'
+        )
         html.append(f'<table style="width: 100%; margin: 10px 0;">')
-        html.append(f'<tr><td style="padding: 5px 0;"><b>Starting Rank:</b></td><td style="text-align: right;">{starting_rank}</td></tr>')
-        html.append(f'<tr><td style="padding: 5px 0;"><b>Final Rank:</b></td><td style="text-align: right;">{final_rank}</td></tr>')
-        html.append(f'<tr><td style="padding: 5px 0;"><b>Promotions:</b></td><td style="text-align: right;">{len(promotions)}</td></tr>')
+        html.append(
+            f'<tr><td style="padding: 5px 0;"><b>{t("tracker.summary.starting_rank")}</b></td>'
+            f'<td style="text-align: right;">{starting_rank}</td></tr>'
+        )
+        html.append(
+            f'<tr><td style="padding: 5px 0;"><b>{t("tracker.summary.final_rank")}</b></td>'
+            f'<td style="text-align: right;">{final_rank}</td></tr>'
+        )
+        html.append(
+            f'<tr><td style="padding: 5px 0;"><b>{t("tracker.summary.promotions")}</b></td>'
+            f'<td style="text-align: right;">{len(promotions)}</td></tr>'
+        )
         html.append(f'<tr><td colspan="2" style="padding: 10px 0 5px 0;"></td></tr>')
-        html.append(f'<tr><td style="padding: 5px 0;"><b>Awards Received:</b></td><td style="text-align: right;">{len(awards)}</td></tr>')
+        html.append(
+            f'<tr><td style="padding: 5px 0;"><b>{t("tracker.summary.awards_received")}</b></td>'
+            f'<td style="text-align: right;">{len(awards)}</td></tr>'
+        )
         html.append('</table>')
         
         if awards:
@@ -2092,18 +2156,29 @@ class EventGenerator:
         
         # Campaign Timeline
         if first_mission_date and last_mission_date:
-            html.append('<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">CAMPAIGN TIMELINE</h2>')
+            html.append(
+                f'<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">{t("tracker.summary.campaign_timeline")}</h2>'
+            )
             html.append(f'<table style="width: 100%; margin: 10px 0;">')
             
             # Format dates nicely
             start_date_formatted = self.format_date(first_mission_date)
             end_date_formatted = self.format_date(last_mission_date)
             
-            html.append(f'<tr><td style="padding: 5px 0;"><b>Start Date:</b></td><td style="text-align: right;">{start_date_formatted}</td></tr>')
-            html.append(f'<tr><td style="padding: 5px 0;"><b>End Date:</b></td><td style="text-align: right;">{end_date_formatted}</td></tr>')
+            html.append(
+                f'<tr><td style="padding: 5px 0;"><b>{t("tracker.summary.start_date")}</b></td>'
+                f'<td style="text-align: right;">{start_date_formatted}</td></tr>'
+            )
+            html.append(
+                f'<tr><td style="padding: 5px 0;"><b>{t("tracker.summary.end_date")}</b></td>'
+                f'<td style="text-align: right;">{end_date_formatted}</td></tr>'
+            )
             if campaign_duration_days is not None:
-                html.append(f'<tr><td style="padding: 5px 0;"><b>Campaign Duration:</b></td><td style="text-align: right;">{campaign_duration_days} days</td></tr>')
-            html.append('</table>')
+                html.append(
+                    f'<tr><td style="padding: 5px 0;"><b>{t("tracker.summary.campaign_duration")}</b></td>'
+                    f'<td style="text-align: right;">{tp("tracker.summary.campaign_duration_days", campaign_duration_days, days=campaign_duration_days)}</td></tr>'
+                )
+        html.append('</table>')
         
         return '\n'.join(html)
     def export_campaign_to_pdf(self, campaign_name: str, html_content: str) -> bool:
@@ -2892,7 +2967,9 @@ def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bo
 
     if parsed_args.auto:
         log_message(LOGGER, "⚙️ Running in AUTO mode (no user interaction).")
-    
+
+    load_locale()
+
     generator = EventGenerator(
         dry_run=parsed_args.dry_run,
         show_popups=parsed_args.show_popups,

@@ -797,7 +797,7 @@ Even if you play in another language, these English files must exist for the tra
 
 Note: When writing Events and Debriefings back to your campaign, the tracker automatically updates all existing `info.locale=*.txt`
 
-⚠️ *Important: All Debriefings/Events are in English, independent of your in-game chosen language. NO multi-language support yet*
+*Debriefings/Events are now generated from the localization catalog. English is the default, and additional locales can be added via `locales/*.json`.*
 
 **Mission File Naming:**
 
