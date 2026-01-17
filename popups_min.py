@@ -39,18 +39,18 @@ def _get_game_dir_from_json() -> Path | None:
 
         if not game_dir:
             config_file = base_path / "campaign_mission_dates.json"
-            log_message(logger, f"[popups] ⚠️ Kein 'game_directory' in {config_file} gefunden.")
+            log_message(logger, f"[popups] ⚠️ No 'game_directory' found in {config_file}.")
             return None
 
         if game_dir.exists():
-            log_message(logger, f"[popups] ✅ game_directory aus JSON geladen: {game_dir}")
+            log_message(logger, f"[popups] ✅ game_directory loaded from JSON: {game_dir}")
             return game_dir
 
-        log_message(logger, f"[popups] ⚠️ Ungültiger game_directory-Pfad: {game_dir}")
+        log_message(logger, f"[popups] ⚠️ Invalid game_directory path: {game_dir}")
         return None
     
     except Exception as e:
-        log_message(logger, f"[popups] ⚠️ Fehler beim Lesen von campaign_mission_dates.json: {e}")
+        log_message(logger, f"[popups] ⚠️ Error reading campaign_mission_dates.json: {e}")
         return None
 
 def _resolve_image_path(game_directory: Path, country: str, ev: Dict[str, Any]) -> Path:
@@ -77,7 +77,7 @@ def _resolve_image_path(game_directory: Path, country: str, ev: Dict[str, Any]) 
             game_directory = json_dir
             log_message(logger, f"[popups] Game directory loaded from JSON: {game_directory}")
         else:
-            log_message(logger, "[popups] ⚠️ Kein gültiger game_directory gefunden.")
+            log_message(logger, "[popups] ⚠️ No valid game_directory found.")
             return Path()
     else:
         game_directory = game_dir_path
@@ -85,7 +85,7 @@ def _resolve_image_path(game_directory: Path, country: str, ev: Dict[str, Any]) 
     # 2️⃣ Bildname aus Event
     image_name = str(ev.get("image", "")).strip()
     if not image_name:
-        log_message(logger, "[popups] ⚠️ Kein Bildname im Event definiert.")
+        log_message(logger, "[popups] ⚠️ No image name defined in event.")
         return Path()
 
     # 🔧 Doppelte Ordnerstruktur vermeiden
