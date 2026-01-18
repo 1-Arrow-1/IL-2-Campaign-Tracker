@@ -77,7 +77,7 @@ ranks:
     score: 2550
     image: generalleutnant.png
   
-    Britain:
+  Britain:
   - name: Sergeant
     score: 0
     image: sergeant_raf.png
