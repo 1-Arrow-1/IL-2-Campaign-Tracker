@@ -591,11 +591,11 @@ class EventGenerator:
         # Add starting rank (before first mission)
         ranks = self.config['ranks'].get(country, [])
         if ranks:
-            # Get starting rank offset from campaign_mission_dates.json (case-insensitive)
+             # Get starting rank offset from campaign_mission_dates.json (case-insensitive)
             starting_rank_offset = 0
             campaign_name_lower = campaign_name.lower()
             if campaign_name_lower in self.mission_dates_lower:
-                original_name, campaign_data = self.mission_dates_lower[campaign_name_lower]
+                _, campaign_data = self.mission_dates_lower[campaign_name_lower]
                 starting_rank_offset = campaign_data.get('starting_rank_offset', 0)
                 # Clamp to valid range
                 starting_rank_offset = max(0, min(starting_rank_offset, len(ranks) - 1))
@@ -1243,7 +1243,7 @@ class EventGenerator:
         if hasattr(self, 'mission_dates_lower'):
             campaign_name_lower = campaign_name.lower()
             if campaign_name_lower in self.mission_dates_lower:
-                original_name, campaign_data = self.mission_dates_lower[campaign_name_lower]
+                _, campaign_data = self.mission_dates_lower[campaign_name_lower]
                 starting_rank_offset = campaign_data.get('starting_rank_offset', 0)
                 # Clamp to valid range
                 starting_rank_offset = max(0, min(starting_rank_offset, len(ranks) - 1))
