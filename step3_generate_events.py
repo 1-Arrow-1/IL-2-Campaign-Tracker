@@ -1238,14 +1238,15 @@ class EventGenerator:
         promotions = []
         running_score = 0
         
-        # Get starting rank offset from campaign_mission_dates.json
+        # Get starting rank offset from campaign_mission_dates.json (case-insensitive)
         starting_rank_offset = 0
-        # New JSON structure: campaigns are at root level (no 'campaigns' wrapper)
-        if hasattr(self, 'mission_dates') and campaign_name in self.mission_dates and campaign_name != 'game_directory':
-            campaign_data = self.mission_dates[campaign_name]
-            starting_rank_offset = campaign_data.get('starting_rank_offset', 0)
-            # Clamp to valid range
-            starting_rank_offset = max(0, min(starting_rank_offset, len(ranks) - 1))
+        if hasattr(self, 'mission_dates_lower'):
+            campaign_name_lower = campaign_name.lower()
+            if campaign_name_lower in self.mission_dates_lower:
+                original_name, campaign_data = self.mission_dates_lower[campaign_name_lower]
+                starting_rank_offset = campaign_data.get('starting_rank_offset', 0)
+                # Clamp to valid range
+                starting_rank_offset = max(0, min(starting_rank_offset, len(ranks) - 1))
         
         current_rank_index = starting_rank_offset  # Start at configured rank
         
