@@ -2,10 +2,28 @@
 
 ## Übersicht
 
-Es wurden **38 Ränge** und **84 Auszeichnungen** zu den Locale-Dateien hinzugefügt.
+Es wurden **44 Ränge** (mit Länder-Unterscheidung) und **84 Auszeichnungen** zu den Locale-Dateien hinzugefügt.
 
 - **Englische Werte**: Bereits in `locales/en.json` vorhanden
 - **Deutsche Werte**: Leer in `locales/de.json` - müssen von dir übersetzt werden
+
+## Wichtig: Länder-Unterscheidung bei Rängen! 🌍
+
+Einige Ränge haben **identische Namen** über verschiedene Länder hinweg (z.B. "Sergeant", "Major", "Captain"). Diese werden mit **Länder-Präfixen** unterschieden:
+
+- `ger_` = Deutschland (Luftwaffe)
+- `raf_` = Großbritannien (RAF)
+- `usaaf_` = USA (USAAF)
+- `vvs_` = Sowjetunion (VVS)
+
+**Beispiel:**
+```json
+"raf_sergeant": "Sergeant",      // RAF Sergeant
+"vvs_sergeant": "Sergeant",      // Soviet Sergeant
+"usaaf_major": "Major",          // US Major
+"ger_major": "Major",            // German Major
+"vvs_major": "Major"             // Soviet Major
+```
 
 ## Struktur
 
@@ -16,7 +34,9 @@ Alle Ränge und Auszeichnungen befinden sich in der neuen `progression` Section:
   "progression": {
     "ranks": {
       "unteroffizier": "",
-      "feldwebel": "",
+      "ger_major": "",
+      "raf_sergeant": "",
+      "vvs_sergeant": "",
       ...
     },
     "awards": {
@@ -28,60 +48,83 @@ Alle Ränge und Auszeichnungen befinden sich in der neuen `progression` Section:
 }
 ```
 
-## Ränge (38 total)
+## Ränge (44 total, inkl. Länder-Duplikate)
 
 ### Deutschland (11 Ränge)
-- unteroffizier
-- feldwebel
-- oberfeldwebel
-- leutnant
-- oberleutnant
-- hauptmann
-- major
-- oberstleutnant
-- oberst
-- generalmajor
-- generalleutnant
+**Keine Präfixe (eindeutig):**
+- `unteroffizier` → "Unteroffizier"
+- `feldwebel` → "Feldwebel"
+- `oberfeldwebel` → "Oberfeldwebel"
+- `leutnant` → "Leutnant"
+- `oberleutnant` → "Oberleutnant"
+- `hauptmann` → "Hauptmann"
+- `oberstleutnant` → "Oberstleutnant"
+- `oberst` → "Oberst"
+- `generalmajor` → "Generalmajor"
+- `generalleutnant` → "Generalleutnant"
+
+**Mit Präfix (Duplikat):**
+- `ger_major` → "Major" ⚠️ (existiert auch als usaaf_major, vvs_major)
 
 ### Großbritannien (11 Ränge)
-- sergeant
-- flight_sergeant
-- warrant_officer
-- pilot_officer
-- flying_officer
-- flight_lieutenant
-- squadron_leader
-- wing_commander
-- group_captain
-- air_commodore
-- air_vice_marshal
+**Mit Präfix (Duplikat):**
+- `raf_sergeant` → "Sergeant" ⚠️ (existiert auch als vvs_sergeant)
+
+**Keine Präfixe (eindeutig):**
+- `flight_sergeant` → "Flight Sergeant"
+- `warrant_officer` → "Warrant Officer"
+- `pilot_officer` → "Pilot Officer"
+- `flying_officer` → "Flying Officer"
+- `flight_lieutenant` → "Flight Lieutenant"
+- `squadron_leader` → "Squadron Leader"
+- `wing_commander` → "Wing Commander"
+- `group_captain` → "Group Captain"
+- `air_commodore` → "Air Commodore"
+- `air_vice_marshal` → "Air Vice Marshal"
 
 ### USA (11 Ränge)
-- first_sergeant
-- flight_officer
-- chief_warrant_officer
-- 2nd_lieutenant
-- 1st_lieutenant
-- captain
-- lt._colonel
-- colonel
-- brigadier_general
-- major_general
+**Keine Präfixe (eindeutig):**
+- `first_sergeant` → "First Sergeant"
+- `flight_officer` → "Flight Officer"
+- `chief_warrant_officer` → "Chief Warrant Officer"
+- `2nd_lieutenant` → "2nd Lieutenant"
+- `1st_lieutenant` → "1st Lieutenant"
+- `lt_colonel` → "Lt. Colonel"
+- `brigadier_general` → "Brigadier General"
+
+**Mit Präfix (Duplikat):**
+- `usaaf_captain` → "Captain" ⚠️ (existiert auch als vvs_captain)
+- `usaaf_major` → "Major" ⚠️ (existiert auch als ger_major, vvs_major)
+- `usaaf_colonel` → "Colonel" ⚠️ (existiert auch als vvs_colonel)
+- `usaaf_major_general` → "Major General" ⚠️ (existiert auch als vvs_major_general)
 
 ### Sowjetunion (11 Ränge)
-- sergeant
-- senior_sergeant
-- junior_lieutenant
-- lieutenant
-- senior_lieutenant
-- captain
-- major
-- sub_colonel
-- colonel
-- major_general
-- lieutenant_general
+**Mit Präfix (Duplikat):**
+- `vvs_sergeant` → "Sergeant" ⚠️ (existiert auch als raf_sergeant)
+- `vvs_captain` → "Captain" ⚠️ (existiert auch als usaaf_captain)
+- `vvs_major` → "Major" ⚠️ (existiert auch als ger_major, usaaf_major)
+- `vvs_colonel` → "Colonel" ⚠️ (existiert auch als usaaf_colonel)
+- `vvs_major_general` → "Major General" ⚠️ (existiert auch als usaaf_major_general)
 
-**Hinweis:** Einige Ränge sind identisch zwischen Ländern (z.B. "sergeant", "captain"), aber haben möglicherweise unterschiedliche Übersetzungen je nach Kontext.
+**Keine Präfixe (eindeutig):**
+- `senior_sergeant` → "Senior Sergeant"
+- `junior_lieutenant` → "Junior Lieutenant"
+- `lieutenant` → "Lieutenant"
+- `senior_lieutenant` → "Senior Lieutenant"
+- `sub_colonel` → "Sub-Colonel"
+- `lieutenant_general` → "Lieutenant General"
+
+## Duplikate im Überblick
+
+Diese 5 Rangnamen existieren in mehreren Ländern:
+
+| Rang | Länder | Keys |
+|------|--------|------|
+| **Sergeant** | RAF, VVS | `raf_sergeant`, `vvs_sergeant` |
+| **Captain** | USAAF, VVS | `usaaf_captain`, `vvs_captain` |
+| **Major** | Luftwaffe, USAAF, VVS | `ger_major`, `usaaf_major`, `vvs_major` |
+| **Colonel** | USAAF, VVS | `usaaf_colonel`, `vvs_colonel` |
+| **Major General** | USAAF, VVS | `usaaf_major_general`, `vvs_major_general` |
 
 ## Auszeichnungen (84 total)
 
@@ -177,7 +220,8 @@ Beispiele:
 1. Öffne `locales/de.json`
 2. Gehe zur `progression` Section
 3. Ersetze die leeren Strings (`""`) mit deutschen Übersetzungen
-4. Für englische/amerikanische/russische Auszeichnungen kannst du:
+4. **Beachte die Länder-Präfixe** bei doppelten Rängen!
+5. Für englische/amerikanische/russische Auszeichnungen kannst du:
    - Die originalen Namen beibehalten
    - Oder eine deutsche Beschreibung hinzufügen
 
@@ -188,8 +232,11 @@ Beispiele:
 "progression": {
   "ranks": {
     "unteroffizier": "",
-    "leutnant": "",
-    "major": ""
+    "ger_major": "",
+    "raf_sergeant": "",
+    "vvs_sergeant": "",
+    "usaaf_major": "",
+    "vvs_major": ""
   },
   "awards": {
     "iron_cross_2nd_class": "",
@@ -203,8 +250,11 @@ Beispiele:
 "progression": {
   "ranks": {
     "unteroffizier": "Unteroffizier",
-    "leutnant": "Leutnant",
-    "major": "Major"
+    "ger_major": "Major",
+    "raf_sergeant": "Sergeant",
+    "vvs_sergeant": "Сержант",  // oder "Sergeant (VVS)"
+    "usaaf_major": "Major",
+    "vvs_major": "Майор"  // oder "Major (VVS)"
   },
   "awards": {
     "iron_cross_2nd_class": "Eisernes Kreuz 2. Klasse",
@@ -212,6 +262,11 @@ Beispiele:
   }
 }
 ```
+
+**Übersetzungs-Tipps für doppelte Ränge:**
+- Du kannst die Originalnamen verwenden (z.B. alle "Major" → "Major")
+- Oder Länder-Kennzeichnung hinzufügen (z.B. "Major (Luftwaffe)", "Major (USAAF)", "Major (VVS)")
+- Oder die original-sprachlichen Namen verwenden (z.B. vvs_major → "Майор")
 
 ## Wo werden diese Keys verwendet?
 
