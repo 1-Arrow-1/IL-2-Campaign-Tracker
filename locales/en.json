@@ -1,0 +1,242 @@
+{
+  "ui": {
+    "popup": {
+      "promotion_title": "Promotion",
+      "promotion_message": "You have been promoted to {rank}",
+      "promotion_message_generic": "You have been promoted!",
+      "award_title": "Award",
+      "award_message": "You have been awarded with {name}",
+      "award_message_generic": "You have received an award!",
+      "event_title": "Event",
+      "event_message": "New campaign event",
+      "mission_label": "Mission {mission}",
+      "campaign_label": "{campaign}"
+    },
+    "button": {
+      "ok": "OK",
+      "cancel": "Cancel",
+      "save": "Save",
+      "close": "Close",
+      "apply": "Apply",
+      "restore": "Restore",
+      "backup": "Backup",
+      "validate": "Validate",
+      "next": "Next",
+      "previous": "Previous",
+      "finish": "Finish",
+      "browse": "Browse..."
+    },
+    "label": {
+      "select_directory": "Select Directory",
+      "game_directory": "Game Directory",
+      "backup_location": "Backup Location",
+      "country": "Country",
+      "campaign": "Campaign",
+      "status": "Status"
+    },
+    "message": {
+      "processing": "Processing...",
+      "complete": "Complete!",
+      "please_wait": "Please wait...",
+      "error_occurred": "An error occurred",
+      "success": "Success!",
+      "confirm_action": "Are you sure?"
+    }
+  },
+  "event": {
+    "promotion": {
+      "description": "Promoted to {rank}",
+      "narrative": "On {date}, you were promoted to the rank of {rank}.",
+      "initial_rank": "Initial rank: {rank}"
+    },
+    "award": {
+      "description": "Awarded {name}",
+      "narrative": "For exceptional service, you have been awarded {name}.",
+      "description_simple": "{name}"
+    },
+    "header": {
+      "mission_debriefings": "Mission Debriefings",
+      "events": "Events"
+    }
+  },
+  "pdf": {
+    "section": {
+      "summary": "Campaign Summary",
+      "missions": "Mission Log",
+      "awards": "Decorations & Honors",
+      "statistics": "Statistics",
+      "combat_results": "Combat Results"
+    },
+    "label": {
+      "missions_flown": "Missions Flown",
+      "total_kills": "Total Kills",
+      "air_kills": "Air Kills",
+      "ground_kills": "Ground Kills",
+      "flight_time": "Flight Time",
+      "total_flight_time": "Total Flight Time",
+      "average_flight_time": "Average Flight Time",
+      "campaign": "Campaign",
+      "pilot": "Pilot",
+      "rank": "Rank",
+      "date": "Date",
+      "mission": "Mission",
+      "aircraft": "Aircraft",
+      "result": "Result",
+      "kills": "Kills",
+      "losses": "Losses",
+      "duration": "Duration",
+      "page": "Page",
+      "of": "of"
+    },
+    "value": {
+      "hours": "{hours}h",
+      "minutes": "{minutes}m",
+      "hours_minutes": "{hours}h {minutes}m",
+      "mission_number": "Mission {number}",
+      "page_number": "{current} of {total}"
+    }
+  },
+  "web": {
+    "title": {
+      "service_record": "IL-2 Campaign Service Record",
+      "campaign_detail": "{campaign_name} - Campaign Service Record",
+      "loading": "Loading...",
+      "select_campaign": "Select a Campaign"
+    },
+    "nav": {
+      "back_to_campaigns": "← Back to Campaigns",
+      "next_campaign": "Next Campaign →",
+      "previous_campaign": "← Previous Campaign"
+    },
+    "stat": {
+      "missions_flown": "Missions Flown",
+      "total_kills": "Total Kills",
+      "air_kills": "Air Kills",
+      "ground_kills": "Ground Kills",
+      "flight_time": "Flight Time",
+      "average_flight_time": "Average Flight Time",
+      "combat_score": "Combat Score",
+      "success_rate": "Success Rate",
+      "current_rank": "Current Rank",
+      "awards_earned": "Awards Earned"
+    },
+    "section": {
+      "overview": "Overview",
+      "missions": "Missions",
+      "awards": "Awards & Decorations",
+      "statistics": "Statistics",
+      "combat_results": "Combat Results",
+      "timeline": "Timeline"
+    },
+    "mission": {
+      "date": "Date",
+      "aircraft": "Aircraft",
+      "duration": "Duration",
+      "result": "Result",
+      "kills": "Kills",
+      "status_success": "Success",
+      "status_failed": "Failed",
+      "status_incomplete": "Incomplete"
+    },
+    "award": {
+      "received": "Received",
+      "description": "Description"
+    },
+    "button": {
+      "download_pdf": "Download PDF Report",
+      "view_details": "View Details",
+      "collapse": "Collapse",
+      "expand": "Expand"
+    },
+    "message": {
+      "loading_campaigns": "Loading campaigns...",
+      "no_campaigns": "No campaigns found",
+      "error_loading": "Error loading data",
+      "pdf_generating": "Generating PDF...",
+      "pdf_ready": "PDF ready for download"
+    }
+  },
+  "cli": {
+    "header": {
+      "first_run_setup": "FIRST RUN SETUP",
+      "country_validation": "COUNTRY VALIDATION",
+      "processing": "PROCESSING",
+      "complete": "COMPLETE"
+    },
+    "message": {
+      "processing_item": "Processing {item}...",
+      "complete": "Complete!",
+      "please_wait": "Please wait...",
+      "checking": "Checking {item}...",
+      "found": "Found: {count} {item}",
+      "validating": "Validating {item}...",
+      "loading": "Loading {item}..."
+    },
+    "error": {
+      "file_not_found": "File not found: {path}",
+      "config_missing": "ERROR: campaign_progress_config.yaml not found!",
+      "config_missing_detail": "Expected location: {path}",
+      "config_missing_instruction": "Please place campaign_progress_config.yaml in the same folder as this executable.",
+      "setup_incomplete": "ERROR: Setup incomplete. Mission dates not created.",
+      "validation_cancelled": "Country validation was cancelled.",
+      "il2_running": "ERROR: IL-2 is currently running. Please close the game first.",
+      "general_error": "ERROR: {message}"
+    },
+    "prompt": {
+      "verify_countries": "Please verify the automatically detected countries...",
+      "select_directory": "Please select your IL-2 Great Battles installation directory",
+      "confirm": "Continue? (y/n): ",
+      "press_enter": "Press Enter to continue..."
+    },
+    "status": {
+      "searching": "Searching for campaigns...",
+      "found_campaigns": "Found {count} campaigns",
+      "extracting_dates": "Extracting mission dates...",
+      "generating_events": "Generating events...",
+      "creating_backups": "Creating backups...",
+      "restoring": "Restoring from backup...",
+      "validating": "Validating data...",
+      "writing_files": "Writing to files...",
+      "done": "Done!"
+    }
+  },
+  "installer": {
+    "welcome": "Welcome to IL-2 Campaign Tracker Setup",
+    "select_il2_dir": "Select your IL-2 Great Battles installation directory",
+    "install_complete": "Installation complete!",
+    "uninstall_options": "Select data to remove:",
+    "remove_config": "Remove configuration files",
+    "remove_backups": "Remove backup files",
+    "remove_service_record": "Remove service record data"
+  },
+  "validation": {
+    "country": {
+      "germany": "Germany",
+      "britain": "Britain",
+      "usa": "USA",
+      "ussr": "USSR",
+      "unknown": "Unknown"
+    },
+    "status": {
+      "valid": "Valid",
+      "invalid": "Invalid",
+      "needs_review": "Needs Review"
+    }
+  },
+  "common": {
+    "yes": "Yes",
+    "no": "No",
+    "unknown": "Unknown",
+    "none": "None",
+    "all": "All",
+    "total": "Total",
+    "average": "Average",
+    "minimum": "Minimum",
+    "maximum": "Maximum",
+    "name": "Name",
+    "value": "Value",
+    "type": "Type",
+    "description": "Description",
+    "details": "Details"
+  }
+}

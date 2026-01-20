@@ -8,6 +8,8 @@ import os, json
 from utils.il2_paths import read_game_directory
 from utils.logging import get_logger, log_message
 from utils.pathing import get_base_path
+from utils.i18n import t, init_i18n
+from utils.locale_config import get_user_locale
 
 logger = None
 
@@ -18,6 +20,15 @@ def _is_debug_enabled() -> bool:
 
 
 logger = get_logger(__name__, debug=_is_debug_enabled())
+
+# Initialize i18n with user's preferred locale
+try:
+    user_locale = get_user_locale()
+    init_i18n(user_locale)
+    log_message(logger, f"[popups] i18n initialized with locale: {user_locale}")
+except Exception as e:
+    log_message(logger, f"[popups] Failed to initialize i18n: {e}, using English")
+    init_i18n('en')
 
 # Pillow is optional; if missing, we show text-only popups
 try:
@@ -370,17 +381,17 @@ def show_event_popups(
         # Titel und Text je nach Eventtyp
         if ev_type == "promotion":
             rank = str(ev.get("rank", "")).strip()
-            line1 = f"You have been promoted to {rank}" if rank else "You have been promoted!"
-            title = "Promotion"
+            line1 = t('ui.popup.promotion_message', rank=rank) if rank else t('ui.popup.promotion_message_generic')
+            title = t('ui.popup.promotion_title')
             img_max = (308, 308)  # 20% larger for promotions
         elif ev_type == "award":
             name = str(ev.get("name", "")).strip()
-            line1 = f"You have been awarded with {name}" if name else "You have received an award!"
-            title = "Award"
+            line1 = t('ui.popup.award_message', name=name) if name else t('ui.popup.award_message_generic')
+            title = t('ui.popup.award_title')
             img_max = (512, 512)
         else:
-            line1 = "New campaign event"
-            title = "Event"
+            line1 = t('ui.popup.event_message')
+            title = t('ui.popup.event_title')
             img_max = (256, 256)
 
         # Untertitel (Mission + Datum)
@@ -388,7 +399,7 @@ def show_event_popups(
         date = str(ev.get("date", "")).strip()
         parts = [campaign_name]
         if mission:
-            parts.append(f"Mission {mission}")
+            parts.append(t('ui.popup.mission_label', mission=mission))
         if date:
             parts.append(date)
         subtitle = "  •  ".join(parts)

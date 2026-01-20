@@ -1,0 +1,242 @@
+{
+  "ui": {
+    "popup": {
+      "promotion_title": "Beförderung",
+      "promotion_message": "Sie wurden zum {rank} befördert",
+      "promotion_message_generic": "Sie wurden befördert!",
+      "award_title": "Auszeichnung",
+      "award_message": "Sie wurden mit {name} ausgezeichnet",
+      "award_message_generic": "Sie haben eine Auszeichnung erhalten!",
+      "event_title": "Ereignis",
+      "event_message": "Neues Kampagnen-Ereignis",
+      "mission_label": "Mission {mission}",
+      "campaign_label": "{campaign}"
+    },
+    "button": {
+      "ok": "OK",
+      "cancel": "Abbrechen",
+      "save": "Speichern",
+      "close": "Schließen",
+      "apply": "Anwenden",
+      "restore": "Wiederherstellen",
+      "backup": "Sichern",
+      "validate": "Validieren",
+      "next": "Weiter",
+      "previous": "Zurück",
+      "finish": "Fertig",
+      "browse": "Durchsuchen..."
+    },
+    "label": {
+      "select_directory": "Verzeichnis auswählen",
+      "game_directory": "Spiel-Verzeichnis",
+      "backup_location": "Sicherungs-Speicherort",
+      "country": "Land",
+      "campaign": "Kampagne",
+      "status": "Status"
+    },
+    "message": {
+      "processing": "Verarbeitung läuft...",
+      "complete": "Abgeschlossen!",
+      "please_wait": "Bitte warten...",
+      "error_occurred": "Ein Fehler ist aufgetreten",
+      "success": "Erfolgreich!",
+      "confirm_action": "Sind Sie sicher?"
+    }
+  },
+  "event": {
+    "promotion": {
+      "description": "Beförderung zum {rank}",
+      "narrative": "Am {date} wurden Sie zum {rank} befördert.",
+      "initial_rank": "Anfangsrang: {rank}"
+    },
+    "award": {
+      "description": "Verleihung von {name}",
+      "narrative": "Für außergewöhnliche Dienste wurden Sie mit {name} ausgezeichnet.",
+      "description_simple": "{name}"
+    },
+    "header": {
+      "mission_debriefings": "Missions-Nachbesprechungen",
+      "events": "Ereignisse"
+    }
+  },
+  "pdf": {
+    "section": {
+      "summary": "Kampagnen-Zusammenfassung",
+      "missions": "Missions-Protokoll",
+      "awards": "Auszeichnungen & Ehrungen",
+      "statistics": "Statistik",
+      "combat_results": "Kampfergebnisse"
+    },
+    "label": {
+      "missions_flown": "Geflogene Missionen",
+      "total_kills": "Gesamt-Abschüsse",
+      "air_kills": "Luftsiege",
+      "ground_kills": "Bodenziele",
+      "flight_time": "Flugzeit",
+      "total_flight_time": "Gesamt-Flugzeit",
+      "average_flight_time": "Durchschnittliche Flugzeit",
+      "campaign": "Kampagne",
+      "pilot": "Pilot",
+      "rank": "Rang",
+      "date": "Datum",
+      "mission": "Mission",
+      "aircraft": "Flugzeug",
+      "result": "Ergebnis",
+      "kills": "Abschüsse",
+      "losses": "Verluste",
+      "duration": "Dauer",
+      "page": "Seite",
+      "of": "von"
+    },
+    "value": {
+      "hours": "{hours}h",
+      "minutes": "{minutes}m",
+      "hours_minutes": "{hours}h {minutes}m",
+      "mission_number": "Mission {number}",
+      "page_number": "{current} von {total}"
+    }
+  },
+  "web": {
+    "title": {
+      "service_record": "IL-2 Kampagnen-Dienstakte",
+      "campaign_detail": "{campaign_name} - Kampagnen-Dienstakte",
+      "loading": "Lädt...",
+      "select_campaign": "Kampagne auswählen"
+    },
+    "nav": {
+      "back_to_campaigns": "← Zurück zu Kampagnen",
+      "next_campaign": "Nächste Kampagne →",
+      "previous_campaign": "← Vorherige Kampagne"
+    },
+    "stat": {
+      "missions_flown": "Geflogene Missionen",
+      "total_kills": "Gesamt-Abschüsse",
+      "air_kills": "Luftsiege",
+      "ground_kills": "Bodenziele",
+      "flight_time": "Flugzeit",
+      "average_flight_time": "Durchschnittliche Flugzeit",
+      "combat_score": "Kampfpunkte",
+      "success_rate": "Erfolgsquote",
+      "current_rank": "Aktueller Rang",
+      "awards_earned": "Erhaltene Auszeichnungen"
+    },
+    "section": {
+      "overview": "Übersicht",
+      "missions": "Missionen",
+      "awards": "Auszeichnungen & Ehrungen",
+      "statistics": "Statistik",
+      "combat_results": "Kampfergebnisse",
+      "timeline": "Zeitstrahl"
+    },
+    "mission": {
+      "date": "Datum",
+      "aircraft": "Flugzeug",
+      "duration": "Dauer",
+      "result": "Ergebnis",
+      "kills": "Abschüsse",
+      "status_success": "Erfolgreich",
+      "status_failed": "Fehlgeschlagen",
+      "status_incomplete": "Unvollständig"
+    },
+    "award": {
+      "received": "Verliehen",
+      "description": "Beschreibung"
+    },
+    "button": {
+      "download_pdf": "PDF-Bericht herunterladen",
+      "view_details": "Details anzeigen",
+      "collapse": "Einklappen",
+      "expand": "Aufklappen"
+    },
+    "message": {
+      "loading_campaigns": "Kampagnen werden geladen...",
+      "no_campaigns": "Keine Kampagnen gefunden",
+      "error_loading": "Fehler beim Laden der Daten",
+      "pdf_generating": "PDF wird erstellt...",
+      "pdf_ready": "PDF bereit zum Download"
+    }
+  },
+  "cli": {
+    "header": {
+      "first_run_setup": "ERSTKONFIGURATION",
+      "country_validation": "LÄNDER-VALIDIERUNG",
+      "processing": "VERARBEITUNG",
+      "complete": "ABGESCHLOSSEN"
+    },
+    "message": {
+      "processing_item": "{item} wird verarbeitet...",
+      "complete": "Abgeschlossen!",
+      "please_wait": "Bitte warten...",
+      "checking": "{item} wird geprüft...",
+      "found": "Gefunden: {count} {item}",
+      "validating": "{item} wird validiert...",
+      "loading": "{item} wird geladen..."
+    },
+    "error": {
+      "file_not_found": "Datei nicht gefunden: {path}",
+      "config_missing": "FEHLER: campaign_progress_config.yaml nicht gefunden!",
+      "config_missing_detail": "Erwarteter Speicherort: {path}",
+      "config_missing_instruction": "Bitte platzieren Sie campaign_progress_config.yaml im selben Ordner wie diese Anwendung.",
+      "setup_incomplete": "FEHLER: Einrichtung unvollständig. Missions-Daten wurden nicht erstellt.",
+      "validation_cancelled": "Länder-Validierung wurde abgebrochen.",
+      "il2_running": "FEHLER: IL-2 läuft derzeit. Bitte schließen Sie das Spiel zuerst.",
+      "general_error": "FEHLER: {message}"
+    },
+    "prompt": {
+      "verify_countries": "Bitte überprüfen Sie die automatisch erkannten Länder...",
+      "select_directory": "Bitte wählen Sie Ihr IL-2 Great Battles Installations-Verzeichnis",
+      "confirm": "Fortfahren? (j/n): ",
+      "press_enter": "Drücken Sie Enter zum Fortfahren..."
+    },
+    "status": {
+      "searching": "Suche nach Kampagnen...",
+      "found_campaigns": "{count} Kampagnen gefunden",
+      "extracting_dates": "Missions-Daten werden extrahiert...",
+      "generating_events": "Ereignisse werden generiert...",
+      "creating_backups": "Sicherungen werden erstellt...",
+      "restoring": "Wiederherstellung aus Sicherung...",
+      "validating": "Daten werden validiert...",
+      "writing_files": "Dateien werden geschrieben...",
+      "done": "Fertig!"
+    }
+  },
+  "installer": {
+    "welcome": "Willkommen beim IL-2 Campaign Tracker Setup",
+    "select_il2_dir": "Wählen Sie Ihr IL-2 Great Battles Installations-Verzeichnis",
+    "install_complete": "Installation abgeschlossen!",
+    "uninstall_options": "Zu entfernende Daten auswählen:",
+    "remove_config": "Konfigurations-Dateien entfernen",
+    "remove_backups": "Sicherungs-Dateien entfernen",
+    "remove_service_record": "Dienstakten-Daten entfernen"
+  },
+  "validation": {
+    "country": {
+      "germany": "Deutschland",
+      "britain": "Großbritannien",
+      "usa": "USA",
+      "ussr": "UdSSR",
+      "unknown": "Unbekannt"
+    },
+    "status": {
+      "valid": "Gültig",
+      "invalid": "Ungültig",
+      "needs_review": "Prüfung erforderlich"
+    }
+  },
+  "common": {
+    "yes": "Ja",
+    "no": "Nein",
+    "unknown": "Unbekannt",
+    "none": "Keine",
+    "all": "Alle",
+    "total": "Gesamt",
+    "average": "Durchschnitt",
+    "minimum": "Minimum",
+    "maximum": "Maximum",
+    "name": "Name",
+    "value": "Wert",
+    "type": "Typ",
+    "description": "Beschreibung",
+    "details": "Details"
+  }
+}

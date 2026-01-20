@@ -16,6 +16,7 @@ a = Analysis(
     ] + psutil_binaries,
     datas=[
         ('IBMPlexSans-Light.ttf', '.'),
+        ('locales/*.json', 'locales'),  # i18n translation files
     ],
     hiddenimports=[
         'tkinter',
@@ -47,6 +48,8 @@ a = Analysis(
 		'utils.sorting',
 		'utils.logging',
         'utils.rank_scaling',
+        'utils.i18n',  # NEW: i18n module
+        'utils.locale_config',  # NEW: locale config module
 		'regex',
         'PIL',
         'PIL.Image',

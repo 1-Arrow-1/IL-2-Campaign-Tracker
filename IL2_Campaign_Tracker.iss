@@ -45,6 +45,9 @@ Source: "mlg2txt.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "QUICK_START.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README.html"; DestDir: "{app}"; Flags: ignoreversion
 
+; i18n translation files
+Source: "locales\*.json"; DestDir: "{app}\locales"; Flags: ignoreversion
+
 ; --- Campaign Service Record ---
 Source: "Campaign_Service_Record.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "_internal\*"; DestDir: "{app}\_internal"; Flags: recursesubdirs createallsubdirs ignoreversion

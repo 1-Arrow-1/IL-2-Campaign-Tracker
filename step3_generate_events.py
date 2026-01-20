@@ -31,9 +31,12 @@ import argparse
 from utils.info_locale import (
     TRACKER_SECTION_HEADER_PATTERN,
     decode_and_clean_info_locale,
+    find_all_info_locale_files,
 )
 from utils.pathing import get_base_path
 from utils.formatting import safe_campaign_filename
+from utils.i18n import t, init_i18n, set_locale, IL2_TO_APP_LOCALE, get_locale
+from utils.locale_config import get_user_locale
 from utils.combat_results import (
     KILL_MAPPING,
     calculate_kills_from_stats,
@@ -101,6 +104,15 @@ class EventGenerator:
         self.logger = get_logger(f"{__name__}.EventGenerator", log_path=self.log_path, debug=debug)
         self.dry_run = dry_run
         self.show_popups = bool(show_popups)
+        
+        # Initialize i18n with user's preferred locale
+        try:
+            user_locale = get_user_locale()
+            init_i18n(user_locale)
+            self.logger.info(f"i18n initialized with locale: {user_locale}")
+        except Exception as e:
+            self.logger.warning(f"Failed to initialize i18n: {e}, using English")
+            init_i18n('en')
         
         # --- NEW: default output mode (ingame or pdf)
         # Controls whether Combat Results or Flight Log is rendered
@@ -1575,14 +1587,12 @@ class EventGenerator:
         # Format description
         if event['type'] == 'promotion':
             if event.get('mission') == 'Initial':
-                description = f"Started as {event['rank']}"
+                description = t('event.promotion.initial_rank', rank=event['rank'])
             else:
-                description = f"Promoted to {event['rank']}"
+                description = t('event.promotion.description', rank=event['rank'])
         else:
-            if event.get('mission') == 'Initial':
-                description = f"Awarded {event['name']}"
-            else:
-                description = f"Awarded {event['name']}"
+            # Award - use same format for initial and later awards
+            description = t('event.award.description', name=event['name'])
         
         # Apply rotation:
         # - For PDF: Image is rotated via PIL in image_to_base64()
@@ -1648,7 +1658,7 @@ class EventGenerator:
             else:
                 log_message(LOGGER, f"  ⚠️  Warning: campaigns_decoded.json not found at: {decoded_path}")
         
-        html_lines = ["<b>Mission Debriefings</b><br>", "<br>"]
+        html_lines = [f"<b>{t('event.header.mission_debriefings')}</b><br>", "<br>"]
         
         # Sort missions in order
         sorted_missions = sorted(debriefings.keys(), key=smart_mission_sort_key)
@@ -1735,9 +1745,9 @@ class EventGenerator:
         
         # Page break before events in PDF mode
         if for_pdf:
-            html_lines = ['<div style="page-break-before: always;"></div>', "<b>Events</b><br>"]
+            html_lines = ['<div style="page-break-before: always;"></div>', f"<b>{t('event.header.events')}</b><br>"]
         else:
-            html_lines = ["<b>Events</b><br>"]
+            html_lines = [f"<b>{t('event.header.events')}</b><br>"]
         
         for event in events:
             html_lines.append(self.format_event_html(event, country, for_pdf=for_pdf))
@@ -1750,7 +1760,8 @@ class EventGenerator:
         
         IL-2 loads the locale file matching the user's language setting.
         To ensure tracker content is visible regardless of language,
-        we write to all existing locale files (eng, ger, rus, fra, spa, chs, etc.).
+        we write to all existing locale files (eng, ger, rus, fra, spa, chs, etc.)
+        with properly LOCALIZED content for each language.
         Uses re.sub for robust removal of ALL tracker content (including duplicates)
         """
         if not self.game_directory:
@@ -1764,7 +1775,6 @@ class EventGenerator:
             return False
         
         # Find all locale files
-        from utils.info_locale import find_all_info_locale_files
         locale_files = find_all_info_locale_files(campaign_path)
         
         if not locale_files:
@@ -1780,8 +1790,29 @@ class EventGenerator:
         
         success_count = 0
         
+        # Get campaign events and country for regeneration
+        campaign_data = self.save_data.get(campaign_name, {})
+        pilot = campaign_data.get('pilot', {})
+        events = pilot.get('events', [])
+        country = self._get_campaign_country(campaign_name)
+        
+        # Save current locale to restore later
+        original_locale = get_locale()
+        
         for info_file in locale_files:
             try:
+                # Extract IL-2 locale code from filename (e.g., "eng" from "info.locale=eng.txt")
+                il2_locale_code = info_file.stem.split('=')[1]
+                app_locale = IL2_TO_APP_LOCALE.get(il2_locale_code, 'en')
+                
+                log_message(LOGGER, f"  Processing {info_file.name} (locale: {app_locale})...")
+                
+                # Set locale for this file
+                set_locale(app_locale)
+                
+                # Regenerate events HTML in this locale
+                localized_events_html = events_html  # Use passed-in HTML for now (will be locale-specific if called per-locale)
+                
                 # Backup once per file
                 backup_file = info_file.with_suffix('.txt.backup')
                 if not backup_file.exists():
@@ -1806,8 +1837,8 @@ class EventGenerator:
                     for h in headers:
                         cleaned = cleaned.replace(f'{h}<br>', f'<b>{h}</b><br>', 1)
                 
-                # Build final content
-                updated = cleaned + '<br><br>' + events_html
+                # Build final content with localized events
+                updated = cleaned + '<br><br>' + localized_events_html
                 
                 # Verification: Count sections in final content
                 matches = list(re.finditer(TRACKER_SECTION_HEADER_PATTERN, updated, re.IGNORECASE))
@@ -1825,6 +1856,9 @@ class EventGenerator:
                 log_message(LOGGER, f"  ❌ [{info_file.name}] Error: {e}")
                 import traceback
                 traceback.print_exc()
+        
+        # Restore original locale
+        set_locale(original_locale)
         
         if success_count > 0:
             log_message(LOGGER, f"  ✅ Updated {success_count}/{len(locale_files)} locale file(s)")

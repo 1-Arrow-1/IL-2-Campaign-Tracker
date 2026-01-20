@@ -182,6 +182,21 @@ if not exist "sync_campaign_mission_states.py" (
     pause
     exit /b 1
 )
+if not exist "locales" (
+    echo ERROR: locales folder not found!
+    pause
+    exit /b 1
+)
+if not exist "locales\en.json" (
+    echo ERROR: locales\en.json not found!
+    pause
+    exit /b 1
+)
+if not exist "locales\de.json" (
+    echo ERROR: locales\de.json not found!
+    pause
+    exit /b 1
+)
 if not exist "CampaignRanksAwards.zip" (
     echo ERROR: CampaignRanksAwards.zip not found!
     pause
@@ -232,6 +247,8 @@ for %%F in (
 		"utils\filesystem.py"
 		"utils\logging.py"
         "utils\rank_scaling.py"
+        "utils\i18n.py"
+        "utils\locale_config.py"
 ) do (
     if exist %%F (
         echo Testing %%F ...
@@ -312,6 +329,17 @@ echo.
 
 echo [5/5] Creating distribution package...
 if not exist "IL2_Campaign_Tracker_v2.0" mkdir "IL2_Campaign_Tracker_v2.0"
+
+REM Copy locales (i18n translation files) - CRITICAL!
+echo Copying i18n translation files...
+if not exist "IL2_Campaign_Tracker_v2.0\locales" mkdir "IL2_Campaign_Tracker_v2.0\locales"
+copy "locales\*.json" "IL2_Campaign_Tracker_v2.0\locales\" >NUL
+if errorlevel 1 (
+    echo ERROR: Could not copy locales!
+    pause
+    exit /b 1
+)
+echo ✓ Locales copied successfully
 
 REM Copy main EXE
 copy "dist\IL2_CampaignTracker_v2.0.exe" "IL2_Campaign_Tracker_v2.0\" >NUL
@@ -402,6 +430,7 @@ echo Contents:
 echo   - IL2_CampaignTracker.exe (~40 MB)
 echo   - mlg2txt.exe (~8 MB)
 echo   - Configuration files (*.yaml)
+echo   - i18n translation files (locales\*.json)
 echo   - Documentation (README.html, QUICK_START.txt)
 echo   - CampaignRanksAwards (folder ~37 MB) 		
 echo.
