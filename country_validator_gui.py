@@ -17,8 +17,19 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from utils.logging import get_logger, log_message
+from utils.i18n import t, init_i18n
+from utils.locale_config import get_user_locale
 
 logger = get_logger(__name__)
+
+# Initialize i18n with user's preferred locale
+try:
+    user_locale = get_user_locale()
+    init_i18n(user_locale)
+    log_message(logger, f"[country_validator] i18n initialized with locale: {user_locale}")
+except Exception as e:
+    log_message(logger, f"[country_validator] Failed to initialize i18n: {e}, using English")
+    init_i18n('en')
 
 COUNTRIES = ['Germany', 'Soviet Union', 'USA', 'Britain']
 
@@ -47,7 +58,7 @@ class CountryValidatorGUI:
         
         # Create main window
         self.root = tk.Tk()
-        self.root.title("IL-2 Campaign Tracker - Verify Countries")
+        self.root.title(t('ui.country_validator.title'))
         self.root.geometry("700x500")
         self.root.resizable(True, True)
         
@@ -63,7 +74,7 @@ class CountryValidatorGUI:
         
         title_label = tk.Label(
             header_frame,
-            text="Campaign Country Detection - Please Verify",
+            text=t('ui.country_validator.header'),
             font=('Arial', 14, 'bold'),
             bg='#2c3e50',
             fg='white'
@@ -72,7 +83,7 @@ class CountryValidatorGUI:
         
         subtitle_label = tk.Label(
             header_frame,
-            text="Review and correct the automatically detected countries for your campaigns",
+            text=t('ui.country_validator.instructions'),
             font=('Arial', 9),
             bg='#2c3e50',
             fg='#ecf0f1'
@@ -112,7 +123,7 @@ class CountryValidatorGUI:
         
         cancel_btn = tk.Button(
             button_frame,
-            text="Cancel",
+            text=t('ui.country_validator.cancel_button'),
             command=self._on_cancel,
             width=15,
             bg='#95a5a6',
@@ -125,7 +136,7 @@ class CountryValidatorGUI:
         
         save_btn = tk.Button(
             button_frame,
-            text="Save & Continue",
+            text=t('ui.country_validator.apply_button'),
             command=self._on_save,
             width=15,
             bg='#27ae60',

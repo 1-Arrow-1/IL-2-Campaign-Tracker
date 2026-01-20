@@ -1,0 +1,151 @@
+{
+    "steelbirds": {
+        "country": "Germany",
+        "events": [
+            {
+                "type": "promotion",
+                "rank": "Unteroffizier",
+                "image": "unteroffizier.png",
+                "mission": "Initial",
+                "date": "April 14 1943."
+            },
+            {
+                "type": "award",
+                "name": "Pilot's Badge",
+                "image": "pilots_badge.dds",
+                "mission": "Initial",
+                "date": "April 14 1943."
+            }
+        ],
+        "debriefings_html": "",
+        "events_html": "<b>Events</b><br>\n\u2022 Before First Mission - Initial rank: Unteroffizier <img src=CampaignRanksAwards\\Germany\\unteroffizier.png><br>\n\u2022 Before First Mission - Awarded Pilot's Badge <img src=CampaignRanksAwards\\Germany\\pilots_badge.dds><br>",
+        "html": "<b>Events</b><br>\n\u2022 Before First Mission - Initial rank: Unteroffizier <img src=CampaignRanksAwards\\Germany\\unteroffizier.png><br>\n\u2022 Before First Mission - Awarded Pilot's Badge <img src=CampaignRanksAwards\\Germany\\pilots_badge.dds><br>"
+    },
+    "kerch": {
+        "country": "Germany",
+        "events": [
+            {
+                "type": "promotion",
+                "rank": "Unteroffizier",
+                "image": "unteroffizier.png",
+                "mission": "Initial",
+                "date": "1943-11-04"
+            },
+            {
+                "type": "award",
+                "name": "Pilot's Badge",
+                "image": "pilots_badge.dds",
+                "mission": "Initial",
+                "date": "1943-11-04"
+            },
+            {
+                "type": "award",
+                "name": "Iron Cross 2nd Class",
+                "image": "iron_cross_2nd.dds",
+                "mission": "01",
+                "date": "1943-11-04"
+            },
+            {
+                "type": "promotion",
+                "rank": "Feldwebel",
+                "image": "feldwebel.png",
+                "mission": "02",
+                "date": "1943-11-06",
+                "score": 120
+            },
+            {
+                "type": "award",
+                "name": "Iron Cross 1st Class",
+                "image": "iron_cross_1st.dds",
+                "mission": "02",
+                "date": "1943-11-06"
+            },
+            {
+                "type": "promotion",
+                "rank": "Oberfeldwebel",
+                "image": "oberfeldwebel.png",
+                "mission": "03",
+                "date": "1943-11-11",
+                "score": 265
+            },
+            {
+                "type": "award",
+                "name": "Honor Goblet",
+                "image": "honor_goblet.dds",
+                "mission": "03",
+                "date": "1943-11-11"
+            },
+            {
+                "type": "promotion",
+                "rank": "Leutnant",
+                "image": "leutnant.png",
+                "mission": "04",
+                "date": "1943-11-12",
+                "score": 305
+            },
+            {
+                "type": "award",
+                "name": "German Cross in Gold",
+                "image": "german_cross_gold.dds",
+                "mission": "05",
+                "date": "1943-11-14"
+            },
+            {
+                "type": "award",
+                "name": "Knight's Cross of the Iron Cross",
+                "image": "knights_cross.dds",
+                "mission": "06",
+                "date": "1943-11-19"
+            },
+            {
+                "type": "promotion",
+                "rank": "Oberleutnant",
+                "image": "oberleutnant.png",
+                "mission": "07",
+                "date": "1943-11-21",
+                "score": 580
+            },
+            {
+                "type": "promotion",
+                "rank": "Hauptmann",
+                "image": "hauptmann.png",
+                "mission": "10",
+                "date": "1943-12-06",
+                "score": 860
+            }
+        ],
+        "debriefings_html": "",
+        "events_html": "<b>Events</b><br>\n\u2022 04 November, 1943 - Initial rank: Unteroffizier <img src=CampaignRanksAwards\\Germany\\unteroffizier.png><br>\n\u2022 04 November, 1943 - Awarded Pilot's Badge <img src=CampaignRanksAwards\\Germany\\pilots_badge.dds><br>\n\u2022 04 November, 1943 - Awarded Iron Cross 2nd Class <img src=CampaignRanksAwards\\Germany\\iron_cross_2nd.dds><br>\n\u2022 06 November, 1943 - Promoted to Feldwebel <img src=CampaignRanksAwards\\Germany\\feldwebel.png><br>\n\u2022 06 November, 1943 - Awarded Iron Cross 1st Class <img src=CampaignRanksAwards\\Germany\\iron_cross_1st.dds><br>\n\u2022 11 November, 1943 - Promoted to Oberfeldwebel <img src=CampaignRanksAwards\\Germany\\oberfeldwebel.png><br>\n\u2022 11 November, 1943 - Awarded Honor Goblet <img src=CampaignRanksAwards\\Germany\\honor_goblet.dds><br>\n\u2022 12 November, 1943 - Promoted to Leutnant <img src=CampaignRanksAwards\\Germany\\leutnant.png><br>\n\u2022 14 November, 1943 - Awarded German Cross in Gold <img src=CampaignRanksAwards\\Germany\\german_cross_gold.dds><br>\n\u2022 19 November, 1943 - Awarded Knight's Cross of the Iron Cross <img src=CampaignRanksAwards\\Germany\\knights_cross.dds><br>\n\u2022 21 November, 1943 - Promoted to Oberleutnant <img src=CampaignRanksAwards\\Germany\\oberleutnant.png><br>\n\u2022 06 December, 1943 - Promoted to Hauptmann <img src=CampaignRanksAwards\\Germany\\hauptmann.png><br>",
+        "html": "<b>Events</b><br>\n\u2022 04 November, 1943 - Initial rank: Unteroffizier <img src=CampaignRanksAwards\\Germany\\unteroffizier.png><br>\n\u2022 04 November, 1943 - Awarded Pilot's Badge <img src=CampaignRanksAwards\\Germany\\pilots_badge.dds><br>\n\u2022 04 November, 1943 - Awarded Iron Cross 2nd Class <img src=CampaignRanksAwards\\Germany\\iron_cross_2nd.dds><br>\n\u2022 06 November, 1943 - Promoted to Feldwebel <img src=CampaignRanksAwards\\Germany\\feldwebel.png><br>\n\u2022 06 November, 1943 - Awarded Iron Cross 1st Class <img src=CampaignRanksAwards\\Germany\\iron_cross_1st.dds><br>\n\u2022 11 November, 1943 - Promoted to Oberfeldwebel <img src=CampaignRanksAwards\\Germany\\oberfeldwebel.png><br>\n\u2022 11 November, 1943 - Awarded Honor Goblet <img src=CampaignRanksAwards\\Germany\\honor_goblet.dds><br>\n\u2022 12 November, 1943 - Promoted to Leutnant <img src=CampaignRanksAwards\\Germany\\leutnant.png><br>\n\u2022 14 November, 1943 - Awarded German Cross in Gold <img src=CampaignRanksAwards\\Germany\\german_cross_gold.dds><br>\n\u2022 19 November, 1943 - Awarded Knight's Cross of the Iron Cross <img src=CampaignRanksAwards\\Germany\\knights_cross.dds><br>\n\u2022 21 November, 1943 - Promoted to Oberleutnant <img src=CampaignRanksAwards\\Germany\\oberleutnant.png><br>\n\u2022 06 December, 1943 - Promoted to Hauptmann <img src=CampaignRanksAwards\\Germany\\hauptmann.png><br>"
+    },
+    "windoffury": [],
+    "knights": [],
+    "hunters": [],
+    "ironwind": [],
+    "operation citadel 1943 ii. sch.g1 fw190-a5": [],
+    "wildmustangs": [],
+    "lightning": [],
+    "icering": [],
+    "gallant": [],
+    "overlord": [],
+    "hornets": [],
+    "hawks": [],
+    "spitfire": [],
+    "wingsovercaen": [],
+    "againstthetide": [],
+    "griffons": [],
+    "kaiserschlacht": [],
+    "beginning": [],
+    "lastchance": [],
+    "hurtgen": [],
+    "seadragons": [],
+    "downfall": [],
+    "havoc": [],
+    "blazingsteppe": [],
+    "10daysofautumn": [],
+    "fortressonthevolga": [],
+    "breakpoint": [],
+    "springoffensive": [],
+    "skynomads": [],
+    "jg51 rzhev": []
+}

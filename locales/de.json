@@ -41,6 +41,39 @@
       "error_occurred": "Ein Fehler ist aufgetreten",
       "success": "Erfolgreich!",
       "confirm_action": "Sind Sie sicher?"
+    },
+    "backup_restore": {
+      "title": "IL-2 Campaign Tracker - Wiederherstellung",
+      "header": "Kampagnen-Sicherung wiederherstellen",
+      "select_backup": "Wählen Sie eine Sicherung aus, um Ihren Kampagnenfortschritt auf einen früheren Stand wiederherzustellen",
+      "warning": "⚠️ Das Wiederherstellen einer Sicherung ersetzt Ihren aktuellen Kampagnenfortschritt. Der Tracker wird nach der Wiederherstellung automatisch neu gestartet. Ihre Popup-Zustände werden ebenfalls wiederhergestellt, falls verfügbar.",
+      "restore_button": "Ausgewählte Sicherung wiederherstellen",
+      "continue_button": "Ohne Wiederherstellung fortfahren",
+      "exit_button": "Beenden",
+      "status_active": "Aktuell aktiv",
+      "popups_included": "Enthalten",
+      "popups_not_available": "Nicht verfügbar",
+      "backups_found": "{count} Sicherung(en) gefunden in: {path}",
+      "confirm_title": "Wiederherstellung bestätigen",
+      "confirm_message": "Sind Sie sicher, dass Sie diese Sicherung wiederherstellen möchten?\n\n📅 Datum: {date}\n📦 Größe: {size}\n💾 Popup-Status: {popup_status}\n\nIhr aktueller Kampagnenfortschritt wird ersetzt.\nDer Tracker wird automatisch neu gestartet.",
+      "popup_will_restore": "Wird wiederhergestellt",
+      "popup_not_available_msg": "Nicht verfügbar",
+      "error_title": "Fehler",
+      "error_no_backup": "Sicherungsinformationen nicht gefunden.",
+      "size_unknown": "Unbekannt",
+      "no_backups_found": "Keine Sicherungen gefunden"
+    },
+    "country_validator": {
+      "title": "IL-2 Campaign Tracker - Länder-Validierung",
+      "header": "Kampagnen-Länder validieren",
+      "instructions": "Bitte überprüfen Sie die automatisch erkannten Länder für jede Kampagne.\nFalsche Zuordnungen können zu Problemen bei Beförderungen und Auszeichnungen führen.",
+      "column_campaign": "Kampagne",
+      "column_detected": "Erkannt",
+      "column_correct": "Korrekt",
+      "apply_button": "Änderungen anwenden",
+      "cancel_button": "Abbrechen",
+      "validation_ok": "✓ Alle Länder validiert",
+      "changes_applied": "Änderungen wurden angewendet"
     }
   },
   "event": {

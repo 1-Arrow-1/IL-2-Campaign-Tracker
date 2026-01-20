@@ -41,6 +41,39 @@
       "error_occurred": "An error occurred",
       "success": "Success!",
       "confirm_action": "Are you sure?"
+    },
+    "backup_restore": {
+      "title": "IL-2 Campaign Tracker - Restore Backup",
+      "header": "Restore Campaign Backup",
+      "select_backup": "Select a backup to restore your campaign progress to a previous state",
+      "warning": "⚠️ Restoring a backup will replace your current campaign progress. The tracker will restart automatically after restore. Your popup states will also be restored if available.",
+      "restore_button": "Restore Selected Backup",
+      "continue_button": "Continue Without Restore",
+      "exit_button": "Exit",
+      "status_active": "Currently Active",
+      "popups_included": "Included",
+      "popups_not_available": "Not available",
+      "backups_found": "{count} backup(s) found in: {path}",
+      "confirm_title": "Confirm Restore",
+      "confirm_message": "Are you sure you want to restore this backup?\n\n📅 Date: {date}\n📦 Size: {size}\n💾 Popup State: {popup_status}\n\nYour current campaign progress will be replaced.\nThe tracker will restart automatically.",
+      "popup_will_restore": "Will be restored",
+      "popup_not_available_msg": "Not available",
+      "error_title": "Error",
+      "error_no_backup": "Could not find backup information.",
+      "size_unknown": "Unknown",
+      "no_backups_found": "No backups found"
+    },
+    "country_validator": {
+      "title": "IL-2 Campaign Tracker - Country Validation",
+      "header": "Validate Campaign Countries",
+      "instructions": "Please verify the automatically detected countries for each campaign.\nIncorrect assignments can cause issues with promotions and awards.",
+      "column_campaign": "Campaign",
+      "column_detected": "Detected",
+      "column_correct": "Correct",
+      "apply_button": "Apply Changes",
+      "cancel_button": "Cancel",
+      "validation_ok": "✓ All countries validated",
+      "changes_applied": "Changes have been applied"
     }
   },
   "event": {

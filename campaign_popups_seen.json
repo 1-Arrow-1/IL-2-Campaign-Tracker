@@ -1,0 +1,26 @@
+{
+  "kerch": {
+    "rank_scale_factor": 1.15,
+    "seen": [
+      "award|German Cross in Gold|05|1943-11-14",
+      "award|Honor Goblet|03|1943-11-11",
+      "award|Iron Cross 1st Class|02|1943-11-06",
+      "award|Iron Cross 2nd Class|01|1943-11-04",
+      "award|Knight's Cross of the Iron Cross|06|1943-11-19",
+      "award|Pilot's Badge|Initial|1943-11-04",
+      "promotion|Feldwebel|02|1943-11-06",
+      "promotion|Hauptmann|10|1943-12-06",
+      "promotion|Leutnant|04|1943-11-12",
+      "promotion|Oberfeldwebel|03|1943-11-11",
+      "promotion|Oberleutnant|07|1943-11-21",
+      "promotion|Unteroffizier|Initial|1943-11-04"
+    ]
+  },
+  "steelbirds": {
+    "rank_scale_factor": 1.15,
+    "seen": [
+      "award|Pilot's Badge|Initial|April 14 1943.",
+      "promotion|Unteroffizier|Initial|April 14 1943."
+    ]
+  }
+}

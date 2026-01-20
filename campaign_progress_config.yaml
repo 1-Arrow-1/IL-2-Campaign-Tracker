@@ -148,37 +148,37 @@ ranks:
     image: major_general.png
 
   Soviet Union:
-  - name: Sergeant
+  - name: Serzhant
     score: 0
     image: sergeant_vvs.png
-  - name: Senior Sergeant
+  - name: Starshiy Serzhant
     score: 80
     image: senior_sergeant.png
-  - name: Junior Lieutenant
+  - name: Mladshiy Leytenant
     score: 160
     image: junior_lieutenant.png
-  - name: Lieutenant
+  - name: Leytenant
     score: 260
     image: lieutenant_vvs.png
-  - name: Senior Lieutenant
+  - name: Starshiy Leytenant
     score: 440
     image: senior_lieutenant.png
-  - name: Captain
+  - name: Kapitan
     score: 650
     image: captain_vvs.png
-  - name: Major
+  - name: Mayor
     score: 900
     image: major_vvs.png
-  - name: Sub-Colonel
+  - name: Podpolkovnik
     score: 1200
     image: sub_colonel.png
-  - name: Colonel
+  - name: Polkovnik
     score: 1600
     image: colonel.png
-  - name: Major General
+  - name: General-Mayor
     score: 2050
     image: major_general.png
-  - name: Lieutenant General
+  - name: General-Leytenant
     score: 2550
     image: lt_general.png
 
