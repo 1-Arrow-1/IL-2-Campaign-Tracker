@@ -144,15 +144,15 @@ const LandingPage = {
         // Build stats HTML
         const statsHTML = `
             <span class="stat-item">
-                <span class="stat-label">Missions:</span>
+                <span class="stat-label">${i18n.t('web.label.missions')}:</span>
                 <span class="stat-value">${campaign.missions_completed}</span>
             </span>
             <span class="stat-item">
-                <span class="stat-label">Promotions:</span>
+                <span class="stat-label">${i18n.t('web.label.promotions')}:</span>
                 <span class="stat-value">${campaign.promotions_count}</span>
             </span>
             <span class="stat-item">
-                <span class="stat-label">Awards:</span>
+                <span class="stat-label">${i18n.t('web.label.awards')}:</span>
                 <span class="stat-value">${campaign.awards_count}</span>
             </span>
         `;

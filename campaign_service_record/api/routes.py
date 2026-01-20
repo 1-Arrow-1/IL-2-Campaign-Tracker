@@ -156,6 +156,32 @@ def debug_data():
 # Health & Status Endpoints
 # ============================================================================
 
+@api_bp.route('/api/locale')
+def get_locale():
+    """
+    Get current locale setting.
+    
+    Returns the locale from environment variable CAMPAIGN_TRACKER_LOCALE,
+    or defaults to 'en'.
+    
+    Returns:
+        JSON with locale code:
+        {
+            "locale": "de"
+        }
+    """
+    import os
+    locale = os.environ.get('CAMPAIGN_TRACKER_LOCALE', 'en')
+    
+    # Validate locale (only allow known locales)
+    valid_locales = ['en', 'de']
+    if locale not in valid_locales:
+        logger.warning(f"Invalid locale '{locale}' in environment, falling back to 'en'")
+        locale = 'en'
+    
+    return jsonify({'locale': locale})
+
+
 @api_bp.route('/api/health')
 def health_check():
     """

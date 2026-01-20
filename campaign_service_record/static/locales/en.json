@@ -126,7 +126,23 @@
       "awards": "Awards & Decorations",
       "statistics": "Statistics",
       "combat_results": "Combat Results",
-      "timeline": "Timeline"
+      "timeline": "Timeline",
+      "pilot_information": "Pilot Information",
+      "promotions_awards": "Promotions & Awards",
+      "campaign_summary": "Campaign Summary",
+      "mission_debriefings": "Mission Debriefings"
+    },
+    "label": {
+      "country": "Country",
+      "missions": "Missions",
+      "promotions": "Promotions",
+      "awards": "Awards",
+      "name": "Name",
+      "first_name": "First Name",
+      "birthday": "Birthday",
+      "place_of_birth": "Place of Birth",
+      "country_of_birth": "Country of Birth",
+      "campaigns_flown": "Campaigns Flown"
     },
     "mission": {
       "date": "Date",
@@ -146,14 +162,26 @@
       "download_pdf": "Download PDF Report",
       "view_details": "View Details",
       "collapse": "Collapse",
-      "expand": "Expand"
+      "expand": "Expand",
+      "change_pilot_photo": "Change Pilot Photo & Data",
+      "choose_photo": "Choose Photo",
+      "apply": "Apply",
+      "cancel": "Cancel"
     },
     "message": {
       "loading_campaigns": "Loading campaigns...",
       "no_campaigns": "No campaigns found",
       "error_loading": "Error loading data",
       "pdf_generating": "Generating PDF...",
-      "pdf_ready": "PDF ready for download"
+      "pdf_ready": "PDF ready for download",
+      "no_photo_selected": "No new photo selected.",
+      "update_pilot_photo_data": "Update Pilot Photo & Personal Data",
+      "personal_data": "Personal Data",
+      "last_name_placeholder": "Last name",
+      "first_name_placeholder": "First name",
+      "birthday_placeholder": "DD Month YYYY",
+      "birth_place_placeholder": "City or region",
+      "birth_country_placeholder": "Country"
     }
   },
   "cli": {

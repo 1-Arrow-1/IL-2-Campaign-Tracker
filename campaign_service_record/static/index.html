@@ -19,7 +19,7 @@
             <div class="header-content">
                 <h1>IL-2 Campaign Service Record</h1>
                 <nav id="header-nav">
-                    <button id="back-btn" class="nav-btn" style="display: none;">
+                    <button id="back-btn" class="nav-btn" style="display: none;" data-i18n="web.nav.back_to_campaigns">
                         ← Back to Campaigns
                     </button>
                 </nav>
@@ -33,18 +33,18 @@
                 <div class="landing-container">
                     <!-- Campaign List -->
                     <section class="campaigns-section">
-                        <h2>Campaigns Flown</h2>
+                        <h2 data-i18n="web.label.campaigns_flown">Campaigns Flown</h2>
                         
                         <!-- Loading State -->
                         <div id="campaigns-loading" class="loading-state">
                             <div class="spinner"></div>
-                            <p>Loading campaigns...</p>
+                            <p data-i18n="web.message.loading_campaigns">Loading campaigns...</p>
                         </div>
                         
                         <!-- Empty State -->
                         <div id="campaigns-empty" class="empty-state" style="display: none;">
                             <p class="empty-message">
-                                No campaigns found.<br>
+                                <span data-i18n="web.message.no_campaigns">No campaigns found.</span><br>
                                 <small>Run Campaign Tracker first to generate data.</small>
                             </p>
                         </div>
@@ -76,11 +76,11 @@
                         <img class="campaign-header__stamp" src="static/images/stamp_extra_II.png" alt="Campaign stamp">
                         <div class="campaign-meta">
                             <span class="meta-item">
-                                <span class="label">Country:</span>
+                                <span class="label" data-i18n="web.label.country">Country:</span>
                                 <span id="campaign-country">—</span>
                             </span>
                             <span class="meta-item">
-                                <span class="label">Missions:</span>
+                                <span class="label" data-i18n="web.label.missions">Missions:</span>
                                 <span id="campaign-missions">—</span>
                             </span>
                         </div>
@@ -91,7 +91,7 @@
                         <!-- Left Column: Promotions & Awards -->
                         <aside class="column column-left">
                             <section class="personal-data-section detail-panel">
-                                <h3>Pilot Information</h3>
+                                <h3 data-i18n="web.section.pilot_information">Pilot Information</h3>
                                 <div class="personal-data-body">
                                     <div class="personal-data-photo">
                                         <div class="pilot-photo-container">
@@ -108,37 +108,37 @@
                                                  alt=""
                                                  aria-hidden="true">
                                         </div>
-                                        <button id="detail-pilot-photo-btn" class="pilot-photo-btn" type="button">
+                                        <button id="detail-pilot-photo-btn" class="pilot-photo-btn" type="button" data-i18n="web.button.change_pilot_photo">
                                             Change Pilot Photo & Data
                                         </button>
                                     </div>
                                 </div>
                                 <div class="personal-data-summary" aria-label="Pilot personal data">
                                         <div class="personal-data-row">
-                                            <span class="personal-data-label">Name</span>
+                                            <span class="personal-data-label" data-i18n="web.label.name">Name</span>
                                             <span id="personal-display-name" class="personal-data-value">—</span>
                                         </div>
                                         <div class="personal-data-row">
-                                            <span class="personal-data-label">First Name</span>
+                                            <span class="personal-data-label" data-i18n="web.label.first_name">First Name</span>
                                             <span id="personal-display-first-name" class="personal-data-value">—</span>
                                         </div>
                                         <div class="personal-data-row">
-                                            <span class="personal-data-label">Birthday</span>
+                                            <span class="personal-data-label" data-i18n="web.label.birthday">Birthday</span>
                                             <span id="personal-display-birthday" class="personal-data-value">—</span>
                                         </div>
                                         <div class="personal-data-row">
-                                            <span class="personal-data-label">Place of Birth</span>
+                                            <span class="personal-data-label" data-i18n="web.label.place_of_birth">Place of Birth</span>
                                             <span id="personal-display-birth-place" class="personal-data-value">—</span>
                                         </div>
                                         <div class="personal-data-row">
-                                            <span class="personal-data-label">Country of Birth</span>
+                                            <span class="personal-data-label" data-i18n="web.label.country_of_birth">Country of Birth</span>
                                             <span id="personal-display-birth-country" class="personal-data-value">—</span>
                                         </div>
                                     </div>
                                 </div>    
                             </section>
                             <section class="events-section detail-panel">
-                                <h3>Promotions & Awards</h3>
+                                <h3 data-i18n="web.section.promotions_awards">Promotions & Awards</h3>
                                 <div id="events-list" class="events-list">
                                     <!-- Dynamically populated -->
                                 </div>
@@ -148,7 +148,7 @@
                         <!-- Middle Column: Summary -->
                         <section class="column column-middle">
                             <section class="summary-section">
-                                <h3>Campaign Summary</h3>
+                                <h3 data-i18n="web.section.campaign_summary">Campaign Summary</h3>
                                 <div id="summary-content" class="summary-content">
                                     <!-- Dynamically populated -->
                                 </div>
@@ -157,7 +157,7 @@
 
                         <!-- Right Column: Debriefings -->
                         <aside class="column column-right">
-                            <h3>Mission Debriefings</h3>
+                            <h3 data-i18n="web.section.mission_debriefings">Mission Debriefings</h3>
                             <div id="debriefings-container" class="debriefings-container">
                                 <!-- HTML injected from campaign_events.json -->
                             </div>
@@ -171,50 +171,51 @@
     <!-- Cropper Modal -->
     <div id="cropper-modal" class="cropper-modal" style="display: none;">
         <div class="cropper-modal-content">
-            <h3>Update Pilot Photo &amp; Personal Data</h3>
+            <h3 data-i18n="web.message.update_pilot_photo_data">Update Pilot Photo &amp; Personal Data</h3>
             <div class="cropper-modal-body">
                 <div class="cropper-modal-form">
-                    <h4>Personal Data</h4>
+                    <h4 data-i18n="web.message.personal_data">Personal Data</h4>
                     <div class="personal-data-fields">
                         <label class="personal-data-field" for="personal-name">
-                            Name
-                            <input id="personal-name" type="text" maxlength="60" placeholder="Last name">
+                            <span data-i18n="web.label.name">Name</span>
+                            <input id="personal-name" type="text" maxlength="60" data-i18n-placeholder="web.message.last_name_placeholder" placeholder="Last name">
                         </label>
                         <label class="personal-data-field" for="personal-first-name">
-                            First Name
-                            <input id="personal-first-name" type="text" maxlength="60" placeholder="First name">
+                            <span data-i18n="web.label.first_name">First Name</span>
+                            <input id="personal-first-name" type="text" maxlength="60" data-i18n-placeholder="web.message.first_name_placeholder" placeholder="First name">
                         </label>
                         <label class="personal-data-field" for="personal-birthday">
-                            Birthday
-                            <input id="personal-birthday" type="text" maxlength="40" placeholder="DD Month YYYY">
+                            <span data-i18n="web.label.birthday">Birthday</span>
+                            <input id="personal-birthday" type="text" maxlength="40" data-i18n-placeholder="web.message.birthday_placeholder" placeholder="DD Month YYYY">
                         </label>
                         <label class="personal-data-field" for="personal-birth-place">
-                            Place of Birth
-                            <input id="personal-birth-place" type="text" maxlength="80" placeholder="City or region">
+                            <span data-i18n="web.label.place_of_birth">Place of Birth</span>
+                            <input id="personal-birth-place" type="text" maxlength="80" data-i18n-placeholder="web.message.birth_place_placeholder" placeholder="City or region">
                         </label>
                         <label class="personal-data-field" for="personal-birth-country">
-                            Country of Birth
-                            <input id="personal-birth-country" type="text" maxlength="60" placeholder="Country">
+                            <span data-i18n="web.label.country_of_birth">Country of Birth</span>
+                            <input id="personal-birth-country" type="text" maxlength="60" data-i18n-placeholder="web.message.birth_country_placeholder" placeholder="Country">
                         </label>
                     </div>
                     <span id="personal-data-status" class="personal-data-status" aria-live="polite"></span>
                 </div>
                 <div class="cropper-modal-photo">
                     <div class="cropper-preview">
-                        <p id="cropper-placeholder" class="cropper-placeholder">No new photo selected.</p>
+                        <p id="cropper-placeholder" class="cropper-placeholder" data-i18n="web.message.no_photo_selected">No new photo selected.</p>
                         <img id="cropper-img" alt="Crop pilot photo">
                     </div>
-                    <button id="cropper-photo-select" class="pilot-photo-btn" type="button">Choose Photo</button>
+                    <button id="cropper-photo-select" class="pilot-photo-btn" type="button" data-i18n="web.button.choose_photo">Choose Photo</button>
                 </div>
             </div>
             <div class="cropper-actions">
-                <button id="cropper-save" type="button">Apply</button>
-                <button id="cropper-cancel" type="button">Cancel</button>
+                <button id="cropper-save" type="button" data-i18n="web.button.apply">Apply</button>
+                <button id="cropper-cancel" type="button" data-i18n="web.button.cancel">Cancel</button>
             </div>
         </div>
     </div>
     
     <!-- Scripts -->
+    <script src="static/js/i18n.js"></script>
     <script src="static/js/api.js?v=2"></script>
     <script src="static/js/cropper.min.js"></script>
     <script src="static/js/landing.js?v=2"></script>

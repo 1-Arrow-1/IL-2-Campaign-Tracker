@@ -1754,7 +1754,12 @@ class EventGenerator:
         
         return "\n".join(html_lines)
     
-    def update_campaign_info_file(self, campaign_name: str, events_html: str) -> bool:
+    def update_campaign_info_file(
+        self,
+        campaign_name: str,
+        events: List[Dict],
+        completed_missions: List[str],
+    ) -> bool:
         """
         Update all campaign info.locale=*.txt files with Events section.
         
@@ -1763,7 +1768,8 @@ class EventGenerator:
         
         Args:
             campaign_name: Campaign folder name
-            events_html: IGNORED (kept for API compatibility, we regenerate per locale)
+            events: Precomputed events for the campaign
+            completed_missions: List of completed mission filenames
             
         Returns:
             True if successful
@@ -1786,16 +1792,6 @@ class EventGenerator:
         if self.dry_run:
             log_message(LOGGER, f"  [DRY RUN] Would update {len(locale_files)} locale file(s)")
             return True
-        
-        # Get campaign data for regeneration
-        campaign_data = self.save_data.get(campaign_name)
-        if not campaign_data:
-            log_message(LOGGER, f"  Warning: No save data for campaign")
-            return False
-        
-        pilot = campaign_data.get('pilot', {})
-        events = pilot.get('events', [])
-        completed_missions = list(campaign_data.get('completedMissionsByFileName', {}).keys())
         
         # Get country
         campaign_name_lower = campaign_name.lower()
@@ -2849,7 +2845,7 @@ class EventGenerator:
                 }
                 
                 # Update the campaign info file
-                if self.update_campaign_info_file(campaign_name, combined_html):
+                if self.update_campaign_info_file(campaign_name, events, completed_missions):
                     files_updated += 1
                 
                 # Export to PDF (only if campaign has completed missions)
@@ -3037,7 +3033,12 @@ def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bo
             log_message(LOGGER, f"\n{'='*70}\nGenerated HTML:\n{'='*70}\n{html}")
             
             if not parsed_args.dry_run:
-                generator.update_campaign_info_file(parsed_args.campaign, html)
+                completed_missions = list(
+                    generator.save_data.get(parsed_args.campaign, {})
+                    .get('completedMissionsByFileName', {})
+                    .keys()
+                )
+                generator.update_campaign_info_file(parsed_args.campaign, events, completed_missions)
         return True
     else:
         # Process all campaigns

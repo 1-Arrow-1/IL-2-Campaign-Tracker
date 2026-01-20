@@ -24,10 +24,49 @@ const App = {
     },
     
     /**
+     * Translate all elements with data-i18n attributes
+     */
+    translatePage() {
+        console.log('[App] Translating page elements...');
+        
+        // Translate text content
+        document.querySelectorAll('[data-i18n]').forEach(element => {
+            const key = element.getAttribute('data-i18n');
+            if (key) {
+                element.textContent = i18n.t(key);
+            }
+        });
+        
+        // Translate placeholders
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+            const key = element.getAttribute('data-i18n-placeholder');
+            if (key) {
+                element.placeholder = i18n.t(key);
+            }
+        });
+        
+        console.log('[App] Page translation complete');
+    },
+    
+    /**
      * Initialize application
      */
-    init() {
+    async init() {
         console.log('Campaign Service Record initializing...');
+        
+        // Initialize i18n first
+        try {
+            const localeData = await API.getLocale();
+            const locale = localeData.locale || 'en';
+            console.log(`Initializing with locale: ${locale}`);
+            await i18n.init(locale);
+        } catch (error) {
+            console.warn('Failed to get locale from API, using default:', error);
+            await i18n.init('en');
+        }
+        
+        // Translate page elements
+        this.translatePage();
         
         this.cacheElements();
         this.setupEventListeners();
@@ -131,6 +170,6 @@ const App = {
 };
 
 // Initialize app when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    App.init();
+document.addEventListener('DOMContentLoaded', async () => {
+    await App.init();
 });

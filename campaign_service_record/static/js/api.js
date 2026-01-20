@@ -145,6 +145,13 @@ const API = {
     },
     
     /**
+     * Get current locale setting
+     */
+    async getLocale() {
+        return this.get('/locale');
+    },
+    
+    /**
      * Health check
      */
     async health() {
