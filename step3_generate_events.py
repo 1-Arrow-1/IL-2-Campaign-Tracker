@@ -1824,11 +1824,17 @@ class EventGenerator:
                 events_html_localized = ""
                 if events:
                     events_html_localized = self.generate_events_html(events, country, for_pdf=False)
+                    log_message(LOGGER, f"    [DEBUG] Generated events HTML: {len(events_html_localized)} chars")
+                else:
+                    log_message(LOGGER, f"    [DEBUG] No events to generate")
                 
                 # Generate LOCALIZED debriefings HTML
                 debriefings_html_localized = ""
                 if self.log_processor and completed_missions:
                     debriefings_html_localized, _ = self.generate_debriefings_html(campaign_name, completed_missions)
+                    log_message(LOGGER, f"    [DEBUG] Generated debriefings HTML: {len(debriefings_html_localized)} chars")
+                else:
+                    log_message(LOGGER, f"    [DEBUG] No debriefings (log_processor={self.log_processor is not None}, missions={len(completed_missions)})")
                 
                 # Combine (debriefings BEFORE events)
                 combined_html = debriefings_html_localized
@@ -1836,6 +1842,8 @@ class EventGenerator:
                     if combined_html:
                         combined_html += "\n<br>\n"
                     combined_html += events_html_localized
+                
+                log_message(LOGGER, f"    [DEBUG] Combined HTML: {len(combined_html)} chars")
                 
                 # Update THIS specific file with LOCALIZED content
                 if self._update_single_locale_file(info_file, combined_html):
@@ -1912,6 +1920,8 @@ class EventGenerator:
             import traceback
             traceback.print_exc()
             return False
+
+
     
     def get_campaign_display_name(self, campaign_name: str) -> str:
         """
