@@ -1118,35 +1118,35 @@ const DetailPage = {
 
         if (summary.combat_results) {
             sections.push(this.createSummarySection(
-                'Combat Results',
+                i18n.t('web.section.combat_results'),
                 this.renderCombatResults(summary.combat_results)
             ));
         }
 
         if (summary.missions_stats) {
             sections.push(this.createSummarySection(
-                'Missions Flown',
+                i18n.t('web.section.missions_flown'),
                 this.renderMissionsStats(summary.missions_stats)
             ));
         }
 
         if (summary.aircraft_usage && Object.keys(summary.aircraft_usage).length > 0) {
             sections.push(this.createSummarySection(
-                'Aircraft Flown',
+                i18n.t('web.section.aircraft_flown'),
                 this.renderAircraftUsage(summary.aircraft_usage)
             ));
         }
 
         if (summary.career_progression) {
             sections.push(this.createSummarySection(
-                'Career Progression',
+                i18n.t('web.section.career_progression'),
                 this.renderCareerProgression(summary.career_progression)
             ));
         }
 
         if (summary.timeline && summary.timeline.first_mission_date) {
             sections.push(this.createSummarySection(
-                'Campaign Timeline',
+                i18n.t('web.section.campaign_timeline'),
                 this.renderTimeline(summary.timeline)
             ));
         }
@@ -1180,17 +1180,17 @@ const DetailPage = {
 
         const summaryStats = document.createElement('div');
         summaryStats.className = 'combat-summary-stats';
-        summaryStats.appendChild(this.createInlineStat('Overall Score', results.total_score ?? 0));
-        summaryStats.appendChild(this.createInlineStat('Total Kills', results.total_kills ?? 0));
+        summaryStats.appendChild(this.createInlineStat(i18n.t('web.stat.overall_score'), results.total_score ?? 0));
+        summaryStats.appendChild(this.createInlineStat(i18n.t('web.stat.total_kills'), results.total_kills ?? 0));
         container.appendChild(summaryStats);
 
         const categories = [
-            { key: 'Aircraft', icon: 'icon_aircraft.png' },
-            { key: 'Vehicles', icon: 'icon_vehicles.png' },
-            { key: 'Railroad', icon: 'icon_railroad.png' },
-            { key: 'Armaments', icon: 'icon_armaments.png' },
-            { key: 'Buildings', icon: 'icon_buildings.png' },
-            { key: 'Marine', icon: 'icon_marine.png' }
+            { key: 'Aircraft', icon: 'icon_aircraft.png', i18nKey: 'web.combat.category.aircraft' },
+            { key: 'Vehicles', icon: 'icon_vehicles.png', i18nKey: 'web.combat.category.vehicles' },
+            { key: 'Railroad', icon: 'icon_railroad.png', i18nKey: 'web.combat.category.railroad' },
+            { key: 'Armaments', icon: 'icon_armaments.png', i18nKey: 'web.combat.category.armaments' },
+            { key: 'Buildings', icon: 'icon_buildings.png', i18nKey: 'web.combat.category.buildings' },
+            { key: 'Marine', icon: 'icon_marine.png', i18nKey: 'web.combat.category.marine' }
         ];
 
         const byCategory = results.by_category || {};
@@ -1216,7 +1216,7 @@ const DetailPage = {
 
             const label = document.createElement('div');
             label.className = 'combat-icon-label';
-            label.textContent = category.key;
+            label.textContent = i18n.t(category.i18nKey);
             cell.appendChild(label);
 
             iconRow.appendChild(cell);
@@ -1228,12 +1228,43 @@ const DetailPage = {
         subcategoryColumns.className = 'combat-subcategory-columns';
 
         const subcategoryMap = {
-            'Aircraft': ['Light', 'Medium', 'Heavy', 'Parked', 'Balloons'],
-            'Vehicles': ['Transport', 'Armored (Light)', 'Armored (Medium)', 'Armored (Heavy)'],
-            'Railroad': ['Locomotives', 'Railroad Cars', 'Station Facilities'],
-            'Armaments': ['Machine Guns', 'Cannons', 'AAA Guns', 'Rocket Launchers', 'Searchlights', 'Radars'],
-            'Buildings': ['Residential Buildings', 'Facilities', 'Bridges'],
-            'Marine': ['Light', 'Cargo', 'Submarines', 'Destroyers']
+            'Aircraft': [
+                { label: 'Light', i18nKey: 'web.combat.subcategory.light' },
+                { label: 'Medium', i18nKey: 'web.combat.subcategory.medium' },
+                { label: 'Heavy', i18nKey: 'web.combat.subcategory.heavy' },
+                { label: 'Parked', i18nKey: 'web.combat.subcategory.parked' },
+                { label: 'Balloons', i18nKey: 'web.combat.subcategory.balloons' }
+            ],
+            'Vehicles': [
+                { label: 'Transport', i18nKey: 'web.combat.subcategory.transport' },
+                { label: 'Armored (Light)', i18nKey: 'web.combat.subcategory.armored_light' },
+                { label: 'Armored (Medium)', i18nKey: 'web.combat.subcategory.armored_medium' },
+                { label: 'Armored (Heavy)', i18nKey: 'web.combat.subcategory.armored_heavy' }
+            ],
+            'Railroad': [
+                { label: 'Locomotives', i18nKey: 'web.combat.subcategory.locomotives' },
+                { label: 'Railroad Cars', i18nKey: 'web.combat.subcategory.railroad_cars' },
+                { label: 'Station Facilities', i18nKey: 'web.combat.subcategory.facilities' }
+            ],
+            'Armaments': [
+                { label: 'Machine Guns', i18nKey: 'web.combat.subcategory.machine_guns' },
+                { label: 'Cannons', i18nKey: 'web.combat.subcategory.cannons' },
+                { label: 'AAA Guns', i18nKey: 'web.combat.subcategory.aaa_guns' },
+                { label: 'Rocket Launchers', i18nKey: 'web.combat.subcategory.rocket_launchers' },
+                { label: 'Searchlights', i18nKey: 'web.combat.subcategory.searchlights' },
+                { label: 'Radars', i18nKey: 'web.combat.subcategory.radars' }
+            ],
+            'Buildings': [
+                { label: 'Residential Buildings', i18nKey: 'web.combat.subcategory.residential' },
+                { label: 'Facilities', i18nKey: 'web.combat.subcategory.facilities' },
+                { label: 'Bridges', i18nKey: 'web.combat.subcategory.bridges' }
+            ],
+            'Marine': [
+                { label: 'Light', i18nKey: 'web.combat.subcategory.light' },
+                { label: 'Cargo', i18nKey: 'web.combat.subcategory.cargo' },
+                { label: 'Submarines', i18nKey: 'web.combat.subcategory.submarines' },
+                { label: 'Destroyers', i18nKey: 'web.combat.subcategory.destroyers' }
+            ]
         };
 
         categories.forEach(category => {
@@ -1246,15 +1277,14 @@ const DetailPage = {
 
                 const label = document.createElement('span');
                 label.className = 'combat-subcategory-label';
-                const formattedLabel = subcat.startsWith('Armored ')
-                    ? subcat.replace('Armored ', 'Armored\n')
-                    : subcat;
+                const translatedLabel = i18n.t(subcat.i18nKey);
+                const formattedLabel = translatedLabel.replace('Armored ', 'Armored\n');
                 label.textContent = formattedLabel;
                 row.appendChild(label);
 
                 const value = document.createElement('span');
                 value.className = 'combat-subcategory-value';
-                value.textContent = (byCategory[category.key] || {})[subcat] || 0;
+                value.textContent = (byCategory[category.key] || {})[subcat.label] || 0;
                 row.appendChild(value);
 
                 column.appendChild(row);
@@ -1277,9 +1307,9 @@ const DetailPage = {
         const totalFlightTime = stats.total_flight_time ?? '0m';
         const averageDuration = stats.average_duration ?? '0m';
 
-        container.appendChild(this.createStat('Missions Completed', totalMissions));
-        container.appendChild(this.createStat('Flight Time', totalFlightTime));
-        container.appendChild(this.createStat('Average Flight Time', averageDuration));
+        container.appendChild(this.createStat(i18n.t('web.stat.missions_completed'), totalMissions));
+        container.appendChild(this.createStat(i18n.t('web.stat.flight_time'), totalFlightTime));
+        container.appendChild(this.createStat(i18n.t('web.stat.average_flight_time'), averageDuration));
 
         const landingStats = Array.isArray(stats.landings) ? stats.landings : [];
         const filteredLandings = landingStats.filter(
@@ -1289,7 +1319,7 @@ const DetailPage = {
         if (filteredLandings.length === 0) {
             const empty = document.createElement('p');
             empty.className = 'empty-message';
-            empty.textContent = 'No status data available';
+            empty.textContent = i18n.t('web.stat.no_status_data');
             container.appendChild(empty);
             return container;
         }
@@ -1321,10 +1351,10 @@ const DetailPage = {
     renderCareerProgression(progression) {
         const container = document.createElement('div');
         
-        container.appendChild(this.createStat('Starting Rank', progression.starting_rank));
-        container.appendChild(this.createStat('Final Rank', progression.final_rank));
-        container.appendChild(this.createStat('Promotions', progression.promotions_count));
-        container.appendChild(this.createStat('Awards', progression.awards_count));
+        container.appendChild(this.createStat(i18n.t('web.stat.starting_rank'), progression.starting_rank));
+        container.appendChild(this.createStat(i18n.t('web.stat.final_rank'), progression.final_rank));
+        container.appendChild(this.createStat(i18n.t('web.stat.promotions'), progression.promotions_count));
+        container.appendChild(this.createStat(i18n.t('web.stat.awards'), progression.awards_count));
         
         // Awards list
         if (progression.awards_list && progression.awards_list.length > 0) {
@@ -1350,15 +1380,16 @@ const DetailPage = {
         const container = document.createElement('div');
         
         if (timeline.first_mission_date) {
-            container.appendChild(this.createStat('First Mission', timeline.first_mission_date));
+            container.appendChild(this.createStat(i18n.t('web.stat.first_mission'), timeline.first_mission_date));
         }
         
         if (timeline.last_mission_date) {
-            container.appendChild(this.createStat('Last Mission', timeline.last_mission_date));
+            container.appendChild(this.createStat(i18n.t('web.stat.last_mission'), timeline.last_mission_date));
         }
         
         if (timeline.duration_days !== null && timeline.duration_days !== undefined) {
-            container.appendChild(this.createStat('Duration', `${timeline.duration_days} days`));
+            const durationText = i18n.t('web.stat.duration_days', { days: timeline.duration_days });
+            container.appendChild(this.createStat(i18n.t('web.stat.duration'), durationText));
         }
         
         return container;
