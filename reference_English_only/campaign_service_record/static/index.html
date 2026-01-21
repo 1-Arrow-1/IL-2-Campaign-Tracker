@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IL-2 Campaign Service Record</title>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/css/landing.css">
+    <link rel="stylesheet" href="static/css/detail.css">
+    <link rel="stylesheet" href="static/css/cropper.min.css">
+</head>
+<body>
+    <!-- Application Container -->
+    <div id="app">
+        <!-- Header (persistent) -->
+        <header id="app-header">
+            <div class="header-content">
+                <h1>IL-2 Campaign Service Record</h1>
+                <nav id="header-nav">
+                    <button id="back-btn" class="nav-btn" style="display: none;">
+                        ← Back to Campaigns
+                    </button>
+                </nav>
+            </div>
+        </header>
+        
+        <!-- Main Content Area -->
+        <main id="app-main">
+            <!-- Landing Page -->
+            <div id="landing-page" class="page">
+                <div class="landing-container">
+                    <!-- Campaign List -->
+                    <section class="campaigns-section">
+                        <h2>Campaigns Flown</h2>
+                        
+                        <!-- Loading State -->
+                        <div id="campaigns-loading" class="loading-state">
+                            <div class="spinner"></div>
+                            <p>Loading campaigns...</p>
+                        </div>
+                        
+                        <!-- Empty State -->
+                        <div id="campaigns-empty" class="empty-state" style="display: none;">
+                            <p class="empty-message">
+                                No campaigns found.<br>
+                                <small>Run Campaign Tracker first to generate data.</small>
+                            </p>
+                        </div>
+                        
+                        <!-- Error State -->
+                        <div id="campaigns-error" class="error-state" style="display: none;">
+                            <p class="error-message" id="error-text"></p>
+                        </div>
+                        
+                        <!-- Campaign List -->
+                        <div id="campaigns-list" class="campaigns-list" style="display: none;">
+                            <!-- Dynamically populated by JavaScript -->
+                        </div>
+                    </section>
+                </div>
+            </div>
+            
+            <!-- Detail Page -->
+            <div id="detail-page" class="page" style="display: none;">
+                <div class="detail-container">
+                    <!-- Campaign Header -->
+                    <header class="campaign-header">
+                        <div class="campaign-header__aircraft-row" aria-hidden="true">
+                            <!-- img id="campaign-insignia-left" class="campaign-header__insignia campaign-header__insignia--left" alt=""!-->
+                            <img id="campaign-plane" class="campaign-header__plane-image" alt="">
+                            <!--img id="campaign-insignia-right" class="campaign-header__insignia campaign-header__insignia--right" alt=""!-->
+                        </div>
+                        <h2 id="campaign-title">Campaign Name</h2>                   
+                        <img class="campaign-header__stamp" src="static/images/stamp_extra_II.png" alt="Campaign stamp">
+                        <div class="campaign-meta">
+                            <span class="meta-item">
+                                <span class="label">Country:</span>
+                                <span id="campaign-country">—</span>
+                            </span>
+                            <span class="meta-item">
+                                <span class="label">Missions:</span>
+                                <span id="campaign-missions">—</span>
+                            </span>
+                        </div>
+                    </header>
+                    
+                    <!-- 3-Column Layout -->
+                    <div class="detail-columns">
+                        <!-- Left Column: Promotions & Awards -->
+                        <aside class="column column-left">
+                            <section class="personal-data-section detail-panel">
+                                <h3>Pilot Information</h3>
+                                <div class="personal-data-body">
+                                    <div class="personal-data-photo">
+                                        <div class="pilot-photo-container">
+                                            <img id="detail-pilot-photo"
+                                                 src="static/images/placeholder_pilot.png"
+                                                 alt="Pilot Photo"
+                                                 class="pilot-photo">
+                                            <img class="pilot-photo-overlay pilot-photo-overlay--edges"
+                                                 src="static/images/photo_edges.png"
+                                                 alt=""
+                                                 aria-hidden="true">
+                                            <img class="pilot-photo-overlay pilot-photo-overlay--rivets"
+                                                 src="static/images/rivets_overlay.png"
+                                                 alt=""
+                                                 aria-hidden="true">
+                                        </div>
+                                        <button id="detail-pilot-photo-btn" class="pilot-photo-btn" type="button">
+                                            Change Pilot Photo & Data
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="personal-data-summary" aria-label="Pilot personal data">
+                                        <div class="personal-data-row">
+                                            <span class="personal-data-label">Name</span>
+                                            <span id="personal-display-name" class="personal-data-value">—</span>
+                                        </div>
+                                        <div class="personal-data-row">
+                                            <span class="personal-data-label">First Name</span>
+                                            <span id="personal-display-first-name" class="personal-data-value">—</span>
+                                        </div>
+                                        <div class="personal-data-row">
+                                            <span class="personal-data-label">Birthday</span>
+                                            <span id="personal-display-birthday" class="personal-data-value">—</span>
+                                        </div>
+                                        <div class="personal-data-row">
+                                            <span class="personal-data-label">Place of Birth</span>
+                                            <span id="personal-display-birth-place" class="personal-data-value">—</span>
+                                        </div>
+                                        <div class="personal-data-row">
+                                            <span class="personal-data-label">Country of Birth</span>
+                                            <span id="personal-display-birth-country" class="personal-data-value">—</span>
+                                        </div>
+                                    </div>
+                                </div>    
+                            </section>
+                            <section class="events-section detail-panel">
+                                <h3>Promotions & Awards</h3>
+                                <div id="events-list" class="events-list">
+                                    <!-- Dynamically populated -->
+                                </div>
+                            </section>
+                        </aside>
+                        
+                        <!-- Middle Column: Summary -->
+                        <section class="column column-middle">
+                            <section class="summary-section">
+                                <h3>Campaign Summary</h3>
+                                <div id="summary-content" class="summary-content">
+                                    <!-- Dynamically populated -->
+                                </div>
+                            </section>
+                        </section>
+
+                        <!-- Right Column: Debriefings -->
+                        <aside class="column column-right">
+                            <h3>Mission Debriefings</h3>
+                            <div id="debriefings-container" class="debriefings-container">
+                                <!-- HTML injected from campaign_events.json -->
+                            </div>
+                        </aside>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Cropper Modal -->
+    <div id="cropper-modal" class="cropper-modal" style="display: none;">
+        <div class="cropper-modal-content">
+            <h3>Update Pilot Photo &amp; Personal Data</h3>
+            <div class="cropper-modal-body">
+                <div class="cropper-modal-form">
+                    <h4>Personal Data</h4>
+                    <div class="personal-data-fields">
+                        <label class="personal-data-field" for="personal-name">
+                            Name
+                            <input id="personal-name" type="text" maxlength="60" placeholder="Last name">
+                        </label>
+                        <label class="personal-data-field" for="personal-first-name">
+                            First Name
+                            <input id="personal-first-name" type="text" maxlength="60" placeholder="First name">
+                        </label>
+                        <label class="personal-data-field" for="personal-birthday">
+                            Birthday
+                            <input id="personal-birthday" type="text" maxlength="40" placeholder="DD Month YYYY">
+                        </label>
+                        <label class="personal-data-field" for="personal-birth-place">
+                            Place of Birth
+                            <input id="personal-birth-place" type="text" maxlength="80" placeholder="City or region">
+                        </label>
+                        <label class="personal-data-field" for="personal-birth-country">
+                            Country of Birth
+                            <input id="personal-birth-country" type="text" maxlength="60" placeholder="Country">
+                        </label>
+                    </div>
+                    <span id="personal-data-status" class="personal-data-status" aria-live="polite"></span>
+                </div>
+                <div class="cropper-modal-photo">
+                    <div class="cropper-preview">
+                        <p id="cropper-placeholder" class="cropper-placeholder">No new photo selected.</p>
+                        <img id="cropper-img" alt="Crop pilot photo">
+                    </div>
+                    <button id="cropper-photo-select" class="pilot-photo-btn" type="button">Choose Photo</button>
+                </div>
+            </div>
+            <div class="cropper-actions">
+                <button id="cropper-save" type="button">Apply</button>
+                <button id="cropper-cancel" type="button">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="static/js/api.js?v=2"></script>
+    <script src="static/js/cropper.min.js"></script>
+    <script src="static/js/landing.js?v=2"></script>
+    <script src="static/js/detail.js?v=2"></script>
+    <script src="static/js/main.js?v=2"></script>
+</body>
+</html>
