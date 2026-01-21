@@ -1,175 +1,70 @@
 {
-  "Operation Citadel 1943 II. Sch.G1 FW190-A5": {
-    "campaign_name": "Operation Citadel 1943 II. Sch.G1 FW190-A5",
-    "country": "Germany",
+  "wildmustangs": {
+    "campaign_name": "wildmustangs",
+    "country": "USA",
     "is_stock": true,
     "starting_rank_offset": 0,
-    "mission_count": 33,
+    "mission_count": 12,
     "missions": {
-      "1943-07-04a-FW190-A5U17-IISG1": {
-        "raw_date": "4.7.1943",
-        "normalized_date": "4.7.1943",
-        "mission_file": "1943-07-04a-FW190-A5U17-IISG1.eng"
+      "01": {
+        "raw_date": "Thursday, March 22nd, 1945",
+        "normalized_date": "Thursday March 22 1945",
+        "mission_file": "01.eng"
       },
-      "1943-07-05a-FW190-A5U17-IISG1": {
-        "raw_date": "5.7.1943",
-        "normalized_date": "5.7.1943",
-        "mission_file": "1943-07-05a-FW190-A5U17-IISG1.eng"
+      "02": {
+        "raw_date": "Saturday, March 24th, 1945",
+        "normalized_date": "Saturday March 24 1945",
+        "mission_file": "02.eng"
       },
-      "1943-07-05b-FW190-A5U17-IISG1": {
-        "raw_date": "5.7.1943",
-        "normalized_date": "5.7.1943",
-        "mission_file": "1943-07-05b-FW190-A5U17-IISG1.eng"
+      "03": {
+        "raw_date": "Sunday, March 25th, 1945",
+        "normalized_date": "Sunday March 25 1945",
+        "mission_file": "03.eng"
       },
-      "1943-07-05c-FW190-A5U17-IISG1": {
-        "raw_date": "5.7.1943",
-        "normalized_date": "5.7.1943",
-        "mission_file": "1943-07-05c-FW190-A5U17-IISG1.eng"
+      "04": {
+        "raw_date": "Wednesday, March 28th, 1945",
+        "normalized_date": "Wednesday March 28 1945",
+        "mission_file": "04.eng"
       },
-      "1943-07-06a-FW190-A5U17-IISG1": {
-        "raw_date": "6.7.1943",
-        "normalized_date": "6.7.1943",
-        "mission_file": "1943-07-06a-FW190-A5U17-IISG1.eng"
+      "05": {
+        "raw_date": "Friday, March 30th, 1945",
+        "normalized_date": "Friday March 30 1945",
+        "mission_file": "05.eng"
       },
-      "1943-07-07a-FW190-A5U17-IISG1": {
-        "raw_date": "7.7.1943",
-        "normalized_date": "7.7.1943",
-        "mission_file": "1943-07-07a-FW190-A5U17-IISG1.eng"
+      "06": {
+        "raw_date": "Saturday, March 31st, 1945",
+        "normalized_date": "Saturday March 31 1945",
+        "mission_file": "06.eng"
       },
-      "1943-07-08a-FW190-A5U17-IISG1": {
-        "raw_date": "8.7.1943",
-        "normalized_date": "8.7.1943",
-        "mission_file": "1943-07-08a-FW190-A5U17-IISG1.eng"
+      "07": {
+        "raw_date": "Saturday, April 7th, 1945",
+        "normalized_date": "Saturday April 7 1945",
+        "mission_file": "07.eng"
       },
-      "1943-07-09a-FW190-A5U17-IISG1": {
-        "raw_date": "9.7.1943",
-        "normalized_date": "9.7.1943",
-        "mission_file": "1943-07-09a-FW190-A5U17-IISG1.eng"
+      "08": {
+        "raw_date": "Sunday, April 8th, 1945",
+        "normalized_date": "Sunday April 8 1945",
+        "mission_file": "08.eng"
       },
-      "1943-07-09b-FW190-A5U17-IISG1": {
-        "raw_date": "9.7.1943",
-        "normalized_date": "9.7.1943",
-        "mission_file": "1943-07-09b-FW190-A5U17-IISG1.eng"
+      "09": {
+        "raw_date": "Monday, April 9th, 1945",
+        "normalized_date": "Monday April 9 1945",
+        "mission_file": "09.eng"
       },
-      "1943-07-10a-FW190-A5U17-IISG1": {
-        "raw_date": "10.7.1943",
-        "normalized_date": "10.7.1943",
-        "mission_file": "1943-07-10a-FW190-A5U17-IISG1.eng"
+      "10": {
+        "raw_date": "Wednesday, April 11th, 1945",
+        "normalized_date": "Wednesday April 11 1945",
+        "mission_file": "10.eng"
       },
-      "1943-07-10b-FW190-A5U17-IISG1": {
-        "raw_date": "10.7.1943",
-        "normalized_date": "10.7.1943",
-        "mission_file": "1943-07-10b-FW190-A5U17-IISG1.eng"
+      "11": {
+        "raw_date": "Friday, April 20th, 1945",
+        "normalized_date": "Friday April 20 1945",
+        "mission_file": "11.eng"
       },
-      "1943-07-11a-FW190-A5U17-IISG1": {
-        "raw_date": "11.7.1943",
-        "normalized_date": "11.7.1943",
-        "mission_file": "1943-07-11a-FW190-A5U17-IISG1.eng"
-      },
-      "1943-07-11b-FW190-A5U17-IISG1": {
-        "raw_date": "11.7.1943",
-        "normalized_date": "11.7.1943",
-        "mission_file": "1943-07-11b-FW190-A5U17-IISG1.eng"
-      },
-      "1943-07-12a-FW190-A5U17-IISG1": {
-        "raw_date": "12.7.1943",
-        "normalized_date": "12.7.1943",
-        "mission_file": "1943-07-12a-FW190-A5U17-IISG1.eng"
-      },
-      "1943-07-12b-FW190-A5U17-IISG1": {
-        "raw_date": "12.7.1943",
-        "normalized_date": "12.7.1943",
-        "mission_file": "1943-07-12b-FW190-A5U17-IISG1.eng"
-      },
-      "1943-07-12c-FW190-A5U17-IISG1": {
-        "raw_date": "12.7.1943",
-        "normalized_date": "12.7.1943",
-        "mission_file": "1943-07-12c-FW190-A5U17-IISG1.eng"
-      },
-      "1943-07-12d-FW190-A5U17-IISG1": {
-        "raw_date": "12.7.1943",
-        "normalized_date": "12.7.1943",
-        "mission_file": "1943-07-12d-FW190-A5U17-IISG1.eng"
-      },
-      "1943-07-13a-FW190-A5U17-IISG1": {
-        "raw_date": "13.7.1943",
-        "normalized_date": "13.7.1943",
-        "mission_file": "1943-07-13a-FW190-A5U17-IISG1.eng"
-      },
-      "1943-07-13b-FW190-A5U17-IISG1": {
-        "raw_date": "13.7.1943",
-        "normalized_date": "13.7.1943",
-        "mission_file": "1943-07-13b-FW190-A5U17-IISG1.eng"
-      },
-      "1943-07-14a-FW190-A5U17-IISG1": {
-        "raw_date": "14.7.1943",
-        "normalized_date": "14.7.1943",
-        "mission_file": "1943-07-14a-FW190-A5U17-IISG1.eng"
-      },
-      "1943-07-14b-FW190-A5U17-IISG1": {
-        "raw_date": "14.7.1943",
-        "normalized_date": "14.7.1943",
-        "mission_file": "1943-07-14b-FW190-A5U17-IISG1.eng"
-      },
-      "1943-07-14c-FW190-A5U17-IISG1": {
-        "raw_date": "14.7.1943",
-        "normalized_date": "14.7.1943",
-        "mission_file": "1943-07-14c-FW190-A5U17-IISG1.eng"
-      },
-      "1943-07-15a-FW190-A5U17-IISG1": {
-        "raw_date": "15.7.1943",
-        "normalized_date": "15.7.1943",
-        "mission_file": "1943-07-15a-FW190-A5U17-IISG1.eng"
-      },
-      "1943-07-15b-FW190-A5U17-IISG1": {
-        "raw_date": "15.7.1943",
-        "normalized_date": "15.7.1943",
-        "mission_file": "1943-07-15b-FW190-A5U17-IISG1.eng"
-      },
-      "1943-07-16a-FW190-A5U17-IISG1": {
-        "raw_date": "16.7.1943",
-        "normalized_date": "16.7.1943",
-        "mission_file": "1943-07-16a-FW190-A5U17-IISG1.eng"
-      },
-      "1943-07-16b-FW190-A5U17-IISG1": {
-        "raw_date": "16.7.1943",
-        "normalized_date": "16.7.1943",
-        "mission_file": "1943-07-16b-FW190-A5U17-IISG1.eng"
-      },
-      "1943-07-17a-FW190-A5U17-IISG1": {
-        "raw_date": "17.7.1943",
-        "normalized_date": "17.7.1943",
-        "mission_file": "1943-07-17a-FW190-A5U17-IISG1.eng"
-      },
-      "1943-07-18a-FW190-A5U17-IISG1": {
-        "raw_date": "18.7.1943",
-        "normalized_date": "18.7.1943",
-        "mission_file": "1943-07-18a-FW190-A5U17-IISG1.eng"
-      },
-      "1943-07-19a-FW190-A5U17-IISG1": {
-        "raw_date": "19.7.1943",
-        "normalized_date": "19.7.1943",
-        "mission_file": "1943-07-19a-FW190-A5U17-IISG1.eng"
-      },
-      "1943-07-20a-FW190-A5U17-IISG1": {
-        "raw_date": "19.7.1943",
-        "normalized_date": "19.7.1943",
-        "mission_file": "1943-07-20a-FW190-A5U17-IISG1.eng"
-      },
-      "1943-07-20b The Battle is over": {
-        "raw_date": null,
-        "normalized_date": null,
-        "mission_file": "1943-07-20b The Battle is over.eng"
-      },
-      "1945-05-08a-REMINDER-CREATE-NEXT-MISSION": {
-        "raw_date": null,
-        "normalized_date": null,
-        "mission_file": "1945-05-08a-REMINDER-CREATE-NEXT-MISSION.eng"
-      },
-      "1945-05-08b-War_is_over": {
-        "raw_date": null,
-        "normalized_date": null,
-        "mission_file": "1945-05-08b-War_is_over.eng"
+      "12": {
+        "raw_date": "Saturday, April 30th, 1945",
+        "normalized_date": "Saturday April 30 1945",
+        "mission_file": "12.eng"
       }
     },
     "excluded": null,
@@ -236,229 +131,320 @@
     "excluded": null,
     "exclusion_reason": null
   },
-  "hunters": {
-    "campaign_name": "hunters",
-    "country": "Britain",
-    "is_stock": true,
-    "starting_rank_offset": 0,
-    "mission_count": 12,
-    "missions": {
-      "01": {
-        "raw_date": "January 8, 1944",
-        "normalized_date": "1944-01-08",
-        "mission_file": "01_mosquito.chs"
-      },
-      "02": {
-        "raw_date": "February 5, 1944",
-        "normalized_date": "1944-02-05",
-        "mission_file": "02_mosquito.chs"
-      },
-      "03": {
-        "raw_date": "February 18, 1944",
-        "normalized_date": "1944-02-18",
-        "mission_file": "03_mosquito.chs"
-      },
-      "04": {
-        "raw_date": "March 18, 1944",
-        "normalized_date": "1944-03-18",
-        "mission_file": "04_mosquito.chs"
-      },
-      "05": {
-        "raw_date": "April 12, 1944",
-        "normalized_date": "1944-04-12",
-        "mission_file": "05_mosquito.chs"
-      },
-      "06": {
-        "raw_date": "April 15, 1944",
-        "normalized_date": "1944-04-15",
-        "mission_file": "06_mosquito.chs"
-      },
-      "07": {
-        "raw_date": "April 25, 1944",
-        "normalized_date": "1944-04-25",
-        "mission_file": "07_mosquito.chs"
-      },
-      "08": {
-        "raw_date": "May 10, 1944",
-        "normalized_date": "1944-05-10",
-        "mission_file": "08_mosquito.chs"
-      },
-      "09": {
-        "raw_date": "June 6, 1944",
-        "normalized_date": "1944-06-06",
-        "mission_file": "09_mosquito.chs"
-      },
-      "10": {
-        "raw_date": "June 11, 1944",
-        "normalized_date": "1944-06-11",
-        "mission_file": "10_mosquito.chs"
-      },
-      "11": {
-        "raw_date": "June 29, 1944",
-        "normalized_date": "1944-06-29",
-        "mission_file": "11_mosquito.chs"
-      },
-      "12": {
-        "raw_date": "July 14, 1944",
-        "normalized_date": "1944-07-14",
-        "mission_file": "12_mosquito.chs"
-      }
-    },
-    "excluded": null,
-    "exclusion_reason": null
-  },
-  "JG51 Rzhev": {
-    "campaign_name": "JG51 Rzhev",
-    "country": "Germany",
-    "is_stock": true,
-    "starting_rank_offset": 0,
-    "mission_count": 12,
-    "missions": {
-      "01": {
-        "raw_date": "26 November 1942",
-        "normalized_date": "1942-11-26",
-        "mission_file": "01.eng"
-      },
-      "02": {
-        "raw_date": "28 November 1942",
-        "normalized_date": "1942-11-28",
-        "mission_file": "02.eng"
-      },
-      "03": {
-        "raw_date": "29 November 1942",
-        "normalized_date": "1942-11-29",
-        "mission_file": "03.eng"
-      },
-      "04": {
-        "raw_date": "4 December 1942",
-        "normalized_date": "1942-12-04",
-        "mission_file": "04.eng"
-      },
-      "05": {
-        "raw_date": "4 December 1942",
-        "normalized_date": "1942-12-04",
-        "mission_file": "05.eng"
-      },
-      "06": {
-        "raw_date": "6 December 1942",
-        "normalized_date": "1942-12-06",
-        "mission_file": "06.eng"
-      },
-      "07": {
-        "raw_date": "8 December 1942",
-        "normalized_date": "1942-12-08",
-        "mission_file": "07.eng"
-      },
-      "08": {
-        "raw_date": "8 December 1942",
-        "normalized_date": "1942-12-08",
-        "mission_file": "08.eng"
-      },
-      "09": {
-        "raw_date": "10 December 1942",
-        "normalized_date": "1942-12-10",
-        "mission_file": "09.eng"
-      },
-      "10": {
-        "raw_date": "14 December 1942",
-        "normalized_date": "1942-12-14",
-        "mission_file": "10.eng"
-      },
-      "11": {
-        "raw_date": "16 December 1942",
-        "normalized_date": "1942-12-16",
-        "mission_file": "11.eng"
-      },
-      "12": {
-        "raw_date": "17 December 1942",
-        "normalized_date": "1942-12-17",
-        "mission_file": "12.eng"
-      }
-    },
-    "excluded": null,
-    "exclusion_reason": null
-  },
-  "overlord": {
-    "campaign_name": "overlord",
-    "country": "USA",
+  "ironwind": {
+    "campaign_name": "ironwind",
+    "country": "Soviet Union",
     "is_stock": true,
     "starting_rank_offset": 0,
     "mission_count": 15,
     "missions": {
       "01": {
-        "raw_date": "June 17,1944",
-        "normalized_date": "June 171944",
-        "mission_file": "01-overlord.chs"
+        "raw_date": "August 24, 1942",
+        "normalized_date": "1942-08-24",
+        "mission_file": "01.chs"
       },
       "02": {
-        "raw_date": "June 19,1944",
-        "normalized_date": "June 191944",
-        "mission_file": "02-overlord.chs"
+        "raw_date": "August 24, 1942",
+        "normalized_date": "1942-08-24",
+        "mission_file": "02.chs"
       },
       "03": {
-        "raw_date": "June 23,1944",
-        "normalized_date": "June 231944",
-        "mission_file": "03-overlord.chs"
+        "raw_date": "August 25, 1942",
+        "normalized_date": "1942-08-25",
+        "mission_file": "03.chs"
       },
       "04": {
-        "raw_date": "June 26,1944",
-        "normalized_date": "June 261944",
-        "mission_file": "04-overlord.chs"
+        "raw_date": "August 26, 1942",
+        "normalized_date": "1942-08-26",
+        "mission_file": "04.chs"
       },
       "05": {
-        "raw_date": "June 27,1944",
-        "normalized_date": "June 271944",
-        "mission_file": "05-overlord.chs"
+        "raw_date": "August 27, 1942",
+        "normalized_date": "1942-08-27",
+        "mission_file": "05.chs"
       },
       "06": {
-        "raw_date": "June 28,1944",
-        "normalized_date": "June 281944",
-        "mission_file": "06-overlord.chs"
+        "raw_date": "September 7, 1942",
+        "normalized_date": "1942-09-07",
+        "mission_file": "06.chs"
       },
       "07": {
-        "raw_date": "June 29,1944",
-        "normalized_date": "June 291944",
-        "mission_file": "07-overlord.chs"
+        "raw_date": "September 12, 1942",
+        "normalized_date": "1942-09-12",
+        "mission_file": "07.chs"
       },
       "08": {
-        "raw_date": "July 4,1944",
-        "normalized_date": "July 41944",
-        "mission_file": "08-overlord.chs"
+        "raw_date": "September 12, 1942",
+        "normalized_date": "1942-09-12",
+        "mission_file": "08.chs"
       },
       "09": {
-        "raw_date": "July 5,1944",
-        "normalized_date": "July 51944",
-        "mission_file": "09-overlord.chs"
+        "raw_date": "September 15, 1942",
+        "normalized_date": "1942-09-15",
+        "mission_file": "09.chs"
       },
       "10": {
-        "raw_date": "July 12,1944",
-        "normalized_date": "July 121944",
-        "mission_file": "10-overlord.chs"
+        "raw_date": "September 16, 1942",
+        "normalized_date": "1942-09-16",
+        "mission_file": "10.chs"
       },
       "11": {
-        "raw_date": "07.13.1944",
-        "normalized_date": "07.13.1944",
-        "mission_file": "11-overlord.chs"
+        "raw_date": "October 8, 1942",
+        "normalized_date": "1942-10-08",
+        "mission_file": "11.chs"
       },
       "12": {
-        "raw_date": "July 16,1944",
-        "normalized_date": "July 161944",
-        "mission_file": "12-overlord.chs"
+        "raw_date": "October 13, 1942",
+        "normalized_date": "1942-10-13",
+        "mission_file": "12.chs"
       },
       "13": {
-        "raw_date": "July 25,1944",
-        "normalized_date": "July 251944",
-        "mission_file": "13-overlord.chs"
+        "raw_date": "October 16, 1942",
+        "normalized_date": "1942-10-16",
+        "mission_file": "13.chs"
       },
       "14": {
-        "raw_date": "August 3,1944",
-        "normalized_date": "August 31944",
-        "mission_file": "14-overlord.chs"
+        "raw_date": "October 25, 1942",
+        "normalized_date": "1942-10-25",
+        "mission_file": "14.chs"
       },
       "15": {
-        "raw_date": "August 7,1944",
-        "normalized_date": "August 71944",
-        "mission_file": "15-overlord.chs"
+        "raw_date": "October 28, 1942",
+        "normalized_date": "1942-10-28",
+        "mission_file": "15.chs"
+      }
+    },
+    "excluded": null,
+    "exclusion_reason": null
+  },
+  "icering": {
+    "campaign_name": "icering",
+    "country": "Soviet Union",
+    "is_stock": true,
+    "starting_rank_offset": 0,
+    "mission_count": 15,
+    "missions": {
+      "01": {
+        "raw_date": "November 29, 1942",
+        "normalized_date": "1942-11-29",
+        "mission_file": "01.eng"
+      },
+      "02": {
+        "raw_date": "December 2, 1942",
+        "normalized_date": "1942-12-02",
+        "mission_file": "02.eng"
+      },
+      "03": {
+        "raw_date": "December 7, 1942",
+        "normalized_date": "1942-12-07",
+        "mission_file": "03.eng"
+      },
+      "04": {
+        "raw_date": "December 10, 1942.",
+        "normalized_date": "December 10 1942.",
+        "mission_file": "04.eng"
+      },
+      "05": {
+        "raw_date": "December 10, 1942.",
+        "normalized_date": "December 10 1942.",
+        "mission_file": "05.eng"
+      },
+      "06": {
+        "raw_date": "December 11, 1942",
+        "normalized_date": "1942-12-11",
+        "mission_file": "06.eng"
+      },
+      "07": {
+        "raw_date": "December 12, 1942.",
+        "normalized_date": "December 12 1942.",
+        "mission_file": "07.eng"
+      },
+      "08": {
+        "raw_date": "December 14, 1942.",
+        "normalized_date": "December 14 1942.",
+        "mission_file": "08.eng"
+      },
+      "09": {
+        "raw_date": "December 17, 1942",
+        "normalized_date": "1942-12-17",
+        "mission_file": "09.eng"
+      },
+      "10": {
+        "raw_date": "December 18, 1942",
+        "normalized_date": "1942-12-18",
+        "mission_file": "10.eng"
+      },
+      "11": {
+        "raw_date": "December 19, 1942.",
+        "normalized_date": "December 19 1942.",
+        "mission_file": "11.eng"
+      },
+      "12": {
+        "raw_date": "December 20, 1942",
+        "normalized_date": "1942-12-20",
+        "mission_file": "12.eng"
+      },
+      "13": {
+        "raw_date": "December 21, 1942",
+        "normalized_date": "1942-12-21",
+        "mission_file": "13.eng"
+      },
+      "14": {
+        "raw_date": "December 22, 1942.",
+        "normalized_date": "December 22 1942.",
+        "mission_file": "14.eng"
+      },
+      "15": {
+        "raw_date": "December 25, 1942",
+        "normalized_date": "1942-12-25",
+        "mission_file": "15.eng"
+      }
+    },
+    "excluded": null,
+    "exclusion_reason": null
+  },
+  "fortressonthevolga": {
+    "campaign_name": "fortressonthevolga",
+    "country": "Germany",
+    "is_stock": true,
+    "starting_rank_offset": 0,
+    "mission_count": 15,
+    "missions": {
+      "01": {
+        "raw_date": "September 24, 1942",
+        "normalized_date": "1942-09-24",
+        "mission_file": "01.chs"
+      },
+      "02": {
+        "raw_date": "September 24, 1942",
+        "normalized_date": "1942-09-24",
+        "mission_file": "02.chs"
+      },
+      "03": {
+        "raw_date": "September 25, 1942",
+        "normalized_date": "1942-09-25",
+        "mission_file": "03.chs"
+      },
+      "04": {
+        "raw_date": "September 26, 1942",
+        "normalized_date": "1942-09-26",
+        "mission_file": "04.chs"
+      },
+      "05": {
+        "raw_date": "September 27, 1942",
+        "normalized_date": "1942-09-27",
+        "mission_file": "05.chs"
+      },
+      "06": {
+        "raw_date": "September 27, 1942",
+        "normalized_date": "1942-09-27",
+        "mission_file": "06.chs"
+      },
+      "07": {
+        "raw_date": "September 28, 1942",
+        "normalized_date": "1942-09-28",
+        "mission_file": "07.chs"
+      },
+      "08": {
+        "raw_date": "September 28, 1942",
+        "normalized_date": "1942-09-28",
+        "mission_file": "08.chs"
+      },
+      "09": {
+        "raw_date": "September 29, 1942",
+        "normalized_date": "1942-09-29",
+        "mission_file": "09.chs"
+      },
+      "10": {
+        "raw_date": "September 30, 1942",
+        "normalized_date": "1942-09-30",
+        "mission_file": "10.chs"
+      },
+      "11": {
+        "raw_date": "October 02, 1942",
+        "normalized_date": "1942-10-02",
+        "mission_file": "11.chs"
+      },
+      "12": {
+        "raw_date": "October 05, 1942",
+        "normalized_date": "1942-10-05",
+        "mission_file": "12.chs"
+      },
+      "13": {
+        "raw_date": "October 07, 1942",
+        "normalized_date": "1942-10-07",
+        "mission_file": "13.chs"
+      },
+      "14": {
+        "raw_date": "October 08, 1942",
+        "normalized_date": "1942-10-08",
+        "mission_file": "14.chs"
+      },
+      "15": {
+        "raw_date": "October 10, 1942",
+        "normalized_date": "1942-10-10",
+        "mission_file": "15.chs"
+      }
+    },
+    "excluded": null,
+    "exclusion_reason": null
+  },
+  "griffons": {
+    "campaign_name": "griffons",
+    "country": "Britain",
+    "is_stock": true,
+    "starting_rank_offset": 0,
+    "mission_count": 10,
+    "missions": {
+      "01": {
+        "raw_date": "January 1, 1945",
+        "normalized_date": "1945-01-01",
+        "mission_file": "01.eng"
+      },
+      "02": {
+        "raw_date": "January 5, 1945",
+        "normalized_date": "1945-01-05",
+        "mission_file": "02.eng"
+      },
+      "03": {
+        "raw_date": "January 14, 1945",
+        "normalized_date": "1945-01-14",
+        "mission_file": "03.eng"
+      },
+      "04": {
+        "raw_date": "January 16, 1945",
+        "normalized_date": "1945-01-16",
+        "mission_file": "04.eng"
+      },
+      "05": {
+        "raw_date": "January 22, 1945",
+        "normalized_date": "1945-01-22",
+        "mission_file": "05.eng"
+      },
+      "06": {
+        "raw_date": "January 27, 1945",
+        "normalized_date": "1945-01-27",
+        "mission_file": "06.eng"
+      },
+      "07": {
+        "raw_date": "February 10, 1945",
+        "normalized_date": "1945-02-10",
+        "mission_file": "07.eng"
+      },
+      "08": {
+        "raw_date": "February 13, 1945",
+        "normalized_date": "1945-02-13",
+        "mission_file": "08.eng"
+      },
+      "09": {
+        "raw_date": "February 14, 1945",
+        "normalized_date": "1945-02-14",
+        "mission_file": "09.eng"
+      },
+      "10": {
+        "raw_date": "February 21, 1945",
+        "normalized_date": "1945-02-21",
+        "mission_file": "10.eng"
       }
     },
     "excluded": null,
@@ -555,6 +541,97 @@
     "excluded": null,
     "exclusion_reason": null
   },
+  "havoc": {
+    "campaign_name": "havoc",
+    "country": "Soviet Union",
+    "is_stock": true,
+    "starting_rank_offset": 0,
+    "mission_count": 16,
+    "missions": {
+      "01": {
+        "raw_date": "September 3rd 1942",
+        "normalized_date": "1942-09-03",
+        "mission_file": "01.chs"
+      },
+      "02": {
+        "raw_date": "September 4th 1942",
+        "normalized_date": "1942-09-04",
+        "mission_file": "02.chs"
+      },
+      "03": {
+        "raw_date": "September 4th 1942",
+        "normalized_date": "1942-09-04",
+        "mission_file": "03.chs"
+      },
+      "04": {
+        "raw_date": "September 5th 1942",
+        "normalized_date": "1942-09-05",
+        "mission_file": "04.chs"
+      },
+      "05": {
+        "raw_date": "September 7th 1942",
+        "normalized_date": "1942-09-07",
+        "mission_file": "05.chs"
+      },
+      "06": {
+        "raw_date": "September 12th 1942",
+        "normalized_date": "1942-09-12",
+        "mission_file": "06.chs"
+      },
+      "07": {
+        "raw_date": "September 13th, 1942",
+        "normalized_date": "1942-09-13",
+        "mission_file": "07.chs"
+      },
+      "08": {
+        "raw_date": "Sept 14th, 1942",
+        "normalized_date": "1942-09-14",
+        "mission_file": "08.chs"
+      },
+      "09": {
+        "raw_date": "Sept 15th, 1942",
+        "normalized_date": "1942-09-15",
+        "mission_file": "09.chs"
+      },
+      "10": {
+        "raw_date": "Sept 17th, 1942",
+        "normalized_date": "1942-09-17",
+        "mission_file": "10.chs"
+      },
+      "11": {
+        "raw_date": "Sept 18th, 1942",
+        "normalized_date": "1942-09-18",
+        "mission_file": "11.chs"
+      },
+      "12": {
+        "raw_date": "Sept 20th, 1942",
+        "normalized_date": "1942-09-20",
+        "mission_file": "12.chs"
+      },
+      "13": {
+        "raw_date": "Sept 21st, 1942",
+        "normalized_date": "1942-09-21",
+        "mission_file": "13.chs"
+      },
+      "14": {
+        "raw_date": "Oct 23rd, 1942",
+        "normalized_date": "1942-10-23",
+        "mission_file": "14.chs"
+      },
+      "15": {
+        "raw_date": "Oct 27th, 1942",
+        "normalized_date": "1942-10-27",
+        "mission_file": "15.chs"
+      },
+      "16": {
+        "raw_date": "Oct 28th, 1942",
+        "normalized_date": "1942-10-28",
+        "mission_file": "16.chs"
+      }
+    },
+    "excluded": null,
+    "exclusion_reason": null
+  },
   "Beginning": {
     "campaign_name": "Beginning",
     "country": "Soviet Union",
@@ -602,7 +679,80 @@
         "normalized_date": "1941-07-01",
         "mission_file": "08_Faleshti_MiG-3.eng"
       }
-    }
+    },
+    "excluded": null,
+    "exclusion_reason": null
+  },
+  "kerch": {
+    "campaign_name": "kerch",
+    "country": "Germany",
+    "is_stock": true,
+    "starting_rank_offset": 0,
+    "mission_count": 12,
+    "missions": {
+      "01": {
+        "raw_date": "4 November, 1943",
+        "normalized_date": "1943-11-04",
+        "mission_file": "01.eng"
+      },
+      "02": {
+        "raw_date": "6 November, 1943",
+        "normalized_date": "1943-11-06",
+        "mission_file": "02.eng"
+      },
+      "03": {
+        "raw_date": "11 November, 1943",
+        "normalized_date": "1943-11-11",
+        "mission_file": "03.eng"
+      },
+      "04": {
+        "raw_date": "12 November, 1943",
+        "normalized_date": "1943-11-12",
+        "mission_file": "04.eng"
+      },
+      "05": {
+        "raw_date": "14 November, 1943",
+        "normalized_date": "1943-11-14",
+        "mission_file": "05.eng"
+      },
+      "06": {
+        "raw_date": "19 November, 1943",
+        "normalized_date": "1943-11-19",
+        "mission_file": "06.eng"
+      },
+      "07": {
+        "raw_date": "21 November, 1943",
+        "normalized_date": "1943-11-21",
+        "mission_file": "07.eng"
+      },
+      "08": {
+        "raw_date": "25 November, 1943",
+        "normalized_date": "1943-11-25",
+        "mission_file": "08.eng"
+      },
+      "09": {
+        "raw_date": "2 December, 1943",
+        "normalized_date": "1943-12-02",
+        "mission_file": "09.eng"
+      },
+      "10": {
+        "raw_date": "6 December, 1943",
+        "normalized_date": "1943-12-06",
+        "mission_file": "10.eng"
+      },
+      "11": {
+        "raw_date": "9 December, 1943",
+        "normalized_date": "1943-12-09",
+        "mission_file": "11.eng"
+      },
+      "12": {
+        "raw_date": "12 December, 1943",
+        "normalized_date": "1943-12-12",
+        "mission_file": "12.eng"
+      }
+    },
+    "excluded": null,
+    "exclusion_reason": null
   },
   "steelbirds": {
     "campaign_name": "steelbirds",
@@ -690,232 +840,6 @@
     "excluded": null,
     "exclusion_reason": null
   },
-  "blazingsteppe": {
-    "campaign_name": "blazingsteppe",
-    "country": "Soviet Union",
-    "is_stock": true,
-    "starting_rank_offset": 0,
-    "mission_count": 15,
-    "missions": {
-      "01": {
-        "raw_date": "August 28, 1942",
-        "normalized_date": "1942-08-28",
-        "mission_file": "01.chs"
-      },
-      "02": {
-        "raw_date": "August 28, 1942",
-        "normalized_date": "1942-08-28",
-        "mission_file": "02.chs"
-      },
-      "03": {
-        "raw_date": "August 29, 1942",
-        "normalized_date": "1942-08-29",
-        "mission_file": "03.chs"
-      },
-      "04": {
-        "raw_date": "August 30, 1942",
-        "normalized_date": "1942-08-30",
-        "mission_file": "04.chs"
-      },
-      "05": {
-        "raw_date": "August 31, 1942",
-        "normalized_date": "1942-08-31",
-        "mission_file": "05.chs"
-      },
-      "06": {
-        "raw_date": "September 1, 1942",
-        "normalized_date": "1942-09-01",
-        "mission_file": "06.chs"
-      },
-      "07": {
-        "raw_date": "September 4, 1942",
-        "normalized_date": "1942-09-04",
-        "mission_file": "07.chs"
-      },
-      "08": {
-        "raw_date": "September 5, 1942",
-        "normalized_date": "1942-09-05",
-        "mission_file": "08.chs"
-      },
-      "09": {
-        "raw_date": "September 6, 1942",
-        "normalized_date": "1942-09-06",
-        "mission_file": "09.chs"
-      },
-      "10": {
-        "raw_date": "September 6, 1942",
-        "normalized_date": "1942-09-06",
-        "mission_file": "10.chs"
-      },
-      "11": {
-        "raw_date": "September 8, 1942",
-        "normalized_date": "1942-09-08",
-        "mission_file": "11.chs"
-      },
-      "12": {
-        "raw_date": "September 9, 1942",
-        "normalized_date": "1942-09-09",
-        "mission_file": "12.chs"
-      },
-      "13": {
-        "raw_date": "September 12, 1942",
-        "normalized_date": "1942-09-12",
-        "mission_file": "13.chs"
-      },
-      "14": {
-        "raw_date": "September 12, 1942",
-        "normalized_date": "1942-09-12",
-        "mission_file": "14.chs"
-      },
-      "15": {
-        "raw_date": "September 13, 1942",
-        "normalized_date": "1942-09-13",
-        "mission_file": "15.chs"
-      }
-    }
-  },
-  "icering": {
-    "campaign_name": "icering",
-    "country": "Soviet Union",
-    "is_stock": true,
-    "starting_rank_offset": 0,
-    "mission_count": 15,
-    "missions": {
-      "01": {
-        "raw_date": "November 29, 1942",
-        "normalized_date": "1942-11-29",
-        "mission_file": "01.eng"
-      },
-      "02": {
-        "raw_date": "December 2, 1942",
-        "normalized_date": "1942-12-02",
-        "mission_file": "02.eng"
-      },
-      "03": {
-        "raw_date": "December 7, 1942",
-        "normalized_date": "1942-12-07",
-        "mission_file": "03.eng"
-      },
-      "04": {
-        "raw_date": "December 10, 1942.",
-        "normalized_date": "December 10 1942.",
-        "mission_file": "04.eng"
-      },
-      "05": {
-        "raw_date": "December 10, 1942.",
-        "normalized_date": "December 10 1942.",
-        "mission_file": "05.eng"
-      },
-      "06": {
-        "raw_date": "December 11, 1942",
-        "normalized_date": "1942-12-11",
-        "mission_file": "06.eng"
-      },
-      "07": {
-        "raw_date": "December 12, 1942.",
-        "normalized_date": "December 12 1942.",
-        "mission_file": "07.eng"
-      },
-      "08": {
-        "raw_date": "December 14, 1942.",
-        "normalized_date": "December 14 1942.",
-        "mission_file": "08.eng"
-      },
-      "09": {
-        "raw_date": "December 17, 1942",
-        "normalized_date": "1942-12-17",
-        "mission_file": "09.eng"
-      },
-      "10": {
-        "raw_date": "December 18, 1942",
-        "normalized_date": "1942-12-18",
-        "mission_file": "10.eng"
-      },
-      "11": {
-        "raw_date": "December 19, 1942.",
-        "normalized_date": "December 19 1942.",
-        "mission_file": "11.eng"
-      },
-      "12": {
-        "raw_date": "December 20, 1942",
-        "normalized_date": "1942-12-20",
-        "mission_file": "12.eng"
-      },
-      "13": {
-        "raw_date": "December 21, 1942",
-        "normalized_date": "1942-12-21",
-        "mission_file": "13.eng"
-      },
-      "14": {
-        "raw_date": "December 22, 1942.",
-        "normalized_date": "December 22 1942.",
-        "mission_file": "14.eng"
-      },
-      "15": {
-        "raw_date": "December 25, 1942",
-        "normalized_date": "1942-12-25",
-        "mission_file": "15.eng"
-      }
-    },
-    "excluded": null,
-    "exclusion_reason": null
-  },
-  "Downfall": {
-    "campaign_name": "Downfall",
-    "country": "Germany",
-    "is_stock": true,
-    "starting_rank_offset": 0,
-    "mission_count": 9,
-    "missions": {
-      "01-Mission 1c": {
-        "raw_date": "March 1st, 1945",
-        "normalized_date": "1945-03-01",
-        "mission_file": "01-Mission 1c.eng"
-      },
-      "02-Mission": {
-        "raw_date": "March 2st, 1945",
-        "normalized_date": "1945-03-02",
-        "mission_file": "02-Mission.eng"
-      },
-      "03-Mission 3": {
-        "raw_date": "March 5th, 1945",
-        "normalized_date": "1945-03-05",
-        "mission_file": "03-Mission 3.eng"
-      },
-      "04-Mission 4": {
-        "raw_date": "March 5th, 1945",
-        "normalized_date": "1945-03-05",
-        "mission_file": "04-Mission 4.eng"
-      },
-      "05-Mission 5": {
-        "raw_date": "March 6th, 1945",
-        "normalized_date": "1945-03-06",
-        "mission_file": "05-Mission 5.eng"
-      },
-      "06-Mission 6": {
-        "raw_date": "March 9th, 1945",
-        "normalized_date": "1945-03-09",
-        "mission_file": "06-Mission 6.eng"
-      },
-      "07-Mission 7b": {
-        "raw_date": "March 13th, 1945",
-        "normalized_date": "1945-03-13",
-        "mission_file": "07-Mission 7b.eng"
-      },
-      "08-Mission 8": {
-        "raw_date": "March 14th, 1945",
-        "normalized_date": "1945-03-14",
-        "mission_file": "08-Mission 8.eng"
-      },
-      "09-Mission 9": {
-        "raw_date": "March 24th, 1945",
-        "normalized_date": "1945-03-24",
-        "mission_file": "09-Mission 9.eng"
-      }
-    },
-    "excluded": null,
-    "exclusion_reason": null
-  },
   "seadragons": {
     "campaign_name": "seadragons",
     "country": "Soviet Union",
@@ -997,153 +921,6 @@
         "raw_date": "October 9, 1943",
         "normalized_date": "1943-10-09",
         "mission_file": "15.eng"
-      }
-    },
-    "excluded": null,
-    "exclusion_reason": null
-  },
-  "kerch": {
-    "campaign_name": "kerch",
-    "country": "Germany",
-    "is_stock": true,
-    "starting_rank_offset": 0,
-    "mission_count": 12,
-    "missions": {
-      "01": {
-        "raw_date": "4 November, 1943",
-        "normalized_date": "1943-11-04",
-        "mission_file": "01.eng"
-      },
-      "02": {
-        "raw_date": "6 November, 1943",
-        "normalized_date": "1943-11-06",
-        "mission_file": "02.eng"
-      },
-      "03": {
-        "raw_date": "11 November, 1943",
-        "normalized_date": "1943-11-11",
-        "mission_file": "03.eng"
-      },
-      "04": {
-        "raw_date": "12 November, 1943",
-        "normalized_date": "1943-11-12",
-        "mission_file": "04.eng"
-      },
-      "05": {
-        "raw_date": "14 November, 1943",
-        "normalized_date": "1943-11-14",
-        "mission_file": "05.eng"
-      },
-      "06": {
-        "raw_date": "19 November, 1943",
-        "normalized_date": "1943-11-19",
-        "mission_file": "06.eng"
-      },
-      "07": {
-        "raw_date": "21 November, 1943",
-        "normalized_date": "1943-11-21",
-        "mission_file": "07.eng"
-      },
-      "08": {
-        "raw_date": "25 November, 1943",
-        "normalized_date": "1943-11-25",
-        "mission_file": "08.eng"
-      },
-      "09": {
-        "raw_date": "2 December, 1943",
-        "normalized_date": "1943-12-02",
-        "mission_file": "09.eng"
-      },
-      "10": {
-        "raw_date": "6 December, 1943",
-        "normalized_date": "1943-12-06",
-        "mission_file": "10.eng"
-      },
-      "11": {
-        "raw_date": "9 December, 1943",
-        "normalized_date": "1943-12-09",
-        "mission_file": "11.eng"
-      },
-      "12": {
-        "raw_date": "12 December, 1943",
-        "normalized_date": "1943-12-12",
-        "mission_file": "12.eng"
-      }
-    },
-    "excluded": null,
-    "exclusion_reason": null
-  },
-  "hornets": {
-    "campaign_name": "hornets",
-    "country": "Germany",
-    "is_stock": true,
-    "starting_rank_offset": 0,
-    "mission_count": 13,
-    "missions": {
-      "01": {
-        "raw_date": "June 6, 1943",
-        "normalized_date": "1943-06-06",
-        "mission_file": "01_hornets.chs"
-      },
-      "02": {
-        "raw_date": "June 21, 1943",
-        "normalized_date": "1943-06-21",
-        "mission_file": "02_hornets.chs"
-      },
-      "03": {
-        "raw_date": "July 13, 1943",
-        "normalized_date": "1943-07-13",
-        "mission_file": "03_hornets.chs"
-      },
-      "04": {
-        "raw_date": "October 1, 1943",
-        "normalized_date": "1943-10-01",
-        "mission_file": "04_hornets.chs"
-      },
-      "05": {
-        "raw_date": "October 24, 1943",
-        "normalized_date": "1943-10-24",
-        "mission_file": "05_hornets.chs"
-      },
-      "06": {
-        "raw_date": "January 21, 1944",
-        "normalized_date": "1944-01-21",
-        "mission_file": "06_hornets.chs"
-      },
-      "07": {
-        "raw_date": "April 22, 1944",
-        "normalized_date": "1944-04-22",
-        "mission_file": "07_hornets.chs"
-      },
-      "08": {
-        "raw_date": "June 3, 1944",
-        "normalized_date": "1944-06-03",
-        "mission_file": "08_hornets.chs"
-      },
-      "09": {
-        "raw_date": "June 6, 1944",
-        "normalized_date": "1944-06-06",
-        "mission_file": "09_hornets.chs"
-      },
-      "10": {
-        "raw_date": "June 7, 1944",
-        "normalized_date": "1944-06-07",
-        "mission_file": "10_hornets.chs"
-      },
-      "11": {
-        "raw_date": "June 12, 1944",
-        "normalized_date": "1944-06-12",
-        "mission_file": "11_hornets.chs"
-      },
-      "12": {
-        "raw_date": "June 16, 1944",
-        "normalized_date": "1944-06-16",
-        "mission_file": "12_hornets.chs"
-      },
-      "13": {
-        "raw_date": "July 5, 1944",
-        "normalized_date": "1944-07-05",
-        "mission_file": "13_hornets.chs"
       }
     },
     "excluded": null,
@@ -1446,353 +1223,30 @@
         "normalized_date": "6.12.1940",
         "mission_file": "1940-12-06a-BoB I JG51-BF109F1-fighter-sweep.eng"
       }
-    }
-  },
-  "10daysofautumn": {
-    "campaign_name": "10daysofautumn",
-    "country": "Germany",
-    "is_stock": true,
-    "starting_rank_offset": 0,
-    "mission_count": 15,
-    "missions": {
-      "01": {
-        "raw_date": "October 19, 1941",
-        "normalized_date": "1941-10-19",
-        "mission_file": "01.chs"
-      },
-      "02": {
-        "raw_date": "October 21, 1941",
-        "normalized_date": "1941-10-21",
-        "mission_file": "02.chs"
-      },
-      "03": {
-        "raw_date": "October 21, 1941",
-        "normalized_date": "1941-10-21",
-        "mission_file": "03.chs"
-      },
-      "04": {
-        "raw_date": "October 21, 1941",
-        "normalized_date": "1941-10-21",
-        "mission_file": "04.chs"
-      },
-      "05": {
-        "raw_date": "October 22, 1941",
-        "normalized_date": "1941-10-22",
-        "mission_file": "05.chs"
-      },
-      "06": {
-        "raw_date": "October 22, 1941",
-        "normalized_date": "1941-10-22",
-        "mission_file": "06.chs"
-      },
-      "07": {
-        "raw_date": "October 23, 1941",
-        "normalized_date": "1941-10-23",
-        "mission_file": "07.chs"
-      },
-      "08": {
-        "raw_date": "October 23, 1941",
-        "normalized_date": "1941-10-23",
-        "mission_file": "08.chs"
-      },
-      "09": {
-        "raw_date": "October 24, 1941",
-        "normalized_date": "1941-10-24",
-        "mission_file": "09.chs"
-      },
-      "10": {
-        "raw_date": "October 24, 1941",
-        "normalized_date": "1941-10-24",
-        "mission_file": "10.chs"
-      },
-      "11": {
-        "raw_date": "October 25, 1941",
-        "normalized_date": "1941-10-25",
-        "mission_file": "11.chs"
-      },
-      "12": {
-        "raw_date": "October 27, 1941",
-        "normalized_date": "1941-10-27",
-        "mission_file": "12.chs"
-      },
-      "13": {
-        "raw_date": "October 28, 1941",
-        "normalized_date": "1941-10-28",
-        "mission_file": "13.chs"
-      },
-      "14": {
-        "raw_date": "October 29, 1941",
-        "normalized_date": "1941-10-29",
-        "mission_file": "14.chs"
-      },
-      "15": {
-        "raw_date": "October 29, 1941",
-        "normalized_date": "1941-10-29",
-        "mission_file": "15.chs"
-      }
-    }
-  },
-  "fortressonthevolga": {
-    "campaign_name": "fortressonthevolga",
-    "country": "Germany",
-    "is_stock": true,
-    "starting_rank_offset": 0,
-    "mission_count": 15,
-    "missions": {
-      "01": {
-        "raw_date": "September 24, 1942",
-        "normalized_date": "1942-09-24",
-        "mission_file": "01.chs"
-      },
-      "02": {
-        "raw_date": "September 24, 1942",
-        "normalized_date": "1942-09-24",
-        "mission_file": "02.chs"
-      },
-      "03": {
-        "raw_date": "September 25, 1942",
-        "normalized_date": "1942-09-25",
-        "mission_file": "03.chs"
-      },
-      "04": {
-        "raw_date": "September 26, 1942",
-        "normalized_date": "1942-09-26",
-        "mission_file": "04.chs"
-      },
-      "05": {
-        "raw_date": "September 27, 1942",
-        "normalized_date": "1942-09-27",
-        "mission_file": "05.chs"
-      },
-      "06": {
-        "raw_date": "September 27, 1942",
-        "normalized_date": "1942-09-27",
-        "mission_file": "06.chs"
-      },
-      "07": {
-        "raw_date": "September 28, 1942",
-        "normalized_date": "1942-09-28",
-        "mission_file": "07.chs"
-      },
-      "08": {
-        "raw_date": "September 28, 1942",
-        "normalized_date": "1942-09-28",
-        "mission_file": "08.chs"
-      },
-      "09": {
-        "raw_date": "September 29, 1942",
-        "normalized_date": "1942-09-29",
-        "mission_file": "09.chs"
-      },
-      "10": {
-        "raw_date": "September 30, 1942",
-        "normalized_date": "1942-09-30",
-        "mission_file": "10.chs"
-      },
-      "11": {
-        "raw_date": "October 02, 1942",
-        "normalized_date": "1942-10-02",
-        "mission_file": "11.chs"
-      },
-      "12": {
-        "raw_date": "October 05, 1942",
-        "normalized_date": "1942-10-05",
-        "mission_file": "12.chs"
-      },
-      "13": {
-        "raw_date": "October 07, 1942",
-        "normalized_date": "1942-10-07",
-        "mission_file": "13.chs"
-      },
-      "14": {
-        "raw_date": "October 08, 1942",
-        "normalized_date": "1942-10-08",
-        "mission_file": "14.chs"
-      },
-      "15": {
-        "raw_date": "October 10, 1942",
-        "normalized_date": "1942-10-10",
-        "mission_file": "15.chs"
-      }
     },
     "excluded": null,
     "exclusion_reason": null
   },
-  "ironwind": {
-    "campaign_name": "ironwind",
-    "country": "Soviet Union",
-    "is_stock": true,
-    "starting_rank_offset": 0,
-    "mission_count": 15,
-    "missions": {
-      "01": {
-        "raw_date": "August 24, 1942",
-        "normalized_date": "1942-08-24",
-        "mission_file": "01.chs"
-      },
-      "02": {
-        "raw_date": "August 24, 1942",
-        "normalized_date": "1942-08-24",
-        "mission_file": "02.chs"
-      },
-      "03": {
-        "raw_date": "August 25, 1942",
-        "normalized_date": "1942-08-25",
-        "mission_file": "03.chs"
-      },
-      "04": {
-        "raw_date": "August 26, 1942",
-        "normalized_date": "1942-08-26",
-        "mission_file": "04.chs"
-      },
-      "05": {
-        "raw_date": "August 27, 1942",
-        "normalized_date": "1942-08-27",
-        "mission_file": "05.chs"
-      },
-      "06": {
-        "raw_date": "September 7, 1942",
-        "normalized_date": "1942-09-07",
-        "mission_file": "06.chs"
-      },
-      "07": {
-        "raw_date": "September 12, 1942",
-        "normalized_date": "1942-09-12",
-        "mission_file": "07.chs"
-      },
-      "08": {
-        "raw_date": "September 12, 1942",
-        "normalized_date": "1942-09-12",
-        "mission_file": "08.chs"
-      },
-      "09": {
-        "raw_date": "September 15, 1942",
-        "normalized_date": "1942-09-15",
-        "mission_file": "09.chs"
-      },
-      "10": {
-        "raw_date": "September 16, 1942",
-        "normalized_date": "1942-09-16",
-        "mission_file": "10.chs"
-      },
-      "11": {
-        "raw_date": "October 8, 1942",
-        "normalized_date": "1942-10-08",
-        "mission_file": "11.chs"
-      },
-      "12": {
-        "raw_date": "October 13, 1942",
-        "normalized_date": "1942-10-13",
-        "mission_file": "12.chs"
-      },
-      "13": {
-        "raw_date": "October 16, 1942",
-        "normalized_date": "1942-10-16",
-        "mission_file": "13.chs"
-      },
-      "14": {
-        "raw_date": "October 25, 1942",
-        "normalized_date": "1942-10-25",
-        "mission_file": "14.chs"
-      },
-      "15": {
-        "raw_date": "October 28, 1942",
-        "normalized_date": "1942-10-28",
-        "mission_file": "15.chs"
-      }
-    },
-    "excluded": null,
-    "exclusion_reason": null
-  },
-  "griffons": {
-    "campaign_name": "griffons",
-    "country": "Britain",
-    "is_stock": true,
-    "starting_rank_offset": 0,
-    "mission_count": 10,
-    "missions": {
-      "01": {
-        "raw_date": "January 1, 1945",
-        "normalized_date": "1945-01-01",
-        "mission_file": "01.eng"
-      },
-      "02": {
-        "raw_date": "January 5, 1945",
-        "normalized_date": "1945-01-05",
-        "mission_file": "02.eng"
-      },
-      "03": {
-        "raw_date": "January 14, 1945",
-        "normalized_date": "1945-01-14",
-        "mission_file": "03.eng"
-      },
-      "04": {
-        "raw_date": "January 16, 1945",
-        "normalized_date": "1945-01-16",
-        "mission_file": "04.eng"
-      },
-      "05": {
-        "raw_date": "January 22, 1945",
-        "normalized_date": "1945-01-22",
-        "mission_file": "05.eng"
-      },
-      "06": {
-        "raw_date": "January 27, 1945",
-        "normalized_date": "1945-01-27",
-        "mission_file": "06.eng"
-      },
-      "07": {
-        "raw_date": "February 10, 1945",
-        "normalized_date": "1945-02-10",
-        "mission_file": "07.eng"
-      },
-      "08": {
-        "raw_date": "February 13, 1945",
-        "normalized_date": "1945-02-13",
-        "mission_file": "08.eng"
-      },
-      "09": {
-        "raw_date": "February 14, 1945",
-        "normalized_date": "1945-02-14",
-        "mission_file": "09.eng"
-      },
-      "10": {
-        "raw_date": "February 21, 1945",
-        "normalized_date": "1945-02-21",
-        "mission_file": "10.eng"
-      }
-    },
-    "excluded": null,
-    "exclusion_reason": null
-  },
-  "Current-Luftwaffe-Campaign": {
-    "campaign_name": "Current-Luftwaffe-Campaign",
+  "Test": {
+    "campaign_name": "Test",
     "country": "Germany",
     "is_stock": true,
     "starting_rank_offset": 0,
-    "mission_count": 4,
+    "mission_count": 2,
     "missions": {
-      "1941-07-02b-Current Campaign II JG77 BF109-E4B": {
-        "raw_date": "2.7.1941",
-        "normalized_date": "2.7.1941",
-        "mission_file": "1941-07-02b-Current Campaign II JG77 BF109-E4B.eng"
+      "01-move to lechelle": {
+        "raw_date": "Tuesday, March 26th",
+        "normalized_date": "Tuesday March 26",
+        "mission_file": "01-move to lechelle.eng"
       },
-      "1941-07-03a-Current Campaign II JG77 BF109-E4B": {
-        "raw_date": "3.7.1941",
-        "normalized_date": "3.7.1941",
-        "mission_file": "1941-07-03a-Current Campaign II JG77 BF109-E4B.eng"
-      },
-      "1941-07-04a-Current Campaign II JG77 BF109-E4B": {
-        "raw_date": "4.7.1941",
-        "normalized_date": "4.7.1941",
-        "mission_file": "1941-07-04a-Current Campaign II JG77 BF109-E4B.eng"
-      },
-      "1941-07-05a-Current Campaign II JG77 BF109-E4B": {
-        "raw_date": "5.7.1941",
-        "normalized_date": "5.7.1941",
-        "mission_file": "1941-07-05a-Current Campaign II JG77 BF109-E4B.eng"
+      "02-balloon hunting": {
+        "raw_date": "Tuesday, March 26th",
+        "normalized_date": "Tuesday March 26",
+        "mission_file": "02-balloon hunting.eng"
       }
-    }
+    },
+    "excluded": null,
+    "exclusion_reason": null
   },
   "spitfire": {
     "campaign_name": "spitfire",
@@ -1905,62 +1359,128 @@
     "excluded": null,
     "exclusion_reason": null
   },
-  "wingsovercaen": {
-    "campaign_name": "wingsovercaen",
-    "country": "Britain",
+  "Downfall": {
+    "campaign_name": "Downfall",
+    "country": "Germany",
     "is_stock": true,
     "starting_rank_offset": 0,
-    "mission_count": 10,
+    "mission_count": 9,
+    "missions": {
+      "01-Mission 1c": {
+        "raw_date": "March 1st, 1945",
+        "normalized_date": "1945-03-01",
+        "mission_file": "01-Mission 1c.eng"
+      },
+      "02-Mission": {
+        "raw_date": "March 2st, 1945",
+        "normalized_date": "1945-03-02",
+        "mission_file": "02-Mission.eng"
+      },
+      "03-Mission 3": {
+        "raw_date": "March 5th, 1945",
+        "normalized_date": "1945-03-05",
+        "mission_file": "03-Mission 3.eng"
+      },
+      "04-Mission 4": {
+        "raw_date": "March 5th, 1945",
+        "normalized_date": "1945-03-05",
+        "mission_file": "04-Mission 4.eng"
+      },
+      "05-Mission 5": {
+        "raw_date": "March 6th, 1945",
+        "normalized_date": "1945-03-06",
+        "mission_file": "05-Mission 5.eng"
+      },
+      "06-Mission 6": {
+        "raw_date": "March 9th, 1945",
+        "normalized_date": "1945-03-09",
+        "mission_file": "06-Mission 6.eng"
+      },
+      "07-Mission 7b": {
+        "raw_date": "March 13th, 1945",
+        "normalized_date": "1945-03-13",
+        "mission_file": "07-Mission 7b.eng"
+      },
+      "08-Mission 8": {
+        "raw_date": "March 14th, 1945",
+        "normalized_date": "1945-03-14",
+        "mission_file": "08-Mission 8.eng"
+      },
+      "09-Mission 9": {
+        "raw_date": "March 24th, 1945",
+        "normalized_date": "1945-03-24",
+        "mission_file": "09-Mission 9.eng"
+      }
+    },
+    "excluded": null,
+    "exclusion_reason": null
+  },
+  "JG51 Rzhev": {
+    "campaign_name": "JG51 Rzhev",
+    "country": "Germany",
+    "is_stock": true,
+    "starting_rank_offset": 0,
+    "mission_count": 12,
     "missions": {
       "01": {
-        "raw_date": "June 27, 1944",
-        "normalized_date": "1944-06-27",
+        "raw_date": "26 November 1942",
+        "normalized_date": "1942-11-26",
         "mission_file": "01.eng"
       },
       "02": {
-        "raw_date": "June 29, 1944",
-        "normalized_date": "1944-06-29",
+        "raw_date": "28 November 1942",
+        "normalized_date": "1942-11-28",
         "mission_file": "02.eng"
       },
       "03": {
-        "raw_date": "July 4, 1944",
-        "normalized_date": "1944-07-04",
+        "raw_date": "29 November 1942",
+        "normalized_date": "1942-11-29",
         "mission_file": "03.eng"
       },
       "04": {
-        "raw_date": "July 8, 1944",
-        "normalized_date": "1944-07-08",
+        "raw_date": "4 December 1942",
+        "normalized_date": "1942-12-04",
         "mission_file": "04.eng"
       },
       "05": {
-        "raw_date": "July 10, 1944",
-        "normalized_date": "1944-07-10",
+        "raw_date": "4 December 1942",
+        "normalized_date": "1942-12-04",
         "mission_file": "05.eng"
       },
       "06": {
-        "raw_date": "July 14, 1944",
-        "normalized_date": "1944-07-14",
+        "raw_date": "6 December 1942",
+        "normalized_date": "1942-12-06",
         "mission_file": "06.eng"
       },
       "07": {
-        "raw_date": "July 17, 1944",
-        "normalized_date": "1944-07-17",
+        "raw_date": "8 December 1942",
+        "normalized_date": "1942-12-08",
         "mission_file": "07.eng"
       },
       "08": {
-        "raw_date": "July 18, 1944",
-        "normalized_date": "1944-07-18",
+        "raw_date": "8 December 1942",
+        "normalized_date": "1942-12-08",
         "mission_file": "08.eng"
       },
       "09": {
-        "raw_date": "July 25, 1944",
-        "normalized_date": "1944-07-25",
+        "raw_date": "10 December 1942",
+        "normalized_date": "1942-12-10",
         "mission_file": "09.eng"
       },
       "10": {
-        "raw_date": "July 27, 1944",
-        "normalized_date": "1944-07-27",
+        "raw_date": "14 December 1942",
+        "normalized_date": "1942-12-14",
         "mission_file": "10.eng"
+      },
+      "11": {
+        "raw_date": "16 December 1942",
+        "normalized_date": "1942-12-16",
+        "mission_file": "11.eng"
+      },
+      "12": {
+        "raw_date": "17 December 1942",
+        "normalized_date": "1942-12-17",
+        "mission_file": "12.eng"
       }
     },
     "excluded": null,
@@ -2027,163 +1547,341 @@
     "excluded": null,
     "exclusion_reason": null
   },
-  "havoc": {
-    "campaign_name": "havoc",
-    "country": "Soviet Union",
+  "wingsovercaen": {
+    "campaign_name": "wingsovercaen",
+    "country": "Britain",
     "is_stock": true,
     "starting_rank_offset": 0,
-    "mission_count": 16,
+    "mission_count": 10,
     "missions": {
       "01": {
-        "raw_date": "September 3rd 1942",
-        "normalized_date": "1942-09-03",
-        "mission_file": "01.chs"
+        "raw_date": "June 27, 1944",
+        "normalized_date": "1944-06-27",
+        "mission_file": "01.eng"
       },
       "02": {
-        "raw_date": "September 4th 1942",
-        "normalized_date": "1942-09-04",
-        "mission_file": "02.chs"
+        "raw_date": "June 29, 1944",
+        "normalized_date": "1944-06-29",
+        "mission_file": "02.eng"
       },
       "03": {
-        "raw_date": "September 4th 1942",
-        "normalized_date": "1942-09-04",
-        "mission_file": "03.chs"
+        "raw_date": "July 4, 1944",
+        "normalized_date": "1944-07-04",
+        "mission_file": "03.eng"
       },
       "04": {
-        "raw_date": "September 5th 1942",
-        "normalized_date": "1942-09-05",
-        "mission_file": "04.chs"
+        "raw_date": "July 8, 1944",
+        "normalized_date": "1944-07-08",
+        "mission_file": "04.eng"
       },
       "05": {
-        "raw_date": "September 7th 1942",
-        "normalized_date": "1942-09-07",
-        "mission_file": "05.chs"
+        "raw_date": "July 10, 1944",
+        "normalized_date": "1944-07-10",
+        "mission_file": "05.eng"
       },
       "06": {
-        "raw_date": "September 12th 1942",
-        "normalized_date": "1942-09-12",
-        "mission_file": "06.chs"
+        "raw_date": "July 14, 1944",
+        "normalized_date": "1944-07-14",
+        "mission_file": "06.eng"
       },
       "07": {
-        "raw_date": "September 13th, 1942",
-        "normalized_date": "1942-09-13",
-        "mission_file": "07.chs"
+        "raw_date": "July 17, 1944",
+        "normalized_date": "1944-07-17",
+        "mission_file": "07.eng"
       },
       "08": {
-        "raw_date": "Sept 14th, 1942",
-        "normalized_date": "1942-09-14",
-        "mission_file": "08.chs"
+        "raw_date": "July 18, 1944",
+        "normalized_date": "1944-07-18",
+        "mission_file": "08.eng"
       },
       "09": {
-        "raw_date": "Sept 15th, 1942",
-        "normalized_date": "1942-09-15",
-        "mission_file": "09.chs"
+        "raw_date": "July 25, 1944",
+        "normalized_date": "1944-07-25",
+        "mission_file": "09.eng"
       },
       "10": {
-        "raw_date": "Sept 17th, 1942",
-        "normalized_date": "1942-09-17",
-        "mission_file": "10.chs"
-      },
-      "11": {
-        "raw_date": "Sept 18th, 1942",
-        "normalized_date": "1942-09-18",
-        "mission_file": "11.chs"
-      },
-      "12": {
-        "raw_date": "Sept 20th, 1942",
-        "normalized_date": "1942-09-20",
-        "mission_file": "12.chs"
-      },
-      "13": {
-        "raw_date": "Sept 21st, 1942",
-        "normalized_date": "1942-09-21",
-        "mission_file": "13.chs"
-      },
-      "14": {
-        "raw_date": "Oct 23rd, 1942",
-        "normalized_date": "1942-10-23",
-        "mission_file": "14.chs"
-      },
-      "15": {
-        "raw_date": "Oct 27th, 1942",
-        "normalized_date": "1942-10-27",
-        "mission_file": "15.chs"
-      },
-      "16": {
-        "raw_date": "Oct 28th, 1942",
-        "normalized_date": "1942-10-28",
-        "mission_file": "16.chs"
+        "raw_date": "July 27, 1944",
+        "normalized_date": "1944-07-27",
+        "mission_file": "10.eng"
       }
     },
     "excluded": null,
     "exclusion_reason": null
   },
-  "wildmustangs": {
-    "campaign_name": "wildmustangs",
-    "country": "USA",
+  "hornets": {
+    "campaign_name": "hornets",
+    "country": "Germany",
     "is_stock": true,
     "starting_rank_offset": 0,
-    "mission_count": 12,
+    "mission_count": 13,
     "missions": {
       "01": {
-        "raw_date": "Thursday, March 22nd, 1945",
-        "normalized_date": "Thursday March 22 1945",
-        "mission_file": "01.eng"
+        "raw_date": "June 6, 1943",
+        "normalized_date": "1943-06-06",
+        "mission_file": "01_hornets.chs"
       },
       "02": {
-        "raw_date": "Saturday, March 24th, 1945",
-        "normalized_date": "Saturday March 24 1945",
-        "mission_file": "02.eng"
+        "raw_date": "June 21, 1943",
+        "normalized_date": "1943-06-21",
+        "mission_file": "02_hornets.chs"
       },
       "03": {
-        "raw_date": "Sunday, March 25th, 1945",
-        "normalized_date": "Sunday March 25 1945",
-        "mission_file": "03.eng"
+        "raw_date": "July 13, 1943",
+        "normalized_date": "1943-07-13",
+        "mission_file": "03_hornets.chs"
       },
       "04": {
-        "raw_date": "Wednesday, March 28th, 1945",
-        "normalized_date": "Wednesday March 28 1945",
-        "mission_file": "04.eng"
+        "raw_date": "October 1, 1943",
+        "normalized_date": "1943-10-01",
+        "mission_file": "04_hornets.chs"
       },
       "05": {
-        "raw_date": "Friday, March 30th, 1945",
-        "normalized_date": "Friday March 30 1945",
-        "mission_file": "05.eng"
+        "raw_date": "October 24, 1943",
+        "normalized_date": "1943-10-24",
+        "mission_file": "05_hornets.chs"
       },
       "06": {
-        "raw_date": "Saturday, March 31st, 1945",
-        "normalized_date": "Saturday March 31 1945",
-        "mission_file": "06.eng"
+        "raw_date": "January 21, 1944",
+        "normalized_date": "1944-01-21",
+        "mission_file": "06_hornets.chs"
       },
       "07": {
-        "raw_date": "Saturday, April 7th, 1945",
-        "normalized_date": "Saturday April 7 1945",
-        "mission_file": "07.eng"
+        "raw_date": "April 22, 1944",
+        "normalized_date": "1944-04-22",
+        "mission_file": "07_hornets.chs"
       },
       "08": {
-        "raw_date": "Sunday, April 8th, 1945",
-        "normalized_date": "Sunday April 8 1945",
-        "mission_file": "08.eng"
+        "raw_date": "June 3, 1944",
+        "normalized_date": "1944-06-03",
+        "mission_file": "08_hornets.chs"
       },
       "09": {
-        "raw_date": "Monday, April 9th, 1945",
-        "normalized_date": "Monday April 9 1945",
-        "mission_file": "09.eng"
+        "raw_date": "June 6, 1944",
+        "normalized_date": "1944-06-06",
+        "mission_file": "09_hornets.chs"
       },
       "10": {
-        "raw_date": "Wednesday, April 11th, 1945",
-        "normalized_date": "Wednesday April 11 1945",
-        "mission_file": "10.eng"
+        "raw_date": "June 7, 1944",
+        "normalized_date": "1944-06-07",
+        "mission_file": "10_hornets.chs"
       },
       "11": {
-        "raw_date": "Friday, April 20th, 1945",
-        "normalized_date": "Friday April 20 1945",
-        "mission_file": "11.eng"
+        "raw_date": "June 12, 1944",
+        "normalized_date": "1944-06-12",
+        "mission_file": "11_hornets.chs"
       },
       "12": {
-        "raw_date": "Saturday, April 30th, 1945",
-        "normalized_date": "Saturday April 30 1945",
-        "mission_file": "12.eng"
+        "raw_date": "June 16, 1944",
+        "normalized_date": "1944-06-16",
+        "mission_file": "12_hornets.chs"
+      },
+      "13": {
+        "raw_date": "July 5, 1944",
+        "normalized_date": "1944-07-05",
+        "mission_file": "13_hornets.chs"
+      }
+    },
+    "excluded": null,
+    "exclusion_reason": null
+  },
+  "blazingsteppe": {
+    "campaign_name": "blazingsteppe",
+    "country": "Soviet Union",
+    "is_stock": true,
+    "starting_rank_offset": 0,
+    "mission_count": 15,
+    "missions": {
+      "01": {
+        "raw_date": "August 28, 1942",
+        "normalized_date": "1942-08-28",
+        "mission_file": "01.chs"
+      },
+      "02": {
+        "raw_date": "August 28, 1942",
+        "normalized_date": "1942-08-28",
+        "mission_file": "02.chs"
+      },
+      "03": {
+        "raw_date": "August 29, 1942",
+        "normalized_date": "1942-08-29",
+        "mission_file": "03.chs"
+      },
+      "04": {
+        "raw_date": "August 30, 1942",
+        "normalized_date": "1942-08-30",
+        "mission_file": "04.chs"
+      },
+      "05": {
+        "raw_date": "August 31, 1942",
+        "normalized_date": "1942-08-31",
+        "mission_file": "05.chs"
+      },
+      "06": {
+        "raw_date": "September 1, 1942",
+        "normalized_date": "1942-09-01",
+        "mission_file": "06.chs"
+      },
+      "07": {
+        "raw_date": "September 4, 1942",
+        "normalized_date": "1942-09-04",
+        "mission_file": "07.chs"
+      },
+      "08": {
+        "raw_date": "September 5, 1942",
+        "normalized_date": "1942-09-05",
+        "mission_file": "08.chs"
+      },
+      "09": {
+        "raw_date": "September 6, 1942",
+        "normalized_date": "1942-09-06",
+        "mission_file": "09.chs"
+      },
+      "10": {
+        "raw_date": "September 6, 1942",
+        "normalized_date": "1942-09-06",
+        "mission_file": "10.chs"
+      },
+      "11": {
+        "raw_date": "September 8, 1942",
+        "normalized_date": "1942-09-08",
+        "mission_file": "11.chs"
+      },
+      "12": {
+        "raw_date": "September 9, 1942",
+        "normalized_date": "1942-09-09",
+        "mission_file": "12.chs"
+      },
+      "13": {
+        "raw_date": "September 12, 1942",
+        "normalized_date": "1942-09-12",
+        "mission_file": "13.chs"
+      },
+      "14": {
+        "raw_date": "September 12, 1942",
+        "normalized_date": "1942-09-12",
+        "mission_file": "14.chs"
+      },
+      "15": {
+        "raw_date": "September 13, 1942",
+        "normalized_date": "1942-09-13",
+        "mission_file": "15.chs"
+      }
+    },
+    "excluded": null,
+    "exclusion_reason": null
+  },
+  "Beginning _IAR80A": {
+    "campaign_name": "Beginning _IAR80A",
+    "country": "Germany",
+    "is_stock": true,
+    "starting_rank_offset": 0,
+    "mission_count": 8,
+    "missions": {
+      "1941-06-22a_The Beginning_IAR80A": {
+        "raw_date": "June 22, 1941",
+        "normalized_date": "1941-06-22",
+        "mission_file": "1941-06-22a_The Beginning_IAR80A.eng"
+      },
+      "1941-06-22b_Beltsy_IAR80A": {
+        "raw_date": "June 22, 1941",
+        "normalized_date": "1941-06-22",
+        "mission_file": "1941-06-22b_Beltsy_IAR80A.eng"
+      },
+      "1941-06-22c_Voronkovo_IAR80A": {
+        "raw_date": "June 22, 1941",
+        "normalized_date": "1941-06-22",
+        "mission_file": "1941-06-22c_Voronkovo_IAR80A.eng"
+      },
+      "1941-06-23a_Beltsy-3_MiG-3": {
+        "raw_date": "June 23, 1941",
+        "normalized_date": "1941-06-23",
+        "mission_file": "1941-06-23a_Beltsy-3_MiG-3.eng"
+      },
+      "1941-06-23b_Florest'_IAR80A": {
+        "raw_date": "June 23, 1941",
+        "normalized_date": "1941-06-23",
+        "mission_file": "1941-06-23b_Florest'_IAR80A.eng"
+      },
+      "1941-06-25a_Sculeni_IAR80A": {
+        "raw_date": "June 25, 1941",
+        "normalized_date": "1941-06-25",
+        "mission_file": "1941-06-25a_Sculeni_IAR80A.eng"
+      },
+      "1941-06-26a_Sculeni_IAR80A": {
+        "raw_date": "June 26, 1941",
+        "normalized_date": "1941-06-26",
+        "mission_file": "1941-06-26a_Sculeni_IAR80A.eng"
+      },
+      "1941-07-01_Falesht'_IAR80A": {
+        "raw_date": "July 1, 1941",
+        "normalized_date": "1941-07-01",
+        "mission_file": "1941-07-01_Falesht'_IAR80A.eng"
+      }
+    },
+    "excluded": null,
+    "exclusion_reason": null
+  },
+  "Battle for the Don Bend": {
+    "campaign_name": "Battle for the Don Bend",
+    "country": "Soviet Union",
+    "is_stock": true,
+    "starting_rank_offset": 0,
+    "mission_count": 11,
+    "missions": {
+      "01_July15_Bokovskaya_Hurricane": {
+        "raw_date": "July 15, 1942",
+        "normalized_date": "1942-07-15",
+        "mission_file": "01_July15_Bokovskaya_Hurricane.eng"
+      },
+      "02_July19_Pronin_Hurricane": {
+        "raw_date": "July 19, 1942",
+        "normalized_date": "1942-07-19",
+        "mission_file": "02_July19_Pronin_Hurricane.eng"
+      },
+      "03_July22_Perelazovsky_Hurricane": {
+        "raw_date": "July 22, 1942",
+        "normalized_date": "1942-07-22",
+        "mission_file": "03_July22_Perelazovsky_Hurricane.eng"
+      },
+      "04_July22_Zimovskoy_Hurricane": {
+        "raw_date": "July 22, 1942",
+        "normalized_date": "1942-07-22",
+        "mission_file": "04_July22_Zimovskoy_Hurricane.eng"
+      },
+      "05_July24_Platonov_Hurricane": {
+        "raw_date": "July 24, 1942",
+        "normalized_date": "1942-07-24",
+        "mission_file": "05_July24_Platonov_Hurricane.eng"
+      },
+      "06_July26_Ventsy_Hurricane": {
+        "raw_date": "July 26, 1942",
+        "normalized_date": "1942-07-26",
+        "mission_file": "06_July26_Ventsy_Hurricane.eng"
+      },
+      "07_July27_Mayorovsky_Hurricane": {
+        "raw_date": "July 27, 1942",
+        "normalized_date": "1942-07-27",
+        "mission_file": "07_July27_Mayorovsky_Hurricane.eng"
+      },
+      "08_July28_Erik_Hurricane": {
+        "raw_date": "July 28, 1942",
+        "normalized_date": "1942-07-28",
+        "mission_file": "08_July28_Erik_Hurricane.eng"
+      },
+      "09_July29_VerkhneBuzinovka_Hurricane": {
+        "raw_date": "July 29, 1942",
+        "normalized_date": "1942-07-29",
+        "mission_file": "09_July29_VerkhneBuzinovka_Hurricane.eng"
+      },
+      "10_Aug15_Kamyshinsky_Hurricane": {
+        "raw_date": "August 15, 1942",
+        "normalized_date": "1942-08-15",
+        "mission_file": "10_Aug15_Kamyshinsky_Hurricane.eng"
+      },
+      "11_Aug16_Sirotinskaya_Hurricane": {
+        "raw_date": "August 16, 1942",
+        "normalized_date": "1942-08-16",
+        "mission_file": "11_Aug16_Sirotinskaya_Hurricane.eng"
       }
     },
     "excluded": null,
@@ -2325,201 +2023,122 @@
     "excluded": null,
     "exclusion_reason": null
   },
-  "Battle for the Don Bend": {
-    "campaign_name": "Battle for the Don Bend",
-    "country": "Soviet Union",
+  "Current-Luftwaffe-Campaign": {
+    "campaign_name": "Current-Luftwaffe-Campaign",
+    "country": "Germany",
     "is_stock": true,
     "starting_rank_offset": 0,
-    "mission_count": 11,
+    "mission_count": 4,
     "missions": {
-      "01_July15_Bokovskaya_Hurricane": {
-        "raw_date": "July 15, 1942",
-        "normalized_date": "1942-07-15",
-        "mission_file": "01_July15_Bokovskaya_Hurricane.eng"
+      "1941-07-02b-Current Campaign II JG77 BF109-E4B": {
+        "raw_date": "2.7.1941",
+        "normalized_date": "2.7.1941",
+        "mission_file": "1941-07-02b-Current Campaign II JG77 BF109-E4B.eng"
       },
-      "02_July19_Pronin_Hurricane": {
-        "raw_date": "July 19, 1942",
-        "normalized_date": "1942-07-19",
-        "mission_file": "02_July19_Pronin_Hurricane.eng"
+      "1941-07-03a-Current Campaign II JG77 BF109-E4B": {
+        "raw_date": "3.7.1941",
+        "normalized_date": "3.7.1941",
+        "mission_file": "1941-07-03a-Current Campaign II JG77 BF109-E4B.eng"
       },
-      "03_July22_Perelazovsky_Hurricane": {
-        "raw_date": "July 22, 1942",
-        "normalized_date": "1942-07-22",
-        "mission_file": "03_July22_Perelazovsky_Hurricane.eng"
+      "1941-07-04a-Current Campaign II JG77 BF109-E4B": {
+        "raw_date": "4.7.1941",
+        "normalized_date": "4.7.1941",
+        "mission_file": "1941-07-04a-Current Campaign II JG77 BF109-E4B.eng"
       },
-      "04_July22_Zimovskoy_Hurricane": {
-        "raw_date": "July 22, 1942",
-        "normalized_date": "1942-07-22",
-        "mission_file": "04_July22_Zimovskoy_Hurricane.eng"
-      },
-      "05_July24_Platonov_Hurricane": {
-        "raw_date": "July 24, 1942",
-        "normalized_date": "1942-07-24",
-        "mission_file": "05_July24_Platonov_Hurricane.eng"
-      },
-      "06_July26_Ventsy_Hurricane": {
-        "raw_date": "July 26, 1942",
-        "normalized_date": "1942-07-26",
-        "mission_file": "06_July26_Ventsy_Hurricane.eng"
-      },
-      "07_July27_Mayorovsky_Hurricane": {
-        "raw_date": "July 27, 1942",
-        "normalized_date": "1942-07-27",
-        "mission_file": "07_July27_Mayorovsky_Hurricane.eng"
-      },
-      "08_July28_Erik_Hurricane": {
-        "raw_date": "July 28, 1942",
-        "normalized_date": "1942-07-28",
-        "mission_file": "08_July28_Erik_Hurricane.eng"
-      },
-      "09_July29_VerkhneBuzinovka_Hurricane": {
-        "raw_date": "July 29, 1942",
-        "normalized_date": "1942-07-29",
-        "mission_file": "09_July29_VerkhneBuzinovka_Hurricane.eng"
-      },
-      "10_Aug15_Kamyshinsky_Hurricane": {
-        "raw_date": "August 15, 1942",
-        "normalized_date": "1942-08-15",
-        "mission_file": "10_Aug15_Kamyshinsky_Hurricane.eng"
-      },
-      "11_Aug16_Sirotinskaya_Hurricane": {
-        "raw_date": "August 16, 1942",
-        "normalized_date": "1942-08-16",
-        "mission_file": "11_Aug16_Sirotinskaya_Hurricane.eng"
-      }
-    }
-  },
-  "hurtgen": {
-    "campaign_name": "hurtgen",
-    "country": "USA",
-    "is_stock": true,
-    "starting_rank_offset": 0,
-    "mission_count": 10,
-    "missions": {
-      "01": {
-        "raw_date": "October 6, 1944, 0945 hours.",
-        "normalized_date": "October 6 1944 0945 hours.",
-        "mission_file": "01.eng"
-      },
-      "02": {
-        "raw_date": null,
-        "normalized_date": null,
-        "mission_file": "02.eng"
-      },
-      "03": {
-        "raw_date": "November 2, 1944, 1430 hours.",
-        "normalized_date": "November 2 1944 1430 hours.",
-        "mission_file": "03.eng"
-      },
-      "04": {
-        "raw_date": "November 5, 1944, 0800 hours.",
-        "normalized_date": "November 5 1944 0800 hours.",
-        "mission_file": "04.eng"
-      },
-      "05": {
-        "raw_date": "November 11, 1944, 1700 hours.",
-        "normalized_date": "November 11 1944 1700 hours.",
-        "mission_file": "05.eng"
-      },
-      "06": {
-        "raw_date": "November 16, 1944, 1105 hours.",
-        "normalized_date": "November 16 1944 1105 hours.",
-        "mission_file": "06.eng"
-      },
-      "07": {
-        "raw_date": "November 25, 1944, 1350 hours.",
-        "normalized_date": "November 25 1944 1350 hours.",
-        "mission_file": "07.eng"
-      },
-      "08": {
-        "raw_date": "November 27, 1944, 1430 hours.",
-        "normalized_date": "November 27 1944 1430 hours.",
-        "mission_file": "08.eng"
-      },
-      "09": {
-        "raw_date": "December 4, 1944, 1430 hours.",
-        "normalized_date": "December 4 1944 1430 hours.",
-        "mission_file": "09.eng"
-      },
-      "10": {
-        "raw_date": "December 6, 1944, 1130 hours.",
-        "normalized_date": "December 6 1944 1130 hours.",
-        "mission_file": "10.eng"
+      "1941-07-05a-Current Campaign II JG77 BF109-E4B": {
+        "raw_date": "5.7.1941",
+        "normalized_date": "5.7.1941",
+        "mission_file": "1941-07-05a-Current Campaign II JG77 BF109-E4B.eng"
       }
     },
     "excluded": null,
     "exclusion_reason": null
   },
-  "Beginning _IAR80A": {
-    "campaign_name": "Beginning _IAR80A",
+  "10daysofautumn": {
+    "campaign_name": "10daysofautumn",
     "country": "Germany",
     "is_stock": true,
     "starting_rank_offset": 0,
-    "mission_count": 8,
+    "mission_count": 15,
     "missions": {
-      "1941-06-22a_The Beginning_IAR80A": {
-        "raw_date": "June 22, 1941",
-        "normalized_date": "1941-06-22",
-        "mission_file": "1941-06-22a_The Beginning_IAR80A.eng"
+      "01": {
+        "raw_date": "October 19, 1941",
+        "normalized_date": "1941-10-19",
+        "mission_file": "01.chs"
       },
-      "1941-06-22b_Beltsy_IAR80A": {
-        "raw_date": "June 22, 1941",
-        "normalized_date": "1941-06-22",
-        "mission_file": "1941-06-22b_Beltsy_IAR80A.eng"
+      "02": {
+        "raw_date": "October 21, 1941",
+        "normalized_date": "1941-10-21",
+        "mission_file": "02.chs"
       },
-      "1941-06-22c_Voronkovo_IAR80A": {
-        "raw_date": "June 22, 1941",
-        "normalized_date": "1941-06-22",
-        "mission_file": "1941-06-22c_Voronkovo_IAR80A.eng"
+      "03": {
+        "raw_date": "October 21, 1941",
+        "normalized_date": "1941-10-21",
+        "mission_file": "03.chs"
       },
-      "1941-06-23a_Beltsy-3_MiG-3": {
-        "raw_date": "June 23, 1941",
-        "normalized_date": "1941-06-23",
-        "mission_file": "1941-06-23a_Beltsy-3_MiG-3.eng"
+      "04": {
+        "raw_date": "October 21, 1941",
+        "normalized_date": "1941-10-21",
+        "mission_file": "04.chs"
       },
-      "1941-06-23b_Florest'_IAR80A": {
-        "raw_date": "June 23, 1941",
-        "normalized_date": "1941-06-23",
-        "mission_file": "1941-06-23b_Florest'_IAR80A.eng"
+      "05": {
+        "raw_date": "October 22, 1941",
+        "normalized_date": "1941-10-22",
+        "mission_file": "05.chs"
       },
-      "1941-06-25a_Sculeni_IAR80A": {
-        "raw_date": "June 25, 1941",
-        "normalized_date": "1941-06-25",
-        "mission_file": "1941-06-25a_Sculeni_IAR80A.eng"
+      "06": {
+        "raw_date": "October 22, 1941",
+        "normalized_date": "1941-10-22",
+        "mission_file": "06.chs"
       },
-      "1941-06-26a_Sculeni_IAR80A": {
-        "raw_date": "June 26, 1941",
-        "normalized_date": "1941-06-26",
-        "mission_file": "1941-06-26a_Sculeni_IAR80A.eng"
+      "07": {
+        "raw_date": "October 23, 1941",
+        "normalized_date": "1941-10-23",
+        "mission_file": "07.chs"
       },
-      "1941-07-01_Falesht'_IAR80A": {
-        "raw_date": "July 1, 1941",
-        "normalized_date": "1941-07-01",
-        "mission_file": "1941-07-01_Falesht'_IAR80A.eng"
-      }
-    }
-  },
-  "Test": {
-    "campaign_name": "Test",
-    "country": "Germany",
-    "is_stock": true,
-    "starting_rank_offset": 0,
-    "mission_count": 2,
-    "missions": {
-      "01-move to lechelle": {
-        "raw_date": "Tuesday, March 26th",
-        "normalized_date": "Tuesday March 26",
-        "mission_file": "01-move to lechelle.eng"
+      "08": {
+        "raw_date": "October 23, 1941",
+        "normalized_date": "1941-10-23",
+        "mission_file": "08.chs"
       },
-      "02-balloon hunting": {
-        "raw_date": "Tuesday, March 26th",
-        "normalized_date": "Tuesday March 26",
-        "mission_file": "02-balloon hunting.eng"
+      "09": {
+        "raw_date": "October 24, 1941",
+        "normalized_date": "1941-10-24",
+        "mission_file": "09.chs"
+      },
+      "10": {
+        "raw_date": "October 24, 1941",
+        "normalized_date": "1941-10-24",
+        "mission_file": "10.chs"
+      },
+      "11": {
+        "raw_date": "October 25, 1941",
+        "normalized_date": "1941-10-25",
+        "mission_file": "11.chs"
+      },
+      "12": {
+        "raw_date": "October 27, 1941",
+        "normalized_date": "1941-10-27",
+        "mission_file": "12.chs"
+      },
+      "13": {
+        "raw_date": "October 28, 1941",
+        "normalized_date": "1941-10-28",
+        "mission_file": "13.chs"
+      },
+      "14": {
+        "raw_date": "October 29, 1941",
+        "normalized_date": "1941-10-29",
+        "mission_file": "14.chs"
+      },
+      "15": {
+        "raw_date": "October 29, 1941",
+        "normalized_date": "1941-10-29",
+        "mission_file": "15.chs"
       }
     },
-    "is_ww1": true,
-    "excluded": true,
-    "exclusion_reason": "WW1 (user-marked)"
+    "excluded": null,
+    "exclusion_reason": null
   },
   "skynomads": {
     "campaign_name": "skynomads",
@@ -2602,6 +2221,400 @@
         "raw_date": "June 5, 1943",
         "normalized_date": "1943-06-05",
         "mission_file": "15.chs"
+      }
+    },
+    "excluded": null,
+    "exclusion_reason": null
+  },
+  "hunters": {
+    "campaign_name": "hunters",
+    "country": "Britain",
+    "is_stock": true,
+    "starting_rank_offset": 0,
+    "mission_count": 12,
+    "missions": {
+      "01": {
+        "raw_date": "January 8, 1944",
+        "normalized_date": "1944-01-08",
+        "mission_file": "01_mosquito.chs"
+      },
+      "02": {
+        "raw_date": "February 5, 1944",
+        "normalized_date": "1944-02-05",
+        "mission_file": "02_mosquito.chs"
+      },
+      "03": {
+        "raw_date": "February 18, 1944",
+        "normalized_date": "1944-02-18",
+        "mission_file": "03_mosquito.chs"
+      },
+      "04": {
+        "raw_date": "March 18, 1944",
+        "normalized_date": "1944-03-18",
+        "mission_file": "04_mosquito.chs"
+      },
+      "05": {
+        "raw_date": "April 12, 1944",
+        "normalized_date": "1944-04-12",
+        "mission_file": "05_mosquito.chs"
+      },
+      "06": {
+        "raw_date": "April 15, 1944",
+        "normalized_date": "1944-04-15",
+        "mission_file": "06_mosquito.chs"
+      },
+      "07": {
+        "raw_date": "April 25, 1944",
+        "normalized_date": "1944-04-25",
+        "mission_file": "07_mosquito.chs"
+      },
+      "08": {
+        "raw_date": "May 10, 1944",
+        "normalized_date": "1944-05-10",
+        "mission_file": "08_mosquito.chs"
+      },
+      "09": {
+        "raw_date": "June 6, 1944",
+        "normalized_date": "1944-06-06",
+        "mission_file": "09_mosquito.chs"
+      },
+      "10": {
+        "raw_date": "June 11, 1944",
+        "normalized_date": "1944-06-11",
+        "mission_file": "10_mosquito.chs"
+      },
+      "11": {
+        "raw_date": "June 29, 1944",
+        "normalized_date": "1944-06-29",
+        "mission_file": "11_mosquito.chs"
+      },
+      "12": {
+        "raw_date": "July 14, 1944",
+        "normalized_date": "1944-07-14",
+        "mission_file": "12_mosquito.chs"
+      }
+    },
+    "excluded": null,
+    "exclusion_reason": null
+  },
+  "hurtgen": {
+    "campaign_name": "hurtgen",
+    "country": "USA",
+    "is_stock": true,
+    "starting_rank_offset": 0,
+    "mission_count": 10,
+    "missions": {
+      "01": {
+        "raw_date": "October 6, 1944, 0945 hours.",
+        "normalized_date": "October 6 1944 0945 hours.",
+        "mission_file": "01.eng"
+      },
+      "02": {
+        "raw_date": null,
+        "normalized_date": null,
+        "mission_file": "02.eng"
+      },
+      "03": {
+        "raw_date": "November 2, 1944, 1430 hours.",
+        "normalized_date": "November 2 1944 1430 hours.",
+        "mission_file": "03.eng"
+      },
+      "04": {
+        "raw_date": "November 5, 1944, 0800 hours.",
+        "normalized_date": "November 5 1944 0800 hours.",
+        "mission_file": "04.eng"
+      },
+      "05": {
+        "raw_date": "November 11, 1944, 1700 hours.",
+        "normalized_date": "November 11 1944 1700 hours.",
+        "mission_file": "05.eng"
+      },
+      "06": {
+        "raw_date": "November 16, 1944, 1105 hours.",
+        "normalized_date": "November 16 1944 1105 hours.",
+        "mission_file": "06.eng"
+      },
+      "07": {
+        "raw_date": "November 25, 1944, 1350 hours.",
+        "normalized_date": "November 25 1944 1350 hours.",
+        "mission_file": "07.eng"
+      },
+      "08": {
+        "raw_date": "November 27, 1944, 1430 hours.",
+        "normalized_date": "November 27 1944 1430 hours.",
+        "mission_file": "08.eng"
+      },
+      "09": {
+        "raw_date": "December 4, 1944, 1430 hours.",
+        "normalized_date": "December 4 1944 1430 hours.",
+        "mission_file": "09.eng"
+      },
+      "10": {
+        "raw_date": "December 6, 1944, 1130 hours.",
+        "normalized_date": "December 6 1944 1130 hours.",
+        "mission_file": "10.eng"
+      }
+    },
+    "excluded": null,
+    "exclusion_reason": null
+  },
+  "overlord": {
+    "campaign_name": "overlord",
+    "country": "USA",
+    "is_stock": true,
+    "starting_rank_offset": 0,
+    "mission_count": 15,
+    "missions": {
+      "01": {
+        "raw_date": "June 17,1944",
+        "normalized_date": "June 171944",
+        "mission_file": "01-overlord.chs"
+      },
+      "02": {
+        "raw_date": "June 19,1944",
+        "normalized_date": "June 191944",
+        "mission_file": "02-overlord.chs"
+      },
+      "03": {
+        "raw_date": "June 23,1944",
+        "normalized_date": "June 231944",
+        "mission_file": "03-overlord.chs"
+      },
+      "04": {
+        "raw_date": "June 26,1944",
+        "normalized_date": "June 261944",
+        "mission_file": "04-overlord.chs"
+      },
+      "05": {
+        "raw_date": "June 27,1944",
+        "normalized_date": "June 271944",
+        "mission_file": "05-overlord.chs"
+      },
+      "06": {
+        "raw_date": "June 28,1944",
+        "normalized_date": "June 281944",
+        "mission_file": "06-overlord.chs"
+      },
+      "07": {
+        "raw_date": "June 29,1944",
+        "normalized_date": "June 291944",
+        "mission_file": "07-overlord.chs"
+      },
+      "08": {
+        "raw_date": "July 4,1944",
+        "normalized_date": "July 41944",
+        "mission_file": "08-overlord.chs"
+      },
+      "09": {
+        "raw_date": "July 5,1944",
+        "normalized_date": "July 51944",
+        "mission_file": "09-overlord.chs"
+      },
+      "10": {
+        "raw_date": "July 12,1944",
+        "normalized_date": "July 121944",
+        "mission_file": "10-overlord.chs"
+      },
+      "11": {
+        "raw_date": "07.13.1944",
+        "normalized_date": "07.13.1944",
+        "mission_file": "11-overlord.chs"
+      },
+      "12": {
+        "raw_date": "July 16,1944",
+        "normalized_date": "July 161944",
+        "mission_file": "12-overlord.chs"
+      },
+      "13": {
+        "raw_date": "July 25,1944",
+        "normalized_date": "July 251944",
+        "mission_file": "13-overlord.chs"
+      },
+      "14": {
+        "raw_date": "August 3,1944",
+        "normalized_date": "August 31944",
+        "mission_file": "14-overlord.chs"
+      },
+      "15": {
+        "raw_date": "August 7,1944",
+        "normalized_date": "August 71944",
+        "mission_file": "15-overlord.chs"
+      }
+    },
+    "excluded": null,
+    "exclusion_reason": null
+  },
+  "Operation Citadel 1943 II. Sch.G1 FW190-A5": {
+    "campaign_name": "Operation Citadel 1943 II. Sch.G1 FW190-A5",
+    "country": "Germany",
+    "is_stock": true,
+    "starting_rank_offset": 0,
+    "mission_count": 33,
+    "missions": {
+      "1943-07-04a-FW190-A5U17-IISG1": {
+        "raw_date": "4.7.1943",
+        "normalized_date": "4.7.1943",
+        "mission_file": "1943-07-04a-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-05a-FW190-A5U17-IISG1": {
+        "raw_date": "5.7.1943",
+        "normalized_date": "5.7.1943",
+        "mission_file": "1943-07-05a-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-05b-FW190-A5U17-IISG1": {
+        "raw_date": "5.7.1943",
+        "normalized_date": "5.7.1943",
+        "mission_file": "1943-07-05b-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-05c-FW190-A5U17-IISG1": {
+        "raw_date": "5.7.1943",
+        "normalized_date": "5.7.1943",
+        "mission_file": "1943-07-05c-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-06a-FW190-A5U17-IISG1": {
+        "raw_date": "6.7.1943",
+        "normalized_date": "6.7.1943",
+        "mission_file": "1943-07-06a-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-07a-FW190-A5U17-IISG1": {
+        "raw_date": "7.7.1943",
+        "normalized_date": "7.7.1943",
+        "mission_file": "1943-07-07a-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-08a-FW190-A5U17-IISG1": {
+        "raw_date": "8.7.1943",
+        "normalized_date": "8.7.1943",
+        "mission_file": "1943-07-08a-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-09a-FW190-A5U17-IISG1": {
+        "raw_date": "9.7.1943",
+        "normalized_date": "9.7.1943",
+        "mission_file": "1943-07-09a-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-09b-FW190-A5U17-IISG1": {
+        "raw_date": "9.7.1943",
+        "normalized_date": "9.7.1943",
+        "mission_file": "1943-07-09b-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-10a-FW190-A5U17-IISG1": {
+        "raw_date": "10.7.1943",
+        "normalized_date": "10.7.1943",
+        "mission_file": "1943-07-10a-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-10b-FW190-A5U17-IISG1": {
+        "raw_date": "10.7.1943",
+        "normalized_date": "10.7.1943",
+        "mission_file": "1943-07-10b-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-11a-FW190-A5U17-IISG1": {
+        "raw_date": "11.7.1943",
+        "normalized_date": "11.7.1943",
+        "mission_file": "1943-07-11a-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-11b-FW190-A5U17-IISG1": {
+        "raw_date": "11.7.1943",
+        "normalized_date": "11.7.1943",
+        "mission_file": "1943-07-11b-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-12a-FW190-A5U17-IISG1": {
+        "raw_date": "12.7.1943",
+        "normalized_date": "12.7.1943",
+        "mission_file": "1943-07-12a-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-12b-FW190-A5U17-IISG1": {
+        "raw_date": "12.7.1943",
+        "normalized_date": "12.7.1943",
+        "mission_file": "1943-07-12b-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-12c-FW190-A5U17-IISG1": {
+        "raw_date": "12.7.1943",
+        "normalized_date": "12.7.1943",
+        "mission_file": "1943-07-12c-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-12d-FW190-A5U17-IISG1": {
+        "raw_date": "12.7.1943",
+        "normalized_date": "12.7.1943",
+        "mission_file": "1943-07-12d-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-13a-FW190-A5U17-IISG1": {
+        "raw_date": "13.7.1943",
+        "normalized_date": "13.7.1943",
+        "mission_file": "1943-07-13a-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-13b-FW190-A5U17-IISG1": {
+        "raw_date": "13.7.1943",
+        "normalized_date": "13.7.1943",
+        "mission_file": "1943-07-13b-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-14a-FW190-A5U17-IISG1": {
+        "raw_date": "14.7.1943",
+        "normalized_date": "14.7.1943",
+        "mission_file": "1943-07-14a-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-14b-FW190-A5U17-IISG1": {
+        "raw_date": "14.7.1943",
+        "normalized_date": "14.7.1943",
+        "mission_file": "1943-07-14b-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-14c-FW190-A5U17-IISG1": {
+        "raw_date": "14.7.1943",
+        "normalized_date": "14.7.1943",
+        "mission_file": "1943-07-14c-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-15a-FW190-A5U17-IISG1": {
+        "raw_date": "15.7.1943",
+        "normalized_date": "15.7.1943",
+        "mission_file": "1943-07-15a-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-15b-FW190-A5U17-IISG1": {
+        "raw_date": "15.7.1943",
+        "normalized_date": "15.7.1943",
+        "mission_file": "1943-07-15b-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-16a-FW190-A5U17-IISG1": {
+        "raw_date": "16.7.1943",
+        "normalized_date": "16.7.1943",
+        "mission_file": "1943-07-16a-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-16b-FW190-A5U17-IISG1": {
+        "raw_date": "16.7.1943",
+        "normalized_date": "16.7.1943",
+        "mission_file": "1943-07-16b-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-17a-FW190-A5U17-IISG1": {
+        "raw_date": "17.7.1943",
+        "normalized_date": "17.7.1943",
+        "mission_file": "1943-07-17a-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-18a-FW190-A5U17-IISG1": {
+        "raw_date": "18.7.1943",
+        "normalized_date": "18.7.1943",
+        "mission_file": "1943-07-18a-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-19a-FW190-A5U17-IISG1": {
+        "raw_date": "19.7.1943",
+        "normalized_date": "19.7.1943",
+        "mission_file": "1943-07-19a-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-20a-FW190-A5U17-IISG1": {
+        "raw_date": "19.7.1943",
+        "normalized_date": "19.7.1943",
+        "mission_file": "1943-07-20a-FW190-A5U17-IISG1.eng"
+      },
+      "1943-07-20b The Battle is over": {
+        "raw_date": null,
+        "normalized_date": null,
+        "mission_file": "1943-07-20b The Battle is over.eng"
+      },
+      "1945-05-08a-REMINDER-CREATE-NEXT-MISSION": {
+        "raw_date": null,
+        "normalized_date": null,
+        "mission_file": "1945-05-08a-REMINDER-CREATE-NEXT-MISSION.eng"
+      },
+      "1945-05-08b-War_is_over": {
+        "raw_date": null,
+        "normalized_date": null,
+        "mission_file": "1945-05-08b-War_is_over.eng"
       }
     },
     "excluded": null,

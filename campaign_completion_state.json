@@ -1,7 +1,13 @@
 {
   "windoffury": [],
   "hunters": [],
+  "battle for the don bend": [],
+  "current-luftwaffe-campaign": [],
   "ironwind": [],
+  "luftwaffe-ww2-career-40-45": [
+    "1940-10-20a-BoB I JG51-BF109F1-fighter-sweep"
+  ],
+  "test": [],
   "operation citadel 1943 ii. sch.g1 fw190-a5": [],
   "wildmustangs": [],
   "lightning": [],
@@ -9,12 +15,12 @@
   "overlord": [],
   "hornets": [],
   "hawks": [],
+  "beginning _iar80a": [],
   "spitfire": [],
   "wingsovercaen": [],
-  "steelbirds": [
-    "01"
-  ],
+  "steelbirds": [],
   "griffons": [],
+  "kaiserschlacht": [],
   "beginning": [],
   "lastchance": [],
   "kerch": [
@@ -27,8 +33,7 @@
     "07",
     "08",
     "09",
-    "10",
-    "11"
+    "10"
   ],
   "hurtgen": [],
   "seadragons": [],

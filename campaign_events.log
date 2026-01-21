@@ -1,119 +1,414 @@
-[2026-01-20 14:25:55] [step3] AUTO mode     = True
-[2026-01-20 14:25:55] [step3] SHOW_POPUPS   = False
-[2026-01-20 14:25:55] [step3] DRY_RUN       = False
-[2026-01-20 14:25:55] ⚙️ Running in AUTO mode (no user interaction).
-[2026-01-20 14:25:55] i18n initialized with locale: en
-[2026-01-20 14:25:55] [popups] enabled = True
-[2026-01-20 14:25:55] [popups] seen campaigns = 0
-[2026-01-20 14:25:55] [snapshot] No snapshot match found – using newest mission logs
-[2026-01-20 14:25:55]   - Mission log processor initialized
-[2026-01-20 14:25:55] Loaded configuration:
-[2026-01-20 14:25:55]   - 24 campaigns with dates
-[2026-01-20 14:25:55]   - 32 campaigns with save data
-[2026-01-20 14:25:55]   - Game directory: C:\Program Files (x86)\Steam\steamapps\common\IL-2 Sturmovik Battle of Stalingrad
-[2026-01-20 14:25:55] ======================================================================
-[2026-01-20 14:25:55] IL-2 CAMPAIGN EVENTS GENERATOR
-[2026-01-20 14:25:55] ======================================================================
-[2026-01-20 14:25:55] [missions] Reloaded mission dates (24 campaigns)
-[2026-01-20 14:25:55] [popups] Reloaded state: 0 campaigns
-[2026-01-20 14:25:55] [state] No previous state found - first run or state file missing
-[2026-01-20 14:25:55] [state] steelbirds: +1 new mission(s)
-[2026-01-20 14:25:55] [state] kerch: +11 new mission(s)
-[2026-01-20 14:25:55] 
-Processing: steelbirds (Germany)
-[2026-01-20 14:25:55]   Missions completed: 1
-[2026-01-20 14:25:55]   Total score: 45
-[2026-01-20 14:25:55]   Air kills: 0.0
-[2026-01-20 14:25:55]   Air combat score: 0.0
-[2026-01-20 14:25:55]   Rank scaling: 1.15x (campaign length: 1 missions)
-[2026-01-20 14:25:55]   Generated 2 events (0 promotions, 2 awards)
-[2026-01-20 14:25:55] [popups] steelbirds: initial sync (2 events)
-[2026-01-20 14:25:55]   Generating debriefings for 1 mission(s)...
-[2026-01-20 14:25:55]   Generating content for info.locale=chs.txt (locale: zh)...
-[2026-01-20 14:25:55]     ✂️  Removed 244 chars of old tracker content
-[2026-01-20 14:25:55]   ✅ Updated info.locale=chs.txt
-[2026-01-20 14:25:55]   Generating content for info.locale=eng.txt (locale: en)...
-[2026-01-20 14:25:55]     ✂️  Removed 244 chars of old tracker content
-[2026-01-20 14:25:55]   ✅ Updated info.locale=eng.txt
-[2026-01-20 14:25:55]   Generating content for info.locale=fra.txt (locale: fr)...
-[2026-01-20 14:25:55]     ✂️  Removed 244 chars of old tracker content
-[2026-01-20 14:25:55]   ✅ Updated info.locale=fra.txt
-[2026-01-20 14:25:55]   Generating content for info.locale=ger.txt (locale: de)...
-[2026-01-20 14:25:55]     ✂️  Removed 4 chars of old tracker content
-[2026-01-20 14:25:55]   ✅ Updated info.locale=ger.txt
-[2026-01-20 14:25:55]   Generating content for info.locale=pol.txt (locale: pl)...
-[2026-01-20 14:25:55]     ✂️  Removed 4 chars of old tracker content
-[2026-01-20 14:25:55]   ✅ Updated info.locale=pol.txt
-[2026-01-20 14:25:55]   Generating content for info.locale=rus.txt (locale: ru)...
-[2026-01-20 14:25:55]     ✂️  Removed 4 chars of old tracker content
-[2026-01-20 14:25:55]   ✅ Updated info.locale=rus.txt
-[2026-01-20 14:25:55]   Generating content for info.locale=spa.txt (locale: es)...
-[2026-01-20 14:25:55]     ✂️  Removed 4 chars of old tracker content
-[2026-01-20 14:25:55]   ✅ Updated info.locale=spa.txt
-[2026-01-20 14:25:55]   ✅ Successfully updated 7/7 locale file(s)
-[2026-01-20 14:25:55] [EventGenerator] Mode set to: pdf
-[2026-01-20 14:25:55]   Regenerating debriefings in PDF mode...
-[2026-01-20 14:25:56]   ✓ PDF exported: C:\Users\ableiholder\source\repos\IL-2-Campaign-Tracker\reports\steelbirds\steelbirds_Report.pdf
-[2026-01-20 14:25:56] [EventGenerator] Mode set to: ingame
-[2026-01-20 14:25:56] 
+[2026-01-20 22:58:28] [step3] AUTO mode     = True
+[2026-01-20 22:58:28] [step3] SHOW_POPUPS   = False
+[2026-01-20 22:58:28] [step3] DRY_RUN       = False
+[2026-01-20 22:58:28] ⚙️ Running in AUTO mode (no user interaction).
+[2026-01-20 22:58:28] i18n initialized with locale: en
+[2026-01-20 22:58:28] [popups] enabled = True
+[2026-01-20 22:58:28] [popups] seen campaigns = 0
+[2026-01-20 22:58:28] [snapshot] No snapshot match found – using newest mission logs
+[2026-01-20 22:58:28]   - Mission log processor initialized
+[2026-01-20 22:58:28] Loaded configuration:
+[2026-01-20 22:58:28]   - 31 campaigns with dates
+[2026-01-20 22:58:28]   - 32 campaigns with save data
+[2026-01-20 22:58:28]   - Game directory: C:\Program Files (x86)\Steam\steamapps\common\IL-2 Sturmovik Battle of Stalingrad
+[2026-01-20 22:58:28] ======================================================================
+[2026-01-20 22:58:28] IL-2 CAMPAIGN EVENTS GENERATOR
+[2026-01-20 22:58:28] ======================================================================
+[2026-01-20 22:58:28] [missions] Reloaded mission dates (31 campaigns)
+[2026-01-20 22:58:28] [popups] Reloaded state: 0 campaigns
+[2026-01-20 22:58:28] [state] No previous state found - first run or state file missing
+[2026-01-20 22:58:28] [state] luftwaffe-ww2-career-40-45: +1 new mission(s)
+[2026-01-20 22:58:28] [state] kerch: +10 new mission(s)
+[2026-01-20 22:58:28] 
+Processing: luftwaffe-ww2-career-40-45 (Germany)
+[2026-01-20 22:58:28]   Missions completed: 1
+[2026-01-20 22:58:32]   Debriefings loaded: 1 missions, 0 wounded
+[2026-01-20 22:58:32]   Total score: 50
+[2026-01-20 22:58:32]   Air kills: 5.0
+[2026-01-20 22:58:32]   Air combat score: 5.0
+[2026-01-20 22:58:32]   Rank scaling: 2.0x (campaign length: 1 missions)
+[2026-01-20 22:58:32]   Generated 3 events (0 promotions, 3 awards)
+[2026-01-20 22:58:32] [popups] luftwaffe-ww2-career-40-45: initial sync (3 events)
+[2026-01-20 22:58:32]   Generating debriefings for 1 mission(s)...
+[2026-01-20 22:58:32]   Processing debriefing for Mission 1940-10-20a-BoB I JG51-BF109F1-fighter-sweep...
+[2026-01-20 22:58:32]   Generating content for info.locale=eng.txt (locale: en)...
+[2026-01-20 22:58:32]   Processing debriefing for Mission 1940-10-20a-BoB I JG51-BF109F1-fighter-sweep...
+[2026-01-20 22:58:32]     ✂️  Removed 987 chars of old tracker content
+[2026-01-20 22:58:32]   ✅ Updated info.locale=eng.txt
+[2026-01-20 22:58:32]   ✅ Successfully updated 1/1 locale file(s)
+[2026-01-20 22:58:32] [EventGenerator] Mode set to: pdf
+[2026-01-20 22:58:32]   Regenerating debriefings in PDF mode...
+[2026-01-20 22:58:32]   ✓ Loaded combat data for 'luftwaffe-ww2-career-40-45'
+[2026-01-20 22:58:32]   Processing debriefing for Mission 1940-10-20a-BoB I JG51-BF109F1-fighter-sweep...
+[2026-01-20 22:58:32]   ℹ️  PDF export skipped: wkhtmltopdf not found
+[2026-01-20 22:58:32]       Download from: https://wkhtmltopdf.org/downloads.html
+[2026-01-20 22:58:32] [EventGenerator] Mode set to: ingame
+[2026-01-20 22:58:32] 
 Processing: kerch (Germany)
-[2026-01-20 14:25:56]   Missions completed: 11
-[2026-01-20 14:25:56]   Total score: 912
-[2026-01-20 14:25:56]   Air kills: 83.0
-[2026-01-20 14:25:56]   Air combat score: 96.0
-[2026-01-20 14:25:56]   Rank scaling: 1.15x (campaign length: 11 missions)
-[2026-01-20 14:25:56]   Generated 12 events (5 promotions, 7 awards)
-[2026-01-20 14:25:56] [popups] kerch: initial sync (12 events)
-[2026-01-20 14:25:56]   Generating debriefings for 11 mission(s)...
-[2026-01-20 14:25:56]   Generating content for info.locale=chs.txt (locale: zh)...
-[2026-01-20 14:25:56]     ✂️  Removed 1314 chars of old tracker content
-[2026-01-20 14:25:56]   ✅ Updated info.locale=chs.txt
-[2026-01-20 14:25:56]   Generating content for info.locale=eng.txt (locale: en)...
-[2026-01-20 14:25:56]     ✂️  Removed 1314 chars of old tracker content
-[2026-01-20 14:25:56]   ✅ Updated info.locale=eng.txt
-[2026-01-20 14:25:56]   Generating content for info.locale=fra.txt (locale: fr)...
-[2026-01-20 14:25:56]     ✂️  Removed 1314 chars of old tracker content
-[2026-01-20 14:25:56]   ✅ Updated info.locale=fra.txt
-[2026-01-20 14:25:56]   Generating content for info.locale=ger.txt (locale: de)...
-[2026-01-20 14:25:56]     ✂️  Removed 4 chars of old tracker content
-[2026-01-20 14:25:56]   ✅ Updated info.locale=ger.txt
-[2026-01-20 14:25:56]   Generating content for info.locale=pol.txt (locale: pl)...
-[2026-01-20 14:25:56]     ✂️  Removed 1314 chars of old tracker content
-[2026-01-20 14:25:56]   ✅ Updated info.locale=pol.txt
-[2026-01-20 14:25:56]   Generating content for info.locale=rus.txt (locale: ru)...
-[2026-01-20 14:25:56]     ✂️  Removed 1314 chars of old tracker content
-[2026-01-20 14:25:56]   ✅ Updated info.locale=rus.txt
-[2026-01-20 14:25:56]   Generating content for info.locale=spa.txt (locale: es)...
-[2026-01-20 14:25:56]     ✂️  Removed 1314 chars of old tracker content
-[2026-01-20 14:25:56]   ✅ Updated info.locale=spa.txt
-[2026-01-20 14:25:56]   ✅ Successfully updated 7/7 locale file(s)
-[2026-01-20 14:25:56] [EventGenerator] Mode set to: pdf
-[2026-01-20 14:25:56]   Regenerating debriefings in PDF mode...
-[2026-01-20 14:25:57]   ✓ PDF exported: C:\Users\ableiholder\source\repos\IL-2-Campaign-Tracker\reports\kerch\kerch_Report.pdf
-[2026-01-20 14:25:57] [EventGenerator] Mode set to: ingame
-[2026-01-20 14:25:57] [state] Saved completion state for 32 campaigns
-[2026-01-20 14:25:57] 
+[2026-01-20 22:58:32]   Missions completed: 10
+[2026-01-20 22:58:33]   Debriefings loaded: 10 missions, 0 wounded
+[2026-01-20 22:58:33]   Total score: 1145
+[2026-01-20 22:58:33]   Air kills: 56.0
+[2026-01-20 22:58:33]   Air combat score: 75.0
+[2026-01-20 22:58:33]   Rank scaling: 1.15x (campaign length: 10 missions)
+[2026-01-20 22:58:33]   Generated 13 events (6 promotions, 7 awards)
+[2026-01-20 22:58:33] [popups] kerch: initial sync (13 events)
+[2026-01-20 22:58:33]   Generating debriefings for 10 mission(s)...
+[2026-01-20 22:58:34]   Processing debriefing for Mission 01...
+[2026-01-20 22:58:34]   Processing debriefing for Mission 02...
+[2026-01-20 22:58:34]   Processing debriefing for Mission 03...
+[2026-01-20 22:58:34]   Processing debriefing for Mission 04...
+[2026-01-20 22:58:34]   Processing debriefing for Mission 05...
+[2026-01-20 22:58:34]   Processing debriefing for Mission 06...
+[2026-01-20 22:58:34]   Processing debriefing for Mission 07...
+[2026-01-20 22:58:34]   Processing debriefing for Mission 08...
+[2026-01-20 22:58:34]   Processing debriefing for Mission 09...
+[2026-01-20 22:58:34]   Processing debriefing for Mission 10...
+[2026-01-20 22:58:34]   Generating content for info.locale=chs.txt (locale: zh)...
+[2026-01-20 22:58:35]   Processing debriefing for Mission 01...
+[2026-01-20 22:58:35]   Processing debriefing for Mission 02...
+[2026-01-20 22:58:35]   Processing debriefing for Mission 03...
+[2026-01-20 22:58:35]   Processing debriefing for Mission 04...
+[2026-01-20 22:58:35]   Processing debriefing for Mission 05...
+[2026-01-20 22:58:35]   Processing debriefing for Mission 06...
+[2026-01-20 22:58:35]   Processing debriefing for Mission 07...
+[2026-01-20 22:58:35]   Processing debriefing for Mission 08...
+[2026-01-20 22:58:35]   Processing debriefing for Mission 09...
+[2026-01-20 22:58:35]   Processing debriefing for Mission 10...
+[2026-01-20 22:58:35]     ✂️  Removed 9310 chars of old tracker content
+[2026-01-20 22:58:35]   ✅ Updated info.locale=chs.txt
+[2026-01-20 22:58:35]   Generating content for info.locale=eng.txt (locale: en)...
+[2026-01-20 22:58:36]   Processing debriefing for Mission 01...
+[2026-01-20 22:58:36]   Processing debriefing for Mission 02...
+[2026-01-20 22:58:36]   Processing debriefing for Mission 03...
+[2026-01-20 22:58:36]   Processing debriefing for Mission 04...
+[2026-01-20 22:58:36]   Processing debriefing for Mission 05...
+[2026-01-20 22:58:36]   Processing debriefing for Mission 06...
+[2026-01-20 22:58:36]   Processing debriefing for Mission 07...
+[2026-01-20 22:58:36]   Processing debriefing for Mission 08...
+[2026-01-20 22:58:36]   Processing debriefing for Mission 09...
+[2026-01-20 22:58:36]   Processing debriefing for Mission 10...
+[2026-01-20 22:58:36]     ✂️  Removed 9310 chars of old tracker content
+[2026-01-20 22:58:36]   ✅ Updated info.locale=eng.txt
+[2026-01-20 22:58:36]   Generating content for info.locale=fra.txt (locale: fr)...
+[2026-01-20 22:58:37]   Processing debriefing for Mission 01...
+[2026-01-20 22:58:37]   Processing debriefing for Mission 02...
+[2026-01-20 22:58:37]   Processing debriefing for Mission 03...
+[2026-01-20 22:58:37]   Processing debriefing for Mission 04...
+[2026-01-20 22:58:37]   Processing debriefing for Mission 05...
+[2026-01-20 22:58:37]   Processing debriefing for Mission 06...
+[2026-01-20 22:58:37]   Processing debriefing for Mission 07...
+[2026-01-20 22:58:37]   Processing debriefing for Mission 08...
+[2026-01-20 22:58:37]   Processing debriefing for Mission 09...
+[2026-01-20 22:58:37]   Processing debriefing for Mission 10...
+[2026-01-20 22:58:37]     ✂️  Removed 9310 chars of old tracker content
+[2026-01-20 22:58:37]   ✅ Updated info.locale=fra.txt
+[2026-01-20 22:58:37]   Generating content for info.locale=ger.txt (locale: de)...
+[2026-01-20 22:58:38]   Processing debriefing for Mission 01...
+[2026-01-20 22:58:38]   Processing debriefing for Mission 02...
+[2026-01-20 22:58:38]   Processing debriefing for Mission 03...
+[2026-01-20 22:58:38]   Processing debriefing for Mission 04...
+[2026-01-20 22:58:38]   Processing debriefing for Mission 05...
+[2026-01-20 22:58:38]   Processing debriefing for Mission 06...
+[2026-01-20 22:58:38]   Processing debriefing for Mission 07...
+[2026-01-20 22:58:38]   Processing debriefing for Mission 08...
+[2026-01-20 22:58:38]   Processing debriefing for Mission 09...
+[2026-01-20 22:58:38]   Processing debriefing for Mission 10...
+[2026-01-20 22:58:38]     ✂️  Removed 9310 chars of old tracker content
+[2026-01-20 22:58:38]   ✅ Updated info.locale=ger.txt
+[2026-01-20 22:58:38]   Generating content for info.locale=pol.txt (locale: pl)...
+[2026-01-20 22:58:38]   Processing debriefing for Mission 01...
+[2026-01-20 22:58:38]   Processing debriefing for Mission 02...
+[2026-01-20 22:58:38]   Processing debriefing for Mission 03...
+[2026-01-20 22:58:38]   Processing debriefing for Mission 04...
+[2026-01-20 22:58:38]   Processing debriefing for Mission 05...
+[2026-01-20 22:58:38]   Processing debriefing for Mission 06...
+[2026-01-20 22:58:38]   Processing debriefing for Mission 07...
+[2026-01-20 22:58:38]   Processing debriefing for Mission 08...
+[2026-01-20 22:58:38]   Processing debriefing for Mission 09...
+[2026-01-20 22:58:38]   Processing debriefing for Mission 10...
+[2026-01-20 22:58:39]     ✂️  Removed 9310 chars of old tracker content
+[2026-01-20 22:58:39]   ✅ Updated info.locale=pol.txt
+[2026-01-20 22:58:39]   Generating content for info.locale=rus.txt (locale: ru)...
+[2026-01-20 22:58:39]   Processing debriefing for Mission 01...
+[2026-01-20 22:58:39]   Processing debriefing for Mission 02...
+[2026-01-20 22:58:39]   Processing debriefing for Mission 03...
+[2026-01-20 22:58:39]   Processing debriefing for Mission 04...
+[2026-01-20 22:58:39]   Processing debriefing for Mission 05...
+[2026-01-20 22:58:39]   Processing debriefing for Mission 06...
+[2026-01-20 22:58:39]   Processing debriefing for Mission 07...
+[2026-01-20 22:58:39]   Processing debriefing for Mission 08...
+[2026-01-20 22:58:39]   Processing debriefing for Mission 09...
+[2026-01-20 22:58:39]   Processing debriefing for Mission 10...
+[2026-01-20 22:58:39]     ✂️  Removed 9310 chars of old tracker content
+[2026-01-20 22:58:39]   ✅ Updated info.locale=rus.txt
+[2026-01-20 22:58:39]   Generating content for info.locale=spa.txt (locale: es)...
+[2026-01-20 22:58:40]   Processing debriefing for Mission 01...
+[2026-01-20 22:58:40]   Processing debriefing for Mission 02...
+[2026-01-20 22:58:40]   Processing debriefing for Mission 03...
+[2026-01-20 22:58:40]   Processing debriefing for Mission 04...
+[2026-01-20 22:58:40]   Processing debriefing for Mission 05...
+[2026-01-20 22:58:40]   Processing debriefing for Mission 06...
+[2026-01-20 22:58:40]   Processing debriefing for Mission 07...
+[2026-01-20 22:58:40]   Processing debriefing for Mission 08...
+[2026-01-20 22:58:40]   Processing debriefing for Mission 09...
+[2026-01-20 22:58:40]   Processing debriefing for Mission 10...
+[2026-01-20 22:58:40]     ✂️  Removed 9310 chars of old tracker content
+[2026-01-20 22:58:40]   ✅ Updated info.locale=spa.txt
+[2026-01-20 22:58:40]   ✅ Successfully updated 7/7 locale file(s)
+[2026-01-20 22:58:40] [EventGenerator] Mode set to: pdf
+[2026-01-20 22:58:40]   Regenerating debriefings in PDF mode...
+[2026-01-20 22:58:41]   ✓ Loaded combat data for 'kerch'
+[2026-01-20 22:58:41]   Processing debriefing for Mission 01...
+[2026-01-20 22:58:41]   Processing debriefing for Mission 02...
+[2026-01-20 22:58:41]   Processing debriefing for Mission 03...
+[2026-01-20 22:58:41]   Processing debriefing for Mission 04...
+[2026-01-20 22:58:41]   Processing debriefing for Mission 05...
+[2026-01-20 22:58:41]   Processing debriefing for Mission 06...
+[2026-01-20 22:58:41]   Processing debriefing for Mission 07...
+[2026-01-20 22:58:41]   Processing debriefing for Mission 08...
+[2026-01-20 22:58:41]   Processing debriefing for Mission 09...
+[2026-01-20 22:58:41]   Processing debriefing for Mission 10...
+[2026-01-20 22:58:41]   ℹ️  PDF export skipped: wkhtmltopdf not found
+[2026-01-20 22:58:41]       Download from: https://wkhtmltopdf.org/downloads.html
+[2026-01-20 22:58:41] [EventGenerator] Mode set to: ingame
+[2026-01-20 22:58:41] [state] Saved completion state for 32 campaigns
+[2026-01-20 22:58:41] 
 ======================================================================
-[2026-01-20 14:25:57] COMPLETE!
-[2026-01-20 14:25:57] ======================================================================
-[2026-01-20 14:25:57] Generated events for 2 campaigns
-[2026-01-20 14:25:57] Updated 2 campaign info files
-[2026-01-20 14:25:57] Results saved to: C:\Users\ableiholder\source\repos\IL-2-Campaign-Tracker\campaign_events.json
-[2026-01-20 14:25:57] PDF reports saved to: C:\Users\ableiholder\source\repos\IL-2-Campaign-Tracker\reports
-[2026-01-20 14:25:57] 
+[2026-01-20 22:58:41] COMPLETE!
+[2026-01-20 22:58:41] ======================================================================
+[2026-01-20 22:58:41] Generated events for 2 campaigns
+[2026-01-20 22:58:41] Updated 2 campaign info files
+[2026-01-20 22:58:41] Results saved to: C:\Users\bleih\source\repos\IL-2-Campaign-Tracker\campaign_events.json
+[2026-01-20 22:58:41] PDF reports saved to: C:\Users\bleih\source\repos\IL-2-Campaign-Tracker\reports
+[2026-01-20 22:58:41] 
 ======================================================================
-[2026-01-20 14:25:57] SAMPLE OUTPUT (kerch):
-[2026-01-20 14:25:57] ======================================================================
-[2026-01-20 14:25:57] <b>Events</b><br>
+[2026-01-20 22:58:41] SAMPLE OUTPUT (kerch):
+[2026-01-20 22:58:41] ======================================================================
+[2026-01-20 22:58:41] <b>Mission Debriefings</b><br>
+<br>
+<div class="mission-box">
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+<b>MISSION 01 | 4 November, 1943</b><br>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+Aircraft: Bf 109 G-6 | Duration: 00:16:58 | Status: Landed<br>
+<br>
+<b>FLIGHT LOG</b><br>
+00:00:25  Takeoff<br>
+00:07:42  LaGG-3 ser.29 destroyed (Alt: 1374m)<br>
+00:07:50  LaGG-3 ser.29 destroyed (Alt: 1m)<br>
+00:08:50  LaGG-3 ser.29 destroyed (Alt: 1274m)<br>
+00:11:02  LaGG-3 ser.29 destroyed (Alt: 821m)<br>
+00:11:38  LaGG-3 ser.29 destroyed (Alt: 339m)<br>
+00:12:08  DShK destroyed (Alt: 40m)<br>
+00:13:00  Gun Boat 1124 AAA destroyed<br>
+00:17:24  Landing<br>
+</div>
+<br>
+<div class="mission-box">
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+<b>MISSION 02 | 6 November, 1943</b><br>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+Aircraft: Bf 109 G-6 | Duration: 00:29:03 | Status: Landed<br>
+<br>
+<b>FLIGHT LOG</b><br>
+00:00:22  Takeoff<br>
+00:16:50  Yak-1B ser.127 destroyed (Alt: 4325m)<br>
+00:17:27  Yak-1B ser.127 destroyed (Alt: 4249m)<br>
+00:18:45  Yak-1B ser.127 destroyed (Alt: 3058m)<br>
+00:21:56  Yak-1B ser.127 destroyed (Alt: 2984m)<br>
+00:29:26  Landing<br>
+00:29:26  CParachute_1851391 destroyed (Alt: 130m)<br>
+</div>
+<br>
+<div class="mission-box">
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+<b>MISSION 03 | 11 November, 1943</b><br>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+Aircraft: Bf 109 G-6 | Duration: 00:11:19 | Status: Landed | Aircraft Dmg: 2.9%<br>
+<br>
+<b>FLIGHT LOG</b><br>
+00:00:25  Takeoff<br>
+00:04:11  Yak-1B ser.127 destroyed (Alt: 1508m)<br>
+00:04:31  Hit by Turret_Il2m43<br>
+00:04:49  Il-2 mod.1943 destroyed (Alt: 576m)<br>
+00:05:08  Il-2 mod.1943 destroyed (Alt: 102m)<br>
+00:05:21  Il-2 mod.1943 destroyed (Alt: 531m)<br>
+00:05:22  Il-2 mod.1943 destroyed (Alt: 176m)<br>
+00:06:01  Il-2 mod.1943 destroyed (Alt: 58m)<br>
+00:06:34  Il-2 mod.1943 destroyed (Alt: 709m)<br>
+00:08:01  P-39L-1 destroyed (Alt: 800m)<br>
+00:08:39  P-39L-1 destroyed (Alt: 748m)<br>
+00:10:18  Il-2 mod.1943 destroyed (Alt: 556m)<br>
+00:11:44  Landing<br>
+</div>
+<br>
+<div class="mission-box">
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+<b>MISSION 04 | 12 November, 1943</b><br>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+Aircraft: Bf 109 G-6 | Duration: 00:15:52 | Status: Landed<br>
+<br>
+<b>FLIGHT LOG</b><br>
+00:00:22  Takeoff<br>
+00:05:02  P-39L-1 destroyed (Alt: 2199m)<br>
+00:05:29  P-39L-1 destroyed (Alt: 2262m)<br>
+00:06:03  P-39L-1 destroyed (Alt: 2326m)<br>
+00:11:04  DShK destroyed (Alt: 27m)<br>
+00:11:33  DShK-AA destroyed<br>
+00:16:14  Landing<br>
+</div>
+<br>
+<div class="mission-box">
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+<b>MISSION 05 | 14 November, 1943</b><br>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+Aircraft: Bf 109 G-6 | Duration: 00:23:21 | Status: Landed | Aircraft Dmg: 2.2%<br>
+<br>
+<b>FLIGHT LOG</b><br>
+00:00:25  Takeoff<br>
+00:11:16  LaGG-3 ser.29 destroyed (Alt: 399m)<br>
+00:11:48  LaGG-3 ser.29 destroyed (Alt: 3m)<br>
+00:11:57  Hit by LaGG-3 ser.29<br>
+00:13:20  LaGG-3 ser.29 destroyed (Alt: 132m)<br>
+00:14:24  LaGG-3 ser.29 destroyed (Alt: 689m)<br>
+00:14:54  LaGG-3 ser.29 destroyed (Alt: 502m)<br>
+00:23:47  Landing<br>
+</div>
+<br>
+<div class="mission-box">
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+<b>MISSION 06 | 19 November, 1943</b><br>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+Aircraft: Bf 109 G-6 | Duration: 00:24:45 | Status: Landed | Aircraft Dmg: 0.8%<br>
+<br>
+<b>FLIGHT LOG</b><br>
+00:00:22  Takeoff<br>
+00:08:34  Hit by Turret_Pe2s87_1M<br>
+00:08:40  Pe-2 ser.87 destroyed (Alt: 3566m)<br>
+00:09:00  Pe-2 ser.87 destroyed (Alt: 4144m)<br>
+00:09:17  Pe-2 ser.87 destroyed (Alt: 2799m)<br>
+00:09:24  Pe-2 ser.87 destroyed (Alt: 3327m)<br>
+00:09:52  Pe-2 ser.87 destroyed (Alt: 3613m)<br>
+00:10:03  Pe-2 ser.87 destroyed (Alt: 3424m)<br>
+00:10:25  Pe-2 ser.87 destroyed (Alt: 3990m)<br>
+00:11:40  Pe-2 ser.87 destroyed (Alt: 3420m)<br>
+00:11:46  Pe-2 ser.87 destroyed (Alt: 3838m)<br>
+00:12:52  P-39L-1 destroyed (Alt: 3417m)<br>
+00:13:09  P-39L-1 destroyed (Alt: 3339m)<br>
+00:15:04  72-K destroyed (Alt: 1m)<br>
+00:15:43  ML-20 destroyed (Alt: 1m)<br>
+00:15:45  ML-20 destroyed (Alt: 1m)<br>
+00:16:20  ML-20 destroyed (Alt: 1m)<br>
+00:16:21  ML-20 destroyed (Alt: 1m)<br>
+00:16:44  Gun Boat 1124 AAA destroyed<br>
+00:18:01  ML-20 destroyed (Alt: 1m)<br>
+00:18:02  ML-20 destroyed<br>
+00:18:51  ML-20 destroyed (Alt: 1m)<br>
+00:18:51  ML-20 destroyed (Alt: 2m)<br>
+00:18:52  ML-20 destroyed (Alt: 2m)<br>
+00:18:52  ML-20 destroyed (Alt: 2m)<br>
+</div>
+<br>
+<div class="mission-box">
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+<b>MISSION 07 | 21 November, 1943</b><br>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+Aircraft: Bf 109 G-6 | Duration: 00:21:16 | Status: Landed | Aircraft Dmg: 0.9%<br>
+<br>
+<b>FLIGHT LOG</b><br>
+00:00:22  Takeoff<br>
+00:06:08  P-39L-1 destroyed<br>
+00:06:23  P-39L-1 destroyed (Alt: 1200m)<br>
+00:11:11  Li-2 destroyed (Alt: 521m)<br>
+00:12:12  Hit by 72-K<br>
+00:15:23  Il-2 mod.1943 destroyed (Alt: 756m)<br>
+00:15:37  Il-2 mod.1943 destroyed (Alt: 64m)<br>
+00:16:33  BA-64 destroyed (Alt: 61m)<br>
+00:16:45  ZiS-5 destroyed (Alt: 61m)<br>
+00:16:47  ZiS-5 destroyed (Alt: 61m)<br>
+00:17:26  ZiS-6 BM-13 destroyed (Alt: 41m)<br>
+00:17:29  ZiS-6 BM-13 destroyed (Alt: 45m)<br>
+00:21:38  Landing<br>
+</div>
+<br>
+<div class="mission-box">
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+<b>MISSION 08 | 25 November, 1943</b><br>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+Aircraft: Bf 109 G-6 | Duration: 00:30:15 | Status: Landed<br>
+<br>
+<b>FLIGHT LOG</b><br>
+00:00:25  Takeoff<br>
+00:12:39  Yak-1B ser.127 destroyed (Alt: 3587m)<br>
+00:12:58  Yak-1B ser.127 destroyed (Alt: 3835m)<br>
+00:13:48  Yak-1B ser.127 destroyed (Alt: 3725m)<br>
+00:17:20  LaGG-3 ser.29 destroyed (Alt: 32m)<br>
+00:18:33  52-K destroyed (Alt: 31m)<br>
+00:18:47  DShK-AA destroyed (Alt: 31m)<br>
+00:21:14  ML-20 destroyed (Alt: 3m)<br>
+00:21:15  ML-20 destroyed (Alt: 3m)<br>
+00:21:16  ML-20 destroyed (Alt: 3m)<br>
+00:21:16  ML-20 destroyed (Alt: 3m)<br>
+00:21:21  61-K destroyed (Alt: 3m)<br>
+00:25:13  DShK destroyed (Alt: 8m)<br>
+00:26:00  DShK destroyed (Alt: 61m)<br>
+00:26:25  DShK destroyed (Alt: 88m)<br>
+00:30:40  Landing<br>
+</div>
+<br>
+<div class="mission-box">
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+<b>MISSION 09 | 2 December, 1943</b><br>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+Aircraft: Bf 109 G-6 | Duration: 00:24:47 | Status: Landed<br>
+<br>
+<b>FLIGHT LOG</b><br>
+00:00:23  Takeoff<br>
+00:10:30  A-20B destroyed (Alt: 2064m)<br>
+00:11:07  A-20B destroyed (Alt: 3m)<br>
+00:11:15  A-20B destroyed (Alt: 1917m)<br>
+00:11:35  A-20B destroyed (Alt: 1508m)<br>
+00:16:35  DShK-AA destroyed (Alt: 32m)<br>
+00:17:02  72-K destroyed (Alt: 1m)<br>
+00:18:39  ZiS-6 BM-13 destroyed (Alt: 73m)<br>
+00:18:40  ZiS-6 BM-13 destroyed (Alt: 76m)<br>
+00:19:05  DShK destroyed (Alt: 82m)<br>
+00:19:34  BA-64 destroyed (Alt: 61m)<br>
+00:20:19  ZiS-6 BM-13 destroyed (Alt: 80m)<br>
+00:20:48  ZiS-6 BM-13 destroyed (Alt: 83m)<br>
+00:25:10  Landing<br>
+</div>
+<br>
+<div class="mission-box">
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+<b>MISSION 10 | 6 December, 1943</b><br>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+Aircraft: Bf 109 G-6 | Duration: 00:13:07 | Status: Landed | Aircraft Dmg: 3.1%<br>
+<br>
+<b>FLIGHT LOG</b><br>
+00:00:23  Takeoff<br>
+00:06:48  Pe-2 ser.87 destroyed (Alt: 2334m)<br>
+00:07:01  Pe-2 ser.87 destroyed (Alt: 2279m)<br>
+00:07:23  Hit by Turret_Pe2s87_2<br>
+00:07:28  Pe-2 ser.87 destroyed (Alt: 2479m)<br>
+00:07:33  Pe-2 ser.87 destroyed (Alt: 2m)<br>
+00:08:08  Hit by Turret_Pe2s87_1M<br>
+00:08:43  Pe-2 ser.87 destroyed (Alt: 1899m)<br>
+00:13:30  Landing<br>
+</div>
+<br>
+<b>Events</b><br>
 • 04 November, 1943 - Initial rank: Unteroffizier <img src=CampaignRanksAwards\Germany\unteroffizier.png><br>
 • 04 November, 1943 - Awarded Pilot's Badge <img src=CampaignRanksAwards\Germany\pilots_badge.dds><br>
 • 04 November, 1943 - Awarded Iron Cross 2nd Class <img src=CampaignRanksAwards\Germany\iron_cross_2nd.dds><br>
 • 06 November, 1943 - Promoted to Feldwebel <img src=CampaignRanksAwards\Germany\feldwebel.png><br>
 • 06 November, 1943 - Awarded Iron Cross 1st Class <img src=CampaignRanksAwards\Germany\iron_cross_1st.dds><br>
 • 11 November, 1943 - Promoted to Oberfeldwebel <img src=CampaignRanksAwards\Germany\oberfeldwebel.png><br>
-• 11 November, 1943 - Awarded Honor Goblet <img src=CampaignRanksAwards\Germany\honor_goblet.dds><br>
-• 12 November, 1943 - Promoted to Leutnant <img src=CampaignRanksAwards\Germany\leutnant.png><br>
-• 14 November, 1943 - Awarded German Cross in Gold <img src=CampaignRanksAwards\Germany\german_cross_gold.dds><br>
-• 19 November, 1943 - Awarded Knight's Cross of the Iron Cross <img src=CampaignRanksAwards\Germany\knights_cross.dds><br>
-• 21 November, 1943 - Promoted to Oberleutnant <img src=CampaignRanksAwards\Germany\oberleutnant.png><br>
-• 06 December, 1943 - Promoted to Hauptmann <img src=CampaignRanksAwards\Germany\hauptmann.png><br>
+• 12 November, 1943 - Awarded Honor Goblet <img src=CampaignRanksAwards\Germany\honor_goblet.dds><br>
+• 14 November, 1943 - Promoted to Leutnant <img src=CampaignRanksAwards\Germany\leutnant.png><br>
+• 19 November, 1943 - Promoted to Oberleutnant <img src=CampaignRanksAwards\Germany\oberleutnant.png><br>
+• 19 November, 1943 - Awarded German Cross in Gold <img src=CampaignRanksAwards\Germany\german_cross_gold.dds><br>
+• 21 November, 1943 - Promoted to Hauptmann <img src=CampaignRanksAwards\Germany\hauptmann.png><br>
+• 21 November, 1943 - Awarded Knight's Cross of the Iron Cross <img src=CampaignRanksAwards\Germany\knights_cross.dds><br>
+• 02 December, 1943 - Promoted to Major <img src=CampaignRanksAwards\Germany\major.png><br>

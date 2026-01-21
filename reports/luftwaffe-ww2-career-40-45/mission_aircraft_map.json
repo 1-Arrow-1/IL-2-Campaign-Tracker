@@ -1,0 +1,17 @@
+{
+  "campaign_name": "luftwaffe-ww2-career-40-45",
+  "missions": {
+    "1940-10-20a-BoB I JG51-BF109F1-fighter-sweep": {
+      "campaign_name": "luftwaffe-ww2-career-40-45",
+      "mission_id": "1940-10-20a-BoB I JG51-BF109F1-fighter-sweep",
+      "aircraft": "Bf 109 F-2",
+      "timestamp": "2026-01-06_23-46-09",
+      "mlg_filename": "missionReport(2026-01-06_23-46-09).mlg",
+      "mlg_mtime": 1767762021.8304586,
+      "mlg_size": 33974,
+      "updated_at": "2026-01-21T03:58:32Z"
+    }
+  },
+  "updated_at": "2026-01-21T03:58:32Z",
+  "campaignsstates_hash": "6fe392a465dfecd94bf1000e07d49715"
+}
