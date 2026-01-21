@@ -1,0 +1,923 @@
+# ============================================================================
+# RANK PROGRESSION SCALING
+# ============================================================================
+# Adjusts rank requirements based on campaign length to maintain meaningful
+# progression throughout campaigns of different lengths.
+#
+# How it works:
+# - Longer campaigns get higher score multipliers
+# - Formula: required_score = base_score * multiplier
+# - Only affects RANKS, not awards
+# - Stock IL-2 campaigns are typically 8-12 missions (factor 1.0)
+#
+# Example:
+#   10-mission campaign: Major at 900 points (factor 1.0)
+#   40-mission campaign: Major at 1350 points (factor 1.5)
+#   60-mission campaign: Major at 1800 points (factor 2.0)
+#
+# Bracket formats (you can customize or add new ones):
+#   "1-10"   = Missions 1 to 10 (range)
+#   "71+"    = Missions 71 and above (open-ended)
+#   "25"     = Exactly 25 missions (exact match)
+#
+# The system automatically finds the matching bracket for each campaign!
+# ============================================================================
+enable_popups: true 
+
+rank_scaling:
+  enabled: true  # Set to false to use base scores without scaling
+  
+  # Score multipliers based on total mission count
+  # Feel free to adjust factors or add new brackets!
+  # Examples:
+  #   "15-25": 1.25  (add a new bracket)
+  #   "100+": 3.0    (for mega-campaigns)
+  factors:
+    "1-10":    1.00   # Short campaigns (stock campaigns)
+    "11-20":   1.15   # Medium-short campaigns  
+    "21-30":   1.30   # Medium campaigns
+    "31-40":   1.50   # Medium-long campaigns
+    "41-50":   1.75   # Long campaigns
+    "51-70":   2.00   # Very long campaigns
+    "71+":     5.50   # Epic campaigns (70+ missions)
+
+ranks:
+  Germany:
+  - name: Unteroffizier
+    score: 0
+    image: unteroffizier.png
+  - name: Feldwebel
+    score: 80
+    image: feldwebel.png
+  - name: Oberfeldwebel
+    score: 160
+    image: oberfeldwebel.png
+  - name: Leutnant
+    score: 260
+    image: leutnant.png
+  - name: Oberleutnant
+    score: 440
+    image: oberleutnant.png
+  - name: Hauptmann
+    score: 650
+    image: hauptmann.png
+  - name: Major
+    score: 900
+    image: major.png
+  - name: Oberstleutnant
+    score: 1200
+    image: oberstleutnant.png
+  - name: Oberst
+    score: 1600
+    image: oberst.png
+  - name: Generalmajor
+    score: 2050
+    image: generalmajor.png
+  - name: Generalleutnant
+    score: 2550
+    image: generalleutnant.png
+  
+  Britain:
+  - name: Sergeant
+    score: 0
+    image: sergeant_raf.png
+  - name: Flight Sergeant
+    score: 80
+    image: flight_sergeant.png
+  - name: Warrant Officer
+    score: 160
+    image: warrant_officer.png
+  - name: Pilot Officer
+    score: 260
+    image: pilot_officer.png
+  - name: Flying Officer
+    score: 440
+    image: flying_officer.png
+  - name: Flight Lieutenant
+    score: 650
+    image: flight_lieutenant.png
+  - name: Squadron Leader
+    score: 900
+    image: squadron_leader.png
+  - name: Wing Commander
+    score: 1200
+    image: wing_commander.png
+  - name: Group Captain
+    score: 1600
+    image: group_captain.png
+  - name: Air Commodore
+    score: 2050
+    image: air_commodore.png
+  - name: Air Vice Marshal
+    score: 2550
+    image: air_vice_marshal.png
+
+  USA:
+  - name: First Sergeant
+    score: 0
+    image: first_sergeant.png
+  - name: Flight Officer
+    score: 80
+    image: flight_officer.png
+  - name: Chief Warrant Officer
+    score: 160
+    image: chief_warrant_officer.png
+  - name: 2nd Lieutenant
+    score: 260
+    image: second_lieutenant.png
+  - name: 1st Lieutenant
+    score: 440
+    image: first_lieutenant.png
+  - name: Captain
+    score: 650
+    image: captain_usaaf.png
+  - name: Major
+    score: 900
+    image: major_usaaf.png
+  - name: Lt. Colonel
+    score: 1200
+    image: lt_colonel.png
+  - name: Colonel
+    score: 1600
+    image: colonel.png
+  - name: Brigadier General
+    score: 2050
+    image: brigadier_general.png
+  - name: Major General
+    score: 2550
+    image: major_general.png
+
+  Soviet Union:
+  - name: Sergeant
+    score: 0
+    image: sergeant_vvs.png
+  - name: Senior Sergeant
+    score: 80
+    image: senior_sergeant.png
+  - name: Junior Lieutenant
+    score: 160
+    image: junior_lieutenant.png
+  - name: Lieutenant
+    score: 260
+    image: lieutenant_vvs.png
+  - name: Senior Lieutenant
+    score: 440
+    image: senior_lieutenant.png
+  - name: Captain
+    score: 650
+    image: captain_vvs.png
+  - name: Major
+    score: 900
+    image: major_vvs.png
+  - name: Sub-Colonel
+    score: 1200
+    image: sub_colonel.png
+  - name: Colonel
+    score: 1600
+    image: colonel.png
+  - name: Major General
+    score: 2050
+    image: major_general.png
+  - name: Lieutenant General
+    score: 2550
+    image: lt_general.png
+
+awards:
+  Germany:
+  - name: Pilot's Badge
+    image: pilots_badge.dds
+    max_awards: 1
+    conditions:
+    - missions_completed: 1
+  - name: Iron Cross 2nd Class
+    image: iron_cross_2nd.dds
+    max_awards: 1
+    conditions:
+    - air_combat_score: 2
+    - missions_completed: 16
+  - name: Iron Cross 1st Class
+    image: iron_cross_1st.dds
+    requires: Iron Cross 2nd Class
+    max_awards: 1
+    conditions:
+    - air_combat_score: 8
+    - missions_completed: 64
+  - name: Honor Goblet
+    image: honor_goblet.dds
+    requires: Iron Cross 1st Class
+    max_awards: 1
+    conditions:
+    - air_combat_score: 20
+    - missions_completed: 160
+  - name: German Cross in Gold
+    image: german_cross_gold.dds
+    requires: Iron Cross 1st Class
+    max_awards: 1
+    conditions:
+    - air_combat_score: 30
+    - missions_completed: 240
+  - name: Knight's Cross of the Iron Cross
+    image: knights_cross.dds
+    requires: German Cross in Gold
+    max_awards: 1
+    conditions:
+    - air_combat_score: 50
+    - missions_completed: 400
+    award_tier: 4
+  - name: Knight's Cross of the Iron Cross with Oak Leaves
+    image: knights_cross_oak_leaves.dds
+    requires: Knight's Cross of the Iron Cross
+    max_awards: 1
+    conditions:
+    - air_combat_score: 100
+    - missions_completed: 800
+    award_tier: 3
+  - name: Knight's Cross of the Iron Cross with Oak Leaves and Swords
+    image: knights_cross_swords.dds
+    requires: Knight's Cross of the Iron Cross with Oak Leaves
+    max_awards: 1
+    conditions:
+    - air_combat_score: 200
+    - missions_completed: 1600
+    award_tier: 2
+  - name: Knight's Cross of the Iron Cross with Oak Leaves, Swords and Diamonds
+    image: knights_cross_diamonds.dds
+    requires: Knight's Cross of the Iron Cross with Oak Leaves and Swords
+    max_awards: 1
+    conditions:
+    - air_combat_score: 250
+    - missions_completed: 2000
+    award_tier: 1
+  - name: Knight's Cross of the Iron Cross with Golden Oak Leaves, Swords and Diamonds
+    image: knights_cross_gold_diamonds.dds
+    requires: Knight's Cross of the Iron Cross with Oak Leaves, Swords and Diamonds
+    max_awards: 1
+    conditions:
+    - air_combat_score: 315
+    - missions_completed: 2500
+    award_tier: 1
+  - name: Front Flying Clasp for Fighters in Bronze
+    image: fighters_bronze.dds
+    max_awards: 1
+    conditions:
+    - missions_completed: 20
+  - name: Front Flying Clasp for Fighters in Silver
+    image: fighters_silver.dds
+    requires: Front Flying Clasp for Fighters in Bronze
+    max_awards: 1
+    conditions:
+    - missions_completed: 60
+  - name: Front Flying Clasp for Fighters in Gold
+    image: fighters_gold.dds
+    requires: Front Flying Clasp for Fighters in Silver
+    max_awards: 1
+    conditions:
+    - missions_completed: 110
+  - name: Front Flying Clasp for Fighters in Gold with Pendant
+    image: fighters_pendant.dds
+    requires: Front Flying Clasp for Fighters in Gold
+    max_awards: 1
+    conditions:
+    - missions_completed: 400
+  - name: Wound Badge in Black
+    image: wound_badge_black.dds
+    max_awards: 1
+    conditions:
+    - deaths: 1
+  - name: Wound Badge in Silver
+    image: wound_badge_silver.dds
+    requires: Wound Badge in Black
+    max_awards: 1
+    conditions:
+    - deaths: 3
+  - name: Wound Badge in Gold
+    image: wound_badge_gold.dds
+    requires: Wound Badge in Silver
+    max_awards: 1
+    conditions:
+    - deaths: 5
+  
+  Britain:
+  - name: RAF Pilot's Badge
+    image: raf_pilots_badge.dds
+    conditions:
+    - missions_completed: 1
+  - name: Mentioned in Despatches
+    image: mentioned_in_despatches.dds
+    conditions:
+    - total_air_kills: 1
+    - missions_completed: 20
+    - flight_time_hours: 40
+  - name: Distinguished Flying Medal
+    image: dfm.dds
+    max_rank_index: 2
+    max_awards: 1
+    award_tier: 3
+    graduated_random_kills:
+      2: 200
+      3: 400
+      4: 600
+      5: 800
+      6: 999
+    conditions:
+    - missions_completed: 100
+    - flight_time_hours: 200
+  - name: Bar to the Distinguished Flying Medal
+    image: dfm_bar.dds
+    requires: Distinguished Flying Medal
+    max_rank_index: 2
+    max_awards: 1
+    award_tier: 3
+    graduated_random_kills:
+      10: 100
+      11: 200
+      12: 300
+      13: 400
+      14: 500
+      15: 600
+      16: 700
+      17: 800
+      18: 900
+    conditions:
+    - missions_completed: 200
+    - flight_time_hours: 400
+  - name: Second Bar to the Distinguished Flying Medal
+    image: dfm_2bar.dds
+    requires: Bar to the Distinguished Flying Medal
+    max_rank_index: 2
+    max_awards: 1
+    award_tier: 3
+    graduated_random_kills:
+      15: 250
+      16: 500
+      17: 750
+      18: 999
+    conditions:
+    - missions_completed: 300
+    - flight_time_hours: 600
+  - name: Distinguished Flying Cross
+    image: dfc.dds
+    min_rank_index: 3
+    max_awards: 1
+    award_tier: 3
+    graduated_random_kills:
+      2: 200
+      3: 400
+      4: 600
+      5: 800
+      6: 999
+    conditions:
+    - missions_completed: 100
+    - flight_time_hours: 200
+  - name: Bar to the Distinguished Flying Cross
+    image: dfc_bar.dds
+    requires: Distinguished Flying Cross
+    min_rank_index: 3
+    max_awards: 1
+    award_tier: 3
+    graduated_random_kills:
+      4: 100
+      5: 200
+      6: 300
+      7: 400
+      8: 500
+      9: 600
+      10: 700
+      11: 800
+      12: 900
+    conditions:
+    - missions_completed: 200
+    - flight_time_hours: 400
+  - name: Second Bar to the Distinguished Flying Cross
+    image: dfc_2bar.dds
+    requires: Bar to the Distinguished Flying Cross
+    min_rank_index: 3
+    max_awards: 1
+    award_tier: 3
+    graduated_random_kills:
+      5: 65
+      6: 130
+      7: 195
+      8: 260
+      9: 325
+      10: 390
+      11: 455
+      12: 520
+      13: 585
+      14: 650
+      15: 715
+      16: 780
+      17: 845
+      18: 910
+      19: 975
+    conditions:
+    - missions_completed: 300
+    - flight_time_hours: 600
+  - name: Distinguished Service Order
+    image: dso.dds
+    min_rank_index: 3
+    max_awards: 1
+    award_tier: 2
+    graduated_random_kills:
+      6: 75
+      7: 150
+      8: 225
+      9: 300
+      10: 375
+      11: 450
+      12: 525
+      13: 600
+      14: 675
+      15: 750
+      16: 825
+      17: 900
+      18: 975
+    conditions:
+    - missions_completed: 300
+  - name: Bar to the Distinguished Service Order
+    image: dso_bar.dds
+    requires: Distinguished Service Order
+    min_rank_index: 3
+    max_awards: 1
+    award_tier: 2
+    graduated_random_kills:
+      12: 75
+      13: 150
+      14: 225
+      15: 300
+      16: 375
+      17: 450
+      18: 525
+      19: 600
+      20: 675
+      21: 750
+      22: 825
+      23: 900
+      24: 975
+    conditions:
+    - missions_completed: 600
+  - name: Second Bar to the Distinguished Service Order
+    image: dso_bar2.dds
+    requires: Bar to the Distinguished Service Order
+    min_rank_index: 3
+    max_awards: 1
+    award_tier: 2
+    graduated_random_kills:
+      21: 90
+      22: 180
+      23: 270
+      24: 360
+      25: 450
+      26: 540
+      27: 630
+      28: 720
+      29: 810
+      30: 900
+      31: 990
+    conditions:
+    - missions_completed: 900
+  - name: Victoria Cross
+    image: victoria_cross.dds
+    per_sortie: true
+    max_awards: 1
+    conditions:
+    - air_kills_in_sortie: 7
+    - air_kills_wounded_sortie: 5
+    award_tier: 1
+  - name: Bar to the Victoria Cross
+    image: victoria_cross_bar.dds
+    requires: Victoria Cross
+    per_sortie: true
+    max_awards: 1
+    replaces: Victoria Cross
+    conditions:
+    - air_kills_in_sortie: 7
+    - air_kills_wounded_sortie: 5
+    award_tier: 1
+  - name: Wound Stripe
+    image: wound_stripe.dds
+    max_awards: 1
+    conditions:
+    - deaths: 1
+  - name: Second Wound Stripe
+    image: wound_stripe_2.dds
+    requires: Wound Stripe
+    max_awards: 1
+    conditions:
+    - deaths: 2
+  - name: Third Wound Stripe
+    image: wound_stripe_3.dds
+    requires: Second Wound Stripe
+    max_awards: 1
+    conditions:
+    - deaths: 3
+  
+  Soviet Union:
+  - name: Aviation Badge
+    image: pilots_badge.dds
+    max_awards: 1
+    conditions:
+    - missions_completed: 1
+  - name: Medal 'For Battle Merit'
+    image: medal_battle_merit.dds
+    max_awards: 1
+    max_rank_index: 2
+    conditions:
+    - missions_completed: 1
+  - name: Medal for Courage
+    image: medal_courage.dds
+    max_awards: 1
+    max_rank_index: 2
+    conditions:
+    - missions_completed: 5
+  - name: Order of the Red Star
+    image: order_red_star.dds
+    max_awards: 1
+    award_tier: 5
+    conditions:
+    - total_air_kills: 3
+    - ship_kills: 1
+    - total_kills: 30
+    - missions_completed: 15
+  - name: Order of the Red Star (2nd awarding)
+    image: order_red_star.dds
+    requires: Order of the Red Star
+    max_awards: 1
+    award_tier: 4
+    conditions:
+    - total_air_kills: 20
+    - ship_kills: 10
+    - total_kills: 200
+    - missions_completed: 100
+  - name: Order of the Red Star (3rd awarding)
+    image: order_red_star.dds
+    requires: Order of the Red Star (2nd awarding)
+    max_awards: 1
+    award_tier: 4
+    conditions:
+    - total_air_kills: 40
+    - ship_kills: 20
+    - total_kills: 400
+    - missions_completed: 200
+  - name: Order of the Patriotic War 2nd Class
+    image: order_patriotic_war_2nd.dds
+    max_awards: 1
+    award_tier: 4
+    conditions:
+    - total_air_kills: 2
+    - missions_completed: 50
+  - name: Order of the Patriotic War 1st Class
+    image: order_patriotic_war_1st.dds
+    max_awards: 1
+    award_tier: 3
+    conditions:
+    - total_air_kills: 3
+    - missions_completed: 60
+  - name: Order of Alexander Nevsky
+    image: order_nevsky.dds
+    max_awards: 1
+    min_rank_index: 6
+    conditions:
+    - missions_completed: 75
+  - name: Order of Suvorov 3rd Class
+    image: order_suvorov.dds
+    max_awards: 1
+    min_rank_index: 6
+    conditions:
+    - missions_completed: 150
+  - name: Order of the Red Banner
+    image: order_red_banner.dds
+    max_awards: 1
+    award_tier: 2
+    conditions:
+    - total_air_kills: 6
+    - ship_kills: 3
+    - total_kills: 60
+    - missions_completed: 25
+  - name: Order of the Red Banner (2nd awarding)
+    image: order_red_banner_2.dds
+    requires: Order of the Red Banner
+    max_awards: 1
+    award_tier: 2
+    conditions:
+    - total_air_kills: 25
+    - ship_kills: 12
+    - total_kills: 250
+    - missions_completed: 125
+  - name: Order of the Red Banner (3rd awarding)
+    image: order_red_banner_3.dds
+    requires: Order of the Red Banner (2nd awarding)
+    max_awards: 1
+    award_tier: 2
+    conditions:
+    - total_air_kills: 50
+    - ship_kills: 25
+    - total_kills: 500
+    - missions_completed: 250
+  - name: Hero of the Soviet Union
+    image: hero_soviet_union.dds
+    max_awards: 1
+    award_tier: 1
+    conditions:
+    - total_air_kills: 10
+    - ship_kills: 5
+    - total_kills: 100
+    - missions_completed: 40
+  - name: Hero of the Soviet Union (2nd awarding)
+    image: hero_soviet_union.dds
+    requires: Hero of the Soviet Union
+    max_awards: 1
+    award_tier: 1
+    conditions:
+    - total_air_kills: 30
+    - ship_kills: 15
+    - total_kills: 300
+    - missions_completed: 150
+  - name: Hero of the Soviet Union (3rd awarding)
+    image: hero_soviet_union.dds
+    requires: Hero of the Soviet Union (2nd awarding)
+    max_awards: 1
+    award_tier: 1
+    conditions:
+    - total_air_kills: 60
+    - ship_kills: 30
+    - total_kills: 600
+    - missions_completed: 300
+  - name: Order of Lenin
+    image: order_lenin.dds
+    max_awards: 1
+    award_tier: 1
+    conditions:
+    - total_air_kills: 10
+    - ship_kills: 5
+    - total_kills: 100
+    - missions_completed: 40
+  - name: Order of Lenin (2nd awarding)
+    image: order_lenin.dds
+    requires: Order of Lenin
+    max_awards: 1
+    award_tier: 1
+    conditions:
+    - total_air_kills: 30
+    - ship_kills: 15
+    - total_kills: 300
+    - missions_completed: 150
+  - name: Order of Lenin (3rd awarding)
+    image: order_lenin.dds
+    requires: Order of Lenin (2nd awarding)
+    max_awards: 1
+    conditions:
+    - total_air_kills: 60
+    - ship_kills: 30
+    - total_kills: 600
+    - missions_completed: 300
+  - name: 5 Combat Sorties Bonus (1500 rubles)
+    image: bonus_5_sorties.dds
+    max_awards: 1
+    conditions:
+    - missions_completed: 5
+  - name: 15 Combat Sorties Bonus (2000 rubles)
+    image: bonus_15_sorties.dds
+    max_awards: 1
+    conditions:
+    - missions_completed: 15
+  - name: 25 Combat Sorties Bonus (3000 rubles)
+    image: bonus_25_sorties.dds
+    max_awards: 1
+    conditions:
+    - missions_completed: 25
+  - name: 40 Combat Sorties Bonus (5000 rubles)
+    image: bonus_40_sorties.dds
+    max_awards: 1
+    conditions:
+    - missions_completed: 40
+  - name: Red Wound Stripe
+    image: red_wound_stripe.dds
+    per_sortie: true
+    max_awards: 999
+    random_threshold: 800
+    conditions:
+    - wounded_this_sortie: true
+  - name: Yellow Wound Stripe
+    image: yellow_wound_stripe.dds
+    per_sortie: true
+    max_awards: 999
+    random_threshold_min: 800
+    conditions:
+    - wounded_this_sortie: true
+  
+  USA:
+  - name: Pilot's Badge
+    image: pilots_badge.dds
+    max_awards: 1
+    conditions:
+    - missions_completed: 1
+  - name: Air Medal
+    image: air_medal.dds
+    max_awards: 1
+    conditions:
+    - total_air_kills: 1
+    - missions_completed: 5
+  - name: Air Medal and One Oak Leaf Cluster
+    image: air_medal_1_oak.dds
+    requires: Air Medal
+    max_awards: 1
+    conditions:
+    - total_air_kills: 2
+    - missions_completed: 10
+  - name: Air Medal and Two Oak Leaf Clusters
+    image: air_medal_2_oak.dds
+    requires: Air Medal and One Oak Leaf Cluster
+    max_awards: 1
+    conditions:
+    - total_air_kills: 3
+    - missions_completed: 15
+  - name: Air Medal and Three Oak Leaf Clusters
+    image: air_medal_3_oak.dds
+    requires: Air Medal and Two Oak Leaf Clusters
+    max_awards: 1
+    conditions:
+    - total_air_kills: 4
+    - missions_completed: 20
+  - name: Bronze Star Medal
+    image: bronze_star.dds
+    max_awards: 1
+    random_threshold: 10
+    conditions:
+    - missions_completed: 25
+  - name: Bronze Star Medal and One Oak Leaf Cluster
+    image: bronze_star_1_oak.dds
+    requires: Bronze Star Medal
+    max_awards: 1
+    random_threshold: 10
+    conditions:
+    - missions_completed: 50
+  - name: Bronze Star Medal and Two Oak Leaf Clusters
+    image: bronze_star_2_oak.dds
+    requires: Bronze Star Medal and One Oak Leaf Cluster
+    max_awards: 1
+    random_threshold: 10
+    conditions:
+    - missions_completed: 75
+  - name: Distinguished Flying Cross
+    image: distinguished_flying_cross.dds
+    requires: Air Medal and Three Oak Leaf Clusters
+    max_awards: 1
+    conditions:
+    - total_air_kills: 5
+    - missions_completed: 25
+  - name: Distinguished Flying Cross and One Oak Leaf Cluster
+    image: dfc_1_oak.dds
+    requires: Distinguished Flying Cross
+    max_awards: 1
+    conditions:
+    - total_air_kills: 10
+    - missions_completed: 50
+  - name: Distinguished Flying Cross and Two Oak Leaf Clusters
+    image: dfc_2_oak.dds
+    requires: Distinguished Flying Cross and One Oak Leaf Cluster
+    max_awards: 1
+    conditions:
+    - total_air_kills: 15
+    - missions_completed: 75
+  - name: Distinguished Flying Cross and Three Oak Leaf Clusters
+    image: dfc_3_oak.dds
+    requires: Distinguished Flying Cross and Two Oak Leaf Clusters
+    max_awards: 1
+    conditions:
+    - total_air_kills: 20
+    - missions_completed: 100
+  - name: Distinguished Flying Cross and Four Oak Leaf Clusters
+    image: dfc_4_oak.dds
+    requires: Distinguished Flying Cross and Three Oak Leaf Clusters
+    max_awards: 1
+    conditions:
+    - total_air_kills: 25
+    - missions_completed: 125
+  - name: Distinguished Flying Cross and One Silver Oak Leaf Cluster
+    image: dfc_1_silver_oak.dds
+    requires: Distinguished Flying Cross and Four Oak Leaf Clusters
+    max_awards: 1
+    conditions:
+    - total_air_kills: 30
+    - missions_completed: 150
+  - name: Legion of Merit
+    image: legion_of_merit.dds
+    requires_rank_index: 6
+    max_awards: 1
+    conditions:
+    - flight_time_hours: 300
+  - name: Silver Star Medal
+    image: silver_star.dds
+    per_sortie: true
+    max_awards: 1
+    random_threshold: 600
+    award_tier: 3
+    conditions:
+    - air_kills_in_sortie: 3
+  - name: Silver Star Medal and One Oak Leaf Cluster
+    image: silver_star_1_oak.dds
+    per_sortie: true
+    requires: Silver Star Medal
+    max_awards: 1
+    random_threshold: 600
+    award_tier: 3
+    conditions:
+    - air_kills_in_sortie: 3
+  - name: Silver Star Medal and Two Oak Leaf Clusters
+    image: silver_star_2_oak.dds
+    per_sortie: true
+    requires: Silver Star Medal and One Oak Leaf Cluster
+    max_awards: 1
+    random_threshold: 600
+    award_tier: 3
+    conditions:
+    - air_kills_in_sortie: 3
+  - name: Distinguished Service Cross
+    image: distinguished_service_cross.dds
+    per_sortie: true
+    max_awards: 1
+    random_threshold: 600
+    award_tier: 2
+    conditions:
+    - air_kills_in_sortie: 5
+  - name: Distinguished Service Cross and One Oak Leaf Cluster
+    image: dsc_1_oak.dds
+    per_sortie: true
+    requires: Distinguished Service Cross
+    max_awards: 1
+    random_threshold: 600
+    award_tier: 2
+    conditions:
+    - air_kills_in_sortie: 5
+  - name: Distinguished Service Cross and Two Oak Leaf Clusters
+    image: dsc_2_oak.dds
+    per_sortie: true
+    requires: Distinguished Service Cross and One Oak Leaf Cluster
+    max_awards: 1
+    random_threshold: 600
+    award_tier: 2
+    conditions:
+    - air_kills_in_sortie: 5
+  - name: Distinguished Service Cross and Three Oak Leaf Clusters
+    image: dsc_3_oak.dds
+    per_sortie: true
+    requires: Distinguished Service Cross and Two Oak Leaf Clusters
+    max_awards: 1
+    random_threshold: 600
+    award_tier: 2
+    conditions:
+    - air_kills_in_sortie: 5
+  - name: Distinguished Service Cross and Four Oak Leaf Clusters
+    image: dsc_4_oak.dds
+    per_sortie: true
+    requires: Distinguished Service Cross and Three Oak Leaf Clusters
+    max_awards: 1
+    random_threshold: 600
+    award_tier: 2
+    conditions:
+    - air_kills_in_sortie: 5
+  - name: Medal of Honor
+    image: medal_of_honor.dds
+    per_sortie: true
+    max_awards: 1
+    award_tier: 1
+    conditions:
+    - air_kills_in_sortie: 7
+    - air_kills_wounded_sortie: 5
+  - name: Medal of Honor and One Oak Leaf Cluster
+    image: medal_of_honor_1_oak.dds
+    requires: Medal of Honor
+    per_sortie: true
+    max_awards: 1
+    award_tier: 1
+    conditions:
+    - air_kills_in_sortie: 7
+    - air_kills_wounded_sortie: 5
+  - name: Purple Heart
+    image: purple_heart.dds
+    max_awards: 1
+    conditions:
+    - deaths: 1
+  - name: Purple Heart and One Oak Leaf Cluster
+    image: purple_heart_1_oak.dds
+    requires: Purple Heart
+    max_awards: 1
+    conditions:
+    - deaths: 2
+  - name: Purple Heart and Two Oak Leaf Clusters
+    image: purple_heart_2_oak.dds
+    requires: Purple Heart and One Oak Leaf Cluster
+    max_awards: 1
+    conditions:
+    - deaths: 3
+  date_format: '%d %B, %Y'
+  include_events_without_dates: true
+  no_date_format: after_mission
+  event_html_template: '<u>Events</u><br>
+
+    {events}
+
+    '
+  single_event_template: • {date} - {description} <img src={image}><br>
+  single_event_no_date_template: • After Mission {mission} - {description} <img src={image}><br>

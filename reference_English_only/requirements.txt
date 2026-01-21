@@ -1,0 +1,14 @@
+# IL-2 Campaign Tracker - Python Dependencies
+
+# Core dependencies
+pillow>=9.0.0          # Image processing (DDS to PNG conversion)
+pyyaml>=6.0            # YAML configuration file parsing
+psutil>=5.9.0          # Process monitoring (detecting IL-2 game)
+pdfkit>=1.0.0          # PDF generation wrapper for wkhtmltopdf
+regex>=2024.0.0        # Regex module used for advanced pattern matching
+
+# Optional but recommended
+pyinstaller>=5.0.0     # For building standalone EXE (development only)
+
+# Note: wkhtmltopdf is required for PDF export but must be installed separately
+# Download from: https://wkhtmltopdf.org/downloads.html

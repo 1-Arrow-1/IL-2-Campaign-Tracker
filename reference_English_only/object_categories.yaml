@@ -1,0 +1,1999 @@
+categories:
+  Air:
+  - a-20b
+  - airco d.h.2
+  - airco d.h.4
+  - albatros d.ii
+  - albatros d.iii
+  - albatros d.va
+  - ar 234 b-2
+  - b-25d
+  - b-26b-55
+  - bf 109 e-7
+  - bf 109 f-2
+  - bf 109 f-4
+  - bf 109 g-14
+  - bf 109 g-2
+  - bf 109 g-4
+  - bf 109 g-6
+  - bf 109 g-6 late
+  - bf 109 g-6as
+  - bf 109 k-4
+  - bf 110 e-2
+  - bf 110 g-2
+  - breguet 14.b2
+  - bristol f2b (f.ii)
+  - bristol f2b (f.iii)
+  - c-47a
+  - cg-4a
+  - dfw c.v
+  - f.e.2b
+  - fokker d.vii
+  - fokker d.viif
+  - fokker d.viii
+  - fokker dr.i
+  - fokker e.iii
+  - fw 190 a-3
+  - fw 190 a-5
+  - fw 190 a-6
+  - fw 190 a-8
+  - fw 190 d-9
+  - gotha g.v
+  - halberstadt cl.ii
+  - halberstadt cl.ii 200hp
+  - halberstadt d.ii
+  - handley page o/400
+  - hanriot hd.1
+  - he 111 h-16
+  - he 111 h-6
+  - hs 129 b-2
+  - hurricane mk.ii
+  - i-16 type 24
+  - i.a.r. 80-a
+  - i.a.r. 80-b
+  - il-2 mod.1941
+  - il-2 mod.1942
+  - il-2 mod.1943
+  - ju 52 3mg4e
+  - ju 87 d-3
+  - ju 88 a-4
+  - ju 88 c-6
+  - la-5 ser.8
+  - la-5f ser.38
+  - la-5fn ser.2
+  - lagg-3 ser.29
+  - li-2
+  - mc.202 ser.viii
+  - me 262 a
+  - me 410 a-1
+  - mig-3 ser.24
+  - mosquito f.b. mk.vi ser.2
+  - nieuport 11.c1
+  - nieuport 17.c1
+  - nieuport 17.c1 gbr
+  - nieuport 28.c1
+  - p-38j-25
+  - p-39l-1
+  - p-40e-1
+  - p-47d-22
+  - p-47d-28
+  - p-51b-5
+  - p-51d-15
+  - pe-2 ser.35
+  - pe-2 ser.87
+  - pfalz d.iiia
+  - pfalz d.xii
+  - r.e.8
+  - roland c.iia
+  - s.e.5a
+  - sopwith camel
+  - sopwith dolphin
+  - sopwith pup
+  - sopwith snipe
+  - sopwith strutter
+  - sopwith strutter b
+  - sopwith triplane
+  - spad 13.c1
+  - spad 7.c1 150hp
+  - spad 7.c1 180hp
+  - spitfire mk.ixc
+  - spitfire mk.ixe
+  - spitfire mk.vb
+  - spitfire mk.xiv
+  - spitfire mk.xive
+  - ssw d.iv
+  - static_albatrosd5
+  - static_bf109
+  - static_bf109_net
+  - static_bf109_open
+  - static_bf109e7
+  - static_bf109e7_net
+  - static_bf109e7_open
+  - static_bf109k4
+  - static_bf110e2
+  - static_bf110e2_open
+  - static_fw190a8
+  - static_fw190d9
+  - static_halberstadtd2
+  - static_he111
+  - static_he111_open
+  - static_hs129b2
+  - static_il2
+  - static_il2_net
+  - static_ju87
+  - static_ju87_net
+  - static_ju87_open
+  - static_ju88
+  - static_ju88_net
+  - static_ju88_open
+  - static_lagg3
+  - static_lagg3_net
+  - static_lagg3_w1
+  - static_lagg3_w2
+  - static_me262a
+  - static_mig3
+  - static_mig3_net
+  - static_nieuport17
+  - static_nieuport17_gbr
+  - static_pe2
+  - static_pe2_open
+  - static_pfalzd3a
+  - static_spad7
+  - static_spitfiremkixe
+  - static_tempestmkvs2
+  - static_typhoon
+  - static_yak1
+  - static_yak1_net
+  - static_yak1_open
+  - ta 152 h-1
+  - tempest mk.v ser.2
+  - towhook
+  - typhoon mk.ib
+  - u-2vs
+  - v-1
+  - yak-1 ser.69
+  - yak-1b ser.127
+  - yak-7b ser.36
+  - yak-9 ser.1
+  - yak-9t ser.1
+  Naval:
+  - bayfield-class attack transport
+  - british aaa peniche
+  - destroyer gleaves-class
+  - destroyer type 7
+  - fighter direction tender
+  - german aaa peniche
+  - gun boat 1124 aaa
+  - gun boat 1124 mrls
+  - gun ship type a
+  - landing boat type a
+  - landing craft lca
+  - landing craft lci(l)
+  - landing craft lcm
+  - landing craft lct
+  - landing craft lcvp
+  - landing ship lst
+  - large cargo ship design 1013
+  - large cargo ship type 1
+  - large tanker ship type 1
+  - large tanker ship type 1 ger
+  - large tanker ship type 1 usa
+  - peniche type a
+  - peniche type b
+  - river cargo ship type georgia
+  - river cargo ship type georgia aaa
+  - submarine type iib
+  - submarine type shch ser.10
+  - torpedo boat g-5 series 11-bis
+  - torpedo boat g-5 series 11-bis 213
+  - torpedo boat type s-38
+  Ground:
+  - 15 cm schwere feldhaubitze 13
+  - 155 mm howitzer m1
+  - 52-k
+  - 53-k
+  - 61-k
+  - 7.7 cm fk 96 n.a.
+  - 7.7 cm fk 96 n.a. cart
+  - 7.7 cm flak l/27
+  - 72-k
+  - american detachment
+  - ames type 15 radar
+  - austin k2 ambulance
+  - ba-10m
+  - ba-64
+  - bedford qlc
+  - bedford qld
+  - bedford qld ammo
+  - benz lkw 1912
+  - benz lkw 1912 ammo
+  - benz lkw 1912 open
+  - benz lkw 1912 searchlight
+  - bl 5.5-inch howitzer
+  - bofors l60
+  - br_rd_arch
+  - br_rd_arch170
+  - br_rd_dngrid
+  - br_rd_ramp_dn
+  - br_rd_ramp_up
+  - br_rd_ramphi_dn
+  - br_rd_ramphi_up
+  - br_rd_ramphish_dn
+  - br_rd_rampmed_dn
+  - br_rd_rampmed_up
+  - br_rd_start_dn_lft
+  - br_rd_start_dn_rgt
+  - br_rd_start_up_lft
+  - br_rd_start_up_rgt
+  - br_rd_trpz
+  - br_rd_updn_lft
+  - br_rd_updn_rgt
+  - br_rd_upgrid
+  - br_rw_arch
+  - br_rw_arch170
+  - br_rw_dngrid
+  - br_rw_invarch
+  - br_rw_ramp_dn
+  - br_rw_ramp_up
+  - br_rw_ramphi_dn
+  - br_rw_ramphi_up
+  - br_rw_ramphish_dn
+  - br_rw_rampmed_dn
+  - br_rw_rampmed_up
+  - br_rw_start_dn_lft
+  - br_rw_start_dn_rgt
+  - br_rw_start_up_lft
+  - br_rw_start_up_rgt
+  - br_rw_trpz
+  - br_rw_updn_lft
+  - br_rw_updn_rgt
+  - br_rw_upgrid
+  - bren mk i
+  - bren mk i aa
+  - bridge_big_1
+  - bridge_big_2
+  - bridge_hw110
+  - bridge_hw130
+  - bridge_hw150
+  - bridge_hw170
+  - bridge_hw190
+  - bridge_hw50
+  - bridge_hw70
+  - bridge_hw90
+  - bridge_pegas
+  - bridge_pontoon_100
+  - bridge_railroad_100
+  - bridge_railroad_200
+  - bridge_rd_cptl_100
+  - bridge_rd_cptl_300
+  - bridge_road_100
+  - bridge_road_150
+  - bridge_road_200
+  - bridge_road_250
+  - bridge_road_300_ssp
+  - bridge_rr110
+  - bridge_rr130
+  - bridge_rr150
+  - bridge_rr170
+  - bridge_rr190
+  - bridge_rr70
+  - bridge_rr90
+  - bridge_section_dmg
+  - bridgestower
+  - britain detachment
+  - british searchlight 1914
+  - bt-7m
+  - bz-35
+  - canon de 75 mle 1897
+  - canon de 75 mle 1897 cart a
+  - canon de 75 mle 1897 cart b
+  - chain home low radar
+  - churchill iv
+  - crossley t5
+  - daimler dr4
+  - daimler dr4 ambulance
+  - daimler dr4 winch
+  - daimler m1914 flak 77/l27
+  - dodge wc54 ambulance
+  - dshk
+  - dshk-aa
+  - fake vehicle
+  - ferry
+  - ferry2
+  - ferry_pontoon_end
+  - ferry_pontoon_part
+  - ferryfloat
+  - flak 36
+  - flak 37
+  - flak 38
+  - flak 38/39
+  - flak 43
+  - flakpanzer iv mobelwagen
+  - flakvierling 38
+  - ford g917
+  - ford g917 ammo
+  - fumg-401 freya lz-a radar
+  - fuse 65 radar
+  - gaz-55
+  - gaz-aa
+  - gaz-aa ammo
+  - gaz-aa m4
+  - gaz-m
+  - gaz-mm 72-k
+  - german landlight
+  - german searchlight
+  - german searchlight 1914
+  - gmc cckw 353
+  - gmc cckw 353 ammo
+  - gmc cckw 353 fuel
+  - h630 pillbox
+  - h634 pillbox
+  - horch 830
+  - hotchkiss mle 14
+  - hotchkiss mle 14 aa
+  - humber mk.iv
+  - jagdpz iv l70
+  - jeffery quad
+  - jeffery quad ambulance
+  - jeffery quad searchlight
+  - jeffery quad winch
+  - kalmost
+  - kv-1-41
+  - kv-1-42
+  - kv-1s
+  - kv-1s chtz(1943)
+  - landing canvas
+  - landlight
+  - lefh 18
+  - leyland 3 ton raf
+  - leyland 3 ton raf ammo
+  - leyland 3 ton raf open
+  - locomotive_e
+  - locomotive_g8
+  - m-30
+  - m-42
+  - m16 half-track aaa gun
+  - m1a1 90 mm gun
+  - m2.50
+  - m2.50 aa
+  - m272 artillery pillbox
+  - m3a1 half-track
+  - m4
+  - m4a2
+  - m4a2(75)
+  - m4a3(75)w
+  - m5 3-inch gun
+  - m8 greyhound
+  - marder iii ausf. h
+  - mark v (female)
+  - mark v (male)
+  - maxim flak m14
+  - mercedes kettenwagen 22
+  - mg 34
+  - mg-34 aa
+  - ml-20
+  - mlbr_bridge
+  - mlbr_bridge_1
+  - mlbr_bridge_10
+  - mlbr_bridge_3
+  - mlbr_bridge_float
+  - mlbr_bridge_ramp
+  - mlbr_pierhead_a
+  - mlbr_pierhead_b
+  - morris c9b
+  - opel blitz
+  - opel blitz ambulance
+  - opel blitz ammo
+  - opel blitz tankwagen
+  - pak 35-36
+  - pak 38
+  - pak 40
+  - port_n_walkingpier1
+  - port_n_walkingpier2
+  - port_n_walkingpier3
+  - port_n_walkingpier4
+  - pz.kpfw.iii ausf.l
+  - pz.kpfw.iii ausf.m
+  - pz.kpfw.iv ausf.g
+  - pz.kpfw.v ausf.d
+  - pz.kpfw.vi ausf.h
+  - pz.kpfw.vi ausf.h1
+  - pzkpfw 38t
+  - pzkpfw iii ausf.h
+  - pzkpfw iii ausf.l
+  - pzkpfw iv ausf.f1
+  - pzkpfw iv ausf.g
+  - pzkpfw iv ausf.h
+  - pzkpfw v ausf.g
+  - qf 13 pounder 6 cwt
+  - qf 17-pounder gun
+  - qf 3.7-inch aaa gun
+  - qf 4.5-inch howitzer
+  - qf 4.5-inch howitzer cart
+  - r669 artillery pillbox
+  - r683 artillery pillbox
+  - radio beacon
+  - renault ft
+  - schneider ca 1
+  - scr-584 radar
+  - sd kfz 10 flak 38
+  - sd kfz 222
+  - sd kfz 234/2
+  - sd kfz 251 wurfrahmen 40
+  - sd kfz 251-1 ausf.c
+  - sd kfz 7 flakvierling 38
+  - sd.kfz.10-5
+  - sd.kfz.184
+  - searchlight
+  - soviet landlight
+  - soviet searchlight
+  - spandau mg 08
+  - spandau mg 08 aa
+  - stug iii ausf.c-d
+  - stug iii ausf.f
+  - stug iii ausf.g
+  - sturmpanzerwagen a7v
+  - su-122 uztm (1943)
+  - su-152 chkz (1943)
+  - t-34-76 stz
+  - t-34-76 stz 41
+  - t-34-76 utz 43
+  - t-34/76 stz(1942)
+  - t-34/76 utz (1943)
+  - t-70
+  - testtank
+  - testtankplates
+  - thornycroft j-type 13pdr aa
+  - todt battery pillbox
+  - uk landlight
+  - uk searchlight
+  - uk searchlight generator
+  - universal carrier mk.ii
+  - us landlight
+  - us searchlight
+  - us searchlight generator
+  - v1 launcher
+  - wagon_aaplatform
+  - wagon_boxb
+  - wagon_boxnb
+  - wagon_et
+  - wagon_g8t
+  - wagon_gondolab
+  - wagon_gondolanb
+  - wagon_pass
+  - wagon_passc
+  - wagon_platformaa-61k
+  - wagon_platformaa-boforsl60
+  - wagon_platformaa-dshk
+  - wagon_platformaa-flak38
+  - wagon_platformaa-flakvierling38
+  - wagon_platformaa-m2
+  - wagon_platformaa-m4
+  - wagon_platformaa-mg34
+  - wagon_platformb
+  - wagon_platformemptyb
+  - wagon_platformemptynb
+  - wagon_platformnb
+  - wagon_tankb
+  - wagon_tanknb
+  - willys mb
+  - zis-2
+  - zis-3
+  - zis-5
+  - zis-5 72-k
+  - zis-6 bm-13
+  Balloon:
+  - aetype
+  - aetype_p2
+  - baloonwinch
+  - caquot
+  - caquot_p2
+  - drachen
+  - drachen_p2
+  - m1-vla
+  - parseval
+  - parseval_p2
+  Building:
+  - abbayesaintvaast
+  - abbey_mont_st_eloi_eu
+  - af_barracksround1
+  - af_barracksround2
+  - af_barrackssmall
+  - af_camptents1
+  - af_camptents2
+  - af_guardgate
+  - af_hangardoubleside
+  - af_hangartent1
+  - af_hangartent2
+  - af_smalltents
+  - arf_ammo_1
+  - arf_ammo_2
+  - arf_ammo_3
+  - arf_ammo_4
+  - arf_barak
+  - arf_caponiers_10_h_3
+  - arf_caponiers_11_h_5
+  - arf_caponiers_12_h_5
+  - arf_caponiers_13_h_1
+  - arf_caponiers_14_h_1
+  - arf_caponiers_1_v_5
+  - arf_caponiers_2_v_5
+  - arf_caponiers_3_v_5
+  - arf_caponiers_4_r_6
+  - arf_caponiers_5_r_7
+  - arf_caponiers_6_h_4
+  - arf_caponiers_7_h_4
+  - arf_caponiers_8_h_4
+  - arf_caponiers_9_h_3
+  - arf_dugouts_1
+  - arf_dugouts_2
+  - arf_dugouts_3
+  - arf_eu_barrackblack
+  - arf_eu_barrackblack4
+  - arf_eu_barrackwhite
+  - arf_eu_barrackwhite4
+  - arf_eu_controltower
+  - arf_eu_lufthangar
+  - arf_gsm_1
+  - arf_gsm_2
+  - arf_hangararc
+  - arf_hangarbox
+  - arf_hangars_1
+  - arf_hangars_2
+  - arf_hangars_3
+  - arf_n_caponiers_typeb
+  - arf_n_hangarb1
+  - arf_n_hangarblister
+  - arf_n_hangart2_c
+  - arf_n_hangart2_o
+  - arf_n_nissenhut1
+  - arf_n_nissenhut2
+  - arf_n_nissenhut3
+  - arf_nets_1_4
+  - arf_nets_2_5
+  - arf_nets_3_3
+  - arf_saray
+  - arf_sign_forward
+  - arf_sign_left
+  - arf_sign_noway
+  - arf_sign_right
+  - arf_sklad
+  - arf_tower
+  - arf_tower_1
+  - arf_tower_2
+  - arrascitadelle
+  - art_position_amb1
+  - art_position_amb2
+  - art_position_at
+  - art_position_at2
+  - art_position_big
+  - art_position_medium
+  - art_position_small
+  - back_of_sacks
+  - ballgate
+  - bar_01
+  - bar_02
+  - bar_03
+  - bar_04
+  - bar_05
+  - bar_06
+  - bar_07
+  - bar_09
+  - barbed1
+  - barbed2
+  - barbed3
+  - barrackround
+  - barracksmall
+  - barrels
+  - basilica_of_sacre_coeur
+  - beauxartsdelille
+  - beffroidelamairiedelille
+  - bench
+  - bench2
+  - bertangles_chateau_eu
+  - bf_barbed_1
+  - bf_barbed_2
+  - bf_barbed_3
+  - bf_barbed_4
+  - bf_barbed_5
+  - bf_barbed_50
+  - bf_gunpos_1
+  - bf_gunpos_2
+  - bf_gunpos_3
+  - bf_gunpos_4
+  - bf_gunpos_5
+  - bf_gunpos_6
+  - bf_gunpos_7
+  - bf_gunpos_8
+  - bf_n_artpos
+  - bf_n_artpos_block
+  - bf_n_artpos_block2
+  - bf_n_barrageat_100
+  - bf_n_barrageat_500
+  - bf_n_barragebg_100
+  - bf_n_barragebg_500
+  - bf_n_barragelog_100
+  - bf_n_barragelog_500
+  - bf_n_mgpos
+  - bf_n_mgpos_block
+  - bf_sbags_corner
+  - bf_sbags_straight
+  - bf_tents_1
+  - bf_tents_2
+  - bf_tents_3
+  - bike
+  - block_of_boxes
+  - boistrancourt
+  - boistrancourt_angar
+  - boosterstation
+  - camptent1
+  - camptent2
+  - cart
+  - chain home rx radar
+  - chain home tx radar
+  - chambre_commerce
+  - chateau_boistrancourt
+  - chateau_cappy_eu
+  - chateau_roucourt_eu
+  - chk
+  - church_eu_big
+  - church_eu_mid1
+  - church_eu_mid2
+  - church_eu_mid3
+  - church_eu_small1
+  - church_eu_small2
+  - churchred
+  - churchyellow
+  - citadelledelille
+  - coal_slag_first
+  - coal_slag_second
+  - country_100x100_1
+  - country_100x100_2
+  - country_100x100_3
+  - country_100x100_4
+  - country_200x100_1
+  - country_200x100_2
+  - country_200x100_3
+  - country_200x100_4
+  - country_200x100_5
+  - country_200x100_6
+  - country_b_block1
+  - country_b_block2
+  - country_b_block3
+  - country_b_block4
+  - country_m_block1
+  - country_m_block2
+  - country_m_block3
+  - country_m_block4
+  - country_m_corner_block1
+  - country_m_corner_block2
+  - country_m_corner_block3
+  - country_m_corner_block4
+  - country_m_corner_block5
+  - country_m_corner_block6
+  - country_m_corner_block7
+  - country_m_corner_block8
+  - coverstructure
+  - decorative_fence
+  - details_for_plane
+  - details_for_plane1
+  - dinamowtr
+  - dot1
+  - dot2
+  - dot3
+  - dot4
+  - dot5
+  - dot6
+  - dottent1
+  - dottent2
+  - dovercastle_blocka
+  - dovercastle_blockb
+  - dovercastle_blockc
+  - dovercastle_blockd
+  - dovercastle_keep
+  - dugout
+  - ecole_militaire
+  - eifeltower
+  - factory_boistrancourt
+  - fake_block
+  - fort_douaumont
+  - fort_vaux
+  - fosse_darenberg
+  - fountain
+  - fumg 41-42 mammut radar
+  - guardgate1
+  - guardhouse
+  - gumrak
+  - hangardoubleside
+  - hangartent1
+  - hangartent2
+  - helling
+  - hotel_des_invalides
+  - hoteldeville
+  - industrial_200x140_01
+  - industrial_200x140_02
+  - industrial_300x100_01
+  - industrial_300x100_02
+  - industrial_300x100_03
+  - industrial_300x100_04
+  - industrial_block_bigwarehouse_300x100
+  - industrial_block_eu_fabric200x200
+  - industrial_block_eu_fabric200x200_2
+  - industrial_block_eu_fabric250x100
+  - industrial_block_eu_fabric300x200
+  - industrial_block_eu_fabric300x200_2
+  - industrial_block_fuel25m_300x100
+  - industrial_block_fuel2_300x100
+  - industrial_block_fuel35m_300x100
+  - industrial_block_fuel_300x100
+  - industrial_block_midwarehouse_200x140
+  - industrial_block_smallwarehouse2_150x100
+  - industrial_block_smallwarehouse2_300x100
+  - industrial_block_smallwarehouse_150x100
+  - industrial_block_smallwarehouse_300x100
+  - industrial_block_zavodcement
+  - industrial_block_zavodoktyabr
+  - industrial_cornerl_01
+  - industrial_cornerl_02
+  - industrial_cornerr_01
+  - industrial_cornerr_02
+  - industrial_object_oil
+  - industrial_object_oilsmall
+  - industrial_object_smallwarehouse
+  - industrial_object_zavodkorpys45m
+  - industrial_object_zavodkorpys70m
+  - just_wheel
+  - kran2ww1
+  - kranww1
+  - kranww2
+  - kuban_block_zdravnica
+  - kuban_elevator
+  - kuban_funicolare
+  - kuban_funicolare1
+  - kuban_funicolare2
+  - kuban_lighthousebig
+  - kuban_lighthousesmall
+  - kuban_museum
+  - kuban_railroadstation00
+  - kuban_tower
+  - lift
+  - loudspeaker_pole
+  - markettent1
+  - markettent2
+  - meh_01
+  - mg_position
+  - millitarytower1
+  - mlbr_flooded_ship_a
+  - mlbr_flooded_ship_b
+  - mlbr_flooded_ship_block
+  - mlbr_phoenix
+  - mlbr_phoenix_3
+  - mlbr_phoenix_5
+  - notredamedamiens
+  - od_railcoal
+  - od_railcross
+  - od_windmil
+  - okt_01
+  - okt_02
+  - okt_03
+  - okt_04
+  - okt_05
+  - okt_06
+  - okt_07
+  - okt_08
+  - operadelille
+  - port_up_crane
+  - port_up_group_cargo_190x15
+  - port_up_group_cargo_50x25
+  - port_up_group_smallsklad
+  - port_up_group_smallwarehouse_1
+  - port_up_group_smallwarehouse_2
+  - port_up_object_smallsklad
+  - port_up_object_smallwarehouse
+  - port_up_unit_bags
+  - port_up_unit_container
+  - port_up_unit_woodbox_1x4
+  - port_up_unit_woodbox_2x24
+  - portedeparis
+  - power_lines
+  - power_lines_small
+  - prefecturedelille
+  - r502 bunker
+  - r502 bunker 2
+  - r683 artillery pillbox 3
+  - race_pylon_double_blue
+  - race_pylon_double_finish
+  - race_pylon_double_green
+  - race_pylon_double_red
+  - race_pylon_double_yellow
+  - race_pylon_single_blue
+  - race_pylon_single_finish
+  - race_pylon_single_green
+  - race_pylon_single_red
+  - race_pylon_single_yellow
+  - railway-light
+  - railway_cart
+  - railway_house
+  - railway_house2
+  - railway_lever
+  - railway_light
+  - railway_pillar
+  - railway_sign
+  - rechnoy
+  - rl401a pillbox
+  - rl401a pillbox 3
+  - rl401a pillbox 4
+  - rl409a pillbox
+  - rl409a pillbox 3
+  - rm262a bunker
+  - rw
+  - rw_light
+  - rwplatform_eu
+  - rwstation01
+  - rwstation02
+  - rwstation03
+  - rwstation04
+  - rwstation05
+  - rwstation_b
+  - rwstation_eu
+  - rwstation_industrial_01
+  - rwstation_industrial_02
+  - rwstation_s1
+  - rwstation_s2
+  - schodnya
+  - scot_01
+  - sec1
+  - sec2
+  - sec3
+  - secu
+  - sight_arras_verduncitadelle
+  - sight_arras_ypresclothall
+  - sight_eu_antverplady
+  - sight_eu_beffroi
+  - sight_eu_keln
+  - sight_eu_memorialinterallie
+  - sight_eu_memorialinterallie2
+  - sight_eu_palaceofjustice
+  - sight_eu_parcducinquantenaire
+  - sight_eu_peacepalace
+  - sight_eu_placesaintegudule
+  - sight_eu_royalpalaceofbrussels
+  - sight_eu_schifffahrtmuseum
+  - sight_eu_stbartholomew
+  - sight_eu_stlambertus
+  - sight_eu_stmartin
+  - sight_fc_abbeystjeanvignesoissons
+  - sight_fc_chateau_de_pierrefonds
+  - sight_fc_chateaucompiegne
+  - sight_fc_hotelvillesoissons
+  - sight_fc_laoncathedral_01
+  - sight_fc_museelouvre1
+  - sight_fc_museelouvre2
+  - sight_fc_museelouvre3
+  - sight_fc_notredamedeparis
+  - sight_fc_palaisdutau
+  - sight_fc_portedemars
+  - sight_fc_portedemars_01
+  - sight_fc_reims_st_remi
+  - sight_fc_reimscathedral
+  - sight_fc_retheltownhall
+  - sight_fc_saintcrxgate
+  - sight_nrmd_abbeydardenne
+  - sight_nrmd_bayeux
+  - sight_nrmd_caenabbey
+  - sight_nrmd_chateaudecaen
+  - sight_nrmd_chateaudefalaise
+  - sight_nrmd_dovercitadel
+  - sight_nrmd_evreuxcathedral
+  - sight_nrmd_fortduroule
+  - sight_nrmd_fortmonckton
+  - sight_nrmd_portsmouthhospital
+  - sight_nrmd_rouencathedral
+  - sight_nrmd_royalhospitalhaslar
+  - sight_nrmd_stmereeglise
+  - sight_nrmd_stonehenge
+  - sight_nrmd_stouenderouen
+  - sight_nrmd_winchester
+  - sklad_01
+  - small_pillar
+  - small_pillar2
+  - stalingrad_00
+  - stalingrad_01
+  - stalingrad_02
+  - stalingrad_03
+  - stalingrad_04
+  - stalingrad_05
+  - stalingrad_06
+  - stalingrad_07
+  - stalingrad_08
+  - stalingrad_09
+  - stalingrad_10
+  - stalingrad_11
+  - stalingrad_12
+  - stalingrad_13
+  - stalingrad_14
+  - stalingrad_15
+  - stalingrad_16
+  - stalingrad_17
+  - stalingrad_18
+  - stalingrad_19
+  - stalingrad_20
+  - stalingrad_21
+  - stalingrad_22
+  - stalingrad_23
+  - stalingrad_24
+  - stalingrad_25
+  - stalingrad_26
+  - stalingrad_27
+  - stalingrad_28
+  - stalingrad_29
+  - stalingrad_30
+  - stalingrad_31
+  - stalingrad_32
+  - stalingrad_33
+  - stalingrad_34
+  - stalingrad_35
+  - stalingrad_36
+  - stalingrad_37
+  - stalingrad_38
+  - stalingrad_39
+  - stalingrad_40
+  - stalingrad_41
+  - stalingrad_42
+  - stalingrad_43
+  - stalingrad_44
+  - stalingrad_45
+  - stalingrad_46
+  - stalingrad_47
+  - stalingrad_48
+  - stalingrad_49
+  - stalingrad_50
+  - stalingrad_51
+  - stalingrad_52
+  - stalingrad_53
+  - stalingrad_54
+  - stalingrad_bridge_01
+  - stalingrad_bridge_02
+  - stand
+  - static_a20b
+  - static_a20raf
+  - static_a7v
+  - static_b25d
+  - static_bedford_qlc
+  - static_bedford_qld
+  - static_benzlkw
+  - static_bm13
+  - static_boxnb
+  - static_boxnb_3
+  - static_boxnb_5
+  - static_bp_d3t26
+  - static_bp_locomotive
+  - static_bp_pl37
+  - static_bp_pl42
+  - static_bp_pl43
+  - static_bt-7m
+  - static_e
+  - static_et
+  - static_ford-g917
+  - static_g8
+  - static_g8t
+  - static_gaz-m
+  - static_gazaa
+  - static_gmc-cckw
+  - static_gmc-cckw-fuel
+  - static_horch830
+  - static_i16
+  - static_i16_net
+  - static_ju52
+  - static_kv1-41
+  - static_leyland3tonraf
+  - static_m4a3
+  - static_mk5m
+  - static_opel
+  - static_opel_fuel
+  - static_p38j25
+  - static_p39l1
+  - static_p40e1
+  - static_p47d28
+  - static_p51b5
+  - static_p51b5_malcolm
+  - static_p51d15
+  - static_pass
+  - static_pass_3
+  - static_pass_5
+  - static_platformemptynb
+  - static_platformemptynb_3
+  - static_platformemptynb_5
+  - static_platformnb
+  - static_platformnb_3
+  - static_platformnb_5
+  - static_pz_iiih
+  - static_pz_ivf1
+  - static_pzvi-h1
+  - static_sdkfz251-1c
+  - static_se5a
+  - static_stug37l24
+  - static_t34-76
+  - static_t70
+  - static_tanknb
+  - static_tanknb_3
+  - static_tanknb_5
+  - static_u2vs
+  - static_whippet
+  - static_willysmb
+  - static_zis
+  - static_zis_fuel
+  - stela
+  - streetlamp
+  - stz_01
+  - stz_02
+  - stz_03
+  - stz_04
+  - stz_05
+  - stz_06
+  - stz_07
+  - stz_08
+  - stz_09
+  - stz_10
+  - stz_11
+  - stz_12
+  - tacinskaya_1
+  - tacinskaya_2
+  - tacinskaya_3
+  - tank_position
+  - tent1
+  - tentcart
+  - thionville_steelworks
+  - todt battery pillbox 2
+  - tonnel
+  - town_block_01_480x420
+  - town_block_02_480x280
+  - town_block_03_480x140
+  - town_block_04_240x420
+  - town_block_05_240x280
+  - town_block_06_440x140
+  - town_block_07_400x420
+  - town_block_08_200x420
+  - town_block_09_400x280
+  - town_block_10_200x280
+  - town_block_11_480x210
+  - town_block_12_480x70
+  - town_block_13_280x200
+  - town_block_14_140x300
+  - town_block_15_280x100
+  - town_eu_arras_01
+  - town_eu_arras_02
+  - town_eu_arras_03
+  - town_eu_arras_04
+  - town_eu_arras_05
+  - town_eu_lille_01
+  - town_eu_lille_02
+  - town_eu_lille_03
+  - town_eu_lille_04
+  - town_eu_lille_05
+  - town_eu_lille_06
+  - town_eu_lrg_block_01_01
+  - town_eu_lrg_block_01_02
+  - town_eu_lrg_block_01_03
+  - town_eu_lrg_block_01_04
+  - town_eu_lrg_block_01_05
+  - town_eu_lrg_block_01_06
+  - town_eu_lrg_block_01_07
+  - town_eu_lrg_block_01_08
+  - town_eu_lrg_block_01_09
+  - town_eu_lrg_block_01_10
+  - town_eu_lrg_block_01_11
+  - town_eu_lrg_block_01_12
+  - town_eu_lrg_block_02_01
+  - town_eu_lrg_block_02_02
+  - town_eu_lrg_block_02_03
+  - town_eu_lrg_block_02_04
+  - town_eu_lrg_block_03_01
+  - town_eu_lrg_block_03_02
+  - town_eu_lrg_block_03_03
+  - town_eu_lrg_block_03_04
+  - town_eu_lrg_block_03_05
+  - town_eu_lrg_block_03_06
+  - town_eu_lrg_block_03_07
+  - town_eu_lrg_block_03_08
+  - town_eu_lrg_block_04_01
+  - town_eu_lrg_block_04_02
+  - town_eu_lrg_block_04_03
+  - town_eu_lrg_block_04_04
+  - town_eu_lrg_block_05_01
+  - town_eu_lrg_block_05_02
+  - town_eu_lrg_block_05_03
+  - town_eu_lrg_block_06_01
+  - town_eu_lrg_block_06_02
+  - town_eu_lrg_block_06_03
+  - town_eu_lrg_block_07_01
+  - town_eu_lrg_block_07_02
+  - town_eu_lrg_block_08_01
+  - town_eu_lrg_block_08_02
+  - town_eu_lrg_block_08_03
+  - town_eu_lrg_block_08_04
+  - town_eu_lrg_block_08_05
+  - town_eu_lrg_block_08_06
+  - town_eu_lrg_block_08_07
+  - town_eu_lrg_block_08_08
+  - town_eu_lrg_block_08_09
+  - town_eu_lrg_block_08_10
+  - town_eu_lrg_block_08_11
+  - town_eu_lrg_block_arras
+  - town_eu_lrg_det_01_01
+  - town_eu_lrg_det_01_02
+  - town_eu_lrg_det_01_03
+  - town_eu_lrg_det_01_04
+  - town_eu_lrg_det_01_05
+  - town_eu_lrg_det_01_06
+  - town_eu_lrg_det_01_07
+  - town_eu_lrg_det_01_09
+  - town_eu_lrg_det_01_10
+  - town_eu_lrg_det_01_11
+  - town_eu_lrg_det_01_12
+  - town_eu_lrg_det_02_01
+  - town_eu_lrg_det_02_02
+  - town_eu_lrg_det_02_03
+  - town_eu_lrg_det_03_01
+  - town_eu_lrg_det_03_02
+  - town_eu_lrg_det_04_01
+  - town_eu_lrg_det_04_02
+  - town_eu_lrg_object_01
+  - town_eu_lrg_object_02
+  - town_eu_lrg_object_03
+  - town_eu_lrg_object_04
+  - town_eu_lrg_object_05
+  - town_eu_lrg_object_06
+  - town_eu_lrg_object_07
+  - town_eu_lrg_object_08
+  - town_eu_lrg_object_09
+  - town_eu_lrg_object_10
+  - town_eu_lrg_object_11
+  - town_eu_lrg_object_12
+  - town_eu_lrg_object_13
+  - town_eu_lrg_object_14
+  - town_eu_med_block_01_01
+  - town_eu_med_block_01_02
+  - town_eu_med_block_01_03
+  - town_eu_med_block_01_04
+  - town_eu_med_block_01_05
+  - town_eu_med_block_01_06
+  - town_eu_med_block_01_07
+  - town_eu_med_block_01_08
+  - town_eu_med_block_01_09
+  - town_eu_med_block_02_01
+  - town_eu_med_block_02_02
+  - town_eu_med_block_02_03
+  - town_eu_med_block_02_04
+  - town_eu_med_block_02_05
+  - town_eu_med_block_02_06
+  - town_eu_med_block_03_01
+  - town_eu_med_block_03_02
+  - town_eu_med_block_03_03
+  - town_eu_med_block_03_04
+  - town_eu_med_block_03_05
+  - town_eu_med_block_03_06
+  - town_eu_med_block_03_07
+  - town_eu_med_block_03_08
+  - town_eu_med_block_03_09
+  - town_eu_med_det_01_01
+  - town_eu_med_det_01_02
+  - town_eu_med_det_01_03
+  - town_eu_med_det_01_04
+  - town_eu_med_det_01_05
+  - town_eu_med_det_01_06
+  - town_eu_med_det_01_07
+  - town_eu_med_det_01_08
+  - town_eu_med_det_01_09
+  - town_eu_med_det_02_01
+  - town_eu_med_det_02_02
+  - town_eu_med_det_02_03
+  - town_eu_med_det_02_04
+  - town_eu_med_det_02_05
+  - town_eu_med_det_02_06
+  - town_eu_med_det_03_01
+  - town_eu_med_det_03_02
+  - town_eu_med_det_03_03
+  - town_eu_med_det_03_04
+  - town_eu_med_object_01
+  - town_eu_med_object_02
+  - town_eu_med_object_03
+  - town_eu_med_object_04
+  - town_eu_med_object_05
+  - town_eu_med_object_06
+  - town_eu_med_object_07
+  - town_eu_med_object_08
+  - town_eu_med_object_09
+  - town_eu_med_object_10
+  - town_eu_med_object_11
+  - town_eu_med_object_12
+  - town_eu_objgrp_01
+  - town_eu_objgrp_02
+  - town_eu_small_object_01
+  - town_eu_small_object_02
+  - town_eu_small_object_03
+  - town_eu_small_object_04
+  - town_eu_small_object_05
+  - town_eu_small_object_06
+  - town_eu_small_object_07
+  - town_eu_small_object_08
+  - town_eu_small_object_09
+  - town_eu_small_object_10
+  - town_eu_small_object_11
+  - town_eu_small_object_12
+  - town_eu_small_object_13
+  - town_eu_small_object_14
+  - town_eu_small_object_15
+  - town_eu_small_object_16
+  - town_eu_small_object_17
+  - town_gb_block_a_01
+  - town_gb_block_a_02
+  - town_gb_block_a_03
+  - town_gb_block_a_04
+  - town_gb_block_a_05
+  - town_gb_block_a_06
+  - town_gb_block_a_07
+  - town_gb_block_a_08
+  - town_gb_block_a_09
+  - town_gb_block_a_10
+  - town_gb_block_a_11
+  - town_gb_block_a_12
+  - town_gb_block_b_01
+  - town_gb_block_b_02
+  - town_gb_block_b_03
+  - town_gb_block_b_04
+  - town_gb_block_b_05
+  - town_gb_block_b_06
+  - town_gb_block_b_07
+  - town_gb_block_b_08
+  - town_gb_block_b_09
+  - town_gb_block_b_10
+  - town_gb_block_b_11
+  - town_gb_block_b_12
+  - town_gb_block_b_13
+  - town_gb_block_b_14
+  - town_gb_block_c_01
+  - town_gb_block_c_02
+  - town_gb_block_c_03
+  - town_gb_block_c_04
+  - town_gb_block_c_05
+  - town_gb_block_c_06
+  - town_gb_block_c_07
+  - town_gb_block_c_08
+  - town_gb_block_c_09
+  - town_gb_block_c_10
+  - town_gb_block_c_11
+  - town_gb_block_c_12
+  - town_gb_block_c_13
+  - town_gb_block_c_14
+  - town_gb_block_c_15
+  - town_gb_block_c_16
+  - town_gb_block_d_01
+  - town_gb_block_d_02
+  - town_gb_block_d_03
+  - town_gb_block_d_04
+  - town_gb_block_e_01
+  - town_gb_block_e_02
+  - town_gb_block_e_03
+  - town_gb_block_e_04
+  - town_gb_block_e_05
+  - town_gb_block_f_01
+  - town_gb_block_f_02
+  - town_gb_block_f_03
+  - town_gb_block_f_04
+  - town_gb_block_f_05
+  - town_gb_block_g_01
+  - town_gb_block_g_02
+  - town_gb_block_g_03
+  - town_gb_block_g_04
+  - town_gb_block_g_05
+  - town_gb_block_g_06
+  - town_gb_block_g_07
+  - town_gb_block_g_08
+  - town_gb_block_g_09
+  - town_gb_block_g_10
+  - town_gb_block_g_11
+  - town_gb_block_g_12
+  - town_gb_block_g_13
+  - town_gb_block_g_14
+  - town_gb_block_g_15
+  - town_gb_block_g_16
+  - town_gb_block_g_17
+  - town_gb_block_g_18
+  - town_gb_block_g_19
+  - town_gb_block_g_20
+  - town_gb_block_g_21
+  - town_gb_block_g_22
+  - town_lrg_01
+  - town_lrg_02
+  - town_lrg_03
+  - town_lrg_04
+  - town_lrg_05
+  - town_lrg_06
+  - town_lrg_corner_01
+  - town_lrg_corner_02
+  - town_med_140x100_01
+  - town_med_140x100_02
+  - town_med_140x140_01
+  - town_med_140x140_02
+  - town_med_140x140_03
+  - town_med_140x140_04
+  - town_med_200x140_01
+  - town_med_200x140_02
+  - town_med_200x140_03
+  - town_med_240x140_01
+  - town_med_240x140_02
+  - town_med_240x140_03
+  - town_med_240x70_01
+  - town_med_240x70_02
+  - town_med_280x140
+  - town_med_420x280
+  - town_med_420x420
+  - town_med_corner_140x140
+  - town_med_cornerl_01
+  - town_med_cornerl_02
+  - town_med_cornerr_01
+  - town_med_cornerr_02
+  - town_med_trapeze_01
+  - town_med_trapeze_02
+  - townblock250x100_01
+  - townblock250x100_02
+  - townblock250x250_01
+  - townblock250x250_02
+  - townblock250x250u_01
+  - townblock250x500_01
+  - townblock250x500_02
+  - townblock250x500_03
+  - townblock500x250u_01
+  - townblock500x250u_02
+  - townblock500x250u_03
+  - townblock500x250u_04
+  - townblock500x250u_05
+  - townblock500x250u_06
+  - townblock500x500_01
+  - townblock500x500_02
+  - townblock500x500u_01
+  - townblock500x500u_02
+  - townblock500x500u_03
+  - townblock500x500u_04
+  - townhall_eu_1
+  - townhall_eu_2
+  - tunel
+  - v1_compstation
+  - v1_ramp
+  - v1_stor_l
+  - v1_stor_r
+  - verdun_centre
+  - village_200_block1
+  - village_200_block2
+  - village_200_block3
+  - village_400_block1
+  - village_400_block2
+  - village_400_block3
+  - village_cross_200_block1
+  - village_cross_200_block2
+  - village_tcross_200_block1
+  - village_tcross_200_block2
+  - vl_001
+  - vl_002
+  - vl_003
+  - vl_004
+  - vl_005
+  - vl_1-06
+  - vl_1-07
+  - vl_1-08
+  - vl_1-09
+  - vl_2wagons
+  - vl_3wagons
+  - vl_banya
+  - vl_cerkvoznes
+  - vl_chapel
+  - vl_depo
+  - vl_dk
+  - vl_factory
+  - vl_klad
+  - vl_n1station
+  - vl_n2station
+  - vl_nsstation
+  - vl_nsstation_w
+  - vl_pioner
+  - vl_pvrz01
+  - vl_pvrz02
+  - vl_pvrz03
+  - vl_rounddepot
+  - vl_rounddepot_right
+  - vl_school
+  - vl_school02
+  - vl_selmag
+  - vl_selpo
+  - vl_selsovet
+  - vl_stadium
+  - vl_torgryad
+  - vl_tupik
+  - vl_vlvokzal
+  - vl_vodonapor
+  - vl_wagon_pass
+  - vl_wagons
+  - watertower
+  - watertower_eu_1
+  - watertower_eu_2
+  - windmill1_eu_1
+  - windmill1_eu_2
+exclude:
+  - 21-K turret
+  - 21-K turret b
+  - 21-K turret f
+  - 34-K turret
+  - 39-Ju torpedo turret
+  - 61-K turret 1124
+  - 61-k turret
+  - 7.7 cm flak l/27 turret
+  - A20B_P2
+  - Aerostat controller AI
+  - Aiming Bot's head
+  - B-13 turret
+  - B-13 turret b
+  - B-24 turret
+  - B25Draf_P2
+  - B26B55_P2
+  - BM-13 turret
+  - Bayfield 127mm turret
+  - Bofors L60 twin turret
+  - Bomb Sight DH4
+  - Bomb Sight HP400
+  - Bomb Sight He111
+  - Bomb Sight Li2
+  - Bomb Sight Pe2
+  - BotBoatSwain
+  - BotController0
+  - BotDriver1
+  - BotFieldController0
+  - BotFieldTankmanController
+  - BotGunner
+  - BotGunnerHowitzer
+  - BotGunner_A20Bbtm_RAF43
+  - BotGunner_A20Bbtm_RUS42
+  - BotGunner_A20Bbtm_RUS43
+  - BotGunner_A20Bbtm_RUSwi
+  - BotGunner_A20Bbtm_USA43
+  - BotGunner_A20Btop_RAF43
+  - BotGunner_A20Btop_RUS42
+  - BotGunner_A20Btop_RUS43
+  - BotGunner_A20Btop_RUSwi
+  - BotGunner_A20Btop_USA43
+  - BotGunner_B25Dbtm_RAF43
+  - BotGunner_B25Dbtm_RUS42
+  - BotGunner_B25Dbtm_RUS43
+  - BotGunner_B25Dbtm_RUSwi
+  - BotGunner_B25Dbtm_USA43
+  - BotGunner_B25Dfwd_RAF43
+  - BotGunner_B25Dfwd_RUS42
+  - BotGunner_B25Dfwd_RUS43
+  - BotGunner_B25Dfwd_RUSwi
+  - BotGunner_B25Dfwd_USA43
+  - BotGunner_B25Dtop_RAF43
+  - BotGunner_B25Dtop_RUS42
+  - BotGunner_B25Dtop_RUS43
+  - BotGunner_B25Dtop_RUSwi
+  - BotGunner_B25Dtop_USA43
+  - BotGunner_B26Bfwd_USA43
+  - BotGunner_B26Brear_USA43
+  - BotGunner_B26Bside_USA43
+  - BotGunner_B26Btop_USA43
+  - BotGunner_BFF2B_M_RAF17
+  - BotGunner_BFF2B_RAF17
+  - BotGunner_Bf110E2_GER41
+  - BotGunner_Bf110G2_GER41
+  - BotGunner_Breguet14_RAF17
+  - BotGunner_DFWC5_GER16
+  - BotGunner_DFWC5_GER17
+  - BotGunner_DFWC5_M_GER16
+  - BotGunner_DFWC5_M_GER17
+  - BotGunner_DH4_M_RAF17
+  - BotGunner_DH4_RAF17
+  - BotGunner_FE2b_M_RAF17
+  - BotGunner_FE2b_RAF17
+  - BotGunner_GothaG5bwdM_GER16
+  - BotGunner_GothaG5bwdM_GER17
+  - BotGunner_GothaG5bwd_GER16
+  - BotGunner_GothaG5bwd_GER17
+  - BotGunner_GothaG5fwdM_GER16
+  - BotGunner_GothaG5fwdM_GER17
+  - BotGunner_GothaG5fwd_GER16
+  - BotGunner_GothaG5fwd_GER17
+  - BotGunner_HCL2_GER17
+  - BotGunner_HCL2_M_GER17
+  - BotGunner_HP400btm_RAF17
+  - BotGunner_HP400fwdM_RAF17
+  - BotGunner_HP400fwd_RAF17
+  - BotGunner_HP400rearM_RAF17
+  - BotGunner_HP400rear_RAF17
+  - BotGunner_He111H16rear_GER41
+  - BotGunner_He111H16side_GER41
+  - BotGunner_He111H16top_GER41
+  - BotGunner_He111H6fwdM_GER41
+  - BotGunner_He111H6fwd_GER41
+  - BotGunner_He111H6rearM_GER41
+  - BotGunner_He111H6rear_GER41
+  - BotGunner_He111H6side_GER41
+  - BotGunner_He111H6top_GER41
+  - BotGunner_Il2m42_RUSwi
+  - BotGunner_Il2m43_RUSwi
+  - BotGunner_Ju87D3_GER41
+  - BotGunner_Ju88C6top_GER41
+  - BotGunner_Ju88C6top_GER44
+  - BotGunner_Ju88btm_GER41
+  - BotGunner_Ju88btm_GER44
+  - BotGunner_Ju88fwd_GER41
+  - BotGunner_Ju88fwd_GER44
+  - BotGunner_Ju88top_GER41
+  - BotGunner_Ju88top_GER44
+  - BotGunner_Li2rear_RUS41
+  - BotGunner_Li2rear_RUS42
+  - BotGunner_Li2rear_RUS43
+  - BotGunner_Li2rear_RUSwi
+  - BotGunner_Li2top_RUS41
+  - BotGunner_Li2top_RUS42
+  - BotGunner_Li2top_RUS43
+  - BotGunner_Li2top_RUSwi
+  - BotGunner_Me410A_GER44
+  - BotGunner_Pe2s35rear_RUS41
+  - BotGunner_Pe2s35rear_RUS42
+  - BotGunner_Pe2s35rear_RUS43
+  - BotGunner_Pe2s35rear_RUSwi
+  - BotGunner_Pe2s35rear_femRUS42
+  - BotGunner_Pe2s35rear_femRUS43
+  - BotGunner_Pe2s35rear_femRUSwi
+  - BotGunner_Pe2s35top_RUS41
+  - BotGunner_Pe2s35top_RUS42
+  - BotGunner_Pe2s35top_RUS43
+  - BotGunner_Pe2s35top_RUSwi
+  - BotGunner_Pe2s35top_femRUS42
+  - BotGunner_Pe2s35top_femRUS43
+  - BotGunner_Pe2s35top_femRUSwi
+  - BotGunner_Pe2s87rear_RUS42
+  - BotGunner_Pe2s87rear_RUS43
+  - BotGunner_Pe2s87rear_RUSwi
+  - BotGunner_Pe2s87rear_femRUS42
+  - BotGunner_Pe2s87rear_femRUS43
+  - BotGunner_Pe2s87rear_femRUSwi
+  - BotGunner_Pe2s87topM_RUS42
+  - BotGunner_Pe2s87topM_RUS43
+  - BotGunner_Pe2s87topM_RUSwi
+  - BotGunner_Pe2s87topM_femRUS42
+  - BotGunner_Pe2s87topM_femRUS43
+  - BotGunner_Pe2s87topM_femRUSwi
+  - BotGunner_Pe2s87top_RUS42
+  - BotGunner_Pe2s87top_RUS43
+  - BotGunner_Pe2s87top_RUSwi
+  - BotGunner_Pe2s87top_femRUS42
+  - BotGunner_Pe2s87top_femRUS43
+  - BotGunner_Pe2s87top_femRUSwi
+  - BotGunner_RE8_RAF17
+  - BotGunner_RolandC2a_GER16
+  - BotGunner_RolandC2a_GER17
+  - BotGunner_RolandC2a_M_GER16
+  - BotGunner_RolandC2a_M_GER17
+  - BotGunner_SopStrutter_RAF17
+  - BotGunner_U2_RUS41
+  - BotGunner_U2_RUS42
+  - BotGunner_U2_RUS43
+  - BotGunner_U2_RUSwi
+  - BotGunner_U2_femRUS42
+  - BotGunner_U2_femRUS43
+  - BotGunner_U2_femRUSwi
+  - BotInputController0
+  - BotMachinist0
+  - BotPilotBalloonNPC_GER17
+  - BotPilotBalloonNPC_RAF17
+  - BotPilotBalloon_Dude
+  - BotPilotBalloon_GER17
+  - BotPilotBalloon_RAF17
+  - BotPilotNPC2_C47A_RAF43
+  - BotPilotNPC2_C47A_RUS41
+  - BotPilotNPC2_C47A_RUS42
+  - BotPilotNPC2_C47A_RUS43
+  - BotPilotNPC2_C47A_RUSwi
+  - BotPilotNPC2_C47A_USA43
+  - BotPilotNPC2_Ju52_GER41
+  - BotPilotNPC_A20B_RAF43
+  - BotPilotNPC_A20B_RUS42
+  - BotPilotNPC_A20B_RUS43
+  - BotPilotNPC_A20B_RUSwi
+  - BotPilotNPC_A20B_USA43
+  - BotPilotNPC_B25D_RAF43
+  - BotPilotNPC_B25D_RUS42
+  - BotPilotNPC_B25D_RUS43
+  - BotPilotNPC_B25D_RUSwi
+  - BotPilotNPC_B25D_USA43
+  - BotPilotNPC_B26B_USA43
+  - BotPilotNPC_C47A_RAF43
+  - BotPilotNPC_C47A_RUS41
+  - BotPilotNPC_C47A_RUS42
+  - BotPilotNPC_C47A_RUS43
+  - BotPilotNPC_C47A_RUSwi
+  - BotPilotNPC_C47A_USA43
+  - BotPilotNPC_CG4A_USA44
+  - BotPilotNPC_Ju52_GER41
+  - BotPilotNPC_Ju88C6_GER41
+  - BotPilotNPC_Ju88C6_GER44
+  - BotPilotNPC_Li2_RUS41
+  - BotPilotNPC_Li2_RUS42
+  - BotPilotNPC_Li2_RUS43
+  - BotPilotNPC_Li2_RUSwi
+  - BotPilotNPC_Mosq_RAF43
+  - BotPilotNPC_U2_RUS41
+  - BotPilotNPC_U2_RUS42
+  - BotPilotNPC_U2_RUS43
+  - BotPilotNPC_U2_RUSwi
+  - BotPilotNPC_U2_femRUS42
+  - BotPilotNPC_U2_femRUS43
+  - BotPilotNPC_U2_femRUSwi
+  - BotPilot_A20B_RUS42
+  - BotPilot_A20B_RUS43
+  - BotPilot_A20B_RUSwi
+  - BotPilot_A20B_USA43
+  - BotPilot_AircoD2_RAF16
+  - BotPilot_Ar234_GER44
+  - BotPilot_B25D_RAF43
+  - BotPilot_B25D_RUS42
+  - BotPilot_B25D_RUS43
+  - BotPilot_B25D_RUSwi
+  - BotPilot_B25D_USA43
+  - BotPilot_B26B_USA43
+  - BotPilot_Bf109_GER41
+  - BotPilot_Bf109_GER44
+  - BotPilot_C47A_RAF43
+  - BotPilot_C47A_RUS41
+  - BotPilot_C47A_RUS42
+  - BotPilot_C47A_RUS43
+  - BotPilot_C47A_RUSwi
+  - BotPilot_C47A_USA43
+  - BotPilot_CG4A_USA44
+  - BotPilot_FokkerDr1_GER17
+  - BotPilot_FokkerE3_GER16
+  - BotPilot_Fw190_GER41
+  - BotPilot_Fw190_GER44
+  - BotPilot_GothaG5_GER16
+  - BotPilot_GothaG5_GER17
+  - BotPilot_HP400_RAF17
+  - BotPilot_He111_GER41
+  - BotPilot_Hs129B2_GER41
+  - BotPilot_IAR80A_ROM41
+  - BotPilot_Il2_RUS41
+  - BotPilot_Il2_RUS42
+  - BotPilot_Il2_RUS43
+  - BotPilot_Il2_RUSwi
+  - BotPilot_Ju52_GER41
+  - BotPilot_Ju88_GER41
+  - BotPilot_Ju88_GER44
+  - BotPilot_LaGG3_RAF43
+  - BotPilot_LaGG3_RUS41
+  - BotPilot_LaGG3_RUS42
+  - BotPilot_LaGG3_RUS43
+  - BotPilot_LaGG3_RUSwi
+  - BotPilot_LaGG3_USA43
+  - BotPilot_Li2_RUS41
+  - BotPilot_Li2_RUS42
+  - BotPilot_Li2_RUS43
+  - BotPilot_Li2_RUSwi
+  - BotPilot_Me262_GER44
+  - BotPilot_Me410A_GER44
+  - BotPilot_Mosq_RAF43
+  - BotPilot_P38_USA43
+  - BotPilot_P38_USA44
+  - BotPilot_P39_RAF43
+  - BotPilot_P39_RUS42
+  - BotPilot_P39_RUS43
+  - BotPilot_P39_RUSwi
+  - BotPilot_P39_USA43
+  - BotPilot_P47_RAF43
+  - BotPilot_P47_RUS43
+  - BotPilot_P47_USA43
+  - BotPilot_P47_USA44
+  - BotPilot_Pe2_RUS41
+  - BotPilot_Pe2_RUS42
+  - BotPilot_Pe2_RUS43
+  - BotPilot_Pe2_RUSwi
+  - BotPilot_Pe2_femRUS42
+  - BotPilot_Pe2_femRUS43
+  - BotPilot_Pe2_femRUSwi
+  - BotPilot_Spad13_RAF17
+  - BotPilot_Spit9_RAF43
+  - BotPilot_Spit9_RUS43
+  - BotPilot_U2_RUS41
+  - BotPilot_U2_RUS42
+  - BotPilot_U2_RUS43
+  - BotPilot_U2_RUSwi
+  - BotPilot_U2_femRUS42
+  - BotPilot_U2_femRUS43
+  - BotPilot_U2_femRUSwi
+  - BotPilot_V1_GER44
+  - BotRangefinder
+  - BotTankGAZMM72K_CoAimer
+  - BotTankGAZMM72K_Commander
+  - BotTankGAZMM72K_Driver
+  - BotTankGAZMM72K_Loader
+  - BotTankKV1_Commander
+  - BotTankKV1_Driver
+  - BotTankKV1_Gunner
+  - BotTankKV1_Loader
+  - BotTankKV1_Radist
+  - BotTankM4A2_Commander
+  - BotTankM4A2_Driver
+  - BotTankM4A2_Gunner
+  - BotTankM4A2_Loader
+  - BotTankM4A2_MGunner
+  - BotTankPz3M_Commander
+  - BotTankPz3M_Driver
+  - BotTankPz3M_Gunner
+  - BotTankPz3M_Loader
+  - BotTankPz3M_Radist
+  - BotTankPz4G_Commander
+  - BotTankPz4G_Driver
+  - BotTankPz4G_Gunner
+  - BotTankPz4G_Loader
+  - BotTankPz4G_Radist
+  - BotTankPz5D_Commander
+  - BotTankPz5D_Driver
+  - BotTankPz5D_Gunner
+  - BotTankPz5D_Loader
+  - BotTankPz5D_Radist
+  - BotTankPz6H1_Commander
+  - BotTankPz6H1_Driver
+  - BotTankPz6H1_Gunner
+  - BotTankPz6H1_Loader
+  - BotTankPz6H1_Radist
+  - BotTankPzIIIL_Driver
+  - BotTankPzIIIL_Gunner
+  - BotTankSU122_Commander
+  - BotTankSU122_Driver
+  - BotTankSU122_Gunner
+  - BotTankSU122_Loader1
+  - BotTankSU122_Loader2
+  - BotTankSU152_Commander
+  - BotTankSU152_Driver
+  - BotTankSU152_Gunner
+  - BotTankSU152_Loader1
+  - BotTankSU152_Loader2
+  - BotTankSdKfz10_Commander
+  - BotTankSdKfz10_Driver
+  - BotTankSdKfz10_Loader
+  - BotTankSdKfz184_Commander
+  - BotTankSdKfz184_Driver
+  - BotTankSdKfz184_Gunner
+  - BotTankSdKfz184_Loader1
+  - BotTankSdKfz184_Loader2
+  - BotTankSdKfz184_Radist
+  - BotTankStuG3G_Commander
+  - BotTankStuG3G_Driver
+  - BotTankStuG3G_Gunner
+  - BotTankStuG3G_MGunner
+  - BotTankT3442_Driver
+  - BotTankT3442_Gunner
+  - BotTankT34UVZ43_Driver
+  - BotTankT34UVZ43_Gunner
+  - BotTankT34UVZ43_Loader
+  - BotTankT34UVZ43_Radist
+  - Bren Mk I (LCA)
+  - C47A_P2
+  - C47A_P3
+  - CCommanderInputController
+  - CG4A_P2
+  - CG4A_Troopers
+  - CG4A_WillysMB
+  - CTurretRadioAI
+  - CTurretRadioAIInputController
+  - Common Bot's head
+  - DShK G5 turret
+  - DShK T7 turret
+  - DShK Twin turret
+  - Dive Bomb Sight Ar 234
+  - Dive Bomb Sight Reticle Ar 234
+  - EjectionPlace
+  - EjectionPlace controller AI
+  - EjectorController
+  - F-34 turret
+  - FDT 76mm turret
+  - FDT Type 11 Radar
+  - FDT Type 15 Radar
+  - Flak 30 turret
+  - Gleaves 127mm turret
+  - Gleaves rangefinder turret
+  - Gleaves torpedo turret
+  - GunSightMe410A1_T
+  - Ju523mg4e_P2
+  - Ju523mg4e_P3
+  - Ju88C6_P2
+  - Kolt Twin turret
+  - Liberty 76mm turret
+  - M1919 (LCVP) turret
+  - M2.50 AA turret (LCM)
+  - M8M turret
+  - MGC 30 turret
+  - MosquitoFBMkVIs2_P2
+  - Oerlikon 20 mm turret
+  - Oerlikon 20 mm twin turret
+  - ParatrooperGER
+  - ParatrooperSU
+  - ParatrooperUK
+  - ParatrooperUS
+  - ParatroopersCreator_C47A
+  - ParatroopersCreator_Ju52
+  - ParatroopersCreator_Li2
+  - Plane controller
+  - Plane controller AI
+  - SKC 35 turret
+  - Searchlight
+  - Ship Controller AI
+  - TankTurret
+  - TorpedoTurret
+  - Train Controller AI
+  - TurretAircoDH4_1
+  - TurretAircoDH4_1M
+  - TurretBreguet14_1
+  - TurretBristolF2BF2_1
+  - TurretBristolF2BF2_1M
+  - TurretBristolF2BF3_1
+  - TurretBristolF2BF3_1M
+  - TurretDFWC5_1
+  - TurretDFWC5_1M
+  - TurretDFWC5_1M2
+  - TurretFE2b_1
+  - TurretFE2b_1M
+  - TurretGothaG5_1
+  - TurretGothaG5_1M
+  - TurretGothaG5_1M2
+  - TurretGothaG5_2
+  - TurretGothaG5_2M
+  - TurretGothaG5_2M2
+  - TurretHalberstadtCL2_1
+  - TurretHalberstadtCL2_1M
+  - TurretHalberstadtCL2_1M2
+  - TurretHandleyPage400_1
+  - TurretHandleyPage400_1M
+  - TurretHandleyPage400_1M2
+  - TurretHandleyPage400_2
+  - TurretHandleyPage400_2M
+  - TurretHandleyPage400_3
+  - TurretRE8_1
+  - TurretRE8_1M
+  - TurretRolandC2a_1
+  - TurretRolandC2a_1M
+  - TurretRolandC2a_1M2
+  - TurretSopStrutter_1
+  - TurretSopStrutter_1M
+  - Turret_A20B_1
+  - Turret_A20B_2
+  - Turret_B25Draf_1
+  - Turret_B25Draf_2
+  - Turret_B25Draf_3
+  - Turret_B26B55_1
+  - Turret_B26B55_2
+  - Turret_B26B55_3
+  - Turret_B26B55_4
+  - Turret_Bf110E2
+  - Turret_Bf110G2
+  - Turret_Churchill-IV
+  - Turret_He111H6_1
+  - Turret_He111H6_1M
+  - Turret_He111H6_2
+  - Turret_He111H6_3
+  - Turret_He111H6_3M
+  - Turret_He111H6_4
+  - Turret_Il2m42
+  - Turret_Il2m43
+  - Turret_Ju523mg4e
+  - Turret_Ju87D3
+  - Turret_Ju88A4_1
+  - Turret_Ju88A4_2
+  - Turret_Ju88A4_3
+  - Turret_Ju88C6_1
+  - Turret_Ju88C6_1M
+  - Turret_Li2_1
+  - Turret_Li2_2
+  - Turret_Me410A1
+  - Turret_Pe2s35_1
+  - Turret_Pe2s35_2
+  - Turret_Pe2s87_1
+  - Turret_Pe2s87_1M
+  - Turret_Pe2s87_2
+  - Turret_PzIII-L
+  - Turret_PzIII-M
+  - Turret_PzIV-G
+  - Turret_T34-76STZ
+  - Turret_U2VS
+  - Turret_he111h16_1
+  - Turret_he111h16_2
+  - Turret_he111h16_3
+  - Turret_he111h16_4
+  - Type 7 AA rangefinder turret
+  - Type 7 rangefinder turret
+  - Vehicle Tank Controller AI
+  - Vehicle Truck Controller AI
+  - VehicleInputController0
+  - VehicleRangefinderTurret
+  - VehicleRangefinderTurretInputController0
+  - VehicleTorpedoTurret
+  - VehicleTurret
+  - VehicleTurretAIHowitzPhysic
+  - VehicleTurretFieldCannon
+  - VehicleTurretInputController0
+  - VehicleTurretTankCannon
+  - ZFR Collimator Sight
+  - ZFR Telescopic Sight
+  - _Churchill-IV_T1
+  - _Churchill-IV_T2
+  - _Churchill-IV_T2_sight1
+  - _Churchill-IV_T3
+  - _Churchill-IV_sight1
+  - _GAZ-MM-72K_T0
+  - _GAZ-MM-72K_T1
+  - _GAZ-MM-72K_T3
+  - _KV1S_T0
+  - _KV1S_T0_sight1
+  - _KV1S_T0_sight2
+  - _KV1S_T1
+  - _KV1S_T2
+  - _KV1S_T3
+  - _M4A2_T0
+  - _M4A2_T0_sight1
+  - _M4A2_T1
+  - _M4A2_T2
+  - _M4A2_T3
+  - _PzIII-M_T0_sight1
+  - _PzIII-M_T1
+  - _PzIII-M_T2
+  - _PzIII-M_T2_sight1
+  - _PzIII-M_T3
+  - _PzIII-M_visor
+  - _PzIV-G_T0_sight1
+  - _PzIV-G_T1
+  - _PzIV-G_T2
+  - _PzIV-G_T3
+  - _PzV-D_T0
+  - _PzV-D_T0_sight1
+  - _PzV-D_T1
+  - _PzV-D_T2
+  - _PzV-D_T3
+  - _PzVI-H1_T0
+  - _PzVI-H1_T0_sight1
+  - _PzVI-H1_T1
+  - _PzVI-H1_T2
+  - _PzVI-H1_T3
+  - _SU122_T0
+  - _SU122_T0_sight1
+  - _SU122_T1_sight1
+  - _SU122_T2
+  - _SU122_T3
+  - _SU122_T4
+  - _SU152_T0
+  - _SU152_T0_sight1
+  - _SU152_T2
+  - _SU152_T3
+  - _SU152_T4
+  - _SdKfz10-5_T0
+  - _SdKfz10-5_T1
+  - _SdKfz10-5_T2
+  - _SdKfz184_T0
+  - _SdKfz184_T1
+  - _SdKfz184_T2
+  - _SdKfz184_T3
+  - _SdKfz184_T4
+  - _StuGIII-G_T0
+  - _StuGIII-G_T1
+  - _StuGIII-G_T2
+  - _T34-76UVZ-43_T0
+  - _T34-76UVZ-43_T2
+  - _T34-76UVZ-43_T3
+  - bofors l60 turret
+  - dshk-aa turret
+  - flak 36 turret
+  - flak 38 turret
+  - flakvierling 38 turret
+  - hotchkiss mle 14 aa turret
+  - m2.50 aa turret
+  - m4 turret
+  - mg-34 aa turret
+  - qf 13 pounder 6 cwt turret
+  - spandau mg 08 aa turret
