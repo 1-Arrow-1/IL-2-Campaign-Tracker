@@ -1,0 +1,453 @@
+/**
+ * Detail Page Styles
+ * 
+ * Three-column layout:
+ * - Left: Promotions & Awards
+ * - Middle: Campaign Summary
+ * - Right: Mission Debriefings
+ */
+
+/* ============================================================================
+   Detail Container
+   ============================================================================ */
+
+.detail-container {
+    max-width: 1700px;
+}
+
+/* ============================================================================
+   Campaign Header
+   ============================================================================ */
+
+.campaign-header {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.campaign-header h2 {
+    margin-bottom: 0.75rem;
+    color: #2c3e50;
+    font-size: 1.75rem;
+}
+
+.campaign-meta {
+    display: flex;
+    gap: 2rem;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.meta-item {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.meta-item .label {
+    font-weight: 600;
+    color: #555;
+}
+
+/* ============================================================================
+   Three-Column Layout
+   ============================================================================ */
+
+.detail-columns {
+    display: grid;
+    grid-template-columns: 0.9fr 1.9fr 1.2fr;
+    gap: 2rem;
+}
+
+.detail-columns > .column {
+    min-width: 0;
+}
+
+.column {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.debriefings-container {
+    overflow-x: auto;
+}
+
+.debriefings-container pre,
+.debriefings-container code {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.column h3 {
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e0e0e0;
+    color: #2c3e50;
+    font-size: 1.125rem;
+}
+
+/* Left Column: Sticky positioning */
+.column-left {
+    height: fit-content;
+    position: sticky;
+    top: calc(60px + 2rem);
+    max-height: calc(100vh - 60px - 4rem);
+    overflow-y: auto;
+}
+
+/* Middle Column: Sticky summary */
+.column-middle {
+    height: fit-content;
+    position: sticky;
+    top: calc(60px + 2rem);
+    max-height: calc(100vh - 60px - 4rem);
+    overflow-y: auto;
+}
+
+/* Right Column: Debriefings */
+.column-right {
+    min-height: 400px;
+}
+
+/* ============================================================================
+   Events List (Left Column)
+   ============================================================================ */
+
+.events-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.event-item {
+    padding: 0.75rem;
+    border-left: 3px solid #3498db;
+    background: #f9f9f9;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.event-item:hover {
+    background: #f0f7ff;
+    border-left-color: #2980b9;
+}
+
+.event-item.promotion {
+    border-left-color: #27ae60;
+}
+
+.event-item.promotion:hover {
+    background: #f0fff4;
+}
+
+.event-item.award {
+    border-left-color: #f39c12;
+}
+
+.event-item.award:hover {
+    background: #fffbf0;
+}
+
+.event-header {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: #7f8c8d;
+    margin-bottom: 0.25rem;
+}
+
+.event-content {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.event-text {
+    flex: 1;
+}
+
+.event-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.event-date {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.event-reason {
+    font-size: 0.85rem;
+    color: #666;
+    font-style: italic;
+    margin-top: 0.25rem;
+}
+
+.event-image {
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+/* ============================================================================
+   Debriefings Container (Middle Column)
+   ============================================================================ */
+
+.debriefings-container {
+    /* HTML content injected from Campaign Tracker */
+    /* Inherits styles from Campaign Tracker's HTML */
+}
+
+/* Override some Campaign Tracker styles if needed */
+.debriefings-container h4 {
+    color: #2c3e50;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.debriefings-container table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+.debriefings-container th,
+.debriefings-container td {
+    padding: 0.5rem;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.debriefings-container th {
+    background: #f5f5f5;
+    font-weight: 600;
+}
+
+/* ============================================================================
+   Summary Content (Right Column)
+   ============================================================================ */
+
+.summary-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+.summary-block {
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #222;
+}
+
+.summary-block:last-child {
+    border-bottom: none;
+}
+
+.summary-block-title {
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #1f2c3a;
+    margin-bottom: 0.75rem;
+    font-weight: 700;
+}
+
+.summary-stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    font-size: 0.9rem;
+}
+
+.summary-stat .stat-label {
+    color: #555;
+}
+
+.summary-stat .stat-value {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.summary-subtitle {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #555;
+}
+
+/* Combat Results */
+.combat-results {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.combat-summary-stats {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.summary-inline-stat {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.summary-inline-stat .stat-label {
+    color: #555;
+    font-weight: 600;
+}
+
+.summary-inline-stat .stat-value {
+    font-weight: 700;
+}
+
+.combat-results-icons {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1rem;
+}
+
+.combat-icon-cell {
+    text-align: center;
+    padding: 0.5rem 0.25rem;
+}
+
+.combat-icon-cell img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    margin-bottom: 0.35rem;
+}
+
+.combat-icon-count {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.combat-icon-label {
+    font-size: 0.75rem;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.combat-subcategory-columns {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1rem;
+    font-size: 0.8rem;
+}
+
+.combat-subcategory-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.2rem 0;
+    color: #444;
+}
+
+.combat-subcategory-label {
+    color: #555;
+}
+
+.combat-subcategory-value {
+    font-weight: 600;
+    color: #1f2c3a;
+}
+
+/* Awards List */
+.awards-list {
+    list-style: none;
+    padding: 0;
+}
+
+.awards-list li {
+    padding: 0.5rem 0;
+    padding-left: 1.25rem;
+    position: relative;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.awards-list li:before {
+    content: "★";
+    position: absolute;
+    left: 0;
+    color: #f39c12;
+    font-size: 1rem;
+}
+
+/* PDF Download Button */
+.pdf-download {
+    display: block;
+    width: 100%;
+    padding: 0.75rem;
+    background: #3498db;
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    margin-top: 1rem;
+}
+
+.pdf-download:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.pdf-download:active {
+    transform: translateY(0);
+}
+
+/* ============================================================================
+   Responsive
+   ============================================================================ */
+
+@media (max-width: 1200px) {
+    .detail-columns {
+        grid-template-columns: 1fr;
+    }
+    
+    .column-left,
+    .column-middle,
+    .column-right {
+        position: static;
+        max-height: none;
+    }
+    
+    .campaign-header {
+        padding: 1rem 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .campaign-header {
+        padding: 1rem;
+    }
+    
+    .campaign-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .column {
+        padding: 1rem;
+    }
+    
+    .combat-results-icons,
+    .combat-subcategory-columns {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}

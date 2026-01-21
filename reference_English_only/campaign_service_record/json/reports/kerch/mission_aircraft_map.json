@@ -1,0 +1,77 @@
+{
+  "campaign_name": "kerch",
+  "missions": {
+    "05": {
+      "campaign_name": "kerch",
+      "mission_id": "05",
+      "aircraft": "Bf 109 G-6",
+      "timestamp": "2026-01-05_23-44-21",
+      "mlg_filename": "missionReport(2026-01-05_23-44-21).mlg",
+      "mlg_mtime": 1767675295.330668,
+      "mlg_size": 39740,
+      "updated_at": "2026-01-12T03:59:36Z"
+    },
+    "04": {
+      "campaign_name": "kerch",
+      "mission_id": "04",
+      "aircraft": "Bf 109 G-6",
+      "timestamp": "2026-01-05_00-05-03",
+      "mlg_filename": "missionReport(2026-01-05_00-05-03).mlg",
+      "mlg_mtime": 1767590138.2394915,
+      "mlg_size": 18235,
+      "updated_at": "2026-01-12T03:59:36Z"
+    },
+    "07": {
+      "campaign_name": "kerch",
+      "mission_id": "07",
+      "aircraft": "Bf 109 G-6",
+      "timestamp": "2026-01-08_22-53-26",
+      "mlg_filename": "missionReport(2026-01-08_22-53-26).mlg",
+      "mlg_mtime": 1767931683.2813597,
+      "mlg_size": 55516,
+      "updated_at": "2026-01-12T03:59:36Z"
+    },
+    "06": {
+      "campaign_name": "kerch",
+      "mission_id": "06",
+      "aircraft": "Bf 109 G-6",
+      "timestamp": "2026-01-08_17-35-30",
+      "mlg_filename": "missionReport(2026-01-08_17-35-30).mlg",
+      "mlg_mtime": 1767912726.1544938,
+      "mlg_size": 156383,
+      "updated_at": "2026-01-12T03:59:36Z"
+    },
+    "01": {
+      "campaign_name": "kerch",
+      "mission_id": "01",
+      "aircraft": "Bf 109 F-4",
+      "timestamp": "2026-01-03_23-42-35",
+      "mlg_filename": "missionReport(2026-01-03_23-42-35).mlg",
+      "mlg_mtime": 1767502314.0469973,
+      "mlg_size": 76940,
+      "updated_at": "2026-01-12T03:59:36Z"
+    },
+    "03": {
+      "campaign_name": "kerch",
+      "mission_id": "03",
+      "aircraft": "Bf 109 G-6",
+      "timestamp": "2026-01-04_22-25-53",
+      "mlg_filename": "missionReport(2026-01-04_22-25-53).mlg",
+      "mlg_mtime": 1767584118.851174,
+      "mlg_size": 105970,
+      "updated_at": "2026-01-12T03:59:36Z"
+    },
+    "02": {
+      "campaign_name": "kerch",
+      "mission_id": "02",
+      "aircraft": "Bf 109 G-6",
+      "timestamp": "2026-01-04_00-14-28",
+      "mlg_filename": "missionReport(2026-01-04_00-14-28).mlg",
+      "mlg_mtime": 1767504410.923814,
+      "mlg_size": 63812,
+      "updated_at": "2026-01-12T03:59:36Z"
+    }
+  },
+  "updated_at": "2026-01-12T03:59:36Z",
+  "campaignsstates_hash": "a1f30b6bb4182d689b50ab091dee3c6b"
+}
