@@ -33,3 +33,6 @@ Thumbs.db
 # Test data (if any)
 test_data/
 *.json.test
+*.json
+*.log
+reports/
