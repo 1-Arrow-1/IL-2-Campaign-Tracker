@@ -23,6 +23,7 @@ const i18n = {
     currentLocale: 'en',
     translations: {},
     initialized: false,
+    missingTranslationPlaceholder: '[missing translation]',
     
     /**
      * Initialize i18n with given locale.
@@ -150,6 +151,76 @@ const i18n = {
         
         return current;
     },
+
+    _isKeyLike(value) {
+        return /^[a-z0-9_]+(\.[a-z0-9_]+)+$/i.test(value);
+    },
+
+    _resolveKey(key, params = {}) {
+        if (!this.initialized) {
+            return {
+                found: false,
+                text: this.missingTranslationPlaceholder,
+                localeUsed: this.currentLocale,
+                fallbackUsed: false,
+                key
+            };
+        }
+
+        const keyParts = key.split('.');
+        let trans = this._getNestedValue(this.translations[this.currentLocale], keyParts);
+        let localeUsed = this.currentLocale;
+        let fallbackUsed = false;
+
+        if (typeof trans !== 'string' || trans.trim() === '') {
+            trans = this._getNestedValue(this.translations.en, keyParts);
+            localeUsed = 'en';
+            fallbackUsed = true;
+        }
+
+        if (typeof trans !== 'string' || trans.trim() === '') {
+            return {
+                found: false,
+                text: this.missingTranslationPlaceholder,
+                localeUsed: this.currentLocale,
+                fallbackUsed: false,
+                key
+            };
+        }
+
+        let text = trans;
+        if (Object.keys(params).length > 0) {
+            try {
+                text = trans.replace(/\{(\w+)\}/g, (match, param) => {
+                    if (param in params) {
+                        return params[param];
+                    }
+                    console.warn(`[i18n] Missing parameter '${param}' for key '${key}'`);
+                    return match;
+                });
+            } catch (error) {
+                console.error(`[i18n] Error substituting parameters for key '${key}':`, error);
+            }
+        }
+
+        return {
+            found: true,
+            text,
+            localeUsed,
+            fallbackUsed,
+            key
+        };
+    },
+
+    hasKey(key, locale = null) {
+        if (!this.initialized) {
+            return false;
+        }
+        const keyParts = key.split('.');
+        const selectedLocale = locale || this.currentLocale;
+        const trans = this._getNestedValue(this.translations[selectedLocale], keyParts);
+        return typeof trans === 'string' && trans.trim() !== '';
+    },
     
     /**
      * Translate key with optional parameters.
@@ -172,44 +243,55 @@ const i18n = {
         // Ensure initialized
         if (!this.initialized) {
             console.warn('[i18n] Not initialized, using key as-is:', key);
-            return `[${key}]`;
+            return this.missingTranslationPlaceholder;
         }
-        
-        // Split nested key
-        const keyParts = key.split('.');
-        
-        // Try current locale
-        let trans = this._getNestedValue(this.translations[this.currentLocale], keyParts);
-        
-        // If not found, try fallback (English)
-        if (typeof trans !== 'string') {
-            trans = this._getNestedValue(this.translations.en, keyParts);
-        }
-        
-        // If still not found, return placeholder
-        if (typeof trans !== 'string') {
+
+        const resolved = this._resolveKey(key, params);
+        if (!resolved.found) {
             console.debug(`[i18n] Translation key not found: ${key}`);
-            return `[${key}]`;
         }
-        
-        // Parameter substitution
-        if (Object.keys(params).length > 0) {
-            try {
-                return trans.replace(/\{(\w+)\}/g, (match, param) => {
-                    if (param in params) {
-                        return params[param];
-                    } else {
-                        console.warn(`[i18n] Missing parameter '${param}' for key '${key}'`);
-                        return match;
-                    }
-                });
-            } catch (error) {
-                console.error(`[i18n] Error substituting parameters for key '${key}':`, error);
-                return trans;
-            }
+        return resolved.text;
+    },
+
+    tr(value, { params = {}, defaultText = null, forceKey = false, returnMeta = false } = {}) {
+        if (value === null || value === undefined) {
+            return returnMeta ? { text: '', meta: null } : '';
         }
-        
-        return trans;
+
+        const rawValue = String(value);
+        let keyUsed = null;
+        let resolved = null;
+
+        const shouldTreatAsKey = forceKey || (this._isKeyLike(rawValue) && (this.hasKey(rawValue) || this.hasKey(rawValue, 'en')));
+
+        if (shouldTreatAsKey) {
+            keyUsed = rawValue;
+            resolved = this._resolveKey(rawValue, params);
+        }
+
+        if (!resolved || !resolved.found) {
+            const text = defaultText !== null
+                ? defaultText
+                : (keyUsed ? this.missingTranslationPlaceholder : rawValue);
+            const meta = {
+                keyUsed,
+                resolvedText: text,
+                locale: this.currentLocale,
+                fallbackUsed: false,
+                missing: Boolean(keyUsed)
+            };
+            return returnMeta ? { text, meta } : text;
+        }
+
+        const meta = {
+            keyUsed,
+            resolvedText: resolved.text,
+            locale: resolved.localeUsed,
+            fallbackUsed: resolved.fallbackUsed,
+            missing: false
+        };
+
+        return returnMeta ? { text: resolved.text, meta } : resolved.text;
     },
     
     /**

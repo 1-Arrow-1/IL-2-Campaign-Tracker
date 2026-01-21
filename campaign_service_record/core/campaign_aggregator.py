@@ -254,7 +254,7 @@ class CampaignAggregator:
         )
         game_directory = get_game_directory(mission_dates)
         events = self._decorate_events(events, country, game_directory)
-        debriefings_html = campaign_events.get('debriefings_html', '')
+        debriefings_html = self._extract_debriefings_html(campaign_events)
         
         # Calculate summary statistics
         summary = self._calculate_summary(
@@ -275,6 +275,25 @@ class CampaignAggregator:
             'debriefings_html': debriefings_html,
             'summary': summary
         }
+
+    @staticmethod
+    def _extract_debriefings_html(campaign_events: Dict) -> str:
+        debriefings_html = campaign_events.get('debriefings_html', '')
+        if isinstance(debriefings_html, str) and debriefings_html.strip():
+            return debriefings_html
+
+        combined_html = campaign_events.get('html', '')
+        if not isinstance(combined_html, str) or not combined_html.strip():
+            return ''
+
+        match = re.search(
+            r'(?is)(<b>\s*Mission Debriefings\s*</b>.*?)(?:<b>\s*Events\s*</b>|$)',
+            combined_html
+        )
+        if match:
+            return match.group(1).strip()
+
+        return combined_html.strip()
     
     def _calculate_summary(
         self,

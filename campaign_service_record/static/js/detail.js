@@ -262,6 +262,16 @@ const normalizeEventName = (value) => (value || '')
     .replace(/[“”]/g, '"')
     .trim();
 
+const isKeyLike = (value) => /^[a-z0-9_]+(\.[a-z0-9_]+)+$/i.test(value || '');
+
+const isDevEnvironment = () => {
+    if (typeof window === 'undefined') {
+        return false;
+    }
+    const hostname = window.location && window.location.hostname;
+    return ['localhost', '127.0.0.1'].includes(hostname);
+};
+
 // ============================================================================
 // i18n TRANSLATION HELPERS
 // ============================================================================
@@ -274,11 +284,13 @@ const nameToI18nKey = (name) => {
     if (!name) return "";
     return name
         .toLowerCase()
-        .replace(/["]/g, "")
+        .replace(/[’‘]/g, "'")
+        .replace(/['"]/g, "")
+        .replace(/&/g, "and")
+        .replace(/\+/g, "and")
         .replace(/[,\.]/g, "")
         .replace(/\s*\(\s*/g, "_")
         .replace(/\s*\)\s*/g, "")
-        .replace(/\+/g, "plus")
         .replace(/…/g, "")
         .replace(/\s+/g, "_")
         .replace(/_+/g, "_")
@@ -294,10 +306,40 @@ const translateAwardName = (name) => {
     if (!i18n || !i18n.translations || Object.keys(i18n.translations).length === 0) {
         return name;  // i18n not loaded yet, return original
     }
-    const key = nameToI18nKey(name);
-    const translated = i18n.t(`progression.awards.${key}`);
-    // If translation starts with "progression.", it means key not found
-    return translated.startsWith('progression.') ? name : translated;
+
+    let resolvedText = name;
+    let keyUsed = null;
+    let fallbackUsed = false;
+
+    if (isKeyLike(name)) {
+        const { text, meta } = i18n.tr(name, { returnMeta: true, forceKey: true });
+        resolvedText = text;
+        keyUsed = name;
+        fallbackUsed = meta?.fallbackUsed || false;
+        if (meta?.missing) {
+            console.warn('[i18n] Missing award translation key:', name);
+        }
+    } else {
+        const key = `progression.awards.${nameToI18nKey(name)}`;
+        const { text, meta } = i18n.tr(key, { returnMeta: true, forceKey: true, defaultText: name });
+        resolvedText = text;
+        keyUsed = key;
+        fallbackUsed = meta?.fallbackUsed || false;
+        if (meta?.missing) {
+            console.warn('[i18n] Missing award translation key:', key);
+        }
+    }
+
+    if (isDevEnvironment()) {
+        console.debug('[i18n] Award translation', {
+            keyUsed,
+            resolvedText,
+            locale: i18n.getLocale(),
+            fallbackUsed
+        });
+    }
+
+    return resolvedText;
 };
 
 /**
@@ -313,13 +355,13 @@ const translateRankName = (name, country) => {
     if (country) {
         const countryCode = getCountryCode(country);
         const countryKey = `${countryCode}_${baseKey}`;
-        const countryTranslated = i18n.t(`progression.ranks.${countryKey}`);
-        if (!countryTranslated.startsWith('progression.')) {
-            return countryTranslated;
+        const { text, meta } = i18n.tr(`progression.ranks.${countryKey}`, { returnMeta: true, forceKey: true });
+        if (!meta?.missing) {
+            return text;
         }
     }
-    const translated = i18n.t(`progression.ranks.${baseKey}`);
-    return translated.startsWith('progression.') ? name : translated;
+    const { text, meta } = i18n.tr(`progression.ranks.${baseKey}`, { returnMeta: true, forceKey: true, defaultText: name });
+    return meta?.missing ? name : text;
 };
 
 /**
@@ -1009,7 +1051,7 @@ const DetailPage = {
         this.elements.eventsList.innerHTML = '';
         
         if (!events || events.length === 0) {
-            this.elements.eventsList.innerHTML = '<p class="empty-message">No events recorded</p>';
+            this.elements.eventsList.innerHTML = `<p class="empty-message">${this.escapeHTML(i18n.t('web.message.no_events'))}</p>`;
             return;
         }
         
@@ -1020,7 +1062,7 @@ const DetailPage = {
         // Render promotions
         if (promotions.length > 0) {
             const header = document.createElement('h4');
-            header.textContent = 'Promotions';
+            header.textContent = i18n.t('web.label.promotions');
             header.style.marginBottom = '0.75rem';
             header.classList.add('event-section-title', 'event-section-title--promotion');
             this.elements.eventsList.appendChild(header);
@@ -1034,7 +1076,7 @@ const DetailPage = {
         // Render awards
         if (awards.length > 0) {
             const header = document.createElement('h4');
-            header.textContent = 'Awards';
+            header.textContent = i18n.t('web.label.awards');
             header.style.marginTop = '1.5rem';
             header.style.marginBottom = '0.75rem';
             header.classList.add('event-section-title', 'event-section-title--award');
@@ -1054,7 +1096,9 @@ const DetailPage = {
         const item = document.createElement('div');
         item.className = `event-item ${event.type}`;
 
-        const typeLabel = event.type === 'promotion' ? 'Promotion' : 'Award';
+        const typeLabel = event.type === 'promotion'
+            ? i18n.t('web.label.promotion')
+            : i18n.t('web.label.award');
         const mainText = event.type === 'promotion' ? translateRankName(event.rank, event.country) : translateAwardName(event.name);
         const dateText = event.date || `Mission ${event.mission_number || '?'}`;
         const reasonText = event.reason || '';
@@ -1163,7 +1207,7 @@ const DetailPage = {
      */
     renderDebriefings(html) {
         if (!html || html.trim() === '') {
-            this.elements.debriefingsContainer.innerHTML = '<p class="empty-message">No debriefings available</p>';
+            this.elements.debriefingsContainer.innerHTML = `<p class="empty-message">${this.escapeHTML(i18n.t('web.message.no_debriefings'))}</p>`;
             return;
         }
         
@@ -1183,7 +1227,7 @@ const DetailPage = {
         this.elements.summaryContent.innerHTML = '';
         
         if (!summary) {
-            this.elements.summaryContent.innerHTML = '<p class="empty-message">No summary available</p>';
+            this.elements.summaryContent.innerHTML = `<p class="empty-message">${this.escapeHTML(i18n.t('web.message.no_summary'))}</p>`;
             return;
         }
         
@@ -1397,8 +1441,18 @@ const DetailPage = {
             return container;
         }
 
+        const landingLabelKeys = {
+            'Safe Landings': 'web.stat.safe_landings',
+            'Hard Landings / Crashes': 'web.stat.hard_landings_crashes',
+            'Wounded Landings': 'web.stat.wounded_landings',
+            'Bailouts': 'web.stat.bailouts',
+            'KIA / MIA': 'web.stat.kia_mia'
+        };
+
         filteredLandings.forEach(landing => {
-            container.appendChild(this.createStat(landing.label, landing.value ?? 0));
+            const labelKey = landingLabelKeys[landing.label];
+            const label = labelKey ? i18n.t(labelKey) : i18n.tr(landing.label);
+            container.appendChild(this.createStat(label, landing.value ?? 0));
         });
 
         return container;
@@ -1423,9 +1477,10 @@ const DetailPage = {
      */
     renderCareerProgression(progression) {
         const container = document.createElement('div');
+        const country = this.currentCampaign?.country;
         
-        container.appendChild(this.createStat(i18n.t('web.stat.starting_rank'), progression.starting_rank));
-        container.appendChild(this.createStat(i18n.t('web.stat.final_rank'), progression.final_rank));
+        container.appendChild(this.createStat(i18n.t('web.stat.starting_rank'), translateRankName(progression.starting_rank, country)));
+        container.appendChild(this.createStat(i18n.t('web.stat.final_rank'), translateRankName(progression.final_rank, country)));
         container.appendChild(this.createStat(i18n.t('web.stat.promotions'), progression.promotions_count));
         container.appendChild(this.createStat(i18n.t('web.stat.awards'), progression.awards_count));
         
@@ -1436,7 +1491,7 @@ const DetailPage = {
             
             progression.awards_list.forEach(award => {
                 const item = document.createElement('li');
-                item.textContent = award;
+                item.textContent = translateAwardName(award);
                 list.appendChild(item);
             });
             
