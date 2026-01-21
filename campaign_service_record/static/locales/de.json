@@ -228,10 +228,10 @@
         "armored_medium": "Gepanzert (mittel)",
         "armored_heavy": "Gepanzert (schwer)",
         "locomotives": "Lokomotiven",
-        "railroad_cars": "Eisenbahnwagen",
+        "railroad_cars": "Waggons",
         "station": "Bahnhofsanlagen",
         "facilities": "Anlagen",
-        "machine_guns": "Maschinengewehre",
+        "machine_guns": "MGs",
         "cannons": "Kanonen",
         "aaa_guns": "Flakgeschütze",
         "rocket_launchers": "Raketenwerfer",
@@ -239,7 +239,7 @@
         "radars": "Radargeräte",
         "residential": "Wohngebäude",
         "bridges": "Brücken",
-        "cargo": "Fracht",
+        "cargo": "Frachter",
         "submarines": "U-Boote",
         "destroyers": "Zerstörer"
       }
