@@ -103,17 +103,17 @@ const PreviewModal = {
 const EVENT_DESCRIPTIONS = {
     germany: {
         ranks: {
-            Unteroffizier: 'New to the line, you fly tight on a leader’s wing and learn fast or die fast. Your logbook fills one sortie at a time.',
-            Feldwebel: 'You’ve seen flak and fighters up close and you don’t flinch. Men follow your turns because they’ve learned you bring them home.',
-            Oberfeldwebel: 'Veteran hands, tired eyes—still climbing into the cockpit. You lead by example and the rookies copy everything you do.',
-            Leutnant: 'Now you carry a commission and the weight that comes with it. You still fly the same sky, just with more eyes depending on you.',
-            Oberleutnant: 'You lead flights into weather, flak, and bad odds. The Staffel watches how you handle the first burst and the last decision.',
-            Hauptmann: 'Command and combat collide: paperwork at dawn, engine heat by noon. You fly when it matters and your name rides every outcome.',
-            Major: 'Your map table is larger than your cockpit time now. When you do fly, it’s because the mission can’t afford mistakes.',
-            Oberstleutnant: 'You keep the unit running and the losses bear your signature. You fly rarely—usually to see the front with your own eyes.',
-            Oberst: 'A commander with a pilot’s past and a war on his desk. If you take off, it’s for a reason everyone remembers.',
-            Generalmajor: 'You move squadrons like chess pieces and count fuel like blood. Flight time is rare; responsibility is constant.',
-            Generalleutnant: 'The war looks different from this altitude—briefings, orders, consequences. You earned wings once; now you carry a theater.'
+            'Unteroffizier': 'New to the line, you fly tight on a leader’s wing and learn fast or die fast. Your logbook fills one sortie at a time.',
+            'Feldwebel': 'You’ve seen flak and fighters up close and you don’t flinch. Men follow your turns because they’ve learned you bring them home.',
+            'Oberfeldwebel': 'Veteran hands, tired eyes—still climbing into the cockpit. You lead by example and the rookies copy everything you do.',
+            'Leutnant': 'Now you carry a commission and the weight that comes with it. You still fly the same sky, just with more eyes depending on you.',
+            'Oberleutnant': 'You lead flights into weather, flak, and bad odds. The Staffel watches how you handle the first burst and the last decision.',
+            'Hauptmann': 'Command and combat collide: paperwork at dawn, engine heat by noon. You fly when it matters and your name rides every outcome.',
+            'Major': 'Your map table is larger than your cockpit time now. When you do fly, it’s because the mission can’t afford mistakes.',
+            'Oberstleutnant': 'You keep the unit running and the losses bear your signature. You fly rarely—usually to see the front with your own eyes.',
+            'Oberst': 'A commander with a pilot’s past and a war on his desk. If you take off, it’s for a reason everyone remembers.',
+            'Generalmajor': 'You move squadrons like chess pieces and count fuel like blood. Flight time is rare; responsibility is constant.',
+            'Generalleutnant': 'The war looks different from this altitude—briefings, orders, consequences. You earned wings once; now you carry a theater.'
         },
         awards: {
             "Pilot's Badge": 'You’ve earned the right to wear wings—and to be sent back up tomorrow. Training is over; the war starts now.',
@@ -137,7 +137,7 @@ const EVENT_DESCRIPTIONS = {
     },
     britain: {
         ranks: {
-            Sergeant: 'Fresh wings, cold cockpit, and the Channel wind cutting through everything. Stay with your leader and keep your eyes moving.',
+            'Sergeant': 'Fresh wings, cold cockpit, and the Channel wind cutting through everything. Stay with your leader and keep your eyes moving.',
             'Flight Sergeant': 'You’ve learned the sound of trouble before you see it. In the air, you’re steady—because panic kills.',
             'Warrant Officer': 'A hard veteran in a soft uniform. You fly like you’ve paid for every lesson—and you have.',
             'Pilot Officer': 'Commissioned, but still proving yourself every sortie. The squadron judges you by the way you hold formation under fire.',
@@ -175,10 +175,10 @@ const EVENT_DESCRIPTIONS = {
             'Chief Warrant Officer': 'You’re the quiet expert—engines, tactics, nerves of steel. When it gets ugly, they want you in the formation.',
             '2nd Lieutenant': 'Brand-new bars, same flak and same fear. Your lead is light, but the war doesn’t care.',
             '1st Lieutenant': 'You’ve seen enough to stop pretending it’s easy. Now you lead flights and carry men through bad weather and worse skies.',
-            Captain: 'You’re a leader and a target both. You still fly—because credibility is earned at altitude.',
-            Major: 'Plans, briefings, and harder calls than trigger pulls. You fly selectively now, usually when the mission needs a proven hand.',
+            'Captain': 'You’re a leader and a target both. You still fly—because credibility is earned at altitude.',
+            'Major': 'Plans, briefings, and harder calls than trigger pulls. You fly selectively now, usually when the mission needs a proven hand.',
             'Lt. Colonel': 'Bigger command, fewer takeoffs. When you do fly, it’s to see the truth beyond the paperwork.',
-            Colonel: 'You command from the top but you’ve flown the hard miles. Flight is rare—your war is coordination and consequence.',
+            'Colonel': 'You command from the top but you’ve flown the hard miles. Flight is rare—your war is coordination and consequence.',
             'Brigadier General': 'You shape operations across units and bases. If you take the air, it’s a statement—and a risk you don’t take lightly.',
             'Major General': 'Strategy, logistics, and the weight of whole formations. Your flying days are mostly memory, but the sky is still yours.'
         },
@@ -215,17 +215,17 @@ const EVENT_DESCRIPTIONS = {
     },
     soviet: {
         ranks: {
-            Sergeant: 'A frontline pilot with little margin and no illusions. You fly, you fight, you hope the engine holds.',
-            'Senior Sergeant': 'You’ve survived enough to teach others how to. The new men watch your hands more than they hear your words.',
-            'Junior Lieutenant': 'You’ve got a commission and a rifleman’s war in the air. Lead tight, strike fast, and don’t linger.',
-            Lieutenant: 'You’re trusted to bring a pair home and still finish the job. The sky is crowded and mercy is scarce.',
-            'Senior Lieutenant': 'You lead sorties into flak and weather like it’s routine. Your squadron runs on discipline and stubbornness.',
-            Captain: 'You command and you still fly hard. The best orders are the ones you’ve tested in your own cockpit.',
-            Major: 'You fly less, plan more, and sleep even less. When you do climb out, it’s for missions that must succeed.',
-            'Sub-Colonel': 'Command pulls you away from the line, but you return when it matters. A rare sortie, a familiar smell of fuel and frost.',
-            Colonel: 'You carry an air regiment’s fate in your notes and your voice. Flying is occasional; responsibility never is.',
-            'Major General': 'You command formations and watch losses like a ledger of steel. If you fly, it’s exceptional—and never for sport.',
-            'Lieutenant General': 'The front is vast, the demands endless. You’re a pilot by training, a commander by necessity.'
+            'Serzhant': 'A frontline pilot with little margin and no illusions. You fly, you fight, you hope the engine holds.',
+            'Starshiy Serzhant': 'You’ve survived enough to teach others how to. The new men watch your hands more than they hear your words.',
+            'Mladshiy Leytenant': 'You’ve got a commission and a rifleman’s war in the air. Lead tight, strike fast, and don’t linger.',
+            'Leytenant': 'You’re trusted to bring a pair home and still finish the job. The sky is crowded and mercy is scarce.',
+            'Starshiy Leytenant': 'You lead sorties into flak and weather like it’s routine. Your squadron runs on discipline and stubbornness.',
+            'Kapitan': 'You command and you still fly hard. The best orders are the ones you’ve tested in your own cockpit.',
+            'Mayor': 'You fly less, plan more, and sleep even less. When you do climb out, it’s for missions that must succeed.',
+            'Podpolkovnik': 'Command pulls you away from the line, but you return when it matters. A rare sortie, a familiar smell of fuel and frost.',
+            'Polkovnik': 'You carry an air regiment’s fate in your notes and your voice. Flying is occasional; responsibility never is.',
+            'General-Mayor': 'You command formations and watch losses like a ledger of steel. If you fly, it’s exceptional—and never for sport.',
+            'General-Leytenant': 'The front is vast, the demands endless. You’re a pilot by training, a commander by necessity.'
         },
         awards: {
             'Aviation Badge': 'You’re marked as aircrew now. The front will use you until the machine or the man breaks.',

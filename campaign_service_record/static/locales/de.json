@@ -462,6 +462,161 @@
       "purple_heart": "Purple Heart",
       "purple_heart_and_one_oak_leaf_cluster": "Purple Heart mit einem Eichenlaubabzeichen",
       "purple_heart_and_two_oak_leaf_clusters": "Purple Heart mit zwei Eichenlaubabzeichen"
+    },
+    "narratives": {
+      "germany": {
+        "ranks": {
+          "unteroffizier": "Neu an der Front fliegst du dicht am Führer und lernst schnell – oder gar nicht. Dein Flugbuch füllt sich Einsatz für Einsatz.",
+          "feldwebel": "Flak und Feindjäger hast du aus nächster Nähe erlebt. Du bleibst ruhig, und die anderen folgen dir, weil sie wissen, dass du sie zurückbringst.",
+          "oberfeldwebel": "Erfahrene Hände, müde Augen – und trotzdem steigst du wieder ein. Du führst durch Vorbild, und die Neuen ahmen jede Bewegung nach.",
+          "leutnant": "Mit dem Offizierspatent kommt Verantwortung. Der Himmel ist derselbe geblieben, doch jetzt hängen mehr Leben von dir ab.",
+          "oberleutnant": "Du führst Rotten und Schwärme in Wetter, Flak und ungünstige Lagen. Die Staffel beobachtet, wie du den ersten Treffer und die letzte Entscheidung meisterst.",
+          "hauptmann": "Führung und Frontdienst prallen aufeinander: Meldungen am Morgen, Motorkraft am Mittag. Du fliegst, wenn es zählt – und dein Name steht für das Ergebnis.",
+          "major": "Die Karte auf dem Tisch ist größer als die Zeit im Cockpit. Wenn du noch fliegst, dann weil der Auftrag keine Fehler erlaubt.",
+          "oberstleutnant": "Du hältst den Verband zusammen, und jede Verlustmeldung trägt deine Verantwortung. Du fliegst selten – meist, um dir die Front selbst anzusehen.",
+          "oberst": "Ein Kommandeur mit fliegerischer Vergangenheit und einem Krieg auf dem Schreibtisch. Wenn du startest, dann aus einem Grund, den niemand vergisst.",
+          "generalmajor": "Du verschiebst Geschwader wie Figuren auf dem Brett und rechnest Treibstoff wie Blut. Eigene Flugzeit ist selten – Verantwortung allgegenwärtig.",
+          "generalleutnant": "Aus dieser Höhe sieht der Krieg anders aus: Befehle, Lagebesprechungen, Folgen. Du hast dir einst die Flügel verdient – nun trägst du einen ganzen Kriegsschauplatz."
+        },
+        "awards": {
+          "iron_cross_2nd_class": "Ein erstes sichtbares Zeichen des Fronteinsatzes. Kein Ruhm – nur der Nachweis, dass du da warst, als es darauf ankam.",
+          "iron_cross_1st_class": "Du hast nicht nur durchgehalten, sondern Wirkung erzielt. Der Verband weiß, wen man ruft, wenn es brennt.",
+          "honor_goblet": "Eine Auszeichnung der Luftwaffe für Männer, die mehr leisten als gefordert. Verliehen an jene, die mit Siegen – und Narben – zurückkehren.",
+          "german_cross_in_gold": "Dauerhafte Bewährung im Kampf. Der lange Einsatz wird zu Metall – geprüft, wiederholt, bestanden.",
+          "knights_cross_of_the_iron_cross": "Eine hohe Auszeichnung für Fronteinsatz. Du hast dir einen Namen gemacht, wo es am meisten zählt.",
+          "with_oak_leaves": "Mehr Anerkennung, höherer Druck. Jetzt erwartet man Außergewöhnliches – und schreibt deinen Namen größer.",
+          "with_oak_leaves_and_swords": "Zeichen unermüdlicher Frontleistung. Du kämpfst nicht nur – du prägst den Kampf.",
+          "with_oak_leaves_swords_and_diamonds": "Selten, schwer, nicht zu übersehen. Deine Bilanz ist Legende, das Risiko bleibt real.",
+          "with_golden_oak_leaves_swords_and_diamonds": "Die höchste Stufe, fast einmalig. Du wirst zum Symbol – und Symbole bluten ebenfalls.",
+          "front_flying_clasp_fighters_bronze": "Genug Feindflüge, um zu wissen, wie tödlich Routine ist. Die Front interessiert sich nicht für Mut.",
+          "front_flying_clasp_fighters_silver": "Eine lange Reihe von Einsätzen unter Druck. Glück ist ersetzt worden durch Disziplin.",
+          "front_flying_clasp_fighters_gold": "Schwere Einsatzzeit an der Spitze. Du hast dort gelebt, wo der Himmel voller Feuer ist.",
+          "gold_with_pendant": "Extreme Anzahl von Frontflügen. Der Krieg ist dir vertraut geworden – und genau das ist die Gefahr.",
+          "wound_badge_in_black": "Erstes Blut für die Front. Du bist zurückgekehrt – diesmal.",
+          "wound_badge_in_silver": "Weitere Verwundungen, weniger Illusionen. Du fliegst weiter, beginnst aber zu zählen, was es kostet.",
+          "wound_badge_in_gold": "Immer wieder getroffen und dennoch zurückgekehrt. Das Abzeichen glänzt – die Schäden nicht."
+        }
+      },
+
+      "britain": {
+        "ranks": {
+          "sergeant": "Frische Flügel, kaltes Cockpit, der Wind über dem Kanal schneidet durch alles. Bleib beim Führer und halte die Augen offen.",
+          "flight_sergeant": "Du erkennst Gefahr, bevor du sie siehst. In der Luft bleibst du ruhig – denn Panik tötet.",
+          "warrant_officer": "Ein harter Veteran in unscheinbarer Uniform. Du fliegst, als hättest du jede Lektion teuer bezahlt – was auch stimmt.",
+          "pilot_officer": "Zum Offizier ernannt, aber noch unter Beobachtung. Die Staffel misst dich daran, wie du unter Feuer Formation hältst.",
+          "flying_officer": "Du kannst einen Abschnitt führen und zusammenhalten. Wenn das Funkgerät schweigt, sprechen deine Entscheidungen.",
+          "flight_lieutenant": "Du jonglierst Dienstpläne und tödlichen Luftraum. Du fliegst weiter – weil du nichts verlangst, was du selbst nicht tust.",
+          "squadron_leader": "Das Tempo der Staffel liegt in deiner Hand. Zu viel Druck zerbricht sie. Du fliegst, wenn Ruhe gebraucht wird.",
+          "wing_commander": "Du führst ganze Wings und spürst jeden Verlust. Du steigst noch auf – oft genug, um den Krieg ehrlich zu halten.",
+          "group_captain": "Ein Befehlshaber mit Instinkt eines Piloten und der Last eines Strategen. Du fliegst kaum noch, hörst aber jedem Motor zu.",
+          "air_commodore": "Du lenkst Luftschlachten von Karten und Meldungen aus. Wenn du fliegst, ist es außergewöhnlich – und allen bewusst.",
+          "air_vice_marshal": "Der Luftkrieg läuft über deinen Schreibtisch in den Himmel. Flugzeit ist selten, Führung unerbittlich."
+        },
+        "awards": {
+          "mentioned_in_despatches": "Dein Name erscheint in den offiziellen Berichten. Stille Anerkennung für Arbeit unter höchster Gefahr.",
+          "distinguished_flying_medal_dfm": "Mut und Zähigkeit eines Mannes, der immer wieder startet. Verdient Einsatz für Einsatz.",
+          "bar_to_the_dfm": "Man bescheinigt dir eine erneute Leistung. Gleicher Himmel, gleiches Risiko – und kein Aufgeben.",
+          "second_bar_to_the_dfm": "Seltene Wiederholungsauszeichnung für unermüdlichen Einsatz. Die Staffel stützt sich auf dich.",
+          "distinguished_flying_cross_dfc": "Tapferkeit in der Luft, die Verbände zusammenhält. Das Band ist sauber – die Einsätze waren es nicht.",
+          "bar_to_the_dfc": "Erneut herausragender Fronteinsatz. Gefahr ist für dich zur Gewohnheit geworden.",
+          "second_bar_to_the_dfc": "Nahezu einmalig. Du hast mehrfach überlebt, was kaum überlebbar war.",
+          "distinguished_service_order_dso": "Führung unter Feuer, nicht bloß Mut. Du hast Männer im Gefecht gehalten, als es hässlich wurde.",
+          "bar_to_the_dso": "Zum zweiten Mal wird deine Gefechtsführung anerkannt. Verantwortung dort getragen, wo sie schmerzt.",
+          "second_bar_to_the_dso": "Außerordentlich selten. Mehrfach durch Krisen geführt – und standgehalten.",
+          "victoria_cross_vc": "Höchste Form des Mutes – jenseits von Befehl und Vernunft. Ein Augenblick, der Geschichte wird.",
+          "bar_to_the_vc": "Eine zweite Verleihung ist nahezu mythisch. Zweimal das Unmögliche angenommen – und nicht gewichen.",
+          "wound_stripe": "Der Krieg hat dich persönlich getroffen. Der Körper vergisst nicht.",
+          "second_wound_stripe": "Erneut verwundet und weiter im Einsatz. Überleben ist nun Ausdauer.",
+          "third_wound_stripe": "Dreimal verwundet und noch geführt. Jeder weiß, was das kostet."
+        }
+      },
+
+      "usa": {
+        "ranks": {
+          "first_sergeant": "Du hältst die Einheit zusammen, wenn der Einsatz sie zerreißt. Wenn du fliegst, dann um das Risiko zu teilen.",
+          "flight_officer": "Flugberechtigt und direkt in den Einsatz geworfen. Lerne schnell, schlag hart, verschwende kein Glück.",
+          "chief_warrant_officer": "Der stille Spezialist – Technik, Taktik, Nerven aus Stahl. Wenn es ernst wird, wollen sie dich dabei haben.",
+          "2nd_lieutenant": "Frische Abzeichen, gleiche Flak, gleiche Angst. Deine Führung ist leicht – der Krieg kennt keine Schonung.",
+          "1st_lieutenant": "Genug gesehen, um nichts mehr zu beschönigen. Du führst Flüge durch schlechtes Wetter und schlimmere Lagen.",
+          "captain": "Führer und Ziel zugleich. Du fliegst weiter – denn Glaubwürdigkeit wird in der Höhe verdient.",
+          "major": "Planung, Briefings und Entscheidungen schwerer als jeder Abzug. Du fliegst gezielt, wenn Erfahrung gefragt ist.",
+          "lt_colonel": "Größeres Kommando, weniger Starts. Wenn du fliegst, dann um die Wahrheit jenseits der Akten zu sehen.",
+          "colonel": "Du führst von oben und kennst die harten Meilen. Flugzeit ist selten – Koordination ist dein Krieg.",
+          "brigadier_general": "Du formst Operationen über Stützpunkte hinweg. Ein eigener Flug ist ein klares Zeichen – und ein bewusstes Risiko.",
+          "major_general": "Strategie, Logistik und die Last ganzer Verbände. Deine Flugtage sind Erinnerung, der Himmel bleibt präsent."
+        },
+        "awards": {
+          "air_medal": "Verdienstvolle Einsätze unter Gefechtsbedingungen. Der Nachweis, dass du geliefert hast.",
+          "air_medal_plus_one_oak_leaf_cluster": "Erneut ausgezeichnet. Mehr Einsätze, mehr Beweis.",
+          "air_medal_plus_two_oak_leaf_clusters": "Ein stetiger Einsatzverlauf. Veteran durch Wiederholung.",
+          "air_medal_plus_three_oak_leaf_clusters": "Mehrfach ausgezeichnete Einsatzserie. Die Risiken enden nicht.",
+          "bronze_star_medal": "Kampfeinsatz und harte Pflichterfüllung. Nicht glanzvoll – aber verdient.",
+          "bronze_star_plus_one_oak_leaf_cluster": "Weitere Anerkennung unter Feuer. Man zählt, was du getragen hast.",
+          "bronze_star_plus_two_oak_leaf_clusters": "Dritte Auszeichnung für Beständigkeit im Abnutzungskrieg.",
+          "distinguished_flying_cross": "Außergewöhnliche Leistung oder Heldentat in der Luft. Einsätze, über die man spricht.",
+          "dfc_plus_one_oak_leaf_cluster": "Erneut außergewöhnlich. Eine weitere Mission, die heraussticht.",
+          "dfc_plus_two_oak_leaf_clusters": "Dauerhaftes Spitzeniveau. Nicht nur der Gegner beobachtet dich.",
+          "dfc_plus_three_oak_leaf_clusters": "Wiederholte Spitzenleistungen. Dein Ruf entsteht aus fast gescheiterten Einsätzen.",
+          "dfc_plus_four_oak_leaf_clusters": "Mehr, als die meisten je erleben. Immer wieder in das Schlimmste hinein – und herausgekommen.",
+          "dfc_plus_one_silver_oak_leaf_cluster": "Hohe Anzahl wiederholter Auszeichnungen. Außergewöhnliches wird zur Routine.",
+          "legion_of_merit": "Langfristige herausragende Dienste. Du hast den Krieg getragen und vorangebracht.",
+          "silver_star_medal": "Tapferkeit im Gefecht. Ein Moment, der nicht nachgegeben hat.",
+          "silver_star_plus_one_oak_leaf_cluster": "Erneut standgehalten, wo andere gebrochen wären.",
+          "silver_star_plus_two_oak_leaf_clusters": "Dreifache Tapferkeit. Du stellst dich der Gefahr bewusst.",
+          "distinguished_service_cross": "Außerordentliche Heldentat im Gefecht. Stoff für Verbandslegenden.",
+          "dsc_plus_one_oak_leaf_cluster": "Zum zweiten Mal äußerste Gefechtsleistung. Kein Zufall – Muster.",
+          "dsc_plus_two_oak_leaf_clusters": "Dritte Verleihung. Wenige erreichen das, noch weniger überleben es.",
+          "dsc_plus_three_oak_leaf_clusters": "Handlungen am Rand des Möglichen. Deine Akte liest sich wie eine Warnung.",
+          "dsc_plus_four_oak_leaf_clusters": "Nahezu beispiellos. Zu oft das Unmögliche getan.",
+          "medal_of_honor": "Tapferkeit weit über die Pflicht hinaus. Eine Tat für den dunkelsten Moment.",
+          "medal_of_honor_plus_one_oak_leaf_cluster": "Zweite Verleihung – kaum vorstellbar. Zweimal die Linie überschritten.",
+          "purple_heart": "Durch Feindeinwirkung verwundet. Die Auszeichnung ist still – die Erinnerung nicht.",
+          "purple_heart_plus_one_oak_leaf_cluster": "Erneut verwundet. Schaden getragen und weitergeflogen.",
+          "purple_heart_plus_two_oak_leaf_clusters": "Dreimal verwundet und noch einsatzfähig. Der Körper vergisst nicht."
+        }
+      },
+
+      "soviet": {
+        "ranks": {
+          "sergeant": "Frontpilot mit wenig Spielraum und keinen Illusionen. Du fliegst, kämpfst und hoffst, dass der Motor hält.",
+          "senior_sergeant": "Du hast lange genug überlebt, um andere anzuleiten. Die Neuen beobachten deine Hände.",
+          "junior_lieutenant": "Offizier mit einem Infanteriekrieg in der Luft. Eng führen, hart zuschlagen, nicht verweilen.",
+          "lieutenant": "Dir wird vertraut, ein Paar zurückzubringen und den Auftrag zu erfüllen. Der Himmel ist voll, Gnade selten.",
+          "senior_lieutenant": "Du führst Einsätze in Flak und Wetter wie Alltag. Disziplin und Härte tragen die Einheit.",
+          "captain": "Du befiehlst und fliegst selbst. Die besten Befehle hast du im eigenen Cockpit geprüft.",
+          "major": "Weniger Flüge, mehr Planung, kaum Schlaf. Wenn du startest, muss es gelingen.",
+          "sub_colonel": "Das Kommando zieht dich weg von der Front – doch du kehrst zurück, wenn es zählt.",
+          "colonel": "Das Schicksal eines Regiments liegt in deiner Stimme. Flugzeit ist selten, Verantwortung nie.",
+          "major_general": "Du führst Formationen und zählst Verluste nüchtern. Ein eigener Flug ist außergewöhnlich.",
+          "lieutenant_general": "Die Front ist weit, die Anforderungen endlos. Pilot durch Ausbildung, Befehlshaber aus Notwendigkeit."
+        },
+        "awards": {
+          "aviation_badge": "Du bist nun als Flugpersonal gekennzeichnet. Die Front wird dich fordern, bis Mensch oder Maschine versagen.",
+          "medal_for_courage": "Persönlicher Mut aus nächster Nähe. Du hast standgehalten, als der Himmel explodierte.",
+          "order_of_the_red_star": "Ernste Kampfauszeichnung für reale Ergebnisse. Nicht für Worte, nur für Taten.",
+          "order_of_the_red_star_2nd_awarding": "Erneute Anerkennung. Gleicher Krieg, höhere Einsätze.",
+          "order_of_the_red_star_3rd_awarding": "Dreimal ist kein Zufall. Du hast Überleben und Erfolg verbunden.",
+          "order_of_the_patriotic_war_2nd_class": "Gefechtsleistung für das Vaterland. Erworben im Einsatz, nicht auf Paraden.",
+          "order_of_the_patriotic_war_1st_class": "Höhere Stufe für besondere Leistungen. Dein Name geht über das Regiment hinaus.",
+          "order_of_alexander_nevsky": "Für Führung unter Unterzahl und Feuer. Eine Auszeichnung für Kommandeure.",
+          "order_of_suvorov_3rd_class": "Anerkennung wirksamer Führung. Du hast Pläne durchgesetzt, wo Pläne scheitern.",
+          "order_of_the_red_banner": "Bedeutendes Zeichen von Mut und Erfolg. Erworben an der Spitze des Kampfes.",
+          "order_of_the_red_banner_2nd_awarding": "Erneut verliehen. Ergebnisse wiederholt, Verluste getragen.",
+          "order_of_the_red_banner_3rd_awarding": "Dritte Verleihung für eine harte Bilanz. Lange, erfolgreich, brutal.",
+          "hero_of_the_soviet_union": "Höchster Titel. Heldentum im Protokoll – der nächste Einsatz bleibt derselbe.",
+          "hero_of_the_soviet_union_2nd_awarding": "Seltene zweite Verleihung. Selbst Kameraden schauen zweimal hin.",
+          "hero_of_the_soviet_union_3rd_awarding": "Nahezu legendär. Du bist Symbol – und wirst weiter eingesetzt.",
+          "order_of_lenin": "Eine der höchsten Auszeichnungen, politisch wie militärisch bedeutend.",
+          "order_of_lenin_2nd_awarding": "Erneute Ehrung für fortgesetzte Leistung. Dein Werdegang ist nicht mehr zu übersehen.",
+          "order_of_lenin_3rd_awarding": "Dreimal verliehen – außergewöhnlich. Ein Niveau, das nur wenige erreichen.",
+          "5_combat_sorties_bonus_1500_rubles": "Kleiner Lohn fürs Durchhalten. Das Überleben wiegt mehr.",
+          "15_combat_sorties_bonus_2000_rubles": "Du fliegst weiter, während andere verschwinden. Der Staat registriert Ausdauer.",
+          "25_combat_sorties_bonus_3000_rubles": "Ein echter Meilenstein an der Front. Einsätze aufgestapelt und weitergemacht.",
+          "40_combat_sorties_bonus_5000_rubles": "Schwere Einsatzzeit. Du bist lange genug geblieben, um gefürchtet zu sein.",
+          "red_wound_stripe": "Verwundet und zurückgekehrt. Das Abzeichen ist schlicht – die Erfahrung nicht.",
+          "yellow_wound_stripe": "Erneut verletzt. Du bist angeschlagen gelandet und wieder angetreten."
+        }
       }
+    }
   }
 }
