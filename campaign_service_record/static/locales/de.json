@@ -350,14 +350,20 @@
     "duration": "Dauer",
     "status_label": "Status",
     "aircraft_damage": "Flugzeugschaden",
+    "pilot_damage": "Pilotenschaden",
     "event": {
       "takeoff": "Start",
       "landing": "Landung",
+      "crash": "Absturz",
+      "bailout": "Absprung",
+      "landing_damage": "Landeschaden",
       "destroyed": "zerstört",
+      "damaged": "beschädigt",
       "hit_by": "Getroffen von"
     },
     "timeline": {
       "before_first_mission": "Vor der ersten Mission",
+      "after_mission": "Nach Mission {mission}",
       "awarded": "Ausgezeichnet mit",
       "promoted_to": "Befördert zu",
       "started_as": "Begann als"
@@ -365,8 +371,10 @@
     "status": {
       "landed": "Gelandet",
       "crashed": "Abgestürzt",
+      "bailout": "Absprung",
       "captured": "Gefangen",
       "wounded": "Verwundet",
+      "hard_landing": "Harte Landung",
       "kia": "Gefallen",
       "mia": "Vermisst"
     },

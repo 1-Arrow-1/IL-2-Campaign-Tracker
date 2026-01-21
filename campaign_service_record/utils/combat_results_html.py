@@ -7,6 +7,43 @@ Provides:
 """
 
 from utils.combat_results import KILL_MAPPING, aggregate_kills_from_missions
+from utils.i18n import t
+
+CATEGORY_I18N_KEYS = {
+    "Aircraft": "combat.category.aircraft",
+    "Vehicles": "combat.category.vehicles",
+    "Railroad": "combat.category.railroad",
+    "Armaments": "combat.category.armaments",
+    "Buildings": "combat.category.buildings",
+    "Marine": "combat.category.marine",
+}
+
+SUBCATEGORY_I18N_KEYS = {
+    "Light": "combat.subcategory.light",
+    "Medium": "combat.subcategory.medium",
+    "Heavy": "combat.subcategory.heavy",
+    "Parked": "combat.subcategory.parked",
+    "Balloons": "combat.subcategory.balloons",
+    "Transport": "combat.subcategory.transport",
+    "Armored (Light)": "combat.subcategory.armored_light",
+    "Armored (Medium)": "combat.subcategory.armored_medium",
+    "Armored (Heavy)": "combat.subcategory.armored_heavy",
+    "Locomotives": "combat.subcategory.locomotives",
+    "Railroad Cars": "combat.subcategory.railroad_cars",
+    "Station Facilities": "combat.subcategory.facilities",
+    "Machine Guns": "combat.subcategory.machine_guns",
+    "Cannons": "combat.subcategory.cannons",
+    "AAA Guns": "combat.subcategory.aaa_guns",
+    "Rocket Launchers": "combat.subcategory.rocket_launchers",
+    "Searchlights": "combat.subcategory.searchlights",
+    "Radars": "combat.subcategory.radars",
+    "Residential Buildings": "combat.subcategory.residential",
+    "Facilities": "combat.subcategory.facilities",
+    "Bridges": "combat.subcategory.bridges",
+    "Cargo": "combat.subcategory.cargo",
+    "Submarines": "combat.subcategory.submarines",
+    "Destroyers": "combat.subcategory.destroyers",
+}
 
 
 # =============================================================================
@@ -28,7 +65,7 @@ def generate_mission_combat_results_html(mission_id: str, decoded_data: dict, ga
     """
     stats = decoded_data.get("characterStatisticsByFileName", {}).get(mission_id, {})
     if not stats:
-        return "<p>Combat data not available for this mission.</p>"
+        return f"<p>{t('pdf.message.combat_data_not_available_mission', mission=mission_id)}</p>"
 
     # Calculate totals per category using central mapping
     category_totals = {}
@@ -53,7 +90,7 @@ def generate_campaign_summary_combat_results_html(decoded_campaign_data: dict, g
     stats_by_mission = decoded_campaign_data.get("characterStatisticsByFileName", {})
 
     if not stats_by_mission:
-        return "<p>No combat data available.</p>"
+        return f"<p>{t('pdf.message.combat_data_not_available')}</p>"
 
     aggregated_kills = aggregate_kills_from_missions(stats_by_mission)
     by_category = aggregated_kills.get("by_category", {})
@@ -101,7 +138,9 @@ def _build_combat_results_html(stats: dict, category_totals: dict, game_director
         html.append(f'<div class="category-col">')
         html.append(f'  <div class="category-icon"><img src="{icon_path}" width="48" height="48"/></div>')
         html.append(f'  <div class="category-total">{total}</div>')
-        html.append(f'  <div class="category-name">{category}</div>')
+        category_key = CATEGORY_I18N_KEYS.get(category)
+        category_label = t(category_key) if category_key else category
+        html.append(f'  <div class="category-name">{category_label}</div>')
         html.append(f'</div>')
     html.append('</div>')
 
@@ -113,7 +152,9 @@ def _build_combat_results_html(stats: dict, category_totals: dict, game_director
         for subcat, key in subcats.items():
             count = int(stats.get(key, 0))
             html.append(f'<div class="subcat-row">')
-            html.append(f'  <span class="subcat-name">{subcat}</span>')
+            subcat_key = SUBCATEGORY_I18N_KEYS.get(subcat)
+            subcat_label = t(subcat_key) if subcat_key else subcat
+            html.append(f'  <span class="subcat-name">{subcat_label}</span>')
             html.append(f'  <span class="subcat-value">{count}</span>')
             html.append(f'</div>')
         html.append('</div>')

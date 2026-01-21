@@ -457,6 +457,138 @@ class EventGenerator:
         """
         _, time_str = self.extract_mission_datetime(campaign_name, mission_id)
         return time_str
+
+    def _format_date_for_locale(self, date_obj: datetime) -> str:
+        if get_locale().startswith('de'):
+            return f"{date_obj.day:02d}.{date_obj.month:02d}.{date_obj.year}"
+
+        month_key = [
+            "january",
+            "february",
+            "march",
+            "april",
+            "may",
+            "june",
+            "july",
+            "august",
+            "september",
+            "october",
+            "november",
+            "december",
+        ][date_obj.month - 1]
+        return f"{date_obj.day} {t(f'flightlog.months.{month_key}')}, {date_obj.year}"
+
+    def _parse_date_string(self, date_str: str) -> Optional[datetime]:
+        if not date_str:
+            return None
+
+        cleaned = date_str.strip()
+        cleaned = re.sub(r'\b(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+', '', cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r'(\d)(st|nd|rd|th)\b', r'\1', cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r'([A-Za-z])\.', r'\1', cleaned)
+
+        formats = [
+            "%Y-%m-%d",
+            "%Y.%m.%d",
+            "%d.%m.%Y",
+            "%d.%m.%y",
+            "%d %B %Y",
+            "%d %B, %Y",
+            "%B %d %Y",
+            "%B %d, %Y",
+            "%d %b %Y",
+            "%b %d %Y",
+            "%b %d, %Y",
+        ]
+        for fmt in formats:
+            try:
+                return datetime.strptime(cleaned, fmt)
+            except ValueError:
+                continue
+        return None
+
+    def _localize_date_string(self, date_str: Optional[str]) -> Optional[str]:
+        if not date_str:
+            return date_str
+
+        parsed = self._parse_date_string(date_str)
+        if parsed:
+            return self._format_date_for_locale(parsed)
+
+        month_map = {
+            "january": "january",
+            "february": "february",
+            "march": "march",
+            "april": "april",
+            "may": "may",
+            "june": "june",
+            "july": "july",
+            "august": "august",
+            "september": "september",
+            "october": "october",
+            "november": "november",
+            "december": "december",
+        }
+        localized = date_str
+        for month_name, key in month_map.items():
+            localized = re.sub(
+                month_name,
+                t(f"flightlog.months.{key}"),
+                localized,
+                flags=re.IGNORECASE,
+            )
+        return localized
+
+    def _localize_status(self, status: str) -> str:
+        if not status:
+            return status
+
+        base = status
+        qualifiers: list[str] = []
+        if "(" in status and status.endswith(")"):
+            base_part, qualifier_part = status.split("(", 1)
+            base = base_part.strip()
+            qualifiers = [q.strip() for q in qualifier_part[:-1].split(",") if q.strip()]
+
+        base_map = {
+            "landed": "flightlog.status.landed",
+            "crashed": "flightlog.status.crashed",
+            "captured": "flightlog.status.captured",
+            "wounded": "flightlog.status.wounded",
+            "kia": "flightlog.status.kia",
+            "mia": "flightlog.status.mia",
+            "bailout": "flightlog.status.bailout",
+        }
+        qualifier_map = {
+            "hard landing": "flightlog.status.hard_landing",
+            "wounded": "flightlog.status.wounded",
+        }
+
+        translated_base = base_map.get(base.lower())
+        if translated_base:
+            base_text = t(translated_base)
+        else:
+            base_text = base
+
+        if qualifiers:
+            translated_qualifiers = []
+            for qualifier in qualifiers:
+                key = qualifier_map.get(qualifier.lower())
+                translated_qualifiers.append(t(key) if key else qualifier)
+            return f"{base_text} ({', '.join(translated_qualifiers)})"
+
+        return base_text
+
+    def _localize_event_label(self, event_type: str) -> str:
+        event_map = {
+            "takeoff": "flightlog.event.takeoff",
+            "landing": "flightlog.event.landing",
+            "crash": "flightlog.event.crash",
+            "bailout": "flightlog.event.bailout",
+            "landing damage": "flightlog.event.landing_damage",
+        }
+        key = event_map.get(event_type.lower())
+        return t(key) if key else event_type
     
     def calculate_cumulative_stats(self, campaign_stats: Dict) -> Dict:
         cumulative = {
@@ -1570,19 +1702,19 @@ class EventGenerator:
             if event.get('date'):
                 try:
                     date_obj = datetime.strptime(event['date'], '%Y-%m-%d')
-                    date_str = date_obj.strftime('%d %B, %Y')
+                    date_str = self._format_date_for_locale(date_obj)
                 except:
-                    date_str = "Before First Mission"
+                    date_str = t('flightlog.timeline.before_first_mission')
             else:
-                date_str = "Before First Mission"
+                date_str = t('flightlog.timeline.before_first_mission')
         elif event.get('date'):
             try:
                 date_obj = datetime.strptime(event['date'], '%Y-%m-%d')
-                date_str = date_obj.strftime('%d %B, %Y')
+                date_str = self._format_date_for_locale(date_obj)
             except:
-                date_str = event['date']
+                date_str = self._localize_date_string(event['date'])
         else:
-            date_str = f"After Mission {event['mission']}"
+            date_str = t('flightlog.timeline.after_mission', mission=event['mission'])
         
         # Format description
         if event['type'] == 'promotion':
@@ -1682,17 +1814,23 @@ class EventGenerator:
             # Mission header
             html_lines.append(f'<div class="mission-box">')
             html_lines.append(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>")
-            if date_str:
-                html_lines.append(f"<b>MISSION {mission_id} | {date_str}</b><br>")
+            localized_date = self._localize_date_string(date_str) if date_str else None
+
+            if localized_date:
+                html_lines.append(f"<b>{t('flightlog.mission')} {mission_id} | {localized_date}</b><br>")
             else:
-                html_lines.append(f"<b>MISSION {mission_id}</b><br>")
+                html_lines.append(f"<b>{t('flightlog.mission')} {mission_id}</b><br>")
             html_lines.append(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>")
             
-            summary_parts = [f"Aircraft: {aircraft}", f"Duration: {duration}", f"Status: {status}"]
+            summary_parts = [
+                f"{t('flightlog.aircraft')}: {aircraft}",
+                f"{t('flightlog.duration')}: {duration}",
+                f"{t('flightlog.status_label')}: {self._localize_status(status)}",
+            ]
             if aircraft_dmg > 0:
-                summary_parts.append(f"Aircraft Dmg: {aircraft_dmg}%")
+                summary_parts.append(f"{t('flightlog.aircraft_damage')}: {aircraft_dmg}%")
             if pilot_dmg > 0:
-                summary_parts.append(f"Pilot Dmg: {pilot_dmg}%")
+                summary_parts.append(f"{t('flightlog.pilot_damage')}: {pilot_dmg}%")
             html_lines.append(f"{' | '.join(summary_parts)}<br>")
             html_lines.append(f"<br>")
             
@@ -1704,10 +1842,12 @@ class EventGenerator:
                 if decoded_data:
                     html_lines.append(generate_mission_combat_results_html(mission_id, decoded_data, self.game_directory))
                 else:
-                    html_lines.append(f"<p><i>Combat data not available for Mission {mission_id}</i></p>")
+                    html_lines.append(
+                        f"<p><i>{t('pdf.message.combat_data_not_available_mission', mission=mission_id)}</i></p>"
+                    )
             else:
                 # In-Game mode → show Flight Log instead of Combat Results
-                html_lines.append(f"<b>FLIGHT LOG</b><br>")
+                html_lines.append(f"<b>{t('flightlog.flight_log')}</b><br>")
                 mission_ended_in_bailout = "Bailout" in status
 
                 for event in data.get('events', [])[:25]:  # Max 25 events
@@ -1719,15 +1859,19 @@ class EventGenerator:
 
                     if event_type == "Kill":
                         details = f" (Alt: {altitude}m)" if altitude else ""
-                        html_lines.append(f"{time}  {target} destroyed{details}<br>")
+                        html_lines.append(
+                            f"{time}  {target} {t('flightlog.event.destroyed')}{details}<br>"
+                        )
                     elif event_type == "Damage Taken":
                         if mission_ended_in_bailout:
                             continue
-                        html_lines.append(f"{time}  Hit by {target}<br>")
-                    elif event_type in ["Takeoff", "Landing", "Crash", "Bailout"]:
-                        html_lines.append(f"{time}  {event_type}<br>")
+                        html_lines.append(
+                            f"{time}  {t('flightlog.event.hit_by')} {target}<br>"
+                        )
+                    elif event_type in ["Takeoff", "Landing", "Crash", "Bailout", "Landing Damage"]:
+                        html_lines.append(f"{time}  {self._localize_event_label(event_type)}<br>")
                     else:
-                        html_lines.append(f"{time}  {event_type}<br>")
+                        html_lines.append(f"{time}  {self._localize_event_label(event_type)}<br>")
             
             # ======================================================================
             # End of mission box
@@ -2083,7 +2227,7 @@ class EventGenerator:
             except (TypeError, ValueError):
                 return "0"
         
-        starting_rank = promotions[0]['rank'] if promotions else 'Unknown'
+        starting_rank = promotions[0]['rank'] if promotions else t('common.unknown')
         final_rank = promotions[-1]['rank'] if promotions else starting_rank
         
         # Generate HTML
@@ -2091,7 +2235,7 @@ class EventGenerator:
         html.append('<div style="page-break-before: always;"></div>')
         html.append('<div style="text-align: center; margin: 40px 0 30px 0;">')
         html.append('<div style="border-top: 3px double #333; border-bottom: 3px double #333; padding: 20px 0; margin: 0 50px;">')
-        html.append('<h1 style="margin: 0; font-size: 24pt;">CAMPAIGN SUMMARY</h1>')
+        html.append(f'<h1 style="margin: 0; font-size: 24pt;">{t("pdf.section.summary")}</h1>')
         
         campaign_display_name = self.get_campaign_display_name(campaign_name)
         html.append(f'<p style="margin: 10px 0 0 0; font-size: 14pt; font-style: italic;">{campaign_display_name}</p>')
@@ -2099,46 +2243,70 @@ class EventGenerator:
         html.append('</div>')
         
         # Combat Results
-        html.append('<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">COMBAT RESULTS</h2>')
+        html.append(f'<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">{t("pdf.section.combat_results")}</h2>')
         if decoded_data:
             html.append(generate_campaign_summary_combat_results_html(decoded_data, self.game_directory))
         else:
-            html.append('<p>No combat data available.</p>')
+            html.append(f'<p>{t("pdf.message.combat_data_not_available")}</p>')
                 
         # Missions Flown
-        html.append('<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">MISSIONS FLOWN</h2>')
+        html.append(f'<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">{t("pdf.section.missions_flown")}</h2>')
         html.append(f'<table style="width: 100%; margin: 10px 0;">')
-        html.append(f'<tr><td style="padding: 5px 0;"><b>Completed:</b></td><td style="text-align: right;">{mission_count} missions</td></tr>')
-        html.append(f'<tr><td style="padding: 5px 0;"><b>Total Flight Time:</b></td><td style="text-align: right;">{total_hours}h {total_minutes}m</td></tr>')
-        html.append(f'<tr><td style="padding: 5px 0;"><b>Average Duration:</b></td><td style="text-align: right;">{avg_minutes}m</td></tr>')
+        html.append(
+            f'<tr><td style="padding: 5px 0;"><b>{t("pdf.label.completed")}:</b></td>'
+            f'<td style="text-align: right;">{mission_count} {t("pdf.value.missions")}</td></tr>'
+        )
+        html.append(
+            f'<tr><td style="padding: 5px 0;"><b>{t("pdf.label.total_flight_time")}:</b></td>'
+            f'<td style="text-align: right;">{total_hours}h {total_minutes}m</td></tr>'
+        )
+        html.append(
+            f'<tr><td style="padding: 5px 0;"><b>{t("pdf.label.average_duration")}:</b></td>'
+            f'<td style="text-align: right;">{avg_minutes}m</td></tr>'
+        )
         html.append(f'<tr><td colspan="2" style="padding: 10px 0 5px 0;"></td></tr>')
         
         total_outcomes = safe_landings + hard_landings + wounded_landings + bailouts + kia_mia
         if total_outcomes > 0:
             safe_pct = int(safe_landings / total_outcomes * 100)
-            html.append(f'<tr><td style="padding: 5px 0;"><b>Safe Landings:</b></td><td style="text-align: right;">{safe_landings} ({safe_pct}%)</td></tr>')
+            html.append(
+                f'<tr><td style="padding: 5px 0;"><b>{t("pdf.label.safe_landings")}:</b></td>'
+                f'<td style="text-align: right;">{safe_landings} ({safe_pct}%)</td></tr>'
+            )
             
             if hard_landings > 0:
                 hard_pct = int(hard_landings / total_outcomes * 100)
-                html.append(f'<tr><td style="padding: 5px 0;"><b>Hard Landings / Crashes:</b></td><td style="text-align: right;">{hard_landings} ({hard_pct}%)</td></tr>')
+                html.append(
+                    f'<tr><td style="padding: 5px 0;"><b>{t("pdf.label.hard_landings_crashes")}:</b></td>'
+                    f'<td style="text-align: right;">{hard_landings} ({hard_pct}%)</td></tr>'
+                )
             
             if wounded_landings > 0:
                 wounded_pct = int(wounded_landings / total_outcomes * 100)
-                html.append(f'<tr><td style="padding: 5px 0;"><b>Wounded Landings:</b></td><td style="text-align: right;">{wounded_landings} ({wounded_pct}%)</td></tr>')
+                html.append(
+                    f'<tr><td style="padding: 5px 0;"><b>{t("pdf.label.wounded_landings")}:</b></td>'
+                    f'<td style="text-align: right;">{wounded_landings} ({wounded_pct}%)</td></tr>'
+                )
             
             if bailouts > 0:
                 bailout_pct = int(bailouts / total_outcomes * 100)
-                html.append(f'<tr><td style="padding: 5px 0;"><b>Bailouts:</b></td><td style="text-align: right;">{bailouts} ({bailout_pct}%)</td></tr>')
+                html.append(
+                    f'<tr><td style="padding: 5px 0;"><b>{t("pdf.label.bailouts")}:</b></td>'
+                    f'<td style="text-align: right;">{bailouts} ({bailout_pct}%)</td></tr>'
+                )
             
             if kia_mia > 0:
                 kia_pct = int(kia_mia / total_outcomes * 100)
-                html.append(f'<tr><td style="padding: 5px 0;"><b>KIA / MIA:</b></td><td style="text-align: right;">{kia_mia} ({kia_pct}%)</td></tr>')
+                html.append(
+                    f'<tr><td style="padding: 5px 0;"><b>{t("pdf.label.kia_mia")}:</b></td>'
+                    f'<td style="text-align: right;">{kia_mia} ({kia_pct}%)</td></tr>'
+                )
         
         html.append('</table>')
         
         # Aircraft Flown
         if aircraft_usage:
-            html.append('<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">AIRCRAFT FLOWN</h2>')
+            html.append(f'<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">{t("pdf.section.aircraft_flown")}</h2>')
             html.append(f'<table style="width: 100%; margin: 10px 0;">')
             aircraft_names = set(aircraft_usage.keys()) | set(aircraft_kills.keys())
             aircraft_rows = []
@@ -2152,18 +2320,30 @@ class EventGenerator:
                      continue  # Skip "Unknown: 0 missions (0 kills)"
                 html.append(
                     f'<tr><td style="padding: 5px 0;"><b>{aircraft}:</b></td>'
-                    f'<td style="text-align: right;">{missions} missions ({format_kill_count(kills)} kills)</td></tr>'
+                    f'<td style="text-align: right;">{missions} {t("pdf.value.missions")} ({format_kill_count(kills)} {t("pdf.value.kills")})</td></tr>'
                 )
             html.append('</table>')
         
         # Career Progression
-        html.append('<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">CAREER PROGRESSION</h2>')
+        html.append(f'<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">{t("pdf.section.career_progression")}</h2>')
         html.append(f'<table style="width: 100%; margin: 10px 0;">')
-        html.append(f'<tr><td style="padding: 5px 0;"><b>Starting Rank:</b></td><td style="text-align: right;">{starting_rank}</td></tr>')
-        html.append(f'<tr><td style="padding: 5px 0;"><b>Final Rank:</b></td><td style="text-align: right;">{final_rank}</td></tr>')
-        html.append(f'<tr><td style="padding: 5px 0;"><b>Promotions:</b></td><td style="text-align: right;">{len(promotions)}</td></tr>')
+        html.append(
+            f'<tr><td style="padding: 5px 0;"><b>{t("pdf.label.starting_rank")}:</b></td>'
+            f'<td style="text-align: right;">{starting_rank}</td></tr>'
+        )
+        html.append(
+            f'<tr><td style="padding: 5px 0;"><b>{t("pdf.label.final_rank")}:</b></td>'
+            f'<td style="text-align: right;">{final_rank}</td></tr>'
+        )
+        html.append(
+            f'<tr><td style="padding: 5px 0;"><b>{t("pdf.label.promotions")}:</b></td>'
+            f'<td style="text-align: right;">{len(promotions)}</td></tr>'
+        )
         html.append(f'<tr><td colspan="2" style="padding: 10px 0 5px 0;"></td></tr>')
-        html.append(f'<tr><td style="padding: 5px 0;"><b>Awards Received:</b></td><td style="text-align: right;">{len(awards)}</td></tr>')
+        html.append(
+            f'<tr><td style="padding: 5px 0;"><b>{t("pdf.label.awards_received")}:</b></td>'
+            f'<td style="text-align: right;">{len(awards)}</td></tr>'
+        )
         html.append('</table>')
         
         if awards:
@@ -2176,17 +2356,26 @@ class EventGenerator:
         
         # Campaign Timeline
         if first_mission_date and last_mission_date:
-            html.append('<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">CAMPAIGN TIMELINE</h2>')
+            html.append(f'<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">{t("pdf.section.campaign_timeline")}</h2>')
             html.append(f'<table style="width: 100%; margin: 10px 0;">')
             
             # Format dates nicely
-            start_date_formatted = self.format_date(first_mission_date)
-            end_date_formatted = self.format_date(last_mission_date)
+            start_date_formatted = self._localize_date_string(first_mission_date)
+            end_date_formatted = self._localize_date_string(last_mission_date)
             
-            html.append(f'<tr><td style="padding: 5px 0;"><b>Start Date:</b></td><td style="text-align: right;">{start_date_formatted}</td></tr>')
-            html.append(f'<tr><td style="padding: 5px 0;"><b>End Date:</b></td><td style="text-align: right;">{end_date_formatted}</td></tr>')
+            html.append(
+                f'<tr><td style="padding: 5px 0;"><b>{t("pdf.label.start_date")}:</b></td>'
+                f'<td style="text-align: right;">{start_date_formatted}</td></tr>'
+            )
+            html.append(
+                f'<tr><td style="padding: 5px 0;"><b>{t("pdf.label.end_date")}:</b></td>'
+                f'<td style="text-align: right;">{end_date_formatted}</td></tr>'
+            )
             if campaign_duration_days is not None:
-                html.append(f'<tr><td style="padding: 5px 0;"><b>Campaign Duration:</b></td><td style="text-align: right;">{campaign_duration_days} days</td></tr>')
+                html.append(
+                    f'<tr><td style="padding: 5px 0;"><b>{t("pdf.label.campaign_duration")}:</b></td>'
+                    f'<td style="text-align: right;">{t("pdf.value.days", days=campaign_duration_days)}</td></tr>'
+                )
             html.append('</table>')
         
         return '\n'.join(html)
@@ -2248,6 +2437,7 @@ class EventGenerator:
         
         # Get campaign display name from info file
         campaign_display_name = self.get_campaign_display_name(campaign_name)
+        report_title = t("pdf.title.campaign_report", campaign=campaign_display_name)
         
         # Clean campaign name for filename (remove special chars)
         safe_name = safe_campaign_filename(campaign_name)
@@ -2263,16 +2453,32 @@ class EventGenerator:
             pdf_filename = fallback
         
         try:
+            font_path = BASE_DIR / "IBMPlexSans-Light.ttf"
+            font_face = ""
+            font_family = "'SpecialElite', monospace, Arial, sans-serif"
+            if font_path.exists():
+                font_url = font_path.resolve().as_posix()
+                font_face = f"""
+        @font-face {{
+            font-family: 'IBMPlexSans';
+            src: url('file:///{font_url}') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }}
+"""
+                font_family = "'IBMPlexSans', 'SpecialElite', monospace, Arial, sans-serif"
+
             # Create complete HTML document
             full_html = f"""
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>{campaign_display_name} - Campaign Report</title>
+    <title>{report_title}</title>
     <style>
+        {font_face}
         body {{
-            font-family: 'SpecialElite', monospace, Arial, sans-serif;
+            font-family: {font_family};
             margin: 20px;
             font-size: 10pt;
         }}

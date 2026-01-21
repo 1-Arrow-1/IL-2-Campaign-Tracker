@@ -350,14 +350,20 @@
     "duration": "Duration",
     "status_label": "Status",
     "aircraft_damage": "Aircraft Dmg",
+    "pilot_damage": "Pilot Dmg",
     "event": {
       "takeoff": "Takeoff",
       "landing": "Landing",
+      "crash": "Crash",
+      "bailout": "Bailout",
+      "landing_damage": "Landing Damage",
       "destroyed": "destroyed",
+      "damaged": "damaged",
       "hit_by": "Hit by"
     },
     "timeline": {
       "before_first_mission": "Before First Mission",
+      "after_mission": "After Mission {mission}",
       "awarded": "Awarded",
       "promoted_to": "Promoted to",
       "started_as": "Started as"
@@ -365,8 +371,10 @@
     "status": {
       "landed": "Landed",
       "crashed": "Crashed",
+      "bailout": "Bailout",
       "captured": "Captured",
       "wounded": "Wounded",
+      "hard_landing": "Hard Landing",
       "kia": "KIA",
       "mia": "MIA"
     },

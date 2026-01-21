@@ -98,7 +98,11 @@
       "missions": "Mission Log",
       "awards": "Decorations & Honors",
       "statistics": "Statistics",
-      "combat_results": "Combat Results"
+      "combat_results": "Combat Results",
+      "missions_flown": "Missions Flown",
+      "aircraft_flown": "Aircraft Flown",
+      "career_progression": "Career Progression",
+      "campaign_timeline": "Campaign Timeline"
     },
     "label": {
       "missions_flown": "Missions Flown",
@@ -119,14 +123,38 @@
       "losses": "Losses",
       "duration": "Duration",
       "page": "Page",
-      "of": "of"
+      "of": "of",
+      "completed": "Completed",
+      "average_duration": "Average Duration",
+      "safe_landings": "Safe Landings",
+      "hard_landings_crashes": "Hard Landings / Crashes",
+      "wounded_landings": "Wounded Landings",
+      "bailouts": "Bailouts",
+      "kia_mia": "KIA / MIA",
+      "starting_rank": "Starting Rank",
+      "final_rank": "Final Rank",
+      "promotions": "Promotions",
+      "awards_received": "Awards Received",
+      "start_date": "Start Date",
+      "end_date": "End Date",
+      "campaign_duration": "Campaign Duration"
     },
     "value": {
       "hours": "{hours}h",
       "minutes": "{minutes}m",
       "hours_minutes": "{hours}h {minutes}m",
       "mission_number": "Mission {number}",
-      "page_number": "{current} of {total}"
+      "page_number": "{current} of {total}",
+      "missions": "missions",
+      "kills": "kills",
+      "days": "{days} days"
+    },
+    "message": {
+      "combat_data_not_available": "No combat data available.",
+      "combat_data_not_available_mission": "Combat data not available for Mission {mission}."
+    },
+    "title": {
+      "campaign_report": "{campaign} - Campaign Report"
     }
   },
   "web": {
@@ -294,14 +322,20 @@
     "duration": "Duration",
     "status_label": "Status",
     "aircraft_damage": "Aircraft Dmg",
+    "pilot_damage": "Pilot Dmg",
     "event": {
       "takeoff": "Takeoff",
       "landing": "Landing",
+      "crash": "Crash",
+      "bailout": "Bailout",
+      "landing_damage": "Landing Damage",
       "destroyed": "destroyed",
+      "damaged": "damaged",
       "hit_by": "Hit by"
     },
     "timeline": {
       "before_first_mission": "Before First Mission",
+      "after_mission": "After Mission {mission}",
       "awarded": "Awarded",
       "promoted_to": "Promoted to",
       "started_as": "Started as"
@@ -309,8 +343,10 @@
     "status": {
       "landed": "Landed",
       "crashed": "Crashed",
+      "bailout": "Bailout",
       "captured": "Captured",
       "wounded": "Wounded",
+      "hard_landing": "Hard Landing",
       "kia": "KIA",
       "mia": "MIA"
     },
@@ -461,6 +497,42 @@
       "purple_heart": "Purple Heart",
       "purple_heart_and_one_oak_leaf_cluster": "Purple Heart and One Oak Leaf Cluster",
       "purple_heart_and_two_oak_leaf_clusters": "Purple Heart and Two Oak Leaf Clusters"
+    }
+  }
+  ,
+  "combat": {
+    "category": {
+      "aircraft": "Aircraft",
+      "vehicles": "Vehicles",
+      "railroad": "Railroad",
+      "armaments": "Armaments",
+      "buildings": "Buildings",
+      "marine": "Marine"
+    },
+    "subcategory": {
+      "light": "Light",
+      "medium": "Medium",
+      "heavy": "Heavy",
+      "parked": "Parked",
+      "balloons": "Balloons",
+      "transport": "Transport",
+      "armored_light": "Armored (Light)",
+      "armored_medium": "Armored (Medium)",
+      "armored_heavy": "Armored (Heavy)",
+      "locomotives": "Locomotives",
+      "railroad_cars": "Railroad Cars",
+      "facilities": "Facilities",
+      "machine_guns": "Machine Guns",
+      "cannons": "Cannons",
+      "aaa_guns": "AAA Guns",
+      "rocket_launchers": "Rocket Launchers",
+      "searchlights": "Searchlights",
+      "radars": "Radars",
+      "residential": "Residential Buildings",
+      "bridges": "Bridges",
+      "cargo": "Cargo",
+      "submarines": "Submarines",
+      "destroyers": "Destroyers"
     }
   }
 }

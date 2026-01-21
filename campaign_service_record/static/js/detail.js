@@ -1306,9 +1306,14 @@ const DetailPage = {
             { pattern: /\bDuration\b:/gi, replacement: `${i18n.t('flightlog.duration')}:` },
             { pattern: /\bStatus\b:/gi, replacement: `${i18n.t('flightlog.status_label')}:` },
             { pattern: /\bAircraft Dmg\b:/gi, replacement: `${i18n.t('flightlog.aircraft_damage')}:` },
+            { pattern: /\bPilot Dmg\b:/gi, replacement: `${i18n.t('flightlog.pilot_damage')}:` },
             { pattern: /\bTakeoff\b/gi, replacement: i18n.t('flightlog.event.takeoff') },
+            { pattern: /\bLanding Damage\b/gi, replacement: i18n.t('flightlog.event.landing_damage') },
             { pattern: /\bLanding\b/gi, replacement: i18n.t('flightlog.event.landing') },
+            { pattern: /\bCrash\b/gi, replacement: i18n.t('flightlog.event.crash') },
+            { pattern: /\bBailout\b/gi, replacement: i18n.t('flightlog.event.bailout') },
             { pattern: /\bdestroyed\b/gi, replacement: i18n.t('flightlog.event.destroyed') },
+            { pattern: /\bdamaged\b/gi, replacement: i18n.t('flightlog.event.damaged') },
             { pattern: /\bHit by\b/gi, replacement: i18n.t('flightlog.event.hit_by') },
             { pattern: /\bBefore First Mission\b/gi, replacement: i18n.t('flightlog.timeline.before_first_mission') },
             { pattern: /\bAwarded\b/gi, replacement: i18n.t('flightlog.timeline.awarded') },
@@ -1322,7 +1327,9 @@ const DetailPage = {
             captured: i18n.t('flightlog.status.captured'),
             wounded: i18n.t('flightlog.status.wounded'),
             kia: i18n.t('flightlog.status.kia'),
-            mia: i18n.t('flightlog.status.mia')
+            mia: i18n.t('flightlog.status.mia'),
+            bailout: i18n.t('flightlog.status.bailout'),
+            'hard landing': i18n.t('flightlog.status.hard_landing')
         };
 
         replacements.forEach(({ pattern, replacement }) => {
@@ -1748,7 +1755,7 @@ const DetailPage = {
         const link = document.createElement('a');
         link.href = `/${pdfPath}`;
         link.className = 'pdf-download';
-        link.textContent = '📄 Download PDF Report';
+        link.textContent = `📄 ${i18n.t('web.button.download_pdf')}`;
         link.target = '_blank';
         
         this.elements.summaryContent.appendChild(link);

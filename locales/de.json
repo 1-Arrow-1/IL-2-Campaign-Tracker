@@ -98,7 +98,11 @@
       "missions": "Missions-Protokoll",
       "awards": "Auszeichnungen & Ehrungen",
       "statistics": "Statistik",
-      "combat_results": "Kampfergebnisse"
+      "combat_results": "Kampfergebnisse",
+      "missions_flown": "Geflogene Missionen",
+      "aircraft_flown": "Geflogene Flugzeuge",
+      "career_progression": "Laufbahn",
+      "campaign_timeline": "Kampagnen-Zeitlinie"
     },
     "label": {
       "missions_flown": "Geflogene Missionen",
@@ -119,14 +123,38 @@
       "losses": "Verluste",
       "duration": "Dauer",
       "page": "Seite",
-      "of": "von"
+      "of": "von",
+      "completed": "Abgeschlossen",
+      "average_duration": "Durchschnittliche Dauer",
+      "safe_landings": "Sichere Landungen",
+      "hard_landings_crashes": "Harte Landungen / Abstürze",
+      "wounded_landings": "Verwundete Landungen",
+      "bailouts": "Absprünge",
+      "kia_mia": "Gefallen / Vermisst",
+      "starting_rank": "Anfangsrang",
+      "final_rank": "Endrang",
+      "promotions": "Beförderungen",
+      "awards_received": "Erhaltene Auszeichnungen",
+      "start_date": "Startdatum",
+      "end_date": "Enddatum",
+      "campaign_duration": "Kampagnendauer"
     },
     "value": {
       "hours": "{hours}h",
       "minutes": "{minutes}m",
       "hours_minutes": "{hours}h {minutes}m",
       "mission_number": "Mission {number}",
-      "page_number": "{current} von {total}"
+      "page_number": "{current} von {total}",
+      "missions": "Missionen",
+      "kills": "Abschüsse",
+      "days": "{days} Tage"
+    },
+    "message": {
+      "combat_data_not_available": "Keine Kampfdaten verfügbar.",
+      "combat_data_not_available_mission": "Keine Kampfdaten für Mission {mission} verfügbar."
+    },
+    "title": {
+      "campaign_report": "{campaign} - Kampagnenbericht"
     }
   },
   "web": {
@@ -294,14 +322,20 @@
     "duration": "Dauer",
     "status_label": "Status",
     "aircraft_damage": "Flugzeugschaden",
+    "pilot_damage": "Pilotenschaden",
     "event": {
       "takeoff": "Start",
       "landing": "Landung",
+      "crash": "Absturz",
+      "bailout": "Absprung",
+      "landing_damage": "Landeschaden",
       "destroyed": "zerstört",
+      "damaged": "beschädigt",
       "hit_by": "Getroffen von"
     },
     "timeline": {
       "before_first_mission": "Vor der ersten Mission",
+      "after_mission": "Nach Mission {mission}",
       "awarded": "Ausgezeichnet mit",
       "promoted_to": "Befördert zu",
       "started_as": "Begann als"
@@ -309,8 +343,10 @@
     "status": {
       "landed": "Gelandet",
       "crashed": "Abgestürzt",
+      "bailout": "Absprung",
       "captured": "Gefangen",
       "wounded": "Verwundet",
+      "hard_landing": "Harte Landung",
       "kia": "Gefallen",
       "mia": "Vermisst"
     },
@@ -473,6 +509,42 @@
       "purple_heart": "Purple Heart",
       "purple_heart_and_one_oak_leaf_cluster": "Purple Heart mit einem Eichenlaubabzeichen",
       "purple_heart_and_two_oak_leaf_clusters": "Purple Heart mit zwei Eichenlaubabzeichen"
-      }
+    }
+  }
+  ,
+  "combat": {
+    "category": {
+      "aircraft": "Flugzeuge",
+      "vehicles": "Fahrzeuge",
+      "railroad": "Eisenbahn",
+      "armaments": "Bewaffnung",
+      "buildings": "Gebäude",
+      "marine": "Marine"
+    },
+    "subcategory": {
+      "light": "Leicht",
+      "medium": "Mittel",
+      "heavy": "Schwer",
+      "parked": "Geparkt",
+      "balloons": "Ballons",
+      "transport": "Transport",
+      "armored_light": "Gepanzert (leicht)",
+      "armored_medium": "Gepanzert (mittel)",
+      "armored_heavy": "Gepanzert (schwer)",
+      "locomotives": "Lokomotiven",
+      "railroad_cars": "Waggons",
+      "facilities": "Anlagen",
+      "machine_guns": "MGs",
+      "cannons": "Kanonen",
+      "aaa_guns": "Flakgeschütze",
+      "rocket_launchers": "Raketenwerfer",
+      "searchlights": "Scheinwerfer",
+      "radars": "Radargeräte",
+      "residential": "Wohngebäude",
+      "bridges": "Brücken",
+      "cargo": "Frachter",
+      "submarines": "U-Boote",
+      "destroyers": "Zerstörer"
+    }
   }
 }
