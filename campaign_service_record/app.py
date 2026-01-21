@@ -24,10 +24,10 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 # Import configuration
-from config import get_config
+from campaign_service_record.config import get_config
 
 # Import API
-from api import api_bp, init_api
+from campaign_service_record.api import api_bp, init_api
 
 
 # ============================================================================
@@ -173,7 +173,8 @@ def monitor_idle_shutdown(idle_timeout: int):
     Args:
         idle_timeout: Timeout in seconds
     """
-    from api.routes import get_last_ping
+    # Smoke: python -c "from campaign_service_record.api.routes import get_game_directory"
+    from campaign_service_record.api.routes import get_last_ping
     
     logger.info(f"Idle shutdown monitor started (timeout={idle_timeout}s)")
     

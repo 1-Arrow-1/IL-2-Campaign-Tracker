@@ -29,8 +29,8 @@ hiddenimports = [
     'logging',
     'json',
     'pathlib',
-    'utils.path_utils',
-    'utils.pilot_photo',
+    'campaign_service_record.utils.path_utils',
+    'campaign_service_record.utils.pilot_photo',
     'campaign_service_record.utils.i18n',
     'PIL',
 ]

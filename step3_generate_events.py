@@ -72,6 +72,90 @@ DEFAULT_LOG_PATH = BASE_DIR / "campaign_events.log"
 ENV_DEBUG = os.environ.get("IL2_TRACKER_DEBUG", "").strip().lower() in {"1", "true", "yes", "on"}
 LOGGER = get_logger(__name__, log_path=DEFAULT_LOG_PATH, debug=ENV_DEBUG)
 
+KEY_PATTERN = re.compile(r"^[a-z0-9_]+(\.[a-z0-9_]+)+$", re.IGNORECASE)
+
+
+def _is_key_like(value: str) -> bool:
+    return bool(value and KEY_PATTERN.match(value))
+
+
+def _name_to_i18n_key(name: str) -> str:
+    value = name.lower()
+    value = value.replace("’", "'").replace("‘", "'")
+    value = value.replace("'", "")
+    value = value.replace("&", "and")
+    value = value.replace("+", "and")
+    value = re.sub(r"[,\.\"]", "", value)
+    value = re.sub(r"\s*\(\s*", "_", value)
+    value = re.sub(r"\s*\)\s*", "", value)
+    value = value.replace("…", "")
+    value = re.sub(r"\s+", "_", value)
+    value = re.sub(r"_+", "_", value)
+    return value.strip("_")
+
+
+def _country_code_for_rank(country: str | None) -> str:
+    normalized = (country or "").lower().strip()
+    if normalized == "germany":
+        return "ger"
+    if normalized in {"britain", "uk", "great britain"}:
+        return "raf"
+    if normalized in {"usa", "united states", "united states of america", "us"}:
+        return "usaaf"
+    if normalized in {"soviet union", "ussr", "russia"}:
+        return "vvs"
+    return ""
+
+
+def _build_award_key(name: str) -> str:
+    if _is_key_like(name):
+        return name
+    return f"progression.awards.{_name_to_i18n_key(name)}"
+
+
+def _build_rank_keys(name: str, country: str | None) -> list[str]:
+    if _is_key_like(name):
+        return [name]
+    base_key = _name_to_i18n_key(name)
+    keys: list[str] = []
+    country_code = _country_code_for_rank(country)
+    if country_code:
+        keys.append(f"progression.ranks.{country_code}_{base_key}")
+    keys.append(f"progression.ranks.{base_key}")
+    return keys
+
+
+def _translate_with_fallback(key: str, fallback: str) -> str:
+    translated = t(key)
+    if translated.startswith("[") and translated.endswith("]"):
+        return fallback
+    return translated
+
+
+def _translate_award_name(name: str, award_key: str | None = None) -> str:
+    fallback = name
+    key = award_key or _build_award_key(name)
+    return _translate_with_fallback(key, fallback)
+
+
+def _translate_rank_name(
+    name: str,
+    country: str | None,
+    rank_key: str | None = None,
+) -> str:
+    candidates: list[str] = []
+    if rank_key:
+        candidates.append(rank_key)
+    for key in _build_rank_keys(name, country):
+        if key not in candidates:
+            candidates.append(key)
+    for key in candidates:
+        translated = t(key)
+        if not (translated.startswith("[") and translated.endswith("]")):
+            return translated
+    return name
+
+
 def _load_decoded_campaign(decoded_path: str) -> dict:
     if not os.path.exists(decoded_path):
         LOGGER.warning("campaigns_decoded.json not found at %s", decoded_path)
@@ -760,6 +844,7 @@ class EventGenerator:
             earned_awards.append({
                 'type': 'promotion',
                 'rank': starting_rank['name'],
+                'rank_key': _build_rank_keys(starting_rank['name'], country)[0],
                 'image': starting_rank['image'],
                 'mission': 'Initial',
                 'date': first_mission_date  # Same date as first mission
@@ -790,6 +875,7 @@ class EventGenerator:
                             earned_awards.append({
                                 'type': 'award',
                                 'name': award['name'],
+                                'award_key': _build_award_key(award['name']),
                                 'image': award['image'],
                                 'mission': 'Initial',
                                 'date': first_mission_date
@@ -802,6 +888,7 @@ class EventGenerator:
                             earned_awards.append({
                                 'type': 'award',
                                 'name': award['name'],
+                                'award_key': _build_award_key(award['name']),
                                 'image': award['image'],
                                 'mission': 'Initial',
                                 'date': first_mission_date
@@ -813,6 +900,7 @@ class EventGenerator:
                     earned_awards.append({
                         'type': 'award',
                         'name': award['name'],
+                        'award_key': _build_award_key(award['name']),
                         'image': award['image'],
                         'mission': 'Initial',
                         'date': first_mission_date
@@ -1025,6 +1113,7 @@ class EventGenerator:
                         earned_awards.append({
                             'type': 'award',
                             'name': tiered_award['name'],
+                            'award_key': _build_award_key(tiered_award['name']),
                             'image': tiered_award['award']['image'],
                             'mission': tiered_award['mission'],
                             'date': tiered_award['date']
@@ -1072,6 +1161,7 @@ class EventGenerator:
                                 earned_awards.append({
                                     'type': 'award',
                                     'name': award['name'],
+                                    'award_key': _build_award_key(award['name']),
                                     'image': award['image'],
                                     'mission': mission_num,
                                     'date': mission_date
@@ -1426,6 +1516,7 @@ class EventGenerator:
                     promotions.append({
                         'type': 'promotion',
                         'rank': next_rank['name'],
+                        'rank_key': _build_rank_keys(next_rank['name'], country)[0],
                         'image': next_rank['image'],
                         'mission': mission_num,
                         'date': mission_date,
@@ -1726,13 +1817,22 @@ class EventGenerator:
         
         # Format description
         if event['type'] == 'promotion':
+            rank_name = _translate_rank_name(
+                event.get('rank', ''),
+                country,
+                event.get('rank_key'),
+            )
             if event.get('mission') == 'Initial':
-                description = t('event.promotion.initial_rank', rank=event['rank'])
+                description = t('event.promotion.initial_rank', rank=rank_name)
             else:
-                description = t('event.promotion.description', rank=event['rank'])
+                description = t('event.promotion.description', rank=rank_name)
         else:
             # Award - use same format for initial and later awards
-            description = t('event.award.description', name=event['name'])
+            award_name = _translate_award_name(
+                event.get('name', ''),
+                event.get('award_key'),
+            )
+            description = t('event.award.description', name=award_name)
         
         # Apply rotation:
         # - For PDF: Image is rotated via PIL in image_to_base64()
@@ -1983,6 +2083,11 @@ class EventGenerator:
                 # SET LOCALE for this file (CRITICAL!)
                 set_locale(app_locale)
                 
+                localized_headers = [
+                    t('event.header.mission_debriefings'),
+                    t('event.header.events'),
+                ]
+
                 # Generate LOCALIZED events HTML
                 events_html_localized = ""
                 if events:
@@ -2009,7 +2114,7 @@ class EventGenerator:
                 log_message(LOGGER, f"    [DEBUG] Combined HTML: {len(combined_html)} chars")
                 
                 # Update THIS specific file with LOCALIZED content
-                if self._update_single_locale_file(info_file, combined_html):
+                if self._update_single_locale_file(info_file, combined_html, localized_headers):
                     success_count += 1
                     log_message(LOGGER, f"  ✅ Updated {info_file.name}")
                 else:
@@ -2031,7 +2136,12 @@ class EventGenerator:
             log_message(LOGGER, f"  ❌ Failed to update any locale files")
             return False
 
-    def _update_single_locale_file(self, info_file: Path, content_html: str) -> bool:
+    def _update_single_locale_file(
+        self,
+        info_file: Path,
+        content_html: str,
+        extra_headers: List[str] | None = None,
+    ) -> bool:
         """
         Update a single info.locale=*.txt file with content.
         
@@ -2051,7 +2161,11 @@ class EventGenerator:
             
             # Read and clean existing content
             raw = info_file.read_bytes()
-            updated, detected_encoding, original, cleaned = apply_tracker_content(raw, content_html)
+            updated, detected_encoding, original, cleaned = apply_tracker_content(
+                raw,
+                content_html,
+                extra_headers=extra_headers,
+            )
             removed = len(original) - len(cleaned)
             if removed > 0:
                 log_message(LOGGER, f"    ✂️  Removed {removed} chars of old tracker content")
@@ -2247,8 +2361,24 @@ class EventGenerator:
             except (TypeError, ValueError):
                 return "0"
         
-        starting_rank = promotions[0]['rank'] if promotions else t('common.unknown')
-        final_rank = promotions[-1]['rank'] if promotions else starting_rank
+        starting_rank = (
+            _translate_rank_name(
+                promotions[0].get('rank', ''),
+                country,
+                promotions[0].get('rank_key'),
+            )
+            if promotions
+            else t('common.unknown')
+        )
+        final_rank = (
+            _translate_rank_name(
+                promotions[-1].get('rank', ''),
+                country,
+                promotions[-1].get('rank_key'),
+            )
+            if promotions
+            else starting_rank
+        )
         
         # Generate HTML
         html = []
@@ -2369,7 +2499,9 @@ class EventGenerator:
         if awards:
             html.append('<ul style="margin: 5px 0; padding-left: 20px;">')
             for award in awards:
-                html.append(f'<li>{award["name"]}</li>')
+                html.append(
+                    f'<li>{_translate_award_name(award.get("name", ""), award.get("award_key"))}</li>'
+                )
             html.append('</ul>')
         
         
@@ -2464,6 +2596,8 @@ class EventGenerator:
             "service_record.app_title": t("service_record.app_title"),
             "pdf.section.summary": t("pdf.section.summary"),
             "pdf.section.missions_flown": t("pdf.section.missions_flown"),
+            "progression.ranks.unteroffizier": t("progression.ranks.unteroffizier"),
+            "progression.awards.pilots_badge": t("progression.awards.pilots_badge"),
         }
         log_message(
             LOGGER,
@@ -2496,12 +2630,18 @@ class EventGenerator:
                 )
                 return False
 
-            font_url = font_path.resolve().as_posix()
+            font_url = font_path.resolve().as_uri()
             font_face = f"""
         @font-face {{
             font-family: 'IBMPlexSans-Light';
-            src: url('file:///{font_url}') format('truetype');
+            src: url('{font_url}') format('truetype');
             font-weight: 300;
+            font-style: normal;
+        }}
+        @font-face {{
+            font-family: 'IBMPlexSans-Light';
+            src: url('{font_url}') format('truetype');
+            font-weight: 700;
             font-style: normal;
         }}
 """
@@ -2516,10 +2656,19 @@ class EventGenerator:
     <title>{report_title}</title>
     <style>
         {font_face}
-        body, h1, h2, h3, h4, h5, h6 {{
+        body {{
             font-family: {font_family};
+            font-weight: 300;
             margin: 20px;
             font-size: 10pt;
+        }}
+        h1, h2, h3, h4, h5, h6 {{
+            font-family: {font_family};
+            font-weight: 300;
+        }}
+        p, div, span, table, th, td, li {{
+            font-family: {font_family};
+            font-weight: 300;
         }}
         h1 {{
             text-align: center;
