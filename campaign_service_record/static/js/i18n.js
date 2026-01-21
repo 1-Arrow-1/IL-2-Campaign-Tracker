@@ -23,6 +23,8 @@ const i18n = {
     currentLocale: 'en',
     translations: {},
     initialized: false,
+    initInProgress: false,
+    _initSequence: 0,
     missingTranslationPlaceholder: '[missing translation]',
     
     /**
@@ -34,6 +36,8 @@ const i18n = {
      */
     async init(locale = 'en') {
         console.log(`[i18n] Initializing with locale: ${locale}`);
+        const initToken = ++this._initSequence;
+        this.initInProgress = true;
         
         try {
             // Load fallback (English) first
@@ -53,13 +57,26 @@ const i18n = {
                 }
             }
             
+            if (initToken !== this._initSequence) {
+                console.warn('[i18n] Initialization superseded by a newer request');
+                return;
+            }
+
             this.currentLocale = locale;
             this.initialized = true;
             console.log(`[i18n] Initialized successfully with locale: ${locale}`);
         } catch (error) {
             console.error('[i18n] Initialization error:', error);
+            if (initToken !== this._initSequence) {
+                console.warn('[i18n] Initialization error superseded by a newer request');
+                return;
+            }
             this.currentLocale = 'en';
             this.initialized = true;
+        } finally {
+            if (initToken === this._initSequence) {
+                this.initInProgress = false;
+            }
         }
     },
     
@@ -317,6 +334,9 @@ const i18n = {
 // Auto-initialize with English on load (async)
 (async () => {
     try {
+        if (i18n.initialized || i18n.initInProgress) {
+            return;
+        }
         await i18n.init('en');
     } catch (error) {
         console.error('[i18n] Auto-initialization failed:', error);
