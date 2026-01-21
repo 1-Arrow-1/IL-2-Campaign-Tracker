@@ -16,3 +16,24 @@
 [2026-01-20 14:26:09] [Monitor] 🟢 Watching C:\Program Files (x86)\Steam\steamapps\common\IL-2 Sturmovik Battle of Stalingrad\data\Campaigns for new campaigns...
 [2026-01-20 15:52:16] 
 👋 Monitor stopped by user
+[2026-01-20 21:33:35] ⚠️ Removed deleted campaigns from JSON: ['breakpoint']
+[2026-01-20 21:33:35] [Monitor] ⚠️ Also removed from stock_campaigns.yaml: ['breakpoint']
+[2026-01-20 21:33:44] [monitor] Using provided path: C:\Program Files (x86)\Steam\steamapps\common\IL-2 Sturmovik Battle of Stalingrad\data\swf\il2\usersave\fa68f365-4460-42b5-b728-f45c391fd30b\campaign\campaignsstates.txt
+[2026-01-20 21:33:44] 
+======================================================================
+[2026-01-20 21:33:44] CAMPAIGN MONITOR - ⚡ FAST MODE (File Watcher + Campaign Watcher)
+[2026-01-20 21:33:44] ======================================================================
+[2026-01-20 21:33:44] Check interval: 1 second(s)
+[2026-01-20 21:33:44] Debounce: 1.5s (prevents race conditions)
+[2026-01-20 21:33:44] ⚡ Fast mode enabled - popups appear within 2-3 seconds!
+[2026-01-20 21:33:44] Log rotation: 5 MB max, 3 backups
+[2026-01-20 21:33:44] ======================================================================
+
+[2026-01-20 21:33:44] [Monitor] 🟡 WW1 exclusions updated (added=1, removed=0)
+[2026-01-20 21:33:44] 🚀 Monitor started!
+[2026-01-20 21:33:44] Watching: C:\Program Files (x86)\Steam\steamapps\common\IL-2 Sturmovik Battle of Stalingrad\data\swf\il2\usersave\fa68f365-4460-42b5-b728-f45c391fd30b\campaign\campaignsstates.txt
+[2026-01-20 21:33:44] ⚡ Fast mode: File watcher active (debounce: 1.5s)
+[2026-01-20 21:33:49] [Monitor] ✅ Loaded game_directory from JSON: C:\Program Files (x86)\Steam\steamapps\common\IL-2 Sturmovik Battle of Stalingrad
+[2026-01-20 21:33:49] [Monitor] 🟢 Watching C:\Program Files (x86)\Steam\steamapps\common\IL-2 Sturmovik Battle of Stalingrad\data\Campaigns for new campaigns...
+[2026-01-20 21:33:55] 
+👋 Monitor stopped by user

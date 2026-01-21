@@ -262,6 +262,79 @@ const normalizeEventName = (value) => (value || '')
     .replace(/[“”]/g, '"')
     .trim();
 
+// ============================================================================
+// i18n TRANSLATION HELPERS
+// ============================================================================
+
+/**
+ * Convert award/rank name to i18n key
+ * e.g. "Iron Cross 2nd Class" -> "iron_cross_2nd_class"
+ */
+const nameToI18nKey = (name) => {
+    if (!name) return "";
+    return name
+        .toLowerCase()
+        .replace(/["]/g, "")
+        .replace(/[,\.]/g, "")
+        .replace(/\s*\(\s*/g, "_")
+        .replace(/\s*\)\s*/g, "")
+        .replace(/\+/g, "plus")
+        .replace(/…/g, "")
+        .replace(/\s+/g, "_")
+        .replace(/_+/g, "_")
+        .replace(/^_|_$/g, "");
+};
+
+/**
+ * Translate award name using i18n
+ */
+const translateAwardName = (name) => {
+    if (!name) return "";
+    // Check if i18n is ready
+    if (!i18n || !i18n.translations || Object.keys(i18n.translations).length === 0) {
+        return name;  // i18n not loaded yet, return original
+    }
+    const key = nameToI18nKey(name);
+    const translated = i18n.t(`progression.awards.${key}`);
+    // If translation starts with "progression.", it means key not found
+    return translated.startsWith('progression.') ? name : translated;
+};
+
+/**
+ * Translate rank name using i18n
+ */
+const translateRankName = (name, country) => {
+    if (!name) return "";
+    // Check if i18n is ready
+    if (!i18n || !i18n.translations || Object.keys(i18n.translations).length === 0) {
+        return name;  // i18n not loaded yet, return original
+    }
+    const baseKey = nameToI18nKey(name);
+    if (country) {
+        const countryCode = getCountryCode(country);
+        const countryKey = `${countryCode}_${baseKey}`;
+        const countryTranslated = i18n.t(`progression.ranks.${countryKey}`);
+        if (!countryTranslated.startsWith('progression.')) {
+            return countryTranslated;
+        }
+    }
+    const translated = i18n.t(`progression.ranks.${baseKey}`);
+    return translated.startsWith('progression.') ? name : translated;
+};
+
+/**
+ * Get country code for rank translation
+ */
+const getCountryCode = (country) => {
+    const normalized = (country || "").toLowerCase().trim();
+    if (normalized === "germany") return "ger";
+    if (["britain", "uk", "great britain"].includes(normalized)) return "raf";
+    if (["usa", "united states"].includes(normalized)) return "usaaf";
+    if (["soviet union", "ussr", "russia"].includes(normalized)) return "vvs";
+    return "";
+};
+
+
 const NORMALIZED_EVENT_DESCRIPTIONS = Object.fromEntries(
     Object.entries(EVENT_DESCRIPTIONS).map(([key, data]) => {
         const normalizeMap = (map) => Object.fromEntries(
@@ -982,7 +1055,7 @@ const DetailPage = {
         item.className = `event-item ${event.type}`;
 
         const typeLabel = event.type === 'promotion' ? 'Promotion' : 'Award';
-        const mainText = event.type === 'promotion' ? event.rank : event.name;
+        const mainText = event.type === 'promotion' ? translateRankName(event.rank, event.country) : translateAwardName(event.name);
         const dateText = event.date || `Mission ${event.mission_number || '?'}`;
         const reasonText = event.reason || '';
 
@@ -1071,7 +1144,7 @@ const DetailPage = {
             if (item.dataset.previewDisabled === 'true') {
                 return;
             }
-            const title = event.type === 'promotion' ? event.rank : event.name;
+            const title = event.type === 'promotion' ? translateRankName(event.rank, event.country) : translateAwardName(event.name);
             const size = event.type === 'promotion' ? this.getPromotionPreviewSize(img) : null;
             const description = this.getEventDescription(event);
             PreviewModal.open({

@@ -1,26 +1,5 @@
 {
-    "steelbirds": {
-        "country": "Germany",
-        "events": [
-            {
-                "type": "promotion",
-                "rank": "Unteroffizier",
-                "image": "unteroffizier.png",
-                "mission": "Initial",
-                "date": "April 14 1943."
-            },
-            {
-                "type": "award",
-                "name": "Pilot's Badge",
-                "image": "pilots_badge.dds",
-                "mission": "Initial",
-                "date": "April 14 1943."
-            }
-        ],
-        "debriefings_html": "",
-        "events_html": "<b>Events</b><br>\n\u2022 Before First Mission - Initial rank: Unteroffizier <img src=CampaignRanksAwards\\Germany\\unteroffizier.png><br>\n\u2022 Before First Mission - Awarded Pilot's Badge <img src=CampaignRanksAwards\\Germany\\pilots_badge.dds><br>",
-        "html": "<b>Events</b><br>\n\u2022 Before First Mission - Initial rank: Unteroffizier <img src=CampaignRanksAwards\\Germany\\unteroffizier.png><br>\n\u2022 Before First Mission - Awarded Pilot's Badge <img src=CampaignRanksAwards\\Germany\\pilots_badge.dds><br>"
-    },
+    "steelbirds": [],
     "kerch": {
         "country": "Germany",
         "events": [
@@ -119,22 +98,18 @@
         "html": "<b>Events</b><br>\n\u2022 04 November, 1943 - Initial rank: Unteroffizier <img src=CampaignRanksAwards\\Germany\\unteroffizier.png><br>\n\u2022 04 November, 1943 - Awarded Pilot's Badge <img src=CampaignRanksAwards\\Germany\\pilots_badge.dds><br>\n\u2022 04 November, 1943 - Awarded Iron Cross 2nd Class <img src=CampaignRanksAwards\\Germany\\iron_cross_2nd.dds><br>\n\u2022 06 November, 1943 - Promoted to Feldwebel <img src=CampaignRanksAwards\\Germany\\feldwebel.png><br>\n\u2022 06 November, 1943 - Awarded Iron Cross 1st Class <img src=CampaignRanksAwards\\Germany\\iron_cross_1st.dds><br>\n\u2022 11 November, 1943 - Promoted to Oberfeldwebel <img src=CampaignRanksAwards\\Germany\\oberfeldwebel.png><br>\n\u2022 11 November, 1943 - Awarded Honor Goblet <img src=CampaignRanksAwards\\Germany\\honor_goblet.dds><br>\n\u2022 12 November, 1943 - Promoted to Leutnant <img src=CampaignRanksAwards\\Germany\\leutnant.png><br>\n\u2022 14 November, 1943 - Awarded German Cross in Gold <img src=CampaignRanksAwards\\Germany\\german_cross_gold.dds><br>\n\u2022 19 November, 1943 - Awarded Knight's Cross of the Iron Cross <img src=CampaignRanksAwards\\Germany\\knights_cross.dds><br>\n\u2022 21 November, 1943 - Promoted to Oberleutnant <img src=CampaignRanksAwards\\Germany\\oberleutnant.png><br>\n\u2022 06 December, 1943 - Promoted to Hauptmann <img src=CampaignRanksAwards\\Germany\\hauptmann.png><br>"
     },
     "windoffury": [],
-    "knights": [],
     "hunters": [],
     "ironwind": [],
     "operation citadel 1943 ii. sch.g1 fw190-a5": [],
     "wildmustangs": [],
     "lightning": [],
     "icering": [],
-    "gallant": [],
     "overlord": [],
     "hornets": [],
     "hawks": [],
     "spitfire": [],
     "wingsovercaen": [],
-    "againstthetide": [],
     "griffons": [],
-    "kaiserschlacht": [],
     "beginning": [],
     "lastchance": [],
     "hurtgen": [],
@@ -144,8 +119,10 @@
     "blazingsteppe": [],
     "10daysofautumn": [],
     "fortressonthevolga": [],
-    "breakpoint": [],
-    "springoffensive": [],
     "skynomads": [],
-    "jg51 rzhev": []
+    "jg51 rzhev": [],
+    "battle for the don bend": [],
+    "current-luftwaffe-campaign": [],
+    "beginning _iar80a": [],
+    "kaiserschlacht": []
 }
