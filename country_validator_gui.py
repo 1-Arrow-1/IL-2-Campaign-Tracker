@@ -17,14 +17,14 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from utils.logging import get_logger, log_message
-from utils.i18n import t, init_i18n
-from utils.locale_config import get_user_locale
+from campaign_service_record.utils.i18n import t, init_i18n
+from utils.locale_config import resolve_locale
 
 logger = get_logger(__name__)
 
 # Initialize i18n with user's preferred locale
 try:
-    user_locale = get_user_locale()
+    user_locale = resolve_locale()
     init_i18n(user_locale)
     log_message(logger, f"[country_validator] i18n initialized with locale: {user_locale}")
 except Exception as e:

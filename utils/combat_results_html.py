@@ -7,7 +7,7 @@ Provides:
 """
 
 from utils.combat_results import KILL_MAPPING, aggregate_kills_from_missions
-from utils.i18n import t
+from campaign_service_record.utils.i18n import t
 
 CATEGORY_I18N_KEYS = {
     "Aircraft": "combat.category.aircraft",

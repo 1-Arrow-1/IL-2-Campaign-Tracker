@@ -48,3 +48,17 @@ def decode_and_clean_info_locale(raw: bytes) -> tuple[str, str, str]:
         cleaned = cleaned[:-4].rstrip()
 
     return cleaned, encoding, content
+
+
+def apply_tracker_content(raw: bytes, content_html: str) -> tuple[str, str, str, str]:
+    """
+    Remove old tracker content and append new content.
+
+    Returns:
+        Tuple of (updated_content, encoding, original_content, cleaned_content)
+    """
+    cleaned, encoding, original = decode_and_clean_info_locale(raw)
+    updated = cleaned
+    if content_html:
+        updated = f"{cleaned}<br><br>{content_html}"
+    return updated, encoding, original, cleaned

@@ -14,7 +14,7 @@ from typing import Dict, Set, List, Tuple
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from utils.i18n import get_available_locales, _get_all_keys, load_locale
+from campaign_service_record.utils.i18n import get_available_locales, _get_all_keys, load_locale
 
 
 def load_all_translations() -> Dict[str, Dict]:

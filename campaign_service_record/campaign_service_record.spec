@@ -17,6 +17,8 @@ base_path = Path(SPECPATH)
 datas = [
     (str(base_path / 'static'), 'static'),
     (str(base_path / 'utils'), 'utils'),
+    (str(base_path.parent / 'locales'), 'locales'),
+    (str(base_path.parent / 'IBMPlexSans-Light.ttf'), '.'),
 ]
 
 # Hidden imports (modules not auto-detected)
@@ -29,6 +31,7 @@ hiddenimports = [
     'pathlib',
     'utils.path_utils',
     'utils.pilot_photo',
+    'campaign_service_record.utils.i18n',
     'PIL',
 ]
 

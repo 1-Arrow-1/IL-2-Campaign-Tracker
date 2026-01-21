@@ -247,7 +247,7 @@ for %%F in (
 		"utils\filesystem.py"
 		"utils\logging.py"
         "utils\rank_scaling.py"
-        "utils\i18n.py"
+        "campaign_service_record\utils\i18n.py"
         "utils\locale_config.py"
 ) do (
     if exist %%F (

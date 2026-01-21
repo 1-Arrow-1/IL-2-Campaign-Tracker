@@ -9,7 +9,7 @@ Provides translation functionality for all Python components:
 - In-game text (info.locale files)
 
 Usage:
-    from utils.i18n import t, set_locale, get_locale
+    from campaign_service_record.utils.i18n import t, set_locale, get_locale
     
     # Set locale (once at startup)
     set_locale('de')  # or 'en', etc.
@@ -67,8 +67,15 @@ def _get_locales_dir() -> Path:
             # Locales dir should be next to the EXE
             _locales_dir = Path(sys.executable).parent / 'locales'
         else:
-            # Running as script
-            _locales_dir = Path(__file__).parent.parent / 'locales'
+            # Running as script: find the nearest locales/ directory up the tree.
+            current = Path(__file__).resolve()
+            for parent in current.parents:
+                candidate = parent / 'locales'
+                if candidate.exists():
+                    _locales_dir = candidate
+                    break
+            if _locales_dir is None:
+                _locales_dir = Path(__file__).parent.parent / 'locales'
     return _locales_dir
 
 
@@ -111,8 +118,12 @@ def init_i18n(locale: str = 'en', force_reload: bool = False):
         force_reload: Force reload even if already initialized
     """
     global _initialized, _current_locale, _translations
+
+    locale = (locale or 'en').strip().lower()
     
     if _initialized and not force_reload:
+        if locale and locale != _current_locale:
+            set_locale(locale)
         logger.debug(f"i18n already initialized (locale={_current_locale})")
         return
     
@@ -145,6 +156,11 @@ def set_locale(locale: str):
     """
     global _current_locale, _translations
     
+    if not locale:
+        return
+
+    locale = locale.strip().lower()
+
     # Ensure fallback is always loaded
     if 'en' not in _translations:
         _translations['en'] = load_locale('en')
@@ -168,6 +184,16 @@ def get_locale() -> str:
         Current locale code (e.g., 'en', 'de')
     """
     return _current_locale
+
+
+def get_loaded_locales() -> list[str]:
+    """
+    Get list of locales currently loaded in memory.
+
+    Returns:
+        List of locale codes.
+    """
+    return sorted(_translations.keys())
 
 
 def get_il2_locale_code() -> str:

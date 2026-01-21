@@ -30,13 +30,20 @@ import argparse
 
 from utils.info_locale import (
     TRACKER_SECTION_HEADER_PATTERN,
-    decode_and_clean_info_locale,
+    apply_tracker_content,
     find_all_info_locale_files,
 )
 from utils.pathing import get_base_path
 from utils.formatting import safe_campaign_filename
-from utils.i18n import t, init_i18n, set_locale, IL2_TO_APP_LOCALE, get_locale
-from utils.locale_config import get_user_locale
+from campaign_service_record.utils.i18n import (
+    t,
+    init_i18n,
+    set_locale,
+    IL2_TO_APP_LOCALE,
+    get_locale,
+    get_loaded_locales,
+)
+from utils.locale_config import resolve_locale
 from utils.combat_results import (
     KILL_MAPPING,
     calculate_kills_from_stats,
@@ -87,6 +94,7 @@ class EventGenerator:
         show_popups: bool = False,
         log_path: str | Path | None = None,
         debug: bool | None = None,
+        locale_override: str | None = None,
     ):
         """Initialize event generator with configuration
         
@@ -107,12 +115,12 @@ class EventGenerator:
         
         # Initialize i18n with user's preferred locale
         try:
-            user_locale = get_user_locale()
-            init_i18n(user_locale)
+            user_locale = resolve_locale(explicit_locale=locale_override)
+            init_i18n(user_locale, force_reload=True)
             self.logger.info(f"i18n initialized with locale: {user_locale}")
         except Exception as e:
             self.logger.warning(f"Failed to initialize i18n: {e}, using English")
-            init_i18n('en')
+            init_i18n('en', force_reload=True)
         
         # --- NEW: default output mode (ingame or pdf)
         # Controls whether Combat Results or Flight Log is rendered
@@ -1790,7 +1798,11 @@ class EventGenerator:
             else:
                 log_message(LOGGER, f"  ⚠️  Warning: campaigns_decoded.json not found at: {decoded_path}")
         
-        html_lines = [f"<b>{t('event.header.mission_debriefings')}</b><br>", "<br>"]
+        header = self._build_tracker_header(
+            t('event.header.mission_debriefings'),
+            "Mission Debriefings",
+        )
+        html_lines = [header, "<br>"]
         
         # Sort missions in order
         sorted_missions = sorted(debriefings.keys(), key=smart_mission_sort_key)
@@ -1888,15 +1900,26 @@ class EventGenerator:
             return ""
         
         # Page break before events in PDF mode
+        header = self._build_tracker_header(t('event.header.events'), "Events")
         if for_pdf:
-            html_lines = ['<div style="page-break-before: always;"></div>', f"<b>{t('event.header.events')}</b><br>"]
+            html_lines = ['<div style="page-break-before: always;"></div>', header]
         else:
-            html_lines = [f"<b>{t('event.header.events')}</b><br>"]
+            html_lines = [header]
         
         for event in events:
             html_lines.append(self.format_event_html(event, country, for_pdf=for_pdf))
         
         return "\n".join(html_lines)
+
+    def _build_tracker_header(self, localized_text: str, english_marker: str) -> str:
+        """
+        Build a header that includes the English marker for overwrite detection.
+
+        The English marker is hidden to keep localized UI intact while
+        preserving the reference cleanup pattern.
+        """
+        marker = f"<span style=\"display:none\"><b>{english_marker}</b></span>"
+        return f"{marker}<b>{localized_text}</b><br>"
     
     def update_campaign_info_file(
         self,
@@ -2028,7 +2051,7 @@ class EventGenerator:
             
             # Read and clean existing content
             raw = info_file.read_bytes()
-            cleaned, detected_encoding, original = decode_and_clean_info_locale(raw)
+            updated, detected_encoding, original, cleaned = apply_tracker_content(raw, content_html)
             removed = len(original) - len(cleaned)
             if removed > 0:
                 log_message(LOGGER, f"    ✂️  Removed {removed} chars of old tracker content")
@@ -2041,9 +2064,6 @@ class EventGenerator:
                 cleaned = cleaned.replace('<u>', '').replace('</u>', '')
                 for h in headers:
                     cleaned = cleaned.replace(f'{h}<br>', f'<b>{h}</b><br>', 1)
-            
-            # Build final content
-            updated = cleaned + '<br><br>' + content_html
             
             # Verification
             matches = list(re.finditer(TRACKER_SECTION_HEADER_PATTERN, updated, re.IGNORECASE))
@@ -2438,6 +2458,20 @@ class EventGenerator:
         # Get campaign display name from info file
         campaign_display_name = self.get_campaign_display_name(campaign_name)
         report_title = t("pdf.title.campaign_report", campaign=campaign_display_name)
+
+        loaded_locales = get_loaded_locales()
+        sample_translations = {
+            "service_record.app_title": t("service_record.app_title"),
+            "pdf.section.summary": t("pdf.section.summary"),
+            "pdf.section.missions_flown": t("pdf.section.missions_flown"),
+        }
+        log_message(
+            LOGGER,
+            "[pdf] locale=%s fallback=en loaded_locales=%s samples=%s",
+            get_locale(),
+            loaded_locales,
+            sample_translations,
+        )
         
         # Clean campaign name for filename (remove special chars)
         safe_name = safe_campaign_filename(campaign_name)
@@ -2454,19 +2488,24 @@ class EventGenerator:
         
         try:
             font_path = BASE_DIR / "IBMPlexSans-Light.ttf"
-            font_face = ""
-            font_family = "'SpecialElite', monospace, Arial, sans-serif"
-            if font_path.exists():
-                font_url = font_path.resolve().as_posix()
-                font_face = f"""
+            if not font_path.exists():
+                log_message(
+                    LOGGER,
+                    "  ❌ PDF export failed: required font not found at %s",
+                    font_path,
+                )
+                return False
+
+            font_url = font_path.resolve().as_posix()
+            font_face = f"""
         @font-face {{
-            font-family: 'IBMPlexSans';
+            font-family: 'IBMPlexSans-Light';
             src: url('file:///{font_url}') format('truetype');
-            font-weight: normal;
+            font-weight: 300;
             font-style: normal;
         }}
 """
-                font_family = "'IBMPlexSans', 'SpecialElite', monospace, Arial, sans-serif"
+            font_family = "'IBMPlexSans-Light', Arial, sans-serif"
 
             # Create complete HTML document
             full_html = f"""
@@ -2477,11 +2516,10 @@ class EventGenerator:
     <title>{report_title}</title>
     <style>
         {font_face}
-        body {{
+        body, h1, h2, h3, h4, h5, h6 {{
             font-family: {font_family};
             margin: 20px;
             font-size: 10pt;
-        }}
         }}
         h1 {{
             text-align: center;
@@ -2496,7 +2534,7 @@ class EventGenerator:
         .combat-results-grid {{
             width: 100%;
             margin: 20px 0;
-            font-family: 'SpecialElite', monospace;
+            font-family: {font_family};
         }}
 
         /* CATEGORY HEADERS */
@@ -3152,6 +3190,7 @@ def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bo
     parser.add_argument('--show-popups', action='store_true', help='Show promotion/award popups (when IL-2 is running)')
     parser.add_argument('--test-popups', action='store_true', help='Show test popup sequence (does not modify seen state)')
     parser.add_argument('--auto', action='store_true', help='Run in auto mode (no user input)')
+    parser.add_argument('--locale', type=str, help='Override locale for translations (e.g., de, en)')
 
     # ✅ Parse CLI args OR provided args list
     try:
@@ -3162,7 +3201,8 @@ def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bo
             campaign=None,
             show_popups=False,
             test_popups=False,
-            auto=False
+            auto=False,
+            locale=None,
         )
     
     # ✅ Override with function parameters if explicitly set
@@ -3186,6 +3226,7 @@ def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bo
     generator = EventGenerator(
         dry_run=parsed_args.dry_run,
         show_popups=parsed_args.show_popups,
+        locale_override=parsed_args.locale,
     )
     
     # Test popups (no mission flight needed)

@@ -18,6 +18,11 @@ import webbrowser
 from pathlib import Path
 from flask import Flask, send_from_directory
 
+BASE_DIR = Path(__file__).resolve().parent
+REPO_ROOT = BASE_DIR.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 # Import configuration
 from config import get_config
 

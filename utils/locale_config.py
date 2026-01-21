@@ -13,6 +13,7 @@ Storage:
 
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 SETTINGS_FILE = "campaign_tracker_settings.json"
 LOCALE_OVERRIDE_FILE = "locale_setting.txt"  # From installer
+LOCALE_ENV_VAR = "CAMPAIGN_TRACKER_LOCALE"
 
 
 def get_settings_path() -> Path:
@@ -131,6 +133,27 @@ def get_user_locale() -> str:
     # 3. Default fallback
     logger.debug("Using default locale: en")
     return 'en'
+
+
+def resolve_locale(explicit_locale: Optional[str] = None) -> str:
+    """
+    Resolve locale based on runtime precedence.
+
+    Priority:
+    1. Explicit locale (runtime override)
+    2. CAMPAIGN_TRACKER_LOCALE environment variable
+    3. User locale (installer override / settings.json)
+    4. Fallback ('en')
+    """
+    if explicit_locale:
+        return explicit_locale.strip().lower()
+
+    env_locale = os.environ.get(LOCALE_ENV_VAR, "").strip().lower()
+    if env_locale:
+        logger.info(f"Using locale from {LOCALE_ENV_VAR}: {env_locale}")
+        return env_locale
+
+    return get_user_locale()
 
 
 def set_user_locale(locale: str) -> bool:

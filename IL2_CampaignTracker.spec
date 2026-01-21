@@ -35,6 +35,8 @@ a = Analysis(
         'popups_min',
         'campaign_reset_checker',
 		'sync_campaign_mission_states',
+        'campaign_service_record',
+        'campaign_service_record.utils',
         'utils',
         'utils.formatting',
         'utils.info_locale',
@@ -48,7 +50,7 @@ a = Analysis(
 		'utils.sorting',
 		'utils.logging',
         'utils.rank_scaling',
-        'utils.i18n',  # NEW: i18n module
+        'campaign_service_record.utils.i18n',  # NEW: i18n module
         'utils.locale_config',  # NEW: locale config module
 		'regex',
         'PIL',
