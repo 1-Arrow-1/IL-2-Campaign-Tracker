@@ -1903,10 +1903,12 @@ class EventGenerator:
             "Mission Debriefings",
         )
         html_lines = [header, "<br>"]
-        
+
         # Sort missions in order
         sorted_missions = sorted(debriefings.keys(), key=smart_mission_sort_key)
-        
+
+        separator = "-" * 50
+
         for mission_id in sorted_missions:
             data = debriefings[mission_id]
             
@@ -1925,14 +1927,14 @@ class EventGenerator:
             
             # Mission header
             html_lines.append(f'<div class="mission-box">')
-            html_lines.append(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>")
+            html_lines.append(f"{separator}<br>")
             localized_date = self._localize_date_string(date_str) if date_str else None
 
             if localized_date:
                 html_lines.append(f"<b>{t('flightlog.mission')} {mission_id} | {localized_date}</b><br>")
             else:
                 html_lines.append(f"<b>{t('flightlog.mission')} {mission_id}</b><br>")
-            html_lines.append(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>")
+            html_lines.append(f"{separator}<br>")
             
             summary_parts = [
                 f"{t('flightlog.aircraft')}: {aircraft}",
@@ -2019,7 +2021,7 @@ class EventGenerator:
         preserving the reference cleanup pattern.
         """
         marker = f"<span style=\"display:none\"><b>{english_marker}</b></span>"
-        return f"{marker}<b>{localized_text}</b><br>"
+        return f"{marker}<span class=\"section-header\"><b>{localized_text}</b></span><br>"
     
     def update_campaign_info_file(
         self,
@@ -2669,6 +2671,14 @@ class EventGenerator:
         p, div, span, table, th, td, li {{
             font-family: {font_family};
             font-weight: 300;
+        }}
+        b, strong {{
+            font-family: {font_family};
+            font-weight: 700;
+            text-shadow: 0.3px 0 0 currentColor, -0.3px 0 0 currentColor;
+        }}
+        .section-header {{
+            font-size: 14pt;
         }}
         h1 {{
             text-align: center;
