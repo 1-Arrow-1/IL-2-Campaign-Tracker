@@ -351,12 +351,21 @@ const getPopupNarrative = ({ type, nation, code, locale, params = {} }) => {
     });
 
     if (isDevEnvironment()) {
+        const requestedLocale = locale || i18n.getLocale();
+        const fallbackLocale = 'en';
+        const narrativeCatalog = i18n.translations?.[requestedLocale]?.narratives;
         console.debug('[i18n] Narrative resolution', {
             key: narrativeKey,
-            locale: i18n.getLocale(),
+            locale: requestedLocale,
+            fallbackLocale,
+            hasKeyInLocale: i18n.hasKey(narrativeKey, requestedLocale),
+            hasKeyInEn: i18n.hasKey(narrativeKey, fallbackLocale),
             resolvedLocale: meta?.locale,
             fallbackUsed: meta?.fallbackUsed,
-            missing: meta?.missing
+            missing: meta?.missing,
+            returnedText: text,
+            narrativesCatalogAvailable: Boolean(narrativeCatalog),
+            narrativesTopLevelKeys: narrativeCatalog ? Object.keys(narrativeCatalog) : []
         });
     }
 
