@@ -442,6 +442,20 @@ const NORMALIZED_EVENT_DESCRIPTIONS = Object.fromEntries(
     })
 );
 
+const loggedNarrativeKeys = new Set();
+
+const logMissingNarrative = (key, context) => {
+    if (!key || loggedNarrativeKeys.has(key)) {
+        return;
+    }
+    loggedNarrativeKeys.add(key);
+    console.warn('[i18n] Missing narrative translation', {
+        key,
+        locale: i18n?.currentLocale || 'unknown',
+        ...context
+    });
+};
+
 const getCountryKey = (country) => {
     const normalized = (country || '').trim().toLowerCase();
     if (['germany', 'deutschland'].includes(normalized)) {
@@ -517,6 +531,24 @@ const getAwardDescription = (awards, name) => {
     }
     if (normalizedName.includes('Front Flying Clasp') && normalizedName.includes('Gold with Pendant')) {
         return awards[normalizeEventName('…Gold with Pendant')] || '';
+    }
+    return '';
+};
+
+const getNarrativeFromDescriptions = (event, countryKey) => {
+    if (!event || !countryKey) {
+        return '';
+    }
+    const descriptions = NORMALIZED_EVENT_DESCRIPTIONS[countryKey];
+    if (!descriptions) {
+        return '';
+    }
+    if (event.type === 'promotion') {
+        const normalizedRank = normalizeEventName(event.rank);
+        return descriptions.ranks[normalizedRank] || '';
+    }
+    if (event.type === 'award') {
+        return getAwardDescription(descriptions.awards, event.name);
     }
     return '';
 };
@@ -1234,18 +1266,64 @@ const DetailPage = {
 
     getEventDescription(event) {
         const countryKey = getCountryKey(this.currentCampaign?.country);
-        if (!countryKey) {
+        if (!event) {
             return '';
         }
-        if (event.type === 'promotion') {
-            const narrativeKey = getNarrativeKeyForRank(countryKey, event.rank);
-            return i18n.tr(narrativeKey, { forceKey: true, defaultText: '' });
+
+        const dateText = event.date || i18n.t('ui.popup.mission_label', { mission: event.mission_number || '?' });
+        const rankText = event.type === 'promotion' ? translateRankName(event.rank, event.country) : '';
+        const awardText = event.type === 'award' ? translateAwardName(event.name) : '';
+        const params = {
+            date: dateText,
+            rank: rankText,
+            name: awardText
+        };
+
+        let narrativeKey = null;
+        if (countryKey && event.type === 'promotion') {
+            narrativeKey = getNarrativeKeyForRank(countryKey, event.rank);
+        } else if (countryKey && event.type === 'award') {
+            narrativeKey = getNarrativeKeyForAward(countryKey, event.name);
         }
-        if (event.type === 'award') {
-            const narrativeKey = getNarrativeKeyForAward(countryKey, event.name);
-            return i18n.tr(narrativeKey, { forceKey: true, defaultText: '' });
+
+        if (narrativeKey) {
+            const { text, meta } = i18n.tr(narrativeKey, {
+                params,
+                forceKey: true,
+                returnMeta: true,
+                defaultText: ''
+            });
+            if (!meta?.missing && text.trim()) {
+                return text;
+            }
+            logMissingNarrative(narrativeKey, { eventType: event.type });
         }
-        return '';
+
+        const genericKey = event.type === 'promotion' ? 'event.promotion.narrative' : 'event.award.narrative';
+        const { text: genericText, meta: genericMeta } = i18n.tr(genericKey, {
+            params,
+            forceKey: true,
+            returnMeta: true,
+            defaultText: ''
+        });
+        if (!genericMeta?.missing && genericText.trim()) {
+            return genericText;
+        }
+        logMissingNarrative(genericKey, { eventType: event.type });
+
+        const fallbackNarrative = getNarrativeFromDescriptions(event, countryKey);
+        if (fallbackNarrative) {
+            return fallbackNarrative;
+        }
+
+        const fallbackKey = event.type === 'promotion' ? 'event.promotion.description' : 'event.award.description';
+        const { text: fallbackText } = i18n.tr(fallbackKey, {
+            params,
+            forceKey: true,
+            returnMeta: true,
+            defaultText: ''
+        });
+        return fallbackText || rankText || awardText || i18n.t('ui.popup.event_message');
     },
 
     bindPreviewModal(item, event, img, mainText) {
