@@ -350,6 +350,16 @@ const getPopupNarrative = ({ type, nation, code, locale, params = {} }) => {
         defaultText: ''
     });
 
+    if (isDevEnvironment()) {
+        console.debug('[i18n] Narrative resolution', {
+            key: narrativeKey,
+            locale: i18n.getLocale(),
+            resolvedLocale: meta?.locale,
+            fallbackUsed: meta?.fallbackUsed,
+            missing: meta?.missing
+        });
+    }
+
     if (!meta?.missing && text.trim()) {
         return text;
     }
