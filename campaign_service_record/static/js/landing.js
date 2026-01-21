@@ -140,6 +140,7 @@ const LandingPage = {
         const item = document.createElement('div');
         item.className = 'campaign-item';
         item.dataset.campaignName = campaign.name;
+        const localizedCountry = this.getLocalizedCountryName(campaign.country);
 
         // Build stats HTML
         const statsHTML = `
@@ -162,7 +163,7 @@ const LandingPage = {
         content.innerHTML = `
             <div class="campaign-name">
                 ${this.escapeHTML(campaign.display_name)}
-                <span class="campaign-country">${this.escapeHTML(campaign.country)}</span>
+                <span class="campaign-country">${this.escapeHTML(localizedCountry || campaign.country)}</span>
             </div>
             <div class="campaign-stats">
                 ${statsHTML}
@@ -175,7 +176,7 @@ const LandingPage = {
         if (flagSrc) {
             const flagImg = document.createElement('img');
             flagImg.src = flagSrc;
-            flagImg.alt = `${campaign.country} flag`;
+            flagImg.alt = localizedCountry ? `${localizedCountry} flag` : `${campaign.country} flag`;
             flagContainer.appendChild(flagImg);
         }
 
@@ -188,6 +189,31 @@ const LandingPage = {
         });
 
         return item;
+    },
+
+    getCountryTranslationKey(country) {
+        const normalized = (country || '').trim().toLowerCase();
+        if (['germany', 'deutschland'].includes(normalized)) {
+            return 'germany';
+        }
+        if (['britain', 'uk', 'united kingdom', 'england', 'great britain'].includes(normalized)) {
+            return 'britain';
+        }
+        if (['usa', 'us', 'united states', 'united states of america'].includes(normalized)) {
+            return 'usa';
+        }
+        if (['soviet union', 'ussr', 'russia'].includes(normalized)) {
+            return 'soviet_union';
+        }
+        return '';
+    },
+
+    getLocalizedCountryName(country) {
+        if (!country) {
+            return '';
+        }
+        const key = this.getCountryTranslationKey(country);
+        return key ? i18n.t(`country.${key}`) : country;
     },
     
     getFlagForCountry(country) {

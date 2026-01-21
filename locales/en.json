@@ -272,6 +272,63 @@
     "description": "Description",
     "details": "Details"
   },
+  "service_record": {
+    "app_title": "IL-2 Campaign Service Record",
+    "header": {
+      "country_label": "Country:",
+      "missions_label": "Missions:",
+      "missions_completed": "{count} completed"
+    }
+  },
+  "country": {
+    "germany": "Germany",
+    "britain": "Britain",
+    "soviet_union": "Soviet Union",
+    "usa": "United States"
+  },
+  "flightlog": {
+    "mission": "MISSION",
+    "flight_log": "FLIGHT LOG",
+    "events": "Events",
+    "aircraft": "Aircraft",
+    "duration": "Duration",
+    "status_label": "Status",
+    "aircraft_damage": "Aircraft Dmg",
+    "event": {
+      "takeoff": "Takeoff",
+      "landing": "Landing",
+      "destroyed": "destroyed",
+      "hit_by": "Hit by"
+    },
+    "timeline": {
+      "before_first_mission": "Before First Mission",
+      "awarded": "Awarded",
+      "promoted_to": "Promoted to",
+      "started_as": "Started as"
+    },
+    "status": {
+      "landed": "Landed",
+      "crashed": "Crashed",
+      "captured": "Captured",
+      "wounded": "Wounded",
+      "kia": "KIA",
+      "mia": "MIA"
+    },
+    "months": {
+      "january": "January",
+      "february": "February",
+      "march": "March",
+      "april": "April",
+      "may": "May",
+      "june": "June",
+      "july": "July",
+      "august": "August",
+      "september": "September",
+      "october": "October",
+      "november": "November",
+      "december": "December"
+    }
+  },
   "progression": {
     "ranks": {
       "unteroffizier": "Unteroffizier",

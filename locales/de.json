@@ -272,6 +272,63 @@
     "description": "Beschreibung",
     "details": "Details"
   },
+  "service_record": {
+    "app_title": "IL-2 Kampagnen-Dienstakte",
+    "header": {
+      "country_label": "Land:",
+      "missions_label": "Missionen:",
+      "missions_completed": "{count} abgeschlossen"
+    }
+  },
+  "country": {
+    "germany": "Deutschland",
+    "britain": "Großbritannien",
+    "soviet_union": "Sowjetunion",
+    "usa": "Vereinigte Staaten"
+  },
+  "flightlog": {
+    "mission": "MISSION",
+    "flight_log": "FLUGPROTOKOLL",
+    "events": "Ereignisse",
+    "aircraft": "Flugzeug",
+    "duration": "Dauer",
+    "status_label": "Status",
+    "aircraft_damage": "Flugzeugschaden",
+    "event": {
+      "takeoff": "Start",
+      "landing": "Landung",
+      "destroyed": "zerstört",
+      "hit_by": "Getroffen von"
+    },
+    "timeline": {
+      "before_first_mission": "Vor der ersten Mission",
+      "awarded": "Ausgezeichnet mit",
+      "promoted_to": "Befördert zu",
+      "started_as": "Begann als"
+    },
+    "status": {
+      "landed": "Gelandet",
+      "crashed": "Abgestürzt",
+      "captured": "Gefangen",
+      "wounded": "Verwundet",
+      "kia": "Gefallen",
+      "mia": "Vermisst"
+    },
+    "months": {
+      "january": "Januar",
+      "february": "Februar",
+      "march": "März",
+      "april": "April",
+      "may": "Mai",
+      "june": "Juni",
+      "july": "Juli",
+      "august": "August",
+      "september": "September",
+      "october": "Oktober",
+      "november": "November",
+      "december": "Dezember"
+    }
+  },
   "progression": {
     "ranks": {
       "unteroffizier": "Unteroffizier",

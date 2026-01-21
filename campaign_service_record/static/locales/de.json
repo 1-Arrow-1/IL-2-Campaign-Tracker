@@ -328,6 +328,63 @@
     "description": "Beschreibung",
     "details": "Details"
   },
+  "service_record": {
+    "app_title": "IL-2 Kampagnen-Dienstakte",
+    "header": {
+      "country_label": "Land:",
+      "missions_label": "Missionen:",
+      "missions_completed": "{count} abgeschlossen"
+    }
+  },
+  "country": {
+    "germany": "Deutschland",
+    "britain": "Großbritannien",
+    "soviet_union": "Sowjetunion",
+    "usa": "Vereinigte Staaten"
+  },
+  "flightlog": {
+    "mission": "MISSION",
+    "flight_log": "FLUGPROTOKOLL",
+    "events": "Ereignisse",
+    "aircraft": "Flugzeug",
+    "duration": "Dauer",
+    "status_label": "Status",
+    "aircraft_damage": "Flugzeugschaden",
+    "event": {
+      "takeoff": "Start",
+      "landing": "Landung",
+      "destroyed": "zerstört",
+      "hit_by": "Getroffen von"
+    },
+    "timeline": {
+      "before_first_mission": "Vor der ersten Mission",
+      "awarded": "Ausgezeichnet mit",
+      "promoted_to": "Befördert zu",
+      "started_as": "Begann als"
+    },
+    "status": {
+      "landed": "Gelandet",
+      "crashed": "Abgestürzt",
+      "captured": "Gefangen",
+      "wounded": "Verwundet",
+      "kia": "Gefallen",
+      "mia": "Vermisst"
+    },
+    "months": {
+      "january": "Januar",
+      "february": "Februar",
+      "march": "März",
+      "april": "April",
+      "may": "Mai",
+      "june": "Juni",
+      "july": "Juli",
+      "august": "August",
+      "september": "September",
+      "october": "Oktober",
+      "november": "November",
+      "december": "Dezember"
+    }
+  },
   "progression": {
     "ranks": {
       "unteroffizier": "Unteroffizier",
@@ -489,6 +546,7 @@
           "generalleutnant": "Aus dieser Höhe sieht der Krieg anders aus: Befehle, Lagebesprechungen, Folgen. Du hast dir einst die Flügel verdient – nun trägst du einen ganzen Kriegsschauplatz."
         },
         "awards": {
+          "pilots_badge": "Du hast dir das Recht verdient, Flügel zu tragen – und morgen wieder zu starten. Die Ausbildung ist vorbei; jetzt beginnt der Krieg.",
           "iron_cross_2nd_class": "Ein erstes sichtbares Zeichen des Fronteinsatzes. Kein Ruhm – nur der Nachweis, dass du da warst, als es darauf ankam.",
           "iron_cross_1st_class": "Du hast nicht nur durchgehalten, sondern Wirkung erzielt. Der Verband weiß, wen man ruft, wenn es brennt.",
           "honor_goblet": "Eine Auszeichnung der Luftwaffe für Männer, die mehr leisten als gefordert. Verliehen an jene, die mit Siegen – und Narben – zurückkehren.",
@@ -523,6 +581,7 @@
           "air_vice_marshal": "Der Luftkrieg läuft über deinen Schreibtisch in den Himmel. Flugzeit ist selten, Führung unerbittlich."
         },
         "awards": {
+          "raf_pilots_badge": "Deine Flügel sind angenäht, dein Alltag ist durch Einsätze bestimmt. Willkommen an der Front.",
           "mentioned_in_despatches": "Dein Name erscheint in den offiziellen Berichten. Stille Anerkennung für Arbeit unter höchster Gefahr.",
           "distinguished_flying_medal_dfm": "Mut und Zähigkeit eines Mannes, der immer wieder startet. Verdient Einsatz für Einsatz.",
           "bar_to_the_dfm": "Man bescheinigt dir eine erneute Leistung. Gleicher Himmel, gleiches Risiko – und kein Aufgeben.",
@@ -556,6 +615,7 @@
           "major_general": "Strategie, Logistik und die Last ganzer Verbände. Deine Flugtage sind Erinnerung, der Himmel bleibt präsent."
         },
         "awards": {
+          "pilots_badge": "Deine Flügel zeigen, dass du einsatzbereit bist. Jetzt entscheidet der Einsatzplan, wo du für sie blutest.",
           "air_medal": "Verdienstvolle Einsätze unter Gefechtsbedingungen. Der Nachweis, dass du geliefert hast.",
           "air_medal_plus_one_oak_leaf_cluster": "Erneut ausgezeichnet. Mehr Einsätze, mehr Beweis.",
           "air_medal_plus_two_oak_leaf_clusters": "Ein stetiger Einsatzverlauf. Veteran durch Wiederholung.",
@@ -602,6 +662,7 @@
         },
         "awards": {
           "aviation_badge": "Du bist nun als Flugpersonal gekennzeichnet. Die Front wird dich fordern, bis Mensch oder Maschine versagen.",
+          "medal_for_battle_merit": "Solider Einsatz unter Feuer. Du hast gearbeitet, Risiko getragen und Ergebnisse zurückgebracht.",
           "medal_for_courage": "Persönlicher Mut aus nächster Nähe. Du hast standgehalten, als der Himmel explodierte.",
           "order_of_the_red_star": "Ernste Kampfauszeichnung für reale Ergebnisse. Nicht für Worte, nur für Taten.",
           "order_of_the_red_star_2nd_awarding": "Erneute Anerkennung. Gleicher Krieg, höhere Einsätze.",

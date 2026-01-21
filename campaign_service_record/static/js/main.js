@@ -44,8 +44,26 @@ const App = {
                 element.placeholder = i18n.t(key);
             }
         });
-        
+        if (this.isDevEnvironment()) {
+            this.logKeyLikeStrings();
+        }
+
         console.log('[App] Page translation complete');
+    },
+
+    isDevEnvironment() {
+        const hostname = window.location && window.location.hostname;
+        return ['localhost', '127.0.0.1'].includes(hostname);
+    },
+
+    logKeyLikeStrings() {
+        const keyLikePattern = /^[a-z0-9_]+(\.[a-z0-9_]+)+$/i;
+        document.querySelectorAll('[data-i18n]').forEach(element => {
+            const text = (element.textContent || '').trim();
+            if (text && keyLikePattern.test(text)) {
+                console.warn('[i18n] Possible missing translation rendered:', text, element);
+            }
+        });
     },
     
     /**
@@ -64,6 +82,8 @@ const App = {
             console.warn('Failed to get locale from API, using default:', error);
             await i18n.init('en');
         }
+
+        document.documentElement.lang = i18n.getLocale();
         
         // Translate page elements
         this.translatePage();
@@ -133,7 +153,7 @@ const App = {
         DetailPage.clearBackgroundState();
         
         // Update page title
-        document.title = 'IL-2 Campaign Service Record';
+        document.title = i18n.t('service_record.app_title');
 
         const fallbackBackground = LandingPage.getFallbackBackground();
         if (fallbackBackground) {
@@ -159,7 +179,7 @@ const App = {
         DetailPage.applyBackgroundForCountry(campaignCountry, { force: true });
         
         // Update page title
-        document.title = `${campaignName} - Campaign Service Record`;
+        document.title = i18n.t('web.title.campaign_detail', { campaign_name: campaignName });
         
         // Load campaign details
         await DetailPage.load(campaignName);

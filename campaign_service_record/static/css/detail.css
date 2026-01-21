@@ -394,6 +394,9 @@
     font-size: 1rem;
     color: var(--ink-strong);
     margin-bottom: 0.25rem;
+    hyphens: auto;
+    overflow-wrap: anywhere;
+    word-break: normal;
 }
 
 .event-date {

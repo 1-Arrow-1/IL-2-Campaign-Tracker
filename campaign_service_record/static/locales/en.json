@@ -328,6 +328,63 @@
     "description": "Description",
     "details": "Details"
   },
+  "service_record": {
+    "app_title": "IL-2 Campaign Service Record",
+    "header": {
+      "country_label": "Country:",
+      "missions_label": "Missions:",
+      "missions_completed": "{count} completed"
+    }
+  },
+  "country": {
+    "germany": "Germany",
+    "britain": "Britain",
+    "soviet_union": "Soviet Union",
+    "usa": "United States"
+  },
+  "flightlog": {
+    "mission": "MISSION",
+    "flight_log": "FLIGHT LOG",
+    "events": "Events",
+    "aircraft": "Aircraft",
+    "duration": "Duration",
+    "status_label": "Status",
+    "aircraft_damage": "Aircraft Dmg",
+    "event": {
+      "takeoff": "Takeoff",
+      "landing": "Landing",
+      "destroyed": "destroyed",
+      "hit_by": "Hit by"
+    },
+    "timeline": {
+      "before_first_mission": "Before First Mission",
+      "awarded": "Awarded",
+      "promoted_to": "Promoted to",
+      "started_as": "Started as"
+    },
+    "status": {
+      "landed": "Landed",
+      "crashed": "Crashed",
+      "captured": "Captured",
+      "wounded": "Wounded",
+      "kia": "KIA",
+      "mia": "MIA"
+    },
+    "months": {
+      "january": "January",
+      "february": "February",
+      "march": "March",
+      "april": "April",
+      "may": "May",
+      "june": "June",
+      "july": "July",
+      "august": "August",
+      "september": "September",
+      "october": "October",
+      "november": "November",
+      "december": "December"
+    }
+  },
   "progression": {
     "ranks": {
       "unteroffizier": "Unteroffizier",
@@ -478,6 +535,7 @@
           "generalleutnant": "The war looks different from this altitude—briefings, orders, consequences. You earned wings once; now you carry a theater."
         },
         "awards": {
+          "pilots_badge": "You’ve earned the right to wear wings—and to be sent back up tomorrow. Training is over; the war starts now.",
           "iron_cross_2nd_class": "A first hard mark of combat service. Not glory—just proof you were there when it counted.",
           "iron_cross_1st_class": "You didn’t just survive; you delivered results. The unit knows you’re the one to call when it’s hot.",
           "honor_goblet": "A Luftwaffe trophy for men who fly beyond “enough.” It’s handed to those who keep coming back with victories and scars.",
@@ -512,6 +570,7 @@
           "air_vice_marshal": "The air war runs through your desk and into the sky. Flight is rare; command is relentless."
         },
         "awards": {
+          "raf_pilots_badge": "Your wings are sewn on, and your life is scheduled around sorties. Welcome to the line.",
           "mentioned_in_despatches": "Your name made it into the official reports. Quiet recognition for work done when it was most dangerous.",
           "distinguished_flying_medal_dfm": "Courage and grit from an airman who kept flying. Earned the hard way, one operation after another.",
           "bar_to_the_dfm": "They’re saying you did it again. Same sky, same risk—more proof you don’t quit.",
@@ -549,6 +608,7 @@
           "major_general": "Strategy, logistics, and the weight of whole formations. Your flying days are mostly memory, but the sky is still yours."
         },
         "awards": {
+          "pilots_badge": "Your wings say you’re rated and ready. Now the mission board tells you where you’ll bleed for them.",
           "air_medal": "Meritorious flying under combat conditions. It’s the war’s way of saying you kept delivering.",
           "air_medal_plus_one_oak_leaf_cluster": "You’ve earned it again. Same sky, more missions, more proof.",
           "air_medal_plus_two_oak_leaf_clusters": "A steady record of combat flying. You’re becoming a veteran by accumulation.",
@@ -596,6 +656,7 @@
         },
         "awards": {
           "aviation_badge": "You’re marked as aircrew now. The front will use you until the machine or the man breaks.",
+          "medal_for_battle_merit": "Solid service under fire. You did the work, took the risk, and brought results back.",
           "medal_for_courage": "Personal bravery, close and undeniable. You held your nerve when the sky turned violent.",
           "order_of_the_red_star": "A serious combat award for real results. Not for talk—only for what you did at the front.",
           "order_of_the_red_star_2nd_awarding": "They’re recognizing you again. Same war, higher stakes, more proof you’re still delivering.",

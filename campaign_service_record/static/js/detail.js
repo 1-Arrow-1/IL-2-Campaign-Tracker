@@ -32,7 +32,7 @@ const PreviewModal = {
         const close = document.createElement('button');
         close.type = 'button';
         close.className = 'preview-modal__close';
-        close.setAttribute('aria-label', 'Close');
+        close.setAttribute('aria-label', i18n.t('ui.button.close'));
         close.textContent = '×';
 
         const title = document.createElement('div');
@@ -297,6 +297,56 @@ const nameToI18nKey = (name) => {
         .replace(/^_|_$/g, "");
 };
 
+const getNarrativeKeyForRank = (countryKey, rank) => {
+    if (!countryKey || !rank) {
+        return '';
+    }
+    return `progression.narratives.${countryKey}.ranks.${nameToI18nKey(rank)}`;
+};
+
+const getNarrativeKeyForAward = (countryKey, awardName) => {
+    if (!countryKey || !awardName) {
+        return '';
+    }
+
+    const normalizedName = normalizeEventName(awardName);
+    let key = nameToI18nKey(normalizedName);
+
+    if (countryKey === 'germany' && normalizedName.includes("Knight's Cross of the Iron Cross")) {
+        if (normalizedName.includes('Golden Oak Leaves')) {
+            key = 'with_golden_oak_leaves_swords_and_diamonds';
+        } else if (normalizedName.includes('Oak Leaves, Swords and Diamonds')) {
+            key = 'with_oak_leaves_swords_and_diamonds';
+        } else if (normalizedName.includes('Oak Leaves and Swords')) {
+            key = 'with_oak_leaves_and_swords';
+        } else if (normalizedName.includes('Oak Leaves')) {
+            key = 'with_oak_leaves';
+        }
+    }
+
+    if (countryKey === 'usa') {
+        const oakLeafMappings = [
+            { prefix: 'air_medal_and', replacement: 'air_medal_plus' },
+            { prefix: 'bronze_star_and', replacement: 'bronze_star_plus' },
+            { prefix: 'bronze_star_medal_and', replacement: 'bronze_star_plus' },
+            { prefix: 'dfc_and', replacement: 'dfc_plus' },
+            { prefix: 'dsc_and', replacement: 'dsc_plus' },
+            { prefix: 'medal_of_honor_and', replacement: 'medal_of_honor_plus' },
+            { prefix: 'purple_heart_and', replacement: 'purple_heart_plus' },
+            { prefix: 'silver_star_and', replacement: 'silver_star_plus' },
+            { prefix: 'silver_star_medal_and', replacement: 'silver_star_plus' }
+        ];
+
+        oakLeafMappings.forEach(mapping => {
+            if (key.startsWith(mapping.prefix)) {
+                key = key.replace(mapping.prefix, mapping.replacement);
+            }
+        });
+    }
+
+    return `progression.narratives.${countryKey}.awards.${key}`;
+};
+
 /**
  * Translate award name using i18n
  */
@@ -407,6 +457,31 @@ const getCountryKey = (country) => {
         return 'soviet';
     }
     return '';
+};
+
+const getCountryTranslationKey = (country) => {
+    const normalized = (country || '').trim().toLowerCase();
+    if (['germany', 'deutschland'].includes(normalized)) {
+        return 'germany';
+    }
+    if (['britain', 'uk', 'united kingdom', 'england', 'great britain'].includes(normalized)) {
+        return 'britain';
+    }
+    if (['usa', 'us', 'united states', 'united states of america'].includes(normalized)) {
+        return 'usa';
+    }
+    if (['soviet union', 'ussr', 'russia'].includes(normalized)) {
+        return 'soviet_union';
+    }
+    return '';
+};
+
+const getLocalizedCountryName = (country) => {
+    if (!country) {
+        return '';
+    }
+    const key = getCountryTranslationKey(country);
+    return key ? i18n.t(`country.${key}`) : country;
 };
 
 const getAwardDescription = (awards, name) => {
@@ -675,8 +750,11 @@ const DetailPage = {
      */
     renderHeader(campaign) {
         this.elements.title.textContent = campaign.display_name;
-        this.elements.country.textContent = campaign.country.toUpperCase();
-        this.elements.missions.textContent = `${campaign.missions_completed} completed`;
+        const localizedCountry = getLocalizedCountryName(campaign.country);
+        this.elements.country.textContent = localizedCountry || campaign.country;
+        this.elements.missions.textContent = i18n.t('service_record.header.missions_completed', {
+            count: campaign.missions_completed
+        });
         this.updatePlaneImage(campaign.country);
         this.updateInsigniaImages(campaign.country);
     },
@@ -1159,16 +1237,13 @@ const DetailPage = {
         if (!countryKey) {
             return '';
         }
-        const descriptions = NORMALIZED_EVENT_DESCRIPTIONS[countryKey];
-        if (!descriptions) {
-            return '';
-        }
         if (event.type === 'promotion') {
-            const rankName = normalizeEventName(event.rank);
-            return descriptions.ranks[rankName] || '';
+            const narrativeKey = getNarrativeKeyForRank(countryKey, event.rank);
+            return i18n.tr(narrativeKey, { forceKey: true, defaultText: '' });
         }
         if (event.type === 'award') {
-            return getAwardDescription(descriptions.awards, event.name);
+            const narrativeKey = getNarrativeKeyForAward(countryKey, event.name);
+            return i18n.tr(narrativeKey, { forceKey: true, defaultText: '' });
         }
         return '';
     },
@@ -1217,7 +1292,75 @@ const DetailPage = {
         );
 
         // Direct HTML injection (safe - comes from Campaign Tracker)
-        this.elements.debriefingsContainer.innerHTML = cleanedHtml;
+        this.elements.debriefingsContainer.innerHTML = this.localizeDebriefingsHtml(cleanedHtml);
+    },
+
+    localizeDebriefingsHtml(html) {
+        let output = html;
+        const replacements = [
+            { pattern: /<b>\s*Mission Debriefings\s*<\/b>/gi, replacement: `<b>${i18n.t('web.section.mission_debriefings')}</b>` },
+            { pattern: /\bMISSION\b/gi, replacement: i18n.t('flightlog.mission') },
+            { pattern: /\bFLIGHT LOG\b/gi, replacement: i18n.t('flightlog.flight_log') },
+            { pattern: /\bEvents\b/gi, replacement: i18n.t('flightlog.events') },
+            { pattern: /\bAircraft\b:/gi, replacement: `${i18n.t('flightlog.aircraft')}:` },
+            { pattern: /\bDuration\b:/gi, replacement: `${i18n.t('flightlog.duration')}:` },
+            { pattern: /\bStatus\b:/gi, replacement: `${i18n.t('flightlog.status_label')}:` },
+            { pattern: /\bAircraft Dmg\b:/gi, replacement: `${i18n.t('flightlog.aircraft_damage')}:` },
+            { pattern: /\bTakeoff\b/gi, replacement: i18n.t('flightlog.event.takeoff') },
+            { pattern: /\bLanding\b/gi, replacement: i18n.t('flightlog.event.landing') },
+            { pattern: /\bdestroyed\b/gi, replacement: i18n.t('flightlog.event.destroyed') },
+            { pattern: /\bHit by\b/gi, replacement: i18n.t('flightlog.event.hit_by') },
+            { pattern: /\bBefore First Mission\b/gi, replacement: i18n.t('flightlog.timeline.before_first_mission') },
+            { pattern: /\bAwarded\b/gi, replacement: i18n.t('flightlog.timeline.awarded') },
+            { pattern: /\bPromoted to\b/gi, replacement: i18n.t('flightlog.timeline.promoted_to') },
+            { pattern: /\bStarted as\b/gi, replacement: i18n.t('flightlog.timeline.started_as') }
+        ];
+
+        const statusMap = {
+            landed: i18n.t('flightlog.status.landed'),
+            crashed: i18n.t('flightlog.status.crashed'),
+            captured: i18n.t('flightlog.status.captured'),
+            wounded: i18n.t('flightlog.status.wounded'),
+            kia: i18n.t('flightlog.status.kia'),
+            mia: i18n.t('flightlog.status.mia')
+        };
+
+        replacements.forEach(({ pattern, replacement }) => {
+            output = output.replace(pattern, replacement);
+        });
+
+        Object.entries(statusMap).forEach(([status, translated]) => {
+            const regex = new RegExp(`\\b${status}\\b`, 'gi');
+            output = output.replace(regex, translated);
+        });
+
+        output = this.localizeDebriefingDates(output);
+        return output;
+    },
+
+    localizeDebriefingDates(text) {
+        const monthKeys = {
+            january: 'january',
+            february: 'february',
+            march: 'march',
+            april: 'april',
+            may: 'may',
+            june: 'june',
+            july: 'july',
+            august: 'august',
+            september: 'september',
+            october: 'october',
+            november: 'november',
+            december: 'december'
+        };
+
+        const monthPattern = Object.keys(monthKeys).join('|');
+        const regex = new RegExp(`\\b(${monthPattern})\\b`, 'gi');
+
+        return text.replace(regex, (match) => {
+            const key = monthKeys[match.toLowerCase()];
+            return key ? i18n.t(`flightlog.months.${key}`) : match;
+        });
     },
     
     /**
