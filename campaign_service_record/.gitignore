@@ -1,38 +1,21 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-ENV/
-build/
-dist/
-*.egg-info/
-.eggs/
-
-# PyInstaller
-*.spec.log
-*.manifest
-
-# IDE
 .vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-
-# Test data (if any)
-test_data/
-*.json.test
-*.json
+# Python bytecode
+__pycache__/
+*.diff
+*.pyc
+*.pyo
+.markdownlint.json
+dist/
+build/
+IL2_Campaign_Tracker_v2.0/
+CampaignRanksAwards.zip
+IL2_Camapaign_Tracker_v2.0.zip
+.vs/
+*.zip
+campaign_completion_state.json
+campaign_events.json
+campaign_popups_seen.json
+campaign_mission_dates.json
+campaigns_decoded.json
 *.log
 reports/
