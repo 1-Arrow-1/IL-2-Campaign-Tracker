@@ -28,8 +28,18 @@ from utils.logging import get_logger, log_message
 from utils.pathing import get_base_path
 from utils.il2_paths import find_campaignsstates_path
 from utils.formatting import safe_campaign_filename
+from utils.locale_config import resolve_locale
+from campaign_service_record.utils.i18n import t, init_i18n
 
 logger = get_logger(__name__)
+
+# Initialize i18n with user's preferred locale
+try:
+    user_locale = resolve_locale()
+    init_i18n(user_locale)
+except Exception as e:
+    logger.warning(f"Failed to initialize i18n: {e}, using English")
+    init_i18n('en')
 def _load_json_dict(path: Path) -> Optional[Dict]:
     if not path.exists():
         return None
@@ -1550,7 +1560,7 @@ def main(args=None):
             game_dir = select_game_directory_gui()
             
             if not game_dir:
-                log_message(logger, "\n⚠ No directory selected. Exiting.")
+                log_message(logger, f"\n⚠ {t('ui.first_time_setup.no_folder_selected')}")
                 return
             
             # Construct campaigns folder path
@@ -1558,16 +1568,15 @@ def main(args=None):
             
             # Validate path exists
             if not Path(campaigns_folder).exists():
-                log_message(logger, f"\n⚠ Error: Campaigns folder not found at: {campaigns_folder}")
-                log_message(logger, "  Please check your IL-2 installation path.")
+                log_message(logger, f"\n⚠ {t('ui.first_time_setup.error_campaigns_not_found', path=campaigns_folder)}")
                 
                 # Ask if user wants to try again
-                try_again = input("\nTry selecting another folder? (y/n): ").strip().lower()
-                if try_again == 'y':
+                try_again = input(f"\n{t('ui.first_time_setup.try_again')} ").strip().lower()
+                if try_again in ('y', 'j', 'o', 't', 'д'):  # yes in en/de/fr/pl/ru
                     return main()  # Recursive call to try again
                 return
             
-            log_message(logger, f"\n✓ Campaigns folder found: {campaigns_folder}")
+            log_message(logger, f"\n✓ {t('ui.first_time_setup.campaigns_found', path=campaigns_folder)}")
     
     # Validate campaigns folder exists
     if not Path(campaigns_folder).exists():
@@ -1618,12 +1627,11 @@ def select_game_directory_gui():
     import os
     
     log_message(logger, "\n" + "="*70)
-    log_message(logger, "FIRST TIME SETUP - Select IL-2 Game Directory")
+    log_message(logger, t('ui.first_time_setup.title'))
     log_message(logger, "="*70)
-    log_message(logger, "\nA folder browser will open...")
-    log_message(logger, "Please select your IL-2 Sturmovik installation folder")
-    log_message(logger, "(The main game folder, NOT the Campaigns subfolder)")
-    log_message(logger, "\nExample: IL-2 Sturmovik Battle of Stalingrad")
+    log_message(logger, f"\n{t('ui.first_time_setup.folder_browser_opening')}")
+    log_message(logger, t('ui.first_time_setup.instructions'))
+    log_message(logger, f"\n{t('ui.first_time_setup.example')}")
     
     # Create invisible root window
     root = tk.Tk()
@@ -1645,9 +1653,9 @@ def select_game_directory_gui():
             initial_dir = path
             break
     
-    # Open folder dialog
+    # Open folder dialog with translated title
     selected_path = filedialog.askdirectory(
-        title="Select IL-2 Sturmovik Game Directory",
+        title=t('ui.first_time_setup.dialog_title'),
         initialdir=initial_dir,
         mustexist=True
     )
@@ -1655,10 +1663,10 @@ def select_game_directory_gui():
     root.destroy()  # Clean up
     
     if selected_path:
-        log_message(logger, f"\n✓ Selected: {selected_path}")
+        log_message(logger, f"\n✓ {t('ui.first_time_setup.selected', path=selected_path)}")
         return selected_path
     else:
-        log_message(logger, "\n⚠ No folder selected")
+        log_message(logger, f"\n⚠ {t('ui.first_time_setup.no_folder_selected')}")
         return None
 
 

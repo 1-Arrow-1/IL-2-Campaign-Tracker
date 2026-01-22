@@ -74,6 +74,19 @@
       "cancel_button": "Anuluj",
       "validation_ok": "✓ Wszystkie kraje zweryfikowane",
       "changes_applied": "Zmiany zostały zastosowane"
+    },
+    "first_time_setup": {
+      "title": "IL-2 Campaign Tracker - Pierwsza konfiguracja",
+      "header": "Wybierz katalog gry IL-2",
+      "instructions": "Proszę wybrać folder instalacji IL-2 Sturmovik.\n(Główny folder gry, NIE podfolder Campaigns)",
+      "example": "Przykład: IL-2 Sturmovik Battle of Stalingrad",
+      "dialog_title": "Wybierz katalog gry IL-2 Sturmovik",
+      "folder_browser_opening": "Otworzy się okno wyboru folderu...",
+      "selected": "Wybrano: {path}",
+      "no_folder_selected": "Nie wybrano folderu",
+      "error_campaigns_not_found": "Folder Campaigns nie znaleziony w: {path}\nProszę sprawdzić ścieżkę instalacji IL-2.",
+      "try_again": "Spróbować wybrać inny folder? (t/n):",
+      "campaigns_found": "Folder Campaigns znaleziony: {path}"
     }
   },
   "event": {
@@ -499,7 +512,7 @@
       "purple_heart_and_two_oak_leaf_clusters": "Purple Heart z dwiema kiściami liści dębu"
     }
   },
- "combat": {
+  "combat": {
     "category": {
       "aircraft": "Samoloty",
       "vehicles": "Pojazdy",

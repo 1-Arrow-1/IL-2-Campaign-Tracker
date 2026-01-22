@@ -74,6 +74,19 @@
       "cancel_button": "Отмена",
       "validation_ok": "✓ Все страны проверены",
       "changes_applied": "Изменения применены"
+    },
+    "first_time_setup": {
+      "title": "IL-2 Campaign Tracker - Первоначальная настройка",
+      "header": "Выберите каталог игры IL-2",
+      "instructions": "Пожалуйста, выберите папку установки IL-2 Sturmovik.\n(Основная папка игры, НЕ подпапка Campaigns)",
+      "example": "Пример: IL-2 Sturmovik Battle of Stalingrad",
+      "dialog_title": "Выберите каталог игры IL-2 Sturmovik",
+      "folder_browser_opening": "Откроется окно выбора папки...",
+      "selected": "Выбрано: {path}",
+      "no_folder_selected": "Папка не выбрана",
+      "error_campaigns_not_found": "Папка Campaigns не найдена по пути: {path}\nПожалуйста, проверьте путь установки IL-2.",
+      "try_again": "Попробовать выбрать другую папку? (д/н):",
+      "campaigns_found": "Папка Campaigns найдена: {path}"
     }
   },
   "event": {

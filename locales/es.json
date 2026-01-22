@@ -74,6 +74,19 @@
       "cancel_button": "Cancelar",
       "validation_ok": "✓ Todos los países validados",
       "changes_applied": "Se han aplicado los cambios"
+    },
+    "first_time_setup": {
+      "title": "IL-2 Campaign Tracker - Configuración inicial",
+      "header": "Seleccionar directorio del juego IL-2",
+      "instructions": "Por favor, seleccione su carpeta de instalación de IL-2 Sturmovik.\n(La carpeta principal del juego, NO la subcarpeta Campaigns)",
+      "example": "Ejemplo: IL-2 Sturmovik Battle of Stalingrad",
+      "dialog_title": "Seleccionar directorio del juego IL-2 Sturmovik",
+      "folder_browser_opening": "Se abrirá un explorador de carpetas...",
+      "selected": "Seleccionado: {path}",
+      "no_folder_selected": "No se seleccionó ninguna carpeta",
+      "error_campaigns_not_found": "Carpeta Campaigns no encontrada en: {path}\nPor favor, verifique su ruta de instalación de IL-2.",
+      "try_again": "¿Intentar seleccionar otra carpeta? (s/n):",
+      "campaigns_found": "Carpeta Campaigns encontrada: {path}"
     }
   },
   "event": {

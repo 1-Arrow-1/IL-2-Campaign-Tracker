@@ -74,6 +74,19 @@
       "cancel_button": "Abbrechen",
       "validation_ok": "✓ Alle Länder validiert",
       "changes_applied": "Änderungen wurden angewendet"
+    },
+    "first_time_setup": {
+      "title": "IL-2 Campaign Tracker - Ersteinrichtung",
+      "header": "IL-2 Spielverzeichnis auswählen",
+      "instructions": "Bitte wählen Sie Ihr IL-2 Sturmovik Installationsverzeichnis.\n(Das Hauptspielverzeichnis, NICHT den Campaigns-Unterordner)",
+      "example": "Beispiel: IL-2 Sturmovik Battle of Stalingrad",
+      "dialog_title": "IL-2 Sturmovik Spielverzeichnis auswählen",
+      "folder_browser_opening": "Ein Ordnerauswahldialog wird geöffnet...",
+      "selected": "Ausgewählt: {path}",
+      "no_folder_selected": "Kein Ordner ausgewählt",
+      "error_campaigns_not_found": "Kampagnen-Ordner nicht gefunden unter: {path}\nBitte überprüfen Sie Ihren IL-2 Installationspfad.",
+      "try_again": "Anderen Ordner auswählen? (j/n):",
+      "campaigns_found": "Kampagnen-Ordner gefunden: {path}"
     }
   },
   "event": {

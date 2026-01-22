@@ -74,6 +74,19 @@
       "cancel_button": "取消",
       "validation_ok": "✓ 所有国家均已验证",
       "changes_applied": "更改已应用"
+    },
+    "first_time_setup": {
+      "title": "IL-2 Campaign Tracker - 首次设置",
+      "header": "选择 IL-2 游戏目录",
+      "instructions": "请选择您的 IL-2 Sturmovik 安装文件夹。\n（主游戏文件夹，不是 Campaigns 子文件夹）",
+      "example": "示例：IL-2 Sturmovik Battle of Stalingrad",
+      "dialog_title": "选择 IL-2 Sturmovik 游戏目录",
+      "folder_browser_opening": "文件夹浏览器将打开...",
+      "selected": "已选择：{path}",
+      "no_folder_selected": "未选择文件夹",
+      "error_campaigns_not_found": "在以下位置未找到 Campaigns 文件夹：{path}\n请检查您的 IL-2 安装路径。",
+      "try_again": "尝试选择其他文件夹？(y/n)：",
+      "campaigns_found": "已找到 Campaigns 文件夹：{path}"
     }
   },
   "event": {
