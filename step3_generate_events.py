@@ -79,6 +79,13 @@ def _is_key_like(value: str) -> bool:
     return bool(value and KEY_PATTERN.match(value))
 
 
+def _is_chinese_locale(locale: str) -> bool:
+    if not locale:
+        return False
+    normalized = locale.strip().lower().replace("_", "-")
+    return normalized == "zh" or normalized.startswith("zh-")
+
+
 def _name_to_i18n_key(name: str) -> str:
     value = name.lower()
     value = value.replace("’", "'").replace("‘", "'")
@@ -2623,7 +2630,16 @@ class EventGenerator:
             pdf_filename = fallback
         
         try:
-            font_path = BASE_DIR / "IBMPlexSans-Light.ttf"
+            is_chinese = _is_chinese_locale(get_locale())
+            if is_chinese:
+                font_path = BASE_DIR / "NotoSansSC-VF.ttf"
+                font_family = "'NotoSansSC', Arial, sans-serif"
+                font_name = "NotoSansSC"
+            else:
+                font_path = BASE_DIR / "IBMPlexSans-Light.ttf"
+                font_family = "'IBMPlexSans-Light', Arial, sans-serif"
+                font_name = "IBMPlexSans-Light"
+
             if not font_path.exists():
                 log_message(
                     LOGGER,
@@ -2635,19 +2651,18 @@ class EventGenerator:
             font_url = font_path.resolve().as_uri()
             font_face = f"""
         @font-face {{
-            font-family: 'IBMPlexSans-Light';
+            font-family: '{font_name}';
             src: url('{font_url}') format('truetype');
             font-weight: 300;
             font-style: normal;
         }}
         @font-face {{
-            font-family: 'IBMPlexSans-Light';
+            font-family: '{font_name}';
             src: url('{font_url}') format('truetype');
             font-weight: 700;
             font-style: normal;
         }}
 """
-            font_family = "'IBMPlexSans-Light', Arial, sans-serif"
 
             # Create complete HTML document
             full_html = f"""
