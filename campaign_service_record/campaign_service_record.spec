@@ -7,7 +7,6 @@ Builds standalone executable with all dependencies bundled.
 
 from pathlib import Path
 
-from PyInstaller.building.datastruct import Tree
 
 # Determine base path
 block_cipher = None
@@ -15,9 +14,9 @@ base_path = Path(SPECPATH)
 
 # Collect data files
 datas = [
-    Tree(str(base_path / 'static'), prefix='static'),
-    Tree(str(base_path / 'utils'), prefix='utils'),
-    Tree(str(base_path.parent / 'locales'), prefix='locales'),
+    (str(base_path / 'static'), 'static'),
+    (str(base_path / 'utils'), 'utils'),
+    (str(base_path.parent / 'locales'), 'locales'),
     (str(base_path.parent / 'IBMPlexSans-Light.ttf'), '.'),
 ]
 
