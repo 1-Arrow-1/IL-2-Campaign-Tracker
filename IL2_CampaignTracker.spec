@@ -1,23 +1,38 @@
 # -*- mode: python ; coding:  utf-8 -*-
 
-from PyInstaller.utils. hooks import collect_dynamic_libs
+import os
+from pathlib import Path
 
-# psutil binaries (. pyd Dateien)
+from PyInstaller.building.datastruct import Tree
+from PyInstaller.utils.hooks import collect_dynamic_libs
+
+base_path = Path(SPECPATH)
+
+# psutil binaries (.pyd Dateien)
 psutil_binaries = collect_dynamic_libs('psutil')
-#import os
-#wkhtml_path = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
-#print(f"wkhtmltopdf exists: {os.path.exists(wkhtml_path)}")
+
+wkhtmltopdf_candidate = os.environ.get(
+    "WKHTMLTOPDF_PATH",
+    r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe",
+)
+wkhtmltopdf_path = Path(wkhtmltopdf_candidate)
+wkhtmltopdf_binaries = []
+if wkhtmltopdf_path.exists():
+    wkhtmltopdf_binaries.append((str(wkhtmltopdf_path), "."))
+
+datas = [
+    (str(base_path / "IBMPlexSans-Light.ttf"), "."),
+    (str(base_path / "campaign_progress_config.yaml"), "."),
+    (str(base_path / "object_categories.yaml"), "."),
+    (str(base_path / "stock_campaigns.yaml"), "."),
+    Tree(str(base_path / "locales"), prefix="locales"),
+]
 
 a = Analysis(
     ['il2_tracker_launcher.py'],
-    pathex=[],
-    binaries=[
-        (r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe', '.'),
-    ] + psutil_binaries,
-    datas=[
-        ('IBMPlexSans-Light.ttf', '.'),
-        ('locales/*.json', 'locales'),  # i18n translation files
-    ],
+    pathex=[str(base_path)],
+    binaries=wkhtmltopdf_binaries + psutil_binaries,
+    datas=datas,
     hiddenimports=[
         'tkinter',
         'tkinter.ttk',
@@ -76,8 +91,6 @@ pyz = PYZ(a. pure)
 exe = EXE(
     pyz,
     a.scripts,
-    a.binaries,
-    a.datas,
     [],
     name='IL2_CampaignTracker_v2.0',
     debug=False,
@@ -93,4 +106,15 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     icon='il2_tracker_icon.ico',
+)
+
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='IL2_CampaignTracker_v2.0',
 )

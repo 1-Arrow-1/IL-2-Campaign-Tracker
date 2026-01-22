@@ -4,6 +4,12 @@ REM
 REM Prerequisites:
 REM   pip install pyinstaller pyyaml psutil
 
+setlocal
+set "SCRIPT_DIR=%~dp0"
+cd /d "%SCRIPT_DIR%"
+set "PYTHONHASHSEED=0"
+set "PYINSTALLER_OPTS=--noconfirm --clean"
+
 echo ====================================================================
 echo IL-2 CAMPAIGN TRACKER - BUILD SCRIPT
 echo ====================================================================
@@ -18,6 +24,15 @@ if errorlevel 1 (
     echo.
     pause
     exit /b 1
+)
+
+REM Detect wkhtmltopdf (optional)
+if exist "%ProgramFiles%\wkhtmltopdf\bin\wkhtmltopdf.exe" (
+    set "WKHTMLTOPDF_PATH=%ProgramFiles%\wkhtmltopdf\bin\wkhtmltopdf.exe"
+) else if exist "%ProgramFiles(x86)%\wkhtmltopdf\bin\wkhtmltopdf.exe" (
+    set "WKHTMLTOPDF_PATH=%ProgramFiles(x86)%\wkhtmltopdf\bin\wkhtmltopdf.exe"
+) else (
+    echo WARNING: wkhtmltopdf.exe not found; PDF export will be skipped.
 )
 
 echo [1/5] Checking required files...
@@ -78,6 +93,11 @@ if not exist "mlg2txt.py" (
 )
 if not exist "IL2_CampaignTracker.spec" (
     echo ERROR: IL2_CampaignTracker.spec not found!
+    pause
+    exit /b 1
+)
+if not exist "campaign_service_record\campaign_service_record.spec" (
+    echo ERROR: campaign_service_record\campaign_service_record.spec not found!
     pause
     exit /b 1
 )
@@ -170,7 +190,6 @@ if not exist "utils\logging.py" (
     echo ERROR: utils\logging.py not found!
     pause
     exit /b 1
-)
 )
 if not exist "utils\rank_scaling.py" (
     echo ERROR: utils\rank_scaling.py not found!
@@ -278,6 +297,7 @@ echo.
 echo [3/5] Cleaning old build files...
 if exist "build" rmdir /s /q build
 if exist "dist" rmdir /s /q dist
+if exist "IL2_Campaign_Tracker_v2.0" rmdir /s /q IL2_Campaign_Tracker_v2.0
 if exist "IL2_CampaignTracker.exe" del /q IL2_CampaignTracker.exe
 if exist "mlg2txt.exe" del /q mlg2txt.exe
 echo OK
@@ -289,7 +309,7 @@ echo.
 
 REM Build main tracker EXE
 echo Building IL2_CampaignTracker.exe...
-pyinstaller IL2_CampaignTracker.spec
+pyinstaller %PYINSTALLER_OPTS% IL2_CampaignTracker.spec
 if errorlevel 1 (
     echo.
     echo ERROR: Build failed for IL2_CampaignTracker.exe!
@@ -302,7 +322,7 @@ echo.
 
 REM Build mlg2txt EXE
 echo Building mlg2txt.exe...
-pyinstaller mlg2txt.spec
+pyinstaller %PYINSTALLER_OPTS% mlg2txt.spec
 if errorlevel 1 (
     echo.
     echo ERROR: Build failed for mlg2txt.exe!
@@ -315,7 +335,7 @@ echo.
 
 REM Build cleanup_tracker_content helper EXE
 echo Building cleanup_tracker_content.exe...
-pyinstaller cleanup_tracker_content.spec
+pyinstaller %PYINSTALLER_OPTS% cleanup_tracker_content.spec
 if errorlevel 1 (
     echo.
     echo ERROR: Build failed for cleanup_tracker_content.exe!
@@ -324,27 +344,29 @@ if errorlevel 1 (
     exit /b 1
 )
 echo ✓ cleanup_tracker_content.exe built successfully
+echo.
+
+REM Build Campaign Service Record EXE
+echo Building Campaign_Service_Record.exe...
+pyinstaller %PYINSTALLER_OPTS% campaign_service_record\campaign_service_record.spec
+if errorlevel 1 (
+    echo.
+    echo ERROR: Build failed for Campaign_Service_Record.exe!
+    echo Check the error messages above.
+    pause
+    exit /b 1
+)
+echo ✓ Campaign_Service_Record.exe built successfully
 echo OK
 echo.
 
 echo [5/5] Creating distribution package...
 if not exist "IL2_Campaign_Tracker_v2.0" mkdir "IL2_Campaign_Tracker_v2.0"
 
-REM Copy locales (i18n translation files) - CRITICAL!
-echo Copying i18n translation files...
-if not exist "IL2_Campaign_Tracker_v2.0\locales" mkdir "IL2_Campaign_Tracker_v2.0\locales"
-copy "locales\*.json" "IL2_Campaign_Tracker_v2.0\locales\" >NUL
-if errorlevel 1 (
-    echo ERROR: Could not copy locales!
-    pause
-    exit /b 1
-)
-echo ✓ Locales copied successfully
-
-REM Copy main EXE
-copy "dist\IL2_CampaignTracker_v2.0.exe" "IL2_Campaign_Tracker_v2.0\" >NUL
-if errorlevel 1 (
-    echo ERROR: Could not copy IL2_CampaignTracker.exe!
+REM Copy main tracker bundle (onedir)
+xcopy /E /I /Y "dist\IL2_CampaignTracker_v2.0" "IL2_Campaign_Tracker_v2.0\" >NUL
+if errorlevel 2 (
+    echo ERROR: Could not copy IL2_CampaignTracker bundle!
     pause
     exit /b 1
 )
@@ -364,21 +386,26 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM Copy config/objects (REQUIRED - external)
-copy "campaign_progress_config.yaml" "IL2_Campaign_Tracker_v2.0\" >NUL
-copy "object_categories.yaml" "IL2_Campaign_Tracker_v2.0\" >NUL
-copy "stock_campaigns.yaml" "IL2_Campaign_Tracker_v2.0\" >NUL
+REM Copy Campaign Service Record bundle
+if exist "dist\Campaign_Service_Record" (
+    xcopy /E /I /Y "dist\Campaign_Service_Record" "IL2_Campaign_Tracker_v2.0\Campaign_Service_Record\" >NUL
+    if errorlevel 2 (
+        echo ERROR: Could not copy Campaign_Service_Record bundle!
+        pause
+        exit /b 1
+    )
+)
 
 REM Copy README if exists
 if exist "README.html" copy "README.html" "IL2_Campaign_Tracker_v2.0\README.html" >NUL
 
-REM Unzip CampaignRanksAwards and delete zip after extraction
+REM Unzip CampaignRanksAwards
 @echo off
 set SCRIPT_DIR=%~dp0
 set TARGET_DIR=%SCRIPT_DIR%IL2_Campaign_Tracker_v2.0
 
 powershell -NoProfile -Command ^
-  "Expand-Archive -Path '%SCRIPT_DIR%CampaignRanksAwards.zip' -DestinationPath '%TARGET_DIR%' -Force -ErrorAction Stop; Remove-Item '%SCRIPT_DIR%CampaignRanksAwards.zip' -Force"
+  "Expand-Archive -Path '%SCRIPT_DIR%CampaignRanksAwards.zip' -DestinationPath '%TARGET_DIR%' -Force -ErrorAction Stop"
 
 
 REM Create quick start guide
@@ -427,8 +454,9 @@ echo.
 echo Distribution package created in: IL2_Campaign_Tracker_v2.0\
 echo.
 echo Contents:
-echo   - IL2_CampaignTracker.exe (~40 MB)
+echo   - IL2_CampaignTracker_v2.0\IL2_CampaignTracker_v2.0.exe (bundle)
 echo   - mlg2txt.exe (~8 MB)
+echo   - Campaign_Service_Record\Campaign_Service_Record.exe (bundle)
 echo   - Configuration files (*.yaml)
 echo   - i18n translation files (locales\*.json)
 echo   - Documentation (README.html, QUICK_START.txt)
