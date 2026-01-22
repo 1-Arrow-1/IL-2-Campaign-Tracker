@@ -26,7 +26,7 @@ datas = [
     (str(base_path / "campaign_progress_config.yaml"), "."),
     (str(base_path / "object_categories.yaml"), "."),
     (str(base_path / "stock_campaigns.yaml"), "."),
-     (str(base_path / "locales"), "locales"),
+    (str(base_path / "locales"), "locales"),
 ]
 
 a = Analysis(
@@ -93,7 +93,7 @@ exe = EXE(
     pyz,
     a.scripts,
     [],
-    name='IL2_CampaignTracker_v2.0',
+    name='IL2_CampaignTracker_v2.1_ML',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -117,5 +117,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='IL2_CampaignTracker_v2.0',
+    name='IL2_CampaignTracker_v2.1_ML',
 )

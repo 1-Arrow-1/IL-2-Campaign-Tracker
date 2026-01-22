@@ -22,7 +22,7 @@ SolidCompression=yes
 UsePreviousAppDir=yes
 
 UninstallDisplayName=IL-2 Great Battles SP Campaign Tracker Uninstaller
-UninstallDisplayIcon={app}\IL2_CampaignTracker_v2.0.exe
+UninstallDisplayIcon={app}\IL2_CampaignTracker_v2.1_ML.exe
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -112,7 +112,7 @@ Source: "object_categories.yaml"; DestDir: "{app}"; Flags: onlyifdoesntexist uni
 Source: "stock_campaigns.yaml"; DestDir: "{app}"; Flags: onlyifdoesntexist uninsneveruninstall
 
 ; Program files: always overwrite
-Source: "IL2_CampaignTracker_v2.0.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "IL2_CampaignTracker_v2.1_ML.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "mlg2txt.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "QUICK_START.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README.html"; DestDir: "{app}"; Flags: ignoreversion
