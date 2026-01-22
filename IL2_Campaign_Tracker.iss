@@ -165,6 +165,16 @@ function GetInstallerLocaleCode(): string;
 begin
   if ActiveLanguage = 'german' then
     Result := 'de'
+  else if ActiveLanguage = 'french' then
+    Result := 'fr'
+  else if ActiveLanguage = 'spanish' then
+    Result := 'es'
+  else if ActiveLanguage = 'polish' then
+    Result := 'pl'
+  else if ActiveLanguage = 'russian' then
+    Result := 'ru'
+  else if ActiveLanguage = 'chinesesimplified' then
+    Result := 'zh'
   else
     Result := 'en';
 end;
