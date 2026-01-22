@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import List, Tuple, Dict, Any
 import tkinter as tk
@@ -29,6 +30,78 @@ try:
 except Exception as e:
     log_message(logger, f"[popups] Failed to initialize i18n: {e}, using English")
     init_i18n('en')
+
+
+# ============================================================================
+# i18n Helper Functions for Rank/Award Translation
+# ============================================================================
+
+def _name_to_i18n_key(name: str) -> str:
+    """Convert display name to i18n key format."""
+    value = name.lower()
+    value = value.replace("'", "'").replace("'", "'")
+    value = value.replace("'", "")
+    value = value.replace("&", "and")
+    value = value.replace("+", "and")
+    value = re.sub(r"[,\.\"]", "", value)
+    value = re.sub(r"\s*\(\s*", "_", value)
+    value = re.sub(r"\s*\)\s*", "", value)
+    value = value.replace("…", "")
+    value = re.sub(r"\s+", "_", value)
+    value = re.sub(r"_+", "_", value)
+    return value.strip("_")
+
+
+def _country_code_for_rank(country: str | None) -> str:
+    """Get country code prefix for rank i18n keys."""
+    normalized = (country or "").lower().strip()
+    if normalized == "germany":
+        return "ger"
+    if normalized in {"britain", "uk", "great britain"}:
+        return "raf"
+    if normalized in {"usa", "united states", "united states of america", "us"}:
+        return "usaaf"
+    if normalized in {"soviet union", "ussr", "russia"}:
+        return "vvs"
+    return ""
+
+
+def _translate_rank_name(name: str, country: str | None) -> str:
+    """Translate rank name using i18n system."""
+    if not name:
+        return name
+    
+    base_key = _name_to_i18n_key(name)
+    country_code = _country_code_for_rank(country)
+    
+    # Try country-specific key first
+    if country_code:
+        key = f"progression.ranks.{country_code}_{base_key}"
+        translated = t(key)
+        if not (translated.startswith("[") and translated.endswith("]")):
+            return translated
+    
+    # Try generic key
+    key = f"progression.ranks.{base_key}"
+    translated = t(key)
+    if not (translated.startswith("[") and translated.endswith("]")):
+        return translated
+    
+    # Fallback to original name
+    return name
+
+
+def _translate_award_name(name: str) -> str:
+    """Translate award name using i18n system."""
+    if not name:
+        return name
+    
+    key = f"progression.awards.{_name_to_i18n_key(name)}"
+    translated = t(key)
+    if not (translated.startswith("[") and translated.endswith("]")):
+        return translated
+    
+    return name
 
 # Pillow is optional; if missing, we show text-only popups
 try:
@@ -381,12 +454,16 @@ def show_event_popups(
         # Titel und Text je nach Eventtyp
         if ev_type == "promotion":
             rank = str(ev.get("rank", "")).strip()
-            line1 = t('ui.popup.promotion_message', rank=rank) if rank else t('ui.popup.promotion_message_generic')
+            # Translate rank name using country context
+            translated_rank = _translate_rank_name(rank, country) if rank else ""
+            line1 = t('ui.popup.promotion_message', rank=translated_rank) if translated_rank else t('ui.popup.promotion_message_generic')
             title = t('ui.popup.promotion_title')
             img_max = (308, 308)  # 20% larger for promotions
         elif ev_type == "award":
             name = str(ev.get("name", "")).strip()
-            line1 = t('ui.popup.award_message', name=name) if name else t('ui.popup.award_message_generic')
+            # Translate award name
+            translated_name = _translate_award_name(name) if name else ""
+            line1 = t('ui.popup.award_message', name=translated_name) if translated_name else t('ui.popup.award_message_generic')
             title = t('ui.popup.award_title')
             img_max = (512, 512)
         else:

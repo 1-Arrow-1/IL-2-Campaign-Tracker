@@ -376,7 +376,8 @@
       "october": "十月",
       "november": "十一月",
       "december": "十二月"
-    }
+    },
+    "altitude": "高度"
   },
   "progression": {
     "ranks": {
@@ -423,7 +424,8 @@
       "sub_colonel": "中校",
       "vvs_colonel": "上校",
       "vvs_major_general": "少将",
-      "lieutenant_general": "中将"
+      "lieutenant_general": "中将",
+      "major": "少校"
     },
     "awards": {
       "pilots_badge": "飞行员徽章",

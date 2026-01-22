@@ -376,7 +376,8 @@
       "october": "octobre",
       "november": "novembre",
       "december": "décembre"
-    }
+    },
+    "altitude": "Alt"
   },
   "progression": {
     "ranks": {
@@ -423,7 +424,8 @@
       "sub_colonel": "Podpolkovnik",
       "vvs_colonel": "Polkovnik",
       "vvs_major_general": "General-Mayor",
-      "lieutenant_general": "General-Leytenant"
+      "lieutenant_general": "General-Leytenant",
+      "major": "Major"
     },
     "awards": {
       "pilots_badge": "Brevet de pilote",

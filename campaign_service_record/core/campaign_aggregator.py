@@ -710,12 +710,14 @@ class CampaignAggregator:
         country: str,
         game_directory: str
     ) -> List[Dict]:
-        """Attach image URLs to events for display."""
+        """Attach image URLs and country to events for display."""
         decorated = []
         for event in events:
             if not isinstance(event, dict):
                 continue
             enriched = dict(event)
+            # Add country to each event for frontend translation
+            enriched['country'] = country
             image_name = event.get('image')
             if image_name:
                 relative_path = build_award_image_relative_path(country, image_name, event.get('date'))

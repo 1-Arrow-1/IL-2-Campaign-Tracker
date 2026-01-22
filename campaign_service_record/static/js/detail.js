@@ -268,15 +268,22 @@ const translateRankName = (name, country) => {
         return name;  // i18n not loaded yet, return original
     }
     const baseKey = nameToI18nKey(name);
+    
     if (country) {
         const countryCode = getCountryCode(country);
-        const countryKey = `${countryCode}_${baseKey}`;
-        const { text, meta } = i18n.tr(`progression.ranks.${countryKey}`, { returnMeta: true, forceKey: true });
-        if (!meta?.missing) {
-            return text;
+        if (countryCode) {
+            const countryKey = `progression.ranks.${countryCode}_${baseKey}`;
+            // Check if the key exists in current locale (not just fallback)
+            if (i18n.hasKey(countryKey, i18n.currentLocale)) {
+                const { text } = i18n.tr(countryKey, { returnMeta: true, forceKey: true });
+                return text;
+            }
         }
     }
-    const { text, meta } = i18n.tr(`progression.ranks.${baseKey}`, { returnMeta: true, forceKey: true, defaultText: name });
+    
+    // Try generic key
+    const genericKey = `progression.ranks.${baseKey}`;
+    const { text, meta } = i18n.tr(genericKey, { returnMeta: true, forceKey: true, defaultText: name });
     return meta?.missing ? name : text;
 };
 
@@ -1230,6 +1237,7 @@ const DetailPage = {
             { pattern: /\bdestroyed\b/gi, replacement: i18n.t('flightlog.event.destroyed') },
             { pattern: /\bdamaged\b/gi, replacement: i18n.t('flightlog.event.damaged') },
             { pattern: /\bHit by\b/gi, replacement: i18n.t('flightlog.event.hit_by') },
+            { pattern: /\(Alt:/gi, replacement: `(${i18n.t('flightlog.altitude')}:` },
             { pattern: /\bBefore First Mission\b/gi, replacement: i18n.t('flightlog.timeline.before_first_mission') },
             { pattern: /\bAwarded\b/gi, replacement: i18n.t('flightlog.timeline.awarded') },
             { pattern: /\bPromoted to\b/gi, replacement: i18n.t('flightlog.timeline.promoted_to') },

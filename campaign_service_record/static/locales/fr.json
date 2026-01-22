@@ -391,7 +391,8 @@
       "october": "octobre",
       "november": "novembre",
       "december": "décembre"
-    }
+    },
+    "altitude": "Alt"
   },
   "progression": {
     "ranks": {
@@ -438,7 +439,8 @@
       "sub_colonel": "Podpolkovnik",
       "vvs_colonel": "Polkovnik",
       "vvs_major_general": "General-Mayor",
-      "lieutenant_general": "General-Leytenant"
+      "lieutenant_general": "General-Leytenant",
+      "major": "Major"
     },
     "awards": {
       "pilots_badge": "Brevet de pilote",
@@ -600,95 +602,95 @@
         "ussr": "static/images/background_USSR.png",
         "us": "static/images/background_US.png"
       }
-    },  
-      "usa": {
-        "ranks": {
-          "first_sergeant": "Tu maintiens l’unité soudée quand la mission la met en pièces. Si tu voles, c’est pour partager le risque, pas pour la gloire.",
-          "flight_officer": "Qualifié pour voler, jeté dans la mêlée. Apprends vite, frappe fort et ne gaspille pas la chance.",
-          "chief_warrant_officer": "L’expert discret — moteurs, tactique, nerfs d’acier. Quand ça dégénère, on te veut dans la formation.",
-          "2nd_lieutenant": "Galons tout neufs, même Flak et même peur. Ton commandement est léger, mais la guerre s’en moque.",
-          "1st_lieutenant": "Tu as assez vu pour cesser de faire semblant. Tu mènes désormais des vols et portes les hommes à travers le mauvais temps et des cieux pires encore.",
-          "captain": "Chef et cible à la fois. Tu voles toujours — parce que la crédibilité se gagne en altitude.",
-          "major": "Plans, briefings et décisions plus dures que les pressions sur la détente. Tu voles désormais avec parcimonie, quand la mission exige une main sûre.",
-          "lt_colonel": "Commandement élargi, décollages plus rares. Quand tu voles, c’est pour voir la vérité au-delà des dossiers.",
-          "colonel": "Tu commandes d’en haut, mais tu as parcouru les milles difficiles. Le vol est rare — ta guerre est faite de coordination et de conséquences.",
-          "brigadier_general": "Tu façonnes les opérations entre unités et bases. Si tu prends l’air, c’est un signal — et un risque que tu n’assumes pas à la légère.",
-          "major_general": "Stratégie, logistique et le poids de formations entières. Tes jours de vol sont surtout des souvenirs, mais le ciel reste le tien."
-        },
-        "awards": {
-          "pilots_badge": "Tes ailes attestent que tu es qualifié et prêt. Désormais, le tableau des missions t’indique où tu saigneras pour eux.",
-          "air_medal": "Vols méritoires en conditions de combat. La guerre reconnaît que tu as continué à livrer.",
-          "air_medal_plus_one_oak_leaf_cluster": "Tu l’as méritée encore. Même ciel, plus de missions, davantage de preuves.",
-          "air_medal_plus_two_oak_leaf_clusters": "Un bilan régulier de vols de combat. Tu deviens vétéran par accumulation.",
-          "air_medal_plus_three_oak_leaf_clusters": "Distinctions répétées pour sorties répétées. Les rubans s’empilent, les risques ne cessent pas.",
-          "bronze_star_medal": "Mérite au combat et service éprouvant reconnus. Rien de clinquant — gagné là où c’est dangereux.",
-          "bronze_star_plus_one_oak_leaf_cluster": "Une nouvelle reconnaissance pour service méritoire sous le feu. On comptabilise ce que tu as porté.",
-          "bronze_star_plus_two_oak_leaf_clusters": "Troisième reconnaissance pour être resté efficace dans la durée. Tu es devenu fiable à la dure.",
-          "distinguished_flying_cross": "Héroïsme ou accomplissement exceptionnel en vol. Le genre de sortie dont on parle après coup.",
-          "dfc_plus_one_oak_leaf_cluster": "Encore une fois — une mission exceptionnelle de plus, une ligne de plus au dossier.",
-          "dfc_plus_two_oak_leaf_clusters": "Une constance d’excellence en vol. L’ennemi n’est plus le seul à t’observer.",
-          "dfc_plus_three_oak_leaf_clusters": "Performances extraordinaires répétées. Ta réputation se forge sur des missions qui auraient dû mal tourner.",
-          "dfc_plus_four_oak_leaf_clusters": "Au-delà de ce que la plupart verront jamais. Tu entres sans cesse dans le pire et tu en ressors.",
-          "dfc_plus_one_silver_oak_leaf_cluster": "Un niveau supérieur de récompenses répétées. Tu empiles des sorties extraordinaires comme du travail ordinaire.",
-          "legion_of_merit": "Service exceptionnel dans la durée, au-delà d’un seul combat. Tu as porté la guerre sur tes épaules et l’as fait avancer.",
-          "silver_star_medal": "Bravoure au feu. Un instant de courage qui a refusé de rompre.",
-          "silver_star_plus_one_oak_leaf_cluster": "Encore une fois, tu as tenu quand d’autres auraient flanché. Bravoure répétée sous le feu.",
-          "silver_star_plus_two_oak_leaf_clusters": "Une troisième citation de bravoure, lourde de sens. Tu ne fais pas que survivre au danger — tu l’affrontes.",
-          "distinguished_service_cross": "Héroïsme extraordinaire au combat. Le genre d’action qui devient la légende d’une unité.",
-          "dsc_plus_one_oak_leaf_cluster": "Une seconde fois pour héroïsme extrême. Ce n’est pas la chance — c’est un schéma de risque assumé.",
-          "dsc_plus_two_oak_leaf_clusters": "Troisième attribution pour héroïsme exceptionnel. Peu y parviennent — encore moins y survivent.",
-          "dsc_plus_three_oak_leaf_clusters": "Actions répétées à la limite de la survivabilité. Ton dossier ressemble à une étiquette d’avertissement.",
-          "dsc_plus_four_oak_leaf_clusters": "Presque inconcevable. Tu as accompli l’impossible trop de fois pour les compter.",
-          "medal_of_honor": "Valeur au-delà de toute attente — un acte qui redéfinit le sens du « devoir ». La plus haute reconnaissance pour l’instant le plus sombre.",
-          "medal_of_honor_plus_one_oak_leaf_cluster": "Une seconde Medal of Honor est presque inimaginable. Cela signifie que tu as franchi cette ligne deux fois.",
-          "purple_heart": "Touché par l’ennemi, tu as payé de ton sang. La médaille est silencieuse ; le souvenir ne l’est pas.",
-          "purple_heart_plus_one_oak_leaf_cluster": "De nouveau blessé. Tu portes les séquelles et tu continues pourtant de voler.",
-          "purple_heart_plus_two_oak_leaf_clusters": "Trois blessures et toujours opérationnel. Le corps tient les comptes, même si la médaille ne le fait pas.",
-          "usa": "static/images/background_US.png",
-          "united_states": "static/images/background_US.png"
-        }
+    },
+    "usa": {
+      "ranks": {
+        "first_sergeant": "Tu maintiens l’unité soudée quand la mission la met en pièces. Si tu voles, c’est pour partager le risque, pas pour la gloire.",
+        "flight_officer": "Qualifié pour voler, jeté dans la mêlée. Apprends vite, frappe fort et ne gaspille pas la chance.",
+        "chief_warrant_officer": "L’expert discret — moteurs, tactique, nerfs d’acier. Quand ça dégénère, on te veut dans la formation.",
+        "2nd_lieutenant": "Galons tout neufs, même Flak et même peur. Ton commandement est léger, mais la guerre s’en moque.",
+        "1st_lieutenant": "Tu as assez vu pour cesser de faire semblant. Tu mènes désormais des vols et portes les hommes à travers le mauvais temps et des cieux pires encore.",
+        "captain": "Chef et cible à la fois. Tu voles toujours — parce que la crédibilité se gagne en altitude.",
+        "major": "Plans, briefings et décisions plus dures que les pressions sur la détente. Tu voles désormais avec parcimonie, quand la mission exige une main sûre.",
+        "lt_colonel": "Commandement élargi, décollages plus rares. Quand tu voles, c’est pour voir la vérité au-delà des dossiers.",
+        "colonel": "Tu commandes d’en haut, mais tu as parcouru les milles difficiles. Le vol est rare — ta guerre est faite de coordination et de conséquences.",
+        "brigadier_general": "Tu façonnes les opérations entre unités et bases. Si tu prends l’air, c’est un signal — et un risque que tu n’assumes pas à la légère.",
+        "major_general": "Stratégie, logistique et le poids de formations entières. Tes jours de vol sont surtout des souvenirs, mais le ciel reste le tien."
       },
-      "soviet": {
-        "ranks": {
-          "sergeant": "Pilote de première ligne, avec peu de marge et sans illusions. Tu voles, tu combats, et tu espères que le moteur tiendra.",
-          "senior_sergeant": "Tu as survécu assez longtemps pour apprendre aux autres comment faire. Les nouveaux observent tes mains plus qu’ils n’écoutent tes paroles.",
-          "junior_lieutenant": "Tu as une commission et une guerre de fantassin dans le ciel. Conduis serré, frappe vite, et ne t’attarde pas.",
-          "lieutenant": "On te fait confiance pour ramener la patrouille et mener la mission à terme. Le ciel est saturé, la clémence rare.",
-          "senior_lieutenant": "Tu conduis les sorties sous la Flak et par tous les temps comme si c’était la routine. Ton escadrille tient par la discipline et l’entêtement.",
-          "captain": "Tu commandes et tu continues de voler dur. Les meilleurs ordres sont ceux que tu as éprouvés dans ton propre cockpit.",
-          "major": "Tu voles moins, tu planifies davantage, et tu dors encore moins. Quand tu montes à bord, c’est pour des missions qui doivent réussir.",
-          "sub_colonel": "Le commandement t’éloigne de la ligne, mais tu y reviens quand l’enjeu l’exige. Une sortie rare, une odeur familière de carburant et de givre.",
-          "colonel": "Tu portes le destin d’un régiment aérien dans tes notes et dans ta voix. Le vol est occasionnel ; la responsabilité ne l’est jamais.",
-          "major_general": "Tu diriges des formations et comptes les pertes comme un registre d’acier. Si tu voles, c’est exceptionnel — jamais par goût.",
-          "lieutenant_general": "Le front est immense, les exigences sans fin. Pilote de formation, commandant par nécessité."
-        },
-        "awards": {
-          "aviation_badge": "Tu es désormais reconnu comme personnel navigant. Le front t’emploiera jusqu’à ce que la machine — ou l’homme — cède.",
-          "medal_for_battle_merit": "Un service solide sous le feu. Tu as fait le travail, pris le risque et rapporté des résultats.",
-          "medal_for_courage": "Un courage personnel, direct et indiscutable. Tu as tenu quand le ciel est devenu violent.",
-          "order_of_the_red_star": "Une décoration de combat sérieuse, pour des résultats réels. Pas pour les discours — uniquement pour ce que tu as fait au front.",
-          "order_of_the_red_star_2nd_awarding": "On te distingue de nouveau. Même guerre, enjeux plus élevés, et encore la preuve que tu tiens la distance.",
-          "order_of_the_red_star_3rd_awarding": "Une troisième fois n’est pas un hasard. Tu as fait carrière en survivant — et en gagnant.",
-          "order_of_the_patriotic_war_2nd_class": "Un mérite de combat qui comptait pour la Patrie. Gagné dans l’effort quotidien, pas au défilé.",
-          "order_of_the_patriotic_war_1st_class": "Un degré supérieur pour une performance remarquable au combat. Ton nom dépasse désormais le cadre du régiment.",
-          "order_of_alexander_nevsky": "Pour les chefs qui l’emportent en infériorité numérique et sous le feu. Une récompense de commandant, gagnée dans les airs.",
-          "order_of_suvorov_3rd_class": "Reconnaissance d’un commandement efficace et d’opérations réussies. Tu as fait fonctionner des plans dans un monde qui les déteste.",
-          "order_of_the_red_banner": "Une marque majeure de courage et d’accomplissement. Le genre de ruban gagné uniquement au point le plus dur.",
-          "order_of_the_red_banner_2nd_awarding": "On dit que tu l’as refait. Résultats répétés, pertes endurées, mission accomplie.",
-          "order_of_the_red_banner_3rd_awarding": "Une troisième attribution parle d’un parcours brutal. Tu as combattu dur, longtemps, et avec succès.",
-          "hero_of_the_soviet_union": "Le titre suprême — l’héroïsme gravrememberé dans les registres. Il ne rend pas la prochaine sortie plus facile.",
-          "hero_of_the_soviet_union_2nd_awarding": "Une seconde attribution, rare, pour un héroïsme exceptionnel répété. Même les camarades relisent ton nom.",
-          "hero_of_the_soviet_union_3rd_awarding": "Presque légendaire. Tu es devenu un symbole — et les symboles sont toujours envoyés au combat.",
-          "order_of_lenin": "L’un des plus hauts honneurs, souvent lié à un héroïsme majeur. Une décoration lourde de poids politique et de respect au front.",
-          "order_of_lenin_2nd_awarding": "On t’élève de nouveau pour une distinction continue. Ton parcours de guerre devient impossible à ignorer.",
-          "order_of_lenin_3rd_awarding": "Une troisième attribution est exceptionnelle. Elle marque un niveau de réussite durable que peu atteignent.",
-          "5_combat_sorties_bonus_1500_rubles": "Une petite récompense pour être resté dans l’effectif. L’argent est appréciable ; survivre est le vrai gain.",
-          "15_combat_sorties_bonus_2000_rubles": "Tu as continué de voler quand d’autres disparaissaient. L’État reconnaît l’endurance.",
-          "25_combat_sorties_bonus_3000_rubles": "Un véritable jalon au front. Tu as empilé les sorties comme du bois et continué d’avancer.",
-          "40_combat_sorties_bonus_5000_rubles": "Un lourd temps opérationnel — durement gagné et rarement propre. Tu es resté au combat assez longtemps pour inspirer la crainte.",
-          "red_wound_stripe": "Tu as été blessé et tu es revenu quand même. La bande est simple ; l’histoire ne l’est pas.",
-          "yellow_wound_stripe": "Une nouvelle marque de blessure portée en avant. Tu as volé blessé, atterri vivant et repris le service."
-        }
+      "awards": {
+        "pilots_badge": "Tes ailes attestent que tu es qualifié et prêt. Désormais, le tableau des missions t’indique où tu saigneras pour eux.",
+        "air_medal": "Vols méritoires en conditions de combat. La guerre reconnaît que tu as continué à livrer.",
+        "air_medal_plus_one_oak_leaf_cluster": "Tu l’as méritée encore. Même ciel, plus de missions, davantage de preuves.",
+        "air_medal_plus_two_oak_leaf_clusters": "Un bilan régulier de vols de combat. Tu deviens vétéran par accumulation.",
+        "air_medal_plus_three_oak_leaf_clusters": "Distinctions répétées pour sorties répétées. Les rubans s’empilent, les risques ne cessent pas.",
+        "bronze_star_medal": "Mérite au combat et service éprouvant reconnus. Rien de clinquant — gagné là où c’est dangereux.",
+        "bronze_star_plus_one_oak_leaf_cluster": "Une nouvelle reconnaissance pour service méritoire sous le feu. On comptabilise ce que tu as porté.",
+        "bronze_star_plus_two_oak_leaf_clusters": "Troisième reconnaissance pour être resté efficace dans la durée. Tu es devenu fiable à la dure.",
+        "distinguished_flying_cross": "Héroïsme ou accomplissement exceptionnel en vol. Le genre de sortie dont on parle après coup.",
+        "dfc_plus_one_oak_leaf_cluster": "Encore une fois — une mission exceptionnelle de plus, une ligne de plus au dossier.",
+        "dfc_plus_two_oak_leaf_clusters": "Une constance d’excellence en vol. L’ennemi n’est plus le seul à t’observer.",
+        "dfc_plus_three_oak_leaf_clusters": "Performances extraordinaires répétées. Ta réputation se forge sur des missions qui auraient dû mal tourner.",
+        "dfc_plus_four_oak_leaf_clusters": "Au-delà de ce que la plupart verront jamais. Tu entres sans cesse dans le pire et tu en ressors.",
+        "dfc_plus_one_silver_oak_leaf_cluster": "Un niveau supérieur de récompenses répétées. Tu empiles des sorties extraordinaires comme du travail ordinaire.",
+        "legion_of_merit": "Service exceptionnel dans la durée, au-delà d’un seul combat. Tu as porté la guerre sur tes épaules et l’as fait avancer.",
+        "silver_star_medal": "Bravoure au feu. Un instant de courage qui a refusé de rompre.",
+        "silver_star_plus_one_oak_leaf_cluster": "Encore une fois, tu as tenu quand d’autres auraient flanché. Bravoure répétée sous le feu.",
+        "silver_star_plus_two_oak_leaf_clusters": "Une troisième citation de bravoure, lourde de sens. Tu ne fais pas que survivre au danger — tu l’affrontes.",
+        "distinguished_service_cross": "Héroïsme extraordinaire au combat. Le genre d’action qui devient la légende d’une unité.",
+        "dsc_plus_one_oak_leaf_cluster": "Une seconde fois pour héroïsme extrême. Ce n’est pas la chance — c’est un schéma de risque assumé.",
+        "dsc_plus_two_oak_leaf_clusters": "Troisième attribution pour héroïsme exceptionnel. Peu y parviennent — encore moins y survivent.",
+        "dsc_plus_three_oak_leaf_clusters": "Actions répétées à la limite de la survivabilité. Ton dossier ressemble à une étiquette d’avertissement.",
+        "dsc_plus_four_oak_leaf_clusters": "Presque inconcevable. Tu as accompli l’impossible trop de fois pour les compter.",
+        "medal_of_honor": "Valeur au-delà de toute attente — un acte qui redéfinit le sens du « devoir ». La plus haute reconnaissance pour l’instant le plus sombre.",
+        "medal_of_honor_plus_one_oak_leaf_cluster": "Une seconde Medal of Honor est presque inimaginable. Cela signifie que tu as franchi cette ligne deux fois.",
+        "purple_heart": "Touché par l’ennemi, tu as payé de ton sang. La médaille est silencieuse ; le souvenir ne l’est pas.",
+        "purple_heart_plus_one_oak_leaf_cluster": "De nouveau blessé. Tu portes les séquelles et tu continues pourtant de voler.",
+        "purple_heart_plus_two_oak_leaf_clusters": "Trois blessures et toujours opérationnel. Le corps tient les comptes, même si la médaille ne le fait pas.",
+        "usa": "static/images/background_US.png",
+        "united_states": "static/images/background_US.png"
+      }
+    },
+    "soviet": {
+      "ranks": {
+        "sergeant": "Pilote de première ligne, avec peu de marge et sans illusions. Tu voles, tu combats, et tu espères que le moteur tiendra.",
+        "senior_sergeant": "Tu as survécu assez longtemps pour apprendre aux autres comment faire. Les nouveaux observent tes mains plus qu’ils n’écoutent tes paroles.",
+        "junior_lieutenant": "Tu as une commission et une guerre de fantassin dans le ciel. Conduis serré, frappe vite, et ne t’attarde pas.",
+        "lieutenant": "On te fait confiance pour ramener la patrouille et mener la mission à terme. Le ciel est saturé, la clémence rare.",
+        "senior_lieutenant": "Tu conduis les sorties sous la Flak et par tous les temps comme si c’était la routine. Ton escadrille tient par la discipline et l’entêtement.",
+        "captain": "Tu commandes et tu continues de voler dur. Les meilleurs ordres sont ceux que tu as éprouvés dans ton propre cockpit.",
+        "major": "Tu voles moins, tu planifies davantage, et tu dors encore moins. Quand tu montes à bord, c’est pour des missions qui doivent réussir.",
+        "sub_colonel": "Le commandement t’éloigne de la ligne, mais tu y reviens quand l’enjeu l’exige. Une sortie rare, une odeur familière de carburant et de givre.",
+        "colonel": "Tu portes le destin d’un régiment aérien dans tes notes et dans ta voix. Le vol est occasionnel ; la responsabilité ne l’est jamais.",
+        "major_general": "Tu diriges des formations et comptes les pertes comme un registre d’acier. Si tu voles, c’est exceptionnel — jamais par goût.",
+        "lieutenant_general": "Le front est immense, les exigences sans fin. Pilote de formation, commandant par nécessité."
+      },
+      "awards": {
+        "aviation_badge": "Tu es désormais reconnu comme personnel navigant. Le front t’emploiera jusqu’à ce que la machine — ou l’homme — cède.",
+        "medal_for_battle_merit": "Un service solide sous le feu. Tu as fait le travail, pris le risque et rapporté des résultats.",
+        "medal_for_courage": "Un courage personnel, direct et indiscutable. Tu as tenu quand le ciel est devenu violent.",
+        "order_of_the_red_star": "Une décoration de combat sérieuse, pour des résultats réels. Pas pour les discours — uniquement pour ce que tu as fait au front.",
+        "order_of_the_red_star_2nd_awarding": "On te distingue de nouveau. Même guerre, enjeux plus élevés, et encore la preuve que tu tiens la distance.",
+        "order_of_the_red_star_3rd_awarding": "Une troisième fois n’est pas un hasard. Tu as fait carrière en survivant — et en gagnant.",
+        "order_of_the_patriotic_war_2nd_class": "Un mérite de combat qui comptait pour la Patrie. Gagné dans l’effort quotidien, pas au défilé.",
+        "order_of_the_patriotic_war_1st_class": "Un degré supérieur pour une performance remarquable au combat. Ton nom dépasse désormais le cadre du régiment.",
+        "order_of_alexander_nevsky": "Pour les chefs qui l’emportent en infériorité numérique et sous le feu. Une récompense de commandant, gagnée dans les airs.",
+        "order_of_suvorov_3rd_class": "Reconnaissance d’un commandement efficace et d’opérations réussies. Tu as fait fonctionner des plans dans un monde qui les déteste.",
+        "order_of_the_red_banner": "Une marque majeure de courage et d’accomplissement. Le genre de ruban gagné uniquement au point le plus dur.",
+        "order_of_the_red_banner_2nd_awarding": "On dit que tu l’as refait. Résultats répétés, pertes endurées, mission accomplie.",
+        "order_of_the_red_banner_3rd_awarding": "Une troisième attribution parle d’un parcours brutal. Tu as combattu dur, longtemps, et avec succès.",
+        "hero_of_the_soviet_union": "Le titre suprême — l’héroïsme gravrememberé dans les registres. Il ne rend pas la prochaine sortie plus facile.",
+        "hero_of_the_soviet_union_2nd_awarding": "Une seconde attribution, rare, pour un héroïsme exceptionnel répété. Même les camarades relisent ton nom.",
+        "hero_of_the_soviet_union_3rd_awarding": "Presque légendaire. Tu es devenu un symbole — et les symboles sont toujours envoyés au combat.",
+        "order_of_lenin": "L’un des plus hauts honneurs, souvent lié à un héroïsme majeur. Une décoration lourde de poids politique et de respect au front.",
+        "order_of_lenin_2nd_awarding": "On t’élève de nouveau pour une distinction continue. Ton parcours de guerre devient impossible à ignorer.",
+        "order_of_lenin_3rd_awarding": "Une troisième attribution est exceptionnelle. Elle marque un niveau de réussite durable que peu atteignent.",
+        "5_combat_sorties_bonus_1500_rubles": "Une petite récompense pour être resté dans l’effectif. L’argent est appréciable ; survivre est le vrai gain.",
+        "15_combat_sorties_bonus_2000_rubles": "Tu as continué de voler quand d’autres disparaissaient. L’État reconnaît l’endurance.",
+        "25_combat_sorties_bonus_3000_rubles": "Un véritable jalon au front. Tu as empilé les sorties comme du bois et continué d’avancer.",
+        "40_combat_sorties_bonus_5000_rubles": "Un lourd temps opérationnel — durement gagné et rarement propre. Tu es resté au combat assez longtemps pour inspirer la crainte.",
+        "red_wound_stripe": "Tu as été blessé et tu es revenu quand même. La bande est simple ; l’histoire ne l’est pas.",
+        "yellow_wound_stripe": "Une nouvelle marque de blessure portée en avant. Tu as volé blessé, atterri vivant et repris le service."
       }
     }
   }
+}

@@ -376,7 +376,8 @@
       "october": "Октябрь",
       "november": "Ноябрь",
       "december": "Декабрь"
-    }
+    },
+    "altitude": "Выс"
   },
   "progression": {
     "ranks": {
@@ -423,7 +424,8 @@
       "sub_colonel": "Подполковник",
       "vvs_colonel": "Полковник",
       "vvs_major_general": "Генерал-майор",
-      "lieutenant_general": "Генерал-лейтенант"
+      "lieutenant_general": "Генерал-лейтенант",
+      "major": "Майор"
     },
     "awards": {
       "pilots_badge": "Значок пилота",

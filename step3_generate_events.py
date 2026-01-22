@@ -1972,7 +1972,7 @@ class EventGenerator:
                     damage = event.get('damage')
 
                     if event_type == "Kill":
-                        details = f" (Alt: {altitude}m)" if altitude else ""
+                        details = f" ({t('flightlog.altitude')}: {altitude}m)" if altitude else ""
                         html_lines.append(
                             f"{time}  {target} {t('flightlog.event.destroyed')}{details}<br>"
                         )
@@ -2725,7 +2725,7 @@ class EventGenerator:
         }}
 
         .category-name {{
-            font-size: 10px;
+            font-size: 11px;
             font-weight: bold;
             text-transform: uppercase;
         }}
@@ -2767,7 +2767,7 @@ class EventGenerator:
         }}
 
         .subcat-name {{
-            font-size: 9px;
+            font-size: 11px;
             color: #666;
             float: left;
             max-width: 70%;
@@ -2775,7 +2775,7 @@ class EventGenerator:
         }}
 
         .subcat-value {{
-            font-size: 10px;
+            font-size: 12px;
             font-weight: bold;
             float: right;
         }}

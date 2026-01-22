@@ -165,7 +165,7 @@
       "place_of_birth": "Lugar de nacimiento",
       "country_of_birth": "País de nacimiento",
       "campaigns_flown": "Campañas voladas"
-  },
+    },
     "mission": {
       "date": "Fecha",
       "aircraft": "Aeronave",
@@ -173,7 +173,7 @@
       "result": "Resultado",
       "kills": "Derribos",
       "status_success": "Éxito",
-      "status_failed": "Fallida", 
+      "status_failed": "Fallida",
       "status_incomplete": "Incompleta"
     },
     "award": {
@@ -189,7 +189,7 @@
       "choose_photo": "Elegir foto",
       "apply": "Aplicar",
       "cancel": "Cancelar"
-  },
+    },
     "message": {
       "loading_campaigns": "Cargando campañas...",
       "no_campaigns": "No se encontraron campañas",
@@ -391,7 +391,8 @@
       "october": "Octubre",
       "november": "Noviembre",
       "december": "Diciembre"
-    }
+    },
+    "altitude": "Alt"
   },
   "progression": {
     "ranks": {
@@ -438,7 +439,8 @@
       "sub_colonel": "Podpolkovnik",
       "vvs_colonel": "Polkovnik",
       "vvs_major_general": "General-Mayor",
-      "lieutenant_general": "General-Leytenant"
+      "lieutenant_general": "General-Leytenant",
+      "major": "Mayor"
     },
     "awards": {
       "pilots_badge": "Insignia de piloto",

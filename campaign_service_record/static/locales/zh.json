@@ -391,7 +391,8 @@
       "october": "十月",
       "november": "十一月",
       "december": "十二月"
-    }
+    },
+    "altitude": "高度"
   },
   "progression": {
     "ranks": {
@@ -438,7 +439,8 @@
       "sub_colonel": "中校",
       "vvs_colonel": "上校",
       "vvs_major_general": "少将",
-      "lieutenant_general": "中将"
+      "lieutenant_general": "中将",
+      "major": "少校"
     },
     "awards": {
       "pilots_badge": "飞行员徽章",
@@ -600,7 +602,7 @@
         "ussr": "static/images/background_USSR.png",
         "us": "static/images/background_US.png"
       }
-   },
+    },
     "usa": {
       "ranks": {
         "first_sergeant": "你把部队一针一线缝起来，哪怕任务把它撕得粉碎。若你出击，是为了分担风险，而不是争抢荣耀。",
@@ -689,6 +691,6 @@
         "red_wound_stripe": "你负伤了，却仍然回来。条纹很简单，故事却不简单。",
         "yellow_wound_stripe": "又一道伤痕被带进明天。你带伤起飞，活着落地，然后继续服役。"
       }
-    }  
+    }
   }
 }
