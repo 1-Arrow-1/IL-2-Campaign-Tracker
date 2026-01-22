@@ -559,10 +559,10 @@
           "gold_with_pendant": "Extreme Anzahl von Frontflügen. Der Krieg ist dir vertraut geworden – und genau das ist die Gefahr.",
           "wound_badge_in_black": "Erstes Blut für die Front. Du bist zurückgekehrt – diesmal.",
           "wound_badge_in_silver": "Weitere Verwundungen, weniger Illusionen. Du fliegst weiter, beginnst aber zu zählen, was es kostet.",
-          "wound_badge_in_gold": "Immer wieder getroffen und dennoch zurückgekehrt. Das Abzeichen glänzt – die Schäden nicht."
+          "wound_badge_in_gold": "Immer wieder getroffen und dennoch zurückgekehrt. Das Abzeichen glänzt – die Schäden nicht.",
+          "germany": "static/images/background_Germany.png"
         }
       },
-
       "britain": {
         "ranks": {
           "sergeant": "Frische Flügel, kaltes Cockpit, der Wind über dem Kanal schneidet durch alles. Bleib beim Führer und halte die Augen offen.",
@@ -593,10 +593,14 @@
           "bar_to_the_vc": "Eine zweite Verleihung ist nahezu mythisch. Zweimal das Unmögliche angenommen – und nicht gewichen.",
           "wound_stripe": "Der Krieg hat dich persönlich getroffen. Der Körper vergisst nicht.",
           "second_wound_stripe": "Erneut verwundet und weiter im Einsatz. Überleben ist nun Ausdauer.",
-          "third_wound_stripe": "Dreimal verwundet und noch geführt. Jeder weiß, was das kostet."
+          "third_wound_stripe": "Dreimal verwundet und noch geführt. Jeder weiß, was das kostet.",
+          "britain": "static/images/background_Britain.png",
+          "uk": "static/images/background_Britain.png",
+          "soviet_union": "static/images/background_USSR.png",
+          "ussr": "static/images/background_USSR.png",
+          "us": "static/images/background_US.png"
         }
       },
-
       "usa": {
         "ranks": {
           "first_sergeant": "Du hältst die Einheit zusammen, wenn der Einsatz sie zerreißt. Wenn du fliegst, dann um das Risiko zu teilen.",
@@ -639,10 +643,11 @@
           "medal_of_honor_plus_one_oak_leaf_cluster": "Zweite Verleihung – kaum vorstellbar. Zweimal die Linie überschritten.",
           "purple_heart": "Durch Feindeinwirkung verwundet. Die Auszeichnung ist still – die Erinnerung nicht.",
           "purple_heart_plus_one_oak_leaf_cluster": "Erneut verwundet. Schaden getragen und weitergeflogen.",
-          "purple_heart_plus_two_oak_leaf_clusters": "Dreimal verwundet und noch einsatzfähig. Der Körper vergisst nicht."
+          "purple_heart_plus_two_oak_leaf_clusters": "Dreimal verwundet und noch einsatzfähig. Der Körper vergisst nicht.",
+          "usa": "static/images/background_US.png",
+          "united_states": "static/images/background_US.png"
         }
       },
-
       "soviet": {
         "ranks": {
           "sergeant": "Frontpilot mit wenig Spielraum und keinen Illusionen. Du fliegst, kämpfst und hoffst, dass der Motor hält.",
@@ -687,4 +692,3 @@
       }
     }
   }
-
