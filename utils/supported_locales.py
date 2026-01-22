@@ -97,6 +97,10 @@ def normalize_locale(locale: Optional[str], fallback: str = DEFAULT_LOCALE) -> s
         return fallback
 
     candidate = locale.strip().lower()
+    if candidate.startswith("zh"):
+        candidate = candidate.replace("_", "-")
+        if candidate == "zh" or candidate.startswith("zh-"):
+            candidate = "zh"
     supported = get_supported_locales()
     if candidate in supported:
         return candidate

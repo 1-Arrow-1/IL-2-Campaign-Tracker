@@ -104,6 +104,7 @@ Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "A
 ; --- Tracker install folder ({app}) ---
 ; Font file for PDF export
 Source: "IBMPlexSans-Light.ttf"; DestDir: "{app}"; Flags: ignoreversion
+Source: "NotoSansSC-VF.ttf"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Configuration files: only install if not already present (preserves user settings)
 Source: "campaign_progress_config.yaml"; DestDir: "{app}"; Flags: onlyifdoesntexist uninsneveruninstall

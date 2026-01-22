@@ -22,6 +22,7 @@ if wkhtmltopdf_path.exists():
 
 datas = [
     (str(base_path / "IBMPlexSans-Light.ttf"), "."),
+    (str(base_path / "NotoSansSC-VF.ttf"), "."),
     (str(base_path / "campaign_progress_config.yaml"), "."),
     (str(base_path / "object_categories.yaml"), "."),
     (str(base_path / "stock_campaigns.yaml"), "."),

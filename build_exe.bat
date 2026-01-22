@@ -412,6 +412,9 @@ if exist "README.html" copy "README.html" "IL2_Campaign_Tracker_v2.0\README.html
 REM Copy font if exists
 if exist "IBMPlexSans-Light.ttf" copy "IBMPlexSans-Light.ttf" "IL2_Campaign_Tracker_v2.0\IBMPlexSans-Light.ttf" >NUL
 
+REM Copy font if exists
+if exist "NotoSansSC-VF.ttf" copy "NotoSansSC-VF.ttf" "IL2_Campaign_Tracker_v2.0\NotoSansSC-VF.ttf" >NUL
+
 REM Copy iss file if exists
 if exist "IL2_Campaign_Tracker.iss" copy "IL2_Campaign_Tracker.iss" "IL2_Campaign_Tracker_v2.0\IL2_Campaign_Tracker.iss" >NUL
 
