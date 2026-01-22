@@ -12,7 +12,9 @@
    ============================================================================ */
 
 .detail-container {
-    max-width: 1700px;
+    max-width: var(--page-max-width);
+    margin: 0 auto;
+    width: 100%;
 }
 
 /* ============================================================================
@@ -160,6 +162,21 @@
     display: grid;
     grid-template-columns: 0.9fr 1.9fr 1.2fr;
     gap: 2rem;
+}
+
+@media (min-width: 1700px) {
+    .detail-columns {
+        --detail-column-gap: 2rem;
+        --detail-base-width: calc((var(--page-max-width) - var(--page-width-delta)) - (var(--page-content-padding) * 2));
+        --detail-columns-width: calc(var(--detail-base-width) - (2 * var(--detail-column-gap)));
+        --detail-left-width: calc((0.9 / 4) * var(--detail-columns-width));
+        --detail-right-width: calc((1.2 / 4) * var(--detail-columns-width));
+        grid-template-columns:
+            minmax(0, var(--detail-left-width))
+            minmax(0, calc(100% - var(--detail-left-width) - var(--detail-right-width) - (2 * var(--detail-column-gap))))
+            minmax(0, var(--detail-right-width));
+        gap: var(--detail-column-gap);
+    }
 }
 
 .detail-columns > .column {

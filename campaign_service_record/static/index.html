@@ -16,7 +16,7 @@
     <div id="app">
         <!-- Header (persistent) -->
         <header id="app-header">
-            <div class="header-content">
+            <div class="page-container header-content">
                 <h1 data-i18n="service_record.app_title">IL-2 Campaign Service Record</h1>
                 <nav id="header-nav">
                     <button id="back-btn" class="nav-btn" style="display: none;" data-i18n="web.nav.back_to_campaigns">
@@ -28,140 +28,142 @@
         
         <!-- Main Content Area -->
         <main id="app-main">
-            <!-- Landing Page -->
-            <div id="landing-page" class="page">
-                <div class="landing-container">
-                    <!-- Campaign List -->
-                    <section class="campaigns-section">
-                        <h2 data-i18n="web.label.campaigns_flown">Campaigns Flown</h2>
-                        
-                        <!-- Loading State -->
-                        <div id="campaigns-loading" class="loading-state">
-                            <div class="spinner"></div>
-                            <p data-i18n="web.message.loading_campaigns">Loading campaigns...</p>
-                        </div>
-                        
-                        <!-- Empty State -->
-                        <div id="campaigns-empty" class="empty-state" style="display: none;">
-                            <p class="empty-message">
-                                <span data-i18n="web.message.no_campaigns">No campaigns found.</span><br>
-                                <small>Run Campaign Tracker first to generate data.</small>
-                            </p>
-                        </div>
-                        
-                        <!-- Error State -->
-                        <div id="campaigns-error" class="error-state" style="display: none;">
-                            <p class="error-message" id="error-text"></p>
-                        </div>
-                        
+            <div class="page-container">
+                <!-- Landing Page -->
+                <div id="landing-page" class="page">
+                    <div class="landing-container">
                         <!-- Campaign List -->
-                        <div id="campaigns-list" class="campaigns-list" style="display: none;">
-                            <!-- Dynamically populated by JavaScript -->
-                        </div>
-                    </section>
-                </div>
-            </div>
-            
-            <!-- Detail Page -->
-            <div id="detail-page" class="page" style="display: none;">
-                <div class="detail-container">
-                    <!-- Campaign Header -->
-                    <header class="campaign-header">
-                        <div class="campaign-header__aircraft-row" aria-hidden="true">
-                            <!-- img id="campaign-insignia-left" class="campaign-header__insignia campaign-header__insignia--left" alt=""!-->
-                            <img id="campaign-plane" class="campaign-header__plane-image" alt="">
-                            <!--img id="campaign-insignia-right" class="campaign-header__insignia campaign-header__insignia--right" alt=""!-->
-                        </div>
-                        <h2 id="campaign-title">Campaign Name</h2>                   
-                        <img class="campaign-header__stamp" src="static/images/stamp_extra_II.png" alt="Campaign stamp">
-                        <div class="campaign-meta">
-                            <span class="meta-item">
-                                <span class="label" data-i18n="service_record.header.country_label">Country:</span>
-                                <span id="campaign-country">—</span>
-                            </span>
-                            <span class="meta-item">
-                                <span class="label" data-i18n="service_record.header.missions_label">Missions:</span>
-                                <span id="campaign-missions">—</span>
-                            </span>
-                        </div>
-                    </header>
-                    
-                    <!-- 3-Column Layout -->
-                    <div class="detail-columns">
-                        <!-- Left Column: Promotions & Awards -->
-                        <aside class="column column-left">
-                            <section class="personal-data-section detail-panel">
-                                <h3 data-i18n="web.section.pilot_information">Pilot Information</h3>
-                                <div class="personal-data-body">
-                                    <div class="personal-data-photo">
-                                        <div class="pilot-photo-container">
-                                            <img id="detail-pilot-photo"
-                                                 src="static/images/placeholder_pilot.png"
-                                                 alt="Pilot Photo"
-                                                 class="pilot-photo">
-                                            <img class="pilot-photo-overlay pilot-photo-overlay--edges"
-                                                 src="static/images/photo_edges.png"
-                                                 alt=""
-                                                 aria-hidden="true">
-                                            <img class="pilot-photo-overlay pilot-photo-overlay--rivets"
-                                                 src="static/images/rivets_overlay.png"
-                                                 alt=""
-                                                 aria-hidden="true">
-                                        </div>
-                                        <button id="detail-pilot-photo-btn" class="pilot-photo-btn" type="button" data-i18n="web.button.change_pilot_photo">
-                                            Change Pilot Photo & Data
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="personal-data-summary" aria-label="Pilot personal data">
-                                        <div class="personal-data-row">
-                                            <span class="personal-data-label" data-i18n="web.label.name">Name</span>
-                                            <span id="personal-display-name" class="personal-data-value">—</span>
-                                        </div>
-                                        <div class="personal-data-row">
-                                            <span class="personal-data-label" data-i18n="web.label.first_name">First Name</span>
-                                            <span id="personal-display-first-name" class="personal-data-value">—</span>
-                                        </div>
-                                        <div class="personal-data-row">
-                                            <span class="personal-data-label" data-i18n="web.label.birthday">Birthday</span>
-                                            <span id="personal-display-birthday" class="personal-data-value">—</span>
-                                        </div>
-                                        <div class="personal-data-row">
-                                            <span class="personal-data-label" data-i18n="web.label.place_of_birth">Place of Birth</span>
-                                            <span id="personal-display-birth-place" class="personal-data-value">—</span>
-                                        </div>
-                                        <div class="personal-data-row">
-                                            <span class="personal-data-label" data-i18n="web.label.country_of_birth">Country of Birth</span>
-                                            <span id="personal-display-birth-country" class="personal-data-value">—</span>
-                                        </div>
-                                    </div>
-                                </div>    
-                            </section>
-                            <section class="events-section detail-panel">
-                                <h3 data-i18n="web.section.promotions_awards">Promotions & Awards</h3>
-                                <div id="events-list" class="events-list">
-                                    <!-- Dynamically populated -->
-                                </div>
-                            </section>
-                        </aside>
-                        
-                        <!-- Middle Column: Summary -->
-                        <section class="column column-middle">
-                            <section class="summary-section">
-                                <h3 data-i18n="web.section.campaign_summary">Campaign Summary</h3>
-                                <div id="summary-content" class="summary-content">
-                                    <!-- Dynamically populated -->
-                                </div>
-                            </section>
-                        </section>
-
-                        <!-- Right Column: Debriefings -->
-                        <aside class="column column-right">
-                            <h3 data-i18n="web.section.mission_debriefings">Mission Debriefings</h3>
-                            <div id="debriefings-container" class="debriefings-container">
-                                <!-- HTML injected from campaign_events.json -->
+                        <section class="campaigns-section">
+                            <h2 data-i18n="web.label.campaigns_flown">Campaigns Flown</h2>
+                            
+                            <!-- Loading State -->
+                            <div id="campaigns-loading" class="loading-state">
+                                <div class="spinner"></div>
+                                <p data-i18n="web.message.loading_campaigns">Loading campaigns...</p>
                             </div>
-                        </aside>
+                            
+                            <!-- Empty State -->
+                            <div id="campaigns-empty" class="empty-state" style="display: none;">
+                                <p class="empty-message">
+                                    <span data-i18n="web.message.no_campaigns">No campaigns found.</span><br>
+                                    <small>Run Campaign Tracker first to generate data.</small>
+                                </p>
+                            </div>
+                            
+                            <!-- Error State -->
+                            <div id="campaigns-error" class="error-state" style="display: none;">
+                                <p class="error-message" id="error-text"></p>
+                            </div>
+                            
+                            <!-- Campaign List -->
+                            <div id="campaigns-list" class="campaigns-list" style="display: none;">
+                                <!-- Dynamically populated by JavaScript -->
+                            </div>
+                        </section>
+                    </div>
+                </div>
+                
+                <!-- Detail Page -->
+                <div id="detail-page" class="page" style="display: none;">
+                    <div class="detail-container">
+                        <!-- Campaign Header -->
+                        <header class="campaign-header">
+                            <div class="campaign-header__aircraft-row" aria-hidden="true">
+                                <!-- img id="campaign-insignia-left" class="campaign-header__insignia campaign-header__insignia--left" alt=""!-->
+                                <img id="campaign-plane" class="campaign-header__plane-image" alt="">
+                                <!--img id="campaign-insignia-right" class="campaign-header__insignia campaign-header__insignia--right" alt=""!-->
+                            </div>
+                            <h2 id="campaign-title">Campaign Name</h2>                   
+                            <img class="campaign-header__stamp" src="static/images/stamp_extra_II.png" alt="Campaign stamp">
+                            <div class="campaign-meta">
+                                <span class="meta-item">
+                                    <span class="label" data-i18n="service_record.header.country_label">Country:</span>
+                                    <span id="campaign-country">—</span>
+                                </span>
+                                <span class="meta-item">
+                                    <span class="label" data-i18n="service_record.header.missions_label">Missions:</span>
+                                    <span id="campaign-missions">—</span>
+                                </span>
+                            </div>
+                        </header>
+                        
+                        <!-- 3-Column Layout -->
+                        <div class="detail-columns">
+                            <!-- Left Column: Promotions & Awards -->
+                            <aside class="column column-left">
+                                <section class="personal-data-section detail-panel">
+                                    <h3 data-i18n="web.section.pilot_information">Pilot Information</h3>
+                                    <div class="personal-data-body">
+                                        <div class="personal-data-photo">
+                                            <div class="pilot-photo-container">
+                                                <img id="detail-pilot-photo"
+                                                     src="static/images/placeholder_pilot.png"
+                                                     alt="Pilot Photo"
+                                                     class="pilot-photo">
+                                                <img class="pilot-photo-overlay pilot-photo-overlay--edges"
+                                                     src="static/images/photo_edges.png"
+                                                     alt=""
+                                                     aria-hidden="true">
+                                                <img class="pilot-photo-overlay pilot-photo-overlay--rivets"
+                                                     src="static/images/rivets_overlay.png"
+                                                     alt=""
+                                                     aria-hidden="true">
+                                            </div>
+                                            <button id="detail-pilot-photo-btn" class="pilot-photo-btn" type="button" data-i18n="web.button.change_pilot_photo">
+                                                Change Pilot Photo & Data
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="personal-data-summary" aria-label="Pilot personal data">
+                                            <div class="personal-data-row">
+                                                <span class="personal-data-label" data-i18n="web.label.name">Name</span>
+                                                <span id="personal-display-name" class="personal-data-value">—</span>
+                                            </div>
+                                            <div class="personal-data-row">
+                                                <span class="personal-data-label" data-i18n="web.label.first_name">First Name</span>
+                                                <span id="personal-display-first-name" class="personal-data-value">—</span>
+                                            </div>
+                                            <div class="personal-data-row">
+                                                <span class="personal-data-label" data-i18n="web.label.birthday">Birthday</span>
+                                                <span id="personal-display-birthday" class="personal-data-value">—</span>
+                                            </div>
+                                            <div class="personal-data-row">
+                                                <span class="personal-data-label" data-i18n="web.label.place_of_birth">Place of Birth</span>
+                                                <span id="personal-display-birth-place" class="personal-data-value">—</span>
+                                            </div>
+                                            <div class="personal-data-row">
+                                                <span class="personal-data-label" data-i18n="web.label.country_of_birth">Country of Birth</span>
+                                                <span id="personal-display-birth-country" class="personal-data-value">—</span>
+                                            </div>
+                                        </div>
+                                    </div>    
+                                </section>
+                                <section class="events-section detail-panel">
+                                    <h3 data-i18n="web.section.promotions_awards">Promotions & Awards</h3>
+                                    <div id="events-list" class="events-list">
+                                        <!-- Dynamically populated -->
+                                    </div>
+                                </section>
+                            </aside>
+                            
+                            <!-- Middle Column: Summary -->
+                            <section class="column column-middle">
+                                <section class="summary-section">
+                                    <h3 data-i18n="web.section.campaign_summary">Campaign Summary</h3>
+                                    <div id="summary-content" class="summary-content">
+                                        <!-- Dynamically populated -->
+                                    </div>
+                                </section>
+                            </section>
+
+                            <!-- Right Column: Debriefings -->
+                            <aside class="column column-right">
+                                <h3 data-i18n="web.section.mission_debriefings">Mission Debriefings</h3>
+                                <div id="debriefings-container" class="debriefings-container">
+                                    <!-- HTML injected from campaign_events.json -->
+                                </div>
+                            </aside>
+                        </div>
                     </div>
                 </div>
             </div>
