@@ -525,7 +525,8 @@
       "purple_heart": "Purple Heart",
       "purple_heart_and_one_oak_leaf_cluster": "Purple Heart mit einem Eichenlaubabzeichen",
       "purple_heart_and_two_oak_leaf_clusters": "Purple Heart mit zwei Eichenlaubabzeichen"
-    },
+      }
+    },    
     "narratives": {
       "germany": {
         "ranks": {
@@ -686,4 +687,4 @@
       }
     }
   }
-}
+
