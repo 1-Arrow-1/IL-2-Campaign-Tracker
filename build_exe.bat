@@ -388,7 +388,17 @@ if errorlevel 1 (
 
 REM Copy Campaign Service Record bundle
 if exist "dist\Campaign_Service_Record" (
-    xcopy /E /I /Y "dist\Campaign_Service_Record" "IL2_Campaign_Tracker_v2.0\Campaign_Service_Record\" >NUL
+    xcopy /E /I /Y "dist\Campaign_Service_Record" "IL2_Campaign_Tracker_v2.0\" >NUL
+    if errorlevel 2 (
+        echo ERROR: Could not copy Campaign_Service_Record bundle!
+        pause
+        exit /b 1
+    )
+)
+
+REM Copy Campaign Service Record bundle
+if exist "dist\Campaign_Service_Record" (
+    xcopy /E /I /Y "locales" "IL2_Campaign_Tracker_v2.0\" >NUL
     if errorlevel 2 (
         echo ERROR: Could not copy Campaign_Service_Record bundle!
         pause
@@ -398,6 +408,12 @@ if exist "dist\Campaign_Service_Record" (
 
 REM Copy README if exists
 if exist "README.html" copy "README.html" "IL2_Campaign_Tracker_v2.0\README.html" >NUL
+
+REM Copy font if exists
+if exist "IBMPlexSans-Light.ttf" copy "IBMPlexSans-Light.ttf" "IL2_Campaign_Tracker_v2.0\IBMPlexSans-Light.ttf" >NUL
+
+REM Copy iss file if exists
+if exist "IL2_Campaign_Tracker.iss" copy "IL2_Campaign_Tracker.iss" "IL2_Campaign_Tracker_v2.0\IL2_Campaign_Tracker.iss" >NUL
 
 REM Unzip CampaignRanksAwards
 @echo off
