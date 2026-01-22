@@ -29,6 +29,11 @@ UninstallDisplayIcon={app}\IL2_CampaignTracker_v2.0.exe
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "german"; MessagesFile: "compiler:Languages\\German.isl"
+Name: "french"; MessagesFile: "compiler:Languages\\French.isl"
+Name: "spanish"; MessagesFile: "compiler:Languages\\Spanish.isl"
+Name: "polish"; MessagesFile: "compiler:Languages\\Polish.isl"
+Name: "russian"; MessagesFile: "compiler:Languages\\Russian.isl"
+Name: "chinesesimplified"; MessagesFile: "compiler:Languages\\ChineseSimplified.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"; Flags: unchecked
