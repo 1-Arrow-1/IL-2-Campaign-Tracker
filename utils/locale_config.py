@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Optional
 
 from utils.pathing import get_base_path
+from utils.supported_locales import DEFAULT_LOCALE, get_supported_locales, normalize_locale
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +107,7 @@ def get_user_locale() -> str:
         try:
             locale = override_path.read_text(encoding='utf-8').strip()
             if locale:
+                locale = normalize_locale(locale)
                 logger.info(f"Using installer locale: {locale}")
                 
                 # Migrate to settings file and remove override
@@ -127,12 +129,15 @@ def get_user_locale() -> str:
     settings = load_settings()
     locale = settings.get('locale')
     if locale:
-        logger.debug(f"Using settings locale: {locale}")
-        return locale
+        normalized = normalize_locale(locale)
+        if normalized != locale:
+            logger.warning("Unsupported locale in settings '%s', using '%s'", locale, normalized)
+        logger.debug(f"Using settings locale: {normalized}")
+        return normalized
     
     # 3. Default fallback
     logger.debug("Using default locale: en")
-    return 'en'
+    return DEFAULT_LOCALE
 
 
 def resolve_locale(explicit_locale: Optional[str] = None) -> str:
@@ -146,12 +151,13 @@ def resolve_locale(explicit_locale: Optional[str] = None) -> str:
     4. Fallback ('en')
     """
     if explicit_locale:
-        return explicit_locale.strip().lower()
+        return normalize_locale(explicit_locale)
 
     env_locale = os.environ.get(LOCALE_ENV_VAR, "").strip().lower()
     if env_locale:
-        logger.info(f"Using locale from {LOCALE_ENV_VAR}: {env_locale}")
-        return env_locale
+        normalized = normalize_locale(env_locale)
+        logger.info(f"Using locale from {LOCALE_ENV_VAR}: {normalized}")
+        return normalized
 
     return get_user_locale()
 
@@ -167,7 +173,7 @@ def set_user_locale(locale: str) -> bool:
         True if successful, False otherwise
     """
     settings = load_settings()
-    settings['locale'] = locale
+    settings['locale'] = normalize_locale(locale)
     
     if save_settings(settings):
         logger.info(f"User locale set to: {locale}")
@@ -195,18 +201,10 @@ def get_system_locale() -> Optional[str]:
         # Extract language code (e.g., 'de_DE' → 'de')
         lang_code = system_locale.split('_')[0].lower()
         
-        # Map common language codes
-        supported = {
-            'en': 'en',
-            'de': 'de',
-            'fr': 'fr',
-            'es': 'es',
-            'ru': 'ru',
-            'pl': 'pl',
-            'zh': 'zh',
-        }
-        
-        return supported.get(lang_code)
+        supported = set(get_supported_locales())
+        if lang_code in supported:
+            return lang_code
+        return None
     except Exception as e:
         logger.debug(f"Could not detect system locale: {e}")
         return None
@@ -237,4 +235,4 @@ def auto_detect_locale() -> str:
         return system_locale
     
     # Fallback
-    return 'en'
+    return DEFAULT_LOCALE

@@ -28,6 +28,7 @@ UninstallDisplayIcon={app}\IL2_CampaignTracker_v2.0.exe
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
+Name: "german"; MessagesFile: "compiler:Languages\\German.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"; Flags: unchecked
@@ -158,6 +159,31 @@ begin
   IL2DirPage.Add('');
 
   PrefillIL2Dir();
+end;
+
+function GetInstallerLocaleCode(): string;
+begin
+  if ActiveLanguage = 'german' then
+    Result := 'de'
+  else
+    Result := 'en';
+end;
+
+procedure WriteLocaleOverrideFile();
+var
+  LocaleFile: string;
+  LocaleValue: string;
+begin
+  LocaleValue := GetInstallerLocaleCode();
+  LocaleFile := ExpandConstant('{app}\locale_setting.txt');
+  if LocaleValue <> '' then
+    SaveStringToFile(LocaleFile, LocaleValue, False);
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+    WriteLocaleOverrideFile();
 end;
 
 

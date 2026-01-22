@@ -39,11 +39,11 @@ from campaign_service_record.utils.i18n import (
     t,
     init_i18n,
     set_locale,
-    IL2_TO_APP_LOCALE,
     get_locale,
     get_loaded_locales,
 )
 from utils.locale_config import resolve_locale
+from utils.supported_locales import IL2_TO_APP_LOCALE
 from utils.combat_results import (
     KILL_MAPPING,
     calculate_kills_from_stats,

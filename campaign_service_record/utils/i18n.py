@@ -28,27 +28,22 @@ import logging
 from pathlib import Path
 from typing import Dict, Any, Optional
 
+from utils.supported_locales import (
+    APP_TO_IL2_LOCALE,
+    DEFAULT_LOCALE,
+    IL2_TO_APP_LOCALE,
+    get_locales_dir,
+    get_supported_locales,
+    normalize_locale,
+)
+
 logger = logging.getLogger(__name__)
 
 # Global state
-_current_locale: str = 'en'
+_current_locale: str = DEFAULT_LOCALE
 _translations: Dict[str, Dict[str, Any]] = {}
 _locales_dir: Optional[Path] = None
 _initialized: bool = False
-
-# IL-2 locale code mapping to app locale codes
-IL2_TO_APP_LOCALE = {
-    'eng': 'en',
-    'ger': 'de',
-    'fra': 'fr',
-    'spa': 'es',
-    'rus': 'ru',
-    'pol': 'pl',
-    'chs': 'zh',
-}
-
-# Reverse mapping (app → IL-2)
-APP_TO_IL2_LOCALE = {v: k for k, v in IL2_TO_APP_LOCALE.items()}
 
 
 def _get_locales_dir() -> Path:
@@ -61,21 +56,7 @@ def _get_locales_dir() -> Path:
     """
     global _locales_dir
     if _locales_dir is None:
-        import sys
-        if getattr(sys, 'frozen', False):
-            # Running as PyInstaller EXE
-            # Locales dir should be next to the EXE
-            _locales_dir = Path(sys.executable).parent / 'locales'
-        else:
-            # Running as script: find the nearest locales/ directory up the tree.
-            current = Path(__file__).resolve()
-            for parent in current.parents:
-                candidate = parent / 'locales'
-                if candidate.exists():
-                    _locales_dir = candidate
-                    break
-            if _locales_dir is None:
-                _locales_dir = Path(__file__).parent.parent / 'locales'
+        _locales_dir = get_locales_dir()
     return _locales_dir
 
 
@@ -106,7 +87,7 @@ def load_locale(locale: str) -> Dict[str, Any]:
         return {}
 
 
-def init_i18n(locale: str = 'en', force_reload: bool = False):
+def init_i18n(locale: str = DEFAULT_LOCALE, force_reload: bool = False):
     """
     Initialize i18n system with given locale.
     
@@ -119,7 +100,7 @@ def init_i18n(locale: str = 'en', force_reload: bool = False):
     """
     global _initialized, _current_locale, _translations
 
-    locale = (locale or 'en').strip().lower()
+    locale = normalize_locale(locale)
     
     if _initialized and not force_reload:
         if locale and locale != _current_locale:
@@ -128,17 +109,17 @@ def init_i18n(locale: str = 'en', force_reload: bool = False):
         return
     
     # Load fallback (English) first
-    _translations['en'] = load_locale('en')
+    _translations[DEFAULT_LOCALE] = load_locale(DEFAULT_LOCALE)
     
-    if not _translations['en']:
+    if not _translations[DEFAULT_LOCALE]:
         logger.error("CRITICAL: English fallback translations not loaded!")
     
     # Load requested locale (if different from fallback)
-    if locale != 'en':
+    if locale != DEFAULT_LOCALE:
         _translations[locale] = load_locale(locale)
         if not _translations[locale]:
             logger.warning(f"Requested locale '{locale}' not available, using 'en' fallback")
-            locale = 'en'
+            locale = DEFAULT_LOCALE
     
     _current_locale = locale
     _initialized = True
@@ -159,11 +140,11 @@ def set_locale(locale: str):
     if not locale:
         return
 
-    locale = locale.strip().lower()
+    locale = normalize_locale(locale)
 
     # Ensure fallback is always loaded
-    if 'en' not in _translations:
-        _translations['en'] = load_locale('en')
+    if DEFAULT_LOCALE not in _translations:
+        _translations[DEFAULT_LOCALE] = load_locale(DEFAULT_LOCALE)
     
     # Load requested locale if not already loaded
     if locale not in _translations:
@@ -262,7 +243,7 @@ def t(key: str, **params) -> str:
     
     # If not found, try fallback (en)
     if not isinstance(trans, str):
-        trans = _get_nested_value(_translations.get('en', {}), key_parts)
+        trans = _get_nested_value(_translations.get(DEFAULT_LOCALE, {}), key_parts)
     
     # If still not found, return placeholder
     if not isinstance(trans, str):
@@ -291,16 +272,7 @@ def get_available_locales() -> list[str]:
     Returns:
         List of locale codes (e.g., ['en', 'de'])
     """
-    locales_dir = _get_locales_dir()
-    if not locales_dir.exists():
-        return ['en']
-    
-    locales = []
-    for file_path in locales_dir.glob('*.json'):
-        locale = file_path.stem
-        locales.append(locale)
-    
-    return sorted(locales)
+    return get_supported_locales()
 
 
 def validate_translations() -> Dict[str, list]:
@@ -310,11 +282,11 @@ def validate_translations() -> Dict[str, list]:
     Returns:
         Dictionary mapping locale codes to lists of missing keys
     """
-    en_keys = _get_all_keys(_translations.get('en', {}))
+    en_keys = _get_all_keys(_translations.get(DEFAULT_LOCALE, {}))
     missing_by_locale = {}
     
     for locale in get_available_locales():
-        if locale == 'en':
+        if locale == DEFAULT_LOCALE:
             continue
         
         if locale not in _translations:
@@ -354,4 +326,4 @@ def _get_all_keys(data: Dict[str, Any], prefix: str = '') -> set:
 
 
 # Auto-initialize with English on import
-init_i18n('en')
+init_i18n(DEFAULT_LOCALE)

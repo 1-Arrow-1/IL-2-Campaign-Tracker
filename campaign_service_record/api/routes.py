@@ -27,6 +27,8 @@ from campaign_service_record.utils.formatting import safe_campaign_filename
 from campaign_service_record.utils.path_utils import get_game_directory
 from campaign_service_record.utils.image_utils import convert_dds_to_png_bytes, find_existing_image_path
 from campaign_service_record.utils.pilot_photo import pilot_photo_path, pilot_photo_filename, pilot_name_path
+from utils.locale_config import resolve_locale
+from utils.supported_locales import DEFAULT_LOCALE, get_supported_locales, normalize_locale
 
 
 logger = logging.getLogger(__name__)
@@ -170,16 +172,22 @@ def get_locale():
             "locale": "de"
         }
     """
-    import os
-    locale = os.environ.get('CAMPAIGN_TRACKER_LOCALE', 'en')
-    
-    # Validate locale (only allow known locales)
-    valid_locales = ['en', 'de']
-    if locale not in valid_locales:
-        logger.warning(f"Invalid locale '{locale}' in environment, falling back to 'en'")
-        locale = 'en'
-    
-    return jsonify({'locale': locale})
+    locale = resolve_locale()
+    return jsonify({'locale': normalize_locale(locale, DEFAULT_LOCALE)})
+
+
+@api_bp.route('/api/locales')
+def get_locales():
+    """
+    Get list of supported locales.
+
+    Returns:
+        JSON with locale list:
+        {
+            "locales": ["en", "de"]
+        }
+    """
+    return jsonify({'locales': get_supported_locales(), 'default': DEFAULT_LOCALE})
 
 
 @api_bp.route('/api/health')

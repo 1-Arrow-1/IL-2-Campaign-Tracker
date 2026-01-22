@@ -150,6 +150,13 @@ const API = {
     async getLocale() {
         return this.get('/locale');
     },
+
+    /**
+     * Get supported locales list
+     */
+    async getLocales() {
+        return this.get('/locales');
+    },
     
     /**
      * Health check
