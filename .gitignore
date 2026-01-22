@@ -12,6 +12,10 @@ CampaignRanksAwards.zip
 IL2_Camapaign_Tracker_v2.0.zip
 .vs/
 *.zip
-*.json
+campaign_completion_state.json
+campaign_events.json
+campaign_popups_seen.json
+campaign_mission_dates.json
+campaigns_decoded.json
 *.log
 reports/
