@@ -25,7 +25,7 @@ datas = [
     (str(base_path / "campaign_progress_config.yaml"), "."),
     (str(base_path / "object_categories.yaml"), "."),
     (str(base_path / "stock_campaigns.yaml"), "."),
-    Tree(str(base_path / "locales"), prefix="locales"),
+     (str(base_path / "locales"), "locales"),
 ]
 
 a = Analysis(
