@@ -554,8 +554,15 @@ class CampaignAggregator:
             return [], []
         durations: List[int] = []
         statuses: List[str] = []
+        
+        # Support multiple languages for Duration/Status labels
+        # Duration labels: Duration, Dauer, Duración, Durée, Czas trwania, Длительность, 时长
+        # Status labels: Status, Estado, Statut, Статус, 状态
+        duration_labels = r"(?:Duration|Dauer|Duración|Durée|Czas trwania|Длительность|时长)"
+        status_labels = r"(?:Status|Estado|Statut|Статус|状态)"
+        
         pattern = re.compile(
-            r"Duration:\s*(\d{2}:\d{2}:\d{2})\s*\|\s*Status:\s*([^<|]+)",
+            rf"{duration_labels}:\s*(\d{{2}}:\d{{2}}:\d{{2}})\s*\|\s*{status_labels}:\s*([^<|]+)",
             re.IGNORECASE
         )
         for duration_str, status in pattern.findall(debriefings_html):
@@ -577,17 +584,42 @@ class CampaignAggregator:
         bailouts = 0
         kia_mia = 0
 
+        # Multilingual status keywords
+        # Safe landings: Landed, Gelandet, Aterrizó, Atterri, Wylądował, Приземлился, 成功着陆
+        safe_keywords = ("landed", "gelandet", "aterrizó", "atterri", "wylądował", "приземлился", "成功着陆")
+        
+        # Hard landings/crashes: Crashed, Abgestürzt, Se estrelló, Crashé, Rozbił się, Разбился, 坠毁
+        # Also: Hard Landing, Harte Landung, Aterrizaje duro, Atterrissage dur, Twarde lądowanie, Жёсткая посадка, 硬着陆
+        hard_keywords = ("crash", "hard", "abgestürzt", "estrelló", "crashé", "rozbił", "разбился", "坠毁",
+                        "harte landung", "aterrizaje duro", "atterrissage dur", "twarde lądowanie", "жёсткая посадка", "硬着陆")
+        
+        # Wounded: Wounded, Verwundet, Herido, Blessé, Ranny, Ранен, 受伤
+        wound_keywords = ("wound", "verwundet", "herido", "blessé", "ranny", "ранен", "受伤")
+        
+        # Bailouts: Bailout, Bailed, Absprung, Salto en paracaídas, Sauté en parachute, Skok, Прыгнул, 跳伞
+        bailout_keywords = ("bail", "absprung", "salto en paracaídas", "sauté en parachute", "skok", "прыгнул", "跳伞")
+        
+        # KIA/MIA: KIA, MIA, Killed, Gefallen, Vermisst, Muerto, Desaparecido, Tué, Disparu, Poległ, Zaginął, Погиб, Пропал без вести, 阵亡, 失踪
+        kia_mia_keywords = ("kia", "mia", "killed", "gefallen", "vermisst", "muerto", "desaparecido", 
+                          "tué", "disparu", "poległ", "zaginął", "погиб", "пропал", "阵亡", "失踪")
+
         for status in statuses:
             normalized = status.lower().strip()
-            if "wound" in normalized:
+            
+            # Check wound first (before landed, as "Wounded and Landed" should count as wounded)
+            if any(kw in normalized for kw in wound_keywords):
                 wounded_landings += 1
-            elif "bail" in normalized or "bailed" in normalized:
+            # Check bailout
+            elif any(kw in normalized for kw in bailout_keywords):
                 bailouts += 1
-            elif any(token in normalized for token in ("kia", "mia", "killed")):
+            # Check KIA/MIA
+            elif any(kw in normalized for kw in kia_mia_keywords):
                 kia_mia += 1
-            elif "hard" in normalized or "crash" in normalized:
+            # Check hard landing/crash
+            elif any(kw in normalized for kw in hard_keywords):
                 hard_landings += 1
-            elif "landed" in normalized:
+            # Check safe landing (must be last as it's the most generic)
+            elif any(kw in normalized for kw in safe_keywords):
                 safe_landings += 1
 
         return [
