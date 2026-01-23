@@ -213,6 +213,37 @@ class DataLoader:
             return {'game_directory': ''}
         
         return data
+
+    def get_mission_dates_for_campaign(self, campaign_name: str) -> Dict[str, Any]:
+        """
+        Get mission dates for a specific campaign with case-insensitive lookup.
+        
+        This method handles the case mismatch between campaign_mission_dates.json
+        (which may have mixed-case keys like 'Luftwaffe-WW2-Career-40-45') and
+        other files (which use lowercase keys like 'luftwaffe-ww2-career-40-45').
+        
+        Args:
+            campaign_name: Campaign name (case-insensitive)
+        
+        Returns:
+            Campaign mission dates dict, or empty dict if not found
+        """
+        mission_dates = self.get_campaign_mission_dates()
+        
+        # Direct lookup first
+        if campaign_name in mission_dates:
+            return mission_dates[campaign_name]
+        
+        # Case-insensitive fallback
+        campaign_name_lower = campaign_name.lower()
+        for key, value in mission_dates.items():
+            if key == 'game_directory':
+                continue
+            if key.lower() == campaign_name_lower:
+                logger.debug(f"Case-insensitive match: '{campaign_name}' -> '{key}'")
+                return value
+        
+        return {}
     
     def get_campaigns_with_progress(self) -> List[str]:
         """
@@ -284,7 +315,7 @@ class DataLoader:
             'completion_state': completion_state.get(campaign_name, []),
             'events': self.get_campaign_events().get(campaign_name, {}),
             'decoded': self.get_campaigns_decoded().get(campaign_name, {}),
-            'mission_dates': self.get_campaign_mission_dates().get(campaign_name, {})
+            'mission_dates': self.get_mission_dates_for_campaign(campaign_name)
         }
     
     def invalidate_cache(self, filename: Optional[str] = None):

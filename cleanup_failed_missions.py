@@ -221,7 +221,16 @@ def resync_campaign_events_for_campaign(
     events = generator.generate_events_for_campaign(campaign_name)
     events_data = _load_json_file(events_path)
 
-    country = generator.mission_dates.get(campaign_name, {}).get("country")
+    # Use case-insensitive lookup for mission_dates
+    country = None
+    campaign_name_lower = campaign_name.lower()
+    if hasattr(generator, 'mission_dates_lower') and campaign_name_lower in generator.mission_dates_lower:
+        _, mission_data = generator.mission_dates_lower[campaign_name_lower]
+        country = mission_data.get("country")
+    else:
+        # Fallback to direct lookup
+        country = generator.mission_dates.get(campaign_name, {}).get("country")
+    
     combined_html = ""
 
     if events:

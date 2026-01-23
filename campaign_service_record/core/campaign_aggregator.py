@@ -161,9 +161,9 @@ class CampaignAggregator:
             # Should not happen (filtered by get_campaigns_with_progress)
             return None
         
-        # Get country
+        # Get country - use case-insensitive lookup for mission_dates
         campaign_dates = self._ensure_dict(
-            mission_dates.get(campaign_name, {}),
+            self.loader.get_mission_dates_for_campaign(campaign_name),
             f"mission_dates[{campaign_name}]"
         )
         
@@ -241,8 +241,9 @@ class CampaignAggregator:
             decoded_data.get(campaign_name, {}),
             f"decoded[{campaign_name}]"
         )
+        # Use case-insensitive lookup for mission_dates
         campaign_dates = self._ensure_dict(
-            mission_dates.get(campaign_name, {}),
+            self.loader.get_mission_dates_for_campaign(campaign_name),
             f"mission_dates[{campaign_name}]"
         )
         
@@ -749,7 +750,8 @@ class CampaignAggregator:
         Returns:
             User-friendly campaign name
         """
-        campaign_data = mission_dates.get(campaign_name, {})
+        # Use case-insensitive lookup
+        campaign_data = self.loader.get_mission_dates_for_campaign(campaign_name)
         
         # Check for explicit display name (if Campaign Tracker provides it)
         display_name = campaign_data.get('display_name')
