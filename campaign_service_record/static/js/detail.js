@@ -394,7 +394,7 @@ const getCountryKey = (country) => {
     if (['germany', 'deutschland'].includes(normalized)) {
         return 'germany';
     }
-    if (['britain', 'uk', 'united kingdom', 'england'].includes(normalized)) {
+    if (['britain', 'uk', 'united kingdom', 'england', 'great britain'].includes(normalized)) {
         return 'britain';
     }
     if (['usa', 'us', 'united states', 'united states of america'].includes(normalized)) {
@@ -441,6 +441,7 @@ const DetailPage = {
         country: null,
         missions: null,
         plane: null,
+        stamp: null,
         insigniaLeft: null,
         insigniaRight: null,
         eventsList: null,
@@ -516,6 +517,7 @@ const DetailPage = {
         this.elements.country = document.getElementById('campaign-country');
         this.elements.missions = document.getElementById('campaign-missions');
         this.elements.plane = document.getElementById('campaign-plane');
+        this.elements.stamp = document.getElementById('campaign-stamp');
         this.elements.insigniaLeft = document.getElementById('campaign-insignia-left');
         this.elements.insigniaRight = document.getElementById('campaign-insignia-right');
         this.elements.eventsList = document.getElementById('events-list');
@@ -667,6 +669,7 @@ const DetailPage = {
         });
         this.updatePlaneImage(campaign.country);
         this.updateInsigniaImages(campaign.country);
+        this.updateStampImage(campaign.country);
     },
 
     clearBackgroundState() {
@@ -997,6 +1000,42 @@ const DetailPage = {
             this.elements.plane.style.display = 'none';
         }
     },
+
+    stampByCountry: {
+        // US / UK use the default stamp
+        us: 'static/images/stamp_extra_II.png',
+        usa: 'static/images/stamp_extra_II.png',
+        'united states': 'static/images/stamp_extra_II.png',
+        britain: 'static/images/stamp_extra_II.png',
+        uk: 'static/images/stamp_extra_II.png',
+        'united kingdom': 'static/images/stamp_extra_II.png',
+        england: 'static/images/stamp_extra_II.png',
+        'great britain': 'static/images/stamp_extra_II.png',
+
+        // Germany
+        germany: 'static/images/stamp_extra_II_ger.png',
+        deutschland: 'static/images/stamp_extra_II_ger.png',
+
+        // USSR
+        ussr: 'static/images/stamp_extra_II_rus.png',
+        'soviet union': 'static/images/stamp_extra_II_rus.png',
+        russia: 'static/images/stamp_extra_II_rus.png'
+    },
+
+    updateStampImage(country) {
+        if (!this.elements.stamp) {
+            return;
+        }
+
+        const normalized = (country || '').trim().toLowerCase();
+        const stampSrc = this.stampByCountry[normalized] || 'static/images/stamp_extra_II.png';
+
+        // Avoid unnecessary DOM updates
+        if (this.elements.stamp.getAttribute('src') !== stampSrc) {
+            this.elements.stamp.src = stampSrc;
+        }
+    },
+
 
     updateInsigniaImages(country) {
         const insigniaElements = [this.elements.insigniaLeft, this.elements.insigniaRight];

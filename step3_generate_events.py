@@ -3118,8 +3118,41 @@ class EventGenerator:
         # Detect which campaigns have new missions since last run
         campaigns_with_changes = self._get_campaigns_with_new_missions()
         
-        results = {}
+        # Check if this is first run or force regenerate (process ALL campaigns)
+        import os
+        force_regenerate = os.environ.get("FORCE_REGENERATE", "0") == "1"
+        is_first_run = popup_state_missing
+        process_all = is_first_run or force_regenerate
+        
+        if process_all:
+            if force_regenerate:
+                log_message(LOGGER, f"[optimize] FORCE_REGENERATE set - processing ALL campaigns")
+            else:
+                log_message(LOGGER, f"[optimize] First run detected - processing ALL campaigns")
+        elif not campaigns_with_changes:
+            log_message(LOGGER, f"[optimize] No campaigns changed - skipping event generation")
+            # Still need to save completion state
+            self._save_campaign_completion_state()
+            return {}
+        else:
+            log_message(LOGGER, f"[optimize] Processing {len(campaigns_with_changes)} changed campaign(s): {', '.join(sorted(campaigns_with_changes))}")
+        
+        # Load existing campaign_events.json if doing incremental update
+        existing_results = {}
+        if not process_all and CAMPAIGN_EVENTS_FILE.exists():
+            try:
+                with open(CAMPAIGN_EVENTS_FILE, 'r', encoding='utf-8') as f:
+                    existing_results = json.load(f)
+                log_message(LOGGER, f"[optimize] Loaded {len(existing_results)} existing campaign event(s)")
+            except (json.JSONDecodeError, OSError) as e:
+                log_message(LOGGER, f"[optimize] Could not load existing events: {e} - processing all")
+                process_all = True
+        
+        # Start with existing results (for incremental update)
+        results = dict(existing_results) if not process_all else {}
         files_updated = 0
+        campaigns_processed = 0
+        campaigns_skipped = 0
         
         for campaign_name in self.save_data.keys():
             # Skip if excluded (WW1) - case-insensitive lookup
@@ -3129,6 +3162,16 @@ class EventGenerator:
                 if mission_data.get('excluded'):
                     log_message(LOGGER, f"\nSkipping {campaign_name} (excluded: WW1)")
                     continue
+            
+            # ============================================================
+            # OPTIMIZATION: Skip unchanged campaigns (incremental update)
+            # ============================================================
+            if not process_all and campaign_name not in campaigns_with_changes:
+                campaigns_skipped += 1
+                # Keep existing events for this campaign
+                continue
+            
+            campaigns_processed += 1
             
             # ============================================================
             # Rank scaling factor change detection
@@ -3326,6 +3369,12 @@ class EventGenerator:
                     # *** CRITICAL: Switch back to ingame mode for subsequent campaigns ***
                     self.set_mode("ingame")
         
+        # Remove campaigns that no longer exist in save_data (deleted campaigns)
+        campaigns_to_remove = [name for name in results.keys() if name not in self.save_data]
+        for campaign_name in campaigns_to_remove:
+            del results[campaign_name]
+            log_message(LOGGER, f"[optimize] Removed deleted campaign from events: {campaign_name}")
+        
         # Save results
         with open(CAMPAIGN_EVENTS_FILE, 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
@@ -3337,8 +3386,10 @@ class EventGenerator:
         log_message(LOGGER, f"\n{'='*70}")
         log_message(LOGGER, f"COMPLETE!")
         log_message(LOGGER, f"{'='*70}")
-        log_message(LOGGER, f"Generated events for {len(results)} campaigns")
-        log_message(LOGGER, f"Updated {files_updated} campaign info files")
+        log_message(LOGGER, f"Total campaigns with events: {len(results)}")
+        log_message(LOGGER, f"Campaigns processed: {campaigns_processed}")
+        log_message(LOGGER, f"Campaigns skipped (unchanged): {campaigns_skipped}")
+        log_message(LOGGER, f"Info files updated: {files_updated}")
         log_message(LOGGER, f"Results saved to: {CAMPAIGN_EVENTS_FILE}")
         log_message(LOGGER, f"PDF reports saved to: {BASE_DIR / 'reports'}")
         

@@ -129,246 +129,145 @@ Source: "cleanup_tracker_content.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 ; --- Copy CampaignRanksAwards into IL-2 ---
 ; This places content into: <IL-2>\data\swf\CampaignRanksAwards\*
-Source: "CampaignRanksAwards\*"; DestDir: "{code:GetIL2Dir}\data\swf\CampaignRanksAwards"; Flags: recursesubdirs createallsubdirs ignoreversion
+Source: "CampaignRanksAwards\*"; DestDir: "{code:GetIL2DataSwfDir}\CampaignRanksAwards"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{group}\Campaign Service Record"; Filename: "{app}\Campaign_Service_Record.exe"
+Name: "{group}\Uninstall"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
-Name: "{group}\Uninstall IL-2 Campaign Tracker"; Filename: "{uninstallexe}"
 
-
-[Registry]
-; Store IL-2 install path for uninstall cleanup
-Root: HKLM; Subkey: "Software\{#MyAppName}"; ValueType: string; ValueName: "IL2Path"; ValueData: "{code:GetIL2Dir}"; Flags: uninsdeletekey
+[Run]
+Filename: "{app}\{#MyAppExeName}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent
 
 [Code]
-
 var
-  IL2DirPage: TInputDirWizardPage;
-  IL2DirValue: string;
-  
-  { Uninstall options }
+  IL2PathPage: TInputDirWizardPage;
   RemoveConfigFiles: Boolean;
   RemoveBackupFiles: Boolean;
   RemoveServiceRecordData: Boolean;
 
-{ ----------------------------
-  Helpers
-  ---------------------------- }
-
-function NormalizeDir(const S: string): string;
+function IsIL2Folder(const DirPath: string): Boolean;
+var
+  DataPath: string;
 begin
-  Result := Trim(S);
-  while (Length(Result) > 0) and (Result[Length(Result)] = '\') do
-    Delete(Result, Length(Result), 1);
+  Result := False;
+  DataPath := AddBackslash(DirPath) + 'data';
+  if DirExists(DataPath) then
+    Result := True;
 end;
 
-function LooksLikeIL2Root(const Dir: string): Boolean;
+procedure InitializeWizard;
 begin
-  { Keep this check internal (do not mention it in UI text).
-    Adjust markers if needed. These are safe and lightweight. }
-  Result :=
-    DirExists(Dir + '\data') and
-    DirExists(Dir + '\data\swf');
+  IL2PathPage := CreateInputDirPage(
+    wpSelectDir,
+    ExpandConstant('{cm:SelectIL2Folder}'),
+    '',
+    '',
+    False,
+    ''
+  );
+  IL2PathPage.Add('');
+end;
+
+function NormalizeDir(const DirPath: string): string;
+begin
+  Result := ExcludeTrailingPathDelimiter(Trim(DirPath));
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+var
+  NormalPath: string;
+begin
+  Result := True;
+  if CurPageID = IL2PathPage.ID then
+  begin
+    NormalPath := NormalizeDir(IL2PathPage.Values[0]);
+    if not IsIL2Folder(NormalPath) then
+    begin
+      MsgBox(ExpandConstant('{cm:InvalidIL2Folder}'), mbError, MB_OK);
+      Result := False;
+    end
+    else
+    begin
+      IL2PathPage.Values[0] := NormalPath;
+    end;
+  end;
+end;
+
+function GetIL2Path(Param: string): string;
+begin
+  Result := NormalizeDir(IL2PathPage.Values[0]);
+end;
+
+function GetIL2DataSwfDir(Param: string): string;
+begin
+  Result := AddBackslash(GetIL2Path('')) + 'data\swf';
+end;
+
+procedure RegisterIL2Path();
+var
+  IL2Root: string;
+begin
+  IL2Root := NormalizeDir(IL2PathPage.Values[0]);
+  RegWriteStringValue(HKCU, 'Software\IL2CampaignTracker', 'IL2Path', IL2Root);
 end;
 
 function GetStoredIL2Path(): string;
 begin
-  Result := '';
-
-  { Prefer 64-bit HKLM view (recommended write target) }
-  if not RegQueryStringValue(HKLM64, 'Software\{#MyAppName}', 'IL2Path', Result) then
-  begin
-    { Fallback: 32-bit view (WOW6432Node) for legacy installs }
-    RegQueryStringValue(HKLM32, 'Software\{#MyAppName}', 'IL2Path', Result);
-  end;
+  if not RegQueryStringValue(HKCU, 'Software\IL2CampaignTracker', 'IL2Path', Result) then
+    Result := '';
 end;
 
-function GetIL2Dir(Param: string): string;
-begin
-  // Used by [Files]/[Registry] as {code:GetIL2Dir} 
-  Result := IL2DirValue;
-
-  { Fallback (e.g., edge cases) }
-  if Result = '' then
-    Result := GetStoredIL2Path();
-end;
-
-procedure PrefillIL2Dir;
-var
-  Prev: string;
-  DefaultSteamIL2: string;
-begin
-  Prev := NormalizeDir(GetStoredIL2Path());
-  DefaultSteamIL2 :=
-    'C:\Program Files (x86)\Steam\steamapps\common\IL-2 Sturmovik Battle of Stalingrad';
-
-  if (Prev <> '') and DirExists(Prev) then
-    IL2DirPage.Values[0] := Prev
-  else if DirExists(DefaultSteamIL2) then
-    IL2DirPage.Values[0] := DefaultSteamIL2
-  else
-    IL2DirPage.Values[0] := 'C:\Program Files (x86)\Steam\steamapps\common';
-end;
-
-{ ----------------------------
-  Wizard setup
-  ---------------------------- }
-
-procedure InitializeWizard;
-begin
-  IL2DirPage := CreateInputDirPage(
-    wpSelectDir,
-    'Select IL-2 Great Battles Installation Folder',
-    'Choose the folder where IL-2 Great Battles is installed.',
-    'Please select the main IL-2 Great Battles installation directory.',
-    False,
-    ''
-  );
-
-  // Create the first (and only) directory input row
-  IL2DirPage.Add('');
-
-  PrefillIL2Dir();
-end;
-
-function GetInstallerLocaleCode(): string;
-begin
-  if ActiveLanguage = 'german' then
-    Result := 'de'
-  else if ActiveLanguage = 'french' then
-    Result := 'fr'
-  else if ActiveLanguage = 'spanish' then
-    Result := 'es'
-  else if ActiveLanguage = 'polish' then
-    Result := 'pl'
-  else if ActiveLanguage = 'russian' then
-    Result := 'ru'
-  else if ActiveLanguage = 'chinesesimplified' then
-    Result := 'zh'
-  else
-    Result := 'en';
-end;
-
-procedure WriteLocaleOverrideFile();
-var
-  LocaleFile: string;
-  LocaleValue: string;
-begin
-  LocaleValue := GetInstallerLocaleCode();
-  LocaleFile := ExpandConstant('{app}\locale_setting.txt');
-  if LocaleValue <> '' then
-    SaveStringToFile(LocaleFile, LocaleValue, False);
-end;
-
-procedure CurStepChanged(CurStep: TSetupStep);
+procedure CurStepChanged(CurStep: TInstallStep);
 begin
   if CurStep = ssPostInstall then
-    WriteLocaleOverrideFile();
-end;
-
-
-function NextButtonClick(CurPageID: Integer): Boolean;
-var
-  D: string;
-begin
-  Result := True;
-
-  if CurPageID = IL2DirPage.ID then
   begin
-    D := NormalizeDir(IL2DirPage.Values[0]);
-
-    if (D = '') or (not DirExists(D)) then
-    begin
-      MsgBox(CustomMessage('SelectIL2Folder'), mbError, MB_OK);
-      Result := False;
-      Exit;
-    end;
-
-    if not LooksLikeIL2Root(D) then
-    begin
-      MsgBox(CustomMessage('InvalidIL2Folder'), mbError, MB_OK);
-      Result := False;
-      Exit;
-    end;
-
-    { Store for this run }
-    IL2DirValue := D;
+    RegisterIL2Path();
   end;
 end;
-
-{ ----------------------------
-  Uninstall: Ask user about keeping files
-  ---------------------------- }
 
 function InitializeUninstall(): Boolean;
 var
-  MsgResult: Integer;
+  ResultCode: Integer;
 begin
   Result := True;
-  
-  { Default: keep configuration, backup files, and Service Record data }
-  RemoveConfigFiles := False;
-  RemoveBackupFiles := False;
-  RemoveServiceRecordData := False;
-  
-  { Ask about configuration files }
-  MsgResult := MsgBox(CustomMessage('RemoveConfigTitle'), mbConfirmation, MB_YESNO);
-  RemoveConfigFiles := (MsgResult = IDYES);
-  
-  { Ask about backup files }
-  MsgResult := MsgBox(CustomMessage('RemoveBackupTitle'), mbConfirmation, MB_YESNO);
-  RemoveBackupFiles := (MsgResult = IDYES);
-  
-  { Ask about Campaign Service Record data }
-  MsgResult := MsgBox(CustomMessage('RemoveServiceRecordTitle'), mbConfirmation, MB_YESNO);
-  RemoveServiceRecordData := (MsgResult = IDYES);
-end;
 
-// ----------------------------
-//  Uninstall cleanup
-//  - Runs cleanup_tracker_content.exe to remove Events/Debriefings from info.locale files
-//  - Optionally deletes:
-//    1) Configuration files (*.yaml) in {app}
-//    2) <IL-2>\data\swf\CampaignRanksAwards\*
-//    3) For each UUID folder:
-//       <IL-2>\data\swf\il2\usersave\{UUID}\campaign\
-//         - campaignsstates_*.backup
-//         - campaign_popups_seen_*.backup
-//         - campaignsstates_hash_index.json
-//    4) Campaign Service Record data:
-//       %LOCALAPPDATA%\.il2_campaign_service_record\
-//         - pilot_photos\
-//         - campaign_personal_data.json
-//  ---------------------------- 
+  { Ask user about config files }
+  ResultCode := MsgBox(ExpandConstant('{cm:RemoveConfigTitle}'), mbConfirmation, MB_YESNO);
+  RemoveConfigFiles := (ResultCode = IDYES);
+
+  { Ask user about backup files }
+  ResultCode := MsgBox(ExpandConstant('{cm:RemoveBackupTitle}'), mbConfirmation, MB_YESNO);
+  RemoveBackupFiles := (ResultCode = IDYES);
+
+  { Ask user about Service Record data }
+  ResultCode := MsgBox(ExpandConstant('{cm:RemoveServiceRecordTitle}'), mbConfirmation, MB_YESNO);
+  RemoveServiceRecordData := (ResultCode = IDYES);
+end;
 
 procedure DeleteUserSaveCampaignFiles(const IL2Root: string);
 var
-  UsersaveRoot, SearchPath, UUIDDir, CampaignDir: string;
+  UserSaveDir, CampaignDir: string;
   FindRec: TFindRec;
 begin
-  if not RemoveBackupFiles then
-  begin
-    { User wants to keep backups - skip this step }
-    Exit;
-  end;
-
-  UsersaveRoot := IL2Root + '\data\swf\il2\usersave';
-  if not DirExists(UsersaveRoot) then
+  { <IL-2>\data\Campaigns\usersave }
+  UserSaveDir := AddBackslash(IL2Root) + 'data\Campaigns\usersave';
+  
+  if not DirExists(UserSaveDir) then
     Exit;
 
-  SearchPath := UsersaveRoot + '\*';
-  if FindFirst(SearchPath, FindRec) then
+  { Iterate through each UUID campaign folder }
+  if FindFirst(UserSaveDir + '\*', FindRec) then
   try
     repeat
       if (FindRec.Attributes and FILE_ATTRIBUTE_DIRECTORY) <> 0 then
       begin
         if (FindRec.Name <> '.') and (FindRec.Name <> '..') then
         begin
-          UUIDDir := UsersaveRoot + '\' + FindRec.Name;
-          CampaignDir := UUIDDir + '\campaign';
+          CampaignDir := UserSaveDir + '\' + FindRec.Name;
 
-          if DirExists(CampaignDir) then
+          if RemoveBackupFiles then
           begin
             { Wildcard deletes – ignore errors }
             DelTree(CampaignDir + '\campaignsstates_*.backup', False, True, False);
@@ -382,6 +281,82 @@ begin
     until not FindNext(FindRec);
   finally
     FindClose(FindRec);
+  end;
+end;
+
+procedure RestoreCampaignInfoBackups(const IL2Root: string);
+var
+  CampaignsDir, CampaignDir: string;
+  FindRecCampaign, FindRecFile: TFindRec;
+  BackupFile, OriginalFile: string;
+  HasBackups: Boolean;
+begin
+  { <IL-2>\data\Campaigns }
+  CampaignsDir := AddBackslash(IL2Root) + 'data\Campaigns';
+  
+  if not DirExists(CampaignsDir) then
+    Exit;
+
+  { Iterate through each campaign folder }
+  if FindFirst(CampaignsDir + '\*', FindRecCampaign) then
+  try
+    repeat
+      if (FindRecCampaign.Attributes and FILE_ATTRIBUTE_DIRECTORY) <> 0 then
+      begin
+        if (FindRecCampaign.Name <> '.') and (FindRecCampaign.Name <> '..') and (FindRecCampaign.Name <> 'usersave') then
+        begin
+          CampaignDir := CampaignsDir + '\' + FindRecCampaign.Name;
+          HasBackups := False;
+
+          { Check if this campaign has any .backup files }
+          if FindFirst(CampaignDir + '\*.backup', FindRecFile) then
+          try
+            HasBackups := True;
+          finally
+            FindClose(FindRecFile);
+          end;
+
+          { Only process campaigns with backup files }
+          if HasBackups then
+          begin
+            { Delete all info.locale=*.txt files (without .backup extension) }
+            if FindFirst(CampaignDir + '\info.locale=*.txt', FindRecFile) then
+            try
+              repeat
+                if (FindRecFile.Attributes and FILE_ATTRIBUTE_DIRECTORY) = 0 then
+                begin
+                  OriginalFile := CampaignDir + '\' + FindRecFile.Name;
+                  { Only delete if it's NOT a backup file }
+                  if Pos('.backup', LowerCase(OriginalFile)) = 0 then
+                  begin
+                    DeleteFile(OriginalFile);
+                  end;
+                end;
+              until not FindNext(FindRecFile);
+            finally
+              FindClose(FindRecFile);
+            end;
+
+            { Rename all *.backup files to remove .backup extension }
+            if FindFirst(CampaignDir + '\info.locale=*.txt.backup', FindRecFile) then
+            try
+              repeat
+                if (FindRecFile.Attributes and FILE_ATTRIBUTE_DIRECTORY) = 0 then
+                begin
+                  BackupFile := CampaignDir + '\' + FindRecFile.Name;
+                  OriginalFile := Copy(BackupFile, 1, Length(BackupFile) - Length('.backup'));
+                  RenameFile(BackupFile, OriginalFile);
+                end;
+              until not FindNext(FindRecFile);
+            finally
+              FindClose(FindRecFile);
+            end;
+          end;
+        end;
+      end;
+    until not FindNext(FindRecCampaign);
+  finally
+    FindClose(FindRecCampaign);
   end;
 end;
 
@@ -481,21 +456,25 @@ begin
       { Step 1: Remove tracker content from info.locale files }
       RunCleanupTrackerContent(IL2Root);
     
-      { Step 2: Remove CampaignRanksAwards folder }
+      { Step 2: Restore backup files in campaign folders }
+      { This restores original info.locale=*.txt files from .backup versions }
+      RestoreCampaignInfoBackups(IL2Root);
+
+      { Step 3: Remove CampaignRanksAwards folder }
       AwardsDir := IL2Root + '\data\swf\CampaignRanksAwards';
       if DirExists(AwardsDir) then
         DelTree(AwardsDir, True, True, True);
 
-      { Step 3: Remove tracker-related files from usersave UUID campaign folders }
+      { Step 4: Remove tracker-related files from usersave UUID campaign folders }
       { (respects RemoveBackupFiles setting) }
       DeleteUserSaveCampaignFiles(IL2Root);
     end;
     
-    { Step 4: Delete Campaign Service Record data }
+    { Step 5: Delete Campaign Service Record data }
     { (respects RemoveServiceRecordData setting) }
     DeleteServiceRecordData();
     
-    { Step 5: Delete app files (respects RemoveConfigFiles setting) }
+    { Step 6: Delete app files (respects RemoveConfigFiles setting) }
     { Deletes: *.json, *.log, *.exe, *.txt, *.html, *.ttf, _internal\, locales\ }
     { Keeps: *.yaml (unless RemoveConfigFiles = True) }
     DeleteAppFiles();

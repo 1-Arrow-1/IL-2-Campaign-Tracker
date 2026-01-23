@@ -90,6 +90,7 @@ class MissionLogProcessor:
         return None
 
     def _calculate_campaignsstates_hash(self) -> Optional[str]:
+        """Legacy method - calculates hash of entire campaignsstates.txt"""
         if not self.campaignsstates_path or not self.campaignsstates_path.exists():
             return None
 
@@ -102,7 +103,35 @@ class MissionLogProcessor:
         except OSError:
             return None
 
-    def _load_aircraft_cache(self, campaign_name: str) -> Dict:
+    def _calculate_campaign_missions_hash(self, completed_missions: List[str]) -> str:
+        """
+        Calculate hash based on campaign's completed missions list.
+        
+        This is more efficient than hashing the entire campaignsstates.txt
+        because it only invalidates cache when THIS campaign's missions change.
+        
+        Args:
+            completed_missions: List of completed mission IDs for this campaign
+            
+        Returns:
+            MD5 hash of the sorted missions list
+        """
+        # Sort for consistent hashing regardless of order
+        sorted_missions = sorted(completed_missions)
+        missions_str = ",".join(sorted_missions)
+        return hashlib.md5(missions_str.encode('utf-8')).hexdigest()
+
+    def _load_aircraft_cache(self, campaign_name: str, completed_missions: List[str] = None) -> Dict:
+        """
+        Load aircraft cache for a campaign.
+        
+        Args:
+            campaign_name: Name of the campaign
+            completed_missions: List of completed missions (for hash validation)
+            
+        Returns:
+            Cache dict with campaign_name and missions
+        """
         cache_path = self._get_aircraft_cache_path(campaign_name)
         if not cache_path.exists():
             return {"campaign_name": campaign_name, "missions": {}}
@@ -115,16 +144,31 @@ class MissionLogProcessor:
                 log_message(logger, f"  ⚠️  Could not read aircraft cache: {exc}")
             return {"campaign_name": campaign_name, "missions": {}}
 
-        current_hash = self._calculate_campaignsstates_hash()
-        cached_hash = data.get("campaignsstates_hash") if isinstance(data, dict) else None
-        if current_hash and cached_hash != current_hash:
-            if self.verbose:
-                log_message(logger, "  🧹 Campaign state changed; regenerating aircraft cache.")
-            try:
-                cache_path.unlink(missing_ok=True)
-            except OSError:
-                pass
-            return {"campaign_name": campaign_name, "missions": {}}
+        # Use campaign-specific hash if completed_missions provided
+        if completed_missions is not None:
+            current_hash = self._calculate_campaign_missions_hash(completed_missions)
+            cached_hash = data.get("missions_hash") if isinstance(data, dict) else None
+            
+            if cached_hash and cached_hash != current_hash:
+                if self.verbose:
+                    log_message(logger, f"  🧹 Missions changed for {campaign_name}; regenerating aircraft cache.")
+                try:
+                    cache_path.unlink(missing_ok=True)
+                except OSError:
+                    pass
+                return {"campaign_name": campaign_name, "missions": {}}
+        else:
+            # Fallback to legacy global hash check for backwards compatibility
+            current_hash = self._calculate_campaignsstates_hash()
+            cached_hash = data.get("campaignsstates_hash") if isinstance(data, dict) else None
+            if current_hash and cached_hash != current_hash:
+                if self.verbose:
+                    log_message(logger, "  🧹 Campaign state changed; regenerating aircraft cache.")
+                try:
+                    cache_path.unlink(missing_ok=True)
+                except OSError:
+                    pass
+                return {"campaign_name": campaign_name, "missions": {}}
 
         if isinstance(data, dict) and "missions" in data and isinstance(data["missions"], dict):
             data.setdefault("campaign_name", campaign_name)
@@ -135,13 +179,28 @@ class MissionLogProcessor:
 
         return {"campaign_name": campaign_name, "missions": {}}
 
-    def _write_aircraft_cache(self, campaign_name: str, cache_data: Dict) -> None:
+    def _write_aircraft_cache(self, campaign_name: str, cache_data: Dict, completed_missions: List[str] = None) -> None:
+        """
+        Write aircraft cache for a campaign.
+        
+        Args:
+            campaign_name: Name of the campaign
+            cache_data: Cache data to write
+            completed_missions: List of completed missions (for hash storage)
+        """
         cache_path = self._get_aircraft_cache_path(campaign_name)
         try:
             cache_path.parent.mkdir(parents=True, exist_ok=True)
-            current_hash = self._calculate_campaignsstates_hash()
-            if current_hash:
-                cache_data["campaignsstates_hash"] = current_hash
+            
+            # Store campaign-specific hash if completed_missions provided
+            if completed_missions is not None:
+                cache_data["missions_hash"] = self._calculate_campaign_missions_hash(completed_missions)
+            else:
+                # Fallback to legacy global hash
+                current_hash = self._calculate_campaignsstates_hash()
+                if current_hash:
+                    cache_data["campaignsstates_hash"] = current_hash
+                    
             with open(cache_path, "w", encoding="utf-8") as f:
                 json.dump(cache_data, f, indent=2, ensure_ascii=False)
         except OSError as exc:
