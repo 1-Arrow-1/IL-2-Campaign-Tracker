@@ -1465,7 +1465,7 @@ class CleanupGUI:
                             if country:
                                 # Update campaign info file
                                 generator.update_campaign_info_file(
-                                    campaign_name, resync_result["combined_html"]
+                                    campaign_name, events, completed_missions
                                 )
 
                                 # *** REGENERATE PDF ***
@@ -1557,8 +1557,7 @@ class CleanupGUI:
                                     # Update info file with empty content
                                     try:
                                         if country:
-                                            empty_html = ""
-                                            generator.update_campaign_info_file(campaign_name, empty_html)
+                                            generator.update_campaign_info_file(campaign_name, [], [])
                                             log_message(logger, f"    ✓ Cleared campaign info file")
                                     except Exception as e:
                                         log_message(logger, f"    ⚠️  Could not update info file: {e}")
