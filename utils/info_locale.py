@@ -1,7 +1,12 @@
+import logging
 import regex
 
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
+
+from utils.supported_locales import APP_TO_IL2_LOCALE
+
+logger = logging.getLogger(__name__)
 
 TRACKER_SECTION_HEADER_PATTERN = (
     r'(?:Mission Debriefings<br>|<[ub]>Mission Debriefings</[ub]>|<[ub]>Events</[ub]>)'
@@ -43,6 +48,46 @@ def find_all_info_locale_files(campaign_path: Path) -> List[Path]:
         List of paths to info.locale=*.txt files (e.g., eng, ger, rus, fra, spa, chs)
     """
     return list(campaign_path.glob("info.locale=*.txt"))
+
+
+def ensure_info_locale_files(
+    campaign_path: Path,
+    supported_locales: List[str],
+) -> Tuple[List[Path], List[Path], Optional[Path]]:
+    """
+    Ensure all info.locale files exist for the supported locales.
+
+    Returns:
+        Tuple of (all_locale_files, created_files, source_file_used)
+    """
+    existing_files = {path.name: path for path in find_all_info_locale_files(campaign_path)}
+    if not existing_files:
+        logger.warning("No info.locale files found in %s", campaign_path)
+        return [], [], None
+
+    preferred_source = campaign_path / "info.locale=eng.txt"
+    source_file = preferred_source if preferred_source.exists() else next(iter(existing_files.values()))
+
+    created_files: list[Path] = []
+    source_bytes = source_file.read_bytes()
+
+    for locale in supported_locales:
+        il2_locale = APP_TO_IL2_LOCALE.get(locale)
+        if not il2_locale:
+            logger.warning("No IL-2 locale mapping for '%s'", locale)
+            continue
+
+        target_name = f"info.locale={il2_locale}.txt"
+        if target_name in existing_files:
+            continue
+
+        target_file = campaign_path / target_name
+        target_file.write_bytes(source_bytes)
+        created_files.append(target_file)
+        existing_files[target_name] = target_file
+        logger.info("Created missing locale file %s from %s", target_file.name, source_file.name)
+
+    return list(existing_files.values()), created_files, source_file
 
 def detect_info_locale_encoding(raw: bytes) -> str:
     if raw.startswith(b"\xef\xbb\xbf"):

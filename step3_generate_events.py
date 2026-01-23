@@ -31,6 +31,7 @@ import argparse
 from utils.info_locale import (
     TRACKER_SECTION_HEADER_PATTERN,
     apply_tracker_content,
+    ensure_info_locale_files,
     find_all_info_locale_files,
 )
 from utils.pathing import get_base_path
@@ -43,7 +44,7 @@ from campaign_service_record.utils.i18n import (
     get_loaded_locales,
 )
 from utils.locale_config import resolve_locale
-from utils.supported_locales import IL2_TO_APP_LOCALE
+from utils.supported_locales import IL2_TO_APP_LOCALE, get_supported_locales
 from utils.combat_results import (
     KILL_MAPPING,
     calculate_kills_from_stats,
@@ -2058,9 +2059,23 @@ class EventGenerator:
         if not campaign_path.exists():
             log_message(LOGGER, f"  Warning: Campaign folder not found: {campaign_path}")
             return False
+
+        supported_locales = get_supported_locales()
+        locale_files, created_files, source_file = ensure_info_locale_files(
+            campaign_path,
+            supported_locales,
+        )
+        if created_files:
+            created_list = ", ".join(path.name for path in created_files)
+            source_name = source_file.name if source_file else "unknown source"
+            log_message(
+                LOGGER,
+                f"  Created missing locale file(s): {created_list} (source: {source_name})",
+            )
         
         # Find all locale files
-        locale_files = find_all_info_locale_files(campaign_path)
+        if not locale_files:
+            locale_files = find_all_info_locale_files(campaign_path)
         if not locale_files:
             log_message(LOGGER, f"  Warning: No info.locale files found")
             return False
@@ -2193,8 +2208,8 @@ class EventGenerator:
             if len(matches) > 2:
                 log_message(LOGGER, f"    ⚠️  WARNING: {len(matches)} sections (expected 2)!")
             
-            # Write with original encoding
-            with open(info_file, "w", encoding=detected_encoding, newline="") as f:
+            # Write with UTF-8 encoding
+            with open(info_file, "w", encoding="utf-8", newline="") as f:
                 f.write(updated)
             
             return True
