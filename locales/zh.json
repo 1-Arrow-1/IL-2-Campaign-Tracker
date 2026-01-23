@@ -548,5 +548,59 @@
       "submarines": "潜艇",
       "destroyers": "驱逐舰"
     }
+  },
+  "cleanup_failed_missions": {
+    "window_title": "IL-2 战役任务清理",
+    "header": {
+      "title": "战役任务清理",
+      "subtitle": "发现可重玩的未成功任务："
+    },
+    "button": {
+      "apply_changes": "应用更改",
+      "cancel": "取消"
+    },
+    "note": "注意：删除前将自动创建备份。可在 cleanup_ignored_missions.json 中管理已忽略的任务",
+    "card": {
+      "title": "{campaign} - 任务 {mission_id}"
+    },
+    "mission": {
+      "position": "任务位置：{mission_number}",
+      "status_unsuccessful": "状态：⚠️  未成功（takeOffStatus = 1）",
+      "result_basic": "结果：空中 {air}，地面 {ground} | 飞行时间：{flight_time}",
+      "result_naval": "结果：空中 {air}，地面 {ground}，海上 {naval} | 飞行时间：{flight_time}",
+      "warning": "⚠️  此任务条目已锁定。删除后可重玩以获得更好结果。"
+    },
+    "checkbox": {
+      "delete": "删除任务 {mission_id} 条目",
+      "ignore": "不再询问此任务",
+      "ignore_hint": "（在后续检查中隐藏此任务）"
+    },
+    "dialog": {
+      "no_changes": {
+        "title": "无更改",
+        "message": "未选择要清理或忽略的任务"
+      },
+      "confirm": {
+        "title": "确认更改",
+        "delete_header_one": "删除 {count} 个任务条目：",
+        "delete_header_many": "删除 {count} 个任务条目：",
+        "delete_item": "  • {campaign} - 任务 {mission_id}",
+        "ignore_header_one": "在后续检查中隐藏 {count} 个任务：",
+        "ignore_header_many": "在后续检查中隐藏 {count} 个任务：",
+        "backup_note": "将自动创建备份。"
+      },
+      "result": {
+        "title_success": "成功",
+        "title_partial": "部分成功",
+        "success_delete_one": "✓ 已成功删除 {count} 个任务条目！",
+        "success_delete_many": "✓ 已成功删除 {count} 个任务条目！",
+        "success_replay": "现在可以重玩这些任务以获得更好结果。",
+        "partial_delete": "⚠️  已删除 {success_count} 个，共 {total_count} 个任务。",
+        "partial_details": "请查看控制台了解详情。",
+        "ignore_added_one": "✓ 已将 {count} 个任务加入忽略列表。",
+        "ignore_added_many": "✓ 已将 {count} 个任务加入忽略列表。",
+        "ignore_note": "以后不会再提示它们。"
+      }
+    }
   }
 }

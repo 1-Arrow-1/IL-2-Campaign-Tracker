@@ -548,5 +548,59 @@
       "submarines": "Submarines",
       "destroyers": "Destroyers"
     }
+  },
+  "cleanup_failed_missions": {
+    "window_title": "IL-2 Campaign Mission Cleanup",
+    "header": {
+      "title": "Campaign Mission Cleanup",
+      "subtitle": "Found unsuccessful missions that can be replayed:"
+    },
+    "button": {
+      "apply_changes": "Apply Changes",
+      "cancel": "Cancel"
+    },
+    "note": "Note: Backup will be created automatically before deletion. Ignored missions can be managed in cleanup_ignored_missions.json",
+    "card": {
+      "title": "{campaign} - Mission {mission_id}"
+    },
+    "mission": {
+      "position": "Mission Position: {mission_number}",
+      "status_unsuccessful": "Status: ⚠️  Unsuccessful (takeOffStatus = 1)",
+      "result_basic": "Result: {air} air, {ground} ground | Flight Time: {flight_time}",
+      "result_naval": "Result: {air} air, {ground} ground, {naval} naval | Flight Time: {flight_time}",
+      "warning": "⚠️  This mission entry is locked. Delete it to replay for a better result."
+    },
+    "checkbox": {
+      "delete": "Delete Mission {mission_id} entry",
+      "ignore": "Don't ask me about this mission again",
+      "ignore_hint": "(Hide this mission from future checks)"
+    },
+    "dialog": {
+      "no_changes": {
+        "title": "No Changes",
+        "message": "No missions selected for cleanup or ignore"
+      },
+      "confirm": {
+        "title": "Confirm Changes",
+        "delete_header_one": "Delete {count} mission entry:",
+        "delete_header_many": "Delete {count} mission entries:",
+        "delete_item": "  • {campaign} - Mission {mission_id}",
+        "ignore_header_one": "Hide {count} mission from future checks:",
+        "ignore_header_many": "Hide {count} missions from future checks:",
+        "backup_note": "Backup will be created automatically."
+      },
+      "result": {
+        "title_success": "Success",
+        "title_partial": "Partial Success",
+        "success_delete_one": "✓ Successfully deleted {count} mission entry!",
+        "success_delete_many": "✓ Successfully deleted {count} mission entries!",
+        "success_replay": "You can now replay these missions for better results.",
+        "partial_delete": "⚠️  Deleted {success_count} of {total_count} missions.",
+        "partial_details": "Check console for details.",
+        "ignore_added_one": "✓ Added {count} mission to ignore list.",
+        "ignore_added_many": "✓ Added {count} missions to ignore list.",
+        "ignore_note": "You won't be asked about them again."
+      }
+    }
   }
 }

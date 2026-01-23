@@ -548,5 +548,59 @@
       "submarines": "Подводные лодки",
       "destroyers": "Эсминцы"
     }
+  },
+  "cleanup_failed_missions": {
+    "window_title": "Очистка миссий кампании IL-2",
+    "header": {
+      "title": "Очистка миссий кампании",
+      "subtitle": "Обнаружены неуспешные миссии, которые можно переиграть:"
+    },
+    "button": {
+      "apply_changes": "Применить изменения",
+      "cancel": "Отмена"
+    },
+    "note": "Примечание: перед удалением будет автоматически создана резервная копия. Игнорируемые миссии можно управлять в cleanup_ignored_missions.json",
+    "card": {
+      "title": "{campaign} - Миссия {mission_id}"
+    },
+    "mission": {
+      "position": "Позиция миссии: {mission_number}",
+      "status_unsuccessful": "Статус: ⚠️  Неуспешная (takeOffStatus = 1)",
+      "result_basic": "Результат: {air} в воздухе, {ground} на земле | Время полета: {flight_time}",
+      "result_naval": "Результат: {air} в воздухе, {ground} на земле, {naval} на море | Время полета: {flight_time}",
+      "warning": "⚠️  Эта запись миссии заблокирована. Удалите ее, чтобы переиграть и получить лучший результат."
+    },
+    "checkbox": {
+      "delete": "Удалить запись миссии {mission_id}",
+      "ignore": "Больше не спрашивать об этой миссии",
+      "ignore_hint": "(Скрыть эту миссию из будущих проверок)"
+    },
+    "dialog": {
+      "no_changes": {
+        "title": "Нет изменений",
+        "message": "Не выбраны миссии для очистки или игнорирования"
+      },
+      "confirm": {
+        "title": "Подтвердить изменения",
+        "delete_header_one": "Удалить {count} запись миссии:",
+        "delete_header_many": "Удалить {count} записей миссий:",
+        "delete_item": "  • {campaign} - Миссия {mission_id}",
+        "ignore_header_one": "Скрыть {count} миссию из будущих проверок:",
+        "ignore_header_many": "Скрыть {count} миссий из будущих проверок:",
+        "backup_note": "Резервная копия будет создана автоматически."
+      },
+      "result": {
+        "title_success": "Успех",
+        "title_partial": "Частичный успех",
+        "success_delete_one": "✓ Успешно удалена {count} запись миссии!",
+        "success_delete_many": "✓ Успешно удалено {count} записей миссий!",
+        "success_replay": "Теперь вы можете переиграть эти миссии для лучших результатов.",
+        "partial_delete": "⚠️  Удалено {success_count} из {total_count} миссий.",
+        "partial_details": "Смотрите консоль для подробностей.",
+        "ignore_added_one": "✓ {count} миссия добавлена в список игнорируемых.",
+        "ignore_added_many": "✓ {count} миссий добавлено в список игнорируемых.",
+        "ignore_note": "Вас больше не будут спрашивать о них."
+      }
+    }
   }
 }

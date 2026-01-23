@@ -548,5 +548,59 @@
       "submarines": "Okręty podwodne",
       "destroyers": "Niszczyciele"
     }
+  },
+  "cleanup_failed_missions": {
+    "window_title": "Czyszczenie misji kampanii IL-2",
+    "header": {
+      "title": "Czyszczenie misji kampanii",
+      "subtitle": "Wykryto nieudane misje, które można powtórzyć:"
+    },
+    "button": {
+      "apply_changes": "Zastosuj zmiany",
+      "cancel": "Anuluj"
+    },
+    "note": "Uwaga: Przed usunięciem zostanie automatycznie utworzona kopia zapasowa. Zignorowane misje można zarządzać w cleanup_ignored_missions.json",
+    "card": {
+      "title": "{campaign} - Misja {mission_id}"
+    },
+    "mission": {
+      "position": "Pozycja misji: {mission_number}",
+      "status_unsuccessful": "Status: ⚠️  Nieudana (takeOffStatus = 1)",
+      "result_basic": "Wynik: {air} powietrze, {ground} ziemia | Czas lotu: {flight_time}",
+      "result_naval": "Wynik: {air} powietrze, {ground} ziemia, {naval} morze | Czas lotu: {flight_time}",
+      "warning": "⚠️  Ten wpis misji jest zablokowany. Usuń go, aby powtórzyć misję i uzyskać lepszy wynik."
+    },
+    "checkbox": {
+      "delete": "Usuń wpis misji {mission_id}",
+      "ignore": "Nie pytaj mnie ponownie o tę misję",
+      "ignore_hint": "(Ukryj tę misję w przyszłych sprawdzeniach)"
+    },
+    "dialog": {
+      "no_changes": {
+        "title": "Brak zmian",
+        "message": "Nie wybrano misji do czyszczenia lub ignorowania"
+      },
+      "confirm": {
+        "title": "Potwierdź zmiany",
+        "delete_header_one": "Usuń {count} wpis misji:",
+        "delete_header_many": "Usuń {count} wpisy misji:",
+        "delete_item": "  • {campaign} - Misja {mission_id}",
+        "ignore_header_one": "Ukryj {count} misję w przyszłych sprawdzeniach:",
+        "ignore_header_many": "Ukryj {count} misje w przyszłych sprawdzeniach:",
+        "backup_note": "Kopia zapasowa zostanie utworzona automatycznie."
+      },
+      "result": {
+        "title_success": "Sukces",
+        "title_partial": "Częściowy sukces",
+        "success_delete_one": "✓ Pomyślnie usunięto {count} wpis misji!",
+        "success_delete_many": "✓ Pomyślnie usunięto {count} wpisy misji!",
+        "success_replay": "Możesz teraz powtórzyć te misje, aby uzyskać lepsze wyniki.",
+        "partial_delete": "⚠️  Usunięto {success_count} z {total_count} misji.",
+        "partial_details": "Sprawdź konsolę, aby uzyskać szczegóły.",
+        "ignore_added_one": "✓ Dodano {count} misję do listy ignorowanych.",
+        "ignore_added_many": "✓ Dodano {count} misje do listy ignorowanych.",
+        "ignore_note": "Nie będziesz o nie ponownie pytany."
+      }
+    }
   }
 }

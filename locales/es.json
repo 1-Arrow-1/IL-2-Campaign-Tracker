@@ -548,5 +548,59 @@
       "submarines": "Submarinos",
       "destroyers": "Destructores"
     }
+  },
+  "cleanup_failed_missions": {
+    "window_title": "Limpieza de misiones de campaña de IL-2",
+    "header": {
+      "title": "Limpieza de misiones de campaña",
+      "subtitle": "Se encontraron misiones fallidas que pueden repetirse:"
+    },
+    "button": {
+      "apply_changes": "Aplicar cambios",
+      "cancel": "Cancelar"
+    },
+    "note": "Nota: Se creará una copia de seguridad automáticamente antes de borrar. Las misiones ignoradas se pueden gestionar en cleanup_ignored_missions.json",
+    "card": {
+      "title": "{campaign} - Misión {mission_id}"
+    },
+    "mission": {
+      "position": "Posición de misión: {mission_number}",
+      "status_unsuccessful": "Estado: ⚠️  Fallida (takeOffStatus = 1)",
+      "result_basic": "Resultado: {air} aire, {ground} tierra | Tiempo de vuelo: {flight_time}",
+      "result_naval": "Resultado: {air} aire, {ground} tierra, {naval} naval | Tiempo de vuelo: {flight_time}",
+      "warning": "⚠️  Esta entrada de misión está bloqueada. Elimínela para repetirla y obtener un mejor resultado."
+    },
+    "checkbox": {
+      "delete": "Eliminar entrada de misión {mission_id}",
+      "ignore": "No volver a preguntarme por esta misión",
+      "ignore_hint": "(Ocultar esta misión en futuras comprobaciones)"
+    },
+    "dialog": {
+      "no_changes": {
+        "title": "Sin cambios",
+        "message": "No se seleccionaron misiones para limpiar o ignorar"
+      },
+      "confirm": {
+        "title": "Confirmar cambios",
+        "delete_header_one": "Eliminar {count} entrada de misión:",
+        "delete_header_many": "Eliminar {count} entradas de misión:",
+        "delete_item": "  • {campaign} - Misión {mission_id}",
+        "ignore_header_one": "Ocultar {count} misión en futuras comprobaciones:",
+        "ignore_header_many": "Ocultar {count} misiones en futuras comprobaciones:",
+        "backup_note": "Se creará una copia de seguridad automáticamente."
+      },
+      "result": {
+        "title_success": "Éxito",
+        "title_partial": "Éxito parcial",
+        "success_delete_one": "✓ Se eliminó correctamente {count} entrada de misión!",
+        "success_delete_many": "✓ Se eliminaron correctamente {count} entradas de misión!",
+        "success_replay": "Ahora puedes repetir estas misiones para obtener mejores resultados.",
+        "partial_delete": "⚠️  Se eliminaron {success_count} de {total_count} misiones.",
+        "partial_details": "Consulta la consola para más detalles.",
+        "ignore_added_one": "✓ Se añadió {count} misión a la lista de ignoradas.",
+        "ignore_added_many": "✓ Se añadieron {count} misiones a la lista de ignoradas.",
+        "ignore_note": "No se te volverá a preguntar por ellas."
+      }
+    }
   }
 }

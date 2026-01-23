@@ -704,5 +704,59 @@
         "yellow_wound_stripe": "Erneut verletzt. Du bist angeschlagen gelandet und wieder angetreten."
       }
     }
+  },
+  "cleanup_failed_missions": {
+    "window_title": "IL-2 Kampagnen-Missionsbereinigung",
+    "header": {
+      "title": "Kampagnen-Missionsbereinigung",
+      "subtitle": "Es wurden erfolglose Missionen gefunden, die erneut gespielt werden können:"
+    },
+    "button": {
+      "apply_changes": "Änderungen anwenden",
+      "cancel": "Abbrechen"
+    },
+    "note": "Hinweis: Vor dem Löschen wird automatisch ein Backup erstellt. Ignorierte Missionen können in cleanup_ignored_missions.json verwaltet werden.",
+    "card": {
+      "title": "{campaign} - Mission {mission_id}"
+    },
+    "mission": {
+      "position": "Missionsposition: {mission_number}",
+      "status_unsuccessful": "Status: ⚠️  Erfolglos (takeOffStatus = 1)",
+      "result_basic": "Ergebnis: {air} Luft, {ground} Boden | Flugzeit: {flight_time}",
+      "result_naval": "Ergebnis: {air} Luft, {ground} Boden, {naval} See | Flugzeit: {flight_time}",
+      "warning": "⚠️  Dieser Missionseintrag ist gesperrt. Löschen Sie ihn, um ihn für ein besseres Ergebnis erneut zu spielen."
+    },
+    "checkbox": {
+      "delete": "Missionseintrag {mission_id} löschen",
+      "ignore": "Frag mich nicht mehr zu dieser Mission",
+      "ignore_hint": "(Diese Mission in zukünftigen Prüfungen ausblenden)"
+    },
+    "dialog": {
+      "no_changes": {
+        "title": "Keine Änderungen",
+        "message": "Keine Missionen für Bereinigung oder Ignorieren ausgewählt"
+      },
+      "confirm": {
+        "title": "Änderungen bestätigen",
+        "delete_header_one": "Lösche {count} Missionseintrag:",
+        "delete_header_many": "Lösche {count} Missionseinträge:",
+        "delete_item": "  • {campaign} - Mission {mission_id}",
+        "ignore_header_one": "Blende {count} Mission bei zukünftigen Prüfungen aus:",
+        "ignore_header_many": "Blende {count} Missionen bei zukünftigen Prüfungen aus:",
+        "backup_note": "Backup wird automatisch erstellt."
+      },
+      "result": {
+        "title_success": "Erfolg",
+        "title_partial": "Teilweiser Erfolg",
+        "success_delete_one": "✓ {count} Missionseintrag erfolgreich gelöscht!",
+        "success_delete_many": "✓ {count} Missionseinträge erfolgreich gelöscht!",
+        "success_replay": "Diese Missionen können jetzt für bessere Ergebnisse erneut gespielt werden.",
+        "partial_delete": "⚠️  {success_count} von {total_count} Missionen gelöscht.",
+        "partial_details": "Siehe Konsole für Details.",
+        "ignore_added_one": "✓ {count} Mission zur Ignorierliste hinzugefügt.",
+        "ignore_added_many": "✓ {count} Missionen zur Ignorierliste hinzugefügt.",
+        "ignore_note": "Sie werden nicht erneut danach gefragt."
+      }
+    }
   }
 }

@@ -22,6 +22,8 @@ from utils.il2_paths import find_campaignsstates_path, read_game_directory
 from utils.logging import get_logger, log_message
 from utils.pathing import get_base_path
 from utils.formatting import safe_campaign_filename
+from campaign_service_record.utils.i18n import t, init_i18n
+from utils.locale_config import resolve_locale
 
 BASE_DIR = get_base_path(__file__)
 CAMPAIGN_COMPLETION_STATE_FILE = BASE_DIR / "campaign_completion_state.json"
@@ -32,6 +34,15 @@ def _is_debug_enabled() -> bool:
     return env_value.strip().lower() in {"1", "true", "yes", "on"}
 
 logger = get_logger(__name__, debug=_is_debug_enabled())
+
+# Initialize i18n with user's preferred locale
+try:
+    user_locale = resolve_locale()
+    init_i18n(user_locale)
+    log_message(logger, f"[cleanup_failed_missions] i18n initialized with locale: {user_locale}")
+except Exception as e:
+    log_message(logger, f"[cleanup_failed_missions] Failed to initialize i18n: {e}, using English")
+    init_i18n('en')
 
 
 # File to store "don't ask again" preferences
@@ -1066,7 +1077,7 @@ class CleanupGUI:
         self.cleanup_tool = MissionCleanup()
         
         self.root = tk.Tk()
-        self.root.title("IL-2 Campaign Mission Cleanup")
+        self.root.title(t("cleanup_failed_missions.window_title"))
         self.root.geometry("800x600")
         
         self.create_widgets()
@@ -1078,12 +1089,19 @@ class CleanupGUI:
         title_frame = ttk.Frame(self.root, padding="10")
         title_frame.pack(fill=tk.X)
         
-        ttk.Label(title_frame, text="Campaign Mission Cleanup",
-                 font=('Arial', 14, 'bold')).pack()
+        ttk.Label(
+            title_frame,
+            text=t("cleanup_failed_missions.header.title"),
+            font=('Arial', 14, 'bold')
+        ).pack()
         
-        ttk.Label(title_frame, 
-                 text="Found unsuccessful missions that can be replayed:",
-                 font=('Arial', 10)).pack()
+        ttk.Label(
+            title_frame,
+            text=t("cleanup_failed_missions.header.subtitle"),
+            font=('Arial', 10),
+            wraplength=760,
+            justify=tk.LEFT
+        ).pack()
         
         # Scrollable frame for campaigns
         canvas_frame = ttk.Frame(self.root)
@@ -1118,48 +1136,81 @@ class CleanupGUI:
         button_frame = ttk.Frame(self.root, padding="10")
         button_frame.pack(fill=tk.X)
         
-        ttk.Button(button_frame, text="Apply Changes", 
-                  command=self.on_apply, width=20).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Cancel", 
-                  command=self.on_cancel, width=20).pack(side=tk.LEFT, padx=5)
+        ttk.Button(
+            button_frame,
+            text=t("cleanup_failed_missions.button.apply_changes"),
+            command=self.on_apply
+        ).pack(side=tk.LEFT, padx=5)
+        ttk.Button(
+            button_frame,
+            text=t("cleanup_failed_missions.button.cancel"),
+            command=self.on_cancel
+        ).pack(side=tk.LEFT, padx=5)
         
         # Note
         note_frame = ttk.Frame(self.root, padding="10")
         note_frame.pack(fill=tk.X)
         
-        ttk.Label(note_frame, 
-                 text="Note: Backup will be created automatically before deletion. "
-                      "Ignored missions can be managed in cleanup_ignored_missions.json",
-                 font=('Arial', 9, 'italic'),
-                 foreground='gray').pack()
+        ttk.Label(
+            note_frame,
+            text=t("cleanup_failed_missions.note"),
+            font=('Arial', 9, 'italic'),
+            foreground='gray',
+            wraplength=760,
+            justify=tk.LEFT
+        ).pack()
     
     
     def create_mission_card(self, parent, campaign_name: str, mission_id: str, data: Dict):
         """Create a card for one mission"""
         
-        card = ttk.LabelFrame(parent, text=f"{campaign_name.upper()} - Mission {mission_id}", padding="10")
+        card = ttk.LabelFrame(
+            parent,
+            text=t(
+                "cleanup_failed_missions.card.title",
+                campaign=campaign_name.upper(),
+                mission_id=mission_id
+            ),
+            padding="10"
+        )
         card.pack(fill=tk.X, padx=5, pady=5)
         
         # Mission info
-        info_text = f"Mission Position: {data['mission_number']}"
+        info_text = t(
+            "cleanup_failed_missions.mission.position",
+            mission_number=data['mission_number']
+        )
         ttk.Label(card, text=info_text, font=('Arial', 10, 'bold')).pack(anchor=tk.W)
         
-        ttk.Label(card, text="Status: ⚠️  Unsuccessful (takeOffStatus = 1)",
+        ttk.Label(card, text=t("cleanup_failed_missions.mission.status_unsuccessful"),
                  foreground='orange').pack(anchor=tk.W)
         
         # Stats
-        stats_text = f"Result: {data['air_kills']} air, {data['ground_kills']} ground"
         if data['naval_kills'] > 0:
-            stats_text += f", {data['naval_kills']} naval"
-        stats_text += f" | Flight Time: {data['flight_time']}"
+            stats_text = t(
+                "cleanup_failed_missions.mission.result_naval",
+                air=data['air_kills'],
+                ground=data['ground_kills'],
+                naval=data['naval_kills'],
+                flight_time=data['flight_time']
+            )
+        else:
+            stats_text = t(
+                "cleanup_failed_missions.mission.result_basic",
+                air=data['air_kills'],
+                ground=data['ground_kills'],
+                flight_time=data['flight_time']
+            )
         
         ttk.Label(card, text=stats_text).pack(anchor=tk.W)
         
         # Warning
         ttk.Label(card, 
-                 text="⚠️  This mission entry is locked. Delete it to replay for a better result.",
+                 text=t("cleanup_failed_missions.mission.warning"),
                  foreground='red',
-                 font=('Arial', 9)).pack(anchor=tk.W, pady=(5, 0))
+                 font=('Arial', 9),
+                 wraplength=740,
+                 justify=tk.LEFT).pack(anchor=tk.W, pady=(5, 0))
         
         # Separator
         ttk.Separator(card, orient='horizontal').pack(fill=tk.X, pady=8)
@@ -1176,7 +1227,7 @@ class CleanupGUI:
         self.selected[mission_key] = delete_var
         
         ttk.Checkbutton(action_frame, 
-                       text=f"Delete Mission {mission_id} entry",
+                       text=t("cleanup_failed_missions.checkbox.delete", mission_id=mission_id),
                        variable=delete_var).pack(anchor=tk.W)
         
         # Ignore checkbox (with distinctive styling)
@@ -1187,7 +1238,7 @@ class CleanupGUI:
         ignore_frame.pack(anchor=tk.W, pady=(5, 0))
         
         ignore_cb = ttk.Checkbutton(ignore_frame, 
-                                   text="Don't ask me about this mission again",
+                                   text=t("cleanup_failed_missions.checkbox.ignore"),
                                    variable=ignore_var)
         ignore_cb.pack(side=tk.LEFT)
         
@@ -1199,7 +1250,7 @@ class CleanupGUI:
         
         # Tooltip would be nice here but keeping it simple
         ttk.Label(ignore_frame,
-                 text="(Hide this mission from future checks)",
+                 text=t("cleanup_failed_missions.checkbox.ignore_hint"),
                  font=('Arial', 8, 'italic'),
                  foreground='gray').pack(side=tk.LEFT, padx=(2, 0))
     
@@ -1234,30 +1285,56 @@ class CleanupGUI:
                         to_ignore.append((campaign_name, mission_id, missions))
         
         if not to_delete and not to_ignore:
-            messagebox.showinfo("No Changes", "No missions selected for cleanup or ignore")
+            messagebox.showinfo(
+                t("cleanup_failed_missions.dialog.no_changes.title"),
+                t("cleanup_failed_missions.dialog.no_changes.message")
+            )
             return
         
         # Build confirmation message
         msg_parts = []
         
         if to_delete:
-            msg_parts.append(f"Delete {len(to_delete)} mission entr{'y' if len(to_delete) == 1 else 'ies'}:")
+            delete_count = len(to_delete)
+            delete_header_key = (
+                "cleanup_failed_missions.dialog.confirm.delete_header_one"
+                if delete_count == 1
+                else "cleanup_failed_missions.dialog.confirm.delete_header_many"
+            )
+            msg_parts.append(t(delete_header_key, count=delete_count))
             for campaign_name, mission_id, data in to_delete:
-                msg_parts.append(f"  • {campaign_name} - Mission {mission_id}")
+                msg_parts.append(t(
+                    "cleanup_failed_missions.dialog.confirm.delete_item",
+                    campaign=campaign_name,
+                    mission_id=mission_id
+                ))
         
         if to_ignore:
             msg_parts.append("")
-            msg_parts.append(f"Hide {len(to_ignore)} mission{'s' if len(to_ignore) > 1 else ''} from future checks:")
+            ignore_count = len(to_ignore)
+            ignore_header_key = (
+                "cleanup_failed_missions.dialog.confirm.ignore_header_one"
+                if ignore_count == 1
+                else "cleanup_failed_missions.dialog.confirm.ignore_header_many"
+            )
+            msg_parts.append(t(ignore_header_key, count=ignore_count))
             for campaign_name, mission_id, data in to_ignore:
-                msg_parts.append(f"  • {campaign_name} - Mission {mission_id}")
+                msg_parts.append(t(
+                    "cleanup_failed_missions.dialog.confirm.delete_item",
+                    campaign=campaign_name,
+                    mission_id=mission_id
+                ))
         
         if to_delete:
             msg_parts.append("")
-            msg_parts.append("Backup will be created automatically.")
+            msg_parts.append(t("cleanup_failed_missions.dialog.confirm.backup_note"))
         
         msg = "\n".join(msg_parts)
         
-        if not messagebox.askyesno("Confirm Changes", msg):
+        if not messagebox.askyesno(
+            t("cleanup_failed_missions.dialog.confirm.title"),
+            msg
+        ):
             return
         
         # Process ignore flags FIRST (before any deletion)
@@ -1276,23 +1353,43 @@ class CleanupGUI:
         
         if to_delete:
             if success_count == len(to_delete):
-                result_parts.append(f"✓ Successfully deleted {success_count} mission entr{'y' if success_count == 1 else 'ies'}!")
-                result_parts.append("You can now replay these missions for better results.")
+                success_key = (
+                    "cleanup_failed_missions.dialog.result.success_delete_one"
+                    if success_count == 1
+                    else "cleanup_failed_missions.dialog.result.success_delete_many"
+                )
+                result_parts.append(t(success_key, count=success_count))
+                result_parts.append(t("cleanup_failed_missions.dialog.result.success_replay"))
             else:
-                result_parts.append(f"⚠️  Deleted {success_count} of {len(to_delete)} missions.")
-                result_parts.append("Check console for details.")
+                result_parts.append(t(
+                    "cleanup_failed_missions.dialog.result.partial_delete",
+                    success_count=success_count,
+                    total_count=len(to_delete)
+                ))
+                result_parts.append(t("cleanup_failed_missions.dialog.result.partial_details"))
         
         if to_ignore:
             result_parts.append("")
-            result_parts.append(f"✓ Added {len(to_ignore)} mission{'s' if len(to_ignore) > 1 else ''} to ignore list.")
-            result_parts.append("You won't be asked about them again.")
+            ignore_added_key = (
+                "cleanup_failed_missions.dialog.result.ignore_added_one"
+                if len(to_ignore) == 1
+                else "cleanup_failed_missions.dialog.result.ignore_added_many"
+            )
+            result_parts.append(t(ignore_added_key, count=len(to_ignore)))
+            result_parts.append(t("cleanup_failed_missions.dialog.result.ignore_note"))
         
         result_msg = "\n".join(result_parts)
         
         if success_count == len(to_delete) or not to_delete:
-            messagebox.showinfo("Success", result_msg)
+            messagebox.showinfo(
+                t("cleanup_failed_missions.dialog.result.title_success"),
+                result_msg
+            )
         else:
-            messagebox.showwarning("Partial Success", result_msg)
+            messagebox.showwarning(
+                t("cleanup_failed_missions.dialog.result.title_partial"),
+                result_msg
+            )
         
         # ✅ Automatically re-decode campaignsstates.txt after all deletions
         if success_count > 0:

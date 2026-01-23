@@ -548,5 +548,59 @@
       "submarines": "Sous-marins",
       "destroyers": "Destroyers"
     }
+  },
+  "cleanup_failed_missions": {
+    "window_title": "Nettoyage des missions de campagne IL-2",
+    "header": {
+      "title": "Nettoyage des missions de campagne",
+      "subtitle": "Des missions échouées pouvant être rejouées ont été détectées :"
+    },
+    "button": {
+      "apply_changes": "Appliquer les modifications",
+      "cancel": "Annuler"
+    },
+    "note": "Note : une sauvegarde sera créée automatiquement avant la suppression. Les missions ignorées peuvent être gérées dans cleanup_ignored_missions.json",
+    "card": {
+      "title": "{campaign} - Mission {mission_id}"
+    },
+    "mission": {
+      "position": "Position de mission : {mission_number}",
+      "status_unsuccessful": "Statut : ⚠️  Échouée (takeOffStatus = 1)",
+      "result_basic": "Résultat : {air} air, {ground} sol | Temps de vol : {flight_time}",
+      "result_naval": "Résultat : {air} air, {ground} sol, {naval} naval | Temps de vol : {flight_time}",
+      "warning": "⚠️  Cette entrée de mission est verrouillée. Supprimez-la pour la rejouer avec un meilleur résultat."
+    },
+    "checkbox": {
+      "delete": "Supprimer l'entrée de mission {mission_id}",
+      "ignore": "Ne plus me demander pour cette mission",
+      "ignore_hint": "(Masquer cette mission lors des vérifications futures)"
+    },
+    "dialog": {
+      "no_changes": {
+        "title": "Aucun changement",
+        "message": "Aucune mission sélectionnée pour le nettoyage ou l'ignorance"
+      },
+      "confirm": {
+        "title": "Confirmer les modifications",
+        "delete_header_one": "Supprimer {count} entrée de mission :",
+        "delete_header_many": "Supprimer {count} entrées de mission :",
+        "delete_item": "  • {campaign} - Mission {mission_id}",
+        "ignore_header_one": "Masquer {count} mission lors des vérifications futures :",
+        "ignore_header_many": "Masquer {count} missions lors des vérifications futures :",
+        "backup_note": "Une sauvegarde sera créée automatiquement."
+      },
+      "result": {
+        "title_success": "Succès",
+        "title_partial": "Succès partiel",
+        "success_delete_one": "✓ {count} entrée de mission supprimée avec succès !",
+        "success_delete_many": "✓ {count} entrées de mission supprimées avec succès !",
+        "success_replay": "Vous pouvez maintenant rejouer ces missions pour de meilleurs résultats.",
+        "partial_delete": "⚠️  {success_count} missions supprimées sur {total_count}.",
+        "partial_details": "Consultez la console pour plus de détails.",
+        "ignore_added_one": "✓ {count} mission ajoutée à la liste d'ignorées.",
+        "ignore_added_many": "✓ {count} missions ajoutées à la liste d'ignorées.",
+        "ignore_note": "Vous ne serez plus interrogé à leur sujet."
+      }
+    }
   }
 }
