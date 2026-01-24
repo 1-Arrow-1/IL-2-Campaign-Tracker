@@ -13,7 +13,7 @@ import time
 from datetime import datetime
 from tkinter import ttk, messagebox
 from copy import deepcopy
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Iterable, Tuple, List
 
 from settings_manager.config.paths import (
     CONFIG_YAML_PATH,
@@ -25,6 +25,7 @@ from settings_manager.config.file_handlers import (
     save_json_atomic,
     load_yaml,
     save_yaml_atomic,
+    HAS_RUAMEL,
 )
 from settings_manager.config.validators import (
     BracketValidator,
@@ -33,6 +34,10 @@ from settings_manager.config.validators import (
 )
 from settings_manager.i18n import Translator, LANGUAGE_NAMES
 
+if HAS_RUAMEL:
+    from ruamel.yaml.comments import CommentedMap
+else:
+    CommentedMap = dict
 
 class SettingsManagerApp(tk.Tk):
     """Main Settings Manager Application."""
@@ -275,16 +280,10 @@ class SettingsManagerApp(tk.Tk):
         rank_scaling = self.config_data.get('rank_scaling', {})
         factors = rank_scaling.get('factors', {}) if isinstance(rank_scaling, dict) else {}
         
-        # Sort by bracket start value
-        def sort_key(item):
-            bracket = item[0]
-            try:
-                start, _ = BracketValidator.parse(bracket)
-                return start
-            except ValueError:
-                return 9999
-        
-        sorted_factors = sorted(factors.items(), key=sort_key)
+        sorted_factors = sorted(
+            factors.items(),
+            key=lambda item: self._bracket_sort_key(item[0]),
+        )
         
         for bracket, factor in sorted_factors:
             self.scaling_tree.insert('', tk.END, values=(bracket, factor))
@@ -542,32 +541,8 @@ class SettingsManagerApp(tk.Tk):
         dialog = BracketDialog(self, self.tr, "", 1.0)
         if dialog.result:
             bracket, factor = dialog.result
-            
-            # Get existing brackets
-            rank_scaling = self.config_data.setdefault('rank_scaling', {})
-            factors = rank_scaling.setdefault('factors', {})
-            existing = list(factors.keys())
-            
-            # Check duplicate
-            if bracket in existing:
-                messagebox.showerror(
-                    self.tr.t("msg_error_title"),
-                    self.tr.t("err_bracket_duplicate")
-                )
-                return
-            
-            # Check overlap
-            overlap = BracketValidator.check_overlap(bracket, existing)
-            if overlap:
-                if not messagebox.askyesno(
-                    self.tr.t("msg_warning_title"),
-                    self.tr.t("err_bracket_overlap", bracket=overlap) + "\n\nContinue anyway?"
-                ):
-                    return
-            
-            # Add
-            factors[bracket] = factor
-            self._populate_scaling_tree()
+
+            self._apply_bracket_update(bracket, factor)
     
     def _on_edit_bracket(self) -> None:
         """Edit selected bracket."""
@@ -582,16 +557,8 @@ class SettingsManagerApp(tk.Tk):
         dialog = BracketDialog(self, self.tr, old_bracket, old_factor)
         if dialog.result:
             new_bracket, new_factor = dialog.result
-            
-            rank_scaling = self.config_data.get('rank_scaling', {})
-            factors = rank_scaling.get('factors', {})
-            
-            # Remove old, add new
-            if old_bracket in factors:
-                del factors[old_bracket]
-            factors[new_bracket] = new_factor
-            
-            self._populate_scaling_tree()
+
+            self._apply_bracket_update(new_bracket, new_factor, old_bracket=old_bracket)
     
     def _on_remove_bracket(self) -> None:
         """Remove selected bracket."""
@@ -606,10 +573,10 @@ class SettingsManagerApp(tk.Tk):
             self.tr.t("msg_confirm_title"),
             self.tr.t("msg_confirm_delete", bracket=bracket)
         ):
-            rank_scaling = self.config_data.get('rank_scaling', {})
-            factors = rank_scaling.get('factors', {})
+            factors = self._get_rank_scaling_factors()
             if bracket in factors:
                 del factors[bracket]
+            self._rebuild_rank_scaling_factors()
             self._populate_scaling_tree()
     
     def _on_edit_rank_score(self) -> None:
@@ -692,6 +659,87 @@ class SettingsManagerApp(tk.Tk):
         if 'rank_scaling' not in self.config_data:
             self.config_data['rank_scaling'] = {}
         self.config_data['rank_scaling']['enabled'] = self.scaling_var.get() == 'True'
+
+    def _bracket_sort_key(self, bracket: str) -> Tuple[int, float]:
+        try:
+            start, end = BracketValidator.parse(bracket)
+        except ValueError:
+            return (9999, float("inf"))
+        end_value = end if end is not None else float("inf")
+        return (start, end_value)
+
+    def _sort_brackets(self, brackets: Iterable[str]) -> List[str]:
+        return sorted(brackets, key=self._bracket_sort_key)
+
+    def _brackets_overlap(self, bracket_a: str, bracket_b: str) -> bool:
+        start_a, end_a = BracketValidator.parse(bracket_a)
+        start_b, end_b = BracketValidator.parse(bracket_b)
+        end_a_value = end_a if end_a is not None else float("inf")
+        end_b_value = end_b if end_b is not None else float("inf")
+        return start_a <= end_b_value and start_b <= end_a_value
+
+    def _find_overlaps(self, bracket: str, existing: Iterable[str]) -> List[str]:
+        overlaps = []
+        for existing_bracket in existing:
+            if existing_bracket == bracket:
+                continue
+            if self._brackets_overlap(bracket, existing_bracket):
+                overlaps.append(existing_bracket)
+        return overlaps
+
+    def _get_rank_scaling_factors(self) -> Dict[str, Any]:
+        if 'rank_scaling' not in self.config_data or not isinstance(self.config_data['rank_scaling'], dict):
+            self.config_data['rank_scaling'] = {}
+        rank_scaling = self.config_data['rank_scaling']
+        factors = rank_scaling.get('factors', {})
+        if not isinstance(factors, dict):
+            factors = {}
+            rank_scaling['factors'] = factors
+        return factors
+
+    def _rebuild_rank_scaling_factors(self) -> None:
+        factors = self._get_rank_scaling_factors()
+        ordered_factors = CommentedMap()
+        for bracket in self._sort_brackets(factors.keys()):
+            ordered_factors[bracket] = factors[bracket]
+        self.config_data['rank_scaling']['factors'] = ordered_factors
+
+    def _apply_bracket_update(
+        self,
+        bracket: str,
+        factor: float,
+        old_bracket: Optional[str] = None,
+    ) -> None:
+        factors = self._get_rank_scaling_factors()
+        existing = [key for key in factors.keys() if key != old_bracket]
+
+        if bracket in existing:
+            messagebox.showerror(
+                self.tr.t("msg_error_title"),
+                self.tr.t("err_bracket_duplicate")
+            )
+            return
+
+        overlaps = self._find_overlaps(bracket, existing)
+        removed = []
+        for overlap in overlaps:
+            if overlap in factors:
+                removed.append(overlap)
+                del factors[overlap]
+
+        if old_bracket and old_bracket != bracket and old_bracket in factors:
+            del factors[old_bracket]
+
+        factors[bracket] = factor
+        self._rebuild_rank_scaling_factors()
+        self._populate_scaling_tree()
+
+        if removed:
+            removed_display = ", ".join(self._sort_brackets(removed))
+            messagebox.showwarning(
+                self.tr.t("msg_warning_title"),
+                f"Removed overlapping brackets: {removed_display}"
+            )
 
     def _format_type_error(self, field: str, expected: str, value: Any) -> str:
         preview = repr(value)
@@ -1016,6 +1064,7 @@ class SettingsManagerApp(tk.Tk):
             previous_locale = self.original_data["settings"].get("locale")
 
         self._collect_changes()
+        self._rebuild_rank_scaling_factors()
 
         normalization_errors = self._normalize_all()
         if normalization_errors:
