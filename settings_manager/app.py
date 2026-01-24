@@ -283,13 +283,23 @@ class SettingsManagerApp(tk.Tk):
         self.notebook.add(frame, text=self.tr.t("tab_rank_values"))
         
         # Info label
-        info_text = "Edit score thresholds for ranks. Changes apply to all countries."
+        info_text = self.tr.t("lbl_rank_values_helper")
         ttk.Label(frame, text=info_text, foreground='gray').grid(
             row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 10)
         )
+
+        self.rank_warning_label = ttk.Label(
+            frame,
+            text=self.tr.t("msg_rank_scores_mismatch"),
+            foreground='darkorange'
+        )
+        self.rank_warning_label.grid(row=1, column=0, columnspan=2, sticky=tk.W, pady=(0, 10))
         
         # Treeview
-        columns = ('rank', 'score')
+        self.rank_country_columns = [
+            (f"country_{idx}", country) for idx, country in enumerate(self._get_rank_countries())
+        ]
+        columns = ('index', 'score', *[col_id for col_id, _ in self.rank_country_columns])
         self.ranks_tree = ttk.Treeview(
             frame,
             columns=columns,
@@ -297,16 +307,19 @@ class SettingsManagerApp(tk.Tk):
             height=12
         )
         
-        self.ranks_tree.heading('rank', text=self.tr.t("lbl_rank_name"))
+        self.ranks_tree.heading('index', text=self.tr.t("lbl_rank_index_header"))
         self.ranks_tree.heading('score', text=self.tr.t("lbl_rank_score"))
-        self.ranks_tree.column('rank', width=200, anchor=tk.W)
-        self.ranks_tree.column('score', width=100, anchor=tk.CENTER)
+        self.ranks_tree.column('index', width=90, anchor=tk.W)
+        self.ranks_tree.column('score', width=90, anchor=tk.CENTER)
+        for col_id, country in self.rank_country_columns:
+            self.ranks_tree.heading(col_id, text=country)
+            self.ranks_tree.column(col_id, width=160, anchor=tk.W)
         
         scrollbar = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=self.ranks_tree.yview)
         self.ranks_tree.configure(yscrollcommand=scrollbar.set)
         
-        self.ranks_tree.grid(row=1, column=0, sticky=tk.NSEW, pady=(0, 10))
-        scrollbar.grid(row=1, column=1, sticky=tk.NS, pady=(0, 10))
+        self.ranks_tree.grid(row=2, column=0, sticky=tk.NSEW, pady=(0, 10))
+        scrollbar.grid(row=2, column=1, sticky=tk.NS, pady=(0, 10))
         
         # Populate
         self._populate_ranks_tree()
@@ -316,27 +329,86 @@ class SettingsManagerApp(tk.Tk):
             frame,
             text=self.tr.t("btn_edit"),
             command=self._on_edit_rank_score
-        ).grid(row=2, column=0, sticky=tk.W)
+        ).grid(row=3, column=0, sticky=tk.W)
         
         # Double-click to edit
         self.ranks_tree.bind('<Double-1>', lambda e: self._on_edit_rank_score())
         
         frame.columnconfigure(0, weight=1)
-        frame.rowconfigure(1, weight=1)
+        frame.rowconfigure(2, weight=1)
     
     def _populate_ranks_tree(self) -> None:
         """Populate ranks treeview."""
         for item in self.ranks_tree.get_children():
             self.ranks_tree.delete(item)
         
-        # Use Germany as reference (all countries have same scores)
+        countries, rows, mismatch_found = self._build_rank_grid_model()
+        if mismatch_found:
+            self.rank_warning_label.grid()
+        else:
+            self.rank_warning_label.grid_remove()
+
+        for row in rows:
+            values = [
+                self._format_rank_index_label(row["index"], row["mismatched"]),
+                row["score"],
+            ]
+            for country in countries:
+                values.append(row["names"].get(country, "—"))
+            self.ranks_tree.insert('', tk.END, values=values)
+
+    def _get_rank_countries(self) -> list[str]:
         ranks = self.config_data.get('ranks', {})
-        germany_ranks = ranks.get('Germany', [])
-        
-        for rank in germany_ranks:
-            name = rank.get('name', 'Unknown')
-            score = rank.get('score', 0)
-            self.ranks_tree.insert('', tk.END, values=(name, score))
+        if isinstance(ranks, dict):
+            return list(ranks.keys())
+        return []
+
+    def _format_rank_index_label(self, index: int, mismatched: bool = False) -> str:
+        label = self.tr.t("lbl_rank_index_format", index=index)
+        if mismatched:
+            return f"{label} ⚠"
+        return label
+
+    def _build_rank_grid_model(self) -> tuple[list[str], list[dict], bool]:
+        ranks_by_country = self.config_data.get('ranks', {})
+        if not isinstance(ranks_by_country, dict):
+            return [], [], False
+
+        if hasattr(self, "rank_country_columns"):
+            countries = [country for _, country in self.rank_country_columns]
+        else:
+            countries = list(ranks_by_country.keys())
+        max_len = max((len(rank_list) for rank_list in ranks_by_country.values()), default=0)
+        rows = []
+        mismatch_found = False
+
+        for idx in range(max_len):
+            scores = []
+            names = {}
+
+            for country in countries:
+                rank_list = ranks_by_country.get(country, [])
+                if idx < len(rank_list):
+                    entry = rank_list[idx] or {}
+                    score = entry.get('score', 0)
+                    scores.append(score)
+                    raw_name = entry.get('name', '')
+                    names[country] = self.tr.translate_rank_name(raw_name, country)
+                else:
+                    names[country] = "—"
+
+            mismatched = len({score for score in scores}) > 1
+            if mismatched:
+                mismatch_found = True
+
+            rows.append({
+                "index": idx,
+                "score": scores[0] if scores else 0,
+                "names": names,
+                "mismatched": mismatched,
+            })
+
+        return countries, rows, mismatch_found
     
     def _create_campaigns_tab(self) -> None:
         """Create Campaigns tab."""
@@ -528,9 +600,10 @@ class SettingsManagerApp(tk.Tk):
         item = selection[0]
         idx = self.ranks_tree.index(item)
         values = self.ranks_tree.item(item, 'values')
-        rank_name, old_score = values[0], int(values[1])
+        rank_label = self.tr.t("lbl_rank_index_format", index=idx)
+        old_score = int(values[1])
         
-        dialog = ScoreDialog(self, self.tr, rank_name, old_score)
+        dialog = ScoreDialog(self, self.tr, rank_label, old_score)
         if dialog.result is not None:
             new_score = dialog.result
             
@@ -619,11 +692,13 @@ class SettingsManagerApp(tk.Tk):
         # Validate rank scores
         ranks = self.config_data.get('ranks', {})
         if ranks:
-            first_country = next(iter(ranks.values()), [])
-            scores = [r.get('score', 0) for r in first_country]
-            is_valid, invalid_idx = ScoreValidator.validate_ascending(scores)
-            if not is_valid:
-                errors.append(self.tr.t("err_score_not_ascending", index=invalid_idx))
+            for country, rank_list in ranks.items():
+                scores = [r.get('score', 0) for r in rank_list]
+                is_valid, invalid_idx = ScoreValidator.validate_ascending(scores)
+                if not is_valid:
+                    errors.append(
+                        self.tr.t("err_score_not_ascending", index=invalid_idx) + f" ({country})"
+                    )
         
         # Validate campaign offsets
         if self.mission_dates_data:

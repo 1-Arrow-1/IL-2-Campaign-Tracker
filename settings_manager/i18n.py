@@ -6,6 +6,7 @@ Reuses locale files from the main tracker and adds settings-specific keys.
 """
 
 import json
+import re
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -44,7 +45,10 @@ SETTINGS_TRANSLATIONS = {
         "btn_edit": "Edit",
         
         "lbl_rank_name": "Rank",
+        "lbl_rank_index_header": "Rank Index",
+        "lbl_rank_index_format": "Rank {index}",
         "lbl_rank_score": "Score",
+        "lbl_rank_values_helper": "Editing scores applies to all countries.",
         
         "lbl_campaign_name": "Campaign",
         "lbl_country": "Country",
@@ -59,6 +63,7 @@ SETTINGS_TRANSLATIONS = {
         "msg_confirm_delete": "Delete bracket '{bracket}'?",
         "msg_save_success": "Settings saved successfully.",
         "msg_save_error": "Error saving settings: {error}",
+        "msg_rank_scores_mismatch": "Scores differ between countries; applying will unify them to the edited values.",
         "msg_warning_title": "Warning",
         "msg_confirm_title": "Confirm",
         "msg_error_title": "Error",
@@ -104,7 +109,10 @@ SETTINGS_TRANSLATIONS = {
         "btn_edit": "Bearbeiten",
         
         "lbl_rank_name": "Rang",
+        "lbl_rank_index_header": "Rang-Index",
+        "lbl_rank_index_format": "Rang {index}",
         "lbl_rank_score": "Punkte",
+        "lbl_rank_values_helper": "Bearbeitete Punkte gelten für alle Länder.",
         
         "lbl_campaign_name": "Kampagne",
         "lbl_country": "Land",
@@ -119,6 +127,7 @@ SETTINGS_TRANSLATIONS = {
         "msg_confirm_delete": "Bereich '{bracket}' löschen?",
         "msg_save_success": "Einstellungen erfolgreich gespeichert.",
         "msg_save_error": "Fehler beim Speichern: {error}",
+        "msg_rank_scores_mismatch": "Punkte unterscheiden sich zwischen Ländern; Übernehmen vereinheitlicht sie auf die bearbeiteten Werte.",
         "msg_warning_title": "Warnung",
         "msg_confirm_title": "Bestätigen",
         "msg_error_title": "Fehler",
@@ -164,7 +173,10 @@ SETTINGS_TRANSLATIONS = {
         "btn_edit": "Editar",
         
         "lbl_rank_name": "Rango",
+        "lbl_rank_index_header": "Índice de rango",
+        "lbl_rank_index_format": "Rango {index}",
         "lbl_rank_score": "Puntuación",
+        "lbl_rank_values_helper": "La edición de puntuaciones se aplica a todos los países.",
         
         "lbl_campaign_name": "Campaña",
         "lbl_country": "País",
@@ -179,6 +191,7 @@ SETTINGS_TRANSLATIONS = {
         "msg_confirm_delete": "¿Eliminar rango '{bracket}'?",
         "msg_save_success": "Configuración guardada correctamente.",
         "msg_save_error": "Error al guardar: {error}",
+        "msg_rank_scores_mismatch": "Las puntuaciones difieren entre países; al aplicar se unificarán con los valores editados.",
         "msg_warning_title": "Advertencia",
         "msg_confirm_title": "Confirmar",
         "msg_error_title": "Error",
@@ -209,7 +222,10 @@ SETTINGS_TRANSLATIONS = {
         "btn_edit": "Modifier",
         
         "lbl_rank_name": "Rang",
+        "lbl_rank_index_header": "Indice de rang",
+        "lbl_rank_index_format": "Rang {index}",
         "lbl_rank_score": "Score",
+        "lbl_rank_values_helper": "La modification des scores s'applique à tous les pays.",
         
         "lbl_campaign_name": "Campagne",
         "lbl_country": "Pays",
@@ -224,6 +240,7 @@ SETTINGS_TRANSLATIONS = {
         "msg_confirm_delete": "Supprimer la plage '{bracket}'?",
         "msg_save_success": "Paramètres enregistrés avec succès.",
         "msg_save_error": "Erreur lors de l'enregistrement: {error}",
+        "msg_rank_scores_mismatch": "Les scores diffèrent selon les pays ; l'application les unifiera aux valeurs modifiées.",
         "msg_warning_title": "Avertissement",
         "msg_confirm_title": "Confirmer",
         "msg_error_title": "Erreur",
@@ -246,7 +263,10 @@ SETTINGS_TRANSLATIONS = {
         "btn_edit": "Edytuj",
         
         "lbl_rank_name": "Ranga",
+        "lbl_rank_index_header": "Indeks rangi",
+        "lbl_rank_index_format": "Ranga {index}",
         "lbl_rank_score": "Punkty",
+        "lbl_rank_values_helper": "Edycja punktów dotyczy wszystkich krajów.",
         
         "lbl_campaign_name": "Kampania",
         "lbl_country": "Kraj",
@@ -261,6 +281,7 @@ SETTINGS_TRANSLATIONS = {
         "msg_confirm_delete": "Usunąć zakres '{bracket}'?",
         "msg_save_success": "Ustawienia zapisane pomyślnie.",
         "msg_save_error": "Błąd podczas zapisywania: {error}",
+        "msg_rank_scores_mismatch": "Punkty różnią się między krajami; zastosowanie ujednolici je do edytowanych wartości.",
         "msg_warning_title": "Ostrzeżenie",
         "msg_confirm_title": "Potwierdź",
         "msg_error_title": "Błąd",
@@ -283,7 +304,10 @@ SETTINGS_TRANSLATIONS = {
         "btn_edit": "Редактировать",
         
         "lbl_rank_name": "Звание",
+        "lbl_rank_index_header": "Индекс звания",
+        "lbl_rank_index_format": "Звание {index}",
         "lbl_rank_score": "Очки",
+        "lbl_rank_values_helper": "Изменение очков применяется ко всем странам.",
         
         "lbl_campaign_name": "Кампания",
         "lbl_country": "Страна",
@@ -298,6 +322,7 @@ SETTINGS_TRANSLATIONS = {
         "msg_confirm_delete": "Удалить диапазон '{bracket}'?",
         "msg_save_success": "Настройки успешно сохранены.",
         "msg_save_error": "Ошибка сохранения: {error}",
+        "msg_rank_scores_mismatch": "Очки различаются между странами; применение приведёт их к изменённым значениям.",
         "msg_warning_title": "Предупреждение",
         "msg_confirm_title": "Подтверждение",
         "msg_error_title": "Ошибка",
@@ -320,7 +345,10 @@ SETTINGS_TRANSLATIONS = {
         "btn_edit": "编辑",
         
         "lbl_rank_name": "军衔",
+        "lbl_rank_index_header": "等级索引",
+        "lbl_rank_index_format": "等级 {index}",
         "lbl_rank_score": "分数",
+        "lbl_rank_values_helper": "编辑分数会应用到所有国家。",
         
         "lbl_campaign_name": "战役",
         "lbl_country": "国家",
@@ -335,11 +363,41 @@ SETTINGS_TRANSLATIONS = {
         "msg_confirm_delete": "删除区间 '{bracket}'？",
         "msg_save_success": "设置保存成功。",
         "msg_save_error": "保存错误：{error}",
+        "msg_rank_scores_mismatch": "各国分数不同；应用后将统一为编辑后的值。",
         "msg_warning_title": "警告",
         "msg_confirm_title": "确认",
         "msg_error_title": "错误",
     },
 }
+
+
+def name_to_i18n_key(name: str) -> str:
+    """Convert display name to i18n key format."""
+    value = name.lower()
+    value = value.replace("'", "")
+    value = value.replace("&", "and")
+    value = value.replace("+", "and")
+    value = re.sub(r"[,\.\"]", "", value)
+    value = re.sub(r"\s*\(\s*", "_", value)
+    value = re.sub(r"\s*\)\s*", "", value)
+    value = value.replace("…", "")
+    value = re.sub(r"\s+", "_", value)
+    value = re.sub(r"_+", "_", value)
+    return value.strip("_")
+
+
+def country_code_for_rank(country: Optional[str]) -> str:
+    """Get country code prefix for rank i18n keys."""
+    normalized = (country or "").lower().strip()
+    if normalized == "germany":
+        return "ger"
+    if normalized in {"britain", "uk", "great britain"}:
+        return "raf"
+    if normalized in {"usa", "united states", "united states of america", "us"}:
+        return "usaaf"
+    if normalized in {"soviet union", "ussr", "russia"}:
+        return "vvs"
+    return ""
 
 
 class Translator:
@@ -350,6 +408,7 @@ class Translator:
     def __init__(self):
         self.current_locale = 'en'
         self.translations: Dict[str, Dict[str, str]] = {}
+        self.locale_data: Dict[str, dict] = {}
         self._load_all_translations()
     
     def _load_all_translations(self) -> None:
@@ -374,6 +433,45 @@ class Translator:
                                     self.translations[locale][f'btn_{key}'] = val
                     except (json.JSONDecodeError, OSError):
                         pass
+
+    def _load_locale_data(self, locale: str) -> dict:
+        """Load full locale JSON for rank translations."""
+        if locale in self.locale_data:
+            return self.locale_data[locale]
+        data: dict = {}
+        filepath = LOCALES_DIR / f"{locale}.json"
+        if filepath.exists():
+            try:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+            except (json.JSONDecodeError, OSError):
+                data = {}
+        self.locale_data[locale] = data
+        return data
+
+    def _lookup_rank_translation(self, locale: str, key: str) -> Optional[str]:
+        data = self._load_locale_data(locale)
+        return data.get("progression", {}).get("ranks", {}).get(key)
+
+    def translate_rank_name(self, name: str, country: Optional[str]) -> str:
+        """Translate rank name using locale files with fallback to English."""
+        if not name:
+            return name
+
+        base_key = name_to_i18n_key(name)
+        country_code = country_code_for_rank(country)
+        keys = []
+        if country_code:
+            keys.append(f"{country_code}_{base_key}")
+        keys.append(base_key)
+
+        for locale in (self.current_locale, 'en'):
+            for key in keys:
+                translated = self._lookup_rank_translation(locale, key)
+                if translated:
+                    return translated
+
+        return name
     
     def set_locale(self, locale: str) -> None:
         """Set current locale."""
