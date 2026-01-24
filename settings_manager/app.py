@@ -671,6 +671,159 @@ class SettingsManagerApp(tk.Tk):
         if 'rank_scaling' not in self.config_data:
             self.config_data['rank_scaling'] = {}
         self.config_data['rank_scaling']['enabled'] = self.scaling_var.get() == 'True'
+
+    def _format_type_error(self, field: str, expected: str, value: Any) -> str:
+        preview = repr(value)
+        if len(preview) > 120:
+            preview = preview[:117] + "..."
+        return f"{field}: expected {expected}, got {type(value).__name__} ({preview})"
+
+    def _coerce_bool(self, value: Any, field: str, errors: list[str], default: Optional[bool] = None) -> Any:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in ("true", "yes", "1"):
+                return True
+            if normalized in ("false", "no", "0"):
+                return False
+        errors.append(self._format_type_error(field, "bool", value))
+        return default if default is not None else value
+
+    def _coerce_int(self, value: Any, field: str, errors: list[str]) -> Any:
+        if isinstance(value, int) and not isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            stripped = value.strip()
+            if stripped.isdigit() or (stripped.startswith("-") and stripped[1:].isdigit()):
+                try:
+                    return int(stripped)
+                except ValueError:
+                    pass
+        errors.append(self._format_type_error(field, "int", value))
+        return value
+
+    def _coerce_float(self, value: Any, field: str, errors: list[str]) -> Any:
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            return float(value)
+        if isinstance(value, str):
+            try:
+                return float(value.strip())
+            except ValueError:
+                pass
+        errors.append(self._format_type_error(field, "float", value))
+        return value
+
+    def _normalize_all(self) -> list[str]:
+        """Normalize UI data into expected types before validation."""
+        errors: list[str] = []
+
+        if not isinstance(self.settings_data, dict):
+            errors.append(self._format_type_error("settings", "dict", self.settings_data))
+            self.settings_data = {}
+        locale = self.settings_data.get("locale")
+        if locale is not None and not isinstance(locale, str):
+            errors.append(self._format_type_error("settings.locale", "str", locale))
+
+        if not isinstance(self.config_data, dict):
+            errors.append(self._format_type_error("config", "dict", self.config_data))
+            self.config_data = {}
+
+        self.config_data["enable_popups"] = self._coerce_bool(
+            self.config_data.get("enable_popups", True),
+            "config.enable_popups",
+            errors,
+            default=True,
+        )
+
+        rank_scaling = self.config_data.get("rank_scaling", {})
+        if not isinstance(rank_scaling, dict):
+            errors.append(self._format_type_error("config.rank_scaling", "dict", rank_scaling))
+            rank_scaling = {}
+        self.config_data["rank_scaling"] = rank_scaling
+        rank_scaling["enabled"] = self._coerce_bool(
+            rank_scaling.get("enabled", True),
+            "config.rank_scaling.enabled",
+            errors,
+            default=True,
+        )
+
+        factors = rank_scaling.get("factors", {})
+        if not isinstance(factors, dict):
+            errors.append(self._format_type_error("config.rank_scaling.factors", "dict", factors))
+            factors = {}
+        normalized_factors: Dict[str, Any] = {}
+        for bracket, factor in factors.items():
+            bracket_key = bracket if isinstance(bracket, str) else str(bracket)
+            if not isinstance(bracket, str):
+                errors.append(self._format_type_error("config.rank_scaling.factors.<key>", "str", bracket))
+            normalized_factors[bracket_key] = self._coerce_float(
+                factor, f"config.rank_scaling.factors.{bracket_key}", errors
+            )
+        rank_scaling["factors"] = normalized_factors
+
+        ranks = self.config_data.get("ranks", {})
+        if ranks and not isinstance(ranks, dict):
+            errors.append(self._format_type_error("config.ranks", "dict", ranks))
+            ranks = {}
+        if isinstance(ranks, dict):
+            for country, rank_list in ranks.items():
+                if not isinstance(rank_list, list):
+                    errors.append(self._format_type_error(f"config.ranks.{country}", "list", rank_list))
+                    ranks[country] = []
+                    continue
+                normalized_rank_list = []
+                for idx, entry in enumerate(rank_list):
+                    if not isinstance(entry, dict):
+                        errors.append(
+                            self._format_type_error(f"config.ranks.{country}[{idx}]", "dict", entry)
+                        )
+                        continue
+                    score = self._coerce_int(
+                        entry.get("score", 0), f"config.ranks.{country}[{idx}].score", errors
+                    )
+                    name = entry.get("name", "")
+                    if name is not None and not isinstance(name, str):
+                        errors.append(
+                            self._format_type_error(f"config.ranks.{country}[{idx}].name", "str", name)
+                        )
+                    normalized_rank_list.append({"score": score, "name": name})
+                ranks[country] = normalized_rank_list
+        self.config_data["ranks"] = ranks
+
+        if self.mission_dates_data is not None:
+            if not isinstance(self.mission_dates_data, dict):
+                errors.append(self._format_type_error("mission_dates", "dict", self.mission_dates_data))
+                self.mission_dates_data = {}
+            else:
+                normalized_mission_dates = {}
+                for campaign, data in self.mission_dates_data.items():
+                    if not isinstance(data, dict):
+                        errors.append(
+                            self._format_type_error(f"mission_dates.{campaign}", "dict", data)
+                        )
+                        normalized_mission_dates[campaign] = {}
+                        continue
+                    offset = self._coerce_int(
+                        data.get("starting_rank_offset", 0),
+                        f"mission_dates.{campaign}.starting_rank_offset",
+                        errors,
+                    )
+                    normalized_entry = dict(data)
+                    normalized_entry["starting_rank_offset"] = offset
+                    normalized_mission_dates[campaign] = normalized_entry
+                self.mission_dates_data = normalized_mission_dates
+
+        return errors
+
+    def _log_normalized_settings(self) -> None:
+        """Log a summary of normalized settings for debugging."""
+        summary = {
+            "settings": {key: type(value).__name__ for key, value in self.settings_data.items()},
+            "config": {key: type(value).__name__ for key, value in self.config_data.items()},
+            "mission_dates": type(self.mission_dates_data).__name__,
+        }
+        print(f"Settings Manager: normalized settings types: {summary}")
     
     def _validate_all(self) -> list[str]:
         """Validate all data. Returns list of errors."""
@@ -678,35 +831,87 @@ class SettingsManagerApp(tk.Tk):
         
         # Validate rank scaling factors
         rank_scaling = self.config_data.get('rank_scaling', {})
-        factors = rank_scaling.get('factors', {}) if isinstance(rank_scaling, dict) else {}
+        if not isinstance(rank_scaling, dict):
+            errors.append(self._format_type_error("config.rank_scaling", "dict", rank_scaling))
+            rank_scaling = {}
+        factors = rank_scaling.get('factors', {})
+        if not isinstance(factors, dict):
+            errors.append(self._format_type_error("config.rank_scaling.factors", "dict", factors))
+            factors = {}
         
         for bracket, factor in factors.items():
+            if not isinstance(bracket, str):
+                errors.append(self._format_type_error("config.rank_scaling.factors.<key>", "str", bracket))
+                continue
             try:
                 BracketValidator.parse(bracket)
             except ValueError as e:
                 errors.append(f"Bracket '{bracket}': {e}")
             
+            if not isinstance(factor, (int, float)) or isinstance(factor, bool):
+                errors.append(self._format_type_error(f"config.rank_scaling.factors.{bracket}", "float", factor))
+                continue
             if not BracketValidator.validate_factor(factor):
                 errors.append(self.tr.t("err_factor_range") + f" ('{bracket}': {factor})")
         
         # Validate rank scores
         ranks = self.config_data.get('ranks', {})
         if ranks:
-            for country, rank_list in ranks.items():
-                scores = [r.get('score', 0) for r in rank_list]
-                is_valid, invalid_idx = ScoreValidator.validate_ascending(scores)
-                if not is_valid:
-                    errors.append(
-                        self.tr.t("err_score_not_ascending", index=invalid_idx) + f" ({country})"
-                    )
+            if not isinstance(ranks, dict):
+                errors.append(self._format_type_error("config.ranks", "dict", ranks))
+            else:
+                for country, rank_list in ranks.items():
+                    if not isinstance(rank_list, list):
+                        errors.append(self._format_type_error(f"config.ranks.{country}", "list", rank_list))
+                        continue
+                    scores = []
+                    for idx, entry in enumerate(rank_list):
+                        if not isinstance(entry, dict):
+                            errors.append(
+                                self._format_type_error(f"config.ranks.{country}[{idx}]", "dict", entry)
+                            )
+                            continue
+                        score = entry.get('score', 0)
+                        if not isinstance(score, int) or isinstance(score, bool):
+                            errors.append(
+                                self._format_type_error(
+                                    f"config.ranks.{country}[{idx}].score",
+                                    "int",
+                                    score,
+                                )
+                            )
+                            continue
+                        scores.append(score)
+                    is_valid, invalid_idx = ScoreValidator.validate_ascending(scores)
+                    if scores and not is_valid:
+                        errors.append(
+                            self.tr.t("err_score_not_ascending", index=invalid_idx) + f" ({country})"
+                        )
         
         # Validate campaign offsets
         if self.mission_dates_data:
             min_off, max_off = OffsetValidator.get_range()
-            for campaign, data in self.mission_dates_data.items():
-                offset = data.get('starting_rank_offset', 0)
-                if not OffsetValidator.validate(offset):
-                    errors.append(self.tr.t("err_offset_range", min=min_off, max=max_off) + f" ({campaign})")
+            if not isinstance(self.mission_dates_data, dict):
+                errors.append(self._format_type_error("mission_dates", "dict", self.mission_dates_data))
+            else:
+                for campaign, data in self.mission_dates_data.items():
+                    if not isinstance(data, dict):
+                        errors.append(self._format_type_error(f"mission_dates.{campaign}", "dict", data))
+                        continue
+                    offset = data.get('starting_rank_offset', 0)
+                    if not isinstance(offset, int) or isinstance(offset, bool):
+                        errors.append(
+                            self._format_type_error(
+                                f"mission_dates.{campaign}.starting_rank_offset",
+                                "int",
+                                offset,
+                            )
+                        )
+                        continue
+                    if not OffsetValidator.validate(offset):
+                        errors.append(
+                            self.tr.t("err_offset_range", min=min_off, max=max_off) + f" ({campaign})"
+                        )
         
         return errors
     
@@ -757,6 +962,16 @@ class SettingsManagerApp(tk.Tk):
     def _on_apply(self) -> bool:
         """Apply changes."""
         self._collect_changes()
+
+        normalization_errors = self._normalize_all()
+        if normalization_errors:
+            messagebox.showerror(
+                self.tr.t("msg_error_title"),
+                "\n".join(normalization_errors)
+            )
+            return False
+
+        self._log_normalized_settings()
         
         # Validate
         errors = self._validate_all()
