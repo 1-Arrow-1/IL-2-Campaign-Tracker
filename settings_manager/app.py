@@ -4,6 +4,7 @@ IL-2 Settings Manager - Main Application
 The main application window with tabbed interface.
 """
 
+import os
 import tkinter as tk
 from tkinter import ttk, messagebox
 from copy import deepcopy
@@ -798,6 +799,13 @@ class SettingsManagerApp(tk.Tk):
             else:
                 normalized_mission_dates = {}
                 for campaign, data in self.mission_dates_data.items():
+                    if campaign == "game_directory":
+                        if data is not None and not isinstance(data, str):
+                            errors.append(
+                                self._format_type_error("mission_dates.game_directory", "str", data)
+                            )
+                        normalized_mission_dates[campaign] = data
+                        continue
                     if not isinstance(data, dict):
                         errors.append(
                             self._format_type_error(f"mission_dates.{campaign}", "dict", data)
@@ -895,6 +903,12 @@ class SettingsManagerApp(tk.Tk):
                 errors.append(self._format_type_error("mission_dates", "dict", self.mission_dates_data))
             else:
                 for campaign, data in self.mission_dates_data.items():
+                    if campaign == "game_directory":
+                        if data is not None and not isinstance(data, str):
+                            errors.append(
+                                self._format_type_error("mission_dates.game_directory", "str", data)
+                            )
+                        continue
                     if not isinstance(data, dict):
                         errors.append(self._format_type_error(f"mission_dates.{campaign}", "dict", data))
                         continue
@@ -959,8 +973,12 @@ class SettingsManagerApp(tk.Tk):
         
         return False
     
-    def _on_apply(self) -> bool:
-        """Apply changes."""
+    def _apply_changes(self, close_after: bool = False) -> bool:
+        """Apply changes and optionally close the window."""
+        previous_locale = None
+        if isinstance(self.original_data.get("settings"), dict):
+            previous_locale = self.original_data["settings"].get("locale")
+
         self._collect_changes()
 
         normalization_errors = self._normalize_all()
@@ -984,17 +1002,60 @@ class SettingsManagerApp(tk.Tk):
         
         # Save
         if self._save_all():
+            current_locale = self.settings_data.get("locale")
+            locale_changed = bool(current_locale and current_locale != previous_locale)
+            refresh_errors = None
+            if locale_changed:
+                refresh_errors = self._refresh_localized_artifacts(current_locale)
+
+            message = self.tr.t("msg_save_success")
+            if locale_changed:
+                if refresh_errors:
+                    messagebox.showerror(
+                        self.tr.t("msg_error_title"),
+                        self.tr.t("msg_locale_refresh_failed", error=refresh_errors)
+                    )
+                message = f"{message}\n\n{self.tr.t('msg_locale_refresh')}"
             messagebox.showinfo(
                 self.tr.t("msg_confirm_title"),
-                self.tr.t("msg_save_success")
+                message
             )
+            if close_after:
+                self.destroy()
             return True
         return False
+
+    def _refresh_localized_artifacts(self, locale: Optional[str]) -> Optional[str]:
+        """Regenerate localized mission text and PDFs after a locale change."""
+        if not locale:
+            return None
+        try:
+            from step3_generate_events import main as generate_events_main
+        except Exception as exc:
+            return str(exc)
+
+        previous_force = os.environ.get("FORCE_REGENERATE")
+        os.environ["FORCE_REGENERATE"] = "1"
+        try:
+            success = generate_events_main(args=["--auto", "--locale", locale])
+            if not success:
+                return "Event regeneration reported failure."
+        except Exception as exc:
+            return str(exc)
+        finally:
+            if previous_force is None:
+                os.environ.pop("FORCE_REGENERATE", None)
+            else:
+                os.environ["FORCE_REGENERATE"] = previous_force
+        return None
+
+    def _on_apply(self) -> bool:
+        """Apply changes."""
+        return self._apply_changes(close_after=False)
     
     def _on_ok(self) -> None:
         """OK button - apply and close."""
-        if self._on_apply():
-            self.destroy()
+        self._apply_changes(close_after=True)
     
     def _on_cancel(self) -> None:
         """Cancel button."""
