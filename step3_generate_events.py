@@ -802,6 +802,7 @@ class EventGenerator:
         entry_label: str,
         campaign_name: Optional[str] = None,
         country: Optional[str] = None,
+        rank_index: Optional[int] = None,
     ) -> str:
         image = entry.get("image")
         if not image:
@@ -810,8 +811,12 @@ class EventGenerator:
                 context_bits.append(f"campaign={campaign_name}")
             if country:
                 context_bits.append(f"country={country}")
+            if rank_index is not None:
+                context_bits.append(f"rank_index={rank_index}")
             context = f" ({', '.join(context_bits)})" if context_bits else ""
-            log_message(LOGGER, f"  Warning: Missing image for {entry_label}{context}")
+            entry_keys = ", ".join(sorted(str(key) for key in entry.keys())) if isinstance(entry, dict) else ""
+            key_suffix = f" [keys: {entry_keys}]" if entry_keys else ""
+            log_message(LOGGER, f"  Warning: Missing image for {entry_label}{context}{key_suffix}")
             return ""
         if not isinstance(image, str):
             log_message(
@@ -878,6 +883,7 @@ class EventGenerator:
                 f"rank '{starting_rank_name or 'unknown'}'",
                 campaign_name=campaign_name,
                 country=country,
+                rank_index=starting_rank_offset,
             )
             # Get date of first mission or use placeholder
             first_mission = sorted(completed_missions, key=smart_mission_sort_key)[0]
@@ -887,6 +893,7 @@ class EventGenerator:
                 'type': 'promotion',
                 'rank': starting_rank_name,
                 'rank_key': _build_rank_keys(starting_rank_name, country)[0],
+                'rank_index': starting_rank_offset,
                 'image': starting_rank_image,
                 'mission': 'Initial',
                 'date': first_mission_date  # Same date as first mission
@@ -1578,12 +1585,14 @@ class EventGenerator:
                         f"rank '{next_rank_name or 'unknown'}'",
                         campaign_name=campaign_name,
                         country=country,
+                        rank_index=current_rank_index,
                     )
                     
                     promotions.append({
                         'type': 'promotion',
                         'rank': next_rank_name,
                         'rank_key': _build_rank_keys(next_rank_name, country)[0],
+                        'rank_index': current_rank_index,
                         'image': next_rank_image,
                         'mission': mission_num,
                         'date': mission_date,

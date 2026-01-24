@@ -764,6 +764,9 @@ class SettingsManagerApp(tk.Tk):
         rank_scaling["factors"] = normalized_factors
 
         ranks = self.config_data.get("ranks", {})
+        original_ranks = {}
+        if isinstance(self.original_data.get("config"), dict):
+            original_ranks = self.original_data["config"].get("ranks", {})
         if ranks and not isinstance(ranks, dict):
             errors.append(self._format_type_error("config.ranks", "dict", ranks))
             ranks = {}
@@ -780,6 +783,12 @@ class SettingsManagerApp(tk.Tk):
                             self._format_type_error(f"config.ranks.{country}[{idx}]", "dict", entry)
                         )
                         continue
+                    original_entry = None
+                    if isinstance(original_ranks, dict):
+                        original_list = original_ranks.get(country)
+                        if isinstance(original_list, list) and idx < len(original_list):
+                            if isinstance(original_list[idx], dict):
+                                original_entry = original_list[idx]
                     score = self._coerce_int(
                         entry.get("score", 0), f"config.ranks.{country}[{idx}].score", errors
                     )
@@ -791,6 +800,10 @@ class SettingsManagerApp(tk.Tk):
                     normalized_entry = dict(entry)
                     normalized_entry["score"] = score
                     normalized_entry["name"] = name
+                    if not normalized_entry.get("image") and isinstance(original_entry, dict):
+                        original_image = original_entry.get("image")
+                        if original_image:
+                            normalized_entry["image"] = original_image
                     normalized_rank_list.append(normalized_entry)
                 ranks[country] = normalized_rank_list
         self.config_data["ranks"] = ranks
