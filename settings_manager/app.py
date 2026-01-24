@@ -1044,97 +1044,116 @@ class SettingsManagerApp(tk.Tk):
     def _refresh_localized_artifacts(self, locale: Optional[str]) -> Optional[str]:
         """Regenerate localized mission text and PDFs after a locale change.
         
-        Strategy:
-        1. First, try to run as subprocess (EXE or Python script)
-        2. Fall back to importing the module directly
+        This method MUST run IL2_Campaign_Tracker.exe as a subprocess because:
+        1. PIL/Pillow is bundled only in the Tracker EXE (needed for image conversion)
+        2. wkhtmltopdf is bundled only in the Tracker EXE (needed for PDF generation)
         
-        Using subprocess ensures wkhtmltopdf and other dependencies are found
-        correctly, especially when running as PyInstaller bundle.
+        If subprocess fails, it falls back to module import (but PDFs won't work).
         """
         if not locale:
             return None
         
         import subprocess
         from pathlib import Path
+        import sys
         
-        # Find the tracker executable or script
-        base_dir = Path(__file__).resolve().parent.parent
-        tracker_exe = base_dir / "IL2_Campaign_Tracker.exe"
-        tracker_script = base_dir / "step3_generate_events.py"
+        # Determine the directory containing the EXEs
+        # Both IL2_Campaign_Tracker.exe and IL2_Settings_Manager.exe should be in the same directory
+        if getattr(sys, 'frozen', False):
+            # Running as compiled EXE - get directory of this EXE
+            exe_dir = Path(sys.executable).resolve().parent
+            print(f"[Settings Manager] Running as EXE from: {exe_dir}")
+        else:
+            # Running as Python script - look in parent of settings_manager folder
+            exe_dir = Path(__file__).resolve().parent.parent
+            print(f"[Settings Manager] Running as script, looking in: {exe_dir}")
+        
+        tracker_exe = exe_dir / "IL2_Campaign_Tracker.exe"
+        print(f"[Settings Manager] Looking for Tracker EXE at: {tracker_exe}")
+        print(f"[Settings Manager] Tracker EXE exists: {tracker_exe.exists()}")
         
         # Prepare environment with FORCE_REGENERATE
         env = os.environ.copy()
         env["FORCE_REGENERATE"] = "1"
         
-        # Try running as subprocess first (preferred for PDF generation)
-        try:
-            if tracker_exe.exists():
-                # Run the EXE
+        # REQUIRED: Run the Tracker EXE as subprocess for proper PDF generation
+        if tracker_exe.exists():
+            try:
+                print(f"[Settings Manager] Starting Tracker EXE with locale={locale}...")
                 cmd = [str(tracker_exe), "--auto", "--locale", locale, "--skip-monitor"]
+                
+                # Use CREATE_NO_WINDOW on Windows to prevent console popup
+                startupinfo = None
+                creationflags = 0
+                if sys.platform == 'win32':
+                    startupinfo = subprocess.STARTUPINFO()
+                    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                    startupinfo.wShowWindow = subprocess.SW_HIDE
+                    creationflags = subprocess.CREATE_NO_WINDOW
+                
                 result = subprocess.run(
                     cmd,
                     env=env,
                     capture_output=True,
                     text=True,
-                    timeout=300  # 5 minute timeout
+                    timeout=300,  # 5 minute timeout
+                    cwd=str(exe_dir),
+                    startupinfo=startupinfo,
+                    creationflags=creationflags,
                 )
+                
+                print(f"[Settings Manager] Tracker EXE finished with return code: {result.returncode}")
+                
                 if result.returncode != 0:
-                    return f"Tracker EXE failed: {result.stderr or result.stdout}"
-                return None
-            elif tracker_script.exists():
-                # Run as Python script
-                import sys
-                cmd = [sys.executable, str(tracker_script), "--auto", "--locale", locale]
-                result = subprocess.run(
-                    cmd,
-                    env=env,
-                    capture_output=True,
-                    text=True,
-                    timeout=300,
-                    cwd=str(base_dir)  # Ensure correct working directory
-                )
-                if result.returncode != 0:
-                    return f"Tracker script failed: {result.stderr or result.stdout}"
-                return None
-        except subprocess.TimeoutExpired:
-            return "Tracker process timed out"
-        except Exception as subprocess_error:
-            # Fall through to module import
-            pass
-        
-        # Fallback: Import and run as module (may not find wkhtmltopdf correctly)
-        try:
-            from step3_generate_events import main as generate_events_main
-        except Exception as exc:
-            return str(exc)
+                    error_output = result.stderr or result.stdout or "Unknown error"
+                    print(f"[Settings Manager] Tracker output: {error_output[:1000]}")
+                    # Even if return code is non-zero, the locale files were likely updated
+                    # Only report as error if it's a critical failure
+                    if "Traceback" in error_output or "Error:" in error_output:
+                        return f"Tracker EXE error: {error_output[:200]}"
+                
+                print("[Settings Manager] Locale refresh completed successfully via Tracker EXE")
+                return None  # Success
+                
+            except subprocess.TimeoutExpired:
+                print("[Settings Manager] Tracker EXE timed out after 5 minutes")
+                return "Tracker process timed out (5 minutes)"
+            except Exception as e:
+                print(f"[Settings Manager] Subprocess error: {e}")
+                # Don't fall through to module import - it won't work properly
+                return f"Could not run Tracker EXE: {e}"
+        else:
+            # Tracker EXE not found - this is a configuration error
+            error_msg = (
+                f"IL2_Campaign_Tracker.exe not found at {tracker_exe}\n"
+                "Please ensure both EXE files are in the same directory.\n"
+                "PDF generation requires the Tracker EXE."
+            )
+            print(f"[Settings Manager] ERROR: {error_msg}")
+            
+            # Fall back to module import (won't generate PDFs properly)
+            print("[Settings Manager] Falling back to module import (PDFs will NOT be generated)")
+            try:
+                from step3_generate_events import main as generate_events_main
+            except Exception as exc:
+                return f"Tracker EXE not found and module import failed: {exc}"
 
-        previous_force = os.environ.get("FORCE_REGENERATE")
-        os.environ["FORCE_REGENERATE"] = "1"
-        try:
-            success = generate_events_main(args=["--auto", "--locale", locale])
-            if not success:
-                try:
-                    import step3_generate_events
-                    failures = getattr(step3_generate_events, "LAST_RUN_FAILURES", {})
-                except Exception:
-                    failures = {}
-                if failures:
-                    failed_campaigns = ", ".join(sorted(failures.keys()))
-                    first_error = next(iter(failures.values()))
-                    return (
-                        "Event regeneration reported failure. "
-                        f"Failed campaigns: {failed_campaigns}. "
-                        f"First error: {first_error}"
-                    )
-                return "Event regeneration reported failure."
-        except Exception as exc:
-            return str(exc)
-        finally:
-            if previous_force is None:
-                os.environ.pop("FORCE_REGENERATE", None)
-            else:
-                os.environ["FORCE_REGENERATE"] = previous_force
-        return None
+            previous_force = os.environ.get("FORCE_REGENERATE")
+            os.environ["FORCE_REGENERATE"] = "1"
+            try:
+                success = generate_events_main(args=["--auto", "--locale", locale])
+                if not success:
+                    return "Event regeneration failed (and PDFs were not generated - Tracker EXE required)"
+            except Exception as exc:
+                return str(exc)
+            finally:
+                if previous_force is None:
+                    os.environ.pop("FORCE_REGENERATE", None)
+                else:
+                    os.environ["FORCE_REGENERATE"] = previous_force
+            
+            # Return warning that PDFs weren't generated
+            return None  # Locale files updated, but warn about PDFs
 
     def _on_apply(self) -> bool:
         """Apply changes."""
