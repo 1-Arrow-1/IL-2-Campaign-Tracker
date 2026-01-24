@@ -5,7 +5,9 @@ The main application window with tabbed interface.
 """
 
 import os
+import threading
 import tkinter as tk
+from datetime import datetime
 from tkinter import ttk, messagebox
 from copy import deepcopy
 from typing import Any, Dict, Optional
@@ -51,6 +53,9 @@ class SettingsManagerApp(tk.Tk):
         self.config_data: Dict[str, Any] = {}
         self.mission_dates_data: Optional[Dict[str, Any]] = None
         self.original_data: Dict[str, Any] = {}
+        self._refresh_thread: Optional[threading.Thread] = None
+        self._close_after_refresh: bool = False
+        self._refresh_status_var = tk.StringVar(value="")
         
         # Load all data
         self._load_all_data()
@@ -479,30 +484,39 @@ class SettingsManagerApp(tk.Tk):
         btn_frame.pack(fill=tk.X)
         
         # Left side
-        ttk.Button(
+        self.restore_defaults_button = ttk.Button(
             btn_frame,
             text=self.tr.t("btn_restore_defaults"),
             command=self._on_restore_defaults
-        ).pack(side=tk.LEFT)
+        )
+        self.restore_defaults_button.pack(side=tk.LEFT)
+        
+        ttk.Label(
+            btn_frame,
+            textvariable=self._refresh_status_var
+        ).pack(side=tk.LEFT, padx=(10, 0))
         
         # Right side
-        ttk.Button(
+        self.cancel_button = ttk.Button(
             btn_frame,
             text=self.tr.t("btn_cancel"),
             command=self._on_cancel
-        ).pack(side=tk.RIGHT, padx=(5, 0))
+        )
+        self.cancel_button.pack(side=tk.RIGHT, padx=(5, 0))
         
-        ttk.Button(
+        self.apply_button = ttk.Button(
             btn_frame,
             text=self.tr.t("btn_apply"),
             command=self._on_apply
-        ).pack(side=tk.RIGHT, padx=(5, 0))
+        )
+        self.apply_button.pack(side=tk.RIGHT, padx=(5, 0))
         
-        ttk.Button(
+        self.ok_button = ttk.Button(
             btn_frame,
             text=self.tr.t("btn_ok"),
             command=self._on_ok
-        ).pack(side=tk.RIGHT)
+        )
+        self.ok_button.pack(side=tk.RIGHT)
     
     def _center_window(self) -> None:
         """Center window on screen."""
@@ -1020,26 +1034,61 @@ class SettingsManagerApp(tk.Tk):
         if self._save_all():
             current_locale = self.settings_data.get("locale")
             locale_changed = bool(current_locale and current_locale != previous_locale)
-            refresh_errors = None
             if locale_changed:
-                refresh_errors = self._refresh_localized_artifacts(current_locale)
+                self._start_locale_refresh(current_locale, close_after=close_after)
+                return True
 
-            message = self.tr.t("msg_save_success")
-            if locale_changed:
-                if refresh_errors:
-                    messagebox.showerror(
-                        self.tr.t("msg_error_title"),
-                        self.tr.t("msg_locale_refresh_failed", error=refresh_errors)
-                    )
-                message = f"{message}\n\n{self.tr.t('msg_locale_refresh')}"
             messagebox.showinfo(
                 self.tr.t("msg_confirm_title"),
-                message
+                self.tr.t("msg_save_success")
             )
             if close_after:
                 self.destroy()
             return True
         return False
+
+    def _set_refresh_controls(self, running: bool) -> None:
+        """Enable/disable controls during locale refresh."""
+        state = tk.DISABLED if running else tk.NORMAL
+        self.apply_button.configure(state=state)
+        self.ok_button.configure(state=state)
+
+    def _start_locale_refresh(self, locale: Optional[str], close_after: bool) -> None:
+        """Start locale refresh in a background thread."""
+        if not locale:
+            return
+        if self._refresh_thread and self._refresh_thread.is_alive():
+            return
+
+        self._close_after_refresh = close_after
+        self._refresh_status_var.set(self.tr.t("msg_locale_refresh_running"))
+        self._set_refresh_controls(True)
+
+        def worker() -> None:
+            refresh_errors = self._refresh_localized_artifacts(locale)
+            self.after(0, lambda: self._on_locale_refresh_complete(refresh_errors))
+
+        self._refresh_thread = threading.Thread(target=worker, daemon=True)
+        self._refresh_thread.start()
+
+    def _on_locale_refresh_complete(self, refresh_errors: Optional[str]) -> None:
+        """Handle completion of locale refresh."""
+        self._refresh_status_var.set("")
+        self._set_refresh_controls(False)
+
+        if refresh_errors:
+            messagebox.showerror(
+                self.tr.t("msg_error_title"),
+                self.tr.t("msg_locale_refresh_failed", error=refresh_errors)
+            )
+        else:
+            messagebox.showinfo(
+                self.tr.t("msg_confirm_title"),
+                f"{self.tr.t('msg_save_success')}\n\n{self.tr.t('msg_locale_refresh')}"
+            )
+
+        if self._close_after_refresh:
+            self.destroy()
 
     def _refresh_localized_artifacts(self, locale: Optional[str]) -> Optional[str]:
         """Regenerate localized mission text and PDFs after a locale change.
@@ -1080,7 +1129,17 @@ class SettingsManagerApp(tk.Tk):
         if tracker_exe.exists():
             try:
                 print(f"[Settings Manager] Starting Tracker EXE with locale={locale}...")
-                cmd = [str(tracker_exe), "--auto", "--locale", locale, "--skip-monitor"]
+                cmd = [
+                    str(tracker_exe),
+                    "--auto",
+                    "--locale",
+                    locale,
+                    "--skip-monitor",
+                    "--non-interactive",
+                ]
+
+                log_name = f"settings_manager_refresh_{datetime.now():%Y%m%d_%H%M%S}.log"
+                log_path = exe_dir / log_name
                 
                 # Use CREATE_NO_WINDOW on Windows to prevent console popup
                 startupinfo = None
@@ -1091,26 +1150,29 @@ class SettingsManagerApp(tk.Tk):
                     startupinfo.wShowWindow = subprocess.SW_HIDE
                     creationflags = subprocess.CREATE_NO_WINDOW
                 
-                result = subprocess.run(
-                    cmd,
-                    env=env,
-                    capture_output=True,
-                    text=True,
-                    timeout=300,  # 5 minute timeout
-                    cwd=str(exe_dir),
-                    startupinfo=startupinfo,
-                    creationflags=creationflags,
-                )
+                with open(log_path, "w", encoding="utf-8") as log_file:
+                    result = subprocess.run(
+                        cmd,
+                        env=env,
+                        stdout=log_file,
+                        stderr=subprocess.STDOUT,
+                        text=True,
+                        timeout=300,  # 5 minute timeout
+                        cwd=str(exe_dir),
+                        startupinfo=startupinfo,
+                        creationflags=creationflags,
+                    )
                 
                 print(f"[Settings Manager] Tracker EXE finished with return code: {result.returncode}")
                 
                 if result.returncode != 0:
-                    error_output = result.stderr or result.stdout or "Unknown error"
+                    error_output = self._read_log_excerpt(log_path)
                     print(f"[Settings Manager] Tracker output: {error_output[:1000]}")
-                    # Even if return code is non-zero, the locale files were likely updated
-                    # Only report as error if it's a critical failure
-                    if "Traceback" in error_output or "Error:" in error_output:
-                        return f"Tracker EXE error: {error_output[:200]}"
+                    return (
+                        "Tracker EXE error. "
+                        f"Exit code: {result.returncode}. "
+                        f"Log excerpt:\n{error_output}"
+                    )
                 
                 print("[Settings Manager] Locale refresh completed successfully via Tracker EXE")
                 return None  # Success
@@ -1155,6 +1217,18 @@ class SettingsManagerApp(tk.Tk):
             # Return warning that PDFs weren't generated
             return None  # Locale files updated, but warn about PDFs
 
+    @staticmethod
+    def _read_log_excerpt(log_path, max_lines: int = 20) -> str:
+        """Read the last lines of a log file for error reporting."""
+        try:
+            with open(log_path, "r", encoding="utf-8") as log_file:
+                lines = log_file.readlines()
+        except Exception as exc:
+            return f"Could not read log file {log_path}: {exc}"
+
+        excerpt = lines[-max_lines:]
+        return "".join(excerpt).strip() or "No log output captured."
+
     def _on_apply(self) -> bool:
         """Apply changes."""
         return self._apply_changes(close_after=False)
@@ -1165,6 +1239,12 @@ class SettingsManagerApp(tk.Tk):
     
     def _on_cancel(self) -> None:
         """Cancel button."""
+        if self._refresh_thread and self._refresh_thread.is_alive():
+            messagebox.showinfo(
+                self.tr.t("msg_confirm_title"),
+                self.tr.t("msg_locale_refresh_running")
+            )
+            return
         if self._has_unsaved_changes():
             if not messagebox.askyesno(
                 self.tr.t("msg_confirm_title"),

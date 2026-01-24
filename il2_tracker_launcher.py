@@ -505,6 +505,8 @@ def run_tracker() -> int:
                        help='Skip backup GUI (used only for automatic restart after restore)')
     parser.add_argument('--debug', action='store_true',
                         help='Enable debug logging output')
+    parser.add_argument('--non-interactive', action='store_true',
+                        help='Run without interactive prompts or backup restore GUI')
     parser.add_argument('--no-exit-with-il2', action='store_true',
                        help='Keep tracker running after IL-2 closes (default: exit with IL-2)')
     args, unknown = parser.parse_known_args()
@@ -520,6 +522,7 @@ def run_tracker() -> int:
     logger.debug("sys.argv = %s", sys.argv)
     logger.debug("Working directory = %s", os.getcwd())
     logger.debug("--skip-backup-gui = %s", args.skip_backup_gui)
+    logger.debug("--non-interactive = %s", args.non_interactive)
     logger.debug("Unknown args = %s", unknown)
     log_message(logger, "=" * 70)
     log_message(logger, "IL-2 CAMPAIGN PROGRESS TRACKER v1.7")
@@ -530,14 +533,19 @@ def run_tracker() -> int:
     os.chdir(SCRIPT_DIR)
     
     # Step 0: Check config
-    if not check_config():
+    def wait_for_exit(message: str, exit_code: int) -> int:
+        log_message(logger, message)
+        if args.non_interactive:
+            return exit_code
         input("Press Enter to exit...")
-        return 1
+        return exit_code
+
+    if not check_config():
+        return wait_for_exit("Configuration check failed.", 1)
     
     # Step 1: First-time setup
     if not run_first_time_setup():
-        input("Press Enter to exit...")
-        return 1
+        return wait_for_exit("First-time setup failed.", 1)
     
     # Step 1.5: Sync campaign structure (detect new/deleted campaigns/missions)
     print_header("SYNCING CAMPAIGN STRUCTURE")
@@ -554,9 +562,12 @@ def run_tracker() -> int:
         # Only skip if this is an automatic restart after restore
         # On manual starts, the GUI will always appear (if backups exist)
         # ================================================================
-        if args.skip_backup_gui:
+        if args.skip_backup_gui or args.non_interactive:
             log_message(logger)
-            log_message(logger, "ℹ️ Backup GUI skipped (automatic restart after restore)")
+            if args.non_interactive:
+                log_message(logger, "ℹ️ Backup GUI skipped (non-interactive mode)")
+            else:
+                log_message(logger, "ℹ️ Backup GUI skipped (automatic restart after restore)")
         else:
             try:
                 from backup_restore_gui import check_and_show_backup_gui, restart_tracker
@@ -594,8 +605,7 @@ def run_tracker() -> int:
                 elif backup_result == 'cancelled': 
                     log_message(logger)
                     log_message(logger, "❌ Cancelled by user")
-                    input("Press Enter to exit...")
-                    return 2
+                    return wait_for_exit("User cancelled restore.", 2)
                     
                 elif backup_result == 'skipped':
                     log_message(logger, "ℹ️ Backup restore skipped - continuing normally...")
@@ -611,7 +621,8 @@ def run_tracker() -> int:
                 traceback.print_exc()
                 log_message(logger)
                 log_message(logger, "Continuing without backup restore option...")
-                input("Press Enter to continue...")
+                if not args.non_interactive:
+                    input("Press Enter to continue...")
         
         # Step 3: Decode campaign save
         print_header("DECODING CAMPAIGN SAVE")
