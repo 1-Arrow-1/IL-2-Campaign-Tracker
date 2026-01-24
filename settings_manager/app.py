@@ -788,7 +788,10 @@ class SettingsManagerApp(tk.Tk):
                         errors.append(
                             self._format_type_error(f"config.ranks.{country}[{idx}].name", "str", name)
                         )
-                    normalized_rank_list.append({"score": score, "name": name})
+                    normalized_entry = dict(entry)
+                    normalized_entry["score"] = score
+                    normalized_entry["name"] = name
+                    normalized_rank_list.append(normalized_entry)
                 ranks[country] = normalized_rank_list
         self.config_data["ranks"] = ranks
 
@@ -1039,6 +1042,19 @@ class SettingsManagerApp(tk.Tk):
         try:
             success = generate_events_main(args=["--auto", "--locale", locale])
             if not success:
+                try:
+                    import step3_generate_events
+                    failures = getattr(step3_generate_events, "LAST_RUN_FAILURES", {})
+                except Exception:
+                    failures = {}
+                if failures:
+                    failed_campaigns = ", ".join(sorted(failures.keys()))
+                    first_error = next(iter(failures.values()))
+                    return (
+                        "Event regeneration reported failure. "
+                        f"Failed campaigns: {failed_campaigns}. "
+                        f"First error: {first_error}"
+                    )
                 return "Event regeneration reported failure."
         except Exception as exc:
             return str(exc)

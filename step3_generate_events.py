@@ -74,6 +74,7 @@ ENV_DEBUG = os.environ.get("IL2_TRACKER_DEBUG", "").strip().lower() in {"1", "tr
 LOGGER = get_logger(__name__, log_path=DEFAULT_LOG_PATH, debug=ENV_DEBUG)
 
 KEY_PATTERN = re.compile(r"^[a-z0-9_]+(\.[a-z0-9_]+)+$", re.IGNORECASE)
+LAST_RUN_FAILURES: dict[str, str] = {}
 
 
 def _is_key_like(value: str) -> bool:
@@ -204,6 +205,7 @@ class EventGenerator:
         self.logger = get_logger(f"{__name__}.EventGenerator", log_path=self.log_path, debug=debug)
         self.dry_run = dry_run
         self.show_popups = bool(show_popups)
+        self.failed_campaigns: dict[str, str] = {}
         
         # Initialize i18n with user's preferred locale
         try:
@@ -793,6 +795,31 @@ class EventGenerator:
                 return None
         
         return None
+
+    def _get_entry_image(
+        self,
+        entry: Dict,
+        entry_label: str,
+        campaign_name: Optional[str] = None,
+        country: Optional[str] = None,
+    ) -> str:
+        image = entry.get("image")
+        if not image:
+            context_bits = []
+            if campaign_name:
+                context_bits.append(f"campaign={campaign_name}")
+            if country:
+                context_bits.append(f"country={country}")
+            context = f" ({', '.join(context_bits)})" if context_bits else ""
+            log_message(LOGGER, f"  Warning: Missing image for {entry_label}{context}")
+            return ""
+        if not isinstance(image, str):
+            log_message(
+                LOGGER,
+                f"  Warning: Non-string image for {entry_label} ({type(image).__name__}); coercing to string.",
+            )
+            return str(image)
+        return image
     
     def check_awards(self, country: str, cumulative_stats: Dict,
                     per_mission_stats: Dict, completed_missions: List[str],
@@ -845,15 +872,22 @@ class EventGenerator:
                 starting_rank_offset = max(0, min(starting_rank_offset, len(ranks) - 1))
             
             starting_rank = ranks[starting_rank_offset]  # Use configured offset
+            starting_rank_name = starting_rank.get('name', '')
+            starting_rank_image = self._get_entry_image(
+                starting_rank,
+                f"rank '{starting_rank_name or 'unknown'}'",
+                campaign_name=campaign_name,
+                country=country,
+            )
             # Get date of first mission or use placeholder
             first_mission = sorted(completed_missions, key=smart_mission_sort_key)[0]
             first_mission_date = self.get_mission_date(campaign_name, first_mission)
             
             earned_awards.append({
                 'type': 'promotion',
-                'rank': starting_rank['name'],
-                'rank_key': _build_rank_keys(starting_rank['name'], country)[0],
-                'image': starting_rank['image'],
+                'rank': starting_rank_name,
+                'rank_key': _build_rank_keys(starting_rank_name, country)[0],
+                'image': starting_rank_image,
                 'mission': 'Initial',
                 'date': first_mission_date  # Same date as first mission
             })
@@ -864,13 +898,20 @@ class EventGenerator:
         first_mission_date = self.get_mission_date(campaign_name, first_mission)
         
         for award in awards_config:
+            award_name = award.get('name', '')
+            award_image = self._get_entry_image(
+                award,
+                f"award '{award_name or 'unknown'}'",
+                campaign_name=campaign_name,
+                country=country,
+            )
             # Check if this is a pilot's badge/emblem
             is_pilots_award = (
-                "Pilot's Badge" in award['name'] or 
-                "Aviation Badge" in award['name'] or
-                "Aviation Emblem" in award['name'] or
-                "pilots_badge" in award.get('image', '') or
-                "pilots_emblem" in award.get('image', '')
+                "Pilot's Badge" in award_name or 
+                "Aviation Badge" in award_name or
+                "Aviation Emblem" in award_name or
+                "pilots_badge" in award_image or
+                "pilots_emblem" in award_image
             )
             
             if is_pilots_award:
@@ -879,41 +920,41 @@ class EventGenerator:
                     # Check if campaign starts before or after transition
                     if first_mission_date and first_mission_date >= "1943-01-06":
                         # Late period - use Aviation Emblem
-                        if "Emblem" in award['name'] or "emblem" in award.get('image', ''):
+                        if "Emblem" in award_name or "emblem" in award_image:
                             earned_awards.append({
                                 'type': 'award',
-                                'name': award['name'],
-                                'award_key': _build_award_key(award['name']),
-                                'image': award['image'],
+                                'name': award_name,
+                                'award_key': _build_award_key(award_name),
+                                'image': award_image,
                                 'mission': 'Initial',
                                 'date': first_mission_date
                             })
-                            already_earned.append(award['name'])
+                            already_earned.append(award_name)
                             break
                     else:
                         # Early period - use Aviation Badge
-                        if "Badge" in award['name'] or "badge" in award.get('image', ''):
+                        if "Badge" in award_name or "badge" in award_image:
                             earned_awards.append({
                                 'type': 'award',
-                                'name': award['name'],
-                                'award_key': _build_award_key(award['name']),
-                                'image': award['image'],
+                                'name': award_name,
+                                'award_key': _build_award_key(award_name),
+                                'image': award_image,
                                 'mission': 'Initial',
                                 'date': first_mission_date
                             })
-                            already_earned.append(award['name'])
+                            already_earned.append(award_name)
                             break
                 else:
                     # For other countries, just use first match
                     earned_awards.append({
                         'type': 'award',
-                        'name': award['name'],
-                        'award_key': _build_award_key(award['name']),
-                        'image': award['image'],
+                        'name': award_name,
+                        'award_key': _build_award_key(award_name),
+                        'image': award_image,
                         'mission': 'Initial',
                         'date': first_mission_date
                     })
-                    already_earned.append(award['name'])
+                    already_earned.append(award_name)
                     break  # Only one pilot's badge
         
         # Process missions in order
@@ -1122,7 +1163,12 @@ class EventGenerator:
                             'type': 'award',
                             'name': tiered_award['name'],
                             'award_key': _build_award_key(tiered_award['name']),
-                            'image': tiered_award['award']['image'],
+                            'image': self._get_entry_image(
+                                tiered_award['award'],
+                                f"award '{tiered_award['name']}'",
+                                campaign_name=campaign_name,
+                                country=country,
+                            ),
                             'mission': tiered_award['mission'],
                             'date': tiered_award['date']
                         })
@@ -1170,7 +1216,12 @@ class EventGenerator:
                                     'type': 'award',
                                     'name': award['name'],
                                     'award_key': _build_award_key(award['name']),
-                                    'image': award['image'],
+                                    'image': self._get_entry_image(
+                                        award,
+                                        f"award '{award['name']}'",
+                                        campaign_name=campaign_name,
+                                        country=country,
+                                    ),
                                     'mission': mission_num,
                                     'date': mission_date
                                 })
@@ -1408,6 +1459,7 @@ class EventGenerator:
             log_message(LOGGER, f"  ERROR in {campaign_name}: {e}")
             import traceback
             traceback.print_exc()
+            self.failed_campaigns[campaign_name] = str(e)
             return []
     
     def get_rank_scaling_factor(self, campaign_name: str) -> float:
@@ -1520,12 +1572,19 @@ class EventGenerator:
                     # Promotion!
                     current_rank_index += 1
                     mission_date = self.get_mission_date(campaign_name, mission_num)
+                    next_rank_name = next_rank.get('name', '')
+                    next_rank_image = self._get_entry_image(
+                        next_rank,
+                        f"rank '{next_rank_name or 'unknown'}'",
+                        campaign_name=campaign_name,
+                        country=country,
+                    )
                     
                     promotions.append({
                         'type': 'promotion',
-                        'rank': next_rank['name'],
-                        'rank_key': _build_rank_keys(next_rank['name'], country)[0],
-                        'image': next_rank['image'],
+                        'rank': next_rank_name,
+                        'rank_key': _build_rank_keys(next_rank_name, country)[0],
+                        'image': next_rank_image,
                         'mission': mission_num,
                         'date': mission_date,
                         'score': running_score
@@ -1790,17 +1849,20 @@ class EventGenerator:
         else:
             country_folder = country_folder_map.get(country, country)
         
-        image_path = f"CampaignRanksAwards/{country_folder}/{event['image']}"
-        
-        # Check if rank needs rotation
-        needs_rotation = self.rank_needs_rotation(event, country, country_folder)
-        
-        # Convert to base64 if generating for PDF, with rotation if needed
-        if for_pdf:
-            image_src = self.image_to_base64(image_path, rotate=needs_rotation)
-        else:
-            # For in-game: Use Windows-style backslashes (IL-2 expects this)
-            image_src = image_path.replace('/', '\\')
+        image_filename = event.get('image') or ""
+        image_src = ""
+        if image_filename:
+            image_path = f"CampaignRanksAwards/{country_folder}/{image_filename}"
+
+            # Check if rank needs rotation
+            needs_rotation = self.rank_needs_rotation(event, country, country_folder)
+
+            # Convert to base64 if generating for PDF, with rotation if needed
+            if for_pdf:
+                image_src = self.image_to_base64(image_path, rotate=needs_rotation)
+            else:
+                # For in-game: Use Windows-style backslashes (IL-2 expects this)
+                image_src = image_path.replace('/', '\\')
         
         # Format date
         if event.get('mission') == 'Initial':
@@ -1849,10 +1911,18 @@ class EventGenerator:
         # DEBUG: Print what we're generating
         if for_pdf:
             # PDF: Better formatting with text before image and proper alignment
-            result = f"• {date_str} - {description} <span style='display: inline-block; vertical-align: middle; margin-left: 5px;'><img src='{image_src}' style='vertical-align: middle;'></span><br>"
+            if image_src:
+                image_html = (
+                    " <span style='display: inline-block; vertical-align: middle; margin-left: 5px;'>"
+                    f"<img src='{image_src}' style='vertical-align: middle;'></span>"
+                )
+            else:
+                image_html = ""
+            result = f"• {date_str} - {description}{image_html}<br>"
         else:
             # In-game: IL-2 expects unquoted src, image after text
-            result = f"• {date_str} - {description} <img src={image_src}><br>"
+            image_html = f" <img src={image_src}>" if image_src else ""
+            result = f"• {date_str} - {description}{image_html}<br>"
             log_message(LOGGER, f"DEBUG HTML: {result[:150]}")  # First 150 chars
         
         return result
@@ -3368,6 +3438,10 @@ class EventGenerator:
                     
                     # *** CRITICAL: Switch back to ingame mode for subsequent campaigns ***
                     self.set_mode("ingame")
+
+        if self.failed_campaigns:
+            failed_list = ", ".join(sorted(self.failed_campaigns.keys()))
+            log_message(LOGGER, f"\nWARNING: Event generation failed for {len(self.failed_campaigns)} campaign(s): {failed_list}")
         
         # Remove campaigns that no longer exist in save_data (deleted campaigns)
         campaigns_to_remove = [name for name in results.keys() if name not in self.save_data]
@@ -3455,6 +3529,9 @@ def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bo
     if test_popups:
         parsed_args.test_popups = test_popups
 
+    global LAST_RUN_FAILURES
+    LAST_RUN_FAILURES = {}
+
     # --- Logging & Debug Info ---
     log_message(LOGGER, f"[step3] AUTO mode     = {parsed_args.auto}")
     log_message(LOGGER, f"[step3] SHOW_POPUPS   = {parsed_args.show_popups}")
@@ -3514,6 +3591,10 @@ def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bo
     if parsed_args.campaign:
         log_message(LOGGER, f"Processing single campaign: {parsed_args.campaign}")
         events = generator.generate_events_for_campaign(parsed_args.campaign)
+        if generator.failed_campaigns:
+            LAST_RUN_FAILURES = dict(generator.failed_campaigns)
+            log_message(LOGGER, f"[step3] Failures: {LAST_RUN_FAILURES}")
+            return False
         if events:
             country = generator.mission_dates[parsed_args.campaign].get('country')
             html = generator.generate_events_html(events, country)
@@ -3530,6 +3611,10 @@ def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bo
     else:
         # Process all campaigns
         results = generator.process_all_campaigns()
+        if generator.failed_campaigns:
+            LAST_RUN_FAILURES = dict(generator.failed_campaigns)
+            log_message(LOGGER, f"[step3] Failures: {LAST_RUN_FAILURES}")
+            return False
         return len(results) > 0  # ✅ Expliziter Rückgabewert
 
 
