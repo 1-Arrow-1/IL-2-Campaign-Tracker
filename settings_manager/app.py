@@ -1042,9 +1042,67 @@ class SettingsManagerApp(tk.Tk):
         return False
 
     def _refresh_localized_artifacts(self, locale: Optional[str]) -> Optional[str]:
-        """Regenerate localized mission text and PDFs after a locale change."""
+        """Regenerate localized mission text and PDFs after a locale change.
+        
+        Strategy:
+        1. First, try to run as subprocess (EXE or Python script)
+        2. Fall back to importing the module directly
+        
+        Using subprocess ensures wkhtmltopdf and other dependencies are found
+        correctly, especially when running as PyInstaller bundle.
+        """
         if not locale:
             return None
+        
+        import subprocess
+        from pathlib import Path
+        
+        # Find the tracker executable or script
+        base_dir = Path(__file__).resolve().parent.parent
+        tracker_exe = base_dir / "IL2_Campaign_Tracker.exe"
+        tracker_script = base_dir / "step3_generate_events.py"
+        
+        # Prepare environment with FORCE_REGENERATE
+        env = os.environ.copy()
+        env["FORCE_REGENERATE"] = "1"
+        
+        # Try running as subprocess first (preferred for PDF generation)
+        try:
+            if tracker_exe.exists():
+                # Run the EXE
+                cmd = [str(tracker_exe), "--auto", "--locale", locale, "--skip-monitor"]
+                result = subprocess.run(
+                    cmd,
+                    env=env,
+                    capture_output=True,
+                    text=True,
+                    timeout=300  # 5 minute timeout
+                )
+                if result.returncode != 0:
+                    return f"Tracker EXE failed: {result.stderr or result.stdout}"
+                return None
+            elif tracker_script.exists():
+                # Run as Python script
+                import sys
+                cmd = [sys.executable, str(tracker_script), "--auto", "--locale", locale]
+                result = subprocess.run(
+                    cmd,
+                    env=env,
+                    capture_output=True,
+                    text=True,
+                    timeout=300,
+                    cwd=str(base_dir)  # Ensure correct working directory
+                )
+                if result.returncode != 0:
+                    return f"Tracker script failed: {result.stderr or result.stdout}"
+                return None
+        except subprocess.TimeoutExpired:
+            return "Tracker process timed out"
+        except Exception as subprocess_error:
+            # Fall through to module import
+            pass
+        
+        # Fallback: Import and run as module (may not find wkhtmltopdf correctly)
         try:
             from step3_generate_events import main as generate_events_main
         except Exception as exc:
