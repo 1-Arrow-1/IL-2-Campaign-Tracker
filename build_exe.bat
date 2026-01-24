@@ -106,6 +106,21 @@ if not exist "mlg2txt.spec" (
     pause
     exit /b 1
 )
+if not exist "settings_manager.spec" (
+    echo ERROR: settings_manager.spec not found!
+    pause
+    exit /b 1
+)
+if not exist "settings_manager\main.py" (
+    echo ERROR: settings_manager\main.py not found!
+    pause
+    exit /b 1
+)
+if not exist "settings_manager\app.py" (
+    echo ERROR: settings_manager\app.py not found!
+    pause
+    exit /b 1
+)
 if not exist "popups_min.py" (
     echo ERROR: popups_min.py!
     pause
@@ -357,6 +372,19 @@ if errorlevel 1 (
     exit /b 1
 )
 echo ✓ Campaign_Service_Record.exe built successfully
+echo.
+
+REM Build Settings Manager EXE
+echo Building IL2_Settings_Manager.exe...
+pyinstaller %PYINSTALLER_OPTS% settings_manager.spec
+if errorlevel 1 (
+    echo.
+    echo ERROR: Build failed for IL2_Settings_Manager.exe!
+    echo Check the error messages above.
+    pause
+    exit /b 1
+)
+echo ✓ IL2_Settings_Manager.exe built successfully
 echo OK
 echo.
 
@@ -396,11 +424,21 @@ if exist "dist\Campaign_Service_Record" (
     )
 )
 
-REM Copy Campaign Service Record bundle
+REM Copy Settings Manager EXE
+if exist "dist\IL2_Settings_Manager.exe" (
+    copy "dist\IL2_Settings_Manager.exe" "IL2_Campaign_Tracker_v2.1_ML\" >NUL
+    if errorlevel 1 (
+        echo ERROR: Could not copy IL2_Settings_Manager.exe!
+        pause
+        exit /b 1
+    )
+)
+
+REM Copy locales
 if exist "dist\Campaign_Service_Record" (
     xcopy /E /I /Y "locales" "IL2_Campaign_Tracker_v2.1_ML\locales\" >NUL
     if errorlevel 2 (
-        echo ERROR: Could not copy Campaign_Service_Record bundle!
+        echo ERROR: Could not copy locales!
         pause
         exit /b 1
     )
