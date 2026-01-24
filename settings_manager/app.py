@@ -389,6 +389,13 @@ class SettingsManagerApp(tk.Tk):
             self.campaigns_tree.delete(item)
         
         for campaign_name, data in sorted(self.mission_dates_data.items()):
+            # Skip if data is not a dict (shouldn't happen, but safety check)
+            if not isinstance(data, dict):
+                continue
+            # Skip entries that don't have country (likely not a campaign entry)
+            if 'country' not in data:
+                continue
+            
             country = data.get('country', 'Unknown')
             offset = data.get('starting_rank_offset', 0)
             self.campaigns_tree.insert('', tk.END, values=(campaign_name, country, offset))
