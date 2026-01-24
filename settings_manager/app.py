@@ -5,8 +5,11 @@ The main application window with tabbed interface.
 """
 
 import os
+import queue
+import subprocess
 import threading
 import tkinter as tk
+import time
 from datetime import datetime
 from tkinter import ttk, messagebox
 from copy import deepcopy
@@ -56,6 +59,9 @@ class SettingsManagerApp(tk.Tk):
         self._refresh_thread: Optional[threading.Thread] = None
         self._close_after_refresh: bool = False
         self._refresh_status_var = tk.StringVar(value="")
+        self._refresh_queue: "queue.Queue[Optional[str]]" = queue.Queue()
+        self._refresh_poll_id: Optional[str] = None
+        self._refresh_running: bool = False
         
         # Load all data
         self._load_all_data()
@@ -1052,6 +1058,7 @@ class SettingsManagerApp(tk.Tk):
         state = tk.DISABLED if running else tk.NORMAL
         self.apply_button.configure(state=state)
         self.ok_button.configure(state=state)
+        print(f"[Settings Manager] Refresh controls {'disabled' if running else 'enabled'}")
 
     def _start_locale_refresh(self, locale: Optional[str], close_after: bool) -> None:
         """Start locale refresh in a background thread."""
@@ -1063,16 +1070,37 @@ class SettingsManagerApp(tk.Tk):
         self._close_after_refresh = close_after
         self._refresh_status_var.set(self.tr.t("msg_locale_refresh_running"))
         self._set_refresh_controls(True)
+        self._refresh_running = True
+        self._refresh_queue = queue.Queue()
+        if self._refresh_poll_id:
+            self.after_cancel(self._refresh_poll_id)
+            self._refresh_poll_id = None
 
         def worker() -> None:
             refresh_errors = self._refresh_localized_artifacts(locale)
-            self.after(0, lambda: self._on_locale_refresh_complete(refresh_errors))
+            self._refresh_queue.put(refresh_errors)
 
         self._refresh_thread = threading.Thread(target=worker, daemon=True)
         self._refresh_thread.start()
+        self._poll_refresh_queue()
+
+    def _poll_refresh_queue(self) -> None:
+        """Poll the refresh queue for completion."""
+        if not self._refresh_running:
+            return
+        try:
+            refresh_errors = self._refresh_queue.get_nowait()
+        except queue.Empty:
+            self._refresh_poll_id = self.after(200, self._poll_refresh_queue)
+            return
+        self._on_locale_refresh_complete(refresh_errors)
 
     def _on_locale_refresh_complete(self, refresh_errors: Optional[str]) -> None:
         """Handle completion of locale refresh."""
+        if self._refresh_poll_id:
+            self.after_cancel(self._refresh_poll_id)
+            self._refresh_poll_id = None
+        self._refresh_running = False
         self._refresh_status_var.set("")
         self._set_refresh_controls(False)
 
@@ -1102,7 +1130,6 @@ class SettingsManagerApp(tk.Tk):
         if not locale:
             return None
         
-        import subprocess
         from pathlib import Path
         import sys
         
@@ -1140,6 +1167,7 @@ class SettingsManagerApp(tk.Tk):
 
                 log_name = f"settings_manager_refresh_{datetime.now():%Y%m%d_%H%M%S}.log"
                 log_path = exe_dir / log_name
+                print(f"[Settings Manager] Regeneration log: {log_path}")
                 
                 # Use CREATE_NO_WINDOW on Windows to prevent console popup
                 startupinfo = None
@@ -1149,37 +1177,71 @@ class SettingsManagerApp(tk.Tk):
                     startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
                     startupinfo.wShowWindow = subprocess.SW_HIDE
                     creationflags = subprocess.CREATE_NO_WINDOW
-                
+
                 with open(log_path, "w", encoding="utf-8") as log_file:
-                    result = subprocess.run(
+                    process = subprocess.Popen(
                         cmd,
                         env=env,
                         stdout=log_file,
                         stderr=subprocess.STDOUT,
                         text=True,
-                        timeout=300,  # 5 minute timeout
                         cwd=str(exe_dir),
+                        stdin=subprocess.DEVNULL,
                         startupinfo=startupinfo,
                         creationflags=creationflags,
                     )
-                
-                print(f"[Settings Manager] Tracker EXE finished with return code: {result.returncode}")
-                
-                if result.returncode != 0:
-                    error_output = self._read_log_excerpt(log_path)
-                    print(f"[Settings Manager] Tracker output: {error_output[:1000]}")
-                    return (
-                        "Tracker EXE error. "
-                        f"Exit code: {result.returncode}. "
-                        f"Log excerpt:\n{error_output}"
+
+                print(f"[Settings Manager] Tracker EXE PID: {process.pid}")
+                completion_marker = "COMPLETE!"
+                timeout_seconds = 600
+                poll_interval = 0.5
+                log_interval = 5.0
+                start_time = time.monotonic()
+                next_log_time = start_time + log_interval
+                log_position = 0
+                completion_detected = False
+
+                while True:
+                    return_code = process.poll()
+                    if return_code is not None:
+                        print(f"[Settings Manager] Tracker EXE exited with return code: {return_code}")
+                        if return_code != 0 and not completion_detected:
+                            error_output = self._read_log_excerpt(log_path)
+                            print(f"[Settings Manager] Tracker output: {error_output[:1000]}")
+                            return (
+                                "Tracker EXE error. "
+                                f"Exit code: {return_code}. "
+                                f"Log excerpt:\n{error_output}"
+                            )
+                        print("[Settings Manager] Locale refresh completed successfully via Tracker EXE")
+                        return None
+
+                    now = time.monotonic()
+                    if now >= next_log_time:
+                        elapsed = int(now - start_time)
+                        print(f"[Settings Manager] Regeneration still running ({elapsed}s)...")
+                        next_log_time = now + log_interval
+
+                    if now - start_time > timeout_seconds:
+                        print("[Settings Manager] Tracker EXE timed out after 10 minutes")
+                        self._terminate_process(process)
+                        return "Tracker process timed out (10 minutes)"
+
+                    log_position_holder = [log_position]
+                    completion_detected = completion_detected or self._log_has_marker(
+                        log_path,
+                        completion_marker,
+                        log_position_holder=log_position_holder,
                     )
-                
-                print("[Settings Manager] Locale refresh completed successfully via Tracker EXE")
-                return None  # Success
-                
-            except subprocess.TimeoutExpired:
-                print("[Settings Manager] Tracker EXE timed out after 5 minutes")
-                return "Tracker process timed out (5 minutes)"
+                    log_position = log_position_holder[0]
+
+                    if completion_detected:
+                        print("[Settings Manager] Completion marker detected; stopping tracker process.")
+                        self._terminate_process(process)
+                        return None
+
+                    time.sleep(poll_interval)
+
             except Exception as e:
                 print(f"[Settings Manager] Subprocess error: {e}")
                 # Don't fall through to module import - it won't work properly
@@ -1228,6 +1290,49 @@ class SettingsManagerApp(tk.Tk):
 
         excerpt = lines[-max_lines:]
         return "".join(excerpt).strip() or "No log output captured."
+
+    @staticmethod
+    def _log_has_marker(
+        log_path,
+        marker: str,
+        log_position_holder: list,
+    ) -> bool:
+        """Check if a log file contains a marker since the last read position."""
+        try:
+            with open(log_path, "r", encoding="utf-8", errors="ignore") as log_file:
+                log_file.seek(log_position_holder[0])
+                chunk = log_file.read()
+                log_position_holder[0] = log_file.tell()
+        except FileNotFoundError:
+            return False
+        except Exception as exc:
+            print(f"[Settings Manager] Log read error: {exc}")
+            return False
+        if not chunk:
+            return False
+        return marker in chunk
+
+    @staticmethod
+    def _terminate_process(process) -> None:
+        """Terminate a process (and its children on Windows)."""
+        try:
+            if process.poll() is not None:
+                return
+            if os.name == "nt":
+                subprocess.run(
+                    ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    check=False,
+                )
+            else:
+                process.terminate()
+            try:
+                process.wait(timeout=5)
+            except Exception:
+                process.kill()
+        except Exception as exc:
+            print(f"[Settings Manager] Failed to terminate process: {exc}")
 
     def _on_apply(self) -> bool:
         """Apply changes."""
