@@ -63,11 +63,11 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,  # No console window
+    console=True,  # No console window
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='il2_tracker_icon.ico',  # Use same icon as main tracker
+    icon='settings.ico',  # Use same icon as main tracker
 )
