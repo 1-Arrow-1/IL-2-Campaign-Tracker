@@ -69,5 +69,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='il2_tracker_icon.ico',  # Use same icon as main tracker
+    icon='settings.ico',  
 )
