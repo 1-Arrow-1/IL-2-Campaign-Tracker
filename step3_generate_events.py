@@ -264,7 +264,46 @@ class EventGenerator:
 
         if not isinstance(config, dict):
             return {}
-        return config        
+        
+        # Ensure all ranks have 'image' field (auto-generate if missing)
+        self._ensure_rank_images(config)
+        
+        return config
+    
+    def _ensure_rank_images(self, config: dict) -> None:
+        """
+        Ensure all rank entries have an 'image' field.
+        If missing, auto-generate from rank name (lowercase + .png).
+        
+        This handles cases where YAML was edited/saved without the image field.
+        """
+        import re
+        
+        def generate_image_name(name: str, extension: str = '.png') -> str:
+            """Generate image filename from name."""
+            if not name:
+                return ''
+            image_name = name.lower()
+            # Replace spaces and special chars with underscores
+            image_name = re.sub(r'[^a-z0-9]', '_', image_name)
+            image_name = re.sub(r'_+', '_', image_name)  # Collapse multiple underscores
+            image_name = image_name.strip('_')
+            return f"{image_name}{extension}"
+        
+        # Process ranks
+        ranks = config.get('ranks', {})
+        if isinstance(ranks, dict):
+            for country, rank_list in ranks.items():
+                if not isinstance(rank_list, list):
+                    continue
+                for rank in rank_list:
+                    if not isinstance(rank, dict):
+                        continue
+                    if 'image' not in rank or not rank.get('image'):
+                        rank_name = rank.get('name', '')
+                        if rank_name:
+                            rank['image'] = generate_image_name(rank_name, '.png')
+                            log_message(LOGGER, f"  [config] Auto-generated image for rank {country}/{rank_name}: {rank['image']}")        
                 
     def _init_popup_state(self) -> None:
         self.enable_popups = bool(self.config.get("enable_popups", True))
