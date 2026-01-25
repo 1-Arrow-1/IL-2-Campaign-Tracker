@@ -161,7 +161,7 @@ class SettingsManagerApp(tk.Tk):
             textvariable=self.language_var,
             values=lang_options,
             state='readonly',
-            width=25
+            width=30
         )
         self.language_combo.grid(row=row, column=1, sticky=tk.W, pady=10, padx=(10, 0))
         
@@ -182,7 +182,7 @@ class SettingsManagerApp(tk.Tk):
             textvariable=self.popups_var,
             values=['True', 'False'],
             state='readonly',
-            width=25
+            width=30
         )
         self.popups_combo.grid(row=row, column=1, sticky=tk.W, pady=10, padx=(10, 0))
         
@@ -201,7 +201,7 @@ class SettingsManagerApp(tk.Tk):
             textvariable=self.scaling_var,
             values=['True', 'False'],
             state='readonly',
-            width=25
+            width=30
         )
         self.scaling_combo.grid(row=row, column=1, sticky=tk.W, pady=10, padx=(10, 0))
         
@@ -447,7 +447,7 @@ class SettingsManagerApp(tk.Tk):
         self.campaigns_tree.heading('campaign', text=self.tr.t("lbl_campaign_name"))
         self.campaigns_tree.heading('country', text=self.tr.t("lbl_country"))
         self.campaigns_tree.heading('offset', text=self.tr.t("lbl_starting_rank_offset"))
-        self.campaigns_tree.column('campaign', width=250, anchor=tk.W)
+        self.campaigns_tree.column('campaign', width=300, anchor=tk.W)
         self.campaigns_tree.column('country', width=100, anchor=tk.CENTER)
         self.campaigns_tree.column('offset', width=150, anchor=tk.CENTER)
         
@@ -1060,8 +1060,15 @@ class SettingsManagerApp(tk.Tk):
     def _apply_changes(self, close_after: bool = False) -> bool:
         """Apply changes and optionally close the window."""
         previous_locale = None
+        previous_rank_scaling = None
+        previous_ranks = None
+        
         if isinstance(self.original_data.get("settings"), dict):
             previous_locale = self.original_data["settings"].get("locale")
+        
+        if isinstance(self.original_data.get("config"), dict):
+            previous_rank_scaling = deepcopy(self.original_data["config"].get("rank_scaling"))
+            previous_ranks = deepcopy(self.original_data["config"].get("ranks"))
 
         self._collect_changes()
         self._rebuild_rank_scaling_factors()
@@ -1088,9 +1095,31 @@ class SettingsManagerApp(tk.Tk):
         # Save
         if self._save_all():
             current_locale = self.settings_data.get("locale")
+            current_rank_scaling = self.config_data.get("rank_scaling")
+            current_ranks = self.config_data.get("ranks")
+            
             locale_changed = bool(current_locale and current_locale != previous_locale)
-            if locale_changed:
-                self._start_locale_refresh(current_locale, close_after=close_after)
+            rank_scaling_changed = current_rank_scaling != previous_rank_scaling
+            ranks_changed = current_ranks != previous_ranks
+            
+            # Force regenerate if locale, rank_scaling, or ranks changed
+            needs_regenerate = locale_changed or rank_scaling_changed or ranks_changed
+            
+            if needs_regenerate:
+                # Use current locale for regeneration
+                regen_locale = current_locale or previous_locale or "en"
+                
+                # Log what changed
+                changes = []
+                if locale_changed:
+                    changes.append("locale")
+                if rank_scaling_changed:
+                    changes.append("rank_scaling")
+                if ranks_changed:
+                    changes.append("ranks")
+                print(f"[Settings Manager] Changes detected: {', '.join(changes)} - triggering regeneration")
+                
+                self._start_locale_refresh(regen_locale, close_after=close_after)
                 return True
 
             messagebox.showinfo(

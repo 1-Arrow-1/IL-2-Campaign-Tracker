@@ -1247,10 +1247,17 @@ const DetailPage = {
             return;
         }
         
-        const cleanedHtml = html.replace(
-            /^\s*<b>\s*Mission Debriefings\s*<\/b>\s*<br>\s*(?:<br>\s*)?/i,
-            ''
-        );
+        // Remove the "Mission Debriefings" header from the HTML since we already have an <h3> title
+        // This handles various formats: <b>Mission Debriefings</b>, localized versions, etc.
+        let cleanedHtml = html
+            // Remove English header
+            .replace(/^\s*<b>\s*Mission Debriefings\s*<\/b>\s*<br>\s*(?:<br>\s*)?/i, '')
+            // Remove any remaining standalone Mission Debriefings headers (including localized)
+            .replace(/<b>\s*Mission Debriefings\s*<\/b>\s*<br>\s*(?:<br>\s*)?/gi, '')
+            // Remove span-wrapped headers (from step3_generate_events.py)
+            .replace(/<span[^>]*style="display:none"[^>]*>.*?<\/span>\s*<span[^>]*class="section-header"[^>]*>\s*<b>[^<]*<\/b>\s*<\/span>\s*<br>\s*(?:<br>\s*)?/gi, '')
+            // Clean up any leading <br> tags
+            .replace(/^(\s*<br>\s*)+/i, '');
 
         // Direct HTML injection (safe - comes from Campaign Tracker)
         this.elements.debriefingsContainer.innerHTML = this.localizeDebriefingsHtml(cleanedHtml);
@@ -1259,7 +1266,7 @@ const DetailPage = {
     localizeDebriefingsHtml(html) {
         let output = html;
         const replacements = [
-            { pattern: /<b>\s*Mission Debriefings\s*<\/b>/gi, replacement: `<b>${i18n.t('web.section.mission_debriefings')}</b>` },
+            // Note: Mission Debriefings header is already removed in renderDebriefings()
             { pattern: /\bMISSION\b/gi, replacement: i18n.t('flightlog.mission') },
             { pattern: /\bFLIGHT LOG\b/gi, replacement: i18n.t('flightlog.flight_log') },
             { pattern: /\bEvents\b/gi, replacement: i18n.t('flightlog.events') },
