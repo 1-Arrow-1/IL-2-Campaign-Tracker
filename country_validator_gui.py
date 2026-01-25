@@ -125,7 +125,7 @@ class CountryValidatorGUI:
             button_frame,
             text=t('ui.country_validator.cancel_button'),
             command=self._on_cancel,
-            width=15,
+            width=20,
             bg='#95a5a6',
             fg='white',
             font=('Arial', 10),
@@ -138,7 +138,7 @@ class CountryValidatorGUI:
             button_frame,
             text=t('ui.country_validator.apply_button'),
             command=self._on_save,
-            width=15,
+            width=20,
             bg='#27ae60',
             fg='white',
             font=('Arial', 10, 'bold'),
@@ -203,7 +203,7 @@ class CountryValidatorGUI:
             textvariable=country_var,
             values=COUNTRIES,
             state='readonly',
-            width=15,
+            width=20,
             font=('Arial', 9)
         )
         country_dropdown.pack(side='left')

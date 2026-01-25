@@ -216,10 +216,10 @@ class BackupRestoreGUI:
         self.tree.heading('status', text='Status')
         self.tree.heading('popups', text='Popup State')
         
-        self.tree.column('date', width=200, anchor='w')
-        self.tree.column('size', width=80, anchor='center')
-        self.tree.column('status', width=180, anchor='center')
-        self.tree.column('popups', width=120, anchor='center')
+        self.tree.column('date', width=220, anchor='w')
+        self.tree.column('size', width=100, anchor='center')
+        self.tree.column('status', width=200, anchor='center')
+        self.tree.column('popups', width=150, anchor='center')
         
         # Scrollbar
         scrollbar = ttk.Scrollbar(list_frame, orient='vertical', command=self.tree. yview)
@@ -267,7 +267,7 @@ class BackupRestoreGUI:
             text=f"🔄 {t('ui.backup_restore.restore_button')}",
             command=self._on_restore,
             state='disabled',
-            width=28
+            width=32
         )
         self.restore_btn.pack(side='left', padx=(0, 10))
         
@@ -275,7 +275,7 @@ class BackupRestoreGUI:
             left_buttons,
             text=f"▶ {t('ui.backup_restore.continue_button')}",
             command=self._on_skip,
-            width=25
+            width=30
         )
         skip_btn.pack(side='left')
         
@@ -284,7 +284,7 @@ class BackupRestoreGUI:
             button_frame,
             text=f"✕ {t('ui.backup_restore.exit_button')}",
             command=self._on_cancel,
-            width=12
+            width=15
         )
         cancel_btn.pack(side='right')
         
