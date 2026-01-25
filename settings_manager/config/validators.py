@@ -120,7 +120,7 @@ class OffsetValidator:
     """Validates starting_rank_offset values."""
     
     MIN_OFFSET = 0
-    MAX_OFFSET = 5  # Per requirement: 0-5
+    MAX_OFFSET = 7  # Increased to 7 to support campaigns where player starts as squadron leader
     
     @classmethod
     def validate(cls, offset: int) -> bool:

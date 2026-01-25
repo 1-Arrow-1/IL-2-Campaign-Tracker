@@ -1580,7 +1580,7 @@ class OffsetDialog(tk.Toplevel):
         self.result = None
         
         self.title(self.tr.t("dlg_edit_offset_title"))
-        self.geometry("350x120")
+        self.geometry("450x150")
         self.resizable(False, False)
         self.transient(parent)
         self.grab_set()
@@ -1590,10 +1590,14 @@ class OffsetDialog(tk.Toplevel):
         
         min_off, max_off = OffsetValidator.get_range()
         
-        ttk.Label(frame, text=self.tr.t("dlg_edit_offset_label", campaign=campaign_name)).grid(
-            row=0, column=0, sticky=tk.W, pady=5
-        )
+        # Campaign name on its own row (above the input)
+        ttk.Label(
+            frame, 
+            text=self.tr.t("dlg_edit_offset_label", campaign=campaign_name),
+            wraplength=400
+        ).grid(row=0, column=0, columnspan=3, sticky=tk.W, pady=(0, 10))
         
+        # Offset input on second row
         self.offset_var = tk.IntVar(value=offset)
         self.offset_spin = ttk.Spinbox(
             frame,
@@ -1602,14 +1606,14 @@ class OffsetDialog(tk.Toplevel):
             textvariable=self.offset_var,
             width=10
         )
-        self.offset_spin.grid(row=0, column=1, sticky=tk.W, pady=5, padx=(10, 0))
+        self.offset_spin.grid(row=1, column=0, sticky=tk.W, pady=5)
         
         ttk.Label(frame, text=f"(Range: {min_off}-{max_off})", foreground='gray').grid(
-            row=0, column=2, sticky=tk.W, pady=5, padx=(10, 0)
+            row=1, column=1, sticky=tk.W, pady=5, padx=(10, 0)
         )
         
         btn_frame = ttk.Frame(frame)
-        btn_frame.grid(row=1, column=0, columnspan=3, pady=(20, 0))
+        btn_frame.grid(row=2, column=0, columnspan=3, pady=(20, 0))
         
         ttk.Button(btn_frame, text=self.tr.t("btn_ok"), command=self._on_ok).pack(side=tk.LEFT, padx=5)
         ttk.Button(btn_frame, text=self.tr.t("btn_cancel"), command=self.destroy).pack(side=tk.LEFT, padx=5)
