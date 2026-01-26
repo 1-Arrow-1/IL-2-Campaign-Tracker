@@ -40,7 +40,7 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **W
 | **Real-time Popups** | Shows promotion and award notifications while playing |
 | **Mission Debriefings** | Parses mission logs to generate detailed flight reports |
 | **PDF Reports** | Creates printable career summaries with combat statistics |
-| **Multi-Language Support** | Full support for 7 languages: English, German, French, Spanish, Polish, Russian, and Chinese |
+| **Multi-Language Support** | Full support for 7 languages: English, German, French, Spanish, Polish, Russian, and Simplified Chinese |
 | **Settings Manager** | User-friendly GUI to configure all tracker settings without editing config files |
 | **Mission Cleanup** | Removes incomplete missions that weren't properly finished |
 | **Backup System** | Creates backups when removing incomplete missions via cleanup tool |
@@ -227,7 +227,7 @@ The **Settings Manager** (`IL2_Settings_Manager.exe`) provides a user-friendly G
 
 | Setting | Description |
 | ------- | ----------- |
-| **Language** | Select display language (English, German, French, Spanish, Polish, Russian, Chinese) |
+| **Language** | Select display language (English, German, French, Spanish, Polish, Russian, Simplified Chinese) |
 | **Enable Popups** | Toggle promotion/award popup notifications on/off |
 | **Rank Scaling Enabled** | Enable/disable rank scaling based on campaign length |
 
@@ -434,7 +434,7 @@ These binary files are "translated" by `mlg2txt.exe` into a *.txt file and is th
 
 Each mission generates detailed output in two formats:
 
-1. **In-Game (Flight Log)** - Chronological list of events written to the campaign's `info.locale=eng.txt`
+1. **In-Game (Flight Log)** - Chronological list of events written to the campaign's `info.locale=eng.txt` - also other language files are written.
 2. **PDF Report** - Detailed kill breakdown by category matching the in-game results screen
 
 ---
