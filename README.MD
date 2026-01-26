@@ -2,9 +2,10 @@
 
 A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **WW2 campaigns**.  Automatically monitors your campaign progress, calculates promotions and awards based on historical criteria, generates detailed mission debriefings, and creates PDF reports of your pilot's career.
 
-![Version](https://img.shields.io/badge/version-2.0-blue)
+![Version](https://img.shields.io/badge/version-2.1-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 ![Game](https://img.shields.io/badge/game-IL--2%20Battle%20of%20Stalingrad-orange)
+![Languages](https://img.shields.io/badge/languages-7-green)
 
 ---
 
@@ -12,9 +13,10 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **W
 
 - [Features](#features)
 - [Supported Nations](#supported-nations)
-- [Installation (manual)](#installation_manual)
-- [Installation via IL2_CampaignTracker_Setup_v2.0.exe](#installation_exe)
+- [Supported Languages](#supported-languages)
+- [Installation](#installation)
 - [First Run Setup](#first-run-setup)
+- [Settings Manager](#settings-manager)
 - [WW1 Detection & Exclusion](#ww1-detection--exclusion)
 - [How It Works](#how-it-works)
 - [Promotions & Awards System](#promotions--awards-system)
@@ -38,6 +40,8 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **W
 | **Real-time Popups** | Shows promotion and award notifications while playing |
 | **Mission Debriefings** | Parses mission logs to generate detailed flight reports |
 | **PDF Reports** | Creates printable career summaries with combat statistics |
+| **Multi-Language Support** | Full support for 7 languages: English, German, French, Spanish, Polish, Russian, and Chinese |
+| **Settings Manager** | User-friendly GUI to configure all tracker settings without editing config files |
 | **Mission Cleanup** | Removes incomplete missions that weren't properly finished |
 | **Backup System** | Creates backups when removing incomplete missions via cleanup tool |
 | **Restore Function** | Easy GUI to restore previous campaign states |
@@ -65,61 +69,104 @@ The tracker includes historically accurate ranks and awards for:
 
 ---
 
-## 📥 Installation (manual) <a id="installation_manual"></a>
+## 🌐 Supported Languages <a id="supported-languages"></a>
 
-1. **Download** the latest release (`IL2_Campaign_Tracker_v2.0.zip`)
+The tracker supports full localization in 7 languages. All UI elements, mission debriefings, PDF reports, and in-game events are automatically translated based on your selected language.
 
-2. **Extract** to a folder of your choice (e.g., `C:IL2_Campaign_Tracker_v2.0`)
+| Language | Code | In-Game Debriefings | PDF Reports | Settings Manager |
+| -------- | ---- | ------------------- | ----------- | ---------------- |
+| 🇬🇧 **English** | en | ✅ | ✅ | ✅ |
+| 🇩🇪 **German** | de | ✅ | ✅ | ✅ |
+| 🇫🇷 **French** | fr | ✅ | ✅ | ✅ |
+| 🇪🇸 **Spanish** | es | ✅ | ✅ | ✅ |
+| 🇵🇱 **Polish** | pl | ✅ | ✅ | ✅ |
+| 🇷🇺 **Russian** | ru | ✅ | ✅ | ✅ |
+| 🇨🇳 **Chinese (Simplified)** | zh | ✅ | ✅ | ✅ |
 
-3. **Copy** the extracted `CampaignRanksAwards` folder to `<Path to IL-2 BoS>\data\swf`<br>
+### Changing Language
 
-Before proceeding to the **optional** step 4:  
+You can change the language using the **Settings Manager** (see [Settings Manager](#settings-manager) section):
 
-⚠️ **IMPORTANT**
-The tracker can monitor **only** campaigns located in `<Path to Il-2 BoS>\data\campaigns`. Standard IL-2 campaigns are not stored directly in this folder; instead, they are run internally from `campaigns.gtp`. As a result, these campaigns must be extracted before they can be tracked (see **Step 4**).
+1. Open `IL2_Settings_Manager.exe`
+2. Select your preferred language from the dropdown
+3. Click "Apply" or "OK"
+4. The tracker will automatically regenerate all debriefings and PDF reports in the new language
 
-🚨 **IMPORTANT**
-If you have modified missions belonging to a standard official campaign, proceed with extreme caution when copying extracted files from `campaigns.gtp` into the `<Path to Il-2 BoS>\data\campaigns` folder. Existing files will be **overwritten**, and any custom mission modifications will be replaced by the original out-of-the-box versions.  
+> **Note:** When switching languages, all existing campaign debriefings and PDF reports are automatically regenerated in the selected language. This may take a moment depending on the number of campaigns you have.
 
-ℹ️ 4.  **OPTIONAL:**  
-Note: The intention of the extraction of the standard official campaigns is ONLY to make them usable for the Campaign Tracker. Please do not change the official campaigns.  
+---
 
-- **Extract** Campaigns.gtp (standard IL-2 BoS campaigns) from `<Path to Il-2 BoS>\data` with the help of unGTP-IL2 (download it here: <https://www.mediafire.com/file/caxpalaudz1hd47/unGTP-IL2.zip>).
-- **Unzip & Move** the `unGTP-IL2.exe` to `<Path to Il-2 BoS>\data`.  
-- **Drag** `Campaigns.gtp` onto `unGTP-IL2.exe`. Ignore the error warning in the cmd-window at the end (don't worry - everything has beed extracted).  
-- **Goto** `<Path to Il-2 BoS>\data\(null)\campaigns`.  
-- **Copy** the subfolders of `<Path to Il-2 BoS>\data\(null)\campaigns` to `<Path to Il-2 BoS>\data\campaigns`  
+## 📥 Installation <a id="installation"></a>
 
-1. **Run** `IL2_Campaign_Tracker_v2.0.exe` from your Tracker installation directory.
+### Step 1: Download and Install
+
+1. **Download** the latest release (`IL2_CampaignTracker_Setup_v2.1.zip`)
+
+2. **Extract** the `zip` file
+
+3. **Run** the extracted `IL2_CampaignTracker_Setup_v2.1.exe`
+
+4. **Follow** the installation instructions in the setup wizard
+
+The setup wizard will guide you through selecting the installation directory and configuring basic options.
+
+### Step 2: Extract Standard Campaigns (Optional but Recommended)
+
+⚠️ **IMPORTANT:** The tracker can monitor **only** campaigns located in `<Path to IL-2 BoS>\data\campaigns`. Standard IL-2 campaigns are not stored directly in this folder; instead, they are run internally from `campaigns.gtp`. As a result, these campaigns must be extracted before they can be tracked.
+
+🚨 **CAUTION:** If you have modified missions belonging to a standard official campaign, proceed with extreme caution when copying extracted files from `campaigns.gtp` into the `<Path to IL-2 BoS>\data\campaigns` folder. Existing files will be **overwritten**, and any custom mission modifications will be replaced by the original out-of-the-box versions.
+
+**To extract standard campaigns:**
+
+1. **Download** unGTP-IL2 from: <https://www.mediafire.com/file/caxpalaudz1hd47/unGTP-IL2.zip>
+2. **Unzip & Move** the `unGTP-IL2.exe` to `<Path to IL-2 BoS>\data`
+3. **Drag** `Campaigns.gtp` onto `unGTP-IL2.exe` (ignore the error warning in the cmd-window at the end - everything has been extracted)
+4. **Navigate** to `<Path to IL-2 BoS>\data\(null)\campaigns`
+5. **Copy** all subfolders to `<Path to IL-2 BoS>\data\campaigns`
+
+> **Note:** The intention of extracting the standard official campaigns is ONLY to make them usable for the Campaign Tracker. Please do not modify the official campaigns.
+
+### Step 3: Run the Tracker
+
+**Run** `IL2_Campaign_Tracker.exe` from your Tracker installation directory.
 
 ℹ️ **NOTE**: By default, the tracker shuts down automatically when IL-2 BoS is closed. To continue using the tracker, you must either restart it manually or configure a Windows Task Scheduler task to launch it automatically when Windows starts.
 
 A general setup guide can be found here:
 <https://forum.il2-series.com/topic/772-expanded-career-rank-mod/#findComment-4176>
 
-Please adjust the executable names and file paths according to your local installation.
+### Installed Files
 
-### PDF Requirements
-
-PDF export uses `pdfkit`, which requires `wkhtmltopdf` to be installed or bundled. If `wkhtmltopdf` is missing, PDF export is skipped (see `step3_generate_events.py`) and the tracker continues without generating PDFs. You can install `wkhtmltopdf` from the official site: <https://wkhtmltopdf.org/downloads.html>.
-
-**Packaged EXE:** The PyInstaller build is configured to bundle `wkhtmltopdf.exe` when available during the build. If it is not bundled, the tracker expects `wkhtmltopdf` to be available on your system `PATH`.
-
-### Required Files
-
-Ensure these files are in the same folder as the executable:
+The installer places the following files in your chosen installation directory:
 
 ```text
-IL2_Campaign_Tracker_v2.0/
-├── IL2_Campaign_Tracker_v2.0.exe        # Main executable
-├── mlg2txt.exe                          # Helper-exe for decoding missionreports (mlg files)
-├── campaign_progress_config.yaml        # Ranks & awards configuration
-├── stock_campaigns.yaml                 # Campaign to Country allocation 
-├── object_categories.yaml               # Needed for mission debriefing
-├── Campaign_Service_Record.exe          # Main executable for the Service Record
-├── _internal (folder)                   # Needed for the Service Record (contains images, css, js, etc.)
-└──(other files created automatically on first run)
+IL2_Campaign_Tracker/
+├── IL2_CampaignTracker_v2.1_ML.exe       # Main executable
+├── IL2_Settings_Manager.exe              # Settings Manager GUI
+├── mlg2txt.exe                           # Helper for decoding mission    ├── reports/                              # Campaign reports (pdf) folder
+├── Campaign_Service_Record.exe           # Service Record web application
+├── campaign_progress_config.yaml         # Ranks & awards configuration
+├── stock_campaigns.yaml                  # Campaign to Country allocation 
+├── object_categories.yaml                # Mission debriefing data
+├── locales/ (folder)                     # Language files (7 languages)
+├── _internal/ (folder)                   # Service Record resources
+├── unins000.exe                          # Uninstaller
+├── unins000.dat                          # Uninstaller data
+├── cleanup_tracker_content.exe           # Helper for uninstaller
+└── (other files created automatically on first run)
 ```
+
+### Uninstall
+
+1. **Run** `unins000.exe` from Tracker installation path
+   
+   🚨 **DO NOT RUN** `cleanup_tracker_content.exe` directly - it is a helper for the uninstaller.
+
+2. **Follow** the uninstallation instructions in the wizard
+
+ℹ️ **NOTE:** All in-game debriefings and events will be removed, and the original `info.locale=[language].txt` files will be restored to their out-of-the-box state.
+
+If you choose to keep the configuration files during uninstallation and later reinstall the tracker into the same folder, those files will not be overwritten. Your previously saved configuration will be retained.
 
 ---
 
@@ -127,7 +174,9 @@ IL2_Campaign_Tracker_v2.0/
 
 When you start the tracker for the first time, a setup wizard guides you through the configuration:
 
-### Step 1: Select Game Directory
+### Step 1: Select Language and Game Directory
+
+Select your language.  
 
 A folder browser opens.  Navigate to your IL-2 installation folder:
 
@@ -160,16 +209,71 @@ After setup, the tracker:
 2. Generates initial events (existing promotions/awards)
 3. Starts monitoring for changes
 
-**Uninstall**
+---
 
-1. **Delete** the tracker folder manually
-2. **Delete** the folder `<Path to IL-2 BoS>\data\swf\CampaignRanksAwards` manually
-3. **Delete** the following files (if existent) from your IL-2 usersave folder `<Path to IL-2 BoS>\data\swf\usersave\{UUID}\campaign` (if you want to remove all tracker data):
-   - `campaignsstates_hash_index.json`
-   - `campaignsstates_[timestamp].backup` (all backup files)
-   - `popups_[timestamp].backup` (all popup state backups)  
+## ⚙️ Settings Manager <a id="settings-manager"></a>
 
-⚠️ NOTE: All in-game debriefings and events will still remain in your campaign files `info.locale=[language].txt`. You will need to remove their content manually if you want to revert to the original state.
+The **Settings Manager** (`IL2_Settings_Manager.exe`) provides a user-friendly GUI to configure all tracker settings without manually editing configuration files.
+
+### Opening the Settings Manager
+
+1. Locate `IL2_Settings_Manager.exe` in your tracker installation folder
+2. Double-click to open the Settings Manager
+3. Make your changes and click "Apply" or "OK"
+
+### Available Settings
+
+#### General Tab
+
+| Setting | Description |
+| ------- | ----------- |
+| **Language** | Select display language (English, German, French, Spanish, Polish, Russian, Chinese) |
+| **Enable Popups** | Toggle promotion/award popup notifications on/off |
+| **Rank Scaling Enabled** | Enable/disable rank scaling based on campaign length |
+
+#### Rank Scaling Tab
+
+Configure how rank requirements scale based on campaign length:
+
+| Bracket | Default Factor | Purpose |
+| ------- | -------------- | ------- |
+| 1-10 missions | 1.00x | Short campaigns (stock campaigns) |
+| 11-20 missions | 1.15x | Medium-short campaigns |
+| 21-30 missions | 1.30x | Medium campaigns |
+| 31-40 missions | 1.50x | Medium-long campaigns |
+| 41-50 missions | 1.75x | Long campaigns |
+| 51-70 missions | 2.00x | Very long campaigns |
+| 71+ missions | 5.50x | Epic campaigns |
+
+You can add, edit, or remove scaling brackets as needed.
+
+#### Rank Values Tab
+
+Configure promotion score thresholds for each nation:
+
+- View and edit the score required for each rank
+- Supports all four nations (Germany, Soviet Union, USA, Britain)
+
+#### Campaigns Tab
+
+Configure per-campaign settings:
+
+| Setting | Description | Range |
+| ------- | ----------- | ----- |
+| **Starting Rank Offset** | Start campaigns at higher ranks | 0-7 |
+
+> **Tip:** Use higher offsets (up to 7) for campaigns where the player is already a squadron leader at mission start. This is particularly useful for British campaigns due to their many lower ranks.
+
+### Auto-Regeneration
+
+When you change certain settings, the tracker automatically regenerates all affected data:
+
+| Changed Setting | Auto-Regeneration |
+| --------------- | ----------------- |
+| Language | ✅ All debriefings and PDF reports regenerated in new language |
+| Rank Scaling | ✅ All events recalculated based on new scaling factors |
+| Rank Values | ✅ All promotions recalculated based on new thresholds |
+| Starting Rank Offset | Manual regeneration (restart tracker) |
 
 ---
 
@@ -188,36 +292,6 @@ Flying Circus (WW1) campaigns are detected and excluded by default because the t
 - Excluded campaigns are skipped during decoding and event generation.
 - The exclusion reason is stored in `campaign_mission_dates.json` so the tracker consistently ignores them.
 - You can review or change exclusions by re-running setup (delete `campaign_mission_dates.json` and the respective entry in the `stock_campaigns.yaml`) and using the **WW1 (ignore)** checkbox in the country validation GUI.
-
----
-
-## 📥 Installation via IL2_CampaignTracker_Setup_v2.0.exe (RECOMMENDED) <a id="installation_exe"></a>
-
-1. **Download** the latest release (`IL2_CampaignTracker_Setup_v2.0.zip`)
-
-2. **Extract** the `zip` file
-
-3. **Run** the extracted `IL2_CampaignTracker_Setup_v2.0.exe`
-
-4. **Follow** the installation instructions in the setup wizard
-
-5. **Run** `IL2_Campaign_Tracker_v2.0.exe` from Tracker installation path.
-
-ℹ️ Rest of the setup is the same as the manual installation method. You will have addional files:
-
-- `unins000.exe` - uninstaller
-- `unins000.dat` - uninstaller data
-- `cleanup_tracker_content.exe` - helper for `unins000.exe` (removes all tracker generated content from in-game debriefings/events)
-
-**Uninstall**
-
-1. **Run** `unins000.exe` from Tracker installation path. 🚨 **DO NOT RUN** `cleanup_tracker_content.exe` directly.
-
-2. **Follow** the uninstallation instructions in the wizard.
-
-ℹ️ **NOTE:** All in-game debriefings and events will be removed, and the original info-locale=[language].txt files will be restored to their out-of-the-box state.
-
-If you choose to keep the configuration files during uninstallation and later reinstall the tracker into the same folder, those files will not be overwritten. Your previously saved configuration will be retained.
 
 ---
 
@@ -309,15 +383,25 @@ Some awards have **prerequisites** (e.g., must have Iron Cross 2nd Class before 
 
 ### Starting Rank Offset
 
-Campaigns can start with higher ranks (if you want to).  This is configurable per-campaign in `campaign_mission_dates.json`:
+Campaigns can start with higher ranks (if you want to). This is useful for campaigns where your pilot is already an experienced officer at mission start. The offset can be configured:
+
+**Option 1: Via Settings Manager (Recommended)**
+1. Open `IL2_Settings_Manager.exe`
+2. Go to the "Campaigns" tab
+3. Double-click on a campaign to edit its offset
+4. Select a value from 0-7
+
+**Option 2: Manual editing in `campaign_mission_dates.json`:**
 
 ```json
 "kerch": {
   "country": "Germany",
-  "starting_rank_offset": 2, --> change this number (default = 0, starting at the lowest rank)
+  "starting_rank_offset": 2, --> change this number (0-7, default = 0)
   "missions": { ...  }
 }
 ```
+
+> **Note:** Higher offset values (up to 7) are particularly useful for British campaigns, which have many lower ranks, or for campaigns where the player starts as a squadron leader.
 
 ℹ️ **Note:** You may customize the promotion and award criteria to suit your preferences. However, it is strongly recommended to create a backup copy of the original `campaign_progress_config.yaml` file before making any changes.
 
@@ -641,8 +725,10 @@ Users who require historically accurate imagery may replace the images locally:
 
 |File|Purpose|User Editable|
 |------|---------|---------------|
-|`campaign_progress_config.yaml`|Ranks, awards, criteria, and settings|✅ Yes|
-|`campaign_mission_dates.json`|Campaign metadata, mission dates, countries|⚠️ Careful|
+|`campaign_progress_config.yaml`|Ranks, awards, criteria, and settings|✅ Yes (or use Settings Manager)|
+|`campaign_mission_dates.json`|Campaign metadata, mission dates, countries|⚠️ Careful (use Settings Manager for offsets)|
+|`settings.json`|User preferences (language, etc.)|✅ Via Settings Manager|
+|`locales/*.yaml`|Language translation files|⚠️ Advanced users only|
 
 ### Configuration Details
 
@@ -720,6 +806,7 @@ Auto-generated during first run, contains:
 | `campaign_popups_seen.json` | Tracks shown popups per campaign | Tracker folder |
 | `campaign_events.json` | Generated events (promotions/awards) | Tracker folder |
 | `campaign_completion_state.json` | Tracks mission completion between runs | Tracker folder |
+| `settings.json` | User preferences (language, popups, etc.) | Tracker folder |
 
 ### Backup Files
 
@@ -795,9 +882,7 @@ The tracker only reads English locale files (`.eng` briefings and `info.locale=e
 
 Even if you play in another language, these English files must exist for the tracker to work. The tracker will not read `.ger`, `.rus`, `.fra` or other language files.
 
-Note: When writing Events and Debriefings back to your campaign, the tracker automatically updates all existing `info.locale=*.txt`
-
-⚠️ *Important: All Debriefings/Events are in English, independent of your in-game chosen language. NO multi-language support yet*
+Note: When writing Events and Debriefings back to your campaign, the tracker automatically updates all existing `info.locale=*.txt` files in your selected language (see [Supported Languages](#supported-languages)).
 
 **Mission File Naming:**
 
@@ -865,12 +950,16 @@ It does **not** modify any game executables or core files.
 
 ### Q:  Can I manually edit the configuration?
 
-**A:** Yes!  `campaign_progress_config.yaml` can be edited to:
+**A:** Yes, but we recommend using the **Settings Manager** (`IL2_Settings_Manager.exe`) for most changes. It provides a user-friendly interface and automatically handles regeneration when needed.
+
+For advanced customization, `campaign_progress_config.yaml` can be edited manually to:
 
 - Adjust promotion score thresholds
 - Modify award criteria
 - Add custom awards
 - Change rank scaling factors
+
+> ⚠️ Always create a backup before manually editing configuration files.
 
 ### Q: How do I reset everything?
 
