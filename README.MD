@@ -40,7 +40,7 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **W
 | **Real-time Popups** | Shows promotion and award notifications while playing |
 | **Mission Debriefings** | Parses mission logs to generate detailed flight reports |
 | **PDF Reports** | Creates printable career summaries with combat statistics |
-| **Multi-Language Support** | Full support for 7 languages: English, German, French, Spanish, Polish, Russian, and Simplified Chinese |
+| **Multi-Language Support** | Full support for 7 languages: English, German, French, Spanish, Polish, Russian, and Chinese |
 | **Settings Manager** | User-friendly GUI to configure all tracker settings without editing config files |
 | **Mission Cleanup** | Removes incomplete missions that weren't properly finished |
 | **Backup System** | Creates backups when removing incomplete missions via cleanup tool |
@@ -71,28 +71,55 @@ The tracker includes historically accurate ranks and awards for:
 
 ## 🌐 Supported Languages <a id="supported-languages"></a>
 
-The tracker supports full localization in 7 languages. All UI elements, mission debriefings, PDF reports, and in-game events are automatically translated based on your selected language.
+The tracker supports full localization in 7 languages. All UI elements, mission debriefings, PDF reports, in-game events, and the Campaign Service Record are automatically translated based on your selected language.
 
-| Language | Code | In-Game Debriefings | PDF Reports | Settings Manager |
-| -------- | ---- | ------------------- | ----------- | ---------------- |
-| 🇬🇧 **English** | en | ✅ | ✅ | ✅ |
-| 🇩🇪 **German** | de | ✅ | ✅ | ✅ |
-| 🇫🇷 **French** | fr | ✅ | ✅ | ✅ |
-| 🇪🇸 **Spanish** | es | ✅ | ✅ | ✅ |
-| 🇵🇱 **Polish** | pl | ✅ | ✅ | ✅ |
-| 🇷🇺 **Russian** | ru | ✅ | ✅ | ✅ |
-| 🇨🇳 **Chinese (Simplified)** | zh | ✅ | ✅ | ✅ |
+| Language | Display Name | Code | Popups | In-Game Events | PDF Reports | Service Record | Settings Manager |
+| -------- | ------------ | ---- | ------ | -------------- | ----------- | -------------- | ---------------- |
+| 🇬🇧 **English** | English | en | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 🇩🇪 **German** | Deutsch | de | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 🇫🇷 **French** | Français | fr | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 🇪🇸 **Spanish** | Español | es | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 🇵🇱 **Polish** | Polski | pl | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 🇷🇺 **Russian** | Русский | ru | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 🇨🇳 **Chinese (Simplified)** | 简体中文 | zh | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+### What Gets Translated
+
+When you select a language, the following content is displayed in that language:
+
+- **Popup Notifications** - Promotion and award announcements
+- **In-Game Events** - The Events section written to campaign `info.locale=*.txt` files
+- **Mission Debriefings** - Flight logs, kill reports, status messages
+- **PDF Reports** - Complete career reports including all statistics
+- **Campaign Service Record** - The web-based service record interface
+- **Settings Manager** - All UI labels, buttons, and messages
 
 ### Changing Language
 
 You can change the language using the **Settings Manager** (see [Settings Manager](#settings-manager) section):
 
 1. Open `IL2_Settings_Manager.exe`
-2. Select your preferred language from the dropdown
+2. Select your preferred language from the dropdown (languages are shown in their native names)
 3. Click "Apply" or "OK"
 4. The tracker will automatically regenerate all debriefings and PDF reports in the new language
 
 > **Note:** When switching languages, all existing campaign debriefings and PDF reports are automatically regenerated in the selected language. This may take a moment depending on the number of campaigns you have.
+
+### IL-2 Language File Mapping
+
+The tracker maps IL-2's language codes to standard locale codes:
+
+| IL-2 Code | Tracker Code | Language |
+| --------- | ------------ | -------- |
+| eng | en | English |
+| ger | de | German |
+| fra | fr | French |
+| spa | es | Spanish |
+| pol | pl | Polish |
+| rus | ru | Russian |
+| chs | zh | Chinese (Simplified) |
+
+When writing events to campaign files, the tracker updates **all** `info.locale=*.txt` files that exist for a campaign (e.g., `info.locale=eng.txt`, `info.locale=ger.txt`, etc.), each in the appropriate language.
 
 ---
 
@@ -141,9 +168,9 @@ The installer places the following files in your chosen installation directory:
 
 ```text
 IL2_Campaign_Tracker/
-├── IL2_CampaignTracker_v2.1_ML.exe       # Main executable
+├── IL2_Campaign_Tracker.exe              # Main executable
 ├── IL2_Settings_Manager.exe              # Settings Manager GUI
-├── mlg2txt.exe                           # Helper for decoding mission    ├── reports/                              # Campaign reports (pdf) folder
+├── mlg2txt.exe                           # Helper for decoding mission reports
 ├── Campaign_Service_Record.exe           # Service Record web application
 ├── campaign_progress_config.yaml         # Ranks & awards configuration
 ├── stock_campaigns.yaml                  # Campaign to Country allocation 
@@ -174,9 +201,7 @@ If you choose to keep the configuration files during uninstallation and later re
 
 When you start the tracker for the first time, a setup wizard guides you through the configuration:
 
-### Step 1: Select Language and Game Directory
-
-Select your language.  
+### Step 1: Select Game Directory
 
 A folder browser opens.  Navigate to your IL-2 installation folder:
 
@@ -227,7 +252,7 @@ The **Settings Manager** (`IL2_Settings_Manager.exe`) provides a user-friendly G
 
 | Setting | Description |
 | ------- | ----------- |
-| **Language** | Select display language (English, German, French, Spanish, Polish, Russian, Simplified Chinese) |
+| **Language** | Select display language (English, German, French, Spanish, Polish, Russian, Chinese) |
 | **Enable Popups** | Toggle promotion/award popup notifications on/off |
 | **Rank Scaling Enabled** | Enable/disable rank scaling based on campaign length |
 
@@ -434,8 +459,10 @@ These binary files are "translated" by `mlg2txt.exe` into a *.txt file and is th
 
 Each mission generates detailed output in two formats:
 
-1. **In-Game (Flight Log)** - Chronological list of events written to the campaign's `info.locale=eng.txt` - also other language files are written.
-2. **PDF Report** - Detailed kill breakdown by category matching the in-game results screen
+1. **In-Game (Flight Log)** - Chronological list of events written to all campaign `info.locale=*.txt` files (each in its respective language)
+2. **PDF Report** - Detailed kill breakdown by category matching the in-game results screen (in your selected language)
+
+> **Note:** The tracker writes localized content to each language file that exists in your campaign folder. For example, if your campaign has both `info.locale=eng.txt` and `info.locale=ger.txt`, the English file will contain English debriefings and the German file will contain German debriefings.
 
 ---
 
@@ -728,7 +755,7 @@ Users who require historically accurate imagery may replace the images locally:
 |`campaign_progress_config.yaml`|Ranks, awards, criteria, and settings|✅ Yes (or use Settings Manager)|
 |`campaign_mission_dates.json`|Campaign metadata, mission dates, countries|⚠️ Careful (use Settings Manager for offsets)|
 |`settings.json`|User preferences (language, etc.)|✅ Via Settings Manager|
-|`locales/*.yaml`|Language translation files|⚠️ Advanced users only|
+|`locales/*.json`|Language translation files|⚠️ Advanced users only|
 
 ### Configuration Details
 
@@ -877,12 +904,24 @@ Auto-generated during first run, contains:
 
 The tracker only reads English locale files (`.eng` briefings and `info.locale=eng.txt`) to extract mission dates and campaign information. IL-2 stores the user's language preference internally, and we have no way to detect which language you're using in-game. Therefore:
 
-- Every mission must have a corresponding .eng briefing file (e.g., `01.eng` for `01.Mission`)
+- Every mission must have a corresponding `.eng` briefing file (e.g., `01.eng` for `01.Mission`)
 - Your campaign folder must contain an `info.locale=eng.txt` file for the campaign description
 
-Even if you play in another language, these English files must exist for the tracker to work. The tracker will not read `.ger`, `.rus`, `.fra` or other language files.
+Even if you play in another language, these English files must exist for the tracker to work. The tracker will not read `.ger`, `.rus`, `.fra` or other language files for date extraction.
 
-Note: When writing Events and Debriefings back to your campaign, the tracker automatically updates all existing `info.locale=*.txt` files in your selected language (see [Supported Languages](#supported-languages)).
+ℹ️ *Multi-Language Output*
+
+When writing Events and Debriefings back to your campaign, the tracker automatically updates **all** existing `info.locale=*.txt` files. Each file is written in its corresponding language:
+
+- `info.locale=eng.txt` → English content
+- `info.locale=ger.txt` → German content (Deutsch)
+- `info.locale=fra.txt` → French content (Français)
+- `info.locale=spa.txt` → Spanish content (Español)
+- `info.locale=pol.txt` → Polish content (Polski)
+- `info.locale=rus.txt` → Russian content (Русский)
+- `info.locale=chs.txt` → Chinese content (简体中文)
+
+See [Supported Languages](#supported-languages) for more details.
 
 **Mission File Naming:**
 
@@ -906,15 +945,18 @@ The tracker looks for date information in this priority order:
 
 **Campaign Folder Structure:**
 
-`Path to IL-2 Bos\data\Campaigns\YourCampaignName\`  
-    ├── `info.locale=eng.txt`    (required for reading - campaign description)  
-    ├── `info.locale=ger.txt`    (optional - tracker will also write here if present)  
-    ├── `info.locale=rus.txt`    (optional - tracker will also write here if present)  
-    ├── `01.Mission`             (mission file)  
-    ├── `01.eng`                 (required - English briefing with date/time)  
-    ├── `02.Mission`  
-    ├── `02.eng`                 (required - English briefing with date/time)  
-    └── ...  
+```
+Path to IL-2 BoS\data\Campaigns\YourCampaignName\
+    ├── info.locale=eng.txt    (required for reading - campaign description)
+    ├── info.locale=ger.txt    (optional - tracker writes German content here)
+    ├── info.locale=fra.txt    (optional - tracker writes French content here)
+    ├── info.locale=rus.txt    (optional - tracker writes Russian content here)
+    ├── 01.Mission             (mission file)
+    ├── 01.eng                 (required - English briefing with date/time)
+    ├── 02.Mission
+    ├── 02.eng                 (required - English briefing with date/time)
+    └── ...
+```
 
 **Country Detection:**
 The tracker auto-detects your country/faction from:
@@ -929,7 +971,7 @@ The tracker auto-detects your country/faction from:
 - Missing `info.locale=eng.txt` → campaign description unavailable, tracker cannot read campaign info
 - Non-standard date format in briefing → use one of the supported formats above
 - Special characters in campaign folder name → avoid umlauts or special symbols
-- WW1 campaigns (Flying Circus) → excluded by default for IL-2 campaigns (see WW1 Detection & Exclusion section)
+- WW1 campaigns (Flying Circus) → excluded by default (see WW1 Detection & Exclusion section)
 
 ### Q: Can I run multiple instances of the tracker?
 
