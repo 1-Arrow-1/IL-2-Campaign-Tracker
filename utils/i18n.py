@@ -9,8 +9,8 @@ Provides translation functionality for all Python components:
 - In-game text (info.locale files)
 
 Usage:
-    from campaign_service_record.utils.i18n import t, set_locale, get_locale
-    
+    from utils.i18n import t, set_locale, get_locale
+
     # Set locale (once at startup)
     set_locale('de')  # or 'en', etc.
     

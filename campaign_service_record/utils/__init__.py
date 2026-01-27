@@ -1,27 +1,44 @@
 """
-Utility modules copied from Campaign Tracker.
+Campaign Service Record utility modules.
 
-These provide core functionality for:
-- Combat results calculation (kill mapping, scoring)
-- HTML generation for combat results grids
-- String formatting (safe filenames, etc.)
-- Mission sorting (chronological order)
+Flask-specific utilities for the Campaign Service Record web application:
+- Image processing (DDS to PNG conversion, data URIs)
+- Path utilities (game asset resolution)
+- Pilot photo handling
+
+Note: Core utilities (combat_results, formatting, sorting) are imported from root utils/ folder.
 """
 
-from .combat_results import (
-    calculate_kills_from_stats,
-    calculate_total_air_kills_weighted,
-    KILL_MAPPING
+# Flask-specific utilities remain in campaign_service_record/utils/
+from .image_utils import (
+    build_dds_data_uri,
+    convert_dds_to_png_bytes,
+    find_existing_image_path
 )
-from .combat_results_html import generate_campaign_summary_combat_results_html
-from .formatting import safe_campaign_filename
-from .sorting import smart_mission_sort_key
+from .path_utils import (
+    build_award_image_relative_path,
+    build_award_large_image_relative_path,
+    build_game_asset_url,
+    get_game_directory
+)
+from .pilot_photo import (
+    pilot_photo_path,
+    pilot_photo_filename,
+    pilot_name_path
+)
 
 __all__ = [
-    'calculate_kills_from_stats',
-    'calculate_total_air_kills_weighted',
-    'KILL_MAPPING',
-    'generate_campaign_summary_combat_results_html',
-    'safe_campaign_filename',
-    'smart_mission_sort_key'
+    # Image utilities
+    'build_dds_data_uri',
+    'convert_dds_to_png_bytes',
+    'find_existing_image_path',
+    # Path utilities
+    'build_award_image_relative_path',
+    'build_award_large_image_relative_path',
+    'build_game_asset_url',
+    'get_game_directory',
+    # Pilot photo utilities
+    'pilot_photo_path',
+    'pilot_photo_filename',
+    'pilot_name_path'
 ]

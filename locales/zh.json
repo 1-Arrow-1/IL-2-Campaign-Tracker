@@ -602,5 +602,76 @@
         "ignore_note": "以后不会再提示它们。"
       }
     }
+  },
+  "settings_manager": {
+    "app_title": "IL-2 战役追踪器 - 设置管理器",
+    "tab": {
+      "general": "通用",
+      "rank_scaling": "军衔缩放",
+      "rank_values": "军衔数值",
+      "campaigns": "战役"
+    },
+    "label": {
+      "language": "语言：",
+      "enable_popups": "启用游戏内弹窗：",
+      "rank_scaling_enabled": "启用军衔缩放：",
+      "bracket": "区间",
+      "factor": "系数",
+      "rank_name": "军衔",
+      "rank_index_header": "等级索引",
+      "rank_index_format": "等级 {index}",
+      "rank_score": "分数",
+      "rank_values_helper": "编辑分数会应用到所有国家。",
+      "campaign_name": "战役",
+      "country": "国家",
+      "starting_rank_offset": "起始军衔偏移"
+    },
+    "button": {
+      "add_bracket": "添加区间",
+      "remove_bracket": "删除区间",
+      "edit": "编辑",
+      "ok": "确定",
+      "apply": "应用",
+      "cancel": "取消",
+      "restore_defaults": "恢复默认"
+    },
+    "message": {
+      "unsaved_changes": "有未保存的更改。是否放弃？",
+      "confirm_delete": "删除区间 '{bracket}'？",
+      "save_success": "设置保存成功。",
+      "locale_refresh": "语言已更新。本地化任务文本和 PDF 将刷新。",
+      "locale_refresh_failed": "语言已更新，但刷新本地化任务文本和 PDF 失败：{error}",
+      "locale_refresh_running": "正在刷新本地化任务文本和 PDF...",
+      "save_error": "保存错误：{error}",
+      "rank_scores_mismatch": "各国分数不同；应用后将统一为编辑后的值。",
+      "warning_title": "警告",
+      "confirm_title": "确认",
+      "error_title": "错误",
+      "no_mission_dates": "战役设置已禁用。\n未找到 campaign_mission_dates.json。",
+      "campaigns_tab_disabled": "战役设置需要 campaign_mission_dates.json。\n请至少运行一次 Campaign Tracker。"
+    },
+    "error": {
+      "bracket_format": "无效格式。请使用 'A-B' 或 'N+'",
+      "bracket_duplicate": "区间已存在",
+      "bracket_overlap": "区间与以下重叠：{bracket}",
+      "factor_range": "系数必须在 0.1 和 10.0 之间",
+      "score_negative": "分数不能为负",
+      "score_not_ascending": "分数必须递增（错误在等级 {index}）",
+      "offset_range": "偏移必须在 {min} 和 {max} 之间"
+    },
+    "dialog": {
+      "edit_bracket_title": "编辑区间",
+      "edit_bracket_label": "区间（例如 '1-10' 或 '71+'）：",
+      "edit_factor_label": "系数：",
+      "edit_score_title": "编辑分数",
+      "edit_score_label": "{rank} 的分数：",
+      "edit_offset_title": "编辑偏移",
+      "edit_offset_label": "{campaign} 的起始军衔偏移："
+    },
+    "tooltip": {
+      "bracket": "任务数量范围（例如 '1-10', '11-20', '71+'）",
+      "factor": "军衔要求的分数倍数",
+      "offset": "从更高的军衔开始（0 = 最低军衔）"
+    }
   }
 }

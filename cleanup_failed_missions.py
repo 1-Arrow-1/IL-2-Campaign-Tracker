@@ -22,7 +22,7 @@ from utils.il2_paths import find_campaignsstates_path, read_game_directory
 from utils.logging import get_logger, log_message
 from utils.pathing import get_base_path
 from utils.formatting import safe_campaign_filename
-from campaign_service_record.utils.i18n import t, init_i18n
+from utils.i18n import t, init_i18n
 from utils.locale_config import resolve_locale
 
 BASE_DIR = get_base_path(__file__)

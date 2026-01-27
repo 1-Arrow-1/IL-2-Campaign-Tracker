@@ -9,8 +9,9 @@ import os, json
 from utils.il2_paths import read_game_directory
 from utils.logging import get_logger, log_message
 from utils.pathing import get_base_path
-from campaign_service_record.utils.i18n import t, init_i18n
+from utils.i18n import t, init_i18n
 from utils.locale_config import resolve_locale
+from utils.name_normalization import name_to_i18n_key, country_code_for_rank
 
 logger = None
 
@@ -35,35 +36,7 @@ except Exception as e:
 # ============================================================================
 # i18n Helper Functions for Rank/Award Translation
 # ============================================================================
-
-def _name_to_i18n_key(name: str) -> str:
-    """Convert display name to i18n key format."""
-    value = name.lower()
-    value = value.replace("'", "'").replace("'", "'")
-    value = value.replace("'", "")
-    value = value.replace("&", "and")
-    value = value.replace("+", "and")
-    value = re.sub(r"[,\.\"]", "", value)
-    value = re.sub(r"\s*\(\s*", "_", value)
-    value = re.sub(r"\s*\)\s*", "", value)
-    value = value.replace("…", "")
-    value = re.sub(r"\s+", "_", value)
-    value = re.sub(r"_+", "_", value)
-    return value.strip("_")
-
-
-def _country_code_for_rank(country: str | None) -> str:
-    """Get country code prefix for rank i18n keys."""
-    normalized = (country or "").lower().strip()
-    if normalized == "germany":
-        return "ger"
-    if normalized in {"britain", "uk", "great britain"}:
-        return "raf"
-    if normalized in {"usa", "united states", "united states of america", "us"}:
-        return "usaaf"
-    if normalized in {"soviet union", "ussr", "russia"}:
-        return "vvs"
-    return ""
+# (Now imported from utils.name_normalization)
 
 
 def _translate_rank_name(name: str, country: str | None) -> str:
@@ -71,8 +44,8 @@ def _translate_rank_name(name: str, country: str | None) -> str:
     if not name:
         return name
     
-    base_key = _name_to_i18n_key(name)
-    country_code = _country_code_for_rank(country)
+    base_key = name_to_i18n_key(name)
+    country_code = country_code_for_rank(country)
     
     # Try country-specific key first
     if country_code:
@@ -96,7 +69,7 @@ def _translate_award_name(name: str) -> str:
     if not name:
         return name
     
-    key = f"progression.awards.{_name_to_i18n_key(name)}"
+    key = f"progression.awards.{name_to_i18n_key(name)}"
     translated = t(key)
     if not (translated.startswith("[") and translated.endswith("]")):
         return translated

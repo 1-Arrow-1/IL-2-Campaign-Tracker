@@ -36,7 +36,7 @@ from utils.info_locale import (
 )
 from utils.pathing import get_base_path
 from utils.formatting import safe_campaign_filename
-from campaign_service_record.utils.i18n import (
+from utils.i18n import (
     t,
     init_i18n,
     set_locale,
@@ -62,6 +62,7 @@ from utils.rank_scaling import check_and_cleanup_rank_scaling
 from utils.process import is_il2_running
 from utils.sorting import smart_mission_sort_key
 from utils.logging import get_logger, log_message
+from utils.name_normalization import name_to_i18n_key, country_code_for_rank
 
 BASE_DIR = get_base_path(__file__)
 POPUP_SEEN_FILE = BASE_DIR / "campaign_popups_seen.json"
@@ -88,46 +89,20 @@ def _is_chinese_locale(locale: str) -> bool:
     return normalized == "zh" or normalized.startswith("zh-")
 
 
-def _name_to_i18n_key(name: str) -> str:
-    value = name.lower()
-    value = value.replace("’", "'").replace("‘", "'")
-    value = value.replace("'", "")
-    value = value.replace("&", "and")
-    value = value.replace("+", "and")
-    value = re.sub(r"[,\.\"]", "", value)
-    value = re.sub(r"\s*\(\s*", "_", value)
-    value = re.sub(r"\s*\)\s*", "", value)
-    value = value.replace("…", "")
-    value = re.sub(r"\s+", "_", value)
-    value = re.sub(r"_+", "_", value)
-    return value.strip("_")
-
-
-def _country_code_for_rank(country: str | None) -> str:
-    normalized = (country or "").lower().strip()
-    if normalized == "germany":
-        return "ger"
-    if normalized in {"britain", "uk", "great britain"}:
-        return "raf"
-    if normalized in {"usa", "united states", "united states of america", "us"}:
-        return "usaaf"
-    if normalized in {"soviet union", "ussr", "russia"}:
-        return "vvs"
-    return ""
 
 
 def _build_award_key(name: str) -> str:
     if _is_key_like(name):
         return name
-    return f"progression.awards.{_name_to_i18n_key(name)}"
+    return f"progression.awards.{name_to_i18n_key(name)}"
 
 
 def _build_rank_keys(name: str, country: str | None) -> list[str]:
     if _is_key_like(name):
         return [name]
-    base_key = _name_to_i18n_key(name)
+    base_key = name_to_i18n_key(name)
     keys: list[str] = []
-    country_code = _country_code_for_rank(country)
+    country_code = country_code_for_rank(country)
     if country_code:
         keys.append(f"progression.ranks.{country_code}_{base_key}")
     keys.append(f"progression.ranks.{base_key}")

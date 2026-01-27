@@ -602,5 +602,76 @@
         "ignore_note": "Vous ne serez plus interrogé à leur sujet."
       }
     }
+  },
+  "settings_manager": {
+    "app_title": "IL-2 Campaign Tracker - Paramètres",
+    "tab": {
+      "general": "Général",
+      "rank_scaling": "Échelle de Rang",
+      "rank_values": "Valeurs de Rang",
+      "campaigns": "Campagnes"
+    },
+    "label": {
+      "language": "Langue:",
+      "enable_popups": "Activer les popups en jeu:",
+      "rank_scaling_enabled": "Échelle de rang activée:",
+      "bracket": "Plage",
+      "factor": "Facteur",
+      "rank_name": "Rang",
+      "rank_index_header": "Indice de rang",
+      "rank_index_format": "Rang {index}",
+      "rank_score": "Score",
+      "rank_values_helper": "La modification des scores s'applique à tous les pays.",
+      "campaign_name": "Campagne",
+      "country": "Pays",
+      "starting_rank_offset": "Décalage de Rang Initial"
+    },
+    "button": {
+      "add_bracket": "Ajouter Plage",
+      "remove_bracket": "Supprimer Plage",
+      "edit": "Modifier",
+      "ok": "OK",
+      "apply": "Appliquer",
+      "cancel": "Annuler",
+      "restore_defaults": "Restaurer les Défauts"
+    },
+    "message": {
+      "unsaved_changes": "Vous avez des modifications non enregistrées. Annuler?",
+      "confirm_delete": "Supprimer la plage '{bracket}'?",
+      "save_success": "Paramètres enregistrés avec succès.",
+      "locale_refresh": "Langue mise à jour. Les textes de mission et PDF localisés seront actualisés.",
+      "locale_refresh_failed": "Langue mise à jour, mais l'actualisation des textes de mission et des PDF localisés a échoué : {error}",
+      "locale_refresh_running": "Actualisation des textes de mission et des PDF localisés...",
+      "save_error": "Erreur lors de l'enregistrement: {error}",
+      "rank_scores_mismatch": "Les scores diffèrent selon les pays ; l'application les unifiera aux valeurs modifiées.",
+      "warning_title": "Avertissement",
+      "confirm_title": "Confirmer",
+      "error_title": "Erreur",
+      "no_mission_dates": "Paramètres de campagne désactivés.\ncampaign_mission_dates.json introuvable.",
+      "campaigns_tab_disabled": "Les paramètres de campagne nécessitent campaign_mission_dates.json.\nVeuillez exécuter le Campaign Tracker au moins une fois."
+    },
+    "error": {
+      "bracket_format": "Format invalide. Utilisez 'A-B' ou 'N+'",
+      "bracket_duplicate": "La plage existe déjà",
+      "bracket_overlap": "La plage chevauche: {bracket}",
+      "factor_range": "Le facteur doit être compris entre 0.1 et 10.0",
+      "score_negative": "Le score ne peut pas être négatif",
+      "score_not_ascending": "Les scores doivent être en ordre croissant (erreur au rang {index})",
+      "offset_range": "Le décalage doit être compris entre {min} et {max}"
+    },
+    "dialog": {
+      "edit_bracket_title": "Modifier la Plage",
+      "edit_bracket_label": "Plage (ex., '1-10' ou '71+'):",
+      "edit_factor_label": "Facteur:",
+      "edit_score_title": "Modifier le Score",
+      "edit_score_label": "Score pour {rank}:",
+      "edit_offset_title": "Modifier le Décalage",
+      "edit_offset_label": "Décalage de rang initial pour {campaign}:"
+    },
+    "tooltip": {
+      "bracket": "Plage de nombre de missions (ex., '1-10', '11-20', '71+')",
+      "factor": "Multiplicateur de score pour les exigences de rang",
+      "offset": "Commencer à un rang supérieur (0 = rang le plus bas)"
+    }
   }
 }

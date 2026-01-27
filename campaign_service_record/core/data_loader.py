@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
-from campaign_service_record.utils.formatting import safe_campaign_filename
+from utils.formatting import safe_campaign_filename
 
 logger = logging.getLogger(__name__)
 

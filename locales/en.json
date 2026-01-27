@@ -602,5 +602,76 @@
         "ignore_note": "You won't be asked about them again."
       }
     }
+  },
+  "settings_manager": {
+    "app_title": "IL-2 Campaign Tracker - Settings Manager",
+    "tab": {
+      "general": "General",
+      "rank_scaling": "Rank Scaling",
+      "rank_values": "Rank Values",
+      "campaigns": "Campaigns"
+    },
+    "label": {
+      "language": "Language:",
+      "enable_popups": "Enable in-game popups:",
+      "rank_scaling_enabled": "Rank scaling enabled:",
+      "bracket": "Bracket",
+      "factor": "Factor",
+      "rank_name": "Rank",
+      "rank_index_header": "Rank Index",
+      "rank_index_format": "Rank {index}",
+      "rank_score": "Score",
+      "rank_values_helper": "Editing scores applies to all countries.",
+      "campaign_name": "Campaign",
+      "country": "Country",
+      "starting_rank_offset": "Starting Rank Offset"
+    },
+    "button": {
+      "add_bracket": "Add Bracket",
+      "remove_bracket": "Remove Bracket",
+      "edit": "Edit",
+      "ok": "OK",
+      "apply": "Apply",
+      "cancel": "Cancel",
+      "restore_defaults": "Restore Defaults"
+    },
+    "message": {
+      "unsaved_changes": "You have unsaved changes. Discard?",
+      "confirm_delete": "Delete bracket '{bracket}'?",
+      "save_success": "Settings saved successfully.",
+      "locale_refresh": "Language updated. Localized mission texts and PDFs will be refreshed.",
+      "locale_refresh_failed": "Language updated, but refreshing localized mission texts and PDFs failed: {error}",
+      "locale_refresh_running": "Refreshing localized mission texts and PDFs...",
+      "save_error": "Error saving settings: {error}",
+      "rank_scores_mismatch": "Scores differ between countries; applying will unify them to the edited values.",
+      "warning_title": "Warning",
+      "confirm_title": "Confirm",
+      "error_title": "Error",
+      "no_mission_dates": "Campaign settings disabled.\ncampaign_mission_dates.json not found.",
+      "campaigns_tab_disabled": "Campaign settings require campaign_mission_dates.json.\nPlease run the Campaign Tracker at least once."
+    },
+    "error": {
+      "bracket_format": "Invalid bracket format. Use 'A-B' or 'N+'",
+      "bracket_duplicate": "Bracket already exists",
+      "bracket_overlap": "Bracket overlaps with: {bracket}",
+      "factor_range": "Factor must be between 0.1 and 10.0",
+      "score_negative": "Score cannot be negative",
+      "score_not_ascending": "Scores must be in ascending order (error at rank {index})",
+      "offset_range": "Offset must be between {min} and {max}"
+    },
+    "dialog": {
+      "edit_bracket_title": "Edit Bracket",
+      "edit_bracket_label": "Bracket (e.g., '1-10' or '71+'):",
+      "edit_factor_label": "Factor:",
+      "edit_score_title": "Edit Score",
+      "edit_score_label": "Score for {rank}:",
+      "edit_offset_title": "Edit Offset",
+      "edit_offset_label": "Starting rank offset for {campaign}:"
+    },
+    "tooltip": {
+      "bracket": "Mission count range (e.g., '1-10', '11-20', '71+')",
+      "factor": "Score multiplier for rank requirements",
+      "offset": "Start at a higher rank (0 = lowest rank)"
+    }
   }
 }

@@ -15,15 +15,15 @@ import re
 from typing import Dict, List, Optional, Any
 from pathlib import Path
 
-# Import utilities from Campaign Tracker (copied to utils/)
+# Import utilities from Campaign Tracker (root utils/)
 try:
-    from campaign_service_record.utils.combat_results import (
+    from utils.combat_results import (
         calculate_kills_from_stats,
         calculate_total_air_kills_weighted,
         aggregate_kills_from_missions,
         KILL_MAPPING
     )
-    from campaign_service_record.utils.sorting import smart_mission_sort_key
+    from utils.sorting import smart_mission_sort_key
     from campaign_service_record.utils.image_utils import build_dds_data_uri
     from campaign_service_record.utils.path_utils import (
         build_award_image_relative_path,

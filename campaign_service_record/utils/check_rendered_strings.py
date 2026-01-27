@@ -14,6 +14,8 @@ import sys
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
+from utils.name_normalization import name_to_i18n_key
+
 ROOT = Path(__file__).resolve().parents[1]
 LOCALES_DIR = ROOT / "static" / "locales"
 SAMPLE_EVENTS = ROOT / "json" / "campaign_events.json"
@@ -34,21 +36,6 @@ def get_nested_value(data: Dict, key: str) -> Optional[str]:
         else:
             return None
     return current if isinstance(current, str) else None
-
-
-def name_to_i18n_key(name: str) -> str:
-    value = name.lower()
-    value = value.replace("’", "'").replace("‘", "'")
-    value = value.replace("'", "")
-    value = value.replace("&", "and")
-    value = value.replace("+", "and")
-    value = re.sub(r"[,\.\"]", "", value)
-    value = re.sub(r"\s*\(\s*", "_", value)
-    value = re.sub(r"\s*\)\s*", "", value)
-    value = value.replace("…", "")
-    value = re.sub(r"\s+", "_", value)
-    value = re.sub(r"_+", "_", value)
-    return value.strip("_")
 
 
 def resolve_key(

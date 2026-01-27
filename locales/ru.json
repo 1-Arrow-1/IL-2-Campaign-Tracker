@@ -602,5 +602,76 @@
         "ignore_note": "Вас больше не будут спрашивать о них."
       }
     }
+  },
+  "settings_manager": {
+    "app_title": "IL-2 Campaign Tracker - Настройки",
+    "tab": {
+      "general": "Общие",
+      "rank_scaling": "Масштаб Званий",
+      "rank_values": "Значения Званий",
+      "campaigns": "Кампании"
+    },
+    "label": {
+      "language": "Язык:",
+      "enable_popups": "Включить всплывающие окна:",
+      "rank_scaling_enabled": "Масштабирование званий:",
+      "bracket": "Диапазон",
+      "factor": "Коэффициент",
+      "rank_name": "Звание",
+      "rank_index_header": "Индекс звания",
+      "rank_index_format": "Звание {index}",
+      "rank_score": "Очки",
+      "rank_values_helper": "Изменение очков применяется ко всем странам.",
+      "campaign_name": "Кампания",
+      "country": "Страна",
+      "starting_rank_offset": "Смещение Начального Звания"
+    },
+    "button": {
+      "add_bracket": "Добавить Диапазон",
+      "remove_bracket": "Удалить Диапазон",
+      "edit": "Редактировать",
+      "ok": "OK",
+      "apply": "Применить",
+      "cancel": "Отмена",
+      "restore_defaults": "Восстановить По Умолчанию"
+    },
+    "message": {
+      "unsaved_changes": "Есть несохранённые изменения. Отменить?",
+      "confirm_delete": "Удалить диапазон '{bracket}'?",
+      "save_success": "Настройки успешно сохранены.",
+      "locale_refresh": "Язык обновлён. Локализованные тексты миссий и PDF будут обновлены.",
+      "locale_refresh_failed": "Язык обновлён, но обновление локализованных текстов миссий и PDF не удалось: {error}",
+      "locale_refresh_running": "Обновление локализованных текстов миссий и PDF...",
+      "save_error": "Ошибка сохранения: {error}",
+      "rank_scores_mismatch": "Очки различаются между странами; применение приведёт их к изменённым значениям.",
+      "warning_title": "Предупреждение",
+      "confirm_title": "Подтверждение",
+      "error_title": "Ошибка",
+      "no_mission_dates": "Настройки кампании отключены.\ncampaign_mission_dates.json не найден.",
+      "campaigns_tab_disabled": "Настройки кампании требуют campaign_mission_dates.json.\nПожалуйста, запустите Campaign Tracker хотя бы один раз."
+    },
+    "error": {
+      "bracket_format": "Недопустимый формат. Используйте 'A-B' или 'N+'",
+      "bracket_duplicate": "Диапазон уже существует",
+      "bracket_overlap": "Диапазон пересекается с: {bracket}",
+      "factor_range": "Коэффициент должен быть между 0.1 и 10.0",
+      "score_negative": "Очки не могут быть отрицательными",
+      "score_not_ascending": "Очки должны быть в порядке возрастания (ошибка в звании {index})",
+      "offset_range": "Смещение должно быть между {min} и {max}"
+    },
+    "dialog": {
+      "edit_bracket_title": "Редактировать Диапазон",
+      "edit_bracket_label": "Диапазон (например, '1-10' или '71+'):",
+      "edit_factor_label": "Коэффициент:",
+      "edit_score_title": "Редактировать Очки",
+      "edit_score_label": "Очки для {rank}:",
+      "edit_offset_title": "Редактировать Смещение",
+      "edit_offset_label": "Смещение начального звания для {campaign}:"
+    },
+    "tooltip": {
+      "bracket": "Диапазон количества миссий (например, '1-10', '11-20', '71+')",
+      "factor": "Множитель очков для требований званий",
+      "offset": "Начать с более высокого звания (0 = самое низкое звание)"
+    }
   }
 }

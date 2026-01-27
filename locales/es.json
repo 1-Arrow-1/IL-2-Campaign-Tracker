@@ -602,5 +602,76 @@
         "ignore_note": "No se te volverá a preguntar por ellas."
       }
     }
+  },
+  "settings_manager": {
+    "app_title": "IL-2 Campaign Tracker - Configuración",
+    "tab": {
+      "general": "General",
+      "rank_scaling": "Escalado de Rango",
+      "rank_values": "Valores de Rango",
+      "campaigns": "Campañas"
+    },
+    "label": {
+      "language": "Idioma:",
+      "enable_popups": "Activar popups en juego:",
+      "rank_scaling_enabled": "Escalado de rango activado:",
+      "bracket": "Rango",
+      "factor": "Factor",
+      "rank_name": "Rango",
+      "rank_index_header": "Índice de rango",
+      "rank_index_format": "Rango {index}",
+      "rank_score": "Puntuación",
+      "rank_values_helper": "La edición de puntuaciones se aplica a todos los países.",
+      "campaign_name": "Campaña",
+      "country": "País",
+      "starting_rank_offset": "Offset de Rango Inicial"
+    },
+    "button": {
+      "add_bracket": "Añadir Rango",
+      "remove_bracket": "Eliminar Rango",
+      "edit": "Editar",
+      "ok": "Aceptar",
+      "apply": "Aplicar",
+      "cancel": "Cancelar",
+      "restore_defaults": "Restaurar Predeterminados"
+    },
+    "message": {
+      "unsaved_changes": "Tienes cambios sin guardar. ¿Descartar?",
+      "confirm_delete": "¿Eliminar rango '{bracket}'?",
+      "save_success": "Configuración guardada correctamente.",
+      "locale_refresh": "Idioma actualizado. Los textos de misión y los PDF localizados se actualizarán.",
+      "locale_refresh_failed": "Idioma actualizado, pero la actualización de los textos de misión y PDF localizados falló: {error}",
+      "locale_refresh_running": "Actualizando textos de misión y PDF localizados...",
+      "save_error": "Error al guardar: {error}",
+      "rank_scores_mismatch": "Las puntuaciones difieren entre países; al aplicar se unificarán con los valores editados.",
+      "warning_title": "Advertencia",
+      "confirm_title": "Confirmar",
+      "error_title": "Error",
+      "no_mission_dates": "Configuración de campañas deshabilitada.\ncampaign_mission_dates.json no encontrado.",
+      "campaigns_tab_disabled": "La configuración de campañas requiere campaign_mission_dates.json.\nPor favor, ejecuta el Campaign Tracker al menos una vez."
+    },
+    "error": {
+      "bracket_format": "Formato inválido. Usa 'A-B' o 'N+'",
+      "bracket_duplicate": "El rango ya existe",
+      "bracket_overlap": "El rango se superpone con: {bracket}",
+      "factor_range": "El factor debe estar entre 0.1 y 10.0",
+      "score_negative": "La puntuación no puede ser negativa",
+      "score_not_ascending": "Las puntuaciones deben ser ascendentes (error en rango {index})",
+      "offset_range": "El offset debe estar entre {min} y {max}"
+    },
+    "dialog": {
+      "edit_bracket_title": "Editar Rango",
+      "edit_bracket_label": "Rango (ej., '1-10' o '71+'):",
+      "edit_factor_label": "Factor:",
+      "edit_score_title": "Editar Puntuación",
+      "edit_score_label": "Puntuación para {rank}:",
+      "edit_offset_title": "Editar Offset",
+      "edit_offset_label": "Offset de rango inicial para {campaign}:"
+    },
+    "tooltip": {
+      "bracket": "Rango de cantidad de misiones (ej., '1-10', '11-20', '71+')",
+      "factor": "Multiplicador de puntuación para requisitos de rango",
+      "offset": "Comenzar en un rango superior (0 = rango más bajo)"
+    }
   }
 }

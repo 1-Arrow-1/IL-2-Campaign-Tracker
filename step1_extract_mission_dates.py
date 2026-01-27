@@ -29,7 +29,7 @@ from utils.pathing import get_base_path
 from utils.il2_paths import find_campaignsstates_path
 from utils.formatting import safe_campaign_filename
 from utils.locale_config import resolve_locale
-from campaign_service_record.utils.i18n import t, init_i18n
+from utils.i18n import t, init_i18n
 
 logger = get_logger(__name__)
 

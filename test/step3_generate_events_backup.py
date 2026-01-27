@@ -36,7 +36,7 @@ from utils.info_locale import (
 )
 from utils.pathing import get_base_path
 from utils.formatting import safe_campaign_filename
-from campaign_service_record.utils.i18n import (
+from utils.i18n import (
     t,
     init_i18n,
     set_locale,

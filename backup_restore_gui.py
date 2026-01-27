@@ -19,7 +19,7 @@ from tkinter import ttk, messagebox
 from typing import Optional, Dict, List
 
 from utils.logging import get_logger, log_message
-from campaign_service_record.utils.i18n import t, init_i18n
+from utils.i18n import t, init_i18n
 from utils.locale_config import resolve_locale
 
 logger = get_logger(__name__)

@@ -23,7 +23,7 @@ from flask import Blueprint, jsonify, request, current_app, send_file, send_from
 
 from campaign_service_record.core.data_loader import DataLoader
 from campaign_service_record.core.campaign_aggregator import CampaignAggregator
-from campaign_service_record.utils.formatting import safe_campaign_filename
+from utils.formatting import safe_campaign_filename
 from campaign_service_record.utils.path_utils import get_game_directory
 from campaign_service_record.utils.image_utils import convert_dds_to_png_bytes, find_existing_image_path
 from campaign_service_record.utils.pilot_photo import pilot_photo_path, pilot_photo_filename, pilot_name_path
