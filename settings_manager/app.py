@@ -1199,7 +1199,7 @@ class SettingsManagerApp(tk.Tk):
     def _refresh_localized_artifacts(self, locale: Optional[str]) -> Optional[str]:
         """Regenerate localized mission text and PDFs after a locale change.
         
-        This method MUST run IL2_CampaignTracker_v2.1_ML.exe as a subprocess because:
+        This method MUST run IL2_CampaignTracker_v2.2_ML.exe as a subprocess because:
         1. PIL/Pillow is bundled only in the Tracker EXE (needed for image conversion)
         2. wkhtmltopdf is bundled only in the Tracker EXE (needed for PDF generation)
         
@@ -1212,7 +1212,7 @@ class SettingsManagerApp(tk.Tk):
         import sys
         
         # Determine the directory containing the EXEs
-        # Both IL2_CampaignTracker_v2.1_ML.exe and IL2_Settings_Manager.exe should be in the same directory
+        # Both IL2_CampaignTracker_v2.2_ML.exe and IL2_Settings_Manager.exe should be in the same directory
         if getattr(sys, 'frozen', False):
             # Running as compiled EXE - get directory of this EXE
             exe_dir = Path(sys.executable).resolve().parent
@@ -1222,7 +1222,7 @@ class SettingsManagerApp(tk.Tk):
             exe_dir = Path(__file__).resolve().parent.parent
             print(f"[Settings Manager] Running as script, looking in: {exe_dir}")
         
-        tracker_exe = exe_dir / "IL2_CampaignTracker_v2.1_ML.exe"
+        tracker_exe = exe_dir / "IL2_CampaignTracker_v2.2_ML.exe"
         print(f"[Settings Manager] Looking for Tracker EXE at: {tracker_exe}")
         print(f"[Settings Manager] Tracker EXE exists: {tracker_exe.exists()}")
         
@@ -1327,7 +1327,7 @@ class SettingsManagerApp(tk.Tk):
         else:
             # Tracker EXE not found - this is a configuration error
             error_msg = (
-                f"IL2_CampaignTracker_v2.1_ML.exe not found at {tracker_exe}\n"
+                f"IL2_CampaignTracker_v2.2_ML.exe not found at {tracker_exe}\n"
                 "Please ensure both EXE files are in the same directory.\n"
                 "PDF generation requires the Tracker EXE."
             )
