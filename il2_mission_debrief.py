@@ -236,8 +236,8 @@ class MissionDebriefParser:
                     })
                 
                 # Wounded status: ONLY based on PILOT damage (not aircraft!)
-                # Threshold: >= 0.20 (20%) pilot damage
-                if self.stats.total_pilot_damage >= 0.20:
+                # Threshold: >= 0.05 (5%) pilot damage
+                if self.stats.total_pilot_damage >= 0.05:
                     self.stats.wounded = True
 
             elif "AType:3" in ln:
