@@ -93,7 +93,7 @@ exe = EXE(
     pyz,
     a.scripts,
     [],
-    name='IL2_CampaignTracker_v2.1_ML',
+    name='IL2_CampaignTracker_v2.2_ML',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -117,5 +117,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='IL2_CampaignTracker_v2.1_ML',
+    name='IL2_CampaignTracker_v2.2_ML',
 )

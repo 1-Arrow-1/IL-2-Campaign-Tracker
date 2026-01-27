@@ -5,7 +5,7 @@
 
     <style>
         html, body {margin: 0; padding:0; min-height: 100%; display: block}
-        #___markdown-content___ {padding: 5px 5px 10px 5px; min-height: 1085px}
+        #___markdown-content___ {padding: 5px 5px 10px 5px; min-height: 958px}
         .markdown-alert {padding: 1em 1em .5em 1em; margin-bottom: 1em; border-radius: 1em; background: #c0c0c022}
         .markdown-alert-title {font-weight: bold; color:inherit}
         .markdown-alert-title svg {margin-right: 5px; margin-top: -1px;}
@@ -967,8 +967,7 @@ code[class*=language-],pre[class*=language-]{color:#ccc;background:0 0;font-fami
 <body>
 
     
-    <div id="___markdown-content___" class="markdown-body">
-        <h1 id="il-2-campaign-progress-tracker"><a id="pragma-line-0"></a>IL-2 Campaign Progress Tracker</h1>
+    <div id="___markdown-content___" class="markdown-body"><h1 id="il-2-campaign-progress-tracker"><a id="pragma-line-0"></a>IL-2 Campaign Progress Tracker</h1>
 <p id="pragma-line-2">A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player <strong>WW2 campaigns</strong>.  Automatically monitors your campaign progress, calculates promotions and awards based on historical criteria, generates detailed mission debriefings, and creates PDF reports of your pilot's career.</p>
 <p id="pragma-line-4"><img src="https://img.shields.io/badge/version-2.1-blue" alt="Version">
 <img src="https://img.shields.io/badge/platform-Windows-lightgrey" alt="Platform">
@@ -1261,11 +1260,11 @@ code[class*=language-],pre[class*=language-]{color:#ccc;background:0 0;font-fami
 <h2 id="installation"><a id="pragma-line-125"></a>📥 Installation <a id="installation"></a></h2>
 <h3 id="step-1-download-and-install"><a id="pragma-line-127"></a>Step 1: Download and Install</h3>
 <ol id="pragma-line-129">
-<li id="pragma-line-129"><p id="pragma-line-129"><strong>Download</strong> the latest release (<code>IL2_CampaignTracker_Setup_v2.1.zip</code>)</p>
+<li id="pragma-line-129"><p id="pragma-line-129"><strong>Download</strong> the latest release (<code>IL2_CampaignTracker_Setup_v2.2_ML.exe.zip</code>)</p>
 </li>
 <li id="pragma-line-131"><p id="pragma-line-131"><strong>Extract</strong> the <code>zip</code> file</p>
 </li>
-<li id="pragma-line-133"><p id="pragma-line-133"><strong>Run</strong> the extracted <code>IL2_CampaignTracker_Setup_v2.1.exe</code></p>
+<li id="pragma-line-133"><p id="pragma-line-133"><strong>Run</strong> the extracted <code>IL2_CampaignTracker_Setup_v2.2_ML.exe</code></p>
 </li>
 <li id="pragma-line-135"><p id="pragma-line-135"><strong>Follow</strong> the installation instructions in the setup wizard</p>
 </li>
@@ -1292,7 +1291,7 @@ code[class*=language-],pre[class*=language-]{color:#ccc;background:0 0;font-fami
 <a href="https://forum.il2-series.com/topic/772-expanded-career-rank-mod/#findComment-4176">https://forum.il2-series.com/topic/772-expanded-career-rank-mod/#findComment-4176</a></p>
 <h3 id="installed-files"><a id="pragma-line-164"></a>Installed Files</h3>
 <p id="pragma-line-166">The installer places the following files in your chosen installation directory:</p>
-<pre class="  language-text"><code id="pragma-line-168" class="  language-text">IL2_Campaign_Tracker/
+<pre class=" language-text"><code id="pragma-line-168" class=" language-text">IL2_Campaign_Tracker/
 ├── IL2_Campaign_Tracker.exe              # Main executable
 ├── IL2_Settings_Manager.exe              # Settings Manager GUI
 ├── mlg2txt.exe                           # Helper for decoding mission reports
@@ -1322,7 +1321,7 @@ code[class*=language-],pre[class*=language-]{color:#ccc;background:0 0;font-fami
 <p id="pragma-line-201">When you start the tracker for the first time, a setup wizard guides you through the configuration:</p>
 <h3 id="step-1-select-game-directory"><a id="pragma-line-203"></a>Step 1: Select Game Directory</h3>
 <p id="pragma-line-205">A folder browser opens.  Navigate to your IL-2 installation folder:</p>
-<pre class="  language-bash"><code id="pragma-line-207" class="  language-bash">Example: C:\Program Files <span class="token punctuation">(</span>x86<span class="token punctuation">)</span>\Steam\steamapps\common\IL-2 Sturmovik Battle of Stalingrad
+<pre class=" language-bash"><code id="pragma-line-207" class=" language-bash">Example: C:\Program Files <span class="token punctuation">(</span>x86<span class="token punctuation">)</span>\Steam\steamapps\common\IL-2 Sturmovik Battle of Stalingrad
 </code></pre>
 <blockquote id="pragma-line-211">
 <p id="pragma-line-211"><strong>Important:</strong> Select the main game folder, NOT the <code>data\Campaigns</code> subfolder.</p>
@@ -1500,7 +1499,7 @@ code[class*=language-],pre[class*=language-]{color:#ccc;background:0 0;font-fami
 <hr id="pragma-line-320">
 <h2 id="how-it-works"><a id="pragma-line-322"></a>⚙️ How It Works <a id="how-it-works"></a></h2>
 <h3 id="monitoring-loop"><a id="pragma-line-324"></a>Monitoring Loop</h3>
-<pre class="  language-text"><code id="pragma-line-326" class="  language-text">┌─────────────────────────────────────────────────────────┐
+<pre class=" language-text"><code id="pragma-line-326" class=" language-text">┌─────────────────────────────────────────────────────────┐
 │                    TRACKER RUNNING                      │
 ├─────────────────────────────────────────────────────────┤
 │                                                         │
@@ -1539,7 +1538,7 @@ and set <code>enable_popups: false</code></p>
 <h2 id="promotions-awards-system"><a id="pragma-line-365"></a>🎖️ Promotions &amp; Awards System <a id="promotions--awards-system"></a></h2>
 <h3 id="how-promotions-work"><a id="pragma-line-367"></a>How Promotions Work</h3>
 <p id="pragma-line-369">Promotions are based on <strong>accumulated score</strong> across all completed missions (the score value comes from the campaignsstates.txt and is calculated by IL-2 GB internal rules):</p>
-<pre class="  language-text"><code id="pragma-line-371" class="  language-text">Overall Score per Campaign = ∑ Mission Scores
+<pre class=" language-text"><code id="pragma-line-371" class=" language-text">Overall Score per Campaign = ∑ Mission Scores
 Promotion Score = Base Score × Rank Scaling Factor
 </code></pre>
 <p id="pragma-line-376"><strong>Rank Scaling Factor</strong> adjusts requirements based on campaign length (can be editited in <code>campaign_progress_config.yaml</code>):</p>
@@ -1598,7 +1597,7 @@ All conditions for awards are <code>OR</code> conditions:</p>
 <li id="pragma-line-416">Select a value from 0-7</li>
 </ol>
 <p id="pragma-line-418"><strong>Option 2: Manual editing in <code>campaign_mission_dates.json</code>:</strong></p>
-<pre class="  language-json"><code id="pragma-line-420" class="  language-json"><span class="token property">"kerch"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+<pre class=" language-json"><code id="pragma-line-420" class=" language-json"><span class="token property">"kerch"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
   <span class="token property">"country"</span><span class="token operator">:</span> <span class="token string">"Germany"</span><span class="token punctuation">,</span>
   <span class="token property">"starting_rank_offset"</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span> --&gt; change this number (<span class="token number">0</span>-<span class="token number">7</span><span class="token punctuation">,</span> default = <span class="token number">0</span><span class="token punctuation">)</span>
   <span class="token property">"missions"</span><span class="token operator">:</span> <span class="token punctuation">{</span> ...  <span class="token punctuation">}</span>
@@ -1612,7 +1611,7 @@ All conditions for awards are <code>OR</code> conditions:</p>
 <h2 id="mission-debriefings"><a id="pragma-line-434"></a>📊 Mission Debriefings <a id="mission-debriefings"></a></h2>
 <h3 id="data-source"><a id="pragma-line-436"></a>Data Source</h3>
 <p id="pragma-line-438">Debriefing data is extracted from IL-2's <strong>mission log files</strong> (<code>.mlg</code> files):</p>
-<pre class="  language-text"><code id="pragma-line-440" class="  language-text">Location: [IL-2 Directory]\data\FlightLogs\[mission].mlg
+<pre class=" language-text"><code id="pragma-line-440" class=" language-text">Location: [IL-2 Directory]\data\FlightLogs\[mission].mlg
 </code></pre>
 <p id="pragma-line-444">These binary files contain detailed records of everything that happened during the mission.
 These binary files are "translated" by <code>mlg2txt.exe</code> into a *.txt file and is then further processed.</p>
@@ -1694,7 +1693,7 @@ These binary files are "translated" by <code>mlg2txt.exe</code> into a *.txt fil
 <p id="pragma-line-493"><strong>Note:</strong> Not all <code>takeoffStatus=1</code> missions are "failed" in the traditional sense.  Bailing out or being KIA may be intentional gameplay.  The cleanup tool gives you the <strong>choice</strong> whether to remove these missions.</p>
 </blockquote>
 <h3 id="cleanup-gui"><a id="pragma-line-495"></a>Cleanup GUI</h3>
-<pre class="  language-text"><code id="pragma-line-497" class="  language-text">┌─────────────────────────────────────────────────────────┐
+<pre class=" language-text"><code id="pragma-line-497" class=" language-text">┌─────────────────────────────────────────────────────────┐
 │        ⚠️ Incomplete Missions Detected                  │
 ├─────────────────────────────────────────────────────────┤
 │                                                          │
@@ -1731,7 +1730,7 @@ These binary files are "translated" by <code>mlg2txt.exe</code> into a *.txt fil
 <p id="pragma-line-538">This ensures you can restore your campaign to the state <strong>before</strong> you removed any missions.</p>
 <h3 id="restore-gui"><a id="pragma-line-540"></a>Restore GUI</h3>
 <p id="pragma-line-542">When the tracker starts and backups are available, a restore GUI may appear:</p>
-<pre class="  language-text"><code id="pragma-line-544" class="  language-text">┌─────────────────────────────────────────────────────────┐
+<pre class=" language-text"><code id="pragma-line-544" class=" language-text">┌─────────────────────────────────────────────────────────┐
 │           🔄 Restore Campaign Backup                    │
 ├─────────────────────────────────────────────────────────┤
 │                                                         │
@@ -1775,7 +1774,7 @@ These binary files are "translated" by <code>mlg2txt.exe</code> into a *.txt fil
 </li>
 </ol>
 <h3 id="use-case-example"><a id="pragma-line-586"></a>Use Case Example</h3>
-<pre class="  language-text"><code id="pragma-line-588" class="  language-text">1. You fly Mission 05 in "kerch" campaign
+<pre class=" language-text"><code id="pragma-line-588" class=" language-text">1. You fly Mission 05 in "kerch" campaign
 2. IL-2 crashes mid-mission → takeoffStatus=1
 3. Next tracker start: Cleanup GUI appears
 4. You select Mission 05 and click "Remove"
@@ -1964,7 +1963,7 @@ Users who require historically accurate imagery may replace the images locally:<
 <h3 id="configuration-details"><a id="pragma-line-759"></a>Configuration Details</h3>
 <h4 id="campaign_progress_config.yaml"><a id="pragma-line-761"></a>campaign_progress_config.yaml</h4>
 <p id="pragma-line-763">This is the main configuration file containing:</p>
-<pre class="  language-yaml"><code id="pragma-line-765" class="  language-yaml"><span class="token comment"># Rank definitions per nation</span>
+<pre class=" language-yaml"><code id="pragma-line-765" class=" language-yaml"><span class="token comment"># Rank definitions per nation</span>
 <span class="token key atrule">ranks</span><span class="token punctuation">:</span> 
   <span class="token key atrule">Germany</span><span class="token punctuation">:</span>
     <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Unteroffizier
@@ -2000,7 +1999,7 @@ Users who require historically accurate imagery may replace the images locally:<
 </code></pre>
 <h4 id="campaign_mission_dates.json"><a id="pragma-line-801"></a>campaign_mission_dates.json</h4>
 <p id="pragma-line-803">Auto-generated during first run, contains:</p>
-<pre class="  language-json"><code id="pragma-line-805" class="  language-json"><span class="token punctuation">{</span>
+<pre class=" language-json"><code id="pragma-line-805" class=" language-json"><span class="token punctuation">{</span>
   <span class="token property">"kerch"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
     <span class="token property">"campaign_name"</span><span class="token operator">:</span> <span class="token string">"kerch"</span><span class="token punctuation">,</span>
     <span class="token property">"country"</span><span class="token operator">:</span> <span class="token string">"Germany"</span><span class="token punctuation">,</span>
@@ -2337,6 +2336,7 @@ The tracker auto-detects your country/faction from:</p>
 </ul>
 <hr id="pragma-line-1048">
 <h2 id="happy-flying"><a id="pragma-line-1050"></a>Happy flying!  ✈️🎖️</h2>
+</div>
+  
 
-    </div>  
 </body></html>

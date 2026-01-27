@@ -127,11 +127,11 @@ When writing events to campaign files, the tracker updates **all** `info.locale=
 
 ### Step 1: Download and Install
 
-1. **Download** the latest release (`IL2_CampaignTracker_Setup_v2.1.zip`)
+1. **Download** the latest release (`IL2_CampaignTracker_Setup_v2.2_ML.exe.zip`)
 
 2. **Extract** the `zip` file
 
-3. **Run** the extracted `IL2_CampaignTracker_Setup_v2.1.exe`
+3. **Run** the extracted `IL2_CampaignTracker_Setup_v2.2_ML.exe`
 
 4. **Follow** the installation instructions in the setup wizard
 

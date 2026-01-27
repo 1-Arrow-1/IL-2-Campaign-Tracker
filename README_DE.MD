@@ -126,11 +126,11 @@ Beim Schreiben von Ereignissen in Kampagnendateien aktualisiert der Tracker **al
 
 ### Schritt 1: Herunterladen und Installieren
 
-1. **Lade** die neueste Version herunter (`IL2_CampaignTracker_Setup_v2.1.zip`)
+1. **Lade** die neueste Version herunter (`IL2_CampaignTracker_Setup_v2.2_ML.exe.zip`)
 
 2. **Entpacke** die `zip`-Datei
 
-3. **Führe** die entpackte `IL2_CampaignTracker_Setup_v2.1.exe` aus
+3. **Führe** die entpackte `IL2_CampaignTracker_Setup_v2.2_ML.exe` aus
 
 4. **Folge** den Installationsanweisungen im Setup-Assistenten
 

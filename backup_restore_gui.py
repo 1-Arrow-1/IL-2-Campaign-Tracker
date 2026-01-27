@@ -61,16 +61,16 @@ class BackupRestoreGUI:
         self.current_hash = self._get_current_hash()
         
         # Create GUI
-        self. root = tk. Tk()
+        self.root = tk.Tk()
         self.root.title(t('ui.backup_restore.title'))
-        self.root.geometry("750x500")
+        self.root.geometry("950x500")
         self.root.resizable(True, True)
         
         # Center window on screen
-        self. root.update_idletasks()
-        x = (self. root.winfo_screenwidth() // 2) - (750 // 2)
+        self.root.update_idletasks()
+        x = (self.root.winfo_screenwidth() // 2) - (950 // 2)
         y = (self.root.winfo_screenheight() // 2) - (500 // 2)
-        self.root.geometry(f"750x500+{x}+{y}")
+        self.root.geometry(f"950x500+{x}+{y}")
         
         self._build_ui()
     
@@ -262,20 +262,18 @@ class BackupRestoreGUI:
         left_buttons = tk.Frame(button_frame)
         left_buttons.pack(side='left')
         
-        self. restore_btn = ttk.Button(
+        self.restore_btn = ttk.Button(
             left_buttons,
             text=f"🔄 {t('ui.backup_restore.restore_button')}",
             command=self._on_restore,
-            state='disabled',
-            width=32
+            state='disabled'
         )
         self.restore_btn.pack(side='left', padx=(0, 10))
         
         skip_btn = ttk.Button(
             left_buttons,
             text=f"▶ {t('ui.backup_restore.continue_button')}",
-            command=self._on_skip,
-            width=30
+            command=self._on_skip
         )
         skip_btn.pack(side='left')
         
@@ -283,8 +281,7 @@ class BackupRestoreGUI:
         cancel_btn = ttk.Button(
             button_frame,
             text=f"✕ {t('ui.backup_restore.exit_button')}",
-            command=self._on_cancel,
-            width=15
+            command=self._on_cancel
         )
         cancel_btn.pack(side='right')
         
