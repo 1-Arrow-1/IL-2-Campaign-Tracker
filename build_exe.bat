@@ -447,6 +447,9 @@ if exist "dist\Campaign_Service_Record" (
 REM Copy README if exists
 if exist "README.html" copy "README.html" "IL2_Campaign_Tracker_v2.1_ML\README.html" >NUL
 
+REM Copy README_DE if exists
+if exist "README_DE.html" copy "README_DE.html" "IL2_Campaign_Tracker_v2.1_ML\README_DE.html" >NUL
+
 REM Copy font if exists
 if exist "IBMPlexSans-Light.ttf" copy "IBMPlexSans-Light.ttf" "IL2_Campaign_Tracker_v2.1_ML\IBMPlexSans-Light.ttf" >NUL
 
