@@ -850,33 +850,20 @@ class MissionDebriefParser:
         # Detect landing damage and mark appropriately
         non_damage_events = self._detect_landing_damage(non_damage_events, data)
 
-        # Filter out misleading self-damage at end of mission for Bailout/MIA outcomes
-        # These events show "Hit by <player aircraft>" which is confusing (crash impact damage)
-        # We keep them for Landed sorties so hard-landing detection still works
+        # Filter out ALL self-damage for Bailout/MIA outcomes
+        # These events show "Hit by <player aircraft>" which is misleading when the aircraft
+        # is destroyed/abandoned (crash impact damage displayed as if hit by own plane).
+        # We keep self-damage for Landed* outcomes so hard-landing detection remains intact.
         final_state = data['summary']['final_state']
         if final_state.startswith('MIA') or final_state.startswith('Bailout'):
             player_aircraft = data['player']['aircraft']
-            # Determine mission end time for the "last N seconds" window (30 seconds)
-            mission_end = self.stats.mission_end_time
-            if not mission_end:
-                # Fallback: use last event time_raw
-                mission_end = max((e.get('time_raw', 0) for e in non_damage_events if e.get('time_raw')), default=0)
-            # Filter threshold: events within 30 seconds (1500 ticks) of mission end
-            threshold_ticks = 1500
             filtered_events = []
             for evt in non_damage_events:
+                # Filter ALL self-damage events (target == player's own aircraft type)
                 if evt.get('type') == 'Damage Taken' and evt.get('target') == player_aircraft:
-                    evt_time = evt.get('time_raw', 0)
-                    if isinstance(evt_time, str):
-                        # time_raw might be HH:MM string from aggregation; skip filter for these
-                        filtered_events.append(evt)
-                    elif mission_end and (mission_end - evt_time) < threshold_ticks:
-                        # Self-damage near mission end in bailout/MIA - hide it
-                        continue
-                    else:
-                        filtered_events.append(evt)
-                else:
-                    filtered_events.append(evt)
+                    # Skip this event - don't show "Hit by <own aircraft>" for MIA/Bailout
+                    continue
+                filtered_events.append(evt)
             non_damage_events = filtered_events
 
         # Sort all events by time
