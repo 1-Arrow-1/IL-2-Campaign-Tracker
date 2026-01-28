@@ -355,13 +355,21 @@
     },
     "status": {
       "landed": "Приземлился",
+      "landed_wounded": "Приземлился (Ранен)",
+      "landed_hard_landing": "Приземлился (Жёсткая посадка)",
+      "landed_hard_landing_wounded": "Приземлился (Жёсткая посадка, Ранен)",
       "crashed": "Разбился",
       "bailout": "Прыгнул",
+      "bailout_survived": "Прыгнул (Выжил)",
+      "bailout_survived_wounded": "Прыгнул (Выжил, Ранен)",
       "captured": "В плену",
       "wounded": "Ранен",
       "hard_landing": "Жёсткая посадка",
       "kia": "Погиб",
-      "mia": "Пропал без вести"
+      "mia": "Пропал без вести",
+      "mia_captured": "Пропал без вести (В плену)",
+      "mia_likely_captured": "Пропал без вести (Вероятно в плену)",
+      "mia_unknown": "Пропал без вести (Неизвестно)"
     },
     "months": {
       "january": "Январь",

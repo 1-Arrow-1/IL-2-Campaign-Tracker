@@ -98,6 +98,7 @@ class MissionStats:
         self.player_aircraft = None
         self.player_pid = None  # Player pilot ID
         self.player_plid = None  # Player aircraft ID
+        self.player_country = None  # Player's country code for territory classification
         self.objects = {}
         self.hits = []      # {attacker,target,damage,time}
         self.kills = []     # GameObject list
@@ -109,10 +110,19 @@ class MissionStats:
         self.landed = False
         self.crashed = False
         self.pilot_separation_time = None  # Time (ticks) when pilot separated from aircraft (bailout)
+        self.pilot_separation_pos = None   # Position (x,y,z) at bailout for territory check
+        self._pilot_touchdown_time = None  # Time (ticks) when pilot touched down after bailout
+        self._pilot_touchdown_pos = None   # Position (x,y,z) of pilot touchdown
         self.final_state = "Alive"
         self.takeoff_time = None
         self.landing_time = None
+        self.mission_end_time = None  # Used for flight duration calc (no event emitted)
         self.flight_duration = None
+        # Territory/influence polygons: {country_code: [polygon1, polygon2, ...]}
+        # where each polygon is a list of (x,z) tuples
+        self.influence_polygons = defaultdict(list)
+        # Mapping from AID to country for AType:13/14 linkage
+        self._influence_aid_to_country = {}
 
     def add_object(self, obj): self.objects[obj.id] = obj
     def add_hit(self, a, t, d, ts): self.hits.append({"attacker": a, "target": t, "damage": d, "time": ts})
@@ -144,6 +154,72 @@ class MissionDebriefParser:
         return f"{h:02}:{m:02}:{s:02}"
 
     # ------------------------------------------------------
+    @staticmethod
+    def _point_in_polygon(x, z, polygon):
+        """
+        Ray-casting algorithm to determine if point (x,z) is inside polygon.
+        Polygon is a list of (x,z) tuples. Returns True if inside.
+        """
+        if not polygon or len(polygon) < 3:
+            return False
+        n = len(polygon)
+        inside = False
+        px, pz = x, z
+        x1, z1 = polygon[0]
+        for i in range(1, n + 1):
+            x2, z2 = polygon[i % n]
+            if pz > min(z1, z2):
+                if pz <= max(z1, z2):
+                    if px <= max(x1, x2):
+                        if z1 != z2:
+                            x_intersect = (pz - z1) * (x2 - x1) / (z2 - z1) + x1
+                        if z1 == z2 or px <= x_intersect:
+                            inside = not inside
+            x1, z1 = x2, z2
+        return inside
+
+    def _determine_territory(self, x, z):
+        """
+        Determine territory for position (x,z) based on influence polygons.
+
+        Territory logic (Section C of spec):
+        - "friendly" if inside ANY polygon of player's COUNTRY
+        - "enemy" if inside ANY polygon of any other COUNTRY
+        - "unknown" if inside none or ambiguous (multiple countries)
+
+        Returns: "friendly", "enemy", or "unknown"
+        """
+        player_country = self.stats.player_country
+        if not player_country:
+            return "unknown"  # No player country info, can't determine
+
+        in_countries = []
+        # Check all polygons for each country (supports multiple polygons per country)
+        for country, polygons in self.stats.influence_polygons.items():
+            for polygon in polygons:
+                if self._point_in_polygon(x, z, polygon):
+                    if country not in in_countries:
+                        in_countries.append(country)
+                    break  # Found match for this country, no need to check more polygons
+
+        if not in_countries:
+            return "unknown"  # Not in any influence zone
+
+        if len(in_countries) > 1:
+            # Ambiguous: point is in polygons of multiple countries (overlap)
+            # Check if player's country is one of them
+            if player_country in in_countries:
+                # Prefer friendly if player's country is included
+                return "friendly"
+            return "unknown"
+
+        # Single country match
+        if in_countries[0] == player_country:
+            return "friendly"
+        else:
+            return "enemy"
+
+    # ------------------------------------------------------
     def parse(self):
         with open(self.path, encoding="utf-8") as f:
             lines = [l.strip() for l in f if "AType" in l]
@@ -159,14 +235,16 @@ class MissionDebriefParser:
                     # Store both, in case IL-2 swaps them (as seen in your logs)
                     self.stats.player_plid = plid
                     self.stats.player_pid = pid
-                    self.stats.player_id = pid or plid  # use plane ID primarily
+                    self.stats.player_id = pid or plid  # prefer pilot PID, fallback to plane PLID
 
                     self.stats.player_name = self._s(ln, r"NAME:([^ ]+)")
                     self.stats.player_aircraft = (
                         self._s(ln, r"TYPE:([^\r\n]+?)\s+COUNTRY:") or self._s(ln, r"TYPE:([^ ]+)")
                     )
+                    # Store player's country for territory classification
+                    self.stats.player_country = self._s(ln, r"COUNTRY:(\d+)")
                     # Debug output (optional)
-                    log_message(logger, f"[DEBUG] Player detected: {self.stats.player_name} (PLID={plid}, PID={pid})")
+                    log_message(logger, f"[DEBUG] Player detected: {self.stats.player_name} (PLID={plid}, PID={pid}, COUNTRY={self.stats.player_country})")
                 gid = self._i(ln, r"AID:(\d+)")
                 self.stats.add_object(GameObject(gid,
                     self._s(ln, r"NAME:([^ ]+)"),
@@ -182,6 +260,32 @@ class MissionDebriefParser:
                     self._s(ln, r"COUNTRY:(\d+)")
                 ))
 
+            # --- Parse influence polygons for territory classification (Section C) ---
+            # AType:13: Influence area header - maps AID to COUNTRY
+            elif "AType:13" in ln:
+                aid = self._i(ln, r"AID:(\d+)")
+                country = self._s(ln, r"COUNTRY:(\d+)")
+                if aid >= 0 and country:
+                    self.stats._influence_aid_to_country[aid] = country
+
+            # AType:14: Influence polygon boundary - BP((x,z),(x,z),...)
+            elif "AType:14" in ln:
+                aid = self._i(ln, r"AID:(\d+)")
+                bp_match = re.search(r"BP\((.+)\)", ln)
+                if aid >= 0 and bp_match:
+                    country = self.stats._influence_aid_to_country.get(aid)
+                    if country:
+                        # Parse polygon points: extract all (x,z) pairs
+                        # Regex supports negative coordinates (e.g., -123.0)
+                        points_str = bp_match.group(1)
+                        points = []
+                        for pt_match in re.finditer(r"\((-?[\d.]+),(-?[\d.]+)\)", points_str):
+                            x, z = float(pt_match.group(1)), float(pt_match.group(2))
+                            points.append((x, z))
+                        if points:
+                            # Append polygon to list (supports multiple polygons per country)
+                            self.stats.influence_polygons[country].append(points)
+
         # --- collect events ---
         destroyed = {}  # {tid: (timestamp, altitude)}
         for ln in lines:
@@ -190,7 +294,7 @@ class MissionDebriefParser:
                         
             if "AType:2" in ln:
                 a, tgt, dmg = self._i(ln, r"AID:(-?\d+)"), self._i(ln, r"TID:(-?\d+)"), self._f(ln, r"DMG:([\d.]+)")
-                pos_match = re.search(r"POS\(([\d.]+),([\d.]+),([\d.]+)\)", ln)
+                pos_match = re.search(r"POS\((-?[\d.]+),(-?[\d.]+),(-?[\d.]+)\)", ln)
                 
                 self.stats.add_hit(a, tgt, dmg, ts)
                 
@@ -242,7 +346,7 @@ class MissionDebriefParser:
 
             elif "AType:3" in ln:
                 a, tgt = self._i(ln, r"AID:(-?\d+)"), self._i(ln, r"TID:(-?\d+)")
-                pos_match = re.search(r"POS\(([\d.]+),([\d.]+),([\d.]+)\)", ln)
+                pos_match = re.search(r"POS\((-?[\d.]+),(-?[\d.]+),(-?[\d.]+)\)", ln)
                 altitude = int(float(pos_match.group(2))) if pos_match else None
                 destroyed[tgt] = (ts, altitude)  # Store with altitude
                 
@@ -261,7 +365,7 @@ class MissionDebriefParser:
 
             elif "AType:5" in ln:  # ✅ Takeoff
                 pid = self._i(ln, r"PID:(-?\d+)")
-                pos_match = re.search(r"POS\(([\d.]+),([\d.]+),([\d.]+)\)", ln)
+                pos_match = re.search(r"POS\((-?[\d.]+),(-?[\d.]+),(-?[\d.]+)\)", ln)
                 if pid in (self.stats.player_pid, self.stats.player_plid) and not self.stats.takeoff_time:
                     self.stats.takeoff_time = t
                     altitude = int(float(pos_match.group(2))) if pos_match else None
@@ -273,90 +377,86 @@ class MissionDebriefParser:
                     })
             
             elif "AType:18" in ln:  # ✅ Pilot Separation (Bailout indicator)
+                # SECTION B.1: AType:18 is the authoritative "pilot separated/bailout started" trigger
                 # BOTID = pilot that separated, PARENTID = aircraft they left
                 botid = self._i(ln, r"BOTID:(-?\d+)")
                 parentid = self._i(ln, r"PARENTID:(-?\d+)")
-                
+                pos_match = re.search(r"POS\((-?[\d.]+),(-?[\d.]+),(-?[\d.]+)\)", ln)
+
                 # Check if player pilot separated from player aircraft
                 # (only if player IDs are known)
-                if (self.stats.player_pid and self.stats.player_plid and 
+                if (self.stats.player_pid and self.stats.player_plid and
                     botid == self.stats.player_pid and parentid == self.stats.player_plid):
-                    self.stats.pilot_separation_time = t  # Store time (ticks)
-                    if self.verbose:
-                        log_message(logger, f"  Pilot separation detected at {ts} (T:{t})")
+                    # Deduplicate by checking if we already recorded this separation
+                    # (IL-2 sometimes emits duplicate AType:18 lines at same tick)
+                    if self.stats.pilot_separation_time is None:
+                        self.stats.pilot_separation_time = t  # Store time (ticks)
+                        # Store position for territory check (Section D)
+                        if pos_match:
+                            x = float(pos_match.group(1))
+                            y = float(pos_match.group(2))
+                            z = float(pos_match.group(3))
+                            self.stats.pilot_separation_pos = (x, y, z)
+                        if self.verbose:
+                            log_message(logger, f"  Pilot separation detected at {ts} (T:{t})")
 
-            elif "AType:6" in ln or "AType:7" in ln:  # ✅ Landing / Crash / Bailout
+            # SECTION B.3: AType:7 MUST NOT be used as landing/crash/bailout trigger.
+            # It may be recognized as a delimiter/segment boundary, but must not drive status.
+            # We only log it for debugging if verbose.
+            elif "AType:7" in ln:
+                # AType:7 is a segment boundary/delimiter ONLY - do not drive outcome status
+                if self.verbose:
+                    pid = self._i(ln, r"PID:(-?\d+)")
+                    if pid in (self.stats.player_pid, self.stats.player_plid):
+                        log_message(logger, f"  [DELIMITER] AType:7 segment boundary at {ts} (ignored for status)")
+
+            # SECTION B.2: AType:6 is "ground contact" - meaning depends on bailout state
+            elif "AType:6" in ln:
                 pid = self._i(ln, r"PID:(-?\d+)")
-                pos_match = re.search(r"POS\(([\d.]+),([\d.]+),([\d.]+)\)", ln)
-                
-                if pid in (self.stats.player_pid, self.stats.player_plid) and not self.stats.landing_time:
-                    self.stats.landing_time = t
+                pos_match = re.search(r"POS\((-?[\d.]+),(-?[\d.]+),(-?[\d.]+)\)", ln)
+
+                # Check if this AType:6 is for player (aircraft or pilot)
+                if pid in (self.stats.player_pid, self.stats.player_plid):
                     altitude = int(float(pos_match.group(2))) if pos_match else None
-                    
-                    # BAILOUT vs CRASH: Check if pilot separated AND time difference
-                    # If pilot separated > 40 seconds before landing → Bailout
-                    # If pilot separated < 40 seconds before landing → Crash/Hard Landing
-                    # Threshold: 2000 ticks (40 seconds at 50 ticks/second)
-                    # NOTE: Lowered from 60s to account for time compression effects
-                    if self.stats.pilot_separation_time:
-                        time_since_separation = t - self.stats.pilot_separation_time
-                        
-                        if time_since_separation > 2000:
-                            # Long time → Player bailed out and descended with parachute
-                            self.stats.crashed = False
-                            self.stats.landed = False
-                            if self.stats.wounded:
-                                self.stats.final_state = "Bailout (Wounded)"
-                            else:
-                                self.stats.final_state = "Bailout"
-                            event_type = "Bailout"
-                        else:
-                            # Short time → Crash separated pilot from aircraft
-                            if "AType:7" in ln:
-                                # Crash ejected pilot - treat as emergency bailout
-                                # (deaths flag from campaign save will override to KIA/MIA if fatal)
-                                self.stats.crashed = False
-                                self.stats.landed = False
-                                if self.stats.wounded:
-                                    self.stats.final_state = "Bailout (Wounded)"
-                                else:
-                                    self.stats.final_state = "Bailout"
-                                event_type = "Bailout"
-                            else:
-                                # AType:6 with quick separation = Hard Landing
-                                self.stats.landed = True
-                                if self.stats.wounded:
-                                    self.stats.final_state = "Landed (Wounded)"
-                                else:
-                                    self.stats.final_state = "Landed"
-                                event_type = "Landing"
-                    
-                    elif "AType:7" in ln:
-                        # AType:7 without bailout separation
-                        # This will almost always be deaths=1 (KIA/MIA)
-                        # But we set a placeholder status (will be overridden by campaign save)
-                        self.stats.crashed = False
-                        self.stats.landed = False
-                        if self.stats.wounded:
-                            self.stats.final_state = "Bailout (Wounded)"
-                        else:
-                            self.stats.final_state = "Bailout"
-                        event_type = "Crash"  # Keep event type for logging
+                    x = float(pos_match.group(1)) if pos_match else None
+                    z = float(pos_match.group(3)) if pos_match else None
+
+                    # SECTION B.2: Conditional semantics based on bailout state
+                    if self.stats.pilot_separation_time and t > self.stats.pilot_separation_time:
+                        # Bailout DID occur, and this AType:6 is AFTER separation
+                        # → This is pilot/parachute touchdown, NOT aircraft landing
+                        # Store touchdown position for territory check (Section D.1)
+                        if self.stats._pilot_touchdown_time is None:
+                            self.stats._pilot_touchdown_time = t
+                            self.stats._pilot_touchdown_pos = (x, altitude, z) if x is not None else None
+
+                            self.stats.events.append({
+                                "time": ts,
+                                "type": "Pilot Touchdown",
+                                "altitude": altitude,
+                                "time_raw": t
+                            })
+                            if self.verbose:
+                                log_message(logger, f"  Pilot touchdown at {ts} (post-bailout AType:6)")
                     else:
-                        self.stats.landed = True
-                        # Wounded status combines with landing
-                        if self.stats.wounded:
-                            self.stats.final_state = "Landed (Wounded)"
-                        else:
-                            self.stats.final_state = "Landed"
-                        event_type = "Landing"
-                    
-                    self.stats.events.append({
-                        "time": ts,
-                        "type": event_type,
-                        "altitude": altitude,
-                        "time_raw": t
-                    })
+                        # NO bailout occurred (or AType:6 is before separation - rare)
+                        # → This is aircraft landing
+                        if not self.stats.landing_time:
+                            self.stats.landing_time = t
+                            self.stats.landed = True
+
+                            # Set provisional landing state (may be upgraded to Hard Landing later)
+                            if self.stats.wounded:
+                                self.stats.final_state = "Landed (Wounded)"
+                            else:
+                                self.stats.final_state = "Landed"
+
+                            self.stats.events.append({
+                                "time": ts,
+                                "type": "Landing",
+                                "altitude": altitude,
+                                "time_raw": t
+                            })
 
         # --- retroactive proportional kills ---
         for tid, (kill_time, altitude) in destroyed.items():
@@ -383,11 +483,11 @@ class MissionDebriefParser:
             if not end_time and self.stats.events:
                 # No landing recorded - use last event as mission end
                 end_time = max((e.get('time_raw', 0) for e in self.stats.events), default=self.stats.takeoff_time)
-                # Add Mission End event if no landing
+                # Store mission_end_time for duration calc and self-damage filtering
+                # NOTE: We do NOT emit a "Mission End" event to the timeline anymore
                 if end_time > self.stats.takeoff_time:
-                    last_ts = self.mission_time_to_hhmmss(end_time)
-                    self.stats.events.append({"time": last_ts, "type": "Mission End", "time_raw": end_time})
-            
+                    self.stats.mission_end_time = end_time
+
             if end_time:
                 duration = end_time - self.stats.takeoff_time
                 # IL-2 uses 50 ticks per second (20ms per tick)
@@ -396,45 +496,71 @@ class MissionDebriefParser:
                 h, m, s = int(sec // 3600), int((sec % 3600) // 60), int(sec % 60)
                 self.stats.flight_duration = f"{h:02}:{m:02}:{s:02}"
 
-        # --- final status cleanup ---
-        # If status is still "Alive", set a fallback based on what we know
-        if self.stats.final_state == "Alive":
-            if self.stats.pilot_separation_time:
-                # Pilot separated (bailout) but mission ended before landing
-                # This happens when player ends mission mid-bailout
-                
-                # Check for heavy aircraft damage before separation (crash-eject detection)
-                separation_time = self.stats.pilot_separation_time
-                recent_heavy_damage = False
-                
-                for evt in self.stats.events:
-                    if evt.get('type') == 'Damage Taken' and 'aircraft' in evt.get('damage', ''):
-                        evt_time = evt.get('time_raw', 0)
-                        # Check damage within 5 seconds (250 ticks) before separation
-                        if 0 < (separation_time - evt_time) < 250:
-                            damage_str = evt.get('damage', '0%')
-                            try:
-                                damage_val = float(damage_str.split('%')[0]) / 100.0
-                                if damage_val > 0.80:  # > 80% aircraft damage
-                                    recent_heavy_damage = True
-                                    break
-                            except:
-                                pass
-                
-                if recent_heavy_damage:
-                    # Heavy damage before separation → likely crash-eject
+        # ==============================================================
+        # SECTION E & F: FINAL STATUS CLEANUP / OUTCOME MAPPING
+        # ==============================================================
+        # Finalize sortie outcome based on bailout state and territory
+
+        if self.stats.pilot_separation_time:
+            # ==============================================================
+            # BAILOUT OCCURRED - Apply capture/MIA logic (Section E, bailout case)
+            # ==============================================================
+
+            # SECTION D: Determine best position for territory check
+            # Priority: 1) pilot touchdown pos, 2) AType:18 separation pos, 3) fallback
+            pilot_pos = None
+            touchdown_observed = False
+
+            # D.1: Check for post-bailout AType:6 (pilot touchdown)
+            if self.stats._pilot_touchdown_pos:
+                pilot_pos = self.stats._pilot_touchdown_pos
+                touchdown_observed = True
+            # D.2: Fallback to AType:18 separation position
+            elif self.stats.pilot_separation_pos:
+                pilot_pos = self.stats.pilot_separation_pos
+            # D.3: No position available - territory unknown
+
+            # Determine territory using position (Section C)
+            territory = "unknown"
+            if pilot_pos and len(pilot_pos) >= 3:
+                x, _, z = pilot_pos  # (x, y, z) - use x and z for 2D polygon test
+                territory = self._determine_territory(x, z)
+
+            if self.verbose:
+                log_message(logger, f"  [TERRITORY] Bailout territory check: pos={pilot_pos}, territory={territory}, touchdown={touchdown_observed}")
+
+            # SECTION E: Map bailout outcome based on territory and touchdown
+            if touchdown_observed:
+                # Pilot touched down (post-bailout AType:6 exists)
+                if territory == "friendly":
                     if self.stats.wounded:
-                        self.stats.final_state = "Crashed (Wounded)"
+                        self.stats.final_state = "Bailout (Survived, Wounded)"
                     else:
-                        self.stats.final_state = "Crashed"
-                    log_message(logger, f"[CRASH-EJECT] Heavy aircraft damage before separation - status set to Crashed")
-                else:
-                    # No heavy damage → normal bailout
+                        self.stats.final_state = "Bailout (Survived)"
+                elif territory == "enemy":
+                    self.stats.final_state = "MIA (Captured)"
+                else:  # unknown
+                    self.stats.final_state = "MIA (Unknown)"
+            else:
+                # Mission ended mid-descent (no post-bailout AType:6)
+                if territory == "friendly":
                     if self.stats.wounded:
-                        self.stats.final_state = "Bailout (Wounded)"
+                        self.stats.final_state = "Bailout (Survived, Wounded)"
                     else:
-                        self.stats.final_state = "Bailout"
-                    log_message(logger, f"[BAILOUT] Mission ended mid-bailout - status set to Bailout")
+                        self.stats.final_state = "Bailout (Survived)"
+                elif territory == "enemy":
+                    self.stats.final_state = "MIA (Likely Captured)"
+                else:  # unknown
+                    self.stats.final_state = "MIA (Unknown)"
+
+            log_message(logger, f"[BAILOUT] Final state: {self.stats.final_state} (territory={territory}, touchdown={touchdown_observed})")
+
+        elif self.stats.final_state == "Alive":
+            # ==============================================================
+            # NO BAILOUT AND NO LANDING - status still "Alive"
+            # Keep existing fallback behavior (mission ended without resolution)
+            # ==============================================================
+            pass  # Leave as "Alive" - no additional states introduced
 
         return self.stats
 
@@ -723,7 +849,36 @@ class MissionDebriefParser:
         
         # Detect landing damage and mark appropriately
         non_damage_events = self._detect_landing_damage(non_damage_events, data)
-        
+
+        # Filter out misleading self-damage at end of mission for Bailout/MIA outcomes
+        # These events show "Hit by <player aircraft>" which is confusing (crash impact damage)
+        # We keep them for Landed sorties so hard-landing detection still works
+        final_state = data['summary']['final_state']
+        if final_state.startswith('MIA') or final_state.startswith('Bailout'):
+            player_aircraft = data['player']['aircraft']
+            # Determine mission end time for the "last N seconds" window (30 seconds)
+            mission_end = self.stats.mission_end_time
+            if not mission_end:
+                # Fallback: use last event time_raw
+                mission_end = max((e.get('time_raw', 0) for e in non_damage_events if e.get('time_raw')), default=0)
+            # Filter threshold: events within 30 seconds (1500 ticks) of mission end
+            threshold_ticks = 1500
+            filtered_events = []
+            for evt in non_damage_events:
+                if evt.get('type') == 'Damage Taken' and evt.get('target') == player_aircraft:
+                    evt_time = evt.get('time_raw', 0)
+                    if isinstance(evt_time, str):
+                        # time_raw might be HH:MM string from aggregation; skip filter for these
+                        filtered_events.append(evt)
+                    elif mission_end and (mission_end - evt_time) < threshold_ticks:
+                        # Self-damage near mission end in bailout/MIA - hide it
+                        continue
+                    else:
+                        filtered_events.append(evt)
+                else:
+                    filtered_events.append(evt)
+            non_damage_events = filtered_events
+
         # Sort all events by time
         def _time_key(evt):
             t = evt.get("time")

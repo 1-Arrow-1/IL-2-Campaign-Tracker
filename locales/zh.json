@@ -355,13 +355,21 @@
     },
     "status": {
       "landed": "成功着陆",
+      "landed_wounded": "成功着陆 (受伤)",
+      "landed_hard_landing": "成功着陆 (硬着陆)",
+      "landed_hard_landing_wounded": "成功着陆 (硬着陆, 受伤)",
       "crashed": "坠毁",
       "bailout": "跳伞",
+      "bailout_survived": "跳伞 (生还)",
+      "bailout_survived_wounded": "跳伞 (生还, 受伤)",
       "captured": "被俘",
       "wounded": "受伤",
       "hard_landing": "硬着陆",
       "kia": "阵亡",
-      "mia": "失踪"
+      "mia": "失踪",
+      "mia_captured": "失踪 (被俘)",
+      "mia_likely_captured": "失踪 (可能被俘)",
+      "mia_unknown": "失踪 (未知)"
     },
     "months": {
       "january": "一月",

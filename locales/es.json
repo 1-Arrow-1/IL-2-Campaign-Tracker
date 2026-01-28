@@ -355,13 +355,21 @@
     },
     "status": {
       "landed": "Aterrizó",
+      "landed_wounded": "Aterrizó (Herido)",
+      "landed_hard_landing": "Aterrizó (Aterrizaje duro)",
+      "landed_hard_landing_wounded": "Aterrizó (Aterrizaje duro, Herido)",
       "crashed": "Se estrelló",
       "bailout": "Salto en paracaídas",
+      "bailout_survived": "Evacuación (Sobrevivió)",
+      "bailout_survived_wounded": "Evacuación (Sobrevivió, Herido)",
       "captured": "Capturado",
       "wounded": "Herido",
       "hard_landing": "Aterrizaje duro",
       "kia": "Muerto",
-      "mia": "Desaparecido"
+      "mia": "Desaparecido",
+      "mia_captured": "Desaparecido (Capturado)",
+      "mia_likely_captured": "Desaparecido (Probablemente capturado)",
+      "mia_unknown": "Desaparecido (Desconocido)"
     },
     "months": {
       "january": "Enero",

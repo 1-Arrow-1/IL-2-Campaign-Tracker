@@ -355,13 +355,21 @@
     },
     "status": {
       "landed": "Landed",
+      "landed_wounded": "Landed (Wounded)",
+      "landed_hard_landing": "Landed (Hard Landing)",
+      "landed_hard_landing_wounded": "Landed (Hard Landing, Wounded)",
       "crashed": "Crashed",
       "bailout": "Bailout",
+      "bailout_survived": "Bailout (Survived)",
+      "bailout_survived_wounded": "Bailout (Survived, Wounded)",
       "captured": "Captured",
       "wounded": "Wounded",
       "hard_landing": "Hard Landing",
       "kia": "KIA",
-      "mia": "MIA"
+      "mia": "MIA",
+      "mia_captured": "MIA (Captured)",
+      "mia_likely_captured": "MIA (Likely Captured)",
+      "mia_unknown": "MIA (Unknown)"
     },
     "months": {
       "january": "January",

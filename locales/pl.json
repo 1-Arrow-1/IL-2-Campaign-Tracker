@@ -355,13 +355,21 @@
     },
     "status": {
       "landed": "Wylądował",
+      "landed_wounded": "Wylądował (Ranny)",
+      "landed_hard_landing": "Wylądował (Twarde lądowanie)",
+      "landed_hard_landing_wounded": "Wylądował (Twarde lądowanie, Ranny)",
       "crashed": "Rozbił się",
       "bailout": "Skok",
+      "bailout_survived": "Skok (Przeżył)",
+      "bailout_survived_wounded": "Skok (Przeżył, Ranny)",
       "captured": "Wzięty do niewoli",
       "wounded": "Ranny",
       "hard_landing": "Twarde lądowanie",
       "kia": "Poległ",
-      "mia": "Zaginął"
+      "mia": "Zaginął",
+      "mia_captured": "Zaginął (Wzięty do niewoli)",
+      "mia_likely_captured": "Zaginął (Prawdopodobnie w niewoli)",
+      "mia_unknown": "Zaginął (Nieznany)"
     },
     "months": {
       "january": "Styczeń",
