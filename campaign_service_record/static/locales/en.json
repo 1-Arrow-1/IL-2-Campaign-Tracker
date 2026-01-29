@@ -150,7 +150,8 @@
       "missions_flown": "Missions Flown",
       "aircraft_flown": "Aircraft Flown",
       "career_progression": "Career Progression",
-      "campaign_timeline": "Campaign Timeline"
+      "campaign_timeline": "Campaign Timeline",
+      "additional_notes": "Additional Incidents"
     },
     "label": {
       "country": "Country",
@@ -188,7 +189,9 @@
       "change_pilot_photo": "Change Pilot Photo & Data",
       "choose_photo": "Choose Photo",
       "apply": "Apply",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "save": "Save",
+      "edit_notes": "Edit"
     },
     "message": {
       "loading_campaigns": "Loading campaigns...",
@@ -197,6 +200,7 @@
       "no_events": "No events recorded",
       "no_debriefings": "No debriefings available",
       "no_summary": "No summary available",
+      "no_entries": "(No entries)",
       "pdf_generating": "Generating PDF...",
       "pdf_ready": "PDF ready for download",
       "no_photo_selected": "No new photo selected.",

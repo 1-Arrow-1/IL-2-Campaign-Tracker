@@ -195,12 +195,13 @@
       "awards_earned": "Décorations obtenues"
     },
     "section": {
-      "overview": "Vue d’ensemble",
+      "overview": "Vue d'ensemble",
       "missions": "Missions",
       "awards": "Décorations & distinctions",
       "statistics": "Statistiques",
       "combat_results": "Résultats au combat",
-      "timeline": "Chronologie"
+      "timeline": "Chronologie",
+      "additional_notes": "Incidents supplémentaires"
     },
     "mission": {
       "date": "Date",
@@ -220,12 +221,16 @@
       "download_pdf": "Télécharger le rapport PDF",
       "view_details": "Voir les détails",
       "collapse": "Réduire",
-      "expand": "Développer"
+      "expand": "Développer",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "edit_notes": "Modifier"
     },
     "message": {
       "loading_campaigns": "Chargement des campagnes...",
       "no_campaigns": "Aucune campagne trouvée",
       "error_loading": "Erreur de chargement des données",
+      "no_entries": "(Aucune entrée)",
       "pdf_generating": "Génération du PDF...",
       "pdf_ready": "PDF prêt au téléchargement"
     }

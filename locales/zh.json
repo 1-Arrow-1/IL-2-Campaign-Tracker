@@ -200,7 +200,8 @@
       "awards": "勋章与荣誉",
       "statistics": "统计",
       "combat_results": "战斗结果",
-      "timeline": "时间线"
+      "timeline": "时间线",
+      "additional_notes": "其他事件"
     },
     "mission": {
       "date": "日期",
@@ -220,12 +221,16 @@
       "download_pdf": "下载 PDF 报告",
       "view_details": "查看详情",
       "collapse": "收起",
-      "expand": "展开"
+      "expand": "展开",
+      "save": "保存",
+      "cancel": "取消",
+      "edit_notes": "编辑"
     },
     "message": {
       "loading_campaigns": "正在加载战役...",
       "no_campaigns": "未找到战役",
       "error_loading": "加载数据时出错",
+      "no_entries": "(无记录)",
       "pdf_generating": "正在生成 PDF...",
       "pdf_ready": "PDF 已准备好下载"
     }

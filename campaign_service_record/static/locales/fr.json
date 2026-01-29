@@ -137,7 +137,7 @@
       "no_status_data": "Aucune donnée de statut disponible"
     },
     "section": {
-      "overview": "Vue d’ensemble",
+      "overview": "Vue d'ensemble",
       "missions": "Missions",
       "awards": "Décorations & distinctions",
       "statistics": "Statistiques",
@@ -150,7 +150,8 @@
       "missions_flown": "Missions effectuées",
       "aircraft_flown": "Appareils pilotés",
       "career_progression": "Progression de carrière",
-      "campaign_timeline": "Chronologie de la campagne"
+      "campaign_timeline": "Chronologie de la campagne",
+      "additional_notes": "Incidents supplémentaires"
     },
     "label": {
       "country": "Pays",
@@ -188,7 +189,9 @@
       "change_pilot_photo": "Changer la photo & les données du pilote",
       "choose_photo": "Choisir une photo",
       "apply": "Appliquer",
-      "cancel": "Annuler"
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "edit_notes": "Modifier"
     },
     "message": {
       "loading_campaigns": "Chargement des campagnes...",
@@ -197,6 +200,7 @@
       "no_events": "Aucun événement enregistré",
       "no_debriefings": "Aucun compte rendu disponible",
       "no_summary": "Aucun résumé disponible",
+      "no_entries": "(Aucune entrée)",
       "pdf_generating": "Génération du PDF...",
       "pdf_ready": "PDF prêt au téléchargement",
       "no_photo_selected": "Aucune nouvelle photo sélectionnée.",

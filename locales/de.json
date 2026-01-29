@@ -200,7 +200,8 @@
       "awards": "Auszeichnungen & Ehrungen",
       "statistics": "Statistik",
       "combat_results": "Kampfergebnisse",
-      "timeline": "Zeitstrahl"
+      "timeline": "Zeitstrahl",
+      "additional_notes": "Weitere Vorkommnisse"
     },
     "mission": {
       "date": "Datum",
@@ -220,12 +221,16 @@
       "download_pdf": "PDF-Bericht herunterladen",
       "view_details": "Details anzeigen",
       "collapse": "Einklappen",
-      "expand": "Aufklappen"
+      "expand": "Aufklappen",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "edit_notes": "Bearbeiten"
     },
     "message": {
       "loading_campaigns": "Kampagnen werden geladen...",
       "no_campaigns": "Keine Kampagnen gefunden",
       "error_loading": "Fehler beim Laden der Daten",
+      "no_entries": "(Keine Einträge)",
       "pdf_generating": "PDF wird erstellt...",
       "pdf_ready": "PDF bereit zum Download"
     }

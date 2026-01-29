@@ -357,7 +357,8 @@ def save_campaign_personal_data(campaign_name: str):
         'first_name': _sanitize_personal_data_value(payload.get('first_name')),
         'birthday': _sanitize_personal_data_value(payload.get('birthday')),
         'birth_place': _sanitize_personal_data_value(payload.get('birth_place')),
-        'birth_country': _sanitize_personal_data_value(payload.get('birth_country'))
+        'birth_country': _sanitize_personal_data_value(payload.get('birth_country')),
+        'additional_notes': _sanitize_personal_data_value(payload.get('additional_notes'))
     }
 
     data = _load_personal_data()

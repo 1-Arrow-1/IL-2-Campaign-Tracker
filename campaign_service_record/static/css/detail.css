@@ -736,6 +736,120 @@
 }
 
 /* ============================================================================
+   Additional Notes Section
+   ============================================================================ */
+
+.additional-notes-section {
+    margin-top: 1rem;
+}
+
+.additional-notes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.additional-notes-header h3 {
+    margin: 0;
+}
+
+.additional-notes-edit-btn {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+    background: #8a7a66;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.additional-notes-edit-btn:hover {
+    background: #6a5a46;
+}
+
+.additional-notes-content {
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(60, 40, 20, 0.1);
+    border-radius: 4px;
+    min-height: 2rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #3b2a18;
+}
+
+.additional-notes-empty {
+    color: #8a7a66;
+    font-style: italic;
+}
+
+.additional-notes-editor {
+    margin-top: 0.5rem;
+}
+
+.additional-notes-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.75rem;
+    font-family: inherit;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    border: 1px solid rgba(60, 40, 20, 0.2);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.8);
+    color: #3b2a18;
+    resize: vertical;
+    min-height: 80px;
+    max-height: 300px;
+}
+
+.additional-notes-textarea:focus {
+    outline: none;
+    border-color: #8a7a66;
+    box-shadow: 0 0 0 2px rgba(138, 122, 102, 0.2);
+}
+
+.additional-notes-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    justify-content: flex-end;
+}
+
+.additional-notes-save-btn,
+.additional-notes-cancel-btn {
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.additional-notes-save-btn {
+    background: #5a8a56;
+    color: #fff;
+}
+
+.additional-notes-save-btn:hover {
+    background: #4a7a46;
+}
+
+.additional-notes-cancel-btn {
+    background: #a08a7a;
+    color: #fff;
+}
+
+.additional-notes-cancel-btn:hover {
+    background: #8a7a6a;
+}
+
+/* ============================================================================
    Responsive
    ============================================================================ */
 

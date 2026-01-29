@@ -200,7 +200,8 @@
       "awards": "Awards & Decorations",
       "statistics": "Statistics",
       "combat_results": "Combat Results",
-      "timeline": "Timeline"
+      "timeline": "Timeline",
+      "additional_notes": "Additional Incidents"
     },
     "mission": {
       "date": "Date",
@@ -220,12 +221,16 @@
       "download_pdf": "Download PDF Report",
       "view_details": "View Details",
       "collapse": "Collapse",
-      "expand": "Expand"
+      "expand": "Expand",
+      "save": "Save",
+      "cancel": "Cancel",
+      "edit_notes": "Edit"
     },
     "message": {
       "loading_campaigns": "Loading campaigns...",
       "no_campaigns": "No campaigns found",
       "error_loading": "Error loading data",
+      "no_entries": "(No entries)",
       "pdf_generating": "Generating PDF...",
       "pdf_ready": "PDF ready for download"
     }

@@ -150,7 +150,8 @@
       "missions_flown": "Misiones voladas",
       "aircraft_flown": "Aeronaves voladas",
       "career_progression": "Progresión de carrera",
-      "campaign_timeline": "Cronología de campaña"
+      "campaign_timeline": "Cronología de campaña",
+      "additional_notes": "Incidentes adicionales"
     },
     "label": {
       "country": "País",
@@ -188,7 +189,9 @@
       "change_pilot_photo": "Cambiar foto y datos del piloto",
       "choose_photo": "Elegir foto",
       "apply": "Aplicar",
-      "cancel": "Cancelar"
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "edit_notes": "Editar"
     },
     "message": {
       "loading_campaigns": "Cargando campañas...",
@@ -197,6 +200,7 @@
       "no_events": "No hay eventos registrados",
       "no_debriefings": "No hay informes disponibles",
       "no_summary": "No hay resumen disponible",
+      "no_entries": "(Sin entradas)",
       "pdf_generating": "Generando PDF...",
       "pdf_ready": "PDF listo para descargar",
       "no_photo_selected": "No se ha seleccionado una nueva foto.",

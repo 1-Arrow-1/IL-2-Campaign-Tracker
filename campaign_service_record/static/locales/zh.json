@@ -150,7 +150,8 @@
       "missions_flown": "出击任务",
       "aircraft_flown": "飞行机型",
       "career_progression": "生涯进展",
-      "campaign_timeline": "战役时间线"
+      "campaign_timeline": "战役时间线",
+      "additional_notes": "其他事件"
     },
     "label": {
       "country": "国家",
@@ -188,7 +189,9 @@
       "change_pilot_photo": "更换飞行员照片与数据",
       "choose_photo": "选择照片",
       "apply": "应用",
-      "cancel": "取消"
+      "cancel": "取消",
+      "save": "保存",
+      "edit_notes": "编辑"
     },
     "message": {
       "loading_campaigns": "正在加载战役...",
@@ -197,6 +200,7 @@
       "no_events": "未记录事件",
       "no_debriefings": "暂无任务总结",
       "no_summary": "暂无总结",
+      "no_entries": "(无记录)",
       "pdf_generating": "正在生成 PDF...",
       "pdf_ready": "PDF 已准备好下载",
       "no_photo_selected": "未选择新照片。",

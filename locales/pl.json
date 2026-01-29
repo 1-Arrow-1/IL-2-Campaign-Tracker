@@ -200,7 +200,8 @@
       "awards": "Odznaczenia",
       "statistics": "Statystyki",
       "combat_results": "Wyniki walk",
-      "timeline": "Oś czasu"
+      "timeline": "Oś czasu",
+      "additional_notes": "Dodatkowe zdarzenia"
     },
     "mission": {
       "date": "Data",
@@ -220,12 +221,16 @@
       "download_pdf": "Pobierz raport PDF",
       "view_details": "Zobacz szczegóły",
       "collapse": "Zwiń",
-      "expand": "Rozwiń"
+      "expand": "Rozwiń",
+      "save": "Zapisz",
+      "cancel": "Anuluj",
+      "edit_notes": "Edytuj"
     },
     "message": {
       "loading_campaigns": "Wczytywanie kampanii...",
       "no_campaigns": "Nie znaleziono kampanii",
       "error_loading": "Błąd wczytywania danych",
+      "no_entries": "(Brak wpisów)",
       "pdf_generating": "Generowanie PDF...",
       "pdf_ready": "PDF gotowy do pobrania"
     }

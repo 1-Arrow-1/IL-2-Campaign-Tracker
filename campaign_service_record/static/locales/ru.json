@@ -150,7 +150,8 @@
       "missions_flown": "Выполнено заданий",
       "aircraft_flown": "Используемые самолёты",
       "career_progression": "Карьерный рост",
-      "campaign_timeline": "Хронология кампании"
+      "campaign_timeline": "Хронология кампании",
+      "additional_notes": "Дополнительные происшествия"
     },
     "label": {
       "country": "Страна",
@@ -188,7 +189,9 @@
       "change_pilot_photo": "Изменить фото и данные пилота",
       "choose_photo": "Выбрать фото",
       "apply": "Применить",
-      "cancel": "Отмена"
+      "cancel": "Отмена",
+      "save": "Сохранить",
+      "edit_notes": "Редактировать"
     },
     "message": {
       "loading_campaigns": "Загрузка кампаний...",
@@ -197,6 +200,7 @@
       "no_events": "События не зафиксированы",
       "no_debriefings": "Разборы отсутствуют",
       "no_summary": "Сводка недоступна",
+      "no_entries": "(Нет записей)",
       "pdf_generating": "Создание PDF...",
       "pdf_ready": "PDF готов к скачиванию",
       "no_photo_selected": "Новое фото не выбрано.",

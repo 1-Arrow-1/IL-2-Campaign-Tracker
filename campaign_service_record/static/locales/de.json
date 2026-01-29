@@ -150,7 +150,8 @@
       "missions_flown": "Geflogene Missionen",
       "aircraft_flown": "Geflogene Flugzeuge",
       "career_progression": "Laufbahn",
-      "campaign_timeline": "Kampagnen-Zeitlinie"
+      "campaign_timeline": "Kampagnen-Zeitlinie",
+      "additional_notes": "Weitere Vorkommnisse"
     },
     "label": {
       "country": "Land",
@@ -188,7 +189,9 @@
       "change_pilot_photo": "Pilotenfoto & Daten ändern",
       "choose_photo": "Foto wählen",
       "apply": "Anwenden",
-      "cancel": "Abbrechen"
+      "cancel": "Abbrechen",
+      "save": "Speichern",
+      "edit_notes": "Bearbeiten"
     },
     "message": {
       "loading_campaigns": "Kampagnen werden geladen...",
@@ -197,6 +200,7 @@
       "no_events": "Keine Ereignisse aufgezeichnet",
       "no_debriefings": "Keine Nachbesprechungen verfügbar",
       "no_summary": "Keine Zusammenfassung verfügbar",
+      "no_entries": "(Keine Einträge)",
       "pdf_generating": "PDF wird erstellt...",
       "pdf_ready": "PDF bereit zum Download",
       "no_photo_selected": "Kein neues Foto ausgewählt.",

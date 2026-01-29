@@ -466,7 +466,14 @@ const DetailPage = {
         cropperPlaceholder: null,
         cropperCancel: null,
         cropperSave: null,
-        cropperPhotoSelect: null
+        cropperPhotoSelect: null,
+        additionalNotesDisplay: null,
+        additionalNotesEditor: null,
+        additionalNotesTextarea: null,
+        additionalNotesEditBtn: null,
+        additionalNotesSaveBtn: null,
+        additionalNotesCancelBtn: null,
+        additionalNotesEmpty: null
     },
 
     eventImageScale: 0.35,
@@ -505,6 +512,7 @@ const DetailPage = {
         this.cacheElements();
         this.ensureDetailColumns();
         this.setupPhotoHandlers();
+        this.setupAdditionalNotesHandlers();
         PreviewModal.init();
     },
 
@@ -543,6 +551,13 @@ const DetailPage = {
         this.elements.cropperCancel = document.getElementById('cropper-cancel');
         this.elements.cropperSave = document.getElementById('cropper-save');
         this.elements.cropperPhotoSelect = document.getElementById('cropper-photo-select');
+        this.elements.additionalNotesDisplay = document.getElementById('additional-notes-display');
+        this.elements.additionalNotesEditor = document.getElementById('additional-notes-editor');
+        this.elements.additionalNotesTextarea = document.getElementById('additional-notes-textarea');
+        this.elements.additionalNotesEditBtn = document.getElementById('additional-notes-edit-btn');
+        this.elements.additionalNotesSaveBtn = document.getElementById('additional-notes-save-btn');
+        this.elements.additionalNotesCancelBtn = document.getElementById('additional-notes-cancel-btn');
+        this.elements.additionalNotesEmpty = document.querySelector('.additional-notes-empty');
     },
 
     setupPhotoHandlers() {
@@ -570,7 +585,138 @@ const DetailPage = {
             });
         }
     },
-    
+
+    /**
+     * Set up additional notes handlers
+     */
+    setupAdditionalNotesHandlers() {
+        if (this.elements.additionalNotesEditBtn) {
+            this.elements.additionalNotesEditBtn.addEventListener('click', () => this.openAdditionalNotesEditor());
+        }
+        if (this.elements.additionalNotesSaveBtn) {
+            this.elements.additionalNotesSaveBtn.addEventListener('click', () => this.saveAdditionalNotes());
+        }
+        if (this.elements.additionalNotesCancelBtn) {
+            this.elements.additionalNotesCancelBtn.addEventListener('click', () => this.cancelAdditionalNotesEdit());
+        }
+    },
+
+    /**
+     * Open additional notes editor
+     */
+    openAdditionalNotesEditor() {
+        if (!this.elements.additionalNotesDisplay || !this.elements.additionalNotesEditor) {
+            return;
+        }
+        // Get current notes text (excluding the empty placeholder)
+        const currentText = this.currentAdditionalNotes || '';
+        this.elements.additionalNotesTextarea.value = currentText;
+        this.elements.additionalNotesDisplay.style.display = 'none';
+        this.elements.additionalNotesEditBtn.style.display = 'none';
+        this.elements.additionalNotesEditor.style.display = 'block';
+        this.elements.additionalNotesTextarea.focus();
+    },
+
+    /**
+     * Cancel additional notes edit
+     */
+    cancelAdditionalNotesEdit() {
+        if (!this.elements.additionalNotesDisplay || !this.elements.additionalNotesEditor) {
+            return;
+        }
+        this.elements.additionalNotesEditor.style.display = 'none';
+        this.elements.additionalNotesDisplay.style.display = 'block';
+        this.elements.additionalNotesEditBtn.style.display = 'inline-block';
+    },
+
+    /**
+     * Save additional notes
+     */
+    async saveAdditionalNotes() {
+        if (!this.currentCampaign) {
+            console.error('No current campaign');
+            return;
+        }
+
+        const newNotes = this.elements.additionalNotesTextarea.value.trim();
+
+        try {
+            // Get existing personal data first
+            const existingData = await API.getCampaignPersonalData(this.currentCampaign.name);
+
+            // Merge with new notes
+            const updatedData = {
+                ...existingData,
+                additional_notes: newNotes
+            };
+
+            // Save back
+            await API.saveCampaignPersonalData(this.currentCampaign.name, updatedData);
+
+            // Update local state
+            this.currentAdditionalNotes = newNotes;
+
+            // Update display
+            this.displayAdditionalNotes(newNotes);
+
+            // Close editor
+            this.cancelAdditionalNotesEdit();
+
+        } catch (error) {
+            console.error('Failed to save additional notes:', error);
+        }
+    },
+
+    /**
+     * Display additional notes in view mode
+     */
+    displayAdditionalNotes(notes) {
+        if (!this.elements.additionalNotesDisplay) {
+            return;
+        }
+
+        // Clear existing content
+        this.elements.additionalNotesDisplay.innerHTML = '';
+
+        if (notes && notes.trim()) {
+            // Create text node to display notes (preserves formatting)
+            const textSpan = document.createElement('span');
+            textSpan.textContent = notes;
+            this.elements.additionalNotesDisplay.appendChild(textSpan);
+        } else {
+            // Show empty placeholder
+            const emptySpan = document.createElement('span');
+            emptySpan.className = 'additional-notes-empty';
+            emptySpan.setAttribute('data-i18n', 'web.message.no_entries');
+            emptySpan.textContent = i18n.t('web.message.no_entries');
+            this.elements.additionalNotesDisplay.appendChild(emptySpan);
+        }
+    },
+
+    /**
+     * Load additional notes for current campaign
+     */
+    async loadAdditionalNotes() {
+        if (!this.currentCampaign) {
+            return;
+        }
+
+        try {
+            const personalData = await API.getCampaignPersonalData(this.currentCampaign.name);
+            this.currentAdditionalNotes = personalData.additional_notes || '';
+            this.displayAdditionalNotes(this.currentAdditionalNotes);
+        } catch (error) {
+            console.error('Failed to load additional notes:', error);
+            this.currentAdditionalNotes = '';
+            this.displayAdditionalNotes('');
+        }
+    },
+
+    /**
+     * Current additional notes text
+     */
+    currentAdditionalNotes: '',
+
     ensureDetailColumns() {
         const page = this.elements.page;
         if (!page) {
@@ -905,11 +1051,17 @@ const DetailPage = {
             this.setPersonalDataFields(data || {});
             this.setPersonalDataDisplay(data || {});
             this.showPersonalDataStatus('');
+            // Load additional notes
+            this.currentAdditionalNotes = (data && data.additional_notes) || '';
+            this.displayAdditionalNotes(this.currentAdditionalNotes);
         } catch (error) {
             console.error('Failed to load personal data:', error);
             this.showPersonalDataStatus('Unable to load personal data.');
             this.setPersonalDataFields({});
             this.setPersonalDataDisplay({});
+            // Reset additional notes on error
+            this.currentAdditionalNotes = '';
+            this.displayAdditionalNotes('');
         }
     },
 

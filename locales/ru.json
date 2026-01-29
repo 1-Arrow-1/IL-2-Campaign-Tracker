@@ -200,7 +200,8 @@
       "awards": "Награды и отличия",
       "statistics": "Статистика",
       "combat_results": "Боевые результаты",
-      "timeline": "Хронология"
+      "timeline": "Хронология",
+      "additional_notes": "Дополнительные происшествия"
     },
     "mission": {
       "date": "Дата",
@@ -220,12 +221,16 @@
       "download_pdf": "Скачать PDF-отчёт",
       "view_details": "Просмотреть детали",
       "collapse": "Свернуть",
-      "expand": "Развернуть"
+      "expand": "Развернуть",
+      "save": "Сохранить",
+      "cancel": "Отмена",
+      "edit_notes": "Редактировать"
     },
     "message": {
       "loading_campaigns": "Загрузка кампаний...",
       "no_campaigns": "Кампании не найдены",
       "error_loading": "Ошибка загрузки данных",
+      "no_entries": "(Нет записей)",
       "pdf_generating": "Создание PDF...",
       "pdf_ready": "PDF готов к скачиванию"
     }

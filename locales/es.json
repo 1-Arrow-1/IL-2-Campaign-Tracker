@@ -200,7 +200,8 @@
       "awards": "Condecoraciones y distintivos",
       "statistics": "Estadísticas",
       "combat_results": "Resultados de combate",
-      "timeline": "Cronología"
+      "timeline": "Cronología",
+      "additional_notes": "Incidentes adicionales"
     },
     "mission": {
       "date": "Fecha",
@@ -220,12 +221,16 @@
       "download_pdf": "Descargar informe PDF",
       "view_details": "Ver detalles",
       "collapse": "Contraer",
-      "expand": "Expandir"
+      "expand": "Expandir",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "edit_notes": "Editar"
     },
     "message": {
       "loading_campaigns": "Cargando campañas...",
       "no_campaigns": "No se encontraron campañas",
       "error_loading": "Error al cargar los datos",
+      "no_entries": "(Sin entradas)",
       "pdf_generating": "Generando PDF...",
       "pdf_ready": "PDF listo para descargar"
     }

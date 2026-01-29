@@ -150,7 +150,8 @@
       "missions_flown": "Wykonane misje",
       "aircraft_flown": "Używane samoloty",
       "career_progression": "Przebieg służby",
-      "campaign_timeline": "Oś czasu kampanii"
+      "campaign_timeline": "Oś czasu kampanii",
+      "additional_notes": "Dodatkowe zdarzenia"
     },
     "label": {
       "country": "Kraj",
@@ -188,7 +189,9 @@
       "change_pilot_photo": "Zmień zdjęcie i dane pilota",
       "choose_photo": "Wybierz zdjęcie",
       "apply": "Zastosuj",
-      "cancel": "Anuluj"
+      "cancel": "Anuluj",
+      "save": "Zapisz",
+      "edit_notes": "Edytuj"
     },
     "message": {
       "loading_campaigns": "Wczytywanie kampanii...",
@@ -197,6 +200,7 @@
       "no_events": "Brak zarejestrowanych wydarzeń",
       "no_debriefings": "Brak dostępnych odpraw",
       "no_summary": "Brak podsumowania",
+      "no_entries": "(Brak wpisów)",
       "pdf_generating": "Generowanie PDF...",
       "pdf_ready": "PDF gotowy do pobrania",
       "no_photo_selected": "Nie wybrano nowego zdjęcia.",
