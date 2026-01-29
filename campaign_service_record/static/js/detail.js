@@ -744,17 +744,28 @@ const DetailPage = {
             return;
         }
 
+        const personalSection = leftColumn.querySelector('.personal-data-section');
+        const additionalNotesSection = page.querySelector('.additional-notes-section');
         const eventsSection = page.querySelector('.events-section');
-        if (!eventsSection) {
-            return;
+
+        // Ensure correct order in left column:
+        // 1. Personal Data Section
+        // 2. Additional Notes Section
+        // 3. Events Section (Promotions & Awards)
+
+        if (additionalNotesSection && additionalNotesSection.parentElement !== leftColumn) {
+            if (personalSection) {
+                personalSection.after(additionalNotesSection);
+            } else {
+                leftColumn.prepend(additionalNotesSection);
+            }
         }
 
-        if (eventsSection.parentElement !== leftColumn) {
-            const personalSection = leftColumn.querySelector('.personal-data-section');
-            if (personalSection && personalSection.nextSibling) {
-                leftColumn.insertBefore(eventsSection, personalSection.nextSibling);
+        if (eventsSection && eventsSection.parentElement !== leftColumn) {
+            if (additionalNotesSection) {
+                additionalNotesSection.after(eventsSection);
             } else if (personalSection) {
-                leftColumn.appendChild(eventsSection);
+                personalSection.after(eventsSection);
             } else {
                 leftColumn.appendChild(eventsSection);
             }
