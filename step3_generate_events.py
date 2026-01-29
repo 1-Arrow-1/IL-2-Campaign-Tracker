@@ -656,44 +656,50 @@ class EventGenerator:
         return localized
 
     def _localize_status(self, status: str) -> str:
+        """
+        Translate status string using a SINGLE i18n lookup.
+
+        This avoids mixed-language output by looking up the complete status
+        string as a single translation key, rather than parsing/reconstructing.
+        """
         if not status:
             return status
 
-        base = status
-        qualifiers: list[str] = []
-        if "(" in status and status.endswith(")"):
-            base_part, qualifier_part = status.split("(", 1)
-            base = base_part.strip()
-            qualifiers = [q.strip() for q in qualifier_part[:-1].split(",") if q.strip()]
-
-        base_map = {
+        # Direct mapping from English status strings to translation keys
+        # This ensures a single lookup produces the fully translated string
+        status_key_map = {
+            # Landed variants
             "landed": "flightlog.status.landed",
+            "landed (wounded)": "flightlog.status.landed_wounded",
+            "landed (hard landing)": "flightlog.status.landed_hard_landing",
+            "landed (hard landing, wounded)": "flightlog.status.landed_hard_landing_wounded",
+            # Crashed
             "crashed": "flightlog.status.crashed",
+            # Bailout variants
+            "bailout": "flightlog.status.bailout",
+            "bailout (survived)": "flightlog.status.bailout_survived",
+            "bailout (survived, wounded)": "flightlog.status.bailout_survived_wounded",
+            # KIA
+            "kia": "flightlog.status.kia",
+            # MIA variants
+            "mia": "flightlog.status.mia",
+            "mia (captured)": "flightlog.status.mia_captured",
+            "mia (likely captured)": "flightlog.status.mia_likely_captured",
+            "mia (unknown)": "flightlog.status.mia_unknown",
+            # Legacy/simple statuses
             "captured": "flightlog.status.captured",
             "wounded": "flightlog.status.wounded",
-            "kia": "flightlog.status.kia",
-            "mia": "flightlog.status.mia",
-            "bailout": "flightlog.status.bailout",
-        }
-        qualifier_map = {
-            "hard landing": "flightlog.status.hard_landing",
-            "wounded": "flightlog.status.wounded",
         }
 
-        translated_base = base_map.get(base.lower())
-        if translated_base:
-            base_text = t(translated_base)
-        else:
-            base_text = base
+        # Try direct lookup first (case-insensitive)
+        translation_key = status_key_map.get(status.lower())
+        if translation_key:
+            return t(translation_key)
 
-        if qualifiers:
-            translated_qualifiers = []
-            for qualifier in qualifiers:
-                key = qualifier_map.get(qualifier.lower())
-                translated_qualifiers.append(t(key) if key else qualifier)
-            return f"{base_text} ({', '.join(translated_qualifiers)})"
-
-        return base_text
+        # Fallback: return original status if no mapping found
+        # Log warning for unmapped statuses so they can be added
+        logger.warning(f"Unmapped status for translation: '{status}'")
+        return status
 
     def _localize_event_label(self, event_type: str) -> str:
         event_map = {

@@ -1290,23 +1290,40 @@ const DetailPage = {
             { pattern: /\bStarted as\b/gi, replacement: i18n.t('flightlog.timeline.started_as') }
         ];
 
-        const statusMap = {
-            landed: i18n.t('flightlog.status.landed'),
-            crashed: i18n.t('flightlog.status.crashed'),
-            captured: i18n.t('flightlog.status.captured'),
-            wounded: i18n.t('flightlog.status.wounded'),
-            kia: i18n.t('flightlog.status.kia'),
-            mia: i18n.t('flightlog.status.mia'),
-            bailout: i18n.t('flightlog.status.bailout'),
-            'hard landing': i18n.t('flightlog.status.hard_landing')
+        // Complete status string map - match full status for single i18n lookup
+        // Order matters: longer/more specific patterns first
+        const fullStatusMap = {
+            // Landed variants
+            'Landed (Hard Landing, Wounded)': i18n.t('flightlog.status.landed_hard_landing_wounded'),
+            'Landed (Hard Landing)': i18n.t('flightlog.status.landed_hard_landing'),
+            'Landed (Wounded)': i18n.t('flightlog.status.landed_wounded'),
+            'Landed': i18n.t('flightlog.status.landed'),
+            // Bailout variants
+            'Bailout (Survived, Wounded)': i18n.t('flightlog.status.bailout_survived_wounded'),
+            'Bailout (Survived)': i18n.t('flightlog.status.bailout_survived'),
+            'Bailout': i18n.t('flightlog.status.bailout'),
+            // MIA variants
+            'MIA (Likely Captured)': i18n.t('flightlog.status.mia_likely_captured'),
+            'MIA (Captured)': i18n.t('flightlog.status.mia_captured'),
+            'MIA (Unknown)': i18n.t('flightlog.status.mia_unknown'),
+            'MIA': i18n.t('flightlog.status.mia'),
+            // Other statuses
+            'Crashed': i18n.t('flightlog.status.crashed'),
+            'KIA': i18n.t('flightlog.status.kia'),
+            'Captured': i18n.t('flightlog.status.captured'),
+            'Wounded': i18n.t('flightlog.status.wounded'),
+            'Hard Landing': i18n.t('flightlog.status.hard_landing')
         };
 
         replacements.forEach(({ pattern, replacement }) => {
             output = output.replace(pattern, replacement);
         });
 
-        Object.entries(statusMap).forEach(([status, translated]) => {
-            const regex = new RegExp(`\\b${status}\\b`, 'gi');
+        // Replace complete status strings (case-insensitive)
+        Object.entries(fullStatusMap).forEach(([status, translated]) => {
+            // Escape special regex chars in status, match whole phrase
+            const escaped = status.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(escaped, 'gi');
             output = output.replace(regex, translated);
         });
 
