@@ -248,29 +248,52 @@ class DataLoader:
     def get_campaigns_with_progress(self) -> List[str]:
         """
         Get list of campaigns that have completed at least one mission.
-        
+
         This is the filter used for the landing page campaign list.
-        WW1 campaigns (excluded=true) are filtered out here.
-        
+        WW1 campaigns (excluded=true OR is_ww1=true) are filtered out here.
+
         Returns:
             List of campaign names with non-empty mission lists
         """
         completion_state = self.get_campaign_completion_state()
         mission_dates = self.get_campaign_mission_dates()
+
+        # Filter out campaigns marked as excluded OR detected as WW1
         excluded_lower = {
             name.lower()
             for name, meta in mission_dates.items()
-            if name != "game_directory" and isinstance(meta, dict) and meta.get("excluded")
+            if name != "game_directory"
+            and isinstance(meta, dict)
+            and (meta.get("excluded") or meta.get("is_ww1"))
         }
 
         campaigns = [
             campaign_name
             for campaign_name, missions in completion_state.items()
-            if missions and campaign_name.lower() not in excluded_lower  # Non-empty list, not excluded
+            if missions and campaign_name.lower() not in excluded_lower
         ]
-        
-        logger.info(f"Found {len(campaigns)} campaigns with progress")
+
+        logger.info(f"Found {len(campaigns)} campaigns with progress (excluded {len(excluded_lower)} WW1/excluded)")
         return campaigns
+
+    def is_campaign_excluded(self, campaign_name: str) -> bool:
+        """
+        Check if a campaign should be hidden from the landing page.
+
+        A campaign is excluded if it has either:
+        - excluded=true (explicitly marked)
+        - is_ww1=true (detected as WW1 Flying Circus campaign)
+
+        Args:
+            campaign_name: Campaign name (case-insensitive)
+
+        Returns:
+            True if campaign should be hidden from landing page
+        """
+        campaign_data = self.get_mission_dates_for_campaign(campaign_name)
+        if not campaign_data:
+            return False
+        return bool(campaign_data.get("excluded") or campaign_data.get("is_ww1"))
 
     def get_mission_aircraft_map(self, campaign_name: str) -> Dict[str, Dict]:
         """
