@@ -250,18 +250,23 @@ class DataLoader:
         Get list of campaigns that have completed at least one mission.
         
         This is the filter used for the landing page campaign list.
-        WW1 campaigns (excluded=true) are NOT filtered here - they are
-        naturally excluded by having empty completion lists.
+        WW1 campaigns (excluded=true) are filtered out here.
         
         Returns:
             List of campaign names with non-empty mission lists
         """
         completion_state = self.get_campaign_completion_state()
-        
+        mission_dates = self.get_campaign_mission_dates()
+        excluded_lower = {
+            name.lower()
+            for name, meta in mission_dates.items()
+            if name != "game_directory" and isinstance(meta, dict) and meta.get("excluded")
+        }
+
         campaigns = [
             campaign_name
             for campaign_name, missions in completion_state.items()
-            if missions  # Non-empty list
+            if missions and campaign_name.lower() not in excluded_lower  # Non-empty list, not excluded
         ]
         
         logger.info(f"Found {len(campaigns)} campaigns with progress")
