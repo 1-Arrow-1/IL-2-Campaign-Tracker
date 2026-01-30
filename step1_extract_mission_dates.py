@@ -40,6 +40,27 @@ try:
 except Exception as e:
     logger.warning(f"Failed to initialize i18n: {e}, using English")
     init_i18n('en')
+
+
+def safe_input(prompt: str = "") -> str | None:
+    """
+    Safe input that handles EOFError and OSError in packaged EXE.
+
+    Returns:
+        User input string, or None if stdin is not available
+    """
+    import sys as sys_mod
+    if not sys_mod.stdin or not hasattr(sys_mod.stdin, 'isatty'):
+        return None
+
+    try:
+        if not sys_mod.stdin.isatty():
+            return None
+        return input(prompt)
+    except (EOFError, OSError):
+        return None
+
+
 def _load_json_dict(path: Path) -> Optional[Dict]:
     if not path.exists():
         return None
@@ -1569,10 +1590,13 @@ def main(args=None):
             # Validate path exists
             if not Path(campaigns_folder).exists():
                 log_message(logger, f"\n⚠ {t('ui.first_time_setup.error_campaigns_not_found', path=campaigns_folder)}")
-                
-                # Ask if user wants to try again
-                try_again = input(f"\n{t('ui.first_time_setup.try_again')} ").strip().lower()
-                if try_again in ('y', 'j', 'o', 't', 'д'):  # yes in en/de/fr/pl/ru
+
+                # Ask if user wants to try again (only if stdin is available)
+                try_again = safe_input(f"\n{t('ui.first_time_setup.try_again')} ")
+                if try_again is None:
+                    # stdin not available, cannot prompt - just abort
+                    return
+                if try_again.strip().lower() in ('y', 'j', 'o', 't', 'д'):  # yes in en/de/fr/pl/ru
                     return main()  # Recursive call to try again
                 return
             

@@ -42,6 +42,11 @@ english.InvalidIL2Folder=The selected folder does not appear to be a valid IL-2 
 english.RemoveConfigTitle=Do you want to REMOVE your configuration files (*.yaml)?%n%nThis includes your custom rank scaling settings and award configurations.%n%nClick YES to remove configuration files.%nClick NO to keep them.
 english.RemoveBackupTitle=Do you want to REMOVE your backup files?%n%nThis includes:%n  - campaignsstates_*.backup%n  - campaign_popups_seen_*.backup%n  - campaignsstates_hash_index.json%n%nThese allow you to restore previous campaign states if you reinstall.%n%nClick YES to remove backup files.%nClick NO to keep them.
 english.RemoveServiceRecordTitle=Do you want to REMOVE your Campaign Service Record data?%n%nThis includes:%n  - Pilot photos%n  - Personal information (name, birthday, birthplace)%n%nLocation: %%LOCALAPPDATA%%\.il2_campaign_service_record%n%nClick YES to remove Service Record data.%nClick NO to keep it.
+english.IL2PageTitle=Select IL-2 Great Battles Installation Folder
+english.IL2PageDescription=Choose the folder where IL-2 Great Battles is installed.
+english.IL2PagePrompt=Please select the main IL-2 Great Battles installation directory.
+english.AdditionalIcons=Additional icons:
+english.CreateDesktopIcon=Create a &desktop icon
 
 ; ============================================================================
 ; GERMAN
@@ -51,6 +56,11 @@ german.InvalidIL2Folder=Der ausgewählte Ordner scheint keine gültige IL-2 Grea
 german.RemoveConfigTitle=Möchten Sie Ihre Konfigurationsdateien (*.yaml) ENTFERNEN?%n%nDies umfasst Ihre benutzerdefinierten Rang-Skalierungseinstellungen und Auszeichnungskonfigurationen.%n%nKlicken Sie JA, um die Konfigurationsdateien zu entfernen.%nKlicken Sie NEIN, um sie zu behalten.
 german.RemoveBackupTitle=Möchten Sie Ihre Backup-Dateien ENTFERNEN?%n%nDies umfasst:%n  - campaignsstates_*.backup%n  - campaign_popups_seen_*.backup%n  - campaignsstates_hash_index.json%n%nDiese ermöglichen die Wiederherstellung früherer Kampagnenstände bei einer Neuinstallation.%n%nKlicken Sie JA, um die Backup-Dateien zu entfernen.%nKlicken Sie NEIN, um sie zu behalten.
 german.RemoveServiceRecordTitle=Möchten Sie Ihre Campaign Service Record Daten ENTFERNEN?%n%nDies umfasst:%n  - Pilotenfotos%n  - Persönliche Informationen (Name, Geburtstag, Geburtsort)%n%nSpeicherort: %%LOCALAPPDATA%%\.il2_campaign_service_record%n%nKlicken Sie JA, um die Service Record Daten zu entfernen.%nKlicken Sie NEIN, um sie zu behalten.
+german.IL2PageTitle=IL-2 Great Battles Installationsordner auswählen
+german.IL2PageDescription=Wählen Sie den Ordner, in dem IL-2 Great Battles installiert ist.
+german.IL2PagePrompt=Bitte wählen Sie das Hauptinstallationsverzeichnis von IL-2 Great Battles.
+german.AdditionalIcons=Zusätzliche Symbole:
+german.CreateDesktopIcon=&Desktop-Symbol erstellen
 
 ; ============================================================================
 ; FRENCH
@@ -60,6 +70,11 @@ french.InvalidIL2Folder=Le dossier sélectionné ne semble pas être une install
 french.RemoveConfigTitle=Voulez-vous SUPPRIMER vos fichiers de configuration (*.yaml) ?%n%nCela inclut vos paramètres de progression de rang et configurations de décorations.%n%nCliquez OUI pour supprimer les fichiers de configuration.%nCliquez NON pour les conserver.
 french.RemoveBackupTitle=Voulez-vous SUPPRIMER vos fichiers de sauvegarde ?%n%nCela inclut :%n  - campaignsstates_*.backup%n  - campaign_popups_seen_*.backup%n  - campaignsstates_hash_index.json%n%nCeux-ci permettent de restaurer les états de campagne précédents si vous réinstallez.%n%nCliquez OUI pour supprimer les fichiers de sauvegarde.%nCliquez NON pour les conserver.
 french.RemoveServiceRecordTitle=Voulez-vous SUPPRIMER vos données Campaign Service Record ?%n%nCela inclut :%n  - Photos de pilote%n  - Informations personnelles (nom, date de naissance, lieu de naissance)%n%nEmplacement : %%LOCALAPPDATA%%\.il2_campaign_service_record%n%nCliquez OUI pour supprimer les données Service Record.%nCliquez NON pour les conserver.
+french.IL2PageTitle=Sélectionner le dossier d'installation d'IL-2 Great Battles
+french.IL2PageDescription=Choisissez le dossier où IL-2 Great Battles est installé.
+french.IL2PagePrompt=Veuillez sélectionner le répertoire d'installation principal d'IL-2 Great Battles.
+french.AdditionalIcons=Icônes supplémentaires :
+french.CreateDesktopIcon=Créer une icône sur le &bureau
 
 ; ============================================================================
 ; SPANISH
@@ -69,6 +84,11 @@ spanish.InvalidIL2Folder=La carpeta seleccionada no parece ser una instalación 
 spanish.RemoveConfigTitle=¿Desea ELIMINAR sus archivos de configuración (*.yaml)?%n%nEsto incluye sus ajustes de escalado de rangos y configuraciones de condecoraciones.%n%nHaga clic en SÍ para eliminar los archivos de configuración.%nHaga clic en NO para conservarlos.
 spanish.RemoveBackupTitle=¿Desea ELIMINAR sus archivos de respaldo?%n%nEsto incluye:%n  - campaignsstates_*.backup%n  - campaign_popups_seen_*.backup%n  - campaignsstates_hash_index.json%n%nEstos permiten restaurar estados de campaña anteriores si reinstala.%n%nHaga clic en SÍ para eliminar los archivos de respaldo.%nHaga clic en NO para conservarlos.
 spanish.RemoveServiceRecordTitle=¿Desea ELIMINAR sus datos de Campaign Service Record?%n%nEsto incluye:%n  - Fotos de piloto%n  - Información personal (nombre, fecha de nacimiento, lugar de nacimiento)%n%nUbicación: %%LOCALAPPDATA%%\.il2_campaign_service_record%n%nHaga clic en SÍ para eliminar los datos de Service Record.%nHaga clic en NO para conservarlos.
+spanish.IL2PageTitle=Seleccionar carpeta de instalación de IL-2 Great Battles
+spanish.IL2PageDescription=Elija la carpeta donde está instalado IL-2 Great Battles.
+spanish.IL2PagePrompt=Por favor, seleccione el directorio de instalación principal de IL-2 Great Battles.
+spanish.AdditionalIcons=Iconos adicionales:
+spanish.CreateDesktopIcon=Crear un icono en el &escritorio
 
 ; ============================================================================
 ; POLISH
@@ -78,6 +98,11 @@ polish.InvalidIL2Folder=Wybrany folder nie wydaje się być prawidłową instala
 polish.RemoveConfigTitle=Czy chcesz USUNĄĆ pliki konfiguracyjne (*.yaml)?%n%nObejmuje to niestandardowe ustawienia skalowania rang i konfiguracje odznaczeń.%n%nKliknij TAK, aby usunąć pliki konfiguracyjne.%nKliknij NIE, aby je zachować.
 polish.RemoveBackupTitle=Czy chcesz USUNĄĆ pliki kopii zapasowych?%n%nObejmuje to:%n  - campaignsstates_*.backup%n  - campaign_popups_seen_*.backup%n  - campaignsstates_hash_index.json%n%nPozwalają one przywrócić poprzednie stany kampanii po ponownej instalacji.%n%nKliknij TAK, aby usunąć pliki kopii zapasowych.%nKliknij NIE, aby je zachować.
 polish.RemoveServiceRecordTitle=Czy chcesz USUNĄĆ dane Campaign Service Record?%n%nObejmuje to:%n  - Zdjęcia pilotów%n  - Dane osobowe (imię, data urodzenia, miejsce urodzenia)%n%nLokalizacja: %%LOCALAPPDATA%%\.il2_campaign_service_record%n%nKliknij TAK, aby usunąć dane Service Record.%nKliknij NIE, aby je zachować.
+polish.IL2PageTitle=Wybierz folder instalacji IL-2 Great Battles
+polish.IL2PageDescription=Wybierz folder, w którym zainstalowano IL-2 Great Battles.
+polish.IL2PagePrompt=Proszę wybrać główny katalog instalacji IL-2 Great Battles.
+polish.AdditionalIcons=Dodatkowe ikony:
+polish.CreateDesktopIcon=Utwórz ikonę na &pulpicie
 
 ; ============================================================================
 ; RUSSIAN
@@ -87,6 +112,11 @@ russian.InvalidIL2Folder=Выбранная папка не является к�
 russian.RemoveConfigTitle=Хотите УДАЛИТЬ файлы конфигурации (*.yaml)?%n%nЭто включает ваши настройки масштабирования званий и конфигурации наград.%n%nНажмите ДА, чтобы удалить файлы конфигурации.%nНажмите НЕТ, чтобы сохранить их.
 russian.RemoveBackupTitle=Хотите УДАЛИТЬ файлы резервных копий?%n%nЭто включает:%n  - campaignsstates_*.backup%n  - campaign_popups_seen_*.backup%n  - campaignsstates_hash_index.json%n%nОни позволяют восстановить предыдущие состояния кампаний при переустановке.%n%nНажмите ДА, чтобы удалить файлы резервных копий.%nНажмите НЕТ, чтобы сохранить их.
 russian.RemoveServiceRecordTitle=Хотите УДАЛИТЬ данные Campaign Service Record?%n%nЭто включает:%n  - Фотографии пилотов%n  - Личную информацию (имя, дата рождения, место рождения)%n%nРасположение: %%LOCALAPPDATA%%\.il2_campaign_service_record%n%nНажмите ДА, чтобы удалить данные Service Record.%nНажмите НЕТ, чтобы сохранить их.
+russian.IL2PageTitle=Выберите папку установки IL-2 Great Battles
+russian.IL2PageDescription=Выберите папку, где установлен IL-2 Great Battles.
+russian.IL2PagePrompt=Пожалуйста, выберите основной каталог установки IL-2 Great Battles.
+russian.AdditionalIcons=Дополнительные значки:
+russian.CreateDesktopIcon=Создать значок на &рабочем столе
 
 ; ============================================================================
 ; CHINESE SIMPLIFIED
@@ -96,9 +126,14 @@ chinesesimplified.InvalidIL2Folder=所选文件夹似乎不是有效的 IL-2 Gre
 chinesesimplified.RemoveConfigTitle=您要删除配置文件 (*.yaml) 吗？%n%n这包括您的自定义军衔缩放设置和勋章配置。%n%n点击"是"删除配置文件。%n点击"否"保留它们。
 chinesesimplified.RemoveBackupTitle=您要删除备份文件吗？%n%n这包括：%n  - campaignsstates_*.backup%n  - campaign_popups_seen_*.backup%n  - campaignsstates_hash_index.json%n%n这些文件允许您在重新安装时恢复以前的战役状态。%n%n点击"是"删除备份文件。%n点击"否"保留它们。
 chinesesimplified.RemoveServiceRecordTitle=您要删除 Campaign Service Record 数据吗？%n%n这包括：%n  - 飞行员照片%n  - 个人信息（姓名、生日、出生地）%n%n位置：%%LOCALAPPDATA%%\.il2_campaign_service_record%n%n点击"是"删除 Service Record 数据。%n点击"否"保留它们。
+chinesesimplified.IL2PageTitle=选择 IL-2 Great Battles 安装文件夹
+chinesesimplified.IL2PageDescription=选择 IL-2 Great Battles 的安装文件夹。
+chinesesimplified.IL2PagePrompt=请选择 IL-2 Great Battles 的主安装目录。
+chinesesimplified.AdditionalIcons=附加图标：
+chinesesimplified.CreateDesktopIcon=创建桌面图标(&D)
 
 [Tasks]
-Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"; Flags: unchecked
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
 ; --- Tracker install folder ({app}) ---
@@ -223,9 +258,9 @@ procedure InitializeWizard;
 begin
   IL2DirPage := CreateInputDirPage(
     wpSelectDir,
-    'Select IL-2 Great Battles Installation Folder',
-    'Choose the folder where IL-2 Great Battles is installed.',
-    'Please select the main IL-2 Great Battles installation directory.',
+    CustomMessage('IL2PageTitle'),
+    CustomMessage('IL2PageDescription'),
+    CustomMessage('IL2PagePrompt'),
     False,
     ''
   );

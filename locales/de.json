@@ -87,6 +87,9 @@
       "error_campaigns_not_found": "Kampagnen-Ordner nicht gefunden unter: {path}\nBitte überprüfen Sie Ihren IL-2 Installationspfad.",
       "try_again": "Anderen Ordner auswählen? (j/n):",
       "campaigns_found": "Kampagnen-Ordner gefunden: {path}"
+    },
+    "launcher": {
+      "first_run_required": "Ersteinrichtung erforderlich.\n\nBitte starten Sie die Haupt-Kampagnentracker-Anwendung einmal, um Ihren IL-2 Installationsordner auszuwählen und die erforderlichen Datendateien (campaign_mission_dates.json) zu erstellen.\n\nDanach können Sie den Einstellungsmanager starten."
     }
   },
   "event": {

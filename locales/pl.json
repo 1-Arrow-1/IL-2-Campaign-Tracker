@@ -87,6 +87,9 @@
       "error_campaigns_not_found": "Folder Campaigns nie znaleziony w: {path}\nProszę sprawdzić ścieżkę instalacji IL-2.",
       "try_again": "Spróbować wybrać inny folder? (t/n):",
       "campaigns_found": "Folder Campaigns znaleziony: {path}"
+    },
+    "launcher": {
+      "first_run_required": "Wymagana wstępna konfiguracja.\n\nProszę uruchomić główną aplikację Campaign Tracker raz, aby wybrać folder instalacji IL-2 i wygenerować wymagane pliki danych (campaign_mission_dates.json).\n\nNastępnie będzie można uruchomić Menedżer ustawień."
     }
   },
   "event": {

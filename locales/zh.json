@@ -87,6 +87,9 @@
       "error_campaigns_not_found": "在以下位置未找到 Campaigns 文件夹：{path}\n请检查您的 IL-2 安装路径。",
       "try_again": "尝试选择其他文件夹？(y/n)：",
       "campaigns_found": "已找到 Campaigns 文件夹：{path}"
+    },
+    "launcher": {
+      "first_run_required": "需要首次设置。\n\n请先运行一次主 Campaign Tracker 应用程序，以选择您的 IL-2 安装文件夹并生成所需的数据文件 (campaign_mission_dates.json)。\n\n之后，您可以启动设置管理器。"
     }
   },
   "event": {

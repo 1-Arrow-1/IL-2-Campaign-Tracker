@@ -24,6 +24,25 @@ from utils.locale_config import resolve_locale
 
 logger = get_logger(__name__)
 
+
+def safe_input(prompt: str = "") -> str | None:
+    """
+    Safe input that handles EOFError and OSError in packaged EXE.
+
+    Returns:
+        User input string, or None if stdin is not available
+    """
+    if not sys.stdin or not hasattr(sys.stdin, 'isatty'):
+        return None
+
+    try:
+        if not sys.stdin.isatty():
+            return None
+        return input(prompt)
+    except (EOFError, OSError):
+        return None
+
+
 # Initialize i18n with user's preferred locale
 try:
     user_locale = resolve_locale()
@@ -371,7 +390,7 @@ class BackupRestoreGUI:
             if not backup_path. exists():
                 log_message(logger, f"❌ ERROR: Backup file not found!")
                 log_message(logger, f"   Path: {backup_path}")
-                input("Press Enter to exit...")
+                safe_input("Press Enter to exit...")
                 self.result = 'cancelled'
                 return
             
@@ -387,7 +406,7 @@ class BackupRestoreGUI:
                 log_message(logger, f"  ✓ Step 2: Created backup copy:  {backup_copy_path. name}")
             except Exception as e: 
                 log_message(logger, f"❌ ERROR:  Could not create backup copy:  {e}")
-                input("Press Enter to exit...")
+                safe_input("Press Enter to exit...")
                 self.result = 'cancelled'
                 return
             
@@ -404,7 +423,7 @@ class BackupRestoreGUI:
                     # Clean up temp file
                     if backup_copy_path.exists():
                         backup_copy_path.unlink()
-                    input("Press Enter to exit...")
+                    safe_input("Press Enter to exit...")
                     self.result = 'cancelled'
                     return
                 except Exception as e: 
@@ -412,7 +431,7 @@ class BackupRestoreGUI:
                     # Clean up temp file
                     if backup_copy_path.exists():
                         backup_copy_path.unlink()
-                    input("Press Enter to exit...")
+                    safe_input("Press Enter to exit...")
                     self. result = 'cancelled'
                     return
             else:
@@ -429,7 +448,7 @@ class BackupRestoreGUI:
                 # Try to clean up
                 if backup_copy_path.exists():
                     backup_copy_path.unlink()
-                input("Press Enter to exit...")
+                safe_input("Press Enter to exit...")
                 self.result = 'cancelled'
                 return
             
@@ -441,7 +460,7 @@ class BackupRestoreGUI:
                 log_message(logger, f"  ✓ Step 5: Verified - new file exists ({new_size} bytes)")
             else: 
                 log_message(logger, f"❌ ERROR: campaignsstates.txt was not created!")
-                input("Press Enter to exit...")
+                safe_input("Press Enter to exit...")
                 self.result = 'cancelled'
                 return
             
@@ -477,7 +496,7 @@ class BackupRestoreGUI:
             import traceback
             traceback.print_exc()
             log_message(logger)
-            input("Press Enter to exit...")
+            safe_input("Press Enter to exit...")
             self.result = 'cancelled'
     
     def _on_skip(self):

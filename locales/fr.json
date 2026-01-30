@@ -87,6 +87,9 @@
       "error_campaigns_not_found": "Dossier Campaigns introuvable à : {path}\nVeuillez vérifier votre chemin d'installation IL-2.",
       "try_again": "Essayer de sélectionner un autre dossier ? (o/n) :",
       "campaigns_found": "Dossier Campaigns trouvé : {path}"
+    },
+    "launcher": {
+      "first_run_required": "Configuration initiale requise.\n\nVeuillez lancer l'application principale Campaign Tracker une fois pour sélectionner votre dossier d'installation IL-2 et générer les fichiers de données requis (campaign_mission_dates.json).\n\nEnsuite, vous pourrez démarrer le Gestionnaire de paramètres."
     }
   },
   "event": {

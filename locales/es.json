@@ -87,6 +87,9 @@
       "error_campaigns_not_found": "Carpeta Campaigns no encontrada en: {path}\nPor favor, verifique su ruta de instalación de IL-2.",
       "try_again": "¿Intentar seleccionar otra carpeta? (s/n):",
       "campaigns_found": "Carpeta Campaigns encontrada: {path}"
+    },
+    "launcher": {
+      "first_run_required": "Se requiere configuración inicial.\n\nPor favor, ejecute la aplicación principal de Campaign Tracker una vez para seleccionar su carpeta de instalación de IL-2 y generar los archivos de datos requeridos (campaign_mission_dates.json).\n\nDespués de eso, podrá iniciar el Administrador de configuración."
     }
   },
   "event": {

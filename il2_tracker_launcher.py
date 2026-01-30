@@ -11,9 +11,10 @@ from pathlib import Path
 import json
 import shutil
 
-from utils.il2_paths import resolve_il2_paths
+from utils.il2_paths import resolve_il2_paths, read_game_directory
 from utils.logging import get_logger, log_message
 from utils.pathing import get_base_path
+from utils.i18n import t
 
 # Determine script directory (works for both script and EXE)
 SCRIPT_DIR = get_base_path(__file__)
@@ -32,6 +33,70 @@ def is_debug_enabled(args_debug: bool = False) -> bool:
     env_value = os.environ.get("IL2_TRACKER_DEBUG", "")
     env_enabled = env_value.strip().lower() in {"1", "true", "yes", "on"}
     return args_debug or env_enabled
+
+
+def safe_input(prompt: str = "") -> str | None:
+    """
+    Safe input that handles EOFError and OSError in packaged EXE.
+
+    Returns:
+        User input string, or None if stdin is not available
+    """
+    # Check if stdin is available
+    if not sys.stdin or not hasattr(sys.stdin, 'isatty'):
+        return None
+
+    try:
+        # Check if we're in an interactive terminal
+        if not sys.stdin.isatty():
+            return None
+        return input(prompt)
+    except (EOFError, OSError):
+        # stdin closed or not available (common in packaged EXE)
+        return None
+
+
+def check_first_run_setup(non_interactive: bool = False) -> tuple[bool, str | None]:
+    """
+    Preflight check for first-run conditions in non-interactive mode.
+
+    In non-interactive mode (e.g., --auto flag, Settings Manager context, or packaged EXE
+    without console), we cannot prompt the user for IL-2 installation path. If this is
+    a first run (no campaign_mission_dates.json or no valid game_directory), we must
+    abort early with a clear message.
+
+    Args:
+        non_interactive: True if running without user interaction capability
+
+    Returns:
+        (can_continue, error_message)
+        - can_continue: True if setup can proceed, False if must abort
+        - error_message: Human-readable message if aborting, None otherwise
+    """
+    mission_dates_file = SCRIPT_DIR / "campaign_mission_dates.json"
+
+    # If mission dates file exists, check if it has a valid game_directory
+    if mission_dates_file.exists():
+        game_dir = read_game_directory(SCRIPT_DIR)
+        if game_dir and game_dir.exists():
+            # Valid setup exists, can continue
+            return (True, None)
+        elif not non_interactive:
+            # File exists but invalid path - interactive mode can fix this
+            return (True, None)
+        else:
+            # File exists but invalid path in non-interactive mode
+            error_msg = t('ui.launcher.first_run_required')
+            return (False, error_msg)
+
+    # Mission dates file doesn't exist - this is first run
+    if not non_interactive:
+        # Interactive mode can prompt user for IL-2 path
+        return (True, None)
+
+    # Non-interactive mode cannot prompt for IL-2 path
+    error_msg = t('ui.launcher.first_run_required')
+    return (False, error_msg)
 
 
 def print_header(title: str):
@@ -101,12 +166,12 @@ def run_first_time_setup() -> bool:
             log_message(logger, "You can manually edit campaign_mission_dates. json")
             log_message(logger, "or restart the tracker to validate again.")
             log_message(logger)
-            input("Press Enter to continue anyway...")
-    except Exception as e: 
+            safe_input("Press Enter to continue anyway...")
+    except Exception as e:
         log_message(logger, f"Warning: Could not show country validation GUI: {e}")
         log_message(logger, "You can manually edit campaign_mission_dates.json")
         log_message(logger)
-        input("Press Enter to continue...")
+        safe_input("Press Enter to continue...")
     
     return True
 
@@ -537,11 +602,24 @@ def run_tracker() -> int:
         log_message(logger, message)
         if args.non_interactive:
             return exit_code
-        input("Press Enter to exit...")
+        safe_input("Press Enter to exit...")
         return exit_code
 
     if not check_config():
         return wait_for_exit("Configuration check failed.", 1)
+
+    # Step 0.5: Preflight check for non-interactive first-run
+    # In non-interactive mode, we cannot prompt for IL-2 path on first run
+    can_continue, error_msg = check_first_run_setup(non_interactive=args.non_interactive)
+    if not can_continue:
+        log_message(logger)
+        log_message(logger, "=" * 70)
+        log_message(logger, "FIRST-TIME SETUP REQUIRED")
+        log_message(logger, "=" * 70)
+        log_message(logger)
+        log_message(logger, error_msg)
+        log_message(logger)
+        return 0  # Clean exit - not an error, just need manual setup first
     
     # Step 1: First-time setup
     if not run_first_time_setup():
@@ -622,7 +700,7 @@ def run_tracker() -> int:
                 log_message(logger)
                 log_message(logger, "Continuing without backup restore option...")
                 if not args.non_interactive:
-                    input("Press Enter to continue...")
+                    safe_input("Press Enter to continue...")
         
         # Step 3: Decode campaign save
         print_header("DECODING CAMPAIGN SAVE")
@@ -676,21 +754,19 @@ def main() -> int:
         import traceback
         traceback.print_exc()
         log_message(logger)
-        if sys.stdin.isatty() or DEBUG_ENABLED:
-            input("Press Enter to exit...")
+        safe_input("Press Enter to exit...")
         return 1
 
 
 if __name__ == "__main__":
     exit_code = main()
-    
+
     # ================================================================
     # DEBUG:  Always wait before closing (remove this later!)
     # ================================================================
     if exit_code != 0:
         log_message(logger)
         log_message(logger, f"[DEBUG] Exiting with code {exit_code}.  Press Enter to close...")
-        if sys.stdin.isatty() or DEBUG_ENABLED:
-            input()
-    
+        safe_input()
+
     sys.exit(exit_code)

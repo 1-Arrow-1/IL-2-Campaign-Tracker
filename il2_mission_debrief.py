@@ -451,6 +451,18 @@ class MissionDebriefParser:
                             else:
                                 self.stats.final_state = "Landed"
 
+                            # Check territory for emergency landings on enemy territory
+                            # Uses AType:13/14 influence polygons to determine if landing
+                            # occurred in enemy-controlled territory. Pilots landing on
+                            # enemy territory without bailout are treated as captured.
+                            if x is not None and z is not None and self.stats.influence_polygons:
+                                territory = self._determine_territory(x, z)
+                                if territory == "enemy":
+                                    self.stats.final_state = "MIA (Captured)"
+                                    self.stats.landed = False  # Not a successful landing
+                                    if self.verbose:
+                                        log_message(logger, f"  [TERRITORY] Landing on enemy territory at ({x:.0f}, {z:.0f}) -> MIA (Captured)")
+
                             self.stats.events.append({
                                 "time": ts,
                                 "type": "Landing",
@@ -680,13 +692,15 @@ class MissionDebriefParser:
                     modified_events.append(evt)
         
         # Update final state if hard landing detected
+        # NOTE: Only upgrade states starting with "Landed" - never touch MIA/Bailout states
+        # This ensures enemy territory landings ("MIA (Captured)") are preserved
         if has_hard_landing:
             current_state = data['summary']['final_state']
             if current_state == 'Landed':
                 data['summary']['final_state'] = 'Landed (Hard Landing)'
             elif current_state == 'Landed (Wounded)':
                 data['summary']['final_state'] = 'Landed (Hard Landing, Wounded)'
-        
+
         return modified_events
     
     # ------------------------------------------------------
