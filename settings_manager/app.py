@@ -19,6 +19,7 @@ from settings_manager.config.paths import (
     CONFIG_YAML_PATH,
     SETTINGS_JSON_PATH,
     MISSION_DATES_PATH,
+    STOCK_CAMPAIGNS_PATH,
 )
 from settings_manager.config.file_handlers import (
     load_json,
@@ -41,6 +42,8 @@ else:
 
 class SettingsManagerApp(tk.Tk):
     """Main Settings Manager Application."""
+
+    COUNTRY_OPTIONS = ["Germany", "Soviet Union", "Britain", "USA"]
     
     def __init__(self):
         super().__init__()
@@ -60,6 +63,7 @@ class SettingsManagerApp(tk.Tk):
         self.settings_data: Dict[str, Any] = {}
         self.config_data: Dict[str, Any] = {}
         self.mission_dates_data: Optional[Dict[str, Any]] = None
+        self.stock_campaigns_data: Optional[Dict[str, Any]] = None
         self.original_data: Dict[str, Any] = {}
         self._refresh_thread: Optional[threading.Thread] = None
         self._close_after_refresh: bool = False
@@ -67,6 +71,8 @@ class SettingsManagerApp(tk.Tk):
         self._refresh_queue: "queue.Queue[Optional[str]]" = queue.Queue()
         self._refresh_poll_id: Optional[str] = None
         self._refresh_running: bool = False
+        self._country_editor: Optional[ttk.Combobox] = None
+        self._country_editor_item: Optional[str] = None
         
         # Load all data
         self._load_all_data()
@@ -110,12 +116,20 @@ class SettingsManagerApp(tk.Tk):
             self.mission_dates_data = load_json(MISSION_DATES_PATH)
         except ValueError:
             self.mission_dates_data = None
+
+        # Load stock campaigns YAML (optional)
+        try:
+            self.stock_campaigns_data = load_yaml(STOCK_CAMPAIGNS_PATH)
+        except ValueError as e:
+            messagebox.showerror(self.tr.t("msg_error_title"), str(e))
+            self.stock_campaigns_data = None
         
         # Store originals for dirty checking
         self.original_data = {
             'settings': deepcopy(self.settings_data),
             'config': deepcopy(self.config_data),
             'mission_dates': deepcopy(self.mission_dates_data) if self.mission_dates_data else None,
+            'stock_campaigns': deepcopy(self.stock_campaigns_data) if self.stock_campaigns_data else None,
         }
     
     def _create_widgets(self) -> None:
@@ -461,12 +475,17 @@ class SettingsManagerApp(tk.Tk):
         self._populate_campaigns_tree()
         
         # Double-click to edit
-        self.campaigns_tree.bind('<Double-1>', lambda e: self._on_edit_campaign_offset())
+        self.campaigns_tree.bind('<ButtonRelease-1>', self._on_campaigns_tree_click)
+        self.campaigns_tree.bind('<Double-1>', self._on_campaigns_tree_double_click)
     
     def _populate_campaigns_tree(self) -> None:
         """Populate campaigns treeview."""
         if not self.mission_dates_data:
             return
+
+        stock_campaigns = {}
+        if isinstance(self.stock_campaigns_data, dict):
+            stock_campaigns = self.stock_campaigns_data.get("stock_campaigns", {}) or {}
         
         for item in self.campaigns_tree.get_children():
             self.campaigns_tree.delete(item)
@@ -475,11 +494,8 @@ class SettingsManagerApp(tk.Tk):
             # Skip if data is not a dict (shouldn't happen, but safety check)
             if not isinstance(data, dict):
                 continue
-            # Skip entries that don't have country (likely not a campaign entry)
-            if 'country' not in data:
-                continue
-            
-            country = data.get('country', 'Unknown')
+
+            country = stock_campaigns.get(campaign_name) or data.get('country', 'Unknown')
             offset = data.get('starting_rank_offset', 0)
             self.campaigns_tree.insert('', tk.END, values=(campaign_name, country, offset))
     
@@ -620,6 +636,103 @@ class SettingsManagerApp(tk.Tk):
         if dialog.result is not None:
             self.mission_dates_data[campaign_name]['starting_rank_offset'] = dialog.result
             self._populate_campaigns_tree()
+
+    def _on_campaigns_tree_click(self, event: tk.Event) -> None:
+        """Handle single click for campaign country editing."""
+        region = self.campaigns_tree.identify("region", event.x, event.y)
+        if region != "cell":
+            self._destroy_country_editor()
+            return
+        column = self.campaigns_tree.identify_column(event.x)
+        if column != "#2":
+            self._destroy_country_editor()
+            return
+        item = self.campaigns_tree.identify_row(event.y)
+        if not item:
+            return
+        self._start_campaign_country_edit(item)
+
+    def _on_campaigns_tree_double_click(self, event: tk.Event) -> None:
+        """Handle double click for campaign offset editing."""
+        region = self.campaigns_tree.identify("region", event.x, event.y)
+        if region != "cell":
+            return
+        column = self.campaigns_tree.identify_column(event.x)
+        if column == "#3":
+            self._on_edit_campaign_offset()
+
+    def _start_campaign_country_edit(self, item: str) -> None:
+        """Begin inline editing of a campaign country."""
+        self._destroy_country_editor()
+
+        values = self.campaigns_tree.item(item, 'values')
+        if not values:
+            return
+        campaign_name, current_country = values[0], values[1]
+        bbox = self.campaigns_tree.bbox(item, "#2")
+        if not bbox:
+            return
+        x, y, width, height = bbox
+        editor = ttk.Combobox(
+            self.campaigns_tree,
+            values=self.COUNTRY_OPTIONS,
+            state='readonly'
+        )
+        if current_country in self.COUNTRY_OPTIONS:
+            editor.set(current_country)
+        else:
+            editor.set("")
+        editor.place(x=x, y=y, width=width, height=height)
+        editor.focus_set()
+        editor.bind(
+            "<<ComboboxSelected>>",
+            lambda e: self._on_campaign_country_selected(item, campaign_name, editor.get())
+        )
+        editor.bind("<FocusOut>", lambda e: self._destroy_country_editor())
+        editor.bind("<Escape>", lambda e: self._destroy_country_editor())
+
+        self._country_editor = editor
+        self._country_editor_item = item
+
+    def _destroy_country_editor(self) -> None:
+        """Destroy any active country editor."""
+        if self._country_editor is not None:
+            self._country_editor.destroy()
+        self._country_editor = None
+        self._country_editor_item = None
+
+    def _get_stock_campaigns_map(self) -> Dict[str, str]:
+        """Return mutable stock campaigns mapping, creating as needed."""
+        if not isinstance(self.stock_campaigns_data, dict):
+            self.stock_campaigns_data = CommentedMap()
+        stock_campaigns = self.stock_campaigns_data.get("stock_campaigns")
+        if not isinstance(stock_campaigns, dict):
+            stock_campaigns = CommentedMap() if HAS_RUAMEL else {}
+            self.stock_campaigns_data["stock_campaigns"] = stock_campaigns
+        return stock_campaigns
+
+    def _on_campaign_country_selected(self, item: str, campaign_name: str, new_country: str) -> None:
+        """Update campaign country selection."""
+        if not new_country:
+            self._destroy_country_editor()
+            return
+
+        stock_campaigns = self._get_stock_campaigns_map()
+        stock_campaigns[campaign_name] = new_country
+
+        if (
+            self.mission_dates_data
+            and campaign_name in self.mission_dates_data
+            and isinstance(self.mission_dates_data[campaign_name], dict)
+        ):
+            self.mission_dates_data[campaign_name]['country'] = new_country
+
+        values = list(self.campaigns_tree.item(item, 'values'))
+        if len(values) >= 2:
+            values[1] = new_country
+            self.campaigns_tree.item(item, values=values)
+
+        self._destroy_country_editor()
     
     def _on_restore_defaults(self) -> None:
         """Restore default values."""
@@ -1027,12 +1140,17 @@ class SettingsManagerApp(tk.Tk):
             # Save mission dates JSON
             if self.mission_dates_data and self.mission_dates_data != self.original_data['mission_dates']:
                 save_json_atomic(MISSION_DATES_PATH, self.mission_dates_data)
+
+            # Save stock campaigns YAML
+            if self.stock_campaigns_data != self.original_data['stock_campaigns']:
+                save_yaml_atomic(STOCK_CAMPAIGNS_PATH, self.stock_campaigns_data or {"stock_campaigns": {}})
             
             # Update originals
             self.original_data = {
                 'settings': deepcopy(self.settings_data),
                 'config': deepcopy(self.config_data),
                 'mission_dates': deepcopy(self.mission_dates_data) if self.mission_dates_data else None,
+                'stock_campaigns': deepcopy(self.stock_campaigns_data) if self.stock_campaigns_data else None,
             }
             
             return True
@@ -1053,6 +1171,8 @@ class SettingsManagerApp(tk.Tk):
         if self.config_data != self.original_data['config']:
             return True
         if self.mission_dates_data and self.mission_dates_data != self.original_data['mission_dates']:
+            return True
+        if self.stock_campaigns_data != self.original_data['stock_campaigns']:
             return True
         
         return False

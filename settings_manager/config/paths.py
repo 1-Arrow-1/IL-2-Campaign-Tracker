@@ -20,6 +20,7 @@ else:
 SETTINGS_JSON_PATH = BASE_DIR / "campaign_tracker_settings.json"
 CONFIG_YAML_PATH = BASE_DIR / "campaign_progress_config.yaml"
 MISSION_DATES_PATH = BASE_DIR / "campaign_mission_dates.json"
+STOCK_CAMPAIGNS_PATH = BASE_DIR / "stock_campaigns.yaml"
 
 # Locales directory
 LOCALES_DIR = BASE_DIR / "locales"
