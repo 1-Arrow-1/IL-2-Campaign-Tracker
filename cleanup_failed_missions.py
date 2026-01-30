@@ -1589,13 +1589,14 @@ class CleanupGUI:
         self.root.mainloop()
 
 
-def startup_cleanup_check(states_path=None):
+def startup_cleanup_check(states_path=None, non_interactive=False):
     """
     Run at tracker startup to check for cleanup opportunities
-    
+
     Args:
         states_path: Path to campaignsstates.txt in IL-2 directory (default: auto-detect)
-    
+        non_interactive: If True, skip GUI and only log findings (for automation/regen)
+
     Returns:
         True if cleanup was performed, False otherwise
     """
@@ -1629,11 +1630,17 @@ def startup_cleanup_check(states_path=None):
         else:
             # Old format compatibility
             log_message(logger, f"  • {campaign_name} - Mission {missions['mission_id']}")
-    
+
+    # Skip GUI in non-interactive mode (e.g., Settings Manager regeneration)
+    if non_interactive:
+        log_message(logger, "\nℹ️  Non-interactive mode: skipping cleanup GUI")
+        log_message(logger, "   Run the tracker manually to clean up missions")
+        return False
+
     # Show GUI
     gui = CleanupGUI(opportunities)
     gui.run()
-    
+
     return True
 
 

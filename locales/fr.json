@@ -178,11 +178,12 @@
     "event": {
       "bailout": "Saut en parachute",
       "crash": "Crash",
+      "damage_taken": "Dégâts subis",
       "damaged": "endommagé",
       "destroyed": "détruit",
       "hit_by": "Touché par",
       "landing": "Atterrissage",
-      "landing_damage": "Dégâts à l’atterrissage",
+      "landing_damage": "Dégâts à l'atterrissage",
       "takeoff": "Décollage"
     },
     "events": "Événements",

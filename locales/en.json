@@ -178,6 +178,7 @@
     "event": {
       "bailout": "Bailout",
       "crash": "Crash",
+      "damage_taken": "Damage taken",
       "damaged": "damaged",
       "destroyed": "destroyed",
       "hit_by": "Hit by",

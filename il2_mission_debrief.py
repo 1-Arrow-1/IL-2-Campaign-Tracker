@@ -301,42 +301,54 @@ class MissionDebriefParser:
                 # Track damage to player or player's aircraft
                 # Create SEPARATE events for aircraft and pilot damage
                 damage_target_type = None
-                
+
                 if tgt == self.stats.player_plid and dmg > 0:
                     # Aircraft took damage
                     damage_target_type = "Aircraft"
                     self.stats.total_aircraft_damage += dmg
-                    
+
                     # Add aircraft damage event
                     altitude = int(float(pos_match.group(2))) if pos_match else None
-                    attacker_obj = self.stats.objects.get(a)
-                    attacker_name = attacker_obj.type if attacker_obj else f"Unknown (ID:{a})"
-                    
+
+                    # Handle AID=-1 (unknown attacker): use None to indicate generic damage
+                    if a == -1:
+                        attacker_name = None
+                    else:
+                        attacker_obj = self.stats.objects.get(a)
+                        attacker_name = attacker_obj.type if attacker_obj else f"Unknown (ID:{a})"
+
                     self.stats.events.append({
                         "time": ts,
                         "type": "Damage Taken",
-                        "target": attacker_name,
+                        "target": attacker_name,  # None = unknown attacker (AID=-1)
                         "damage": f"{dmg*100:.1f}% aircraft",  # Include "aircraft" in string for aggregation
                         "altitude": altitude,
-                        "time_raw": t
+                        "time_raw": t,
+                        "attacker_unknown": (a == -1)  # Flag for UI rendering
                     })
-                    
+
                 if tgt in (self.stats.player_pid, self.stats.player_id) and dmg > 0:
                     # Pilot took damage (separate event!)
                     self.stats.total_pilot_damage += dmg
-                    
+
                     # Add pilot damage event
                     altitude = int(float(pos_match.group(2))) if pos_match else None
-                    attacker_obj = self.stats.objects.get(a)
-                    attacker_name = attacker_obj.type if attacker_obj else f"Unknown (ID:{a})"
-                    
+
+                    # Handle AID=-1 (unknown attacker): use None to indicate generic damage
+                    if a == -1:
+                        attacker_name = None
+                    else:
+                        attacker_obj = self.stats.objects.get(a)
+                        attacker_name = attacker_obj.type if attacker_obj else f"Unknown (ID:{a})"
+
                     self.stats.events.append({
                         "time": ts,
                         "type": "Damage Taken",
-                        "target": attacker_name,
+                        "target": attacker_name,  # None = unknown attacker (AID=-1)
                         "damage": f"{dmg*100:.1f}% pilot",  # Include "pilot" in string for aggregation
                         "altitude": altitude,
-                        "time_raw": t
+                        "time_raw": t,
+                        "attacker_unknown": (a == -1)  # Flag for UI rendering
                     })
                 
                 # Wounded status: ONLY based on PILOT damage (not aircraft!)
@@ -786,7 +798,7 @@ class MissionDebriefParser:
         # Aggregate damage events by minute (not exact second)
         damage_by_time = {}
         non_damage_events = []
-        
+
         for evt in events:
             if evt.get("type") == "Damage Taken":
                 # Group by minute (HH:MM) instead of exact time
@@ -795,7 +807,7 @@ class MissionDebriefParser:
                     time_key = ':'.join(full_time.split(':')[:2])  # Take HH:MM only for grouping
                 else:
                     time_key = full_time
-                
+
                 if time_key not in damage_by_time:
                     damage_by_time[time_key] = {
                         "time": full_time,  # Keep full time with seconds from first event
@@ -803,12 +815,13 @@ class MissionDebriefParser:
                         "aircraft_damage": 0.0,
                         "pilot_damage": 0.0,
                         "attacker": evt.get("target"),
-                        "altitude": evt.get("altitude")
+                        "altitude": evt.get("altitude"),
+                        "attacker_unknown": evt.get("attacker_unknown", False)  # Preserve AID=-1 flag
                     }
-                
+
                 # Accumulate damage
                 damage_str = evt.get("damage", "")
-                
+
                 # Parse aggregated damage strings like "4.2% aircraft, 19.2% pilot"
                 if "aircraft" in damage_str and "pilot" in damage_str:
                     parts = damage_str.split(",")
@@ -825,41 +838,38 @@ class MissionDebriefParser:
                 elif "pilot" in damage_str:
                     dmg_val = float(damage_str.split("%")[0])
                     damage_by_time[time_key]["pilot_damage"] += dmg_val
+
+                # If any event in this group has unknown attacker, mark the whole group
+                if evt.get("attacker_unknown"):
+                    damage_by_time[time_key]["attacker_unknown"] = True
             else:
                 non_damage_events.append(evt)
-        
+
         # Convert aggregated damage back to events
         for time_key, dmg_data in damage_by_time.items():
+            base_evt = {
+                "time": dmg_data["time"],
+                "type": "Damage Taken",
+                "target": dmg_data["attacker"],
+                "altitude": dmg_data["altitude"],
+                "time_raw": time_key
+            }
+            # Add attacker_unknown flag if true
+            if dmg_data.get("attacker_unknown"):
+                base_evt["attacker_unknown"] = True
+
             if dmg_data["aircraft_damage"] > 0 and dmg_data["pilot_damage"] > 0:
                 # Both aircraft and pilot hit
-                non_damage_events.append({
-                    "time": dmg_data["time"],
-                    "type": "Damage Taken",
-                    "target": dmg_data["attacker"],
-                    "damage": f"{dmg_data['aircraft_damage']:.1f}% aircraft, {dmg_data['pilot_damage']:.1f}% pilot",
-                    "altitude": dmg_data["altitude"],
-                    "time_raw": time_key
-                })
+                base_evt["damage"] = f"{dmg_data['aircraft_damage']:.1f}% aircraft, {dmg_data['pilot_damage']:.1f}% pilot"
+                non_damage_events.append(base_evt)
             elif dmg_data["aircraft_damage"] > 0:
                 # Only aircraft
-                non_damage_events.append({
-                    "time": dmg_data["time"],
-                    "type": "Damage Taken",
-                    "target": dmg_data["attacker"],
-                    "damage": f"{dmg_data['aircraft_damage']:.1f}% aircraft",
-                    "altitude": dmg_data["altitude"],
-                    "time_raw": time_key
-                })
+                base_evt["damage"] = f"{dmg_data['aircraft_damage']:.1f}% aircraft"
+                non_damage_events.append(base_evt)
             elif dmg_data["pilot_damage"] > 0:
                 # Only pilot
-                non_damage_events.append({
-                    "time": dmg_data["time"],
-                    "type": "Damage Taken",
-                    "target": dmg_data["attacker"],
-                    "damage": f"{dmg_data['pilot_damage']:.1f}% pilot",
-                    "altitude": dmg_data["altitude"],
-                    "time_raw": time_key
-                })
+                base_evt["damage"] = f"{dmg_data['pilot_damage']:.1f}% pilot"
+                non_damage_events.append(base_evt)
         
         # Detect landing damage and mark appropriately
         non_damage_events = self._detect_landing_damage(non_damage_events, data)

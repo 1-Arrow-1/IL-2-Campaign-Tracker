@@ -2085,9 +2085,18 @@ class EventGenerator:
                     elif event_type == "Damage Taken":
                         if mission_ended_in_bailout:
                             continue
-                        html_lines.append(
-                            f"{time}  {t('flightlog.event.hit_by')} {target}<br>"
-                        )
+                        # Check if attacker is unknown (AID=-1 case)
+                        attacker_unknown = event.get('attacker_unknown', False)
+                        if attacker_unknown or not target:
+                            # Generic "Damage taken" without attacker
+                            html_lines.append(
+                                f"{time}  {t('flightlog.event.damage_taken')}<br>"
+                            )
+                        else:
+                            # Known attacker: "Hit by <attacker>"
+                            html_lines.append(
+                                f"{time}  {t('flightlog.event.hit_by')} {target}<br>"
+                            )
                     elif event_type in ["Takeoff", "Landing", "Crash", "Bailout", "Landing Damage"]:
                         html_lines.append(f"{time}  {self._localize_event_label(event_type)}<br>")
                     else:

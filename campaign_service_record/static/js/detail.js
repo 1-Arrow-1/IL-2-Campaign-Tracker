@@ -1508,6 +1508,7 @@ const DetailPage = {
             { pattern: /\bCrash\b/gi, replacement: i18n.t('flightlog.event.crash') },
             { pattern: /\bBailout\b/gi, replacement: i18n.t('flightlog.event.bailout') },
             { pattern: /\bdestroyed\b/gi, replacement: i18n.t('flightlog.event.destroyed') },
+            { pattern: /\bDamage taken\b/gi, replacement: i18n.t('flightlog.event.damage_taken') },
             { pattern: /\bdamaged\b/gi, replacement: i18n.t('flightlog.event.damaged') },
             { pattern: /\bHit by\b/gi, replacement: i18n.t('flightlog.event.hit_by') },
             { pattern: /\(Alt:/gi, replacement: `(${i18n.t('flightlog.altitude')}:` },

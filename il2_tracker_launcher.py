@@ -458,19 +458,20 @@ def generate_initial_events(locale_override: str | None = None) -> bool:
         return False
 
 
-def run_cleanup_check(il2_states_path: Path) -> bool:
+def run_cleanup_check(il2_states_path: Path, non_interactive: bool = False) -> bool:
     """
     Check for unsuccessful missions and show cleanup GUI.
-    
+
     Args:
         il2_states_path: Path to campaignsstates.txt
-        
-    Returns: 
+        non_interactive: If True, skip GUI (for automation/regen)
+
+    Returns:
         True if cleanup was performed, False otherwise
     """
-    try: 
+    try:
         from cleanup_failed_missions import startup_cleanup_check
-        return startup_cleanup_check(states_path=il2_states_path)
+        return startup_cleanup_check(states_path=il2_states_path, non_interactive=non_interactive)
         
     except ImportError:
         log_message(logger, "Note: cleanup_failed_missions. py not found")
@@ -739,7 +740,7 @@ def run_tracker() -> int:
         
         # Step 6: Cleanup check
         print_header("CHECKING FOR UNSUCCESSFUL MISSIONS")
-        run_cleanup_check(il2_states_path)
+        run_cleanup_check(il2_states_path, non_interactive=args.non_interactive)
         
         # Step 7: Popup reset cleanup
         print_header("CHECKING FOR RESET CAMPAIGNS (POPUP CLEANUP)")

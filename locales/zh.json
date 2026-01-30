@@ -178,6 +178,7 @@
     "event": {
       "bailout": "跳伞",
       "crash": "坠毁",
+      "damage_taken": "受到伤害",
       "damaged": "受损",
       "destroyed": "被摧毁",
       "hit_by": "被命中",

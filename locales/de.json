@@ -178,6 +178,7 @@
     "event": {
       "bailout": "Absprung",
       "crash": "Absturz",
+      "damage_taken": "Schaden erlitten",
       "damaged": "beschädigt",
       "destroyed": "zerstört",
       "hit_by": "Getroffen von",

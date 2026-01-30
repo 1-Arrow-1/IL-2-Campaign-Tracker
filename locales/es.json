@@ -178,6 +178,7 @@
     "event": {
       "bailout": "Salto en paracaídas",
       "crash": "Accidente",
+      "damage_taken": "Daño recibido",
       "damaged": "dañado",
       "destroyed": "destruido",
       "hit_by": "impactado por",

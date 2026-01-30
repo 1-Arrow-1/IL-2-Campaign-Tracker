@@ -178,6 +178,7 @@
     "event": {
       "bailout": "Skok",
       "crash": "Katastrofa",
+      "damage_taken": "Otrzymane obrażenia",
       "damaged": "uszkodzony",
       "destroyed": "zniszczony",
       "hit_by": "Trafiony przez",
