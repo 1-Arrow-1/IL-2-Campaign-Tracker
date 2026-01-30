@@ -584,7 +584,14 @@ def run_tracker() -> int:
                        help='Skip monitoring loop (for Settings Manager regeneration)')
     parser.add_argument('--locale', type=str,
                        help='Override locale for translations (e.g., de, en)')
+    parser.add_argument('--force-regen', action='store_true',
+                       help='Force regeneration of all campaign events and reports')
     args, unknown = parser.parse_known_args()
+
+    # Handle --force-regen flag by setting environment variable
+    # This is equivalent to FORCE_REGENERATE=1 but works reliably with elevated processes
+    if args.force_regen:
+        os.environ["FORCE_REGENERATE"] = "1"
     
     global DEBUG_ENABLED
     DEBUG_ENABLED = is_debug_enabled(args.debug)
@@ -600,6 +607,8 @@ def run_tracker() -> int:
     logger.debug("--non-interactive = %s", args.non_interactive)
     logger.debug("--skip-monitor = %s", args.skip_monitor)
     logger.debug("--locale = %s", args.locale)
+    logger.debug("--force-regen = %s", args.force_regen)
+    logger.debug("FORCE_REGENERATE env = %s", os.environ.get("FORCE_REGENERATE", "not set"))
     logger.debug("Unknown args = %s", unknown)
     if unknown:
         logger.warning("Unrecognized command-line arguments ignored: %s", unknown)

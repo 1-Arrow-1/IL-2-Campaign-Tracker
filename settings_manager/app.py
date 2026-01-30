@@ -109,15 +109,22 @@ def _run_elevated_windows(
     kernel32 = ctypes.windll.kernel32
 
     # Build command line for cmd.exe to handle redirection
-    # Format: /c "exe_path" arg1 arg2 ... > "log_path" 2>&1
+    # cmd.exe /c "entire command" - outer quotes delimit the command
+    # Inner quotes around paths with spaces are handled by cmd.exe
     args_str = " ".join(f'"{a}"' if " " in a else a for a in args)
-    cmd_params = f'/c ""{exe_path}" {args_str} > "{log_path}" 2>&1"'
 
-    # Set environment variables via cmd.exe SET commands if provided
+    # Build the inner command (exe + args + redirect)
+    inner_cmd = f'"{exe_path}" {args_str} > "{log_path}" 2>&1'
+
+    # Prepend environment variable setup if provided
     if env:
-        env_sets = " && ".join(f'set "{k}={v}"' for k, v in env.items() if k != "PATH")
+        # Use set VAR=value (no quotes around the assignment)
+        env_sets = " && ".join(f"set {k}={v}" for k, v in env.items() if k != "PATH")
         if env_sets:
-            cmd_params = f'/c {env_sets} && ""{exe_path}" {args_str} > "{log_path}" 2>&1"'
+            inner_cmd = f"{env_sets} && {inner_cmd}"
+
+    # Wrap entire command in quotes for /c
+    cmd_params = f'/c "{inner_cmd}"'
 
     print(f"[Settings Manager] Requesting elevation for Tracker EXE...")
     print(f"[Settings Manager] Command: cmd.exe {cmd_params}")
@@ -1591,14 +1598,15 @@ class SettingsManagerApp(tk.Tk):
         print(f"[Settings Manager] Looking for Tracker EXE at: {tracker_exe}")
         print(f"[Settings Manager] Tracker EXE exists: {tracker_exe.exists()}")
         
-        # Prepare environment with FORCE_REGENERATE
+        # Prepare environment with FORCE_REGENERATE (for non-elevated launch)
         env = os.environ.copy()
         env["FORCE_REGENERATE"] = "1"
-        
+
         # REQUIRED: Run the Tracker EXE as subprocess for proper PDF generation
         if tracker_exe.exists():
             print(f"[Settings Manager] Starting Tracker EXE with locale={locale}...")
-            cmd_args = ["--auto", "--locale", locale, "--skip-monitor", "--non-interactive"]
+            # Use --force-regen flag (works reliably for both normal and elevated launches)
+            cmd_args = ["--auto", "--locale", locale, "--skip-monitor", "--non-interactive", "--force-regen"]
 
             log_name = f"settings_manager_refresh_{datetime.now():%Y%m%d_%H%M%S}.log"
             log_path = exe_dir / log_name
@@ -1648,12 +1656,13 @@ class SettingsManagerApp(tk.Tk):
                 with open(log_path, "w", encoding="utf-8") as f:
                     f.write(f"[Settings Manager] Launching with elevation at {datetime.now()}\n")
 
+                # --force-regen flag in cmd_args handles regeneration; no env vars needed
                 success, return_code, error_msg = _run_elevated_windows(
                     str(tracker_exe),
                     cmd_args,
                     str(exe_dir),
                     str(log_path),
-                    {"FORCE_REGENERATE": "1"},
+                    env=None,  # No environment variables needed (--force-regen flag handles it)
                     timeout_seconds=600,
                 )
 
@@ -1671,7 +1680,11 @@ class SettingsManagerApp(tk.Tk):
                 if return_code != 0:
                     error_output = self._read_log_excerpt(log_path)
                     print(f"[Settings Manager] Elevated Tracker output: {error_output[:1000]}")
-                    return f"Tracker EXE error. Exit code: {return_code}. Log excerpt:\n{error_output}"
+                    return (
+                        f"Tracker EXE error. Exit code: {return_code}.\n\n"
+                        f"Full log: {log_path}\n\n"
+                        f"Log excerpt:\n{error_output}"
+                    )
 
                 print("[Settings Manager] Locale refresh completed successfully via elevated Tracker EXE")
                 return None
