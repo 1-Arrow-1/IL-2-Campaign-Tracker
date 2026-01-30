@@ -26,6 +26,8 @@ REM Clean previous builds
 echo Cleaning previous builds...
 if exist build rmdir /s /q build
 if exist dist rmdir /s /q dist
+if exist __pycache__ rmdir /s /q __pycache__
+if exist IL2_Campaign_Tracker_v2.2_ML rmdir /s /q IL2_Campaign_Tracker_v2.2_ML
 echo.
 
 REM Run PyInstaller
