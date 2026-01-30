@@ -698,7 +698,7 @@ class EventGenerator:
 
         # Fallback: return original status if no mapping found
         # Log warning for unmapped statuses so they can be added
-        logger.warning(f"Unmapped status for translation: '{status}'")
+        self.logger.warning("Unmapped status for translation: '%s'", status)
         return status
 
     def _localize_event_label(self, event_type: str) -> str:
