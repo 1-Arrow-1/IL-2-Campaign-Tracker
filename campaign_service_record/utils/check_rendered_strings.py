@@ -16,8 +16,8 @@ from typing import Dict, Iterable, List, Optional
 
 from utils.name_normalization import name_to_i18n_key
 
-ROOT = Path(__file__).resolve().parents[1]
-LOCALES_DIR = ROOT / "static" / "locales"
+ROOT = Path(__file__).resolve().parents[2]
+LOCALES_DIR = ROOT / "locales"
 SAMPLE_EVENTS = ROOT / "json" / "campaign_events.json"
 
 KEY_PATTERN = re.compile(r"^[a-z0-9_]+(\.[a-z0-9_]+)+$", re.IGNORECASE)

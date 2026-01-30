@@ -88,13 +88,7 @@ const i18n = {
      */
     async loadLocale(locale) {
         try {
-            // Try campaign_service_record/static/locales first (symlink)
-            let response = await fetch(`/static/locales/${locale}.json`);
-            
-            // Fallback to root locales directory
-            if (!response.ok) {
-                response = await fetch(`/locales/${locale}.json`);
-            }
+            const response = await fetch(`/locales/${locale}.json`);
             
             if (!response.ok) {
                 console.warn(`[i18n] Failed to load locale: ${locale} (${response.status})`);
