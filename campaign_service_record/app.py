@@ -25,6 +25,7 @@ if str(REPO_ROOT) not in sys.path:
 
 # Import configuration
 from campaign_service_record.config import get_config
+from utils.supported_locales import get_locales_dir
 
 # Import API
 from campaign_service_record.api import api_bp, init_api
@@ -119,6 +120,18 @@ def create_app():
             return f"File not found: {path}", 404
         
         return send_from_directory(config.static_dir, path)
+
+    @app.route('/locales/<path:filename>')
+    def serve_locales(filename):
+        """Serve locale JSON files from the canonical locales directory."""
+        locales_dir = get_locales_dir()
+        logger.debug("Locale request: %s -> %s", filename, locales_dir / filename)
+
+        if not locales_dir.exists():
+            logger.error("Locales directory not found: %s", locales_dir)
+            return f"Locales directory not found: {locales_dir}", 404
+
+        return send_from_directory(locales_dir, filename)
     
     if config.frozen:
         # In frozen mode, serve reports from data directory

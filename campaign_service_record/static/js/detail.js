@@ -154,12 +154,38 @@ const getNarrativeKeyForAward = (countryKey, awardCode) => {
     return `narratives.${countryKey}.awards.${awardCode}`;
 };
 
+const normalizeSovietRankNarrativeCode = (code) => {
+    if (!code) {
+        return code;
+    }
+    let normalized = code.replace(/_(early|late)$/i, '');
+    const map = {
+        serzhant: 'sergeant',
+        starshiy_serzhant: 'senior_sergeant',
+        mladshiy_leytenant: 'junior_lieutenant',
+        leytenant: 'lieutenant',
+        starshiy_leytenant: 'senior_lieutenant',
+        kapitan: 'captain',
+        mayor: 'major',
+        podpolkovnik: 'sub_colonel',
+        polkovnik: 'colonel',
+        general_mayor: 'major_general',
+        general_leytenant: 'lieutenant_general'
+    };
+    return map[normalized] || normalized;
+};
+
 const getRankNarrativeCode = (event) => {
     const rawCode = event?.rank_code || event?.rankCode || event?.rank;
     if (!rawCode) {
         return '';
     }
-    return nameToI18nKey(rawCode);
+    let key = nameToI18nKey(rawCode);
+    const countryKey = getCountryKey(event?.country || event?.nation);
+    if (countryKey === 'soviet') {
+        key = normalizeSovietRankNarrativeCode(key);
+    }
+    return key;
 };
 
 const getAwardNarrativeCodeFromName = (countryKey, awardName) => {
@@ -183,23 +209,9 @@ const getAwardNarrativeCodeFromName = (countryKey, awardName) => {
     }
 
     if (countryKey === 'usa') {
-        const oakLeafMappings = [
-            { prefix: 'air_medal_and', replacement: 'air_medal_plus' },
-            { prefix: 'bronze_star_and', replacement: 'bronze_star_plus' },
-            { prefix: 'bronze_star_medal_and', replacement: 'bronze_star_plus' },
-            { prefix: 'dfc_and', replacement: 'dfc_plus' },
-            { prefix: 'dsc_and', replacement: 'dsc_plus' },
-            { prefix: 'medal_of_honor_and', replacement: 'medal_of_honor_plus' },
-            { prefix: 'purple_heart_and', replacement: 'purple_heart_plus' },
-            { prefix: 'silver_star_and', replacement: 'silver_star_plus' },
-            { prefix: 'silver_star_medal_and', replacement: 'silver_star_plus' }
-        ];
-
-        oakLeafMappings.forEach(mapping => {
-            if (key.startsWith(mapping.prefix)) {
-                key = key.replace(mapping.prefix, mapping.replacement);
-            }
-        });
+        key = normalizeUSAwardNarrativeKey(key);
+    } else if (countryKey === 'britain') {
+        key = normalizeBritainAwardNarrativeKey(key);
     }
 
     return key;
@@ -208,9 +220,61 @@ const getAwardNarrativeCodeFromName = (countryKey, awardName) => {
 const getAwardNarrativeCode = (event, countryKey) => {
     const rawCode = event?.award_code || event?.awardCode;
     if (rawCode) {
-        return nameToI18nKey(rawCode);
+        let key = nameToI18nKey(rawCode);
+        if (countryKey === 'usa') {
+            key = normalizeUSAwardNarrativeKey(key);
+        } else if (countryKey === 'britain') {
+            key = normalizeBritainAwardNarrativeKey(key);
+        }
+        return key;
     }
     return getAwardNarrativeCodeFromName(countryKey, event?.name);
+};
+
+const normalizeBritainAwardNarrativeKey = (key) => {
+    if (!key) {
+        return key;
+    }
+    const mappings = {
+        distinguished_flying_cross: 'distinguished_flying_cross_dfc',
+        distinguished_flying_medal: 'distinguished_flying_medal_dfm',
+        distinguished_service_order: 'distinguished_service_order_dso',
+        victoria_cross: 'victoria_cross_vc',
+        bar_to_the_victoria_cross: 'bar_to_the_vc',
+        bar_to_the_distinguished_flying_cross: 'bar_to_the_dfc',
+        bar_to_the_distinguished_flying_medal: 'bar_to_the_dfm',
+        bar_to_the_distinguished_service_order: 'bar_to_the_dso',
+        second_bar_to_the_distinguished_flying_cross: 'second_bar_to_the_dfc',
+        second_bar_to_the_distinguished_flying_medal: 'second_bar_to_the_dfm',
+        second_bar_to_the_distinguished_service_order: 'second_bar_to_the_dso'
+    };
+    return mappings[key] || key;
+};
+
+const normalizeUSAwardNarrativeKey = (key) => {
+    if (!key) {
+        return key;
+    }
+    const oakLeafMappings = [
+        { prefix: 'air_medal_and', replacement: 'air_medal_plus' },
+        { prefix: 'bronze_star_and', replacement: 'bronze_star_plus' },
+        { prefix: 'bronze_star_medal_and', replacement: 'bronze_star_plus' },
+        { prefix: 'dfc_and', replacement: 'dfc_plus' },
+        { prefix: 'dsc_and', replacement: 'dsc_plus' },
+        { prefix: 'distinguished_service_cross_and', replacement: 'dsc_plus' },
+        { prefix: 'medal_of_honor_and', replacement: 'medal_of_honor_plus' },
+        { prefix: 'purple_heart_and', replacement: 'purple_heart_plus' },
+        { prefix: 'silver_star_and', replacement: 'silver_star_plus' },
+        { prefix: 'silver_star_medal_and', replacement: 'silver_star_plus' }
+    ];
+
+    for (const mapping of oakLeafMappings) {
+        if (key.startsWith(mapping.prefix)) {
+            return key.replace(mapping.prefix, mapping.replacement);
+        }
+    }
+
+    return key;
 };
 
 /**

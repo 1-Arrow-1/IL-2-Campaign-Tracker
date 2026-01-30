@@ -920,9 +920,12 @@ class EventGenerator:
             })
         
         # Add Pilot's Badge/Emblem (before first mission)
-        # For USSR: Choose between Badge (early) and Emblem (late) based on first mission date
+        # For USSR: Prefer Emblem in late period if available, otherwise fall back to Badge
         first_mission = sorted(completed_missions, key=smart_mission_sort_key)[0]
         first_mission_date = self.get_mission_date(campaign_name, first_mission)
+        soviet_transition = datetime(1943, 1, 6).date()
+        parsed_first_date = self._parse_date_string(first_mission_date) if first_mission_date else None
+        is_soviet_late = bool(parsed_first_date and parsed_first_date.date() >= soviet_transition)
         
         for award in awards_config:
             award_name = award.get('name', '')
@@ -944,33 +947,29 @@ class EventGenerator:
             if is_pilots_award:
                 # For Soviet Union, choose based on date
                 if country == 'Soviet Union':
-                    # Check if campaign starts before or after transition
-                    if first_mission_date and first_mission_date >= "1943-01-06":
-                        # Late period - use Aviation Emblem
-                        if "Emblem" in award_name or "emblem" in award_image:
-                            earned_awards.append({
-                                'type': 'award',
-                                'name': award_name,
-                                'award_key': _build_award_key(award_name),
-                                'image': award_image,
-                                'mission': 'Initial',
-                                'date': first_mission_date
-                            })
-                            already_earned.append(award_name)
-                            break
-                    else:
-                        # Early period - use Aviation Badge
-                        if "Badge" in award_name or "badge" in award_image:
-                            earned_awards.append({
-                                'type': 'award',
-                                'name': award_name,
-                                'award_key': _build_award_key(award_name),
-                                'image': award_image,
-                                'mission': 'Initial',
-                                'date': first_mission_date
-                            })
-                            already_earned.append(award_name)
-                            break
+                    if is_soviet_late and ("Emblem" in award_name or "emblem" in award_image):
+                        earned_awards.append({
+                            'type': 'award',
+                            'name': award_name,
+                            'award_key': _build_award_key(award_name),
+                            'image': award_image,
+                            'mission': 'Initial',
+                            'date': first_mission_date
+                        })
+                        already_earned.append(award_name)
+                        break
+
+                    if "Badge" in award_name or "badge" in award_image:
+                        earned_awards.append({
+                            'type': 'award',
+                            'name': award_name,
+                            'award_key': _build_award_key(award_name),
+                            'image': award_image,
+                            'mission': 'Initial',
+                            'date': first_mission_date
+                        })
+                        already_earned.append(award_name)
+                        break
                 else:
                     # For other countries, just use first match
                     earned_awards.append({

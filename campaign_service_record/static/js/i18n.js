@@ -26,6 +26,7 @@ const i18n = {
     initInProgress: false,
     _initSequence: 0,
     missingTranslationPlaceholder: '[missing translation]',
+    defaultLocale: 'en',
     
     /**
      * Initialize i18n with given locale.
@@ -35,25 +36,30 @@ const i18n = {
      * @returns {Promise<void>}
      */
     async init(locale = 'en') {
+        const normalizedLocale = this.normalizeLocale(locale);
+        if (normalizedLocale !== locale) {
+            console.log(`[i18n] Normalized locale '${locale}' -> '${normalizedLocale}'`);
+        }
+        locale = normalizedLocale;
         console.log(`[i18n] Initializing with locale: ${locale}`);
         const initToken = ++this._initSequence;
         this.initInProgress = true;
         
         try {
             // Load fallback (English) first
-            this.translations.en = await this.loadLocale('en');
+            this.translations.en = await this.loadLocale(this.defaultLocale);
             
             if (!this.translations.en) {
                 console.error('[i18n] CRITICAL: Failed to load English fallback!');
             }
             
             // Load requested locale (if different from fallback)
-            if (locale !== 'en') {
+            if (locale !== this.defaultLocale) {
                 this.translations[locale] = await this.loadLocale(locale);
                 
                 if (!this.translations[locale]) {
-                    console.warn(`[i18n] Locale '${locale}' not available, using 'en' fallback`);
-                    locale = 'en';
+                    console.warn(`[i18n] Locale '${locale}' not available, using '${this.defaultLocale}' fallback`);
+                    locale = this.defaultLocale;
                 }
             }
             
@@ -88,15 +94,17 @@ const i18n = {
      */
     async loadLocale(locale) {
         try {
-            const response = await fetch(`/locales/${locale}.json`);
+            const normalizedLocale = this.normalizeLocale(locale);
+            const url = `/locales/${normalizedLocale}.json`;
+            const response = await fetch(url);
             
             if (!response.ok) {
-                console.warn(`[i18n] Failed to load locale: ${locale} (${response.status})`);
+                console.error(`[i18n] Failed to load locale '${normalizedLocale}' from ${url} (${response.status})`);
                 return null;
             }
             
             const data = await response.json();
-            console.log(`[i18n] Loaded locale: ${locale}`);
+            console.log(`[i18n] Loaded locale: ${normalizedLocale}`);
             return data;
         } catch (error) {
             console.error(`[i18n] Error loading locale ${locale}:`, error);
@@ -112,11 +120,16 @@ const i18n = {
      * @returns {Promise<void>}
      */
     async setLocale(locale) {
+        const normalizedLocale = this.normalizeLocale(locale);
+        if (normalizedLocale !== locale) {
+            console.log(`[i18n] Normalized locale '${locale}' -> '${normalizedLocale}'`);
+        }
+        locale = normalizedLocale;
         console.log(`[i18n] Setting locale to: ${locale}`);
         
         // Ensure fallback is always loaded
         if (!this.translations.en) {
-            this.translations.en = await this.loadLocale('en');
+            this.translations.en = await this.loadLocale(this.defaultLocale);
         }
         
         // Load requested locale if not already loaded
@@ -140,6 +153,20 @@ const i18n = {
      */
     getLocale() {
         return this.currentLocale;
+    },
+
+    normalizeLocale(locale) {
+        if (!locale) {
+            return this.defaultLocale;
+        }
+        let candidate = String(locale).trim().toLowerCase();
+        if (candidate.startsWith('zh')) {
+            candidate = candidate.replace('_', '-');
+            if (candidate === 'zh' || candidate.startsWith('zh-')) {
+                return 'zh';
+            }
+        }
+        return candidate;
     },
     
     /**

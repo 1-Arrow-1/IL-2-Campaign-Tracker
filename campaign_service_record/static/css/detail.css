@@ -745,7 +745,6 @@
 
 .additional-notes-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     margin-bottom: 0.75rem;
 }
@@ -790,6 +789,12 @@
 
 .additional-notes-editor {
     margin-top: 0.5rem;
+}
+
+.additional-notes-actions {
+    margin-top: 0.5rem;
+    display: flex;
+    justify-content: flex-end;
 }
 
 .additional-notes-textarea {
