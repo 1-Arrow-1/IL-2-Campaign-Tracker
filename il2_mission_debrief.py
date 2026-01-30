@@ -603,27 +603,27 @@ class MissionDebriefParser:
     def _detect_landing_damage(self, events, data):
         """
         Detect and mark landing damage events.
-        
+
         Criteria (ALL must match):
-        1. Attacker = Player's aircraft
-        2. Time before landing < 30 seconds
+        1. Attacker is player's aircraft OR unknown (AID=-1)
+        2. Time before landing < 60 seconds
         3. Time since last kill > 60 seconds (not in combat)
         4. Relative altitude < 150m above airfield
-        
+
         Args:
             events: List of events
             data: Mission data dict with player info
-            
+
         Returns:
             Modified events list with landing damage marked
         """
         player_aircraft = data['player']['aircraft']
-        
+
         # Find takeoff and landing altitudes (airfield elevation)
         takeoff_alt = None
         landing_alt = None
         landing_time = None
-        
+
         for evt in events:
             if evt.get('type') == 'Takeoff' and evt.get('altitude') is not None:
                 takeoff_alt = evt['altitude']
@@ -631,7 +631,7 @@ class MissionDebriefParser:
                 landing_time = evt.get('time')
                 if evt.get('altitude') is not None:
                     landing_alt = evt['altitude']
-        
+
         # Use average of takeoff/landing as airfield elevation
         airfield_alt = None
         if takeoff_alt is not None and landing_alt is not None:
@@ -640,27 +640,32 @@ class MissionDebriefParser:
             airfield_alt = takeoff_alt
         elif landing_alt is not None:
             airfield_alt = landing_alt
-        
+
         if not landing_time:
             return events  # No landing, can't detect landing damage
-        
+
         # Find last kill time
         last_kill_time = None
         for evt in reversed(events):
             if evt.get('type') == 'Kill':
                 last_kill_time = evt.get('time')
                 break
-        
+
         # Check each damage event
         modified_events = []
         has_hard_landing = False
-        
+
         for evt in events:
             if evt.get('type') == 'Damage Taken':
                 is_landing_dmg = False
-                
-                # Criterion 1: Attacker is player's own aircraft
-                if evt.get('target') == player_aircraft:
+
+                # Criterion 1: Attacker is player's aircraft OR unknown (AID=-1)
+                # Both cases indicate potential landing/self damage
+                is_self_or_unknown = (
+                    evt.get('target') == player_aircraft or
+                    evt.get('attacker_unknown') is True
+                )
+                if is_self_or_unknown:
                     damage_time = evt.get('time')
                     damage_alt = evt.get('altitude')
                     
