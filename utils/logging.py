@@ -8,6 +8,58 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 
+# Mapping of Unicode characters to ASCII-safe equivalents
+UNICODE_TO_ASCII = {
+    '✓': '[OK]',
+    '✅': '[OK]',
+    '❌': '[ERROR]',
+    '⚠️': '[WARN]',
+    '⚠': '[WARN]',
+    '🎮': '[GAME]',
+    '👋': '[BYE]',
+    '🛑': '[STOP]',
+    '📝': '[FILE]',
+    '📋': '[LIST]',
+    '📖': '[READ]',
+    '📁': '[DIR]',
+    '🔄': '[SYNC]',
+    '⚡': '[FAST]',
+    '🎯': '[TARGET]',
+    '🚀': '[START]',
+    '🟢': '[ON]',
+    '🟡': '[!]',
+    '💾': '[SAVE]',
+    '🔹': '[*]',
+    '🔁': '[LOOP]',
+}
+
+
+class SafeStreamHandler(logging.StreamHandler):
+    """StreamHandler that gracefully handles Unicode encoding errors on Windows console."""
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            super().emit(record)
+        except UnicodeEncodeError:
+            # Replace problematic Unicode characters and retry
+            original_msg = record.msg
+            if isinstance(original_msg, str):
+                safe_msg = original_msg
+                for unicode_char, ascii_replacement in UNICODE_TO_ASCII.items():
+                    safe_msg = safe_msg.replace(unicode_char, ascii_replacement)
+                # Replace any remaining non-ASCII with '?'
+                safe_msg = safe_msg.encode('ascii', errors='replace').decode('ascii')
+                record.msg = safe_msg
+                try:
+                    super().emit(record)
+                except Exception:
+                    pass  # Silently fail if still can't emit
+                finally:
+                    record.msg = original_msg  # Restore original message
+            else:
+                pass  # Can't fix non-string messages
+
+
 def get_logger(name: str, log_path: str | Path | None = None, debug: bool = False) -> logging.Logger:
     """Return a configured logger with rotating file + console handlers."""
     logger = logging.getLogger(name)
@@ -29,7 +81,8 @@ def get_logger(name: str, log_path: str | Path | None = None, debug: bool = Fals
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
 
-    console_handler = logging.StreamHandler(sys.stdout)
+    # Use SafeStreamHandler to handle Unicode encoding errors on Windows
+    console_handler = SafeStreamHandler(sys.stdout)
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
 

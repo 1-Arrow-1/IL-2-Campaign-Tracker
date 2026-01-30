@@ -392,10 +392,13 @@ def restore_popup_backup(il2_states_path:  Path) -> bool:
         return False
 
 
-def generate_initial_events() -> bool:
+def generate_initial_events(locale_override: str | None = None) -> bool:
     """
     Generate events on first run or after backup restore.
-    
+
+    Args:
+        locale_override: Optional locale to use for translations (e.g., 'de', 'en')
+
     Returns:
         True if events were generated, False if skipped or error
     """
@@ -425,8 +428,11 @@ def generate_initial_events() -> bool:
     
     try:
         import step3_generate_events
-        # Direkte Parameterübergabe statt sys.argv Manipulation
-        step3_generate_events.main(args=["--auto"], show_popups=False)
+        # Build args list with optional locale
+        step3_args = ["--auto"]
+        if locale_override:
+            step3_args.extend(["--locale", locale_override])
+        step3_generate_events.main(args=step3_args, show_popups=False)
         
         if popup_path.exists() and popup_path.stat().st_size > 0:
             log_message(logger, f"✅ Events generated, popup state initialized ({popup_path.stat().st_size} bytes)")
@@ -574,6 +580,10 @@ def run_tracker() -> int:
                         help='Run without interactive prompts or backup restore GUI')
     parser.add_argument('--no-exit-with-il2', action='store_true',
                        help='Keep tracker running after IL-2 closes (default: exit with IL-2)')
+    parser.add_argument('--skip-monitor', action='store_true',
+                       help='Skip monitoring loop (for Settings Manager regeneration)')
+    parser.add_argument('--locale', type=str,
+                       help='Override locale for translations (e.g., de, en)')
     args, unknown = parser.parse_known_args()
     
     global DEBUG_ENABLED
@@ -588,7 +598,11 @@ def run_tracker() -> int:
     logger.debug("Working directory = %s", os.getcwd())
     logger.debug("--skip-backup-gui = %s", args.skip_backup_gui)
     logger.debug("--non-interactive = %s", args.non_interactive)
+    logger.debug("--skip-monitor = %s", args.skip_monitor)
+    logger.debug("--locale = %s", args.locale)
     logger.debug("Unknown args = %s", unknown)
+    if unknown:
+        logger.warning("Unrecognized command-line arguments ignored: %s", unknown)
     log_message(logger, "=" * 70)
     log_message(logger, "IL-2 CAMPAIGN PROGRESS TRACKER v1.7")
     log_message(logger, "=" * 70)
@@ -712,7 +726,7 @@ def run_tracker() -> int:
         
         # Step 5: Event generation
         print_header("EVENT GENERATION CHECK")
-        generate_initial_events()
+        generate_initial_events(locale_override=args.locale)
         
         # Step 6: Cleanup check
         print_header("CHECKING FOR UNSUCCESSFUL MISSIONS")
@@ -724,8 +738,16 @@ def run_tracker() -> int:
         
     else:
         show_campaign_not_found_message()
-    
-    # Step 8: Start monitoring
+
+    # Step 8: Start monitoring (or exit if --skip-monitor)
+    if args.skip_monitor:
+        log_message(logger)
+        log_message(logger, "=" * 70)
+        log_message(logger, "REGENERATION COMPLETE")
+        log_message(logger, "=" * 70)
+        log_message(logger, "COMPLETE!")  # Marker for Settings Manager
+        return 0
+
     return start_monitoring(il2_states_path, exit_with_il2=not args.no_exit_with_il2)
 
 

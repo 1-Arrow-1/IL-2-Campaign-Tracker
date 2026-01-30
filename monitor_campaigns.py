@@ -606,9 +606,21 @@ class CampaignMonitor:
                     if self.il2_was_running:
                         self.log("👋 IL-2 Sturmovik closed")
                         self.il2_was_running = False
-                        
-                        # Exit tracker if configured to do so
+
+                        # CRITICAL FIX: Process any pending/final changes BEFORE exiting
+                        # IL-2 may have saved campaign state right before closing
                         if self.exit_with_il2:
+                            # Process any pending debounced changes
+                            if self.pending_change:
+                                self.log("📋 Processing pending changes before exit...")
+                                self._process_campaigns()
+                                self.pending_change = False
+
+                            # Check for final file change (IL-2 may have saved on exit)
+                            if self._has_file_changed():
+                                self.log("📝 Final file change detected, processing before exit...")
+                                self._process_campaigns()
+
                             self.log("🛑 Tracker exiting (exit_with_il2 enabled)")
                             break
                 
