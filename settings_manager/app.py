@@ -44,6 +44,134 @@ else:
 
 logger = logging.getLogger(__name__)
 
+# Windows elevation constants
+_ERROR_ELEVATION_REQUIRED = 740
+_ERROR_CANCELLED = 1223
+
+
+def _run_elevated_windows(
+    exe_path: str,
+    args: List[str],
+    working_dir: str,
+    log_path: str,
+    env: Optional[Dict[str, str]] = None,
+    timeout_seconds: int = 600,
+) -> Tuple[bool, int, str]:
+    """
+    Run a process with elevation (admin rights) on Windows using ShellExecuteEx.
+
+    Since ShellExecute cannot capture stdout directly, we use cmd.exe to redirect
+    output to a log file.
+
+    Args:
+        exe_path: Path to the executable
+        args: List of command-line arguments
+        working_dir: Working directory for the process
+        log_path: Path to write stdout/stderr
+        env: Environment variables (note: only partially supported via cmd.exe)
+        timeout_seconds: Maximum time to wait for process completion
+
+    Returns:
+        Tuple of (success, return_code, error_message)
+    """
+    import ctypes
+    from ctypes import wintypes
+
+    # ShellExecuteEx constants
+    SEE_MASK_NOCLOSEPROCESS = 0x00000040
+    SEE_MASK_NO_CONSOLE = 0x00008000
+    SW_SHOWNORMAL = 1
+
+    # WaitForSingleObject return values
+    WAIT_OBJECT_0 = 0x00000000
+    WAIT_TIMEOUT = 0x00000102
+
+    class SHELLEXECUTEINFO(ctypes.Structure):
+        _fields_ = [
+            ("cbSize", wintypes.DWORD),
+            ("fMask", wintypes.ULONG),
+            ("hwnd", wintypes.HWND),
+            ("lpVerb", wintypes.LPCWSTR),
+            ("lpFile", wintypes.LPCWSTR),
+            ("lpParameters", wintypes.LPCWSTR),
+            ("lpDirectory", wintypes.LPCWSTR),
+            ("nShow", ctypes.c_int),
+            ("hInstApp", wintypes.HINSTANCE),
+            ("lpIDList", ctypes.c_void_p),
+            ("lpClass", wintypes.LPCWSTR),
+            ("hkeyClass", wintypes.HKEY),
+            ("dwHotKey", wintypes.DWORD),
+            ("hIcon", wintypes.HANDLE),
+            ("hProcess", wintypes.HANDLE),
+        ]
+
+    shell32 = ctypes.windll.shell32
+    kernel32 = ctypes.windll.kernel32
+
+    # Build command line for cmd.exe to handle redirection
+    # Format: /c "exe_path" arg1 arg2 ... > "log_path" 2>&1
+    args_str = " ".join(f'"{a}"' if " " in a else a for a in args)
+    cmd_params = f'/c ""{exe_path}" {args_str} > "{log_path}" 2>&1"'
+
+    # Set environment variables via cmd.exe SET commands if provided
+    if env:
+        env_sets = " && ".join(f'set "{k}={v}"' for k, v in env.items() if k != "PATH")
+        if env_sets:
+            cmd_params = f'/c {env_sets} && ""{exe_path}" {args_str} > "{log_path}" 2>&1"'
+
+    print(f"[Settings Manager] Requesting elevation for Tracker EXE...")
+    print(f"[Settings Manager] Command: cmd.exe {cmd_params}")
+
+    sei = SHELLEXECUTEINFO()
+    sei.cbSize = ctypes.sizeof(sei)
+    sei.fMask = SEE_MASK_NOCLOSEPROCESS
+    sei.hwnd = None
+    sei.lpVerb = "runas"
+    sei.lpFile = "cmd.exe"
+    sei.lpParameters = cmd_params
+    sei.lpDirectory = working_dir
+    sei.nShow = SW_SHOWNORMAL
+
+    # Attempt elevated launch
+    if not shell32.ShellExecuteExW(ctypes.byref(sei)):
+        error_code = ctypes.GetLastError()
+        if error_code == _ERROR_CANCELLED:
+            return (False, -1, "UAC_CANCELLED")
+        return (False, -1, f"ShellExecuteEx failed with error code {error_code}")
+
+    if not sei.hProcess:
+        return (False, -1, "ShellExecuteEx succeeded but no process handle returned")
+
+    print(f"[Settings Manager] Elevated process launched, waiting for completion...")
+
+    # Poll with timeout
+    timeout_ms = timeout_seconds * 1000
+    poll_interval_ms = 500
+    elapsed_ms = 0
+
+    while elapsed_ms < timeout_ms:
+        result = kernel32.WaitForSingleObject(sei.hProcess, poll_interval_ms)
+        if result == WAIT_OBJECT_0:
+            # Process completed
+            exit_code = wintypes.DWORD()
+            kernel32.GetExitCodeProcess(sei.hProcess, ctypes.byref(exit_code))
+            kernel32.CloseHandle(sei.hProcess)
+            return (True, exit_code.value, "")
+        elif result == WAIT_TIMEOUT:
+            elapsed_ms += poll_interval_ms
+            continue
+        else:
+            # Unexpected result
+            kernel32.CloseHandle(sei.hProcess)
+            return (False, -1, f"WaitForSingleObject returned unexpected value {result}")
+
+    # Timeout reached
+    print(f"[Settings Manager] Elevated process timed out after {timeout_seconds}s")
+    kernel32.TerminateProcess(sei.hProcess, 1)
+    kernel32.CloseHandle(sei.hProcess)
+    return (False, -1, "TIMEOUT")
+
+
 class SettingsManagerApp(tk.Tk):
     """Main Settings Manager Application."""
 
@@ -1469,21 +1597,18 @@ class SettingsManagerApp(tk.Tk):
         
         # REQUIRED: Run the Tracker EXE as subprocess for proper PDF generation
         if tracker_exe.exists():
-            try:
-                print(f"[Settings Manager] Starting Tracker EXE with locale={locale}...")
-                cmd = [
-                    str(tracker_exe),
-                    "--auto",
-                    "--locale",
-                    locale,
-                    "--skip-monitor",
-                    "--non-interactive",
-                ]
+            print(f"[Settings Manager] Starting Tracker EXE with locale={locale}...")
+            cmd_args = ["--auto", "--locale", locale, "--skip-monitor", "--non-interactive"]
 
-                log_name = f"settings_manager_refresh_{datetime.now():%Y%m%d_%H%M%S}.log"
-                log_path = exe_dir / log_name
-                print(f"[Settings Manager] Regeneration log: {log_path}")
-                
+            log_name = f"settings_manager_refresh_{datetime.now():%Y%m%d_%H%M%S}.log"
+            log_path = exe_dir / log_name
+            print(f"[Settings Manager] Regeneration log: {log_path}")
+
+            # Try normal subprocess launch first
+            needs_elevation = False
+            process = None
+
+            try:
                 # Use CREATE_NO_WINDOW on Windows to prevent console popup
                 startupinfo = None
                 creationflags = 0
@@ -1495,7 +1620,7 @@ class SettingsManagerApp(tk.Tk):
 
                 with open(log_path, "w", encoding="utf-8") as log_file:
                     process = subprocess.Popen(
-                        cmd,
+                        [str(tracker_exe)] + cmd_args,
                         env=env,
                         stdout=log_file,
                         stderr=subprocess.STDOUT,
@@ -1505,17 +1630,67 @@ class SettingsManagerApp(tk.Tk):
                         startupinfo=startupinfo,
                         creationflags=creationflags,
                     )
+            except OSError as e:
+                # Check for Windows elevation required error (WinError 740)
+                if sys.platform == 'win32' and getattr(e, 'winerror', None) == _ERROR_ELEVATION_REQUIRED:
+                    print(f"[Settings Manager] Elevation required (WinError 740), requesting admin rights...")
+                    needs_elevation = True
+                else:
+                    print(f"[Settings Manager] Subprocess error: {e}")
+                    return f"Could not run Tracker EXE: {e}"
+            except Exception as e:
+                print(f"[Settings Manager] Subprocess error: {e}")
+                return f"Could not run Tracker EXE: {e}"
 
-                print(f"[Settings Manager] Tracker EXE PID: {process.pid}")
-                completion_marker = "COMPLETE!"
-                timeout_seconds = 600
-                poll_interval = 0.5
-                log_interval = 5.0
-                start_time = time.monotonic()
-                next_log_time = start_time + log_interval
-                log_position = 0
-                completion_detected = False
+            # Handle elevated launch if required
+            if needs_elevation:
+                # Create empty log file for elevated process to write to
+                with open(log_path, "w", encoding="utf-8") as f:
+                    f.write(f"[Settings Manager] Launching with elevation at {datetime.now()}\n")
 
+                success, return_code, error_msg = _run_elevated_windows(
+                    str(tracker_exe),
+                    cmd_args,
+                    str(exe_dir),
+                    str(log_path),
+                    {"FORCE_REGENERATE": "1"},
+                    timeout_seconds=600,
+                )
+
+                if not success:
+                    if error_msg == "UAC_CANCELLED":
+                        return (
+                            "Administrator rights are required to regenerate mission texts and PDFs.\n\n"
+                            "Please click 'Yes' on the User Account Control prompt when asked."
+                        )
+                    elif error_msg == "TIMEOUT":
+                        return "Tracker process timed out (10 minutes)"
+                    else:
+                        return f"Elevated launch failed: {error_msg}"
+
+                if return_code != 0:
+                    error_output = self._read_log_excerpt(log_path)
+                    print(f"[Settings Manager] Elevated Tracker output: {error_output[:1000]}")
+                    return f"Tracker EXE error. Exit code: {return_code}. Log excerpt:\n{error_output}"
+
+                print("[Settings Manager] Locale refresh completed successfully via elevated Tracker EXE")
+                return None
+
+            # Normal (non-elevated) launch succeeded - continue with polling loop
+            if process is None:
+                return "Failed to start Tracker process"
+
+            print(f"[Settings Manager] Tracker EXE PID: {process.pid}")
+            completion_marker = "COMPLETE!"
+            timeout_seconds = 600
+            poll_interval = 0.5
+            log_interval = 5.0
+            start_time = time.monotonic()
+            next_log_time = start_time + log_interval
+            log_position = 0
+            completion_detected = False
+
+            try:
                 while True:
                     return_code = process.poll()
                     if return_code is not None:
@@ -1556,11 +1731,11 @@ class SettingsManagerApp(tk.Tk):
                         return None
 
                     time.sleep(poll_interval)
-
             except Exception as e:
-                print(f"[Settings Manager] Subprocess error: {e}")
-                # Don't fall through to module import - it won't work properly
-                return f"Could not run Tracker EXE: {e}"
+                print(f"[Settings Manager] Polling error: {e}")
+                if process:
+                    self._terminate_process(process)
+                return f"Error during Tracker execution: {e}"
         else:
             # Tracker EXE not found - this is a configuration error
             error_msg = (
