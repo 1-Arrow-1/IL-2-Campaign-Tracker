@@ -6,10 +6,12 @@ The main application window with tabbed interface.
 
 import os
 import queue
+import re
 import subprocess
 import threading
 import tkinter as tk
 import time
+import logging
 from datetime import datetime
 from tkinter import ttk, messagebox
 from copy import deepcopy
@@ -39,6 +41,8 @@ if HAS_RUAMEL:
     from ruamel.yaml.comments import CommentedMap
 else:
     CommentedMap = dict
+
+logger = logging.getLogger(__name__)
 
 class SettingsManagerApp(tk.Tk):
     """Main Settings Manager Application."""
@@ -73,6 +77,7 @@ class SettingsManagerApp(tk.Tk):
         self._refresh_running: bool = False
         self._country_editor: Optional[ttk.Combobox] = None
         self._country_editor_item: Optional[str] = None
+        self._campaign_display_name_map: Optional[Dict[str, str]] = None
         
         # Load all data
         self._load_all_data()
@@ -131,6 +136,7 @@ class SettingsManagerApp(tk.Tk):
             'mission_dates': deepcopy(self.mission_dates_data) if self.mission_dates_data else None,
             'stock_campaigns': deepcopy(self.stock_campaigns_data) if self.stock_campaigns_data else None,
         }
+        self._campaign_display_name_map = None
     
     def _create_widgets(self) -> None:
         """Create all UI widgets."""
@@ -483,9 +489,7 @@ class SettingsManagerApp(tk.Tk):
         if not self.mission_dates_data:
             return
 
-        stock_campaigns = {}
-        if isinstance(self.stock_campaigns_data, dict):
-            stock_campaigns = self.stock_campaigns_data.get("stock_campaigns", {}) or {}
+        stock_campaigns = self._get_stock_campaigns_map_readonly() or {}
         
         for item in self.campaigns_tree.get_children():
             self.campaigns_tree.delete(item)
@@ -495,7 +499,12 @@ class SettingsManagerApp(tk.Tk):
             if not isinstance(data, dict):
                 continue
 
-            country = stock_campaigns.get(campaign_name) or data.get('country', 'Unknown')
+            stock_key = self._resolve_stock_campaign_key(campaign_name, stock_campaigns) if stock_campaigns else None
+            country = (
+                stock_campaigns.get(stock_key)
+                if stock_key
+                else data.get('country', 'Unknown')
+            )
             offset = data.get('starting_rank_offset', 0)
             self.campaigns_tree.insert('', tk.END, values=(campaign_name, country, offset))
     
@@ -701,6 +710,80 @@ class SettingsManagerApp(tk.Tk):
         self._country_editor = None
         self._country_editor_item = None
 
+    def _read_campaign_display_name(self, info_path: str) -> Optional[str]:
+        """Read display name from an info.locale=eng.txt file."""
+        try:
+            content = None
+            for encoding in ['utf-8', 'utf-8-sig', 'iso-8859-1', 'cp1252']:
+                try:
+                    with open(info_path, 'r', encoding=encoding) as handle:
+                        content = handle.read(1000)
+                    break
+                except UnicodeDecodeError:
+                    continue
+            if not content:
+                return None
+            match = re.search(r'&name="([^"]+)"', content)
+            if not match:
+                match = re.search(r'&name=([^\s\n;]+)', content)
+            if match:
+                return match.group(1)
+        except Exception as exc:
+            logger.debug("Failed reading campaign display name from %s: %s", info_path, exc)
+        return None
+
+    def _get_campaign_display_name_map(self) -> Dict[str, str]:
+        """Map campaign folder names to display names."""
+        if self._campaign_display_name_map is not None:
+            return self._campaign_display_name_map
+
+        mapping: Dict[str, str] = {}
+        game_dir = None
+        if isinstance(self.mission_dates_data, dict):
+            game_dir = self.mission_dates_data.get('game_directory')
+
+        if game_dir and os.path.isdir(game_dir):
+            campaigns_dir = os.path.join(game_dir, "data", "Campaigns")
+            if os.path.isdir(campaigns_dir):
+                for entry in os.listdir(campaigns_dir):
+                    entry_path = os.path.join(campaigns_dir, entry)
+                    if not os.path.isdir(entry_path):
+                        continue
+                    info_path = os.path.join(entry_path, "info.locale=eng.txt")
+                    if not os.path.isfile(info_path):
+                        continue
+                    display_name = self._read_campaign_display_name(info_path)
+                    if display_name:
+                        mapping[entry] = display_name
+
+        self._campaign_display_name_map = mapping
+        return mapping
+
+    def _get_stock_campaigns_map_readonly(self) -> Optional[Dict[str, str]]:
+        """Return stock campaigns mapping if loaded, without creating new entries."""
+        if not isinstance(self.stock_campaigns_data, dict):
+            return None
+        stock_campaigns = self.stock_campaigns_data.get("stock_campaigns")
+        if not isinstance(stock_campaigns, dict):
+            return None
+        return stock_campaigns
+
+    def _resolve_stock_campaign_key(
+        self,
+        campaign_name: str,
+        stock_campaigns: Dict[str, str],
+    ) -> Optional[str]:
+        """Resolve campaign folder name to stock_campaigns.yaml key."""
+        if campaign_name in stock_campaigns:
+            return campaign_name
+        display_name = self._get_campaign_display_name_map().get(campaign_name)
+        if not display_name:
+            return None
+        for key in stock_campaigns.keys():
+            if key.lower() == display_name.lower():
+                return key
+        return None
+
     def _get_stock_campaigns_map(self) -> Dict[str, str]:
         """Return mutable stock campaigns mapping, creating as needed."""
         if not isinstance(self.stock_campaigns_data, dict):
@@ -717,8 +800,42 @@ class SettingsManagerApp(tk.Tk):
             self._destroy_country_editor()
             return
 
-        stock_campaigns = self._get_stock_campaigns_map()
-        stock_campaigns[campaign_name] = new_country
+        stock_campaigns = self._get_stock_campaigns_map_readonly()
+        if not stock_campaigns:
+            messagebox.showerror(
+                self.tr.t("msg_error_title"),
+                "Unable to update campaign country: stock_campaigns.yaml is missing or invalid."
+            )
+            logger.error("Stock campaigns data unavailable; cannot update %s.", campaign_name)
+            self._destroy_country_editor()
+            return
+
+        stock_key = self._resolve_stock_campaign_key(campaign_name, stock_campaigns)
+        if not stock_key:
+            messagebox.showerror(
+                self.tr.t("msg_error_title"),
+                f"Unable to update campaign country: no stock mapping found for '{campaign_name}'."
+            )
+            logger.error(
+                "Stock campaigns mapping not found for campaign '%s'.", campaign_name
+            )
+            self._destroy_country_editor()
+            return
+
+        if stock_key not in stock_campaigns:
+            messagebox.showerror(
+                self.tr.t("msg_error_title"),
+                f"Unable to update campaign country: '{stock_key}' not present in stock_campaigns.yaml."
+            )
+            logger.error(
+                "Resolved stock key '%s' not present in stock_campaigns.yaml (campaign '%s').",
+                stock_key,
+                campaign_name,
+            )
+            self._destroy_country_editor()
+            return
+
+        stock_campaigns[stock_key] = new_country
 
         if (
             self.mission_dates_data
