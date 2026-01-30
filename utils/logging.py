@@ -31,33 +31,59 @@ UNICODE_TO_ASCII = {
     '💾': '[SAVE]',
     '🔹': '[*]',
     '🔁': '[LOOP]',
+    '🧹': '[CLEAN]',
+    '🔍': '[SEARCH]',
+    '📊': '[DATA]',
+    '🏆': '[AWARD]',
+    '✈️': '[PLANE]',
+    '✈': '[PLANE]',
+    '💥': '[HIT]',
+    '🎖️': '[MEDAL]',
+    '🎖': '[MEDAL]',
 }
 
 
-class SafeStreamHandler(logging.StreamHandler):
-    """StreamHandler that gracefully handles Unicode encoding errors on Windows console."""
+class _SafeStreamWrapper:
+    """Wrapper around a stream that handles Unicode encoding errors at write time."""
 
-    def emit(self, record: logging.LogRecord) -> None:
+    def __init__(self, stream, unicode_map: dict[str, str]):
+        self._stream = stream
+        self._unicode_map = unicode_map
+
+    def write(self, s: str) -> int:
         try:
-            super().emit(record)
+            return self._stream.write(s)
         except UnicodeEncodeError:
-            # Replace problematic Unicode characters and retry
-            original_msg = record.msg
-            if isinstance(original_msg, str):
-                safe_msg = original_msg
-                for unicode_char, ascii_replacement in UNICODE_TO_ASCII.items():
-                    safe_msg = safe_msg.replace(unicode_char, ascii_replacement)
-                # Replace any remaining non-ASCII with '?'
-                safe_msg = safe_msg.encode('ascii', errors='replace').decode('ascii')
-                record.msg = safe_msg
-                try:
-                    super().emit(record)
-                except Exception:
-                    pass  # Silently fail if still can't emit
-                finally:
-                    record.msg = original_msg  # Restore original message
-            else:
-                pass  # Can't fix non-string messages
+            # Replace known Unicode characters with ASCII equivalents
+            safe_s = s
+            for unicode_char, ascii_replacement in self._unicode_map.items():
+                safe_s = safe_s.replace(unicode_char, ascii_replacement)
+            # Replace any remaining non-ASCII with '?'
+            safe_s = safe_s.encode('ascii', errors='replace').decode('ascii')
+            return self._stream.write(safe_s)
+
+    def flush(self) -> None:
+        return self._stream.flush()
+
+    def __getattr__(self, name: str):
+        # Delegate all other attributes to the underlying stream
+        return getattr(self._stream, name)
+
+
+class SafeStreamHandler(logging.StreamHandler):
+    """StreamHandler that gracefully handles Unicode encoding errors on Windows console.
+
+    This wraps the stream at the write level to catch encoding errors before
+    Python's standard StreamHandler.emit() handles them (which would print
+    ugly '--- Logging error ---' tracebacks).
+    """
+
+    def __init__(self, stream=None):
+        if stream is None:
+            stream = sys.stdout
+        # Wrap the stream to handle encoding errors at write time
+        wrapped_stream = _SafeStreamWrapper(stream, UNICODE_TO_ASCII)
+        super().__init__(wrapped_stream)
 
 
 def get_logger(name: str, log_path: str | Path | None = None, debug: bool = False) -> logging.Logger:
