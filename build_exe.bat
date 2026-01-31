@@ -313,7 +313,7 @@ echo [3/5] Cleaning old build files...
 if exist "build" rmdir /s /q build
 if exist "dist" rmdir /s /q dist
 if exist "IL2_Campaign_Tracker_v2.2_ML" rmdir /s /q IL2_Campaign_Tracker_v2.2_ML
-if exist "__pycache__" del /s /q __pycache__
+if exist "__pycache__" rmdir /s /q __pycache__
 echo OK
 echo.
 
