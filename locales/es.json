@@ -184,6 +184,7 @@
       "hit_by": "impactado por",
       "landing": "Aterrizaje",
       "landing_damage": "Daños al aterrizar",
+      "pilot_touchdown": "Aterrizaje (paracaídas)",
       "takeoff": "Despegue"
     },
     "events": "Eventos",
@@ -941,6 +942,37 @@
       "loading": "Cargando...",
       "select_campaign": "Seleccionar una campaña",
       "service_record": "Registro de servicio de campaña IL-2"
+    }
+  },
+  "control_gui": {
+    "window_title": "Centro de control del rastreador de campañas IL-2",
+    "button": {
+      "start_tracker": "Iniciar Rastreador",
+      "close_tracker": "Cerrar Rastreador",
+      "service_record": "Registro de Servicio",
+      "settings_manager": "Configuración",
+      "uninstall": "Desinstalar"
+    },
+    "status": {
+      "checking": "Comprobando estado del rastreador...",
+      "running": "El rastreador está en ejecución",
+      "not_running": "El rastreador no está en ejecución",
+      "starting": "Iniciando rastreador..."
+    },
+    "message": {
+      "tracker_not_found": "Ejecutable del rastreador no encontrado:",
+      "service_record_not_found": "Ejecutable del registro de servicio no encontrado:",
+      "settings_not_found": "Administrador de configuración no encontrado:",
+      "uninstaller_not_found": "Desinstalador no encontrado:",
+      "uninstall_manual": "Es posible que deba desinstalar manualmente.",
+      "launch_cancelled": "Inicio cancelado",
+      "launch_cancelled_detail": "El rastreador no se ha iniciado.\n\nEsto puede deberse a que canceló la solicitud de administrador o se produjo un error.",
+      "confirm_uninstall": "Confirmar desinstalación",
+      "confirm_uninstall_detail": "¿Está seguro de que desea desinstalar el Rastreador de Campaña IL-2?\n\nSe eliminará la aplicación pero se conservarán los datos de su campaña.",
+      "uninstall_cancelled": "Desinstalación cancelada",
+      "uninstall_cancelled_detail": "El desinstalador no se ha iniciado.\n\nEs posible que deba ejecutarlo manualmente con privilegios de administrador.",
+      "error_open_service_record": "Error al abrir el registro de servicio.",
+      "error_open_settings": "Error al abrir el administrador de configuración."
     }
   }
 }

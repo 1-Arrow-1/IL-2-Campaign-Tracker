@@ -93,9 +93,9 @@ class CampaignAggregator:
     def get_campaign_list(self) -> List[Dict]:
         """
         Get list of all campaigns for landing page.
-        
+
         Returns:
-            List of campaign summaries:
+            List of campaign summaries sorted by overall score (descending):
             [
                 {
                     "name": "kerch",
@@ -104,49 +104,60 @@ class CampaignAggregator:
                     "missions_completed": 15,
                     "promotions_count": 3,
                     "awards_count": 8,
-                    "final_rank": "Senior Sergeant"
+                    "final_rank": "Senior Sergeant",
+                    "total_score": 12500,
+                    "total_kills": 25
                 }
             ]
         """
         campaigns = self.loader.get_campaigns_with_progress()
         mission_dates = self.loader.get_campaign_mission_dates()
         events_data = self.loader.get_campaign_events()
-        
+        decoded_data = self.loader.get_campaigns_decoded()
+
         result = []
-        
+
         for campaign_name in campaigns:
             try:
                 campaign_info = self._get_campaign_list_item(
                     campaign_name,
                     mission_dates,
-                    events_data
+                    events_data,
+                    decoded_data
                 )
                 if campaign_info:
                     result.append(campaign_info)
             except Exception as e:
                 logger.error(f"Error processing campaign {campaign_name}: {e}", exc_info=True)
                 # Continue with next campaign (defensive)
-        
-        # Sort alphabetically by display name
-        result.sort(key=lambda x: x['display_name'].lower())
-        
-        logger.info(f"Generated campaign list with {len(result)} campaigns")
+
+        # Sort by overall score descending (Hall of Fame style)
+        # Tie-breakers: total kills, then campaign name alphabetically
+        result.sort(key=lambda x: (
+            -x.get('total_score', 0),      # Primary: score descending
+            -x.get('total_kills', 0),      # Secondary: kills descending
+            x['display_name'].lower()      # Tertiary: alphabetical
+        ))
+
+        logger.info(f"Generated campaign list with {len(result)} campaigns (sorted by score)")
         return result
     
     def _get_campaign_list_item(
         self,
         campaign_name: str,
         mission_dates: Dict,
-        events_data: Dict
+        events_data: Dict,
+        decoded_data: Dict
     ) -> Optional[Dict]:
         """
         Create campaign list item for a single campaign.
-        
+
         Args:
             campaign_name: Campaign identifier
             mission_dates: Mission dates dict (all campaigns)
             events_data: Events dict (all campaigns)
-        
+            decoded_data: Decoded campaign save data (all campaigns)
+
         Returns:
             Campaign info dict or None if data insufficient
         """
@@ -156,17 +167,17 @@ class CampaignAggregator:
             completion_state.get(campaign_name, []),
             f"completion_state[{campaign_name}]"
         )
-        
+
         if not missions_completed:
             # Should not happen (filtered by get_campaigns_with_progress)
             return None
-        
+
         # Get country - use case-insensitive lookup for mission_dates
         campaign_dates = self._ensure_dict(
             self.loader.get_mission_dates_for_campaign(campaign_name),
             f"mission_dates[{campaign_name}]"
         )
-        
+
         # Get events
         campaign_events = self._ensure_dict(
             events_data.get(campaign_name, {}),
@@ -177,16 +188,21 @@ class CampaignAggregator:
             campaign_events.get('events', []),
             f"events[{campaign_name}].events"
         )
-        
+
         # Count promotions and awards
         promotions = [e for e in events if e.get('type') == 'promotion']
         awards = [e for e in events if e.get('type') == 'award']
-        
+
         # Get final rank
         final_rank = "Unknown"
         if promotions:
             final_rank = promotions[-1].get('rank', 'Unknown')
-        
+
+        # Calculate total score and kills from decoded data
+        total_score, total_kills = self._calculate_campaign_totals(
+            campaign_name, decoded_data, missions_completed
+        )
+
         return {
             'name': campaign_name,
             'display_name': self._get_display_name(campaign_name, mission_dates),
@@ -194,9 +210,55 @@ class CampaignAggregator:
             'missions_completed': len(missions_completed),
             'promotions_count': len(promotions),
             'awards_count': len(awards),
-            'final_rank': final_rank
+            'final_rank': final_rank,
+            'total_score': total_score,
+            'total_kills': total_kills
         }
-    
+
+    def _calculate_campaign_totals(
+        self,
+        campaign_name: str,
+        decoded_data: Dict,
+        missions_completed: List[str]
+    ) -> tuple:
+        """
+        Calculate total score and kills for a campaign.
+
+        Args:
+            campaign_name: Campaign identifier
+            decoded_data: Decoded campaign save data (all campaigns)
+            missions_completed: List of completed mission IDs
+
+        Returns:
+            Tuple of (total_score, total_kills)
+        """
+        total_score = 0
+        total_kills = 0
+
+        campaign_decoded = decoded_data.get(campaign_name, {})
+        if not isinstance(campaign_decoded, dict):
+            return (total_score, total_kills)
+
+        per_mission_stats = campaign_decoded.get('characterStatisticsByFileName', {})
+        if not isinstance(per_mission_stats, dict):
+            return (total_score, total_kills)
+
+        for mission_id in missions_completed:
+            mission_stats = per_mission_stats.get(mission_id, {})
+            if not isinstance(mission_stats, dict):
+                continue
+
+            # Sum score
+            try:
+                total_score += int(mission_stats.get('score', 0))
+            except (TypeError, ValueError):
+                pass
+
+            # Sum kills (air + ground + naval)
+            total_kills += self._calculate_mission_kills(mission_stats)
+
+        return (total_score, total_kills)
+
     def get_campaign_detail(self, campaign_name: str) -> Optional[Dict]:
         """
         Get complete campaign data for detail page.

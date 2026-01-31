@@ -184,6 +184,7 @@
       "hit_by": "Подбит",
       "landing": "Посадка",
       "landing_damage": "Повреждение при посадке",
+      "pilot_touchdown": "Приземление (парашют)",
       "takeoff": "Взлёт"
     },
     "events": "События",
@@ -941,6 +942,37 @@
       "loading": "Загрузка...",
       "select_campaign": "Выбери кампанию",
       "service_record": "Боевой путь IL-2"
+    }
+  },
+  "control_gui": {
+    "window_title": "Графический интерфейс пользователя центра управления кампанией IL-2",
+    "button": {
+      "start_tracker": "Запустить Tracker",
+      "close_tracker": "Закрыть Tracker",
+      "service_record": "Боевой путь",
+      "settings_manager": "Настройки",
+      "uninstall": "Удалить"
+    },
+    "status": {
+      "checking": "Проверка состояния трекера...",
+      "running": "Трекер запущен",
+      "not_running": "Трекер не запущен",
+      "starting": "Запуск трекера..."
+    },
+    "message": {
+      "tracker_not_found": "Исполняемый файл трекера не найден:",
+      "service_record_not_found": "Исполняемый файл боевого пути не найден:",
+      "settings_not_found": "Менеджер настроек не найден:",
+      "uninstaller_not_found": "Программа удаления не найдена:",
+      "uninstall_manual": "Возможно, вам придётся удалить вручную.",
+      "launch_cancelled": "Запуск отменён",
+      "launch_cancelled_detail": "Трекер не был запущен.\n\nЭто может быть связано с отменой запроса администратора или возникшей ошибкой.",
+      "confirm_uninstall": "Подтвердить удаление",
+      "confirm_uninstall_detail": "Вы уверены, что хотите удалить IL-2 Campaign Tracker?\n\nПриложение будет удалено, но данные ваших кампаний сохранятся.",
+      "uninstall_cancelled": "Удаление отменено",
+      "uninstall_cancelled_detail": "Программа удаления не была запущена.\n\nВозможно, вам придётся запустить её вручную с правами администратора.",
+      "error_open_service_record": "Не удалось открыть боевой путь.",
+      "error_open_settings": "Не удалось открыть менеджер настроек."
     }
   }
 }

@@ -111,6 +111,41 @@ if not exist "settings_manager.spec" (
     pause
     exit /b 1
 )
+if not exist "il2_tracker_control_gui.spec" (
+    echo ERROR: il2_tracker_control_gui.spec not found!
+    pause
+    exit /b 1
+)
+if not exist "tools\il2_tracker_control_gui.py" (
+    echo ERROR: tools\il2_tracker_control_gui.py not found!
+    pause
+    exit /b 1
+)
+if not exist "tools\icons\stop.png" (
+    echo ERROR: tools\icons\stop.png not found!
+    pause
+    exit /b 1
+)
+if not exist "tools\icons\uninstall.png" (
+    echo ERROR: tools\icons\uninstall.png not found!
+    pause
+    exit /b 1
+)
+if not exist "tools\icons\tracker.png" (
+    echo ERROR: tools\icons\tracker.png not found!
+    pause
+    exit /b 1
+)
+if not exist "tools\icons\service_record.png" (
+    echo ERROR: tools\icons\service_record.png not found!
+    pause
+    exit /b 1
+)
+if not exist "tools\icons\settings.png" (
+    echo ERROR: tools\icons\settings.png not found!
+    pause
+    exit /b 1
+)
 if not exist "settings_manager\main.py" (
     echo ERROR: settings_manager\main.py not found!
     pause
@@ -283,6 +318,7 @@ for %%F in (
         "utils\rank_scaling.py"
         "campaign_service_record\utils\i18n.py"
         "utils\locale_config.py"
+        "tools\il2_tracker_control_gui.py"
 ) do (
     if exist %%F (
         echo Testing %%F ...
@@ -384,6 +420,19 @@ if errorlevel 1 (
     exit /b 1
 )
 echo ✓ IL2_Settings_Manager.exe built successfully
+echo.
+
+REM Build Control GUI EXE
+echo Building IL2_Tracker_Control_GUI.exe...
+pyinstaller %PYINSTALLER_OPTS% il2_tracker_control_gui.spec
+if errorlevel 1 (
+    echo.
+    echo ERROR: Build failed for IL2_Tracker_Control_GUI.exe!
+    echo Check the error messages above.
+    pause
+    exit /b 1
+)
+echo ✓ IL2_Tracker_Control_GUI.exe built successfully
 echo OK
 echo.
 
@@ -428,6 +477,16 @@ if exist "dist\IL2_Settings_Manager.exe" (
     copy "dist\IL2_Settings_Manager.exe" "IL2_Campaign_Tracker_v2.2_ML\" >NUL
     if errorlevel 1 (
         echo ERROR: Could not copy IL2_Settings_Manager.exe!
+        pause
+        exit /b 1
+    )
+)
+
+REM Copy Control GUI EXE
+if exist "dist\IL2_Tracker_Control_GUI.exe" (
+    copy "dist\IL2_Tracker_Control_GUI.exe" "IL2_Campaign_Tracker_v2.2_ML\" >NUL
+    if errorlevel 1 (
+        echo ERROR: Could not copy IL2_Tracker_Control_GUI.exe!
         pause
         exit /b 1
     )
@@ -515,10 +574,11 @@ echo.
 echo Distribution package created in: IL2_Campaign_Tracker_v2.2_ML\
 echo.
 echo Contents:
-echo   - IL2_CampaignTracker_v2.2\IL2_CampaignTracker_v2.2_ML.exe 
+echo   - IL2_CampaignTracker_v2.2\IL2_CampaignTracker_v2.2_ML.exe
 echo   - mlg2txt.exe (helper exe for mission log conversion)
-echo   - Campaign_Service_Record\Campaign_Service_Record.exe 
-echo   - IL2_Settings_Manager.exe 
+echo   - Campaign_Service_Record\Campaign_Service_Record.exe
+echo   - IL2_Settings_Manager.exe
+echo   - IL2_Tracker_Control_GUI.exe (launcher/control center)
 echo   - Configuration files (*.yaml)
 echo   - unins000.exe (main uninstaller executable)
 echo   - cleanup_tracker_content.exe (helper exe for uninstallation)

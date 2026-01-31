@@ -1503,6 +1503,7 @@ const DetailPage = {
             { pattern: /\bAircraft Dmg\b:/gi, replacement: `${i18n.t('flightlog.aircraft_damage')}:` },
             { pattern: /\bPilot Dmg\b:/gi, replacement: `${i18n.t('flightlog.pilot_damage')}:` },
             { pattern: /\bTakeoff\b/gi, replacement: i18n.t('flightlog.event.takeoff') },
+            { pattern: /\bPilot Touchdown\b/gi, replacement: i18n.t('flightlog.event.pilot_touchdown') },
             { pattern: /\bLanding Damage\b/gi, replacement: i18n.t('flightlog.event.landing_damage') },
             { pattern: /\bLanding\b/gi, replacement: i18n.t('flightlog.event.landing') },
             { pattern: /\bCrash\b/gi, replacement: i18n.t('flightlog.event.crash') },

@@ -184,6 +184,7 @@
       "hit_by": "Hit by",
       "landing": "Landing",
       "landing_damage": "Landing Damage",
+      "pilot_touchdown": "Pilot Touchdown",
       "takeoff": "Takeoff"
     },
     "events": "Events",
@@ -941,6 +942,37 @@
       "loading": "Loading...",
       "select_campaign": "Select a Campaign",
       "service_record": "IL-2 Campaign Service Record"
+    }
+  },
+  "control_gui": {
+    "window_title": "IL-2 Campaign Tracker Control Center",
+    "button": {
+      "start_tracker": "Start Tracker",
+      "close_tracker": "Close Tracker",
+      "service_record": "Service Record",
+      "settings_manager": "Settings Manager",
+      "uninstall": "Uninstall"
+    },
+    "status": {
+      "checking": "Checking tracker status...",
+      "running": "Tracker is running",
+      "not_running": "Tracker is not running",
+      "starting": "Starting tracker..."
+    },
+    "message": {
+      "tracker_not_found": "Tracker executable not found:",
+      "service_record_not_found": "Service Record executable not found:",
+      "settings_not_found": "Settings Manager executable not found:",
+      "uninstaller_not_found": "Uninstaller not found:",
+      "uninstall_manual": "You may need to uninstall manually.",
+      "launch_cancelled": "Launch Cancelled",
+      "launch_cancelled_detail": "The tracker was not started.\n\nThis may be because you cancelled the administrator prompt, or an error occurred.",
+      "confirm_uninstall": "Confirm Uninstall",
+      "confirm_uninstall_detail": "Are you sure you want to uninstall the IL-2 Campaign Tracker?\n\nThis will remove the application but keep your campaign data.",
+      "uninstall_cancelled": "Uninstall Cancelled",
+      "uninstall_cancelled_detail": "The uninstaller was not started.\n\nYou may need to run it manually with administrator privileges.",
+      "error_open_service_record": "Failed to open Service Record.",
+      "error_open_settings": "Failed to open Settings Manager."
     }
   }
 }

@@ -184,6 +184,7 @@
       "hit_by": "Touché par",
       "landing": "Atterrissage",
       "landing_damage": "Dégâts à l'atterrissage",
+      "pilot_touchdown": "Atterrissage (parachute)",
       "takeoff": "Décollage"
     },
     "events": "Événements",
@@ -942,6 +943,37 @@
       "loading": "Chargement...",
       "select_campaign": "Sélectionner une campagne",
       "service_record": "Dossier de service de campagne IL-2"
+    }
+  },
+  "control_gui": {
+    "window_title": "Centre de Contrôle du Tracker de Campagne IL-2",
+    "button": {
+      "start_tracker": "Démarrer le Tracker",
+      "close_tracker": "Arrêter le Tracker",
+      "service_record": "Dossier de service",
+      "settings_manager": "Paramètres",
+      "uninstall": "Désinstaller"
+    },
+    "status": {
+      "checking": "Vérification de l'état du tracker...",
+      "running": "Le tracker est en cours d'exécution",
+      "not_running": "Le tracker n'est pas en cours d'exécution",
+      "starting": "Démarrage du tracker..."
+    },
+    "message": {
+      "tracker_not_found": "Exécutable du tracker introuvable :",
+      "service_record_not_found": "Exécutable du dossier de service introuvable :",
+      "settings_not_found": "Gestionnaire de paramètres introuvable :",
+      "uninstaller_not_found": "Programme de désinstallation introuvable :",
+      "uninstall_manual": "Vous devrez peut-être désinstaller manuellement.",
+      "launch_cancelled": "Lancement annulé",
+      "launch_cancelled_detail": "Le tracker n'a pas été démarré.\n\nCela peut être dû à l'annulation de la demande d'administrateur ou à une erreur.",
+      "confirm_uninstall": "Confirmer la désinstallation",
+      "confirm_uninstall_detail": "Êtes-vous sûr de vouloir désinstaller le Tracker de Campagne IL-2 ?\n\nL'application sera supprimée mais vos données de campagne seront conservées.",
+      "uninstall_cancelled": "Désinstallation annulée",
+      "uninstall_cancelled_detail": "Le programme de désinstallation n'a pas été démarré.\n\nVous devrez peut-être l'exécuter manuellement avec les privilèges administrateur.",
+      "error_open_service_record": "Impossible d'ouvrir le dossier de service.",
+      "error_open_settings": "Impossible d'ouvrir le gestionnaire de paramètres."
     }
   }
 }

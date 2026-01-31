@@ -184,6 +184,7 @@
       "hit_by": "被命中",
       "landing": "着陆",
       "landing_damage": "着陆损伤",
+      "pilot_touchdown": "跳伞着陆",
       "takeoff": "起飞"
     },
     "events": "事件",
@@ -941,6 +942,37 @@
       "loading": "加载中...",
       "select_campaign": "选择战役",
       "service_record": "IL-2 战役服役记录"
+    }
+  },
+  "control_gui": {
+    "window_title": "IL-2战役追踪器控制中心图形用户界面",
+    "button": {
+      "start_tracker": "启动追踪器",
+      "close_tracker": "关闭追踪器",
+      "service_record": "服役记录",
+      "settings_manager": "设置管理",
+      "uninstall": "卸载"
+    },
+    "status": {
+      "checking": "正在检查追踪器状态...",
+      "running": "追踪器正在运行",
+      "not_running": "追踪器未运行",
+      "starting": "正在启动追踪器..."
+    },
+    "message": {
+      "tracker_not_found": "未找到追踪器程序：",
+      "service_record_not_found": "未找到服役记录程序：",
+      "settings_not_found": "未找到设置管理器：",
+      "uninstaller_not_found": "未找到卸载程序：",
+      "uninstall_manual": "您可能需要手动卸载。",
+      "launch_cancelled": "启动已取消",
+      "launch_cancelled_detail": "追踪器未启动。\n\n这可能是因为您取消了管理员权限请求，或发生了错误。",
+      "confirm_uninstall": "确认卸载",
+      "confirm_uninstall_detail": "您确定要卸载 IL-2 战役追踪器吗？\n\n应用程序将被删除，但您的战役数据将被保留。",
+      "uninstall_cancelled": "卸载已取消",
+      "uninstall_cancelled_detail": "卸载程序未启动。\n\n您可能需要以管理员权限手动运行它。",
+      "error_open_service_record": "无法打开服役记录。",
+      "error_open_settings": "无法打开设置管理器。"
     }
   }
 }

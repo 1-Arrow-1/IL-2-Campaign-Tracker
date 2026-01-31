@@ -184,6 +184,7 @@
       "hit_by": "Getroffen von",
       "landing": "Landung",
       "landing_damage": "Landeschaden",
+      "pilot_touchdown": "Fallschirmlandung",
       "takeoff": "Start"
     },
     "events": "Ereignisse",
@@ -941,6 +942,37 @@
       "loading": "Lädt...",
       "select_campaign": "Kampagne auswählen",
       "service_record": "IL-2 Kampagnen-Dienstakte"
+    }
+  },
+  "control_gui": {
+    "window_title": "IL-2 Kampagnen-Tracker-Kontrollzentrum GUI",
+    "button": {
+      "start_tracker": "Tracker starten",
+      "close_tracker": "Tracker beenden",
+      "service_record": "Dienstakte",
+      "settings_manager": "Einstellungen",
+      "uninstall": "Deinstallieren"
+    },
+    "status": {
+      "checking": "Tracker-Status wird geprüft...",
+      "running": "Tracker läuft",
+      "not_running": "Tracker läuft nicht",
+      "starting": "Tracker wird gestartet..."
+    },
+    "message": {
+      "tracker_not_found": "Tracker-Anwendung nicht gefunden:",
+      "service_record_not_found": "Dienstakte-Anwendung nicht gefunden:",
+      "settings_not_found": "Einstellungs-Manager nicht gefunden:",
+      "uninstaller_not_found": "Deinstallationsprogramm nicht gefunden:",
+      "uninstall_manual": "Möglicherweise müssen Sie manuell deinstallieren.",
+      "launch_cancelled": "Start abgebrochen",
+      "launch_cancelled_detail": "Der Tracker wurde nicht gestartet.\n\nDies kann daran liegen, dass Sie die Administrator-Anfrage abgelehnt haben oder ein Fehler aufgetreten ist.",
+      "confirm_uninstall": "Deinstallation bestätigen",
+      "confirm_uninstall_detail": "Sind Sie sicher, dass Sie den IL-2 Kampagnen-Tracker deinstallieren möchten?\n\nDie Anwendung wird entfernt, aber Ihre Kampagnendaten bleiben erhalten.",
+      "uninstall_cancelled": "Deinstallation abgebrochen",
+      "uninstall_cancelled_detail": "Das Deinstallationsprogramm wurde nicht gestartet.\n\nMöglicherweise müssen Sie es manuell mit Administratorrechten ausführen.",
+      "error_open_service_record": "Dienstakte konnte nicht geöffnet werden.",
+      "error_open_settings": "Einstellungs-Manager konnte nicht geöffnet werden."
     }
   }
 }

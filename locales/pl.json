@@ -184,6 +184,7 @@
       "hit_by": "Trafiony przez",
       "landing": "Lądowanie",
       "landing_damage": "Uszkodzenie przy lądowaniu",
+      "pilot_touchdown": "Lądowanie (spadochron)",
       "takeoff": "Start"
     },
     "events": "Wydarzenia",
@@ -941,6 +942,37 @@
       "loading": "Wczytywanie...",
       "select_campaign": "Wybierz kampanię",
       "service_record": "IL-2 Campaign Service Record"
+    }
+  },
+  "control_gui": {
+    "window_title": "IL-2 Campaign Tracker Centrum sterowania GUI",
+    "button": {
+      "start_tracker": "Uruchom Tracker",
+      "close_tracker": "Zamknij Tracker",
+      "service_record": "Karta Służby",
+      "settings_manager": "Ustawienia",
+      "uninstall": "Odinstaluj"
+    },
+    "status": {
+      "checking": "Sprawdzanie stanu trackera...",
+      "running": "Tracker jest uruchomiony",
+      "not_running": "Tracker nie jest uruchomiony",
+      "starting": "Uruchamianie trackera..."
+    },
+    "message": {
+      "tracker_not_found": "Nie znaleziono pliku wykonywalnego trackera:",
+      "service_record_not_found": "Nie znaleziono pliku wykonywalnego karty służby:",
+      "settings_not_found": "Nie znaleziono menedżera ustawień:",
+      "uninstaller_not_found": "Nie znaleziono deinstalatora:",
+      "uninstall_manual": "Może być konieczna ręczna deinstalacja.",
+      "launch_cancelled": "Uruchamianie anulowane",
+      "launch_cancelled_detail": "Tracker nie został uruchomiony.\n\nMoże to być spowodowane anulowaniem żądania administratora lub wystąpił błąd.",
+      "confirm_uninstall": "Potwierdź deinstalację",
+      "confirm_uninstall_detail": "Czy na pewno chcesz odinstalować IL-2 Campaign Tracker?\n\nAplikacja zostanie usunięta, ale dane kampanii zostaną zachowane.",
+      "uninstall_cancelled": "Deinstalacja anulowana",
+      "uninstall_cancelled_detail": "Deinstalator nie został uruchomiony.\n\nMoże być konieczne ręczne uruchomienie z uprawnieniami administratora.",
+      "error_open_service_record": "Nie udało się otworzyć karty służby.",
+      "error_open_settings": "Nie udało się otworzyć menedżera ustawień."
     }
   }
 }
