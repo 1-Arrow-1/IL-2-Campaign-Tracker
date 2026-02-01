@@ -465,28 +465,60 @@ class EventGenerator:
         """
         Return set of campaign names that have new completions since last run.
         This is used to filter popups - only show popups for campaigns that actually changed.
+        Also clears popup_seen entries when a campaign has been reset (missions removed).
         """
         prev_state = self._load_campaign_completion_state()
         changed = set()
-        
+        popup_state_modified = False
+
         for campaign_name, data in self.save_data.items():
             current_missions = set(data.get('completedMissionsByFileName', {}).keys())
             prev_missions = set(prev_state.get(campaign_name, []))
-            
+
             # Campaign changed if mission list is different
             if current_missions != prev_missions:
                 changed.add(campaign_name)
                 new_count = len(current_missions - prev_missions)
-                removed_count = len(prev_missions - current_missions)
-                
+                removed_missions = prev_missions - current_missions
+                removed_count = len(removed_missions)
+
                 if new_count > 0:
                     self.logger.info("[state] %s: +%s new mission(s)", campaign_name, new_count)
                 if removed_count > 0:
                     self.logger.info("[state] %s: -%s removed mission(s)", campaign_name, removed_count)
-        
+
+                    # Clear popup_seen entries for removed missions (campaign reset/restarted)
+                    # This ensures popups will be shown again when replaying the campaign
+                    if campaign_name in self.popup_seen:
+                        campaign_seen = get_seen_keys(self.popup_seen, campaign_name)
+                        # Filter out events that reference removed missions
+                        remaining_events = []
+                        cleared_count = 0
+                        for event_key in campaign_seen:
+                            # Event key format: "type|name|mission_id|date"
+                            parts = event_key.split('|')
+                            if len(parts) >= 3:
+                                mission_id = parts[2]
+                                # Keep event if mission still exists OR it's an "Initial" event
+                                if mission_id in current_missions or mission_id == "Initial":
+                                    remaining_events.append(event_key)
+                                else:
+                                    cleared_count += 1
+                            else:
+                                remaining_events.append(event_key)
+
+                        if cleared_count > 0:
+                            self.popup_seen = set_seen_keys(self.popup_seen, campaign_name, remaining_events)
+                            popup_state_modified = True
+                            log_message(LOGGER, f"[popups] {campaign_name}: cleared {cleared_count} popup entries for removed missions")
+
+        # Save popup state if modified
+        if popup_state_modified:
+            save_popup_seen(POPUP_SEEN_FILE, self.popup_seen)
+
         if not changed:
             log_message(LOGGER, f"[state] No campaign changes detected")
-        
+
         return changed    
     
     def extract_mission_datetime(self, campaign_name: str, mission_id: str) -> tuple[Optional[str], Optional[str]]:
@@ -3335,18 +3367,20 @@ class EventGenerator:
                 log_message(LOGGER, f"[popups] {campaign_name}: initial sync ({len(keys_now_set)} events)")
                 baseline_synced = True
 
-            # CRITICAL: Only process popups for campaigns that changed THIS run
+            # CRITICAL: Process popups for campaigns that changed THIS run OR have unseen events
+            # (The latter handles deferred popups from previous runs where completion_state
+            # was saved but popup_seen was not updated)
+            keys_now = [make_event_key(ev) for ev in events] if events else []
+            keys_now_set = set(keys_now)
+            campaign_seen = set(get_seen_keys(self.popup_seen, campaign_name))
+            has_unseen_events = bool(keys_now_set - campaign_seen)
+
             if (
                 self.enable_popups
                 and events
-                and campaign_name in campaigns_with_changes
+                and (campaign_name in campaigns_with_changes or has_unseen_events)
                 and not baseline_synced
             ):
-                keys_now = [make_event_key(ev) for ev in events]
-                keys_now_set = set(keys_now)
-
-                # Use get_seen_keys to handle both old and new format
-                campaign_seen = set(get_seen_keys(self.popup_seen, campaign_name))
                 new_keys = keys_now_set - campaign_seen
 
                 if new_keys:
@@ -3387,9 +3421,10 @@ class EventGenerator:
                 self.enable_popups
                 and events
                 and campaign_name not in campaigns_with_changes
+                and not has_unseen_events
                 and not baseline_synced
-            ):    
-                # Campaign has events but didn't change - skip popup processing
+            ):
+                # Campaign has events but didn't change and no unseen events - skip popup processing
                 log_message(LOGGER, f"[popups] {campaign_name}: skipped (no changes detected)")
 
             
