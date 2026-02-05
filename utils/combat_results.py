@@ -209,7 +209,7 @@ def calculate_total_air_kills_weighted(stats: Dict[str, Any]) -> float:
     light = int(stats.get('killLightPlane', 0))
     medium = int(stats.get('killMediumPlane', 0))
     heavy = int(stats.get('killHeavyPlane', 0))
-    static = int(stats.get('killStaticPlane', 0))   mm
+    static = int(stats.get('killStaticPlane', 0))
     balloons = int(stats.get('killMediumAerostat', 0))
 
     return light + medium + heavy + (static * 0.5) + balloons
