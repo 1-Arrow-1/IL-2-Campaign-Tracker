@@ -972,10 +972,13 @@ class CampaignDateExtractor:
                 return None
             
             raw_date = date_match.group(1).strip()
-            
+
             # Clean up the date string
             # Remove trailing text like "Time", "Weather", etc.
             raw_date = re.split(r'\s+(Time|Weather|Airfield|Callsign|Wind)', raw_date, flags=re.IGNORECASE)[0].strip()
+
+            # Remove embedded time like "0945 hours." or "1430 hours" (e.g. hurtgen campaign)
+            raw_date = re.sub(r',?\s*\d{3,4}\s+hours\.?', '', raw_date).strip()
             
             # Try to normalize the date
             normalized_date = self.normalize_date(raw_date)

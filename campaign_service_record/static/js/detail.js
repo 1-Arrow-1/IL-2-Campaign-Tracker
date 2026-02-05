@@ -1354,7 +1354,7 @@ const DetailPage = {
             ? i18n.t('web.label.promotion')
             : i18n.t('web.label.award');
         const mainText = event.type === 'promotion' ? translateRankName(event.rank, event.country) : translateAwardName(event.name);
-        const dateText = event.date || `Mission ${event.mission_number || '?'}`;
+        const dateText = this.localizeDebriefingDates(event.date || `Mission ${event.mission_number || '?'}`);
         const reasonText = event.reason || '';
 
         const header = document.createElement('div');
