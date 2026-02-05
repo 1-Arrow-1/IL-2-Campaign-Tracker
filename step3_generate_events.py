@@ -571,10 +571,13 @@ class EventGenerator:
                     continue
                 
                 # Look for: Date: 4 November, 1943<br>
+                # Also handles <u>Date:</u> and <b>Date:</b> formats
                 date_str = None
-                date_match = re.search(r'Date:\s*([^<\r\n]+)', content, re.IGNORECASE)
+                date_match = re.search(r'Date:\s*(?:</?[\w\s]+>)*\s*([^<\r\n]+)', content, re.IGNORECASE)
                 if date_match:
                     date_str = date_match.group(1).strip()
+                    # Remove embedded time like "0945 hours." (e.g. hurtgen campaign)
+                    date_str = re.sub(r',?\s*\d{3,4}\s+hours\.?', '', date_str).strip()
                 
                 # Look for: Time: 9:45<br> or Time: 09:45<br>
                 time_str = None
