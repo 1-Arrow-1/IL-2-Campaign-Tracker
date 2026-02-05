@@ -1403,7 +1403,7 @@ const DetailPage = {
         content.appendChild(textBlock);
         item.appendChild(content);
 
-        this.bindPreviewModal(item, event, img, mainText);
+        this.bindPreviewModal(item, event, mainText);
 
         return item;
     },
@@ -1436,10 +1436,9 @@ const DetailPage = {
         });
     },
 
-    bindPreviewModal(item, event, img, mainText) {
-        const previewUrl = event.type === 'award'
-            ? (event.modal_image_url || event.image_url)
-            : event.image_url;
+    bindPreviewModal(item, event, mainText) {
+        // Use large modal image URL for both awards and promotions (512x512 insignias)
+        const previewUrl = event.modal_image_url || event.image_url;
 
         if (!previewUrl) {
             return;
@@ -1452,14 +1451,11 @@ const DetailPage = {
                 return;
             }
             const title = event.type === 'promotion' ? translateRankName(event.rank, event.country) : translateAwardName(event.name);
-            const size = event.type === 'promotion' ? this.getPromotionPreviewSize(img) : null;
             const description = this.getEventDescription(event);
             PreviewModal.open({
                 title: title || mainText || '',
                 imageUrl: previewUrl,
                 imageAlt: title || mainText || 'Event preview',
-                width: size ? size.width : null,
-                height: size ? size.height : null,
                 description
             });
         });

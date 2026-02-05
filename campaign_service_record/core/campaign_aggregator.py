@@ -818,7 +818,8 @@ class CampaignAggregator:
                 relative_path = build_award_image_relative_path(country, image_name, event.get('date'))
                 data_uri = build_dds_data_uri(game_directory, relative_path)
                 enriched['image_url'] = data_uri or build_game_asset_url(relative_path)
-                if event.get('type') == 'award':
+                # Add large image URL for modal popup (both awards and promotions)
+                if event.get('type') in ('award', 'promotion'):
                     large_relative_path = build_award_large_image_relative_path(
                         country,
                         image_name,
