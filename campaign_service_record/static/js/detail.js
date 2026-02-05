@@ -127,7 +127,7 @@ const nameToI18nKey = (name) => {
     if (!name) return "";
     return name
         .toLowerCase()
-        .replace(/[’‘]/g, "'")
+        .replace(/['']/g, "'")
         .replace(/['"]/g, "")
         .replace(/&/g, "and")
         .replace(/\+/g, "and")
@@ -135,7 +135,7 @@ const nameToI18nKey = (name) => {
         .replace(/\s*\(\s*/g, "_")
         .replace(/\s*\)\s*/g, "")
         .replace(/…/g, "")
-        .replace(/\s+/g, "_")
+        .replace(/[-\s]+/g, "_")
         .replace(/_+/g, "_")
         .replace(/^_|_$/g, "");
 };

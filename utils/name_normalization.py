@@ -56,8 +56,8 @@ def name_to_i18n_key(name: str) -> str:
     # Remove ellipsis
     value = value.replace("…", "")
 
-    # Replace whitespace with underscores
-    value = re.sub(r"\s+", "_", value)
+    # Replace hyphens and whitespace with underscores
+    value = re.sub(r"[-\s]+", "_", value)
 
     # Collapse multiple underscores
     value = re.sub(r"_+", "_", value)
