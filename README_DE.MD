@@ -47,6 +47,8 @@ Ein umfassendes Tracking-Tool für IL-2 Sturmovik Great Battles Einzelspieler-**
 | **Wiederherstellungsfunktion** | Einfache GUI zur Wiederherstellung vorheriger Kampagnenzustände |
 | **Multi-Kampagnen-Unterstützung** | Verfolgt mehrere Kampagnen gleichzeitig |
 | **WW1-Erkennung & Ausschluss** | Erkennt Flying Circus (WW1) Kampagnen und überspringt sie standardmäßig |
+| **Control Center GUI** | Zentrale Anlaufstelle zum Starten von Tracker, Einstellungsmanager und Dienstakte |
+| **Kampagnenspezifische Sprache** | Sprache der Detailseite für einzelne Kampagnen in der Dienstakte überschreiben |
 
 ---
 
@@ -161,12 +163,37 @@ Der Setup-Assistent führt dich durch die Auswahl des Installationsverzeichnisse
 Eine allgemeine Einrichtungsanleitung findest du hier:
 <https://forum.il2-series.com/topic/772-expanded-career-rank-mod/#findComment-4176>
 
+### Control Center GUI
+
+Das **Control Center** (`IL2_Control_Center.exe`) bietet eine zentrale Anlaufstelle zum Starten aller Tracker-Komponenten:
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│              IL-2 Campaign Tracker                      │
+│                  Control Center                         │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│   [🚀 Tracker starten]   Startet den Campaign Tracker   │
+│                                                         │
+│   [⚙️ Einstellungen]     Öffnet Einstellungsmanager     │
+│                                                         │
+│   [📋 Dienstakte]        Öffnet Kampagnen-Dienstakte    │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Funktionen:**
+- Ein-Klick-Zugriff auf alle Tracker-Komponenten
+- Visuelle Statusanzeigen
+- Saubere, moderne Oberfläche
+
 ### Installierte Dateien
 
 Der Installer platziert die folgenden Dateien in deinem gewählten Installationsverzeichnis:
 
 ```text
 IL2_Campaign_Tracker/
+├── IL2_Control_Center.exe                # Control Center GUI (empfohlener Einstiegspunkt)
 ├── IL2_Campaign_Tracker.exe              # Hauptprogramm
 ├── IL2_Settings_Manager.exe              # Einstellungsmanager GUI
 ├── mlg2txt.exe                           # Hilfsprogramm zum Dekodieren von Missionsberichten
@@ -282,11 +309,21 @@ Konfiguriere die Beförderungs-Punkteschwellen für jede Nation:
 
 Konfiguriere kampagnenspezifische Einstellungen:
 
-| Einstellung | Beschreibung | Bereich |
-| ----------- | ------------ | ------- |
+| Einstellung | Beschreibung | Bereich/Optionen |
+| ----------- | ------------ | ---------------- |
 | **Start-Rang-Offset** | Starte Kampagnen mit höheren Rängen | 0-7 |
+| **Detailseiten-Sprache** | Sprache für die Dienstakte-Detailseite überschreiben | Standard, Englisch, Deutsch, Russisch |
 
 > **Tipp:** Verwende höhere Offsets (bis zu 7) für Kampagnen, in denen der Spieler beim Missionsstart bereits Staffelführer ist. Dies ist besonders nützlich für britische Kampagnen aufgrund ihrer vielen niedrigeren Ränge.
+
+##### Kampagnenspezifische Sprachüberschreibung
+
+Die Einstellung **Detailseiten-Sprache** ermöglicht es dir, die Detailseite einer bestimmten Kampagne in der Dienstakte auf eine bestimmte Sprache (Englisch, Deutsch oder Russisch) festzulegen, unabhängig von der globalen Spracheinstellung.
+
+- **Standard**: Folgt dynamisch der globalen Spracheinstellung
+- **Englisch/Deutsch/Russisch**: Sperrt die Detailseite auf diese spezifische Sprache
+
+Dies ist nützlich, wenn du die Nachbesprechungen einer deutschen Kampagne auf Deutsch ansehen möchtest, während der Rest der Anwendung in deiner bevorzugten Sprache bleibt. Wenn du diese Einstellung änderst und speicherst, werden die lokalisierten Nachbesprechungen automatisch für die betroffenen Kampagnen neu generiert.
 
 ### Automatische Neugenerierung
 
@@ -650,6 +687,8 @@ Die **Kampagnen-Dienstakte** ist eine webbasierte Anwendung, die eine elegante, 
   - und mehr
 - **Rechte Spalte**: Missionsnachbesprechungen mit detaillierten Kampfergebnissen
 - **Zurück-Button**: Zurück zur Kampagnenübersicht
+
+**Kampagnenspezifische Sprache**: Die Detailseite kann in einer anderen Sprache als der globalen Einstellung angezeigt werden. Dies wird im Einstellungsmanager unter dem Reiter "Kampagnen" konfiguriert. Wenn eine Kampagne eine spezifische Sprachüberschreibung hat, wird die Detailseite (einschließlich Nachbesprechungen) in dieser Sprache angezeigt, während die Startseite in deiner globalen Sprache bleibt.
 
 ### Piloteninformationen anpassen
 
