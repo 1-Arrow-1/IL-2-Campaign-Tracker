@@ -329,6 +329,13 @@ class CampaignAggregator:
             debriefings_html
         )
         
+        # Extract localized debriefings (en/de/ru) if available
+        localized_debriefings = {
+            'debriefings_html_en': campaign_events.get('debriefings_html_en', ''),
+            'debriefings_html_de': campaign_events.get('debriefings_html_de', ''),
+            'debriefings_html_ru': campaign_events.get('debriefings_html_ru', ''),
+        }
+
         return {
             'name': campaign_name,
             'display_name': self._get_display_name(campaign_name, mission_dates),
@@ -336,7 +343,8 @@ class CampaignAggregator:
             'missions_completed': len(completed_missions),
             'events': events,
             'debriefings_html': debriefings_html,
-            'summary': summary
+            'summary': summary,
+            **localized_debriefings,  # Include localized versions
         }
 
     @staticmethod

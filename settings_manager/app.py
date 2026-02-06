@@ -48,6 +48,35 @@ logger = logging.getLogger(__name__)
 _ERROR_ELEVATION_REQUIRED = 740
 _ERROR_CANCELLED = 1223
 
+# Tracker EXE name for process detection
+_TRACKER_EXE_NAME = "IL2_CampaignTracker_v2.2_ML.exe"
+
+
+def _is_tracker_running() -> bool:
+    """Check if the Tracker EXE is currently running."""
+    try:
+        import psutil
+        tracker_name_lower = _TRACKER_EXE_NAME.lower()
+        for proc in psutil.process_iter(['name']):
+            try:
+                if proc.info['name'] and proc.info['name'].lower() == tracker_name_lower:
+                    return True
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+        return False
+    except ImportError:
+        # psutil not available, try Windows tasklist
+        try:
+            result = subprocess.run(
+                ['tasklist', '/FI', f'IMAGENAME eq {_TRACKER_EXE_NAME}', '/NH'],
+                capture_output=True,
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0,
+            )
+            return _TRACKER_EXE_NAME.lower() in result.stdout.lower()
+        except Exception:
+            return False  # Can't detect, assume not running
+
 
 def _run_elevated_windows(
     exe_path: str,
@@ -183,6 +212,15 @@ class SettingsManagerApp(tk.Tk):
     """Main Settings Manager Application."""
 
     COUNTRY_OPTIONS = ["Germany", "Soviet Union", "Britain", "USA"]
+
+    # Detail page language options: stored value -> i18n key
+    # None means "Default" (follow global language)
+    DETAIL_PAGE_LOCALE_OPTIONS = {
+        None: "lbl_language_default",
+        "en": "lbl_language_english",
+        "de": "lbl_language_german",
+        "ru": "lbl_language_russian",
+    }
     
     def __init__(self):
         super().__init__()
@@ -212,8 +250,12 @@ class SettingsManagerApp(tk.Tk):
         self._refresh_running: bool = False
         self._country_editor: Optional[ttk.Combobox] = None
         self._country_editor_item: Optional[str] = None
+        self._language_editor: Optional[ttk.Combobox] = None
+        self._language_editor_item: Optional[str] = None
         self._campaign_display_name_map: Optional[Dict[str, str]] = None
-        
+        # Track campaigns that need localized debriefings regeneration
+        self._campaigns_needing_debriefings_regen: set = set()
+
         # Load all data
         self._load_all_data()
         
@@ -591,20 +633,22 @@ class SettingsManagerApp(tk.Tk):
             return
         
         # Treeview
-        columns = ('campaign', 'country', 'offset')
+        columns = ('campaign', 'country', 'language', 'offset')
         self.campaigns_tree = ttk.Treeview(
             frame,
             columns=columns,
             show='headings',
             height=12
         )
-        
+
         self.campaigns_tree.heading('campaign', text=self.tr.t("lbl_campaign_name"))
         self.campaigns_tree.heading('country', text=self.tr.t("lbl_country"))
+        self.campaigns_tree.heading('language', text=self.tr.t("lbl_detail_page_language"))
         self.campaigns_tree.heading('offset', text=self.tr.t("lbl_starting_rank_offset"))
-        self.campaigns_tree.column('campaign', width=300, anchor=tk.W)
+        self.campaigns_tree.column('campaign', width=220, anchor=tk.W)
         self.campaigns_tree.column('country', width=100, anchor=tk.CENTER)
-        self.campaigns_tree.column('offset', width=150, anchor=tk.CENTER)
+        self.campaigns_tree.column('language', width=130, anchor=tk.CENTER)
+        self.campaigns_tree.column('offset', width=130, anchor=tk.CENTER)
         
         scrollbar = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=self.campaigns_tree.yview)
         self.campaigns_tree.configure(yscrollcommand=scrollbar.set)
@@ -625,10 +669,10 @@ class SettingsManagerApp(tk.Tk):
             return
 
         stock_campaigns = self._get_stock_campaigns_map_readonly() or {}
-        
+
         for item in self.campaigns_tree.get_children():
             self.campaigns_tree.delete(item)
-        
+
         for campaign_name, data in sorted(self.mission_dates_data.items()):
             # Skip if data is not a dict (shouldn't happen, but safety check)
             if not isinstance(data, dict):
@@ -641,7 +685,13 @@ class SettingsManagerApp(tk.Tk):
                 else data.get('country', 'Unknown')
             )
             offset = data.get('starting_rank_offset', 0)
-            self.campaigns_tree.insert('', tk.END, values=(campaign_name, country, offset))
+
+            # Get detail page language (translated display value)
+            detail_locale = data.get('detail_page_locale')
+            lang_key = self.DETAIL_PAGE_LOCALE_OPTIONS.get(detail_locale, "lbl_language_default")
+            language_display = self.tr.t(lang_key)
+
+            self.campaigns_tree.insert('', tk.END, values=(campaign_name, country, language_display, offset))
     
     def _create_button_bar(self, parent) -> None:
         """Create bottom button bar."""
@@ -767,34 +817,44 @@ class SettingsManagerApp(tk.Tk):
         """Edit selected campaign offset."""
         if not self.mission_dates_data:
             return
-        
+
         selection = self.campaigns_tree.selection()
         if not selection:
             return
-        
+
         item = selection[0]
         values = self.campaigns_tree.item(item, 'values')
-        campaign_name, _, old_offset = values[0], values[1], int(values[2])
-        
+        # Columns: campaign(0), country(1), language(2), offset(3)
+        campaign_name = values[0]
+        old_offset = int(values[3])
+
         dialog = OffsetDialog(self, self.tr, campaign_name, old_offset)
         if dialog.result is not None:
             self.mission_dates_data[campaign_name]['starting_rank_offset'] = dialog.result
             self._populate_campaigns_tree()
 
     def _on_campaigns_tree_click(self, event: tk.Event) -> None:
-        """Handle single click for campaign country editing."""
+        """Handle single click for campaign country/language editing."""
         region = self.campaigns_tree.identify("region", event.x, event.y)
         if region != "cell":
             self._destroy_country_editor()
+            self._destroy_language_editor()
             return
         column = self.campaigns_tree.identify_column(event.x)
-        if column != "#2":
-            self._destroy_country_editor()
-            return
         item = self.campaigns_tree.identify_row(event.y)
         if not item:
             return
-        self._start_campaign_country_edit(item)
+
+        # Column #2 = country, Column #3 = language
+        if column == "#2":
+            self._destroy_language_editor()
+            self._start_campaign_country_edit(item)
+        elif column == "#3":
+            self._destroy_country_editor()
+            self._start_campaign_language_edit(item)
+        else:
+            self._destroy_country_editor()
+            self._destroy_language_editor()
 
     def _on_campaigns_tree_double_click(self, event: tk.Event) -> None:
         """Handle double click for campaign offset editing."""
@@ -802,7 +862,8 @@ class SettingsManagerApp(tk.Tk):
         if region != "cell":
             return
         column = self.campaigns_tree.identify_column(event.x)
-        if column == "#3":
+        # Column #4 = offset (after adding language column)
+        if column == "#4":
             self._on_edit_campaign_offset()
 
     def _start_campaign_country_edit(self, item: str) -> None:
@@ -844,6 +905,114 @@ class SettingsManagerApp(tk.Tk):
             self._country_editor.destroy()
         self._country_editor = None
         self._country_editor_item = None
+
+    def _start_campaign_language_edit(self, item: str) -> None:
+        """Begin inline editing of a campaign's detail page language."""
+        self._destroy_language_editor()
+
+        values = self.campaigns_tree.item(item, 'values')
+        if not values:
+            return
+        campaign_name = values[0]
+        current_language_display = values[2]
+
+        bbox = self.campaigns_tree.bbox(item, "#3")
+        if not bbox:
+            return
+        x, y, width, height = bbox
+
+        # Build translated options list
+        options = [self.tr.t(key) for key in self.DETAIL_PAGE_LOCALE_OPTIONS.values()]
+
+        editor = ttk.Combobox(
+            self.campaigns_tree,
+            values=options,
+            state='readonly'
+        )
+        if current_language_display in options:
+            editor.set(current_language_display)
+        else:
+            editor.set(options[0])  # Default
+        editor.place(x=x, y=y, width=width, height=height)
+        editor.focus_set()
+        editor.bind(
+            "<<ComboboxSelected>>",
+            lambda e: self._on_campaign_language_selected(item, campaign_name, editor.get())
+        )
+        editor.bind("<FocusOut>", lambda e: self._destroy_language_editor())
+        editor.bind("<Escape>", lambda e: self._destroy_language_editor())
+
+        self._language_editor = editor
+        self._language_editor_item = item
+
+    def _destroy_language_editor(self) -> None:
+        """Destroy any active language editor."""
+        if self._language_editor is not None:
+            self._language_editor.destroy()
+        self._language_editor = None
+        self._language_editor_item = None
+
+    def _on_campaign_language_selected(self, item: str, campaign_name: str, selected_display: str) -> None:
+        """Update campaign detail page language selection."""
+        if not selected_display:
+            self._destroy_language_editor()
+            return
+
+        # Convert display text back to stored value (None, 'en', 'de', 'ru')
+        stored_value = None
+        for locale_val, key in self.DETAIL_PAGE_LOCALE_OPTIONS.items():
+            if self.tr.t(key) == selected_display:
+                stored_value = locale_val
+                break
+
+        # Update mission_dates_data
+        if (
+            self.mission_dates_data
+            and campaign_name in self.mission_dates_data
+            and isinstance(self.mission_dates_data[campaign_name], dict)
+        ):
+            if stored_value is None:
+                # Remove the key if setting to default (cleaner JSON)
+                self.mission_dates_data[campaign_name].pop('detail_page_locale', None)
+            else:
+                self.mission_dates_data[campaign_name]['detail_page_locale'] = stored_value
+
+            # Mark this campaign for debriefings regeneration on save
+            # Compare with original value to determine if regeneration is needed
+            original_locale = None
+            if (
+                self.original_data.get('mission_dates')
+                and campaign_name in self.original_data['mission_dates']
+                and isinstance(self.original_data['mission_dates'][campaign_name], dict)
+            ):
+                original_locale = self.original_data['mission_dates'][campaign_name].get('detail_page_locale')
+
+            if stored_value != original_locale:
+                # Value changed - mark for regeneration if specific language is set
+                if stored_value is not None:
+                    self._campaigns_needing_debriefings_regen.add(campaign_name)
+                    logger.info(
+                        "Campaign '%s' marked for localized debriefings regeneration (locale=%s)",
+                        campaign_name, stored_value
+                    )
+                else:
+                    # Changed back to Default - remove from regeneration set if present
+                    self._campaigns_needing_debriefings_regen.discard(campaign_name)
+                    logger.info(
+                        "Campaign '%s' removed from debriefings regeneration set (set to Default)",
+                        campaign_name
+                    )
+            else:
+                # Value unchanged from original - remove from regeneration set
+                self._campaigns_needing_debriefings_regen.discard(campaign_name)
+
+        # Update tree view
+        values = list(self.campaigns_tree.item(item, 'values'))
+        if len(values) >= 3:
+            values[2] = selected_display
+            self.campaigns_tree.item(item, values=values)
+
+        self._destroy_language_editor()
 
     def _read_campaign_display_name(self, info_path: str) -> Optional[str]:
         """Read display name from an info.locale=eng.txt file."""
@@ -1431,10 +1600,19 @@ class SettingsManagerApp(tk.Tk):
     
     def _apply_changes(self, close_after: bool = False) -> bool:
         """Apply changes and optionally close the window."""
+        # Check if Tracker is running - warn user to avoid file locking issues
+        if _is_tracker_running():
+            result = messagebox.askyesno(
+                self.tr.t("msg_confirm_title"),
+                self.tr.t("msg_tracker_running_warning"),
+            )
+            if not result:
+                return False
+
         previous_locale = None
         previous_rank_scaling = None
         previous_ranks = None
-        
+
         if isinstance(self.original_data.get("settings"), dict):
             previous_locale = self.original_data["settings"].get("locale")
         
@@ -1480,7 +1658,7 @@ class SettingsManagerApp(tk.Tk):
             if needs_regenerate:
                 # Use current locale for regeneration
                 regen_locale = current_locale or previous_locale or "en"
-                
+
                 # Log what changed
                 changes = []
                 if locale_changed:
@@ -1490,9 +1668,26 @@ class SettingsManagerApp(tk.Tk):
                 if ranks_changed:
                     changes.append("ranks")
                 print(f"[Settings Manager] Changes detected: {', '.join(changes)} - triggering regeneration")
-                
+
+                # Full regeneration will handle all campaigns, so clear the per-campaign set
+                self._campaigns_needing_debriefings_regen.clear()
+
                 self._start_locale_refresh(regen_locale, close_after=close_after)
                 return True
+
+            # Regenerate localized debriefings for campaigns with changed language setting
+            if self._campaigns_needing_debriefings_regen:
+                campaigns_to_regen = list(self._campaigns_needing_debriefings_regen)
+                print(f"[Settings Manager] Regenerating localized debriefings for {len(campaigns_to_regen)} campaign(s): {campaigns_to_regen}")
+
+                error = self._regenerate_debriefings_subprocess(campaigns_to_regen)
+                if error:
+                    messagebox.showwarning(
+                        self.tr.t("msg_confirm_title"),
+                        f"Debriefings regeneration issue:\n{error}\n\nSettings were saved successfully."
+                    )
+
+                self._campaigns_needing_debriefings_regen.clear()
 
             messagebox.showinfo(
                 self.tr.t("msg_confirm_title"),
@@ -1567,6 +1762,133 @@ class SettingsManagerApp(tk.Tk):
 
         if self._close_after_refresh:
             self.destroy()
+
+    def _regenerate_debriefings_subprocess(self, campaigns: List[str]) -> Optional[str]:
+        """Regenerate localized debriefings for specific campaigns via Tracker EXE.
+
+        This runs the Tracker EXE with --regen-debriefings to regenerate localized
+        debriefings (en/de/ru) for campaigns where the user changed the detail page
+        language setting. Uses elevation if required (for reading FlightLogs).
+
+        Args:
+            campaigns: List of campaign names to regenerate debriefings for
+
+        Returns:
+            None on success, error message string on failure
+        """
+        if not campaigns:
+            return None
+
+        from pathlib import Path
+        import sys
+
+        # Determine the directory containing the EXEs
+        if getattr(sys, 'frozen', False):
+            exe_dir = Path(sys.executable).resolve().parent
+        else:
+            exe_dir = Path(__file__).resolve().parent.parent
+
+        tracker_exe = exe_dir / "IL2_CampaignTracker_v2.2_ML.exe"
+        print(f"[Settings Manager] Looking for Tracker EXE at: {tracker_exe}")
+
+        if not tracker_exe.exists():
+            # Fallback: try direct Python import (won't have elevation)
+            print("[Settings Manager] Tracker EXE not found, trying direct Python import...")
+            try:
+                from step3_generate_events import regenerate_campaign_localized_debriefings
+                for campaign in campaigns:
+                    regenerate_campaign_localized_debriefings(campaign)
+                return None
+            except Exception as e:
+                return f"Failed to regenerate debriefings: {e}"
+
+        # Build command args
+        cmd_args = ["--regen-debriefings"] + campaigns
+
+        log_name = f"settings_manager_debriefings_{datetime.now():%Y%m%d_%H%M%S}.log"
+        log_path = exe_dir / log_name
+        print(f"[Settings Manager] Debriefings regeneration log: {log_path}")
+
+        # Try normal subprocess launch first
+        needs_elevation = False
+
+        try:
+            startupinfo = None
+            creationflags = 0
+            if sys.platform == 'win32':
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                startupinfo.wShowWindow = subprocess.SW_HIDE
+                creationflags = subprocess.CREATE_NO_WINDOW
+
+            with open(log_path, "w", encoding="utf-8") as log_file:
+                result = subprocess.run(
+                    [str(tracker_exe)] + cmd_args,
+                    stdout=log_file,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    cwd=str(exe_dir),
+                    stdin=subprocess.DEVNULL,
+                    startupinfo=startupinfo,
+                    creationflags=creationflags,
+                    timeout=300,  # 5 minute timeout
+                )
+
+            if result.returncode == 0:
+                print("[Settings Manager] Debriefings regeneration completed successfully")
+                return None
+            else:
+                error_output = self._read_log_excerpt(log_path)
+                # Check if it's a permission error
+                if "Permission denied" in error_output or "Errno 13" in error_output:
+                    needs_elevation = True
+                else:
+                    return f"Debriefings regeneration failed (exit code {result.returncode}):\n{error_output}"
+
+        except OSError as e:
+            if sys.platform == 'win32' and getattr(e, 'winerror', None) == _ERROR_ELEVATION_REQUIRED:
+                print("[Settings Manager] Elevation required (WinError 740)")
+                needs_elevation = True
+            else:
+                return f"Could not run Tracker EXE: {e}"
+        except subprocess.TimeoutExpired:
+            return "Debriefings regeneration timed out (5 minutes)"
+        except Exception as e:
+            return f"Debriefings regeneration error: {e}"
+
+        # Handle elevated launch if required
+        if needs_elevation:
+            print("[Settings Manager] Requesting elevation for debriefings regeneration...")
+            with open(log_path, "w", encoding="utf-8") as f:
+                f.write(f"[Settings Manager] Launching with elevation at {datetime.now()}\n")
+
+            success, return_code, error_msg = _run_elevated_windows(
+                str(tracker_exe),
+                cmd_args,
+                str(exe_dir),
+                str(log_path),
+                env=None,
+                timeout_seconds=300,
+            )
+
+            if not success:
+                if error_msg == "UAC_CANCELLED":
+                    return (
+                        "Administrator rights are required to regenerate debriefings.\n\n"
+                        "Please click 'Yes' on the User Account Control prompt when asked."
+                    )
+                elif error_msg == "TIMEOUT":
+                    return "Debriefings regeneration timed out (5 minutes)"
+                else:
+                    return f"Elevated launch failed: {error_msg}"
+
+            if return_code != 0:
+                error_output = self._read_log_excerpt(log_path)
+                return f"Debriefings regeneration failed (exit code {return_code}):\n{error_output}"
+
+            print("[Settings Manager] Debriefings regeneration completed successfully via elevation")
+
+        return None
 
     def _refresh_localized_artifacts(self, locale: Optional[str]) -> Optional[str]:
         """Regenerate localized mission text and PDFs after a locale change.

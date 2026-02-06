@@ -13,7 +13,12 @@ const App = {
      * Current page
      */
     currentPage: 'landing',
-    
+
+    /**
+     * Global locale (from settings, used for landing page and as default)
+     */
+    globalLocale: 'en',
+
     /**
      * DOM elements
      */
@@ -78,9 +83,12 @@ const App = {
             const locale = localeData.locale || 'en';
             console.log(`Initializing with locale: ${locale}`);
             await i18n.init(locale);
+            // Store global locale for restoration when leaving detail pages
+            this.globalLocale = locale;
         } catch (error) {
             console.warn('Failed to get locale from API, using default:', error);
             await i18n.init('en');
+            this.globalLocale = 'en';
         }
 
         document.documentElement.lang = i18n.getLocale();
@@ -142,16 +150,23 @@ const App = {
     /**
      * Show landing page
      */
-    showLanding() {
+    async showLanding() {
         console.log('Navigating to landing page');
-        
+
+        // Restore global locale if detail page had a per-campaign override
+        if (i18n.getLocale() !== this.globalLocale) {
+            console.log(`[App] Restoring global locale: ${this.globalLocale}`);
+            await i18n.setLocale(this.globalLocale);
+            this.translatePage();
+        }
+
         this.elements.landingPage.style.display = 'block';
         this.elements.detailPage.style.display = 'none';
         this.elements.backBtn.style.display = 'none';
-        
+
         this.currentPage = 'landing';
         DetailPage.clearBackgroundState();
-        
+
         // Update page title
         document.title = i18n.t('service_record.app_title');
 

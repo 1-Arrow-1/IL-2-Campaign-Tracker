@@ -155,6 +155,10 @@ def _load_decoded_campaign(decoded_path: str) -> dict:
 
 
 class EventGenerator:
+    # Locales supported for per-campaign detail page language override
+    # These are the only locales for which we pre-generate debriefings HTML
+    DETAIL_PAGE_LOCALES = ('en', 'de', 'ru')
+
     def __init__(
         self,
         config_file: str = "campaign_progress_config.yaml",
@@ -2146,7 +2150,48 @@ class EventGenerator:
         
         return ("\n".join(html_lines), debriefings)
 
-    
+    def generate_localized_debriefings(
+        self, campaign_name: str, completed_missions: List[str]
+    ) -> Dict[str, str]:
+        """
+        Generate debriefings HTML in all supported detail page locales (en, de, ru).
+
+        This is used for per-campaign language override on the detail page.
+        The debriefings are pre-generated in all 3 locales so the API can serve
+        the correct version based on the campaign's language setting.
+
+        Args:
+            campaign_name: Campaign folder name
+            completed_missions: List of completed mission IDs
+
+        Returns:
+            Dict with keys 'debriefings_html_en', 'debriefings_html_de', 'debriefings_html_ru'
+        """
+        if not self.log_processor or not completed_missions:
+            return {
+                'debriefings_html_en': '',
+                'debriefings_html_de': '',
+                'debriefings_html_ru': '',
+            }
+
+        # Save current locale to restore later
+        original_locale = get_locale()
+        result = {}
+
+        for locale in self.DETAIL_PAGE_LOCALES:
+            try:
+                set_locale(locale)
+                html, _ = self.generate_debriefings_html(campaign_name, completed_missions)
+                result[f'debriefings_html_{locale}'] = html
+            except Exception as e:
+                log_message(LOGGER, f"  Warning: Failed to generate debriefings in {locale}: {e}")
+                result[f'debriefings_html_{locale}'] = ''
+
+        # Restore original locale
+        set_locale(original_locale)
+
+        return result
+
     def generate_events_html(self, events: List[Dict], country: str, for_pdf: bool = False) -> str:
         if not events:
             return ""
@@ -3441,28 +3486,35 @@ class EventGenerator:
                 
                 # Generate Events HTML
                 events_html = self.generate_events_html(events, country)
-                
+
                 # Generate Debriefings HTML (if available)
                 completed_missions = list(self.save_data[campaign_name].get('completedMissionsByFileName', {}).keys())
                 debriefings_html = ""
                 debriefings = {}
-                
+
                 if self.log_processor and completed_missions:
                     log_message(LOGGER, f"  Generating debriefings for {len(completed_missions)} mission(s)...")
                     debriefings_html, debriefings = self.generate_debriefings_html(campaign_name, completed_missions)
-                
+
+                # Generate localized debriefings for detail page language override (en, de, ru)
+                localized_debriefings = {}
+                if self.log_processor and completed_missions:
+                    log_message(LOGGER, f"  Generating localized debriefings (en/de/ru)...")
+                    localized_debriefings = self.generate_localized_debriefings(campaign_name, completed_missions)
+
                 # Combine: Debriefings BEFORE Events
                 if debriefings_html:
                     combined_html = debriefings_html + "\n" + events_html
                 else:
                     combined_html = events_html
-                
+
                 results[campaign_name] = {
                     'country': country,
                     'events': events,
                     'debriefings_html': debriefings_html,
                     'events_html': events_html,
-                    'html': combined_html
+                    'html': combined_html,
+                    **localized_debriefings,  # Add debriefings_html_en, _de, _ru
                 }
                 
                 # Update the campaign info file
@@ -3580,6 +3632,8 @@ def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bo
     parser.add_argument('--test-popups', action='store_true', help='Show test popup sequence (does not modify seen state)')
     parser.add_argument('--auto', action='store_true', help='Run in auto mode (no user input)')
     parser.add_argument('--locale', type=str, help='Override locale for translations (e.g., de, en)')
+    parser.add_argument('--regen-debriefings', type=str, nargs='+', metavar='CAMPAIGN',
+                        help='Regenerate localized debriefings (en/de/ru) for specific campaigns')
 
     # ✅ Parse CLI args OR provided args list
     try:
@@ -3592,6 +3646,7 @@ def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bo
             test_popups=False,
             auto=False,
             locale=None,
+            regen_debriefings=None,
         )
     
     # ✅ Override with function parameters if explicitly set
@@ -3663,6 +3718,16 @@ def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bo
         )
         return True  # ✅ Expliziter Rückgabewert
 
+    # Handle --regen-debriefings for per-campaign localized debriefings regeneration
+    if parsed_args.regen_debriefings:
+        all_success = True
+        for campaign_name in parsed_args.regen_debriefings:
+            log_message(LOGGER, f"Regenerating debriefings for: {campaign_name}")
+            success = regenerate_campaign_localized_debriefings(campaign_name)
+            if not success:
+                all_success = False
+        return all_success
+
     if parsed_args.campaign:
         log_message(LOGGER, f"Processing single campaign: {parsed_args.campaign}")
         events = generator.generate_events_for_campaign(parsed_args.campaign)
@@ -3693,6 +3758,94 @@ def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bo
         return len(results) > 0  # ✅ Expliziter Rückgabewert
 
 
+def regenerate_campaign_localized_debriefings(campaign_name: str) -> bool:
+    """
+    Regenerate localized debriefings (en/de/ru) for a single campaign.
+
+    This is called when a user changes the per-campaign detail page language
+    in the Settings Manager. It only regenerates the localized debriefings,
+    not the full event data or PDFs.
+
+    Args:
+        campaign_name: Campaign folder name (case-insensitive)
+
+    Returns:
+        True if successful, False otherwise
+    """
+    log_message(LOGGER, f"\n{'='*70}")
+    log_message(LOGGER, f"REGENERATING LOCALIZED DEBRIEFINGS: {campaign_name}")
+    log_message(LOGGER, f"{'='*70}")
+
+    try:
+        # Initialize generator (lightweight, just for debriefings)
+        generator = EventGenerator(dry_run=False, show_popups=False)
+
+        # Normalize campaign name (case-insensitive lookup)
+        campaign_name_lower = campaign_name.lower()
+        actual_campaign_name = None
+
+        # Find the actual campaign name from save_data
+        for name in generator.save_data.keys():
+            if name.lower() == campaign_name_lower:
+                actual_campaign_name = name
+                break
+
+        if not actual_campaign_name:
+            log_message(LOGGER, f"  Campaign not found in save data: {campaign_name}")
+            return False
+
+        # Get completed missions
+        completed_missions = list(
+            generator.save_data[actual_campaign_name]
+            .get('completedMissionsByFileName', {})
+            .keys()
+        )
+
+        if not completed_missions:
+            log_message(LOGGER, f"  No completed missions for campaign: {actual_campaign_name}")
+            return False
+
+        # Generate localized debriefings
+        log_message(LOGGER, f"  Generating localized debriefings (en/de/ru) for {len(completed_missions)} mission(s)...")
+        localized_debriefings = generator.generate_localized_debriefings(actual_campaign_name, completed_missions)
+
+        # Load existing campaign_events.json
+        if not os.path.exists(CAMPAIGN_EVENTS_FILE):
+            log_message(LOGGER, f"  campaign_events.json not found")
+            return False
+
+        with open(CAMPAIGN_EVENTS_FILE, 'r', encoding='utf-8') as f:
+            events_data = json.load(f)
+
+        # Find campaign in events data (case-insensitive)
+        events_campaign_name = None
+        for name in events_data.keys():
+            if name.lower() == campaign_name_lower:
+                events_campaign_name = name
+                break
+
+        if not events_campaign_name:
+            log_message(LOGGER, f"  Campaign not found in events data: {campaign_name}")
+            return False
+
+        # Update with new localized debriefings
+        events_data[events_campaign_name].update(localized_debriefings)
+
+        # Save updated events
+        with open(CAMPAIGN_EVENTS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(events_data, f, indent=2, ensure_ascii=False)
+
+        log_message(LOGGER, f"  Successfully updated localized debriefings for: {events_campaign_name}")
+        log_message(LOGGER, f"{'='*70}")
+        return True
+
+    except Exception as e:
+        log_message(LOGGER, f"  Error regenerating debriefings: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
 if __name__ == "__main__":
-    
+
     main()

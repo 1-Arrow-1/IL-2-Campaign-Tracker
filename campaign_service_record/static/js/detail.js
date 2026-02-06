@@ -842,25 +842,34 @@ const DetailPage = {
      */
     async load(campaignName) {
         console.log('Loading campaign details:', campaignName);
-        
+
         try {
             // Show loading state
             this.elements.title.textContent = 'Loading...';
             this.elements.eventsList.innerHTML = '<p>Loading events...</p>';
             this.elements.debriefingsContainer.innerHTML = '<p>Loading debriefings...</p>';
             this.elements.summaryContent.innerHTML = '<p>Loading summary...</p>';
-            
+
             // Fetch campaign data
             const campaign = await API.getCampaignDetail(campaignName);
-            
+
             if (!campaign) {
                 throw new Error('Campaign not found');
             }
-            
+
             this.currentCampaign = campaign;
 
+            // Apply per-campaign locale override if present
+            // This affects ONLY the detail page rendering
+            if (campaign.effective_locale && campaign.effective_locale !== i18n.getLocale()) {
+                console.log(`[DetailPage] Switching to campaign locale: ${campaign.effective_locale}`);
+                await i18n.setLocale(campaign.effective_locale);
+                // Re-translate page elements with new locale
+                App.translatePage();
+            }
+
             this.applyBackgroundForCountry(campaign.country, { force: true });
-            
+
             // Render components
             this.renderHeader(campaign);
             this.renderEvents(campaign.events);
@@ -868,10 +877,10 @@ const DetailPage = {
             this.renderSummary(campaign.summary);
             await this.loadPersonalData(campaign.name);
             await this.loadPilotPhoto(campaign.name);
-            
+
             // Check for PDF
             this.checkPDF(campaign.name);
-            
+
         } catch (error) {
             console.error('Failed to load campaign details:', error);
             this.showError(error.message);
