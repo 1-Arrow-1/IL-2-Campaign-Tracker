@@ -587,6 +587,8 @@ def run_tracker() -> int:
                        help='Override locale for translations (e.g., de, en)')
     parser.add_argument('--force-regen', action='store_true',
                        help='Force regeneration of all campaign events and reports')
+    parser.add_argument('--regen-debriefings', type=str, nargs='+', metavar='CAMPAIGN',
+                       help='Regenerate localized debriefings (en/de/ru) for specific campaigns')
     args, unknown = parser.parse_known_args()
 
     # Handle --force-regen flag by setting environment variable
@@ -617,10 +619,30 @@ def run_tracker() -> int:
     log_message(logger, "IL-2 CAMPAIGN PROGRESS TRACKER v1.7")
     log_message(logger, "=" * 70)
     log_message(logger)
-    
+
     # Change to script directory
     os.chdir(SCRIPT_DIR)
-    
+
+    # Handle --regen-debriefings: quick regeneration of localized debriefings for specific campaigns
+    # This is called by Settings Manager when user changes per-campaign language setting
+    if args.regen_debriefings:
+        log_message(logger, "=" * 70)
+        log_message(logger, "REGENERATING LOCALIZED DEBRIEFINGS")
+        log_message(logger, "=" * 70)
+        log_message(logger, f"Campaigns: {args.regen_debriefings}")
+        log_message(logger)
+
+        import step3_generate_events
+        step3_args = ["--regen-debriefings"] + args.regen_debriefings
+        success = step3_generate_events.main(args=step3_args)
+
+        if success:
+            log_message(logger, "COMPLETE!")
+            return 0
+        else:
+            log_message(logger, "Debriefings regeneration failed")
+            return 1
+
     # Step 0: Check config
     def wait_for_exit(message: str, exit_code: int) -> int:
         log_message(logger, message)

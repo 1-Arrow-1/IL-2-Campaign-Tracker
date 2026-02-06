@@ -23,6 +23,7 @@ from flask import Blueprint, jsonify, request, current_app, send_file, send_from
 
 from campaign_service_record.core.data_loader import DataLoader
 from campaign_service_record.core.campaign_aggregator import CampaignAggregator
+from campaign_service_record.core.locale_resolver import resolve_detail_page_locale
 from utils.formatting import safe_campaign_filename
 from campaign_service_record.utils.path_utils import get_game_directory
 from campaign_service_record.utils.image_utils import convert_dds_to_png_bytes, find_existing_image_path
@@ -451,17 +452,37 @@ def get_campaign_detail(campaign_name: str):
         
         # Use campaign name directly (Flask already URL-decodes it safely)
         # Note: Campaign names come from JSON keys, so they're trusted
-        # 🔧 Normalize case for consistency
-        campaign_name = campaign_name.lower()# 🔧 Normalize case for consistency
+        # Normalize case for consistency
+        campaign_name = campaign_name.lower()
         campaign_data = _aggregator.get_campaign_detail(campaign_name)
-        
+
         if not campaign_data:
             logger.warning(f"Campaign not found: {campaign_name}")
             return jsonify({
                 'error': 'Campaign not found',
                 'campaign': campaign_name
             }), 404
-        
+
+        # Add effective locale for detail page rendering
+        # This respects per-campaign language override if set
+        effective_locale = resolve_detail_page_locale(
+            campaign_name,
+            data_loader=_data_loader
+        )
+        campaign_data['effective_locale'] = effective_locale
+
+        # Select the localized debriefings_html based on effective locale
+        # If the localized version exists and is not empty, use it
+        localized_key = f'debriefings_html_{effective_locale}'
+        localized_debriefings = campaign_data.get(localized_key, '')
+        if localized_debriefings and localized_debriefings.strip():
+            campaign_data['debriefings_html'] = localized_debriefings
+            logger.debug(f"Using localized debriefings ({effective_locale}) for {campaign_name}")
+
+        # Remove the localized versions from response (no need to send all 3)
+        for locale in ('en', 'de', 'ru'):
+            campaign_data.pop(f'debriefings_html_{locale}', None)
+
         logger.info(f"Served campaign detail: {campaign_name}")
         return jsonify(campaign_data)
         

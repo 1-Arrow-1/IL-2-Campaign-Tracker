@@ -50,34 +50,47 @@ def save_json_atomic(filepath: Path, data: dict, create_backup: bool = True) -> 
     """
     Save JSON atomically: write to temp file, then replace.
     Optionally create .backup before overwriting.
-    
+
     Args:
         filepath: Path to save to
         data: Dictionary to save
         create_backup: Whether to create backup of existing file
     """
+    import time
+
     filepath = Path(filepath)
-    
+
     # Create backup if file exists
     if create_backup and filepath.exists():
         backup_path = filepath.with_suffix(filepath.suffix + '.backup')
         shutil.copy2(filepath, backup_path)
-    
+
     # Write to temporary file in same directory (for atomic rename)
     temp_fd, temp_path = tempfile.mkstemp(
         dir=filepath.parent,
         prefix=filepath.stem + '_',
         suffix='.tmp'
     )
-    
+
     try:
         with os.fdopen(temp_fd, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
-        
-        # Atomic replace
+
+        # Atomic replace with retry for Windows file locking issues
         temp_path_obj = Path(temp_path)
-        temp_path_obj.replace(filepath)
-        
+        max_retries = 5
+        retry_delay = 0.2  # 200ms
+
+        for attempt in range(max_retries):
+            try:
+                temp_path_obj.replace(filepath)
+                break  # Success
+            except PermissionError as e:
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                else:
+                    raise OSError(f"Cannot save {filepath.name}: file is locked by another process") from e
+
     except Exception:
         # Cleanup temp file on error
         Path(temp_path).unlink(missing_ok=True)
