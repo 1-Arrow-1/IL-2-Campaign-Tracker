@@ -176,9 +176,13 @@ The **Control Center** (`IL2_Control_Center.exe`) provides a central hub to laun
 │                                                         │
 │   [🚀 Start Tracker]     Launch the Campaign Tracker    │
 │                                                         │
+│   [❌ Stop Tracker]      Stop the Camapaign Tracker     │
+│                                                         │
 │   [⚙️ Settings]          Open Settings Manager          │
 │                                                         │
 │   [📋 Service Record]    Open Campaign Service Record   │
+│                                                         │
+│   [🗑️ Uninstall]         Uninstall the Campaign Tracker │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
 ```
