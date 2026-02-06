@@ -168,18 +168,22 @@ Eine allgemeine Einrichtungsanleitung findest du hier:
 Das **Control Center** (`IL2_Control_Center.exe`) bietet eine zentrale Anlaufstelle zum Starten aller Tracker-Komponenten:
 
 ```text
-┌─────────────────────────────────────────────────────────┐
-│              IL-2 Campaign Tracker                      │
-│                  Control Center                         │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│   [🚀 Tracker starten]   Startet den Campaign Tracker   │
-│                                                         │
-│   [⚙️ Einstellungen]     Öffnet Einstellungsmanager     │
-│                                                         │
-│   [📋 Dienstakte]        Öffnet Kampagnen-Dienstakte    │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│              IL-2 Campaign Tracker                          │
+│                  Control Center                             │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   [🚀 Tracker starten]  Startet den Campaign Tracker        │
+│                                                             │   
+│   [❌ Tracker beenden]  Schliesst den Camapaign Tracker     │  
+│                                                             │
+│   [⚙️ Einstellungen]    Öffnet Einstellungsmanager          │
+│                                                             │
+│   [📋 Dienstakte]       Öffnet Kampagnen-Dienstakte         │
+│                                                             │
+│   [🗑️ Deinstallation]   Deinstalliert den Campaign Tracker  │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 **Funktionen:**
