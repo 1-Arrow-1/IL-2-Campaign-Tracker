@@ -47,6 +47,8 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **W
 | **Restore Function** | Easy GUI to restore previous campaign states |
 | **Multi-Campaign Support** | Tracks multiple campaigns simultaneously |
 | **WW1 Detection & Exclusion** | Detects Flying Circus (WW1) campaigns and skips them by default |
+| **Control Center GUI** | Central hub to launch Tracker, Settings Manager, and Service Record |
+| **Per-Campaign Language** | Override detail page language for individual campaigns in Service Record |
 
 ---
 
@@ -162,12 +164,37 @@ The setup wizard will guide you through selecting the installation directory and
 A general setup guide can be found here:
 <https://forum.il2-series.com/topic/772-expanded-career-rank-mod/#findComment-4176>
 
+### Control Center GUI
+
+The **Control Center** (`IL2_Control_Center.exe`) provides a central hub to launch all tracker components:
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│              IL-2 Campaign Tracker                      │
+│                  Control Center                         │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│   [🚀 Start Tracker]     Launch the Campaign Tracker    │
+│                                                         │
+│   [⚙️ Settings]          Open Settings Manager          │
+│                                                         │
+│   [📋 Service Record]    Open Campaign Service Record   │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Features:**
+- One-click access to all tracker components
+- Visual status indicators
+- Clean, modern interface
+
 ### Installed Files
 
 The installer places the following files in your chosen installation directory:
 
 ```text
 IL2_Campaign_Tracker/
+├── IL2_Control_Center.exe                # Control Center GUI (recommended entry point)
 ├── IL2_Campaign_Tracker.exe              # Main executable
 ├── IL2_Settings_Manager.exe              # Settings Manager GUI
 ├── mlg2txt.exe                           # Helper for decoding mission reports
@@ -283,11 +310,21 @@ Configure promotion score thresholds for each nation:
 
 Configure per-campaign settings:
 
-| Setting | Description | Range |
-| ------- | ----------- | ----- |
+| Setting | Description | Range/Options |
+| ------- | ----------- | ------------- |
 | **Starting Rank Offset** | Start campaigns at higher ranks | 0-7 |
+| **Detail Page Language** | Override language for Service Record detail page | Default, English, German, Russian |
 
 > **Tip:** Use higher offsets (up to 7) for campaigns where the player is already a squadron leader at mission start. This is particularly useful for British campaigns due to their many lower ranks.
+
+##### Per-Campaign Language Override
+
+The **Detail Page Language** setting allows you to lock a specific campaign's Service Record detail page to a particular language (English, German, or Russian), independent of the global language setting.
+
+- **Default**: Follows the global language setting dynamically
+- **English/German/Russian**: Locks the detail page to that specific language
+
+This is useful when you want to view a German campaign's debriefings in German while keeping the rest of the application in your preferred language. When you change this setting and save, the localized debriefings are automatically regenerated for the affected campaigns.
 
 ### Auto-Regeneration
 
@@ -650,6 +687,8 @@ The **Campaign Service Record** is a web-based application that provides an eleg
   - and more
 - **Right Column**: Mission debriefings with detailed combat results
 - **Back Button**: Return to campaign overview
+
+**Per-Campaign Language**: The detail page can display in a different language than the global setting. This is configured in the Settings Manager under the Campaigns tab. When a campaign has a specific language override, the detail page (including debriefings) will display in that language, while the landing page remains in your global language.
 
 ### Customizing Pilot Information
 
