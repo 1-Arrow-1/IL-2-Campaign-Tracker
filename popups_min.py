@@ -316,10 +316,11 @@ def _make_popup(
     # Auto close
     win.after(duration_ms, win.destroy)
 
-    # Positioning
+    # Positioning — use winfo_reqwidth/reqheight which return the size
+    # needed by widget contents (reliable before window is fully mapped)
     win.update_idletasks()
-    w = win.winfo_width()
-    h = win.winfo_height()
+    w = win.winfo_reqwidth()
+    h = win.winfo_reqheight()
     sw = win.winfo_screenwidth()
     sh = win.winfo_screenheight()
 
