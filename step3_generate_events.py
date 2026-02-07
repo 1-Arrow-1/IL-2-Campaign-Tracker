@@ -3720,13 +3720,18 @@ def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bo
 
     # Handle --regen-debriefings for per-campaign localized debriefings regeneration
     if parsed_args.regen_debriefings:
-        all_success = True
+        any_failure = False
+        # Create a SINGLE EventGenerator and reuse it for all campaigns
+        shared_generator = EventGenerator(dry_run=False, show_popups=False)
         for campaign_name in parsed_args.regen_debriefings:
             log_message(LOGGER, f"Regenerating debriefings for: {campaign_name}")
-            success = regenerate_campaign_localized_debriefings(campaign_name)
-            if not success:
-                all_success = False
-        return all_success
+            success = regenerate_campaign_localized_debriefings(campaign_name, generator=shared_generator)
+            if success is None:
+                # Campaign had no completed missions — skip, not a failure
+                pass
+            elif not success:
+                any_failure = True
+        return not any_failure
 
     if parsed_args.campaign:
         log_message(LOGGER, f"Processing single campaign: {parsed_args.campaign}")
@@ -3758,7 +3763,7 @@ def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bo
         return len(results) > 0  # ✅ Expliziter Rückgabewert
 
 
-def regenerate_campaign_localized_debriefings(campaign_name: str) -> bool:
+def regenerate_campaign_localized_debriefings(campaign_name: str, generator: 'EventGenerator' = None) -> Optional[bool]:
     """
     Regenerate localized debriefings (en/de/ru) for a single campaign.
 
@@ -3768,17 +3773,19 @@ def regenerate_campaign_localized_debriefings(campaign_name: str) -> bool:
 
     Args:
         campaign_name: Campaign folder name (case-insensitive)
+        generator: Optional shared EventGenerator instance (avoids re-initialization)
 
     Returns:
-        True if successful, False otherwise
+        True if successful, None if skipped (no missions), False on error
     """
     log_message(LOGGER, f"\n{'='*70}")
     log_message(LOGGER, f"REGENERATING LOCALIZED DEBRIEFINGS: {campaign_name}")
     log_message(LOGGER, f"{'='*70}")
 
     try:
-        # Initialize generator (lightweight, just for debriefings)
-        generator = EventGenerator(dry_run=False, show_popups=False)
+        # Reuse shared generator or create a new one
+        if generator is None:
+            generator = EventGenerator(dry_run=False, show_popups=False)
 
         # Normalize campaign name (case-insensitive lookup)
         campaign_name_lower = campaign_name.lower()
@@ -3802,8 +3809,8 @@ def regenerate_campaign_localized_debriefings(campaign_name: str) -> bool:
         )
 
         if not completed_missions:
-            log_message(LOGGER, f"  No completed missions for campaign: {actual_campaign_name}")
-            return False
+            log_message(LOGGER, f"  No completed missions for campaign: {actual_campaign_name} (skipping)")
+            return None  # Skip, not an error
 
         # Generate localized debriefings
         log_message(LOGGER, f"  Generating localized debriefings (en/de/ru) for {len(completed_missions)} mission(s)...")
