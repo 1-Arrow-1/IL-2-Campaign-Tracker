@@ -884,7 +884,149 @@ class EventGenerator:
             )
             return str(image)
         return image
-    
+
+    # ------------------------------------------------------------------
+    # Personal data & pilot photo helpers (for PDF cover page)
+    # ------------------------------------------------------------------
+
+    _placeholder_hash: Optional[str] = None  # class-level cache
+
+    def _load_campaign_personal_data(self, campaign_name: str) -> dict:
+        """Load personal data for a single campaign from campaign_personal_data.json.
+
+        Returns the campaign's personal-data dict, or an empty dict on any error.
+        """
+        try:
+            base = os.environ.get('LOCALAPPDATA') or str(Path.home())
+            data_path = Path(base) / '.il2_campaign_service_record' / 'campaign_personal_data.json'
+            if not data_path.exists():
+                return {}
+            with open(data_path, 'r', encoding='utf-8') as fh:
+                payload = json.load(fh)
+            if not isinstance(payload, dict):
+                return {}
+            return payload.get(campaign_name, {})
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            log_message(LOGGER, f"  ⚠️  Could not load personal data: {exc}")
+            return {}
+
+    def _resolve_pilot_photo_dir(self) -> Path:
+        """Return the directory that contains pilot photos."""
+        if getattr(sys, 'frozen', False):
+            base = os.environ.get('LOCALAPPDATA') or str(Path.home())
+            return Path(base) / '.il2_campaign_service_record' / 'pilot_photos'
+        return BASE_DIR / 'campaign_service_record' / 'static' / 'pilot_photos'
+
+    def _resolve_placeholder_path(self) -> Path:
+        """Return the path to the default placeholder_pilot.png."""
+        if getattr(sys, 'frozen', False):
+            return Path(sys._MEIPASS) / 'static' / 'images' / 'placeholder_pilot.png'
+        return BASE_DIR / 'campaign_service_record' / 'static' / 'images' / 'placeholder_pilot.png'
+
+    def _get_placeholder_hash(self) -> Optional[str]:
+        """Return SHA-256 hex digest of placeholder_pilot.png (cached)."""
+        if EventGenerator._placeholder_hash is not None:
+            return EventGenerator._placeholder_hash
+        import hashlib
+        placeholder = self._resolve_placeholder_path()
+        if not placeholder.exists():
+            return None
+        try:
+            EventGenerator._placeholder_hash = hashlib.sha256(
+                placeholder.read_bytes()
+            ).hexdigest()
+            return EventGenerator._placeholder_hash
+        except OSError:
+            return None
+
+    def _load_pilot_photo_base64(self, campaign_name: str) -> Optional[str]:
+        """Load the campaign pilot photo, apply vintage filter, return as base64 data-URI.
+
+        Returns None when:
+        - no photo exists for the campaign
+        - the photo is identical to the default placeholder
+        - the photo cannot be read
+        """
+        import hashlib
+        try:
+            from campaign_service_record.utils.pilot_photo import pilot_photo_path
+        except ImportError:
+            log_message(LOGGER, "  ⚠️  pilot_photo module not available – skipping photo")
+            return None
+
+        photo_dir = self._resolve_pilot_photo_dir()
+        if not photo_dir.is_dir():
+            return None
+
+        desc = f"campaign:{campaign_name}"
+        photo_path = pilot_photo_path(photo_dir, desc)
+        if not photo_path.exists():
+            return None
+
+        # Read raw bytes and compare hash with placeholder
+        try:
+            photo_bytes = photo_path.read_bytes()
+        except OSError as exc:
+            log_message(LOGGER, f"  ⚠️  Cannot read pilot photo {photo_path}: {exc}")
+            return None
+
+        if not photo_bytes:
+            return None
+
+        photo_hash = hashlib.sha256(photo_bytes).hexdigest()
+        placeholder_hash = self._get_placeholder_hash()
+        if placeholder_hash and photo_hash == placeholder_hash:
+            return None  # standard photo – skip
+
+        # Open with Pillow, apply filter, convert to base64
+        try:
+            from PIL import Image
+            from io import BytesIO
+            import base64
+
+            img = Image.open(BytesIO(photo_bytes))
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+            img = self._apply_pilot_photo_filter(img)
+
+            buf = BytesIO()
+            img.save(buf, format='PNG')
+            b64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+            return f"data:image/png;base64,{b64}"
+        except Exception as exc:
+            log_message(LOGGER, f"  ⚠️  Failed to process pilot photo: {exc}")
+            return None
+
+    @staticmethod
+    def _apply_pilot_photo_filter(img):
+        """Apply grayscale + sepia-touch filter matching the Campaign Service Record CSS.
+
+        CSS reference (detail.css):
+            filter: grayscale(100%) sepia(28%) saturate(110%) contrast(105%) brightness(102%);
+        """
+        from PIL import ImageOps, ImageEnhance, ImageChops, Image as PILImage
+
+        # 1. grayscale(100%)
+        gray = ImageOps.grayscale(img)
+        gray_rgb = gray.convert('RGB')
+
+        # 2. sepia(28%) – tint the grey image with a warm tone, blend at 28 %
+        # Classic sepia multipliers (full sepia): R×1.2, G×1.0, B×0.8
+        r, g, b = gray_rgb.split()
+        sepia_r = r.point(lambda p: min(int(p * 1.2), 255))
+        sepia_b = b.point(lambda p: int(p * 0.8))
+        full_sepia = PILImage.merge('RGB', (sepia_r, g, sepia_b))
+        blended = ImageChops.blend(gray_rgb, full_sepia, 0.28)
+
+        # 3. saturate(110%)
+        blended = ImageEnhance.Color(blended).enhance(1.1)
+        # 4. contrast(105%)
+        blended = ImageEnhance.Contrast(blended).enhance(1.05)
+        # 5. brightness(102%)
+        blended = ImageEnhance.Brightness(blended).enhance(1.02)
+
+        return blended
+
     def check_awards(self, country: str, cumulative_stats: Dict,
                     per_mission_stats: Dict, completed_missions: List[str],
                     campaign_name: str, debriefing_wounds: Dict = None) -> List[Dict]:
@@ -2447,8 +2589,84 @@ class EventGenerator:
             log_message(LOGGER, f"  ⚠️  Could not read campaign name: {e}")
         
         return campaign_name
-    
-    def generate_campaign_summary_html(self, campaign_name: str, events: List[Dict], debriefings: Dict, 
+
+    # ------------------------------------------------------------------
+    # PDF cover page: personal data + pilot photo
+    # ------------------------------------------------------------------
+
+    def generate_personal_data_html(self, campaign_name: str) -> str:
+        """Build the HTML block for the PDF cover page (personal data + pilot photo).
+
+        Returns an empty string when there is nothing to display, so the
+        existing PDF layout remains unaffected.
+        """
+        from html import escape
+
+        data = self._load_campaign_personal_data(campaign_name)
+        name = data.get('name', '').strip()
+        first_name = data.get('first_name', '').strip()
+
+        # Block is only shown when at least name or first_name is present
+        if not name and not first_name:
+            return ""
+
+        photo_b64 = self._load_pilot_photo_base64(campaign_name)
+
+        # --- Build the two-column layout (photo left, data right) ---
+        html_parts: list[str] = []
+        html_parts.append('<div class="personal-data-block">')
+        html_parts.append(f'<h2 class="personal-data-heading">{escape(t("web.section.pilot_information"))}</h2>')
+        html_parts.append('<div class="personal-data-row">')
+
+        # Photo column (only if a non-default photo exists)
+        if photo_b64:
+            html_parts.append('<div class="personal-data-photo-col">')
+            html_parts.append(
+                f'<img class="personal-data-photo" src="{photo_b64}" alt="Pilot Photo">'
+            )
+            html_parts.append('</div>')
+
+        # Data column
+        html_parts.append('<div class="personal-data-info-col">')
+        html_parts.append('<table class="personal-data-table">')
+
+        fields = [
+            ('web.label.name', name),
+            ('web.label.first_name', first_name),
+            ('web.label.birthday', data.get('birthday', '').strip()),
+            ('web.label.place_of_birth', data.get('birth_place', '').strip()),
+            ('web.label.country_of_birth', data.get('birth_country', '').strip()),
+        ]
+        for label_key, value in fields:
+            if value:
+                html_parts.append(
+                    f'<tr><td class="pd-label">{escape(t(label_key))}</td>'
+                    f'<td class="pd-value">{escape(value)}</td></tr>'
+                )
+
+        html_parts.append('</table>')
+        html_parts.append('</div>')  # info-col
+        html_parts.append('</div>')  # row
+
+        # Additional notes (optional)
+        notes = data.get('additional_notes', '').strip()
+        if notes:
+            html_parts.append('<div class="personal-data-notes">')
+            html_parts.append(
+                f'<h3 class="personal-data-notes-heading">'
+                f'{escape(t("web.section.additional_notes"))}</h3>'
+            )
+            html_parts.append(f'<p>{escape(notes)}</p>')
+            html_parts.append('</div>')
+
+        html_parts.append('</div>')  # personal-data-block
+
+        # Force a page break so mission debriefings start on page 2
+        html_parts.append('<div style="page-break-after: always;"></div>')
+
+        return '\n'.join(html_parts)
+
+    def generate_campaign_summary_html(self, campaign_name: str, events: List[Dict], debriefings: Dict,
                                         country: str, cumulative_stats: Dict, decoded_data: dict = None) -> str:
         """
         Generate campaign summary statistics for PDF
@@ -2995,6 +3213,66 @@ class EventGenerator:
             font-size: 12px;
             font-weight: bold;
             float: right;
+        }}
+
+        /* --- Personal data cover page --- */
+        .personal-data-block {{
+            margin-top: 30px;
+        }}
+        .personal-data-heading {{
+            font-size: 14pt;
+            border-bottom: 2px solid #333;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }}
+        .personal-data-row {{
+            display: table;
+            width: 100%;
+        }}
+        .personal-data-photo-col {{
+            display: table-cell;
+            width: 160px;
+            vertical-align: top;
+            padding-right: 20px;
+        }}
+        .personal-data-photo {{
+            max-width: 150px;
+            max-height: 200px;
+            border: 1px solid #999;
+            object-fit: cover;
+        }}
+        .personal-data-info-col {{
+            display: table-cell;
+            vertical-align: top;
+        }}
+        .personal-data-table {{
+            border-collapse: collapse;
+        }}
+        .personal-data-table td {{
+            padding: 4px 8px 4px 0;
+            vertical-align: top;
+            line-height: 1.5;
+        }}
+        .pd-label {{
+            font-weight: 700;
+            white-space: nowrap;
+            width: 130px;
+        }}
+        .pd-value {{
+            word-wrap: break-word;
+        }}
+        .personal-data-notes {{
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid #ccc;
+        }}
+        .personal-data-notes-heading {{
+            font-size: 11pt;
+            margin-bottom: 5px;
+        }}
+        .personal-data-notes p {{
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }}
     </style>
 </head>
@@ -3560,7 +3838,12 @@ class EventGenerator:
                     # Add summary at the end
                     if summary_html:
                         combined_html_pdf += "\n" + summary_html
-                    
+
+                    # Prepend personal data cover page (photo + pilot info)
+                    personal_data_html = self.generate_personal_data_html(campaign_name)
+                    if personal_data_html:
+                        combined_html_pdf = personal_data_html + "\n" + combined_html_pdf
+
                     self.export_campaign_to_pdf(campaign_name, combined_html_pdf)
                     
                     # *** CRITICAL: Switch back to ingame mode for subsequent campaigns ***
