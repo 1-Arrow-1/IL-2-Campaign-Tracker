@@ -70,6 +70,20 @@ def resolve_detail_page_locale(
 
     # Default: follow current global language
     global_locale = resolve_locale()
+
+    # If the global locale is not a valid detail page locale (en/de/ru),
+    # fall back to English. Detail pages only have pre-generated content
+    # for en/de/ru, and sending an unsupported locale to the frontend
+    # causes localizeDebriefingsHtml() to incorrectly re-translate
+    # English debriefings into the unsupported language.
+    if global_locale not in VALID_DETAIL_PAGE_LOCALES:
+        logger.info(
+            "Campaign '%s': global locale '%s' is not a valid detail page locale, "
+            "falling back to 'en'",
+            campaign_name, global_locale
+        )
+        return 'en'
+
     logger.debug(
         "Campaign '%s' using global locale (Default): %s",
         campaign_name, global_locale

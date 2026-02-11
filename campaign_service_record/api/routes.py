@@ -478,6 +478,16 @@ def get_campaign_detail(campaign_name: str):
         if localized_debriefings and localized_debriefings.strip():
             campaign_data['debriefings_html'] = localized_debriefings
             logger.debug(f"Using localized debriefings ({effective_locale}) for {campaign_name}")
+        elif effective_locale != 'en':
+            # No pre-generated debriefings for this locale — fall back to English
+            # and correct effective_locale so the frontend doesn't re-translate
+            logger.info(f"No localized debriefings for '{effective_locale}', "
+                        f"falling back to English for {campaign_name}")
+            en_debriefings = campaign_data.get('debriefings_html_en', '')
+            if en_debriefings and en_debriefings.strip():
+                campaign_data['debriefings_html'] = en_debriefings
+            effective_locale = 'en'
+            campaign_data['effective_locale'] = effective_locale
 
         # Remove the localized versions from response (no need to send all 3)
         for locale in ('en', 'de', 'ru'):
