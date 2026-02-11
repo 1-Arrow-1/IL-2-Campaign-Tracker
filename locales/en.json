@@ -957,7 +957,8 @@
       "close_tracker": "Close Tracker",
       "service_record": "Service Record",
       "settings_manager": "Settings Manager",
-      "uninstall": "Uninstall"
+      "uninstall": "Uninstall",
+      "pdf_reports": "PDF Reports"
     },
     "status": {
       "checking": "Checking tracker status...",
@@ -978,7 +979,9 @@
       "uninstall_cancelled": "Uninstall Cancelled",
       "uninstall_cancelled_detail": "The uninstaller was not started.\n\nYou may need to run it manually with administrator privileges.",
       "error_open_service_record": "Failed to open Service Record.",
-      "error_open_settings": "Failed to open Settings Manager."
+      "error_open_settings": "Failed to open Settings Manager.",
+      "error_open_pdf": "Failed to open PDF report.",
+      "no_pdfs_found": "No campaign PDFs found"
     }
   }
 }

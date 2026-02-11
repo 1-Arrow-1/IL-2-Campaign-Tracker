@@ -21,12 +21,13 @@ All EXE paths are resolved relative to this script/executable location.
 
 import ctypes
 import os
+import re
 import sys
 import subprocess
 import tkinter as tk
 from tkinter import messagebox
 from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Optional
 import random
 
 # Detect frozen state and set paths
@@ -84,6 +85,7 @@ SERVICE_RECORD_ICON_PNG = "tools/icons/service_record.png"
 SETTINGS_ICON_PNG = "tools/icons/settings.png"
 STOP_ICON_PNG = "tools/icons/stop.png"
 UNINSTALL_ICON_PNG = "tools/icons/uninstall.png"
+PDF_ICON_PNG = "tools/icons/pdf.png"
 
 # Window icon (ICO format for window decoration)
 WINDOW_ICON = "oak_leaves.ico"
@@ -176,6 +178,47 @@ def run_normal(exe_path: str, args: str = "", workdir: str = "") -> bool:
         return False
 
 
+def _safe_campaign_filename(name: str) -> str:
+    """Sanitise a campaign name for filesystem use (mirrors utils.formatting)."""
+    cleaned = re.sub(r"[^\w\s-]", "", name)
+    return cleaned.strip().replace(" ", "_")
+
+
+def get_available_campaign_pdfs() -> Dict[str, Path]:
+    """Return a mapping of campaign display-name -> PDF path for all existing PDFs.
+
+    Scans ``<INSTALL_DIR>/reports/`` for sub-folders that contain a
+    ``<safe_name>_Report.pdf`` file.
+    """
+    reports_dir = INSTALL_DIR / "reports"
+    if not reports_dir.is_dir():
+        return {}
+
+    result: Dict[str, Path] = {}
+    for entry in reports_dir.iterdir():
+        if not entry.is_dir():
+            continue
+        safe_name = entry.name
+        pdf_path = entry / f"{safe_name}_Report.pdf"
+        if pdf_path.is_file():
+            # Use the folder name as the display name (replace underscores with spaces)
+            display_name = safe_name.replace("_", " ")
+            result[display_name] = pdf_path
+
+    return dict(sorted(result.items(), key=lambda item: item[0].lower()))
+
+
+def open_pdf(path: Path) -> None:
+    """Open a PDF file with the system default viewer (Windows only)."""
+    try:
+        os.startfile(str(path))
+    except Exception as exc:
+        messagebox.showerror(
+            t('settings_manager.message.error_title'),
+            f"{t('control_gui.message.error_open_pdf')}\n\n{path}\n\n{exc}",
+        )
+
+
 class ControlGUI(tk.Tk):
     """Main Control GUI window."""
 
@@ -231,6 +274,7 @@ class ControlGUI(tk.Tk):
             ("settings", SETTINGS_ICON_PNG),
             ("stop", STOP_ICON_PNG),
             ("uninstall", UNINSTALL_ICON_PNG),
+            ("pdf", PDF_ICON_PNG),
         ]
 
         for name, rel_path in icon_configs:
@@ -394,12 +438,19 @@ class ControlGUI(tk.Tk):
             1, 1
         )
 
-        # Row 3: Uninstall (centered)
+        # Row 3: PDF Reports / Uninstall
+        self.btn_pdf = self._create_button(
+            btn_frame, t('control_gui.button.pdf_reports'),
+            self._icons.get("pdf"),
+            self._on_pdf_reports,
+            2, 0
+        )
+
         self.btn_uninstall = self._create_button(
             btn_frame, t('control_gui.button.uninstall'),
             self._icons.get("uninstall"),
             self._on_uninstall,
-            2, 0, columnspan=2
+            2, 1
         )
 
     def _create_button(
@@ -700,6 +751,35 @@ class ControlGUI(tk.Tk):
                 t('settings_manager.message.error_title'),
                 t('control_gui.message.error_open_settings')
             )
+
+    def _on_pdf_reports(self):
+        """Show a popup menu listing available campaign PDFs."""
+        pdfs = get_available_campaign_pdfs()
+
+        menu = tk.Menu(self, tearoff=0, bg="#2f251b", fg=TEXT_COLOR,
+                       activebackground=BTN_ACTIVE_COLOR, activeforeground=TEXT_COLOR,
+                       font=(FONT_FAMILY, FONT_SIZE))
+
+        if pdfs:
+            for display_name, pdf_path in pdfs.items():
+                # Capture pdf_path in default argument to avoid late-binding issue
+                menu.add_command(
+                    label=display_name,
+                    command=lambda p=pdf_path: open_pdf(p),
+                )
+        else:
+            menu.add_command(
+                label=t('control_gui.message.no_pdfs_found'),
+                state="disabled",
+            )
+
+        # Show the menu near the PDF button
+        try:
+            x = self.btn_pdf.winfo_rootx()
+            y = self.btn_pdf.winfo_rooty() + self.btn_pdf.winfo_height()
+            menu.tk_popup(x, y)
+        finally:
+            menu.grab_release()
 
     def _on_uninstall(self):
         """Launch the uninstaller."""

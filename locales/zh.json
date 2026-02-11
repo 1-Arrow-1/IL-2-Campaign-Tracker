@@ -957,7 +957,8 @@
       "close_tracker": "关闭追踪器",
       "service_record": "服役记录",
       "settings_manager": "设置管理",
-      "uninstall": "卸载"
+      "uninstall": "卸载",
+      "pdf_reports": "PDF报告"
     },
     "status": {
       "checking": "正在检查追踪器状态...",
@@ -978,7 +979,9 @@
       "uninstall_cancelled": "卸载已取消",
       "uninstall_cancelled_detail": "卸载程序未启动。\n\n您可能需要以管理员权限手动运行它。",
       "error_open_service_record": "无法打开服役记录。",
-      "error_open_settings": "无法打开设置管理器。"
+      "error_open_settings": "无法打开设置管理器。",
+      "error_open_pdf": "无法打开PDF报告。",
+      "no_pdfs_found": "未找到战役PDF文件"
     }
   }
 }

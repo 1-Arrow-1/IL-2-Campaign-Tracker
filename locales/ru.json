@@ -957,7 +957,8 @@
       "close_tracker": "Закрыть Tracker",
       "service_record": "Боевой путь",
       "settings_manager": "Настройки",
-      "uninstall": "Удалить"
+      "uninstall": "Удалить",
+      "pdf_reports": "PDF-отчёты"
     },
     "status": {
       "checking": "Проверка состояния трекера...",
@@ -978,7 +979,9 @@
       "uninstall_cancelled": "Удаление отменено",
       "uninstall_cancelled_detail": "Программа удаления не была запущена.\n\nВозможно, вам придётся запустить её вручную с правами администратора.",
       "error_open_service_record": "Не удалось открыть боевой путь.",
-      "error_open_settings": "Не удалось открыть менеджер настроек."
+      "error_open_settings": "Не удалось открыть менеджер настроек.",
+      "error_open_pdf": "Не удалось открыть PDF-отчёт.",
+      "no_pdfs_found": "PDF-отчёты кампаний не найдены"
     }
   }
 }

@@ -957,7 +957,8 @@
       "close_tracker": "Tracker beenden",
       "service_record": "Dienstakte",
       "settings_manager": "Einstellungen",
-      "uninstall": "Deinstallieren"
+      "uninstall": "Deinstallieren",
+      "pdf_reports": "PDF-Berichte"
     },
     "status": {
       "checking": "Tracker-Status wird geprüft...",
@@ -978,7 +979,9 @@
       "uninstall_cancelled": "Deinstallation abgebrochen",
       "uninstall_cancelled_detail": "Das Deinstallationsprogramm wurde nicht gestartet.\n\nMöglicherweise müssen Sie es manuell mit Administratorrechten ausführen.",
       "error_open_service_record": "Dienstakte konnte nicht geöffnet werden.",
-      "error_open_settings": "Einstellungs-Manager konnte nicht geöffnet werden."
+      "error_open_settings": "Einstellungs-Manager konnte nicht geöffnet werden.",
+      "error_open_pdf": "PDF-Bericht konnte nicht geöffnet werden.",
+      "no_pdfs_found": "Keine Kampagnen-PDFs gefunden"
     }
   }
 }

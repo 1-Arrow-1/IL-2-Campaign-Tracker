@@ -957,7 +957,8 @@
       "close_tracker": "Zamknij Tracker",
       "service_record": "Karta Służby",
       "settings_manager": "Ustawienia",
-      "uninstall": "Odinstaluj"
+      "uninstall": "Odinstaluj",
+      "pdf_reports": "Raporty PDF"
     },
     "status": {
       "checking": "Sprawdzanie stanu trackera...",
@@ -978,7 +979,9 @@
       "uninstall_cancelled": "Deinstalacja anulowana",
       "uninstall_cancelled_detail": "Deinstalator nie został uruchomiony.\n\nMoże być konieczne ręczne uruchomienie z uprawnieniami administratora.",
       "error_open_service_record": "Nie udało się otworzyć karty służby.",
-      "error_open_settings": "Nie udało się otworzyć menedżera ustawień."
+      "error_open_settings": "Nie udało się otworzyć menedżera ustawień.",
+      "error_open_pdf": "Nie udało się otworzyć raportu PDF.",
+      "no_pdfs_found": "Nie znaleziono plików PDF kampanii"
     }
   }
 }

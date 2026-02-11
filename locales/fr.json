@@ -958,7 +958,8 @@
       "close_tracker": "Arrêter le Tracker",
       "service_record": "Dossier de service",
       "settings_manager": "Paramètres",
-      "uninstall": "Désinstaller"
+      "uninstall": "Désinstaller",
+      "pdf_reports": "Rapports PDF"
     },
     "status": {
       "checking": "Vérification de l'état du tracker...",
@@ -979,7 +980,9 @@
       "uninstall_cancelled": "Désinstallation annulée",
       "uninstall_cancelled_detail": "Le programme de désinstallation n'a pas été démarré.\n\nVous devrez peut-être l'exécuter manuellement avec les privilèges administrateur.",
       "error_open_service_record": "Impossible d'ouvrir le dossier de service.",
-      "error_open_settings": "Impossible d'ouvrir le gestionnaire de paramètres."
+      "error_open_settings": "Impossible d'ouvrir le gestionnaire de paramètres.",
+      "error_open_pdf": "Impossible d'ouvrir le rapport PDF.",
+      "no_pdfs_found": "Aucun PDF de campagne trouvé"
     }
   }
 }

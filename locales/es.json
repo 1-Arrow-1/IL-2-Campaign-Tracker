@@ -957,7 +957,8 @@
       "close_tracker": "Cerrar Rastreador",
       "service_record": "Registro de Servicio",
       "settings_manager": "Configuración",
-      "uninstall": "Desinstalar"
+      "uninstall": "Desinstalar",
+      "pdf_reports": "Informes PDF"
     },
     "status": {
       "checking": "Comprobando estado del rastreador...",
@@ -978,7 +979,9 @@
       "uninstall_cancelled": "Desinstalación cancelada",
       "uninstall_cancelled_detail": "El desinstalador no se ha iniciado.\n\nEs posible que deba ejecutarlo manualmente con privilegios de administrador.",
       "error_open_service_record": "Error al abrir el registro de servicio.",
-      "error_open_settings": "Error al abrir el administrador de configuración."
+      "error_open_settings": "Error al abrir el administrador de configuración.",
+      "error_open_pdf": "Error al abrir el informe PDF.",
+      "no_pdfs_found": "No se encontraron PDFs de campaña"
     }
   }
 }

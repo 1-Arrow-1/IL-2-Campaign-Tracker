@@ -25,6 +25,7 @@ a = Analysis(
         ('tools/icons/settings.png', 'tools/icons'),
         ('tools/icons/stop.png', 'tools/icons'),
         ('tools/icons/uninstall.png', 'tools/icons'),
+        ('tools/icons/pdf.png', 'tools/icons'),
         # Include window icon (ICO format for window decoration)
         ('oak_leaves.ico', '.'),
     ],
