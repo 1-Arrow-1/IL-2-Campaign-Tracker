@@ -2661,8 +2661,8 @@ class EventGenerator:
 
         html_parts.append('</div>')  # personal-data-block
 
-        # Force a page break so mission debriefings start on page 2
-        html_parts.append('<div style="page-break-after: always;"></div>')
+        # 2 cm vertical space before Mission Debriefings
+        html_parts.append('<div style="margin-bottom: 2cm;"></div>')
 
         return '\n'.join(html_parts)
 
@@ -3114,6 +3114,10 @@ class EventGenerator:
         }}
         .section-header {{
             font-size: 14pt;
+            display: block;
+            border-bottom: 2px solid #333;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
         }}
         h1 {{
             text-align: center;
@@ -3231,13 +3235,13 @@ class EventGenerator:
         }}
         .personal-data-photo-col {{
             display: table-cell;
-            width: 160px;
+            width: 240px;
             vertical-align: top;
             padding-right: 20px;
         }}
         .personal-data-photo {{
-            max-width: 150px;
-            max-height: 200px;
+            max-width: 225px;
+            max-height: 300px;
             border: 1px solid #999;
             object-fit: cover;
         }}

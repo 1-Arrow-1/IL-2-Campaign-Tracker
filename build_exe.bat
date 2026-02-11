@@ -9,6 +9,10 @@ set "SCRIPT_DIR=%~dp0"
 cd /d "%SCRIPT_DIR%"
 set "PYTHONHASHSEED=0"
 set "PYINSTALLER_OPTS=--noconfirm --clean"
+REM Path to Inno Setup Compiler
+set ISCC="C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+
+
 
 echo ====================================================================
 echo IL-2 CAMPAIGN TRACKER - BUILD SCRIPT
@@ -584,6 +588,23 @@ echo   - unins000.exe (main uninstaller executable)
 echo   - cleanup_tracker_content.exe (helper exe for uninstallation)
 echo   - i18n translation files (locales\*.json)
 echo   - Documentation (README.html, README_DE.html QUICK_START.txt)
-echo   - CampaignRanksAwards (folder ~37 MB) 		
+echo   - CampaignRanksAwards (folder ~37 MB) 
+
+REM Path to the ISS script
+set ISS_FILE=%SCRIPT_DIR%IL2_Campaign_Tracker_v2.2_ML\IL2_Campaign_Tracker.iss
+
+REM Compile
+%ISCC% "%ISS_FILE%"
+
+REM Exit handling
+if errorlevel 1 (
+    echo Build FAILED.
+    exit /b 1
+) else (
+    echo Build SUCCESSFUL.
+)
+
+endlocal
+
 echo.
 pause
