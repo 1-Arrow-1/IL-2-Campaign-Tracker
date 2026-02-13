@@ -206,6 +206,7 @@
     },
     "pilot_damage": "飞行员伤情",
     "status": {
+      "alive": "存活",
       "bailout": "跳伞",
       "bailout_survived": "跳伞 (生还)",
       "bailout_survived_wounded": "跳伞 (生还, 受伤)",

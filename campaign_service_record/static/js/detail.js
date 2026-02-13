@@ -1546,7 +1546,8 @@ const DetailPage = {
             'KIA': i18n.t('flightlog.status.kia'),
             'Captured': i18n.t('flightlog.status.captured'),
             'Wounded': i18n.t('flightlog.status.wounded'),
-            'Hard Landing': i18n.t('flightlog.status.hard_landing')
+            'Hard Landing': i18n.t('flightlog.status.hard_landing'),
+            'Alive': i18n.t('flightlog.status.alive')
         };
 
         replacements.forEach(({ pattern, replacement }) => {

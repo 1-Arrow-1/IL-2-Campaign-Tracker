@@ -206,6 +206,7 @@
     },
     "pilot_damage": "Pilotenschaden",
     "status": {
+      "alive": "Am Leben",
       "bailout": "Absprung",
       "bailout_survived": "Absprung (Überlebt)",
       "bailout_survived_wounded": "Absprung (Überlebt, Verwundet)",

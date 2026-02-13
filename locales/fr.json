@@ -206,6 +206,7 @@
     },
     "pilot_damage": "Blessures du pilote",
     "status": {
+      "alive": "En vie",
       "bailout": "Sauté en parachute",
       "bailout_survived": "Évacuation (Survécu)",
       "bailout_survived_wounded": "Évacuation (Survécu, Blessé)",

@@ -228,6 +228,9 @@ def _make_popup(
 ) -> None:
     win = tk.Toplevel(root)
 
+    # Hide window until positioned to prevent flash at (0,0)
+    win.withdraw()
+
     # Borderless / toast style
     win.overrideredirect(True)
     win.attributes("-topmost", True)
@@ -339,6 +342,9 @@ def _make_popup(
         y = int((sh - h) / 2)
 
     win.geometry(f"{w}x{h}+{x}+{y}")
+
+    # Show window at the correct position (was hidden with withdraw())
+    win.deiconify()
 
     # Ensure focus (helps when IL-2 is fullscreen/windowed)
     try:

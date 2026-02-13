@@ -206,6 +206,7 @@
     },
     "pilot_damage": "Ранение пилота",
     "status": {
+      "alive": "Жив",
       "bailout": "Прыгнул",
       "bailout_survived": "Прыгнул (Выжил)",
       "bailout_survived_wounded": "Прыгнул (Выжил, Ранен)",

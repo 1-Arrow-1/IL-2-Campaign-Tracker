@@ -206,6 +206,7 @@
     },
     "pilot_damage": "Uszk. pilota",
     "status": {
+      "alive": "Żywy",
       "bailout": "Skok",
       "bailout_survived": "Skok (Przeżył)",
       "bailout_survived_wounded": "Skok (Przeżył, Ranny)",

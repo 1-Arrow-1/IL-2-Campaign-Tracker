@@ -726,6 +726,7 @@ class EventGenerator:
             "mia (likely captured)": "flightlog.status.mia_likely_captured",
             "mia (unknown)": "flightlog.status.mia_unknown",
             # Legacy/simple statuses
+            "alive": "flightlog.status.alive",
             "captured": "flightlog.status.captured",
             "wounded": "flightlog.status.wounded",
         }

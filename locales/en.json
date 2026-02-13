@@ -206,6 +206,7 @@
     },
     "pilot_damage": "Pilot Dmg",
     "status": {
+      "alive": "Alive",
       "bailout": "Bailout",
       "bailout_survived": "Bailout (Survived)",
       "bailout_survived_wounded": "Bailout (Survived, Wounded)",
