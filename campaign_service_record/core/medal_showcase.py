@@ -169,141 +169,56 @@ class CountryShowcase:
 
 
 # ---------------------------------------------------------------------------
-# Excel parsing
+# JSON parsing
 # ---------------------------------------------------------------------------
 
-def _is_overlay_name(name: str) -> bool:
-    """Return True if this row is the overlay entry, not a medal."""
-    low = name.lower()
-    return 'overlay' in low or low == 'glass_overlay_ussr'
-
-
-def _try_fix_name(name: str) -> str:
+def parse_json_coordinates(json_path: Path) -> dict[str, CountryShowcase]:
     """
-    Apply known normalisation fixes.
+    Parse the award-coordinates JSON file into a per-country dict.
 
-    Examples:
-      "AF_cross_2bars_big"   -> "AF_cross_2bars_big1"   (missing trailing 1)
-      "order_surov_big1"     -> kept as-is (typo in Excel for order_suvorov)
-    """
-    if name.endswith('_big') and not name.endswith('_big1'):
-        fixed = name + '1'
-        logger.warning(
-            "[medal_showcase] Excel name '%s' appears to be missing '1' suffix"
-            " – treating as '%s'", name, fixed)
-        return fixed
-    return name
-
-
-def parse_excel_coordinates(excel_path: Path) -> dict[str, CountryShowcase]:
-    """
-    Parse the award-coordinates Excel file into a per-country dict.
+    The JSON is produced by the one-time conversion script from the Excel
+    source file (IL-2_Tracker_award_coordinates.xlsx).  Keeping the JSON
+    in the repo removes the openpyxl / numpy runtime dependency.
 
     Returns:
         { country_key: CountryShowcase }
 
     Raises:
-        ImportError  if openpyxl is unavailable
-        FileNotFoundError / ValueError  on file / sheet issues
+        FileNotFoundError  if the file does not exist
+        ValueError         on malformed JSON structure
     """
-    try:
-        import openpyxl  # noqa: PLC0415
-    except ImportError as exc:
-        raise ImportError(
-            "openpyxl is required to parse medal coordinates.  "
-            "Install it with: pip install openpyxl"
-        ) from exc
+    import json  # stdlib, always available
 
-    if not excel_path.exists():
-        raise FileNotFoundError(f"Excel file not found: {excel_path}")
+    if not json_path.exists():
+        raise FileNotFoundError(f"Coordinate file not found: {json_path}")
 
-    wb = openpyxl.load_workbook(str(excel_path), data_only=True, read_only=True)
-
-    if 'Sheet1' not in wb.sheetnames:
-        raise ValueError(
-            f"Expected sheet 'Sheet1' in {excel_path}.  "
-            f"Available sheets: {wb.sheetnames}"
-        )
-
-    ws = wb['Sheet1']
+    raw = json.loads(json_path.read_text(encoding='utf-8'))
 
     result: dict[str, CountryShowcase] = {}
-    current_key: Optional[str] = None
-    medals_buf: list[MedalEntry] = []
-    overlay_buf: Optional[MedalEntry] = None
-
-    def _flush() -> None:
-        nonlocal medals_buf, overlay_buf
-        if current_key is not None:
-            result[current_key] = CountryShowcase(
-                medals=list(medals_buf),
-                overlay=overlay_buf,
+    for country_key, section in raw.items():
+        medals = [
+            MedalEntry(
+                name=m['name'],
+                x=m['x'], y=m['y'], w=m['w'], h=m['h'],
+                replacements=m.get('replacements', []),
             )
-        medals_buf  = []
-        overlay_buf = None
-
-    for raw_row in ws.iter_rows(values_only=True):
-        col_a = raw_row[0]
-        if col_a is None:
-            continue
-
-        col_a_str = str(col_a).strip()
-        if not col_a_str:
-            continue
-
-        # --- Section header? ---
-        if col_a_str in SECTION_HEADERS:
-            _flush()
-            current_key = SECTION_HEADERS[col_a_str]
-            medals_buf  = []
-            overlay_buf = None
-            continue
-
-        if current_key is None:
-            continue  # rows before first section header
-
-        # --- Coordinate row ---
-        try:
-            x_raw = raw_row[1]
-            y_raw = raw_row[2]
-            w_raw = raw_row[3]
-            h_raw = raw_row[4]
-
-            if any(v is None for v in (x_raw, y_raw, w_raw, h_raw)):
-                continue  # header sub-row ("x y w h") or empty
-
-            x = int(x_raw)
-            y = int(y_raw)
-            w = int(w_raw)
-            h = int(h_raw)
-        except (TypeError, ValueError):
-            continue
-
-        # Replacements: columns G–K  (indices 6–10)
-        replacements: list[str] = []
-        for idx in range(6, 11):
-            raw_val = raw_row[idx] if idx < len(raw_row) else None
-            if raw_val is not None:
-                rep = str(raw_val).strip()
-                if rep:
-                    rep = _try_fix_name(rep)
-                    replacements.append(rep)
-
-        name = _try_fix_name(col_a_str)
-
-        entry = MedalEntry(name, x, y, w, h, replacements)
-
-        if _is_overlay_name(name):
-            overlay_buf = entry
-        else:
-            medals_buf.append(entry)
-
-    # Flush the last section
-    _flush()
+            for m in section.get('medals', [])
+        ]
+        ovl_raw = section.get('overlay')
+        overlay = (
+            MedalEntry(
+                name=ovl_raw['name'],
+                x=ovl_raw['x'], y=ovl_raw['y'],
+                w=ovl_raw['w'], h=ovl_raw['h'],
+                replacements=ovl_raw.get('replacements', []),
+            )
+            if ovl_raw else None
+        )
+        result[country_key] = CountryShowcase(medals=medals, overlay=overlay)
 
     logger.info(
-        "[medal_showcase] Parsed %d country sections from %s",
-        len(result), excel_path.name,
+        "[medal_showcase] Loaded %d country sections from %s",
+        len(result), json_path.name,
     )
     return result
 
@@ -316,20 +231,20 @@ _cached_coordinates: Optional[dict[str, CountryShowcase]] = None
 _cached_excel_mtime: Optional[float] = None
 
 
-def load_coordinates(excel_path: Path) -> dict[str, CountryShowcase]:
+def load_coordinates(json_path: Path) -> dict[str, CountryShowcase]:
     """
-    Return parsed coordinates, re-parsing if the Excel file has changed.
+    Return parsed coordinates, re-parsing if the JSON file has changed.
     Thread-safe via GIL (single writer, dict swap).
     """
     global _cached_coordinates, _cached_excel_mtime
 
     try:
-        mtime = excel_path.stat().st_mtime
+        mtime = json_path.stat().st_mtime
     except OSError:
         mtime = None
 
     if _cached_coordinates is None or mtime != _cached_excel_mtime:
-        _cached_coordinates = parse_excel_coordinates(excel_path)
+        _cached_coordinates = parse_json_coordinates(json_path)
         _cached_excel_mtime = mtime
 
     return _cached_coordinates

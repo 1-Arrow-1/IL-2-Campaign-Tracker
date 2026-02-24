@@ -266,12 +266,12 @@
         "ussr": "static/images/background_USSR.png",
         "victoria_cross_vc": "The highest kind of courage—beyond orders, beyond reason. A moment that becomes history.",
         "wound_stripe": "Proof the war reached you personally. The body keeps the receipt.",
-        "air_force_medal": "For distinguished service and courage on {date}, {first_name} {name} was awarded the Air Force Medal.",
-        "bar_to_the_air_force_medal": "A Bar to the Air Force Medal was awarded on {date} in recognition of further distinguished service.",
-        "second_bar_to_the_air_force_medal": "A Second Bar to the Air Force Medal was bestowed on {date}, marking continued gallantry above and beyond.",
-        "air_force_cross": "On {date}, in recognition of an act of valour in the air, {first_name} {name} was awarded the Air Force Cross.",
-        "bar_to_the_air_force_cross": "A Bar to the Air Force Cross was awarded on {date} for further distinguished service as a commissioned officer.",
-        "second_bar_to_the_air_force_cross": "A Second Bar to the Air Force Cross was bestowed on {date}, honouring sustained courage and leadership."
+        "air_force_medal": "Steady hands and quiet courage in the air. You’ve proven yourself where discipline matters more than noise.",
+        "bar_to_the_air_force_medal": "More sorties, more pressure, the same standard held. The ribbon grows because you didn’t lower it.",
+        "second_bar_to_the_air_force_medal": "Sustained grit at operational height. Not a single act—but a pattern of resolve.",
+        "air_force_cross": "Leadership and nerve in the air. Responsibility now sits heavier, and you’ve shown you can carry it.",
+        "bar_to_the_air_force_cross": "Further distinction under command. The weight of decisions grows, and so does trust in your judgment.",
+        "second_bar_to_the_air_force_cross": "Repeated proof at the sharp end. Authority tested in fire—and held."
       },
       "ranks": {
         "air_commodore": "You direct whole air battles from reports and maps. If you fly, it’s exceptional—and everyone notices.",
@@ -307,7 +307,7 @@
         "wound_badge_in_black": "First blood paid to the front. You came back—this time.",
         "wound_badge_in_gold": "You’ve been hit again and again and kept returning. The badge shines; the damage doesn’t.",
         "wound_badge_in_silver": "More wounds, fewer illusions. You’re still flying, but you’ve started counting what it costs.",
-        "luftwaffe_honor_roll_clasp": "On {date}, {first_name} {name} was entered in the Luftwaffe Honor Roll and awarded the Ehrenpokal – the Honor Roll Clasp."
+        "luftwaffe_honor_roll_clasp": "Your name is no longer just on a roster—it stands in the Honor Roll. Recognition earned the hard way, through repeated proof at the front. It’s not applause; it’s expectation."
       },
       "ranks": {
         "feldwebel": "You’ve seen flak and fighters up close and you don’t flinch. Men follow your turns because they’ve learned you bring them home.",

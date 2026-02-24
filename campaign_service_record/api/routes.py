@@ -636,12 +636,12 @@ def get_campaign_showcase(campaign_name: str):
 
     data_dir = _data_loader.data_dir
 
-    # --- Locate Excel coordinate file ---
+    # --- Locate JSON coordinate file ---
     # Primary: alongside the EXE / in data_dir (installed build).
     # Fallback: one level up (dev: Flask started from campaign_service_record/ subdir).
-    excel_path = data_dir / 'IL-2_Tracker_award_coordinates.xlsx'
+    excel_path = data_dir / 'IL-2_Tracker_award_coordinates.json'
     if not excel_path.exists():
-        excel_path = data_dir.parent / 'IL-2_Tracker_award_coordinates.xlsx'
+        excel_path = data_dir.parent / 'IL-2_Tracker_award_coordinates.json'
 
     if not excel_path.exists():
         return jsonify({'error': 'Coordinate file not found', 'path': str(excel_path)}), 404
@@ -655,7 +655,7 @@ def get_campaign_showcase(campaign_name: str):
     else:
         assets_dir = data_dir / 'CampaignRanksAwards'  # fallback (no game dir configured)
 
-    # --- Load / cache Excel coordinates ---
+    # --- Load / cache JSON coordinates ---
     try:
         coordinates = load_coordinates(excel_path)
     except Exception as exc:
