@@ -316,7 +316,9 @@ async function openMedalShowcase(campaignName, btn) {
                 return;
             }
 
-            throw new Error(body.error || `HTTP ${response.status}`);
+            const msg = body.error || `HTTP ${response.status}`;
+            const detail = body.detail ? ` — ${body.detail}` : '';
+            throw new Error(msg + detail);
         }
 
         const data = await response.json();
