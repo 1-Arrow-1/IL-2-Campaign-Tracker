@@ -265,7 +265,13 @@
         "us": "static/images/background_US.png",
         "ussr": "static/images/background_USSR.png",
         "victoria_cross_vc": "最高等级的勇气——超越命令、超越理性。那一刻，会被写进历史。",
-        "wound_stripe": "战争触及了你的血肉之身。身体会把账单收好。"
+        "wound_stripe": "战争触及了你的血肉之身。身体会把账单收好。",
+        "air_force_medal": "空中有稳定的双手与无声的勇气。你在纪律比喧阂更重要的地方证明了自己。",
+        "bar_to_the_air_force_medal": "更多出击，更大压力，相同的标准依然坚守。缶带延长，因为你没有降低它。",
+        "second_bar_to_the_air_force_medal": "在战斗高度持续的坚韧。不是单一的行动——而是一贯的意志。",
+        "air_force_cross": "空中的指挥力与胆量。责任现在更沉——你已证明能够承担。",
+        "bar_to_the_air_force_cross": "指挥中再度获得荣誉。决策的重量在增加，对你判断的信任也随之加深。",
+        "second_bar_to_the_air_force_cross": "在最前沿一再证明自身。权威经历了炮火考验——并坚守住了。"
       },
       "ranks": {
         "air_commodore": "你从报告与地图上指挥整场空战。若你亲自飞，那必是破例——所有人都会注意到。",
@@ -300,7 +306,8 @@
         "with_oak_leaves_swords_and_diamonds": "稀有、沉重、无法忽视。你的记录已成传奇，但风险依旧真实。",
         "wound_badge_in_black": "第一次在前线流血。你回来了——至少这一次。",
         "wound_badge_in_gold": "你一次又一次中弹却不断归来。徽章闪亮，伤害却不会。",
-        "wound_badge_in_silver": "伤得更多，幻想更少。你仍在飞行，但已开始计算代价。"
+        "wound_badge_in_silver": "伤得更多，幻想更少。你仍在飞行，但已开始计算代价。",
+        "luftwaffe_honor_roll_clasp": "你的名字不再只是花名册上的一行——它已立于荣誉名册之中。这份认可来之不易，靠的是在前线一次次的自我证明。这不是掌声；这是期望。"
       },
       "ranks": {
         "feldwebel": "你近距离见过高射炮火与敌机，不再畏缩。战友跟随你的转向，因为他们知道你能把人带回来。",
@@ -556,7 +563,14 @@
       "wound_badge_in_gold": "金色负伤章",
       "wound_badge_in_silver": "银色负伤章",
       "wound_stripe": "负伤条纹",
-      "yellow_wound_stripe": "黄色负伤条纹"
+      "yellow_wound_stripe": "黄色负伤条纹",
+      "air_force_medal": "空军奖章",
+      "bar_to_the_air_force_medal": "空军奖章附条",
+      "second_bar_to_the_air_force_medal": "空军奖章第二附条",
+      "air_force_cross": "空军十字勋章",
+      "bar_to_the_air_force_cross": "空军十字勋章附条",
+      "second_bar_to_the_air_force_cross": "空军十字勋章第二附条",
+      "luftwaffe_honor_roll_clasp": "德国空军荣誉名册扣"
     },
     "ranks": {
       "1st_lieutenant": "中尉",
@@ -782,6 +796,13 @@
       "promotion_message": "你已晋升为 {rank}",
       "promotion_message_generic": "你已获得晋升！",
       "promotion_title": "晋升"
+    },
+    "medal_showcase": {
+      "button": "奖章展示",
+      "title": "奖章展示",
+      "loading": "加载中…",
+      "not_available": "不可用",
+      "error": "加载失败"
     }
   },
   "validation": {

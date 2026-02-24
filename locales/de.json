@@ -265,7 +265,13 @@
         "us": "static/images/background_US.png",
         "ussr": "static/images/background_USSR.png",
         "victoria_cross_vc": "Höchste Form des Mutes – jenseits von Befehl und Vernunft. Ein Augenblick, der Geschichte wird.",
-        "wound_stripe": "Der Krieg hat dich persönlich getroffen. Der Körper vergisst nicht."
+        "wound_stripe": "Der Krieg hat dich persönlich getroffen. Der Körper vergisst nicht.",
+        "air_force_medal": "Ruhige Hände, stiller Mut im Cockpit. Du hast bewiesen, dass Disziplin mehr zählt als Lärm.",
+        "bar_to_the_air_force_medal": "Mehr Einsätze, mehr Druck — derselbe Maßstab gehalten. Das Band wächst, weil du die Latte nicht gesenkt hast.",
+        "second_bar_to_the_air_force_medal": "Ausdauernde Entschlossenheit auf Einsatzhöhe. Nicht eine einzelne Tat — sondern ein Muster aus Haltung.",
+        "air_force_cross": "Führung und Kaltblütigkeit in der Luft. Die Verantwortung wiegt schwerer — und du hast gezeigt, dass du sie tragen kannst.",
+        "bar_to_the_air_force_cross": "Weitere Auszeichnung in verantwortlicher Stellung. Das Gewicht der Entscheidungen wächst — und damit das Vertrauen in dein Urteil.",
+        "second_bar_to_the_air_force_cross": "Wiederholter Beweis an vorderster Front. Autorität im Feuer erprobt — und bestanden."
       },
       "ranks": {
         "air_commodore": "Du lenkst Luftschlachten von Karten und Meldungen aus. Wenn du fliegst, ist es außergewöhnlich – und allen bewusst.",
@@ -300,7 +306,8 @@
         "with_oak_leaves_swords_and_diamonds": "Selten, schwer, nicht zu übersehen. Deine Bilanz ist Legende, das Risiko bleibt real.",
         "wound_badge_in_black": "Erstes Blut für die Front. Du bist zurückgekehrt – diesmal.",
         "wound_badge_in_gold": "Immer wieder getroffen und dennoch zurückgekehrt. Das Abzeichen glänzt – die Schäden nicht.",
-        "wound_badge_in_silver": "Weitere Verwundungen, weniger Illusionen. Du fliegst weiter, beginnst aber zu zählen, was es kostet."
+        "wound_badge_in_silver": "Weitere Verwundungen, weniger Illusionen. Du fliegst weiter, beginnst aber zu zählen, was es kostet.",
+        "luftwaffe_honor_roll_clasp": "Dein Name steht nicht mehr nur auf einer Liste — er steht in der Ehrenliste. Anerkennung, die auf die harte Tour erworben wird: durch immer wieder erbrachten Beweis an der Front. Kein Beifall — eine Erwartung."
       },
       "ranks": {
         "feldwebel": "Flak und Feindjäger hast du aus nächster Nähe erlebt. Du bleibst ruhig, und die anderen folgen dir, weil sie wissen, dass du sie zurückbringst.",
@@ -556,7 +563,14 @@
       "wound_badge_in_gold": "Verwundetenabzeichen in Gold",
       "wound_badge_in_silver": "Verwundetenabzeichen in Silber",
       "wound_stripe": "Verwundetenstreifen",
-      "yellow_wound_stripe": "Gelber Verwundetenstreifen"
+      "yellow_wound_stripe": "Gelber Verwundetenstreifen",
+      "air_force_medal": "Air Force Medal",
+      "bar_to_the_air_force_medal": "Spange zur Air Force Medal",
+      "second_bar_to_the_air_force_medal": "Zweite Spange zur Air Force Medal",
+      "air_force_cross": "Air Force Cross",
+      "bar_to_the_air_force_cross": "Spange zum Air Force Cross",
+      "second_bar_to_the_air_force_cross": "Zweite Spange zum Air Force Cross",
+      "luftwaffe_honor_roll_clasp": "Ehrenblattspange der Luftwaffe"
     },
     "ranks": {
       "1st_lieutenant": "1st Lieutenant",
@@ -782,6 +796,13 @@
       "promotion_message": "Sie wurden zum {rank} befördert",
       "promotion_message_generic": "Sie wurden befördert!",
       "promotion_title": "Beförderung"
+    },
+    "medal_showcase": {
+      "button": "Medaillenschau",
+      "title": "Medaillenschau",
+      "loading": "Laden…",
+      "not_available": "Nicht verfügbar",
+      "error": "Fehler beim Laden"
     }
   },
   "validation": {

@@ -265,7 +265,13 @@
         "us": "static/images/background_US.png",
         "ussr": "static/images/background_USSR.png",
         "victoria_cross_vc": "La forma más alta de coraje, más allá de órdenes y de razón. Un instante que se vuelve historia.",
-        "wound_stripe": "Prueba de que la guerra te alcanzó en persona. El cuerpo se guarda el recibo."
+        "wound_stripe": "Prueba de que la guerra te alcanzó en persona. El cuerpo se guarda el recibo.",
+        "air_force_medal": "Manos firmes y valor silencioso en el aire. Te has demostrado donde la disciplina vale más que el ruido.",
+        "bar_to_the_air_force_medal": "Más salidas, más presión, el mismo nivel mantenido. La distinción crece porque no la rebajaste.",
+        "second_bar_to_the_air_force_medal": "Tenacidad sostenida a altura operativa. No un solo acto — sino un patrón de determinación.",
+        "air_force_cross": "Mando y temple en el aire. La responsabilidad pesa más ahora, y has demostrado que puedes con ella.",
+        "bar_to_the_air_force_cross": "Distinción renovada al mando. El peso de las decisiones crece, y también la confianza en tu criterio.",
+        "second_bar_to_the_air_force_cross": "Prueba repetida en primera línea. Autoridad sometida al fuego — y sostenida."
       },
       "ranks": {
         "air_commodore": "Diriges batallas aéreas enteras desde informes y mapas. Si vuelas, es una excepción… y todos lo notan.",
@@ -300,7 +306,8 @@
         "with_oak_leaves_swords_and_diamonds": "Raro, pesado e imposible de ignorar. Tu historial es leyenda; el riesgo sigue siendo real.",
         "wound_badge_in_black": "La primera sangre pagada al frente. Volviste… esta vez.",
         "wound_badge_in_gold": "Te han alcanzado una y otra vez y sigues regresando. La insignia brilla; el daño no.",
-        "wound_badge_in_silver": "Más heridas, menos ilusiones. Sigues volando, pero ya empiezas a contar lo que cuesta."
+        "wound_badge_in_silver": "Más heridas, menos ilusiones. Sigues volando, pero ya empiezas a contar lo que cuesta.",
+        "luftwaffe_honor_roll_clasp": "Tu nombre ya no figura solo en una lista — está en el Libro de Honor. Reconocimiento ganado a duras penas, mediante prueba reiterada en el frente. No es un aplauso; es una expectativa."
       },
       "ranks": {
         "feldwebel": "Has visto la flak y a los cazas a quemarropa y ya no te encoges. Te siguen en cada viraje porque han aprendido que tú los traes de vuelta.",
@@ -556,7 +563,14 @@
       "wound_badge_in_gold": "Insignia de herido en oro",
       "wound_badge_in_silver": "Insignia de herido en plata",
       "wound_stripe": "Galón de herido",
-      "yellow_wound_stripe": "Galón amarillo de herido"
+      "yellow_wound_stripe": "Galón amarillo de herido",
+      "air_force_medal": "Medalla de la Fuerza Aérea",
+      "bar_to_the_air_force_medal": "Barra de la Medalla de la Fuerza Aérea",
+      "second_bar_to_the_air_force_medal": "Segunda barra de la Medalla de la Fuerza Aérea",
+      "air_force_cross": "Cruz de la Fuerza Aérea",
+      "bar_to_the_air_force_cross": "Barra de la Cruz de la Fuerza Aérea",
+      "second_bar_to_the_air_force_cross": "Segunda barra de la Cruz de la Fuerza Aérea",
+      "luftwaffe_honor_roll_clasp": "Broche de la Lista de Honor de la Luftwaffe"
     },
     "ranks": {
       "1st_lieutenant": "1st Lieutenant",
@@ -782,6 +796,13 @@
       "promotion_message": "Has sido ascendido al rango de {rank}",
       "promotion_message_generic": "¡Has sido ascendido!",
       "promotion_title": "Ascenso"
+    },
+    "medal_showcase": {
+      "button": "Vitrina de medallas",
+      "title": "Vitrina de medallas",
+      "loading": "Cargando…",
+      "not_available": "No disponible",
+      "error": "Error al cargar"
     }
   },
   "validation": {

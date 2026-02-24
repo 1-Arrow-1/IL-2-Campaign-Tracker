@@ -265,7 +265,13 @@
         "us": "static/images/background_US.png",
         "ussr": "static/images/background_USSR.png",
         "victoria_cross_vc": "Le courage le plus haut — au-delà des ordres, au-delà de la raison. Un instant qui devient Histoire.",
-        "wound_stripe": "La preuve que la guerre t’a touché de près. Le corps garde la quittance."
+        "wound_stripe": "La preuve que la guerre t’a touché de près. Le corps garde la quittance.",
+        "air_force_medal": "Des mains fermes et un courage tranquille dans les airs. Tu t’es imposé là où la discipline pèse plus que le bruit.",
+        "bar_to_the_air_force_medal": "Plus de sorties, plus de pression — le même niveau tenu. Le ruban s’allonge parce que tu ne l’as pas abaissé.",
+        "second_bar_to_the_air_force_medal": "Un cran maintenu à altitude opérationnelle. Non pas un acte isolé — mais la constance d’une résolution.",
+        "air_force_cross": "Commandement et sang-froid dans les airs. La responsabilité pèse désormais plus lourd — et tu as montré que tu peux la porter.",
+        "bar_to_the_air_force_cross": "Nouvelle distinction dans le commandement. Le poids des décisions augmente — et avec lui, la confiance en ton jugement.",
+        "second_bar_to_the_air_force_cross": "Preuve répétée au plus vif du front. L’autorité éprouvée au feu — et maintenue."
       },
       "ranks": {
         "air_commodore": "Tu diriges des batailles aériennes entières depuis des rapports et des cartes. Si tu voles, c’est exceptionnel — et tout le monde le remarque.",
@@ -300,7 +306,8 @@
         "with_oak_leaves_swords_and_diamonds": "Rare, lourd, impossible à ignorer. Ton palmarès devient légende ; le risque, lui, reste bien réel.",
         "wound_badge_in_black": "Premier sang payé au front. Tu es revenu — cette fois.",
         "wound_badge_in_gold": "Touché encore et encore, et pourtant tu es reparti. L’insigne brille ; pas les dommages.",
-        "wound_badge_in_silver": "Davantage de blessures, moins d’illusions. Tu voles encore, mais tu commences à compter le prix."
+        "wound_badge_in_silver": "Davantage de blessures, moins d’illusions. Tu voles encore, mais tu commences à compter le prix.",
+        "luftwaffe_honor_roll_clasp": "Ton nom ne figure plus seulement sur un tableau d’effectifs — il est inscrit au Tableau d’Honneur. Une distinction méritée à la dure, à force de preuves répétées au front. Ce n’est pas des applaudissements ; c’est une attente."
       },
       "ranks": {
         "feldwebel": "Tu as vu la Flak et les chasseurs de près, et tu ne cilles plus. On suit tes virages parce qu’on sait que tu ramènes les hommes.",
@@ -557,7 +564,14 @@
       "wound_badge_in_gold": "Insigne des blessés en or",
       "wound_badge_in_silver": "Insigne des blessés en argent",
       "wound_stripe": "Bande de blessure",
-      "yellow_wound_stripe": "Bande de blessure jaune"
+      "yellow_wound_stripe": "Bande de blessure jaune",
+      "air_force_medal": "Air Force Medal",
+      "bar_to_the_air_force_medal": "Barrette à la Air Force Medal",
+      "second_bar_to_the_air_force_medal": "Deuxième barrette à la Air Force Medal",
+      "air_force_cross": "Air Force Cross",
+      "bar_to_the_air_force_cross": "Barrette à la Air Force Cross",
+      "second_bar_to_the_air_force_cross": "Deuxième barrette à la Air Force Cross",
+      "luftwaffe_honor_roll_clasp": "Agrafe du Tableau d’Honneur de la Luftwaffe"
     },
     "ranks": {
       "1st_lieutenant": "1st Lieutenant",
@@ -783,6 +797,13 @@
       "promotion_message": "Tu as été promu au grade de {rank}",
       "promotion_message_generic": "Tu as été promu !",
       "promotion_title": "Promotion"
+    },
+    "medal_showcase": {
+      "button": "Vitrine des médailles",
+      "title": "Vitrine des médailles",
+      "loading": "Chargement…",
+      "not_available": "Non disponible",
+      "error": "Erreur de chargement"
     }
   },
   "validation": {

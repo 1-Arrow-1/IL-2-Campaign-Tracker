@@ -265,7 +265,13 @@
         "us": "static/images/background_US.png",
         "ussr": "static/images/background_USSR.png",
         "victoria_cross_vc": "Najwyższa odwaga — ponad rozkazami, ponad zdrowym rozsądkiem. Chwila, która staje się historią.",
-        "wound_stripe": "Dowód, że wojna dosięgła cię osobiście. Ciało zachowuje rachunek."
+        "wound_stripe": "Dowód, że wojna dosięgła cię osobiście. Ciało zachowuje rachunek.",
+        "air_force_medal": "Spokojne ręce i cicha odwaga w powietrzu. Udowodniłeś się tam, gdzie dyscyplina liczy się bardziej niż hałas.",
+        "bar_to_the_air_force_medal": "Więcej lotów bojowych, większa presja — ten sam poziom utrzymany. Wstążka rośnie, bo jej nie opuściłeś.",
+        "second_bar_to_the_air_force_medal": "Wytrwałość na wysokości operacyjnej. Nie jeden czyn — lecz wzórzec zdecydowania.",
+        "air_force_cross": "Dowodzenie i nerwy w powietrzu. Odpowiedzialność waży teraz ciężej — i pokazałeś, że potrafisz ją udźwignąć.",
+        "bar_to_the_air_force_cross": "Kolejne wyróżnienie w służbie dowódczej. Ciężar decyzji rośnie — i rośnie też zaufanie do twojego osądu.",
+        "second_bar_to_the_air_force_cross": "Kolejny dowód w ogniu. Autorytet wystawiony na próbę — i utrzymany."
       },
       "ranks": {
         "air_commodore": "Prowadzisz całe bitwy powietrzne z raportów i map. Jeśli lecisz, to rzecz wyjątkowa — i wszyscy to widzą.",
@@ -300,7 +306,8 @@
         "with_oak_leaves_swords_and_diamonds": "Rzadkie, ciężkie, niemożliwe do zignorowania. Twoja karta jest legendą; ryzyko pozostaje realne.",
         "wound_badge_in_black": "Pierwsza krew zapłacona frontowi. Wróciłeś — tym razem.",
         "wound_badge_in_gold": "Trafiano cię raz po raz, a ty wciąż wracałeś. Odznaka błyszczy; szkody — nie.",
-        "wound_badge_in_silver": "Więcej ran, mniej złudzeń. Nadal latasz, ale coraz częściej liczysz, ile to kosztuje."
+        "wound_badge_in_silver": "Więcej ran, mniej złudzeń. Nadal latasz, ale coraz częściej liczysz, ile to kosztuje.",
+        "luftwaffe_honor_roll_clasp": "Twoje nazwisko nie figuruje już tylko na liście — widnieje w Księdze Zasług. Uznanie zdobyte ciężką pracą, przez wielokrotne potwierdzanie się na froncie. To nie oklaski — to oczekiwanie."
       },
       "ranks": {
         "feldwebel": "Widziałeś flak i myśliwce zbyt blisko, by jeszcze drgnąć. Ludzie idą za twoim zakrętem, bo wiedzą, że potrafisz ich sprowadzić do domu.",
@@ -556,7 +563,14 @@
       "wound_badge_in_gold": "Odznaka za Rany w Złocie",
       "wound_badge_in_silver": "Odznaka za Rany w Srebrze",
       "wound_stripe": "Pasek za Rany",
-      "yellow_wound_stripe": "Żółty pasek ranny"
+      "yellow_wound_stripe": "Żółty pasek ranny",
+      "air_force_medal": "Air Force Medal",
+      "bar_to_the_air_force_medal": "Klips do Air Force Medal",
+      "second_bar_to_the_air_force_medal": "Drugi Klips do Air Force Medal",
+      "air_force_cross": "Air Force Cross",
+      "bar_to_the_air_force_cross": "Klips do Air Force Cross",
+      "second_bar_to_the_air_force_cross": "Drugi Klips do Air Force Cross",
+      "luftwaffe_honor_roll_clasp": "Klamra Listy Zasług Luftwaffe"
     },
     "ranks": {
       "1st_lieutenant": "1st Lieutenant",
@@ -782,6 +796,13 @@
       "promotion_message": "Awansowałeś na stopień: {rank}",
       "promotion_message_generic": "Awans!",
       "promotion_title": "Awans"
+    },
+    "medal_showcase": {
+      "button": "Gablota medali",
+      "title": "Gablota medali",
+      "loading": "Ładowanie…",
+      "not_available": "Niedostępne",
+      "error": "Błąd ładowania"
     }
   },
   "validation": {
