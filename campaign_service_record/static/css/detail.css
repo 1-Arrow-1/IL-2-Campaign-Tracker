@@ -1018,13 +1018,11 @@
     pointer-events: none;
 }
 
-/* Individual medal images */
+/* Individual medal slots (div with background-image) */
 .msc-medal {
     position: absolute;
     display: block;
-    object-fit: contain;
     user-select: none;
-    -webkit-user-drag: none;
 }
 
 /* Glass overlay – always on top */

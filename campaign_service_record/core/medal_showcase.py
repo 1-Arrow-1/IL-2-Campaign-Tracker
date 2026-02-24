@@ -125,13 +125,16 @@ _CAMPAIGN_COUNTRY_MAP: dict[str, str] = {
 
 class MedalEntry:
     """One medal slot from the Excel, with optional replacement chain."""
-    __slots__ = ('name', 'x', 'y', 'w', 'h', 'replacements')
+    __slots__ = ('name', 'x', 'y', 'w', 'h', 'replacements',
+                 'img_w', 'img_h', 'img_x', 'img_y')
 
     def __init__(
         self,
         name: str,
         x: int, y: int, w: int, h: int,
         replacements: list[str],
+        img_w: int = 0, img_h: int = 0,
+        img_x: int = 0, img_y: int = 0,
     ) -> None:
         self.name         = name
         self.x            = x
@@ -139,13 +142,19 @@ class MedalEntry:
         self.w            = w
         self.h            = h
         self.replacements = replacements  # ordered from base+1 to highest
+        # Image natural dimensions and content offset within the PNG
+        # (the transparent padding region before the actual medal pixels)
+        self.img_w        = img_w
+        self.img_h        = img_h
+        self.img_x        = img_x
+        self.img_y        = img_y
 
     def full_chain(self) -> list[str]:
         """Return [base, *replacements] – all candidates, lowest first."""
         return [self.name] + self.replacements
 
     def to_dict(self) -> dict:
-        return {
+        d = {
             'name':         self.name,
             'x':            self.x,
             'y':            self.y,
@@ -153,6 +162,12 @@ class MedalEntry:
             'h':            self.h,
             'replacements': self.replacements,
         }
+        if self.img_w:
+            d['img_w'] = self.img_w
+            d['img_h'] = self.img_h
+            d['img_x'] = self.img_x
+            d['img_y'] = self.img_y
+        return d
 
 
 class CountryShowcase:
@@ -201,6 +216,8 @@ def parse_json_coordinates(json_path: Path) -> dict[str, CountryShowcase]:
                 name=m['name'],
                 x=m['x'], y=m['y'], w=m['w'], h=m['h'],
                 replacements=m.get('replacements', []),
+                img_w=m.get('img_w', 0), img_h=m.get('img_h', 0),
+                img_x=m.get('img_x', 0), img_y=m.get('img_y', 0),
             )
             for m in section.get('medals', [])
         ]
@@ -426,14 +443,20 @@ def build_showcase_data(
             if asset_path is None:
                 continue  # no usable image
 
-        placed_medals.append({
+        slot: dict = {
             'image_url': _make_url(asset_path.name),
             'x':         entry.x,
             'y':         entry.y,
             'w':         entry.w,
             'h':         entry.h,
             'name':      chosen,
-        })
+        }
+        if entry.img_w:
+            slot['img_w'] = entry.img_w
+            slot['img_h'] = entry.img_h
+            slot['img_x'] = entry.img_x
+            slot['img_y'] = entry.img_y
+        placed_medals.append(slot)
 
     return {
         'country_key': country_key,

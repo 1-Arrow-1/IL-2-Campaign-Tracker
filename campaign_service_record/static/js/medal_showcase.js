@@ -120,35 +120,61 @@ const MedalShowcaseModal = (() => {
 
     /**
      * Place a single medal image absolutely inside _medalContainer.
+     *
+     * Each _big1.png is a padded image: the medal content sits inside a larger
+     * transparent canvas (e.g. 512×512).  `imgW/imgH` are the natural PNG
+     * dimensions; `imgX/imgY` are the pixel offset where the content starts.
+     * We use CSS background-image to crop out exactly the content region, so
+     * the medal fills its coordinate slot without letterboxing.
+     *
      * @param {string} imageUrl
-     * @param {number} x  - top-left x from Excel (natural pixels)
-     * @param {number} y  - top-left y from Excel (natural pixels)
-     * @param {number} w  - width from Excel (natural pixels)
-     * @param {number} h  - height from Excel (natural pixels)
-     * @param {string} name - showcase name for alt text / data attribute
-     * @returns {HTMLImageElement}
+     * @param {number} x, y     - top-left of the slot on the canvas
+     * @param {number} w, h     - slot dimensions on the canvas
+     * @param {string} name
+     * @param {number} imgW, imgH - natural PNG dimensions (0 = unknown)
+     * @param {number} imgX, imgY - content offset within the PNG (0 = full image)
+     * @returns {HTMLElement}
      */
-    function _placeMedal(imageUrl, x, y, w, h, name) {
-        const img = document.createElement('img');
-        img.className = 'msc-medal';
-        img.src = imageUrl;
-        img.alt = name || '';
-        img.draggable = false;
-        img.dataset.name = name || '';
+    function _placeMedal(imageUrl, x, y, w, h, name, imgW, imgH, imgX, imgY) {
+        const el = document.createElement('div');
+        el.className = 'msc-medal';
+        el.dataset.name = name || '';
+        el.title = name || '';
 
-        img.style.left   = `${Math.round(x * SCALE)}px`;
-        img.style.top    = `${Math.round(y * SCALE)}px`;
-        img.style.width  = `${Math.round(w * SCALE)}px`;
-        img.style.height = `${Math.round(h * SCALE)}px`;
+        el.style.left   = `${Math.round(x * SCALE)}px`;
+        el.style.top    = `${Math.round(y * SCALE)}px`;
+        el.style.width  = `${Math.round(w * SCALE)}px`;
+        el.style.height = `${Math.round(h * SCALE)}px`;
 
-        // Log missing images (dev aid)
-        img.addEventListener('error', () => {
+        if (imgW && imgH) {
+            // Use background-image: display the full PNG at its natural size
+            // and shift it so the content area aligns with the slot.
+            const scaledImgW = Math.round(imgW * SCALE);
+            const scaledImgH = Math.round(imgH * SCALE);
+            const offsetX    = Math.round((imgX || 0) * SCALE);
+            const offsetY    = Math.round((imgY || 0) * SCALE);
+            el.style.backgroundImage    = `url('${imageUrl}')`;
+            el.style.backgroundSize     = `${scaledImgW}px ${scaledImgH}px`;
+            el.style.backgroundPosition = `-${offsetX}px -${offsetY}px`;
+            el.style.backgroundRepeat   = 'no-repeat';
+        } else {
+            // Fallback: scale image to fill slot (object-fit: contain equivalent)
+            el.style.backgroundImage    = `url('${imageUrl}')`;
+            el.style.backgroundSize     = 'contain';
+            el.style.backgroundPosition = 'center';
+            el.style.backgroundRepeat   = 'no-repeat';
+        }
+
+        // Dev aid: detect broken images
+        const testImg = new Image();
+        testImg.onerror = () => {
             console.warn('[MedalShowcase] Image failed to load:', imageUrl,
                          '(medal:', name, ')');
-            img.style.outline = '2px dashed red';
-        });
+            el.style.outline = '2px dashed red';
+        };
+        testImg.src = imageUrl;
 
-        return img;
+        return el;
     }
 
     /**
@@ -228,10 +254,11 @@ const MedalShowcaseModal = (() => {
         // ---- Place medal images ----
         const medals = Array.isArray(data.medals) ? data.medals : [];
         medals.forEach((medal) => {
-            const img = _placeMedal(
-                medal.image_url, medal.x, medal.y, medal.w, medal.h, medal.name
+            const el = _placeMedal(
+                medal.image_url, medal.x, medal.y, medal.w, medal.h, medal.name,
+                medal.img_w, medal.img_h, medal.img_x, medal.img_y
             );
-            _medalContainer.appendChild(img);
+            _medalContainer.appendChild(el);
         });
 
         // ---- Place overlay last (on top) ----

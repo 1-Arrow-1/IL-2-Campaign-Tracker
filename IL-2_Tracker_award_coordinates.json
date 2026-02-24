@@ -7,7 +7,11 @@
         "y": 141,
         "w": 316,
         "h": 473,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 105,
+        "img_y": 35
       },
       {
         "name": "medal_battle_merit_big1",
@@ -15,7 +19,11 @@
         "y": 141,
         "w": 316,
         "h": 489,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 102,
+        "img_y": 15
       },
       {
         "name": "hero_soviet_union_big1",
@@ -23,7 +31,11 @@
         "y": 141,
         "w": 307,
         "h": 440,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 115,
+        "img_y": 51
       },
       {
         "name": "order_lenin_big1",
@@ -31,7 +43,11 @@
         "y": 277,
         "w": 335,
         "h": 347,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 88,
+        "img_y": 104
       },
       {
         "name": "order_surov_big1",
@@ -39,7 +55,11 @@
         "y": 1071,
         "w": 335,
         "h": 464,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 95,
+        "img_y": 37
       },
       {
         "name": "order_patriotic_war_2nd_big1",
@@ -47,7 +67,11 @@
         "y": 636,
         "w": 355,
         "h": 493,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 84,
+        "img_y": 19
       },
       {
         "name": "order_nevsky_big1",
@@ -55,7 +79,11 @@
         "y": 636,
         "w": 364,
         "h": 503,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 80,
+        "img_y": 9
       },
       {
         "name": "order_patriotic_war_1st_big1",
@@ -63,7 +91,11 @@
         "y": 635,
         "w": 351,
         "h": 496,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 85,
+        "img_y": 16
       },
       {
         "name": "pilots_badge_big1",
@@ -71,7 +103,11 @@
         "y": 1243,
         "w": 332,
         "h": 238,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 22,
+        "img_y": 119
       },
       {
         "name": "order_red_star_big1",
@@ -79,7 +115,11 @@
         "y": 1167,
         "w": 363,
         "h": 364,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 78,
+        "img_y": 86
       },
       {
         "name": "order_red_banner_big1",
@@ -90,7 +130,11 @@
         "replacements": [
           "order_red_banner_2_big1",
           "order_red_banner_3_big1"
-        ]
+        ],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 117,
+        "img_y": 125
       },
       {
         "name": "red_wound_stripe_big1",
@@ -100,7 +144,11 @@
         "h": 212,
         "replacements": [
           "yellow_wound_stripe_big1"
-        ]
+        ],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 47,
+        "img_y": 168
       }
     ],
     "overlay": {
@@ -120,7 +168,11 @@
         "y": 162,
         "w": 329,
         "h": 503,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 94,
+        "img_y": 9
       },
       {
         "name": "medal_battle_merit_big1",
@@ -128,7 +180,11 @@
         "y": 159,
         "w": 304,
         "h": 503,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 106,
+        "img_y": 9
       },
       {
         "name": "hero_soviet_union_big1",
@@ -136,7 +192,11 @@
         "y": 139,
         "w": 298,
         "h": 496,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 111,
+        "img_y": 14
       },
       {
         "name": "order_lenin_big1",
@@ -144,7 +204,11 @@
         "y": 178,
         "w": 332,
         "h": 503,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 91,
+        "img_y": 9
       },
       {
         "name": "order_surov_big1",
@@ -152,7 +216,11 @@
         "y": 1177,
         "w": 382,
         "h": 372,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 70,
+        "img_y": 80
       },
       {
         "name": "order_patriotic_war_2nd_big1",
@@ -160,7 +228,11 @@
         "y": 696,
         "w": 355,
         "h": 365,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 84,
+        "img_y": 88
       },
       {
         "name": "order_nevsky_big1",
@@ -168,7 +240,11 @@
         "y": 681,
         "w": 364,
         "h": 378,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 79,
+        "img_y": 84
       },
       {
         "name": "order_patriotic_war_1st_big1",
@@ -176,7 +252,11 @@
         "y": 697,
         "w": 351,
         "h": 363,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 86,
+        "img_y": 88
       },
       {
         "name": "pilots_badge_big1",
@@ -184,7 +264,11 @@
         "y": 1253,
         "w": 270,
         "h": 216,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 125,
+        "img_y": 163
       },
       {
         "name": "order_red_star_big1",
@@ -192,7 +276,11 @@
         "y": 1165,
         "w": 363,
         "h": 364,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 78,
+        "img_y": 86
       },
       {
         "name": "order_red_banner_big1",
@@ -203,7 +291,11 @@
         "replacements": [
           "order_red_banner_2_big1",
           "order_red_banner_3_big1"
-        ]
+        ],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 86,
+        "img_y": 9
       },
       {
         "name": "red_wound_stripe_big1",
@@ -211,7 +303,11 @@
         "y": 1257,
         "w": 425,
         "h": 212,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 47,
+        "img_y": 168
       }
     ],
     "overlay": {
@@ -239,7 +335,11 @@
           "dfc_3_oak_big1",
           "dfc_4_oak_big1",
           "dfc_1_silver_oak_big1"
-        ]
+        ],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 124,
+        "img_y": 33
       },
       {
         "name": "distinguished_service_cross_big1",
@@ -252,7 +352,11 @@
           "dsc_2_oak_big1",
           "dsc_3_oak_big1",
           "dsc_4_oak_big1"
-        ]
+        ],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 106,
+        "img_y": 9
       },
       {
         "name": "medal_of_honor_big1",
@@ -262,7 +366,11 @@
         "h": 503,
         "replacements": [
           "medal_of_honor_1_oak_big1"
-        ]
+        ],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 0,
+        "img_y": 9
       },
       {
         "name": "silver_star_big1",
@@ -273,7 +381,11 @@
         "replacements": [
           "silver_star_1_oak_big1",
           "silver_star_2_oak_big1"
-        ]
+        ],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 109,
+        "img_y": 24
       },
       {
         "name": "legion_of_merit_big1",
@@ -281,7 +393,11 @@
         "y": 160,
         "w": 300,
         "h": 467,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 106,
+        "img_y": 23
       },
       {
         "name": "air_medal_big1",
@@ -293,7 +409,11 @@
           "air_medal_1_oak_big1",
           "air_medal_2_oak_big1",
           "air_medal_3_oak_big1"
-        ]
+        ],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 125,
+        "img_y": 32
       },
       {
         "name": "pilots_badge_big1",
@@ -301,7 +421,11 @@
         "y": 846,
         "w": 410,
         "h": 197,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 51,
+        "img_y": 182
       },
       {
         "name": "bronze_star_big1",
@@ -312,7 +436,11 @@
         "replacements": [
           "bronze_star_1_oak_big1",
           "bronze_star_2_oak_big1"
-        ]
+        ],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 102,
+        "img_y": 16
       },
       {
         "name": "purple_heart_big1",
@@ -323,7 +451,11 @@
         "replacements": [
           "purple_heart_1_oak_big1",
           "purple_heart_2_oak_big1"
-        ]
+        ],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 115,
+        "img_y": 21
       }
     ],
     "overlay": {
@@ -343,7 +475,11 @@
         "y": 134,
         "w": 363,
         "h": 503,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 78,
+        "img_y": 9
       },
       {
         "name": "iron_cross_1st_big1",
@@ -351,7 +487,11 @@
         "y": 306,
         "w": 363,
         "h": 365,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 78,
+        "img_y": 97
       },
       {
         "name": "knights_cross_big1",
@@ -364,7 +504,11 @@
           "knights_cross_swords_big1",
           "knights_cross_diamonds_big1",
           "knights_cross_gold_diamonds_big1"
-        ]
+        ],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 35,
+        "img_y": 9
       },
       {
         "name": "german_cross_gold_big1",
@@ -372,7 +516,11 @@
         "y": 288,
         "w": 369,
         "h": 370,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 71,
+        "img_y": 87
       },
       {
         "name": "honor_clasp_big1",
@@ -380,7 +528,11 @@
         "y": 186,
         "w": 306,
         "h": 485,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 106,
+        "img_y": 25
       },
       {
         "name": "pilots_badge_big1",
@@ -388,7 +540,11 @@
         "y": 772,
         "w": 430,
         "h": 362,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 48,
+        "img_y": 98
       },
       {
         "name": "honor_goblet_big1",
@@ -396,7 +552,11 @@
         "y": 671,
         "w": 280,
         "h": 497,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 122,
+        "img_y": 15
       },
       {
         "name": "fighters_bronze_big1",
@@ -407,7 +567,11 @@
         "replacements": [
           "fighters_silver_big1",
           "fighters_gold_big1"
-        ]
+        ],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 16,
+        "img_y": 153
       },
       {
         "name": "wound_badge_black_big1",
@@ -418,7 +582,11 @@
         "replacements": [
           "wound_badge_silver_big1",
           "wound_badge_gold_big1"
-        ]
+        ],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 104,
+        "img_y": 99
       }
     ],
     "overlay": {
@@ -441,7 +609,11 @@
         "replacements": [
           "dfm_bar_big1",
           "dfm_2bar_big1"
-        ]
+        ],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 127,
+        "img_y": 9
       },
       {
         "name": "dfc_big1",
@@ -452,7 +624,11 @@
         "replacements": [
           "dfc_bar_big1",
           "dfc_2bar_big1"
-        ]
+        ],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 102,
+        "img_y": 10
       },
       {
         "name": "victoria_cross_big1",
@@ -462,7 +638,11 @@
         "h": 504,
         "replacements": [
           "victoria_cross_bar_big1"
-        ]
+        ],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 115,
+        "img_y": 8
       },
       {
         "name": "dso_big1",
@@ -473,7 +653,11 @@
         "replacements": [
           "dso_bar_big1",
           "dso_bar2_big1"
-        ]
+        ],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 119,
+        "img_y": 14
       },
       {
         "name": "AF_medal_big1",
@@ -484,7 +668,11 @@
         "replacements": [
           "AF_medal_bar_big1",
           "AF_medal_2bars_big1"
-        ]
+        ],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 127,
+        "img_y": 9
       },
       {
         "name": "raf_pilots_badge_big1",
@@ -492,7 +680,11 @@
         "y": 802,
         "w": 471,
         "h": 265,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 25,
+        "img_y": 126
       },
       {
         "name": "mentioned_in_despatches_big1",
@@ -500,7 +692,11 @@
         "y": 657,
         "w": 470,
         "h": 500,
-        "replacements": []
+        "replacements": [],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 25,
+        "img_y": 9
       },
       {
         "name": "wound_stripe_big1",
@@ -511,7 +707,11 @@
         "replacements": [
           "wound_stripe_2_big1",
           "wound_stripe_3_big1"
-        ]
+        ],
+        "img_w": 384,
+        "img_h": 177,
+        "img_x": 0,
+        "img_y": 0
       },
       {
         "name": "AF_cross_big1",
@@ -522,7 +722,11 @@
         "replacements": [
           "AF_cross_bar_big1",
           "AF_cross_2bars_big1"
-        ]
+        ],
+        "img_w": 512,
+        "img_h": 512,
+        "img_x": 106,
+        "img_y": 10
       }
     ],
     "overlay": {
