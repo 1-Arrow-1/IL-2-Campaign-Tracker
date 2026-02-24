@@ -798,8 +798,8 @@
       "promotion_title": "Beförderung"
     },
     "medal_showcase": {
-      "button": "Medaillenschau",
-      "title": "Medaillenschau",
+      "button": "Ordenvitrine",
+      "title": "Ordenvitrine",
       "loading": "Laden…",
       "not_available": "Nicht verfügbar",
       "error": "Fehler beim Laden"
