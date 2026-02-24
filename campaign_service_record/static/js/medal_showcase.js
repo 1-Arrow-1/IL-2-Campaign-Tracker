@@ -326,6 +326,7 @@ async function openMedalShowcase(campaignName, btn) {
         btn.textContent = (i18n && i18n.t)
             ? i18n.t('ui.medal_showcase.error')
             : 'Error loading';
+        btn.title = err.message || '';   // visible on hover for quick diagnosis
         btn.disabled = true;
         return;
     } finally {
