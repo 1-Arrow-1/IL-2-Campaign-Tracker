@@ -38,13 +38,14 @@ const MedalShowcaseModal = (() => {
     let _overlay        = null;   // backdrop div
     let _canvasImg      = null;   // background canvas <img>
     let _medalContainer = null;   // relative-positioned layer for medals
+    let _stage          = null;   // stage div – the CSS transform target
+    let _scaler         = null;   // wrapper sized to post-scale visual dimensions
     let _closeBtn       = null;
     let _isOpen         = false;
     let _currentData    = null;
-
-    // Scale factor: 1.0 = natural image pixels.
-    // Increase if the canvas is very large and doesn't fit the viewport.
-    const SCALE = 1.0;
+    let _nativeW        = 0;      // natural canvas width in px
+    let _nativeH        = 0;      // natural canvas height in px
+    let _resizeTimer    = null;   // debounce handle for window resize
 
     // ------------------------------------------------------------------ //
     //  Build DOM (once)
@@ -74,29 +75,29 @@ const MedalShowcaseModal = (() => {
         _closeBtn.textContent = '×';
         _closeBtn.addEventListener('click', close);
 
-        // ---- scrollable wrapper (in case canvas is very large) ----
-        const scroller = document.createElement('div');
-        scroller.className = 'msc-scroller';
+        // ---- scaler wrapper – JS sets width/height to post-scale visual dims ----
+        _scaler = document.createElement('div');
+        _scaler.className = 'msc-scaler';
 
-        // ---- canvas stage (relative container) ----
-        const stage = document.createElement('div');
-        stage.className = 'msc-stage';
+        // ---- canvas stage – the single transform target (bg + medals + overlay) ----
+        _stage = document.createElement('div');
+        _stage.className = 'msc-stage';
 
         // background canvas image
         _canvasImg = document.createElement('img');
         _canvasImg.className = 'msc-canvas';
         _canvasImg.alt = '';
         _canvasImg.draggable = false;
-        stage.appendChild(_canvasImg);
+        _stage.appendChild(_canvasImg);
 
         // medal container (same size as canvas, absolute positioned over it)
         _medalContainer = document.createElement('div');
         _medalContainer.className = 'msc-medals';
-        stage.appendChild(_medalContainer);
+        _stage.appendChild(_medalContainer);
 
-        scroller.appendChild(stage);
+        _scaler.appendChild(_stage);
         box.appendChild(_closeBtn);
-        box.appendChild(scroller);
+        box.appendChild(_scaler);
         _overlay.appendChild(box);
         document.body.appendChild(_overlay);
 
@@ -112,6 +113,55 @@ const MedalShowcaseModal = (() => {
                 close();
             }
         }, true);
+
+        // Recompute scale whenever the browser window is resized.
+        window.addEventListener('resize', _onResize);
+    }
+
+    // ------------------------------------------------------------------ //
+    //  Viewport-adaptive scaling
+    // ------------------------------------------------------------------ //
+
+    /**
+     * Compute a uniform scale factor so the showcase fits within 90% of the
+     * current viewport in both dimensions.
+     *   scale = min(1, 0.9·vw / nativeW, 0.9·vh / nativeH)
+     * The min(1, …) ensures we never upscale – only downscale when needed.
+     */
+    function _computeScale() {
+        if (!_nativeW || !_nativeH) return 1;
+        return Math.min(
+            1,
+            (0.9 * window.innerWidth)  / _nativeW,
+            (0.9 * window.innerHeight) / _nativeH
+        );
+    }
+
+    /**
+     * Apply a CSS transform to the entire stage and resize the scaler wrapper
+     * to match the post-transform visual dimensions.
+     *
+     * Scaling a single wrapper element (background + medals + overlay together)
+     * means all absolute coordinates remain correct without any recalculation.
+     * Using transform-origin: top left lets the scaler be sized as nativeW*s ×
+     * nativeH*s, which tells the flex-centered backdrop the correct bounds.
+     */
+    function _applyScale() {
+        if (!_stage || !_scaler || !_nativeW || !_nativeH) return;
+        const s = _computeScale();
+        _stage.style.transform       = `scale(${s})`;
+        _stage.style.transformOrigin = 'top left';
+        // Shrink the wrapper to the visible (post-transform) size so the
+        // flex-centered backdrop calculates the right centering offset.
+        _scaler.style.width  = `${Math.round(_nativeW * s)}px`;
+        _scaler.style.height = `${Math.round(_nativeH * s)}px`;
+    }
+
+    /** Debounced resize handler – recomputes scale while the modal is open. */
+    function _onResize() {
+        if (!_isOpen) return;
+        clearTimeout(_resizeTimer);
+        _resizeTimer = setTimeout(_applyScale, 60);
     }
 
     // ------------------------------------------------------------------ //
@@ -141,21 +191,20 @@ const MedalShowcaseModal = (() => {
         el.dataset.name = name || '';
         el.title = name || '';
 
-        el.style.left   = `${Math.round(x * SCALE)}px`;
-        el.style.top    = `${Math.round(y * SCALE)}px`;
-        el.style.width  = `${Math.round(w * SCALE)}px`;
-        el.style.height = `${Math.round(h * SCALE)}px`;
+        // All coordinates stay in native canvas pixels.  Downscaling is handled
+        // by a single CSS transform on the parent stage, so no per-element
+        // multiplication is needed here.
+        el.style.left   = `${x}px`;
+        el.style.top    = `${y}px`;
+        el.style.width  = `${w}px`;
+        el.style.height = `${h}px`;
 
         if (imgW && imgH) {
             // Use background-image: display the full PNG at its natural size
             // and shift it so the content area aligns with the slot.
-            const scaledImgW = Math.round(imgW * SCALE);
-            const scaledImgH = Math.round(imgH * SCALE);
-            const offsetX    = Math.round((imgX || 0) * SCALE);
-            const offsetY    = Math.round((imgY || 0) * SCALE);
             el.style.backgroundImage    = `url('${imageUrl}')`;
-            el.style.backgroundSize     = `${scaledImgW}px ${scaledImgH}px`;
-            el.style.backgroundPosition = `-${offsetX}px -${offsetY}px`;
+            el.style.backgroundSize     = `${imgW}px ${imgH}px`;
+            el.style.backgroundPosition = `-${imgX || 0}px -${imgY || 0}px`;
             el.style.backgroundRepeat   = 'no-repeat';
         } else {
             // Fallback: scale image to fill slot (object-fit: contain equivalent)
@@ -189,10 +238,10 @@ const MedalShowcaseModal = (() => {
         img.alt = '';
         img.draggable = false;
 
-        img.style.left   = `${Math.round(overlayData.x * SCALE)}px`;
-        img.style.top    = `${Math.round(overlayData.y * SCALE)}px`;
-        img.style.width  = `${Math.round(overlayData.w * SCALE)}px`;
-        img.style.height = `${Math.round(overlayData.h * SCALE)}px`;
+        img.style.left   = `${overlayData.x}px`;
+        img.style.top    = `${overlayData.y}px`;
+        img.style.width  = `${overlayData.w}px`;
+        img.style.height = `${overlayData.h}px`;
 
         img.addEventListener('error', () => {
             console.warn('[MedalShowcase] Overlay image failed to load:', overlayData.url);
@@ -202,15 +251,19 @@ const MedalShowcaseModal = (() => {
     }
 
     /**
-     * Resize _medalContainer and _canvasImg stage once the canvas has loaded.
+     * Set the stage to native canvas pixel dimensions once the image has loaded,
+     * then compute and apply the CSS transform scale for the current viewport.
      */
     function _applyCanvasSize(naturalW, naturalH) {
-        const w = Math.round(naturalW * SCALE);
-        const h = Math.round(naturalH * SCALE);
-        _canvasImg.style.width  = `${w}px`;
-        _canvasImg.style.height = `${h}px`;
-        _medalContainer.style.width  = `${w}px`;
-        _medalContainer.style.height = `${h}px`;
+        // Store native dimensions so _applyScale() (and _onResize) can recompute
+        // the scale factor at any time without re-reading the DOM.
+        _nativeW = naturalW;
+        _nativeH = naturalH;
+        _canvasImg.style.width       = `${naturalW}px`;
+        _canvasImg.style.height      = `${naturalH}px`;
+        _medalContainer.style.width  = `${naturalW}px`;
+        _medalContainer.style.height = `${naturalH}px`;
+        _applyScale();
     }
 
     // ------------------------------------------------------------------ //
@@ -237,6 +290,11 @@ const MedalShowcaseModal = (() => {
         }
 
         _currentData = data;
+
+        // Reset native dimensions so _applyScale() doesn't use stale values
+        // from a previously opened showcase with a different canvas size.
+        _nativeW = 0;
+        _nativeH = 0;
 
         // Clear previous content
         _medalContainer.innerHTML = '';

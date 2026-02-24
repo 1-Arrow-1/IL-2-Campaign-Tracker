@@ -965,16 +965,15 @@
     background: rgba(10, 8, 4, 0.82);
     align-items: center;
     justify-content: center;
-    padding: 1rem;
-    box-sizing: border-box;
-    overflow: auto;
+    /* No scrollbars – JS scale keeps the showcase within 90% of the viewport */
+    overflow: hidden;
 }
 
 .msc-backdrop.is-open {
     display: flex;
 }
 
-/* Inner box */
+/* Inner box – sized by its content (.msc-scaler); position:relative anchors the close button */
 .msc-box {
     position: relative;
     background: #1a1510;
@@ -983,23 +982,24 @@
     box-shadow:
         0 8px 40px rgba(0,0,0,0.8),
         0 0 0 1px rgba(200,184,122,0.15);
-    display: flex;
-    flex-direction: column;
-    max-width: calc(100vw - 2rem);
-    max-height: calc(100vh - 2rem);
     overflow: hidden;
 }
 
-/* Scrollable wrapper */
-.msc-scroller {
-    overflow: auto;
-    flex: 1;
+/* Scaler – JS sets explicit width/height to the post-transform visual size.
+   overflow:hidden prevents any sub-pixel bleed during the CSS transform. */
+.msc-scaler {
+    overflow: hidden;
+    line-height: 0;
+    font-size: 0;
 }
 
-/* Stage – sized to match the canvas image */
+/* Stage – sized to native canvas pixels; JS applies transform:scale() here.
+   transform-origin:top left matches the JS so the scaler can be sized to
+   nativeW*scale × nativeH*scale, enabling correct flex-centering in the backdrop. */
 .msc-stage {
     position: relative;
-    display: inline-block;
+    display: block;
+    transform-origin: top left;
     line-height: 0;
     font-size: 0;
 }
