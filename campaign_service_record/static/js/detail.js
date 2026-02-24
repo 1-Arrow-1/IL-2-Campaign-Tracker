@@ -212,6 +212,8 @@ const getAwardNarrativeCodeFromName = (countryKey, awardName) => {
         key = normalizeUSAwardNarrativeKey(key);
     } else if (countryKey === 'britain') {
         key = normalizeBritainAwardNarrativeKey(key);
+    } else if (countryKey === 'germany') {
+        key = normalizeGermanyAwardNarrativeKey(key);
     }
 
     return key;
@@ -225,6 +227,8 @@ const getAwardNarrativeCode = (event, countryKey) => {
             key = normalizeUSAwardNarrativeKey(key);
         } else if (countryKey === 'britain') {
             key = normalizeBritainAwardNarrativeKey(key);
+        } else if (countryKey === 'germany') {
+            key = normalizeGermanyAwardNarrativeKey(key);
         }
         return key;
     }
@@ -247,6 +251,19 @@ const normalizeBritainAwardNarrativeKey = (key) => {
         second_bar_to_the_distinguished_flying_cross: 'second_bar_to_the_dfc',
         second_bar_to_the_distinguished_flying_medal: 'second_bar_to_the_dfm',
         second_bar_to_the_distinguished_service_order: 'second_bar_to_the_dso'
+    };
+    return mappings[key] || key;
+};
+
+const normalizeGermanyAwardNarrativeKey = (key) => {
+    if (!key) {
+        return key;
+    }
+    const mappings = {
+        front_flying_clasp_for_fighters_in_bronze:           'front_flying_clasp_fighters_bronze',
+        front_flying_clasp_for_fighters_in_silver:           'front_flying_clasp_fighters_silver',
+        front_flying_clasp_for_fighters_in_gold:             'front_flying_clasp_fighters_gold',
+        front_flying_clasp_for_fighters_in_gold_with_pendant:'front_flying_clasp_fighters_gold'
     };
     return mappings[key] || key;
 };
