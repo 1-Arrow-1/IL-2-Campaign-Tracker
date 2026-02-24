@@ -160,6 +160,7 @@ Source: "locales\*.json"; DestDir: "{app}\locales"; Flags: ignoreversion
 ; --- Campaign Service Record ---
 Source: "Campaign_Service_Record.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "_internal\*"; DestDir: "{app}\_internal"; Flags: recursesubdirs createallsubdirs ignoreversion
+Source: "IL-2_Tracker_award_coordinates.xlsx"; DestDir: "{app}"; Flags: ignoreversion
 
 ; --- Setting Manager ---
 Source: "IL2_Settings_Manager.exe"; DestDir: "{app}"; Flags: ignoreversion

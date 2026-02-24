@@ -634,13 +634,26 @@ def get_campaign_showcase(campaign_name: str):
 
     campaign_name = campaign_name.lower()
 
-    # --- Resolve data directory (where CampaignRanksAwards lives) ---
     data_dir = _data_loader.data_dir
+
+    # --- Locate Excel coordinate file ---
+    # Primary: alongside the EXE / in data_dir (installed build).
+    # Fallback: one level up (dev: Flask started from campaign_service_record/ subdir).
     excel_path = data_dir / 'IL-2_Tracker_award_coordinates.xlsx'
-    assets_dir = data_dir / 'CampaignRanksAwards'
+    if not excel_path.exists():
+        excel_path = data_dir.parent / 'IL-2_Tracker_award_coordinates.xlsx'
 
     if not excel_path.exists():
         return jsonify({'error': 'Coordinate file not found', 'path': str(excel_path)}), 404
+
+    # --- CampaignRanksAwards lives in the IL-2 game's swf directory ---
+    # The installer copies CampaignRanksAwards/* there; we serve via /api/game_assets/.
+    mission_dates = _data_loader.get_campaign_mission_dates()
+    game_directory = get_game_directory(mission_dates)
+    if game_directory:
+        assets_dir = Path(game_directory) / 'data' / 'swf' / 'CampaignRanksAwards'
+    else:
+        assets_dir = data_dir / 'CampaignRanksAwards'  # fallback (no game dir configured)
 
     # --- Load / cache Excel coordinates ---
     try:
@@ -682,7 +695,7 @@ def get_campaign_showcase(campaign_name: str):
             earned_showcase_names=earned,
             coordinates=coordinates,
             assets_dir=assets_dir,
-            tracker_asset_url_prefix='/api/tracker_assets',
+            tracker_asset_url_prefix='/api/game_assets',
         )
     except Exception as exc:
         logger.error("Failed to build showcase data: %s", exc, exc_info=True)
