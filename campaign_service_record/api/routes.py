@@ -24,6 +24,14 @@ from flask import Blueprint, jsonify, request, current_app, send_file, send_from
 from campaign_service_record.core.data_loader import DataLoader
 from campaign_service_record.core.campaign_aggregator import CampaignAggregator
 from campaign_service_record.core.locale_resolver import resolve_detail_page_locale
+from campaign_service_record.core.medal_showcase import (
+    load_coordinates,
+    resolve_showcase_country,
+    resolve_ussr_variant,
+    earned_showcase_names_from_events,
+    build_showcase_data,
+    ASSET_FOLDER,
+)
 from utils.formatting import safe_campaign_filename
 from campaign_service_record.utils.path_utils import get_game_directory
 from campaign_service_record.utils.image_utils import convert_dds_to_png_bytes, find_existing_image_path
@@ -595,6 +603,130 @@ def get_game_asset(asset_path: str):
         )
 
     return send_from_directory(swf_dir, asset_path)
+
+
+# ============================================================================
+# Medal Showcase Endpoint
+# ============================================================================
+
+@api_bp.route('/api/campaign/<campaign_name>/showcase')
+def get_campaign_showcase(campaign_name: str):
+    """
+    Build and return medal showcase data for the given campaign.
+
+    Returns:
+        JSON:
+        {
+            "country_key": "germany",
+            "canvas_url":  "/api/tracker_assets/CampaignRanksAwards/Germany/Germany_canvas.png",
+            "overlay": { "url": "...", "x": 32, "y": 0, "w": 2018, "h": 961 },
+            "medals": [
+                { "image_url": "...", "x": 141, "y": 134, "w": 363, "h": 503,
+                  "name": "iron_cross_2nd_big1" },
+                ...
+            ]
+        }
+    """
+    _last_ping[0] = __import__('time').time()
+
+    if not _aggregator or not _data_loader:
+        return jsonify({'error': 'API not initialized'}), 500
+
+    campaign_name = campaign_name.lower()
+
+    # --- Resolve data directory (where CampaignRanksAwards lives) ---
+    data_dir = _data_loader.data_dir
+    excel_path = data_dir / 'IL-2_Tracker_award_coordinates.xlsx'
+    assets_dir = data_dir / 'CampaignRanksAwards'
+
+    if not excel_path.exists():
+        return jsonify({'error': 'Coordinate file not found', 'path': str(excel_path)}), 404
+
+    # --- Load / cache Excel coordinates ---
+    try:
+        coordinates = load_coordinates(excel_path)
+    except Exception as exc:
+        logger.error("Failed to parse medal coordinates: %s", exc, exc_info=True)
+        return jsonify({'error': 'Failed to parse coordinate file', 'detail': str(exc)}), 500
+
+    # --- Get campaign events ---
+    events_data = _data_loader.get_campaign_events()
+    campaign_events = events_data.get(campaign_name, {})
+    if not campaign_events:
+        return jsonify({'error': 'Campaign not found or no events'}), 404
+
+    events = campaign_events.get('events', [])
+    raw_country = campaign_events.get('country', '')
+
+    # --- Resolve country key ---
+    showcase_base = resolve_showcase_country(raw_country)
+    if not showcase_base:
+        return jsonify({'error': f'Unsupported country for showcase: {raw_country}'}), 404
+
+    # For USSR, decide early vs late from the last mission date
+    if showcase_base == 'ussr':
+        # Find latest mission date among events
+        dates = [ev.get('date') for ev in events if ev.get('date')]
+        last_date = max(dates) if dates else None
+        country_key = resolve_ussr_variant(last_date)
+    else:
+        country_key = showcase_base
+
+    # --- Build set of earned showcase names ---
+    earned = earned_showcase_names_from_events(events)
+
+    # --- Build showcase payload ---
+    try:
+        payload = build_showcase_data(
+            country_key=country_key,
+            earned_showcase_names=earned,
+            coordinates=coordinates,
+            assets_dir=assets_dir,
+            tracker_asset_url_prefix='/api/tracker_assets',
+        )
+    except Exception as exc:
+        logger.error("Failed to build showcase data: %s", exc, exc_info=True)
+        return jsonify({'error': 'Failed to build showcase data', 'detail': str(exc)}), 500
+
+    if not payload:
+        return jsonify({'error': 'No showcase data available for this country'}), 404
+
+    return jsonify(payload)
+
+
+# ============================================================================
+# Tracker Assets Endpoint
+# ============================================================================
+
+@api_bp.route('/api/tracker_assets/<path:asset_path>')
+def get_tracker_asset(asset_path: str):
+    """
+    Serve tracker-bundled assets (CampaignRanksAwards canvas, overlay,
+    and *_big1.png medal images).
+
+    These are served from <data_dir>/CampaignRanksAwards/, which is the
+    tracker's own asset folder (distinct from the IL-2 game installation).
+    """
+    if not _data_loader:
+        return jsonify({'error': 'API not initialized'}), 500
+
+    data_dir = _data_loader.data_dir
+    assets_root = data_dir / 'CampaignRanksAwards'
+
+    requested = (assets_root / asset_path).resolve()
+
+    # Security: prevent path traversal
+    try:
+        requested.relative_to(assets_root.resolve())
+    except ValueError:
+        logger.warning("Blocked path traversal attempt: %s", asset_path)
+        return jsonify({'error': 'Invalid asset path'}), 400
+
+    if not requested.exists():
+        logger.warning("Tracker asset not found: %s", requested)
+        return jsonify({'error': 'Asset not found'}), 404
+
+    return send_from_directory(str(assets_root), asset_path)
 
 
 # ============================================================================

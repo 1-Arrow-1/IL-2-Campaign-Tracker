@@ -816,6 +816,9 @@ const DetailPage = {
         // 1. Personal Data Section
         // 2. Additional Notes Section
         // 3. Events Section (Promotions & Awards)
+        // 4. Medal Showcase Section
+
+        const showcaseSection = page.querySelector('#medal-showcase-section');
 
         if (additionalNotesSection && additionalNotesSection.parentElement !== leftColumn) {
             if (personalSection) {
@@ -832,6 +835,14 @@ const DetailPage = {
                 personalSection.after(eventsSection);
             } else {
                 leftColumn.appendChild(eventsSection);
+            }
+        }
+
+        if (showcaseSection && showcaseSection.parentElement !== leftColumn) {
+            if (eventsSection) {
+                eventsSection.after(showcaseSection);
+            } else {
+                leftColumn.appendChild(showcaseSection);
             }
         }
     },
@@ -880,6 +891,9 @@ const DetailPage = {
 
             // Check for PDF
             this.checkPDF(campaign.name);
+
+            // Medal Showcase button
+            this.setupMedalShowcase(campaign.name, campaign.country);
 
         } catch (error) {
             console.error('Failed to load campaign details:', error);
@@ -1953,6 +1967,42 @@ const DetailPage = {
         };
     },
     
+    /**
+     * Set up or refresh the Medal Showcase button in the left column.
+     * Probes the showcase API to determine availability before showing button.
+     */
+    async setupMedalShowcase(campaignName, country) {
+        const section = document.getElementById('medal-showcase-section');
+        if (!section) return;
+
+        // Clear any previous button
+        section.innerHTML = '';
+        section.style.display = 'none';
+
+        if (!campaignName || !country) return;
+
+        // Show the button optimistically (API probe happens on click)
+        const btn = (typeof createMedalShowcaseButton === 'function')
+            ? createMedalShowcaseButton()
+            : (() => {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.id = 'medal-showcase-btn';
+                b.className = 'medal-showcase-btn';
+                b.textContent = i18n.t('ui.medal_showcase.button');
+                return b;
+            })();
+
+        btn.addEventListener('click', () => {
+            if (typeof openMedalShowcase === 'function') {
+                openMedalShowcase(campaignName, btn);
+            }
+        });
+
+        section.appendChild(btn);
+        section.style.display = '';
+    },
+
     /**
      * Check PDF availability and show download button
      */

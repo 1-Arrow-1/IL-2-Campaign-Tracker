@@ -908,3 +908,158 @@
         grid-template-columns: repeat(3, 1fr);
     }
 }
+
+/* ============================================================================
+   Medal Showcase Button
+   ============================================================================ */
+
+.medal-showcase-section {
+    padding: 0.5rem 0 0.25rem;
+    text-align: center;
+}
+
+.medal-showcase-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.55rem 1.25rem;
+    font-size: 0.85rem;
+    font-family: inherit;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    border: 1.5px solid var(--border, #c8b87a);
+    border-radius: 5px;
+    background: linear-gradient(135deg, #f5ead5 0%, #e8d9b5 100%);
+    color: #4a3a1a;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.5);
+    transition: background 0.15s, box-shadow 0.15s, transform 0.08s;
+    width: 100%;
+}
+
+.medal-showcase-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #fdf4e0 0%, #f0e0c0 100%);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+
+.medal-showcase-btn:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.medal-showcase-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* ============================================================================
+   Medal Showcase Modal
+   ============================================================================ */
+
+/* Backdrop */
+.msc-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: rgba(10, 8, 4, 0.82);
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    box-sizing: border-box;
+    overflow: auto;
+}
+
+.msc-backdrop.is-open {
+    display: flex;
+}
+
+/* Inner box */
+.msc-box {
+    position: relative;
+    background: #1a1510;
+    border: 2px solid rgba(200, 184, 122, 0.4);
+    border-radius: 6px;
+    box-shadow:
+        0 8px 40px rgba(0,0,0,0.8),
+        0 0 0 1px rgba(200,184,122,0.15);
+    display: flex;
+    flex-direction: column;
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100vh - 2rem);
+    overflow: hidden;
+}
+
+/* Scrollable wrapper */
+.msc-scroller {
+    overflow: auto;
+    flex: 1;
+}
+
+/* Stage – sized to match the canvas image */
+.msc-stage {
+    position: relative;
+    display: inline-block;
+    line-height: 0;
+    font-size: 0;
+}
+
+/* Canvas background */
+.msc-canvas {
+    display: block;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+/* Medal container – overlaid on the canvas, exact same size */
+.msc-medals {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+/* Individual medal images */
+.msc-medal {
+    position: absolute;
+    display: block;
+    object-fit: contain;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+/* Glass overlay – always on top */
+.msc-overlay-img {
+    position: absolute;
+    display: block;
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none;
+}
+
+/* Close button */
+.msc-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.6rem;
+    z-index: 1;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    line-height: 1;
+    background: rgba(30, 22, 10, 0.8);
+    color: #d4c080;
+    border: 1px solid rgba(200, 184, 122, 0.4);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    padding: 0;
+    font-family: inherit;
+}
+
+.msc-close:hover {
+    background: rgba(200, 184, 122, 0.2);
+    color: #fff;
+}

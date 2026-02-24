@@ -1165,14 +1165,21 @@ class EventGenerator:
                     already_earned.append(award_name)
                     break  # Only one pilot's badge
         
+        # Rank-bound reset counter for officer-equivalent awards (e.g. Britain AFC).
+        # Maps min_rank_index threshold -> missions_completed when first reached.
+        # Used to count missions_completed *from* the promotion point for awards
+        # that have a min_rank_index condition (officer-only awards).
+        rank_promotion_mission_count: Dict[int, int] = {}
+        _prev_rank_idx: int = starting_rank_offset
+
         # Process missions in order
         for mission_num in sorted(completed_missions, key=smart_mission_sort_key):
             if mission_num not in per_mission_stats:
                 continue
-            
+
             mission_stats = per_mission_stats[mission_num]
             earned_this_mission = []  # Reset for new mission
-            
+
             # Update running statistics using central helpers
             kills = calculate_kills_from_stats(mission_stats)
 
@@ -1190,10 +1197,42 @@ class EventGenerator:
                 running_stats['ground_kills'] +
                 running_stats['ship_kills']
             )
+
+            # --- Track rank transitions for rank-bound reset counter ---
+            _current_rank_for_tracking = 0
+            if country in self.config.get('ranks', {}):
+                for _idx, _rank in enumerate(self.config['ranks'][country]):
+                    if running_stats.get('total_score', 0) >= _rank['score']:
+                        _current_rank_for_tracking = _idx
+            for _threshold in range(_prev_rank_idx + 1, _current_rank_for_tracking + 1):
+                if _threshold not in rank_promotion_mission_count:
+                    rank_promotion_mission_count[_threshold] = running_stats['missions_completed']
+                    LOGGER.debug(
+                        "  [rank-counter] Rank threshold %d reached at mission %d "
+                        "(missions_completed=%d)",
+                        _threshold, running_stats['missions_completed'],
+                        running_stats['missions_completed'],
+                    )
+            _prev_rank_idx = _current_rank_for_tracking
             
             # Check each award
             for award in awards_config:
                 award_name = award['name']
+
+                # Skip cumulative wound awards here - they are handled by the
+                # dedicated wound badge system below (lines 1394+) which correctly
+                # finds the mission where the wound threshold was first reached.
+                # Checking them here with the full debriefing_wounds dict would
+                # incorrectly assign the award to the first mission.
+                if not award.get('per_sortie'):
+                    is_wound_award = False
+                    for cond in award.get('conditions', []):
+                        if 'deaths' in cond or 'wounded_in_sortie' in cond:
+                            is_wound_award = True
+                            break
+                    if is_wound_award:
+                        continue
+
                 max_awards = award.get('max_awards', 1)
                 
                 # Handle unlimited awards (max_awards: null)
@@ -1283,44 +1322,57 @@ class EventGenerator:
                         for idx, rank in enumerate(ranks):
                             if running_stats.get('total_score', 0) >= rank['score']:
                                 current_rank_idx = idx
-                    
+
                     # Check minimum rank requirement
+                    required_min = None
                     if 'requires_rank_index' in award or 'min_rank_index' in award:
                         required_min = award.get('requires_rank_index', award.get('min_rank_index', 0))
                         if current_rank_idx < required_min:
                             continue  # Don't have required minimum rank yet
-                    
+
                     # Check maximum rank requirement (for NCO-only awards)
                     if 'max_rank_index' in award:
                         required_max = award['max_rank_index']
                         if current_rank_idx > required_max:
                             continue  # Rank too high for this award
-                    
+
+                    # --- Rank-bound reset counter (e.g. Britain AFM -> AFC) ---
+                    # For awards gated by min_rank_index, count missions_completed
+                    # from the promotion date, not from campaign start.  This
+                    # ensures the officer must "re-qualify" after promotion.
+                    if required_min is not None and required_min in rank_promotion_mission_count:
+                        promotion_base = rank_promotion_mission_count[required_min]
+                        effective_missions = running_stats['missions_completed'] - promotion_base
+                        stats_for_check = dict(running_stats)
+                        stats_for_check['missions_completed'] = effective_missions
+                    else:
+                        stats_for_check = running_stats
+
                     # Check cumulative stats OR graduated random
                     award_granted = False
-                    
+
                     # First check graduated random kills (British DFM/DFC style)
                     if 'graduated_random_kills' in award:
                         import random
                         random.seed(f"{campaign_name}_{mission_num}_{award_name}")
                         random_roll = random.randint(0, 999)
-                        
+
                         total_kills = running_stats.get('total_air_kills', 0)
                         graduated_thresholds = award['graduated_random_kills']
-                        
+
                         # Check if any kill threshold passes the random check
                         for kill_count, rnd_threshold in sorted(graduated_thresholds.items(), reverse=True):
                             if total_kills >= kill_count and random_roll < rnd_threshold:
                                 award_granted = True
                                 break
-                    
+
                     # OR check normal conditions (missions/flight time)
-                    if not award_granted and self.check_award_conditions_with_stats(award, running_stats, debriefing_wounds):
+                    if not award_granted and self.check_award_conditions_with_stats(award, stats_for_check, debriefing_wounds):
                         award_granted = True
-                    
+
                     # If no graduated_random_kills, just check normal conditions
                     if 'graduated_random_kills' not in award:
-                        award_granted = self.check_award_conditions_with_stats(award, running_stats, debriefing_wounds)
+                        award_granted = self.check_award_conditions_with_stats(award, stats_for_check, debriefing_wounds)
                     
                     if award_granted:
                         # Check standard random thresholds
@@ -1406,6 +1458,11 @@ class EventGenerator:
                 cumulative_wounds = sum(1 for w in debriefing_wounds.values() if w)
 
                 for award in wound_awards:
+                    # Check prerequisites
+                    requires = award.get('requires')
+                    if requires and requires not in already_earned:
+                        continue
+
                     for condition in award.get('conditions', []):
                         if 'deaths' in condition or 'wounded_in_sortie' in condition:
                             required_wounds = condition.get('deaths') or condition.get('wounded_in_sortie')

@@ -18,6 +18,8 @@ datas = [
     (str(base_path / 'utils'), 'utils'),
     (str(base_path.parent / 'locales'), 'locales'),
     (str(base_path.parent / 'IBMPlexSans-Light.ttf'), '.'),
+    # Medal showcase coordinate source — placed in the EXE folder (= data_dir / CWD)
+    (str(base_path.parent / 'IL-2_Tracker_award_coordinates.xlsx'), '.'),
 ]
 
 # Hidden imports (modules not auto-detected)
@@ -35,6 +37,10 @@ hiddenimports = [
     'PIL',
     'PIL.Image',
     'PIL.DdsImagePlugin',
+    'openpyxl',
+    'openpyxl.cell._writer',
+    'openpyxl.styles.stylesheet',
+    'openpyxl.reader.excel',
 ]
 
 # Analysis

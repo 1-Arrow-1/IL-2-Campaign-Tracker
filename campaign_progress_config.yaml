@@ -22,7 +22,22 @@
 #
 # The system automatically finds the matching bracket for each campaign!
 # ============================================================================
-enable_popups: true 
+enable_popups: true
+
+# ============================================================================
+# USSR RANK / AWARD REDESIGN DATE
+# ============================================================================
+# On this date the Soviet Air Force introduced redesigned rank insignia and
+# award artwork.  Awards earned BEFORE this date use assets from
+# CampaignRanksAwards/USSR/early/; awards earned ON or AFTER use
+# CampaignRanksAwards/USSR/late/.
+#
+# The Medal Showcase respects this boundary:
+#   - If the campaign's last mission is before this date -> early canvas
+#   - On or after this date -> late canvas
+#
+# Change this only if your campaigns use a different historical boundary.
+ussr_redesign_date: "1943-01-06"
 
 rank_scaling:
   enabled: true  # Set to false to use base scores without scaling
@@ -296,6 +311,12 @@ awards:
     max_awards: 1
     conditions:
     - deaths: 5
+  - name: Luftwaffe Honor Roll Clasp
+    image: honor_clasp.dds
+    max_awards: 1
+    conditions:
+    - air_combat_score: 15
+    - missions_completed: 80 
   
   Britain:
   - name: RAF Pilot's Badge
@@ -511,6 +532,52 @@ awards:
     max_awards: 1
     conditions:
     - deaths: 3
+  - name: Air Force Medal
+    image: AF_medal.dds
+    max_awards: 1
+    max_rank_index: 2
+    random_threshold: 50
+    conditions:
+    - missions_completed: 20
+  - name: Bar to the Air Force Medal
+    image: AF_medal_bar.dds
+    requires: Air Force Medal
+    max_awards: 1
+    max_rank_index: 2
+    random_threshold: 50
+    conditions:
+    - missions_completed: 40
+  - name: Second Bar to the Air Force Medal
+    image: AF_medal_2bars.dds
+    requires: Bar to the Air Force Medal
+    max_awards: 1
+    max_rank_index: 2
+    random_threshold: 25
+    conditions:
+    - missions_completed: 60
+  - name: Air Force Cross
+    image: AF_cross.dds
+    max_awards: 1
+    min_rank_index: 3
+    random_threshold: 50
+    conditions:
+    - missions_completed: 20
+  - name: Bar to the Air Force Cross
+    image: AF_cross_bar.dds
+    requires: Air Force Cross
+    max_awards: 1
+    min_rank_index: 3
+    random_threshold: 50
+    conditions:
+    - missions_completed: 40
+  - name: Second Bar to the Air Force Cross
+    image: AF_cross_2bars.dds
+    requires: Bar to the Air Force Cross
+    max_awards: 1
+    min_rank_index: 3
+    random_threshold: 25
+    conditions:
+    - missions_completed: 60  
   
   Soviet Union:
   - name: Aviation Badge
