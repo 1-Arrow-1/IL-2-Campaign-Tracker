@@ -521,10 +521,6 @@ REM Copy iss file if exists
 if exist "IL2_Campaign_Tracker.iss" copy "IL2_Campaign_Tracker.iss" "IL2_Campaign_Tracker_v2.2_ML\IL2_Campaign_Tracker.iss" >NUL
 
 REM Copy iss file if exists
-if exist "IL-2_Tracker_award_coordinates.xlsx" copy "IL-2_Tracker_award_coordinates.xlsx" "IL2_Campaign_Tracker_v2.2_ML\IL-2_Tracker_award_coordinates.xlsx" >NUL
-
-
-REM Copy iss file if exists
 if exist "*.yaml" copy "*.yaml" "IL2_Campaign_Tracker_v2.2_ML\" >NUL
 
 REM Unzip CampaignRanksAwards
