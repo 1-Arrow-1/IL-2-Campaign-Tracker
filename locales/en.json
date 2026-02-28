@@ -570,7 +570,41 @@
       "air_force_cross": "Air Force Cross",
       "bar_to_the_air_force_cross": "Bar to the Air Force Cross",
       "second_bar_to_the_air_force_cross": "Second Bar to the Air Force Cross",
-      "luftwaffe_honor_roll_clasp": "Luftwaffe Honor Roll Clasp"
+      "luftwaffe_honor_roll_clasp": "Luftwaffe Honor Roll Clasp",
+      "iron_cross_2nd": "Iron Cross 2nd Class",
+      "iron_cross_1st": "Iron Cross 1st Class",
+      "german_cross_gold": "German Cross in Gold",
+      "knights_cross": "Knight's Cross of the Iron Cross",
+      "knights_cross_oak_leaves": "Knight's Cross with Oak Leaves",
+      "knights_cross_swords": "Knight's Cross with Oak Leaves and Swords",
+      "knights_cross_diamonds": "Knight's Cross with Diamonds",
+      "knights_cross_gold_diamonds": "Knight's Cross with Golden Oak Leaves, Swords and Diamonds",
+      "fighters_bronze": "Front Flying Clasp for Fighters in Bronze",
+      "fighters_silver": "Front Flying Clasp for Fighters in Silver",
+      "fighters_gold": "Front Flying Clasp for Fighters in Gold",
+      "fighters_gold_clasp": "Front Flying Clasp for Fighters in Gold with Pendant",
+      "bombers_bronze": "Front Flying Clasp for Bombers in Bronze",
+      "bombers_silver": "Front Flying Clasp for Bombers in Silver",
+      "bomber_gold": "Front Flying Clasp for Bombers in Gold",
+      "bombers_gold_clasp": "Front Flying Clasp for Bombers in Gold with Pendant",
+      "transport_bronze": "Front Flying Clasp for Transport in Bronze",
+      "transport_silver": "Front Flying Clasp for Transport in Silver",
+      "transport_gold": "Front Flying Clasp for Transport in Gold",
+      "transport_gold_clasp": "Front Flying Clasp for Transport in Gold with Pendant",
+      "attack_heavy_fighters_bronze": "Attack Badge for Destroyers in Bronze",
+      "attack_heavy_fighters_silver": "Attack Badge for Destroyers in Silver",
+      "attack_heavy_fighters_gold": "Attack Badge for Destroyers in Gold",
+      "attack_heavy_fighters_gold_clasp": "Attack Badge for Destroyers in Gold with Pendant",
+      "wound_badge_black": "Wound Badge in Black",
+      "wound_badge_silver": "Wound Badge in Silver",
+      "wound_badge_gold": "Wound Badge in Gold",
+      "eastern_front_medal": "Medal for the Winter Campaign in the East",
+      "kuban_shield": "Kuban Shield",
+      "attack_bronze": "Ground Attack Badge in Bronze",
+      "attack_silver": "Ground Attack Badge in Silver",
+      "attack_gold": "Ground Attack Badge in Gold",
+      "attack_gold_clasp": "Ground Attack Badge in Gold with Pendant",
+      "honor_clasp": "Luftwaffe Honor Roll Clasp"
     },
     "ranks": {
       "1st_lieutenant": "1st Lieutenant",
@@ -622,6 +656,7 @@
   },
   "service_record": {
     "app_title": "IL-2 Campaign Service Record",
+    "career_app_title": "IL-2 Career Service Record",
     "header": {
       "country_label": "Country:",
       "missions_completed": "{count} completed",
@@ -803,6 +838,15 @@
       "loading": "Loading…",
       "not_available": "Not available",
       "error": "Error loading"
+    },
+    "landing": {
+      "campaign_section": "Campaign Tracker",
+      "career_section": "IL-2 Career"
+    },
+    "career": {
+      "section_title": "IL-2 Career",
+      "theatre_chain_label": "Theatre Chain",
+      "no_careers_found": "No career data found."
     }
   },
   "validation": {
@@ -827,7 +871,7 @@
     "button": {
       "apply": "Apply",
       "cancel": "Cancel",
-      "change_pilot_photo": "Change Pilot Photo & Data",
+      "change_pilot_photo": "Change Pilot Photo",
       "choose_photo": "Choose Photo",
       "collapse": "Collapse",
       "download_pdf": "Download PDF Report",
@@ -879,6 +923,7 @@
       "campaigns_flown": "Campaigns Flown",
       "country": "Country",
       "country_of_birth": "Country of Birth",
+      "current_squadron": "Current Squadron",
       "first_name": "First Name",
       "missions": "Missions",
       "name": "Name",
@@ -917,6 +962,7 @@
     },
     "nav": {
       "back_to_campaigns": "← Back to Campaigns",
+      "back_to_careers": "← Back to Careers",
       "next_campaign": "Next Campaign →",
       "previous_campaign": "← Previous Campaign"
     },
@@ -926,6 +972,8 @@
       "awards": "Awards & Decorations",
       "campaign_summary": "Campaign Summary",
       "campaign_timeline": "Campaign Timeline",
+      "career_summary": "Career Summary",
+      "career_timeline": "Career Timeline",
       "career_progression": "Career Progression",
       "combat_results": "Combat Results",
       "mission_debriefings": "Mission Debriefings",
@@ -958,6 +1006,7 @@
       "missions_flown": "Missions Flown",
       "no_status_data": "No status data available",
       "overall_score": "Overall Score",
+      "pcp_score": "PCP Score",
       "promotions": "Promotions",
       "safe_landings": "Safe Landings",
       "starting_rank": "Starting Rank",
@@ -977,7 +1026,8 @@
     "button": {
       "start_tracker": "Start Tracker",
       "close_tracker": "Close Tracker",
-      "service_record": "Service Record",
+      "service_record": "Campaign Service Record",
+      "career_service_record": "Career Service Record",
       "settings_manager": "Settings Manager",
       "uninstall": "Uninstall",
       "pdf_reports": "PDF Reports"
@@ -1001,6 +1051,8 @@
       "uninstall_cancelled": "Uninstall Cancelled",
       "uninstall_cancelled_detail": "The uninstaller was not started.\n\nYou may need to run it manually with administrator privileges.",
       "error_open_service_record": "Failed to open Service Record.",
+      "career_service_record_not_found": "Career Service Record executable not found:",
+      "error_open_career_service_record": "Failed to open Career Service Record.",
       "error_open_settings": "Failed to open Settings Manager.",
       "error_open_pdf": "Failed to open PDF report.",
       "no_pdfs_found": "No campaign PDFs found"

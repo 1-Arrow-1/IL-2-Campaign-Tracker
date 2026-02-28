@@ -20,6 +20,11 @@ const App = {
     globalLocale: 'en',
 
     /**
+     * App mode: 'campaign' or 'career' (read from /api/mode on init)
+     */
+    appMode: 'campaign',
+
+    /**
      * DOM elements
      */
     elements: {
@@ -28,6 +33,39 @@ const App = {
         backBtn: null
     },
     
+    /**
+     * Apply app-mode-specific branding (title, h1, back button text, h2).
+     * Called once after appMode is known.
+     */
+    applyAppBranding() {
+        const isCareer = this.appMode === 'career';
+
+        // Browser tab + document title
+        const titleKey = isCareer ? 'service_record.career_app_title' : 'service_record.app_title';
+        document.title = i18n.t(titleKey);
+
+        // Header h1
+        const h1 = document.querySelector('#app-header h1');
+        if (h1) {
+            h1.textContent = i18n.t(titleKey);
+        }
+
+        // Landing page h2 ("Campaigns Flown" → "Careers" in career mode)
+        if (isCareer) {
+            const h2 = document.querySelector('.campaigns-section h2');
+            if (h2) {
+                h2.textContent = i18n.t('ui.career.section_title') || 'IL-2 Careers';
+            }
+        }
+
+        // Back button label
+        const backBtn = document.getElementById('back-btn');
+        if (backBtn) {
+            const backKey = isCareer ? 'web.nav.back_to_careers' : 'web.nav.back_to_campaigns';
+            backBtn.textContent = i18n.t(backKey);
+        }
+    },
+
     /**
      * Translate all elements with data-i18n attributes
      */
@@ -96,18 +134,29 @@ const App = {
         // Translate page elements
         this.translatePage();
         
+        // Fetch app mode to determine branding
+        try {
+            const modeData = await API.getMode();
+            this.appMode = modeData.app_mode || 'campaign';
+        } catch (e) {
+            console.warn('Could not fetch app_mode; defaulting to campaign', e);
+            this.appMode = 'campaign';
+        }
+
         this.cacheElements();
+        this.applyAppBranding();
         this.setupEventListeners();
         this.setupKeyboardShortcuts();
-        
+
         // Initialize pages
         LandingPage.init();
         DetailPage.init();
-        
+
         // Show landing page
         this.showLanding();
-        
-        console.log('Campaign Service Record ready');
+
+        const modeLabel = this.appMode === 'career' ? 'Career' : 'Campaign';
+        console.log(`${modeLabel} Service Record ready`);
     },
     
     /**
@@ -128,10 +177,10 @@ const App = {
             this.showLanding();
         });
         
-        // Custom navigation event from landing page
+        // Custom navigation event from landing page (campaign or career)
         document.addEventListener('navigate-to-detail', (event) => {
-            const { campaignName, campaignCountry } = event.detail;
-            this.showDetail(campaignName, campaignCountry);
+            const { campaignName, campaignCountry, source } = event.detail;
+            this.showDetail(campaignName, campaignCountry, source || 'campaign');
         });
     },
     
@@ -168,7 +217,10 @@ const App = {
         DetailPage.clearBackgroundState();
 
         // Update page title
-        document.title = i18n.t('service_record.app_title');
+        const titleKey = this.appMode === 'career'
+            ? 'service_record.career_app_title'
+            : 'service_record.app_title';
+        document.title = i18n.t(titleKey);
 
         const fallbackBackground = LandingPage.getFallbackBackground();
         if (fallbackBackground) {
@@ -180,25 +232,29 @@ const App = {
     
     /**
      * Show detail page
+     *
+     * @param {string} entryId      - Campaign name or career root id
+     * @param {string} entryCountry - Country key for background selection
+     * @param {string} source       - "campaign" | "career"
      */
-    async showDetail(campaignName, campaignCountry) {
-        console.log('Navigating to detail page:', campaignName);
-        
+    async showDetail(entryId, entryCountry, source) {
+        console.log('Navigating to detail page:', source, entryId);
+
         this.elements.landingPage.style.display = 'none';
         this.elements.detailPage.style.display = 'block';
         this.elements.backBtn.style.display = 'inline-block';
-        
+
         this.currentPage = 'detail';
 
         DetailPage.clearBackgroundState();
-        DetailPage.applyBackgroundForCountry(campaignCountry, { force: true });
-        
+        DetailPage.applyBackgroundForCountry(entryCountry, { force: true });
+
         // Update page title
-        document.title = i18n.t('web.title.campaign_detail', { campaign_name: campaignName });
-        
-        // Load campaign details
-        await DetailPage.load(campaignName);
-        
+        document.title = i18n.t('web.title.campaign_detail', { campaign_name: entryId });
+
+        // Load details via the correct API method based on source
+        await DetailPage.load(entryId, source || 'campaign');
+
         // Scroll to top
         window.scrollTo(0, 0);
     }

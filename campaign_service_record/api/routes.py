@@ -24,6 +24,7 @@ from flask import Blueprint, jsonify, request, current_app, send_file, send_from
 from campaign_service_record.core.data_loader import DataLoader
 from campaign_service_record.core.campaign_aggregator import CampaignAggregator
 from campaign_service_record.core.locale_resolver import resolve_detail_page_locale
+from campaign_service_record.providers.career_provider import CareerDataProvider
 from campaign_service_record.core.medal_showcase import (
     load_coordinates,
     resolve_showcase_country,
@@ -49,6 +50,11 @@ api_bp = Blueprint('api', __name__)
 _data_loader: Optional[DataLoader] = None
 _aggregator: Optional[CampaignAggregator] = None
 _reports_dir: Optional[Path] = None
+
+# Career mode globals (initialized by init_career, optional)
+_career_provider: Optional[CareerDataProvider] = None
+_career_game_dir: Optional[Path] = None   # <game_dir>/data/swf/CampaignRanksAwards/...
+_career_data_dir: Optional[Path] = None   # <data_dir>/CampaignRanksAwards/...
 
 # Last activity timestamp (for idle shutdown)
 _last_ping = [time.time()]
@@ -124,6 +130,77 @@ def init_api(data_dir: Path, reports_dir: Optional[Path] = None):
     _reports_dir = reports_dir or (data_dir / 'reports')
     
     logger.info(f"API initialized with data_dir={data_dir}")
+
+
+def init_career(
+    db_path: Path,
+    reports_dir: Optional[Path] = None,
+    game_dir: Optional[Path] = None,
+    data_dir: Optional[Path] = None,
+) -> bool:
+    """
+    Initialize the Career mode provider.
+
+    Called from app.py only when cp.db is confirmed present and readable.
+    Safe to call multiple times (re-initializes on each call).
+
+    Args:
+        db_path:     Absolute path to cp.db.
+        reports_dir: Directory to search for missionReport .txt/.mlg files.
+                     Defaults to <game_dir>/data/FlightLogs when not supplied.
+        game_dir:    IL-2 game root directory (optional; used for FlightLogs
+                     auto-detection and squadron name lookups).
+                     If omitted, CareerDatabase derives it from db_path
+                     (<game_dir>/data/Career/cp.db).
+        data_dir:    Tracker data directory (optional; used as fallback for
+                     squadron name lookups via <data_dir>/CampaignRanksAwards/).
+
+    Returns:
+        True if initialization succeeded, False otherwise.
+    """
+    global _career_provider, _career_game_dir, _career_data_dir
+
+    from campaign_service_record.career.database import CareerDatabase
+    from campaign_service_record.career.chain_resolver import CareerChainResolver
+    from campaign_service_record.career.statistics import StatisticsMapper
+    from campaign_service_record.career.mission_linker import MissionReportLinker
+    from campaign_service_record.career.aggregator import CareerAggregator
+
+    try:
+        db = CareerDatabase(db_path)
+
+        # Resolve reports_dir: prefer explicit arg, fall back to FlightLogs in game_dir,
+        # then db.game_dir (derived from cp.db path), then CWD as last resort.
+        resolved_reports_dir = reports_dir
+        if resolved_reports_dir is None:
+            _gd = game_dir or db.game_dir
+            if _gd is not None:
+                fl = _gd / 'data' / 'FlightLogs'
+                if fl.is_dir():
+                    resolved_reports_dir = fl
+                    logger.info("Career reports_dir auto-detected: %s", fl)
+                else:
+                    logger.warning(
+                        "FlightLogs not found at %s; missionReport linking will be unavailable", fl
+                    )
+        if resolved_reports_dir is None:
+            resolved_reports_dir = Path('.')
+
+        resolver = CareerChainResolver(db)
+        stats = StatisticsMapper()
+        linker = MissionReportLinker(resolved_reports_dir)
+        aggregator = CareerAggregator(
+            db, resolver, stats, linker, game_dir=game_dir, data_dir=data_dir
+        )
+        _career_provider = CareerDataProvider(db, resolver, aggregator)
+        _career_game_dir = game_dir
+        _career_data_dir = data_dir
+        logger.info("Career mode initialized: db=%s", db_path)
+        return True
+    except Exception as exc:
+        logger.error("Failed to initialize career mode: %s", exc, exc_info=True)
+        _career_provider = None
+        return False
 
 
 def get_last_ping() -> float:
@@ -606,6 +683,62 @@ def get_game_asset(asset_path: str):
 
 
 # ============================================================================
+# Career Assets Endpoint
+# ============================================================================
+
+@api_bp.route('/api/career_assets/<path:asset_path>')
+def get_career_asset(asset_path: str):
+    """
+    Serve CampaignRanksAwards images for the Career mode event list and modals.
+
+    Tries candidate roots in order:
+      1. <data_dir>/<asset_path>           (tracker's local CampaignRanksAwards copy)
+      2. <game_dir>/data/swf/<asset_path>  (IL-2 game installation)
+
+    DDS files are converted to PNG on-the-fly.
+    """
+    if not _career_provider:
+        return jsonify({'error': 'Career mode not initialized'}), 500
+
+    candidate_roots = []
+    if _career_data_dir:
+        candidate_roots.append(_career_data_dir)
+    if _career_game_dir:
+        candidate_roots.append(_career_game_dir / 'data' / 'swf')
+
+    if not candidate_roots:
+        return jsonify({'error': 'Career assets directory not configured'}), 404
+
+    for root in candidate_roots:
+        full_path = (root / asset_path).resolve()
+        # Security: prevent path traversal
+        try:
+            full_path.relative_to(root.resolve())
+        except ValueError:
+            logger.warning("Blocked path traversal attempt: %s", asset_path)
+            return jsonify({'error': 'Invalid asset path'}), 400
+
+        existing = find_existing_image_path(full_path)
+        if not existing:
+            continue
+
+        if existing.suffix.lower() == '.dds':
+            png_bytes = convert_dds_to_png_bytes(existing)
+            if not png_bytes:
+                return jsonify({'error': 'Failed to convert DDS asset'}), 500
+            return send_file(
+                BytesIO(png_bytes),
+                mimetype='image/png',
+                download_name=existing.with_suffix('.png').name,
+            )
+
+        return send_file(existing, mimetype='image/png')
+
+    logger.warning("Career asset not found: %s", asset_path)
+    return jsonify({'error': 'Asset not found'}), 404
+
+
+# ============================================================================
 # Medal Showcase Endpoint
 # ============================================================================
 
@@ -740,6 +873,122 @@ def get_tracker_asset(asset_path: str):
         return jsonify({'error': 'Asset not found'}), 404
 
     return send_from_directory(str(assets_root), asset_path)
+
+
+# ============================================================================
+# Mode Endpoint
+# ============================================================================
+
+@api_bp.route('/api/mode')
+def get_mode():
+    """
+    Return which data providers are currently active and the configured app mode.
+
+    Used by the frontend to decide which sections to render and which title to show.
+
+    Returns:
+        {
+            "modes":    ["campaign"] | ["career"] | ["campaign", "career"],
+            "app_mode": "campaign" | "career"
+        }
+    """
+    from campaign_service_record.config import get_config
+    app_mode = get_config().app_mode
+
+    modes = []
+    if _aggregator is not None:
+        modes.append("campaign")
+    if _career_provider is not None and _career_provider.is_available():
+        modes.append("career")
+    return jsonify({"modes": modes, "app_mode": app_mode})
+
+
+# ============================================================================
+# Career List Endpoint
+# ============================================================================
+
+@api_bp.route('/api/careers')
+def get_careers():
+    """
+    Get list of all virtual pilot careers.
+
+    Returns the same shape as /api/campaigns plus a 'theatre_chain' field
+    per entry and 'source': 'career'.
+
+    Returns:
+        JSON array of career summary objects.
+    """
+    _last_ping[0] = time.time()
+
+    if not _career_provider:
+        return jsonify({'error': 'Career mode not available'}), 503
+
+    try:
+        careers = _career_provider.get_entry_list()
+        logger.info("Served career list: %d careers", len(careers))
+        return jsonify(careers)
+    except Exception as exc:
+        logger.error("Error getting career list: %s", exc, exc_info=True)
+        return jsonify({'error': 'Failed to load careers', 'detail': str(exc)}), 500
+
+
+# ============================================================================
+# Career Detail Endpoint
+# ============================================================================
+
+@api_bp.route('/api/career/<int:root_career_id>')
+def get_career_detail(root_career_id: int):
+    """
+    Get full career detail for a virtual pilot.
+
+    Response shape is identical to /api/campaign/<name> with additional
+    'theatre_chain', 'birth_date', and 'source' fields.
+
+    Args:
+        root_career_id: The id of the career chain root (extends = -1).
+    """
+    _last_ping[0] = time.time()
+
+    if not _career_provider:
+        return jsonify({'error': 'Career mode not available'}), 503
+
+    try:
+        detail = _career_provider.get_entry_detail(str(root_career_id))
+        if detail is None:
+            return jsonify({'error': 'Career not found', 'id': root_career_id}), 404
+        logger.info("Served career detail: root_id=%d", root_career_id)
+        return jsonify(detail)
+    except Exception as exc:
+        logger.error(
+            "Error getting career detail for id=%d: %s", root_career_id, exc, exc_info=True
+        )
+        return jsonify({'error': 'Failed to load career details', 'detail': str(exc)}), 500
+
+
+# ============================================================================
+# Career Showcase Endpoint
+# ============================================================================
+
+@api_bp.route('/api/career/<int:root_career_id>/showcase')
+def get_career_showcase(root_career_id: int):
+    """
+    Medal showcase for a career pilot.
+
+    Currently returns 503 until award translation tables are provided.
+    Once event.tpar2 codes are mapped to image filenames, this endpoint
+    will delegate to the existing build_showcase_data() function.
+    """
+    _last_ping[0] = time.time()
+
+    if not _career_provider:
+        return jsonify({'error': 'Career mode not available'}), 503
+
+    # Showcase requires award image mapping (event.tpar2 → image filename).
+    # Translation table not yet available — return explicit "not yet" response.
+    return jsonify({
+        'error': 'Career showcase not yet available',
+        'reason': 'Award image mapping pending translation table'
+    }), 503
 
 
 # ============================================================================

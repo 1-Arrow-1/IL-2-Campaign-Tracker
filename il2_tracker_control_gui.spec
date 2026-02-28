@@ -22,6 +22,7 @@ a = Analysis(
         # Include all PNG icon assets (required for button display)
         ('tools/icons/tracker.png', 'tools/icons'),
         ('tools/icons/service_record.png', 'tools/icons'),
+        ('tools/icons/career.png', 'tools/icons'),
         ('tools/icons/settings.png', 'tools/icons'),
         ('tools/icons/stop.png', 'tools/icons'),
         ('tools/icons/uninstall.png', 'tools/icons'),

@@ -66,17 +66,38 @@ const API = {
     },
     
     /**
+     * Get active modes (campaign / career)
+     */
+    async getMode() {
+        return this.get('/mode');
+    },
+
+    /**
      * Get list of all campaigns
      */
     async getCampaigns() {
         return this.get('/campaigns');
     },
-    
+
     /**
      * Get detailed campaign data
      */
     async getCampaignDetail(campaignName) {
         return this.get(`/campaign/${encodeURIComponent(campaignName)}`);
+    },
+
+    /**
+     * Get list of all career entries (virtual pilot careers)
+     */
+    async getCareers() {
+        return this.get('/careers');
+    },
+
+    /**
+     * Get detailed career data by root career id
+     */
+    async getCareerDetail(rootCareerId) {
+        return this.get(`/career/${encodeURIComponent(rootCareerId)}`);
     },
     
     /**

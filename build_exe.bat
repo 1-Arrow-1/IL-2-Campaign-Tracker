@@ -105,6 +105,11 @@ if not exist "campaign_service_record\campaign_service_record.spec" (
     pause
     exit /b 1
 )
+if not exist "campaign_service_record\career_service_record.spec" (
+    echo ERROR: campaign_service_record\career_service_record.spec not found!
+    pause
+    exit /b 1
+)
 if not exist "mlg2txt.spec" (
     echo ERROR: mlg2txt.spec not found!
     pause
@@ -142,6 +147,11 @@ if not exist "tools\icons\tracker.png" (
 )
 if not exist "tools\icons\service_record.png" (
     echo ERROR: tools\icons\service_record.png not found!
+    pause
+    exit /b 1
+)
+if not exist "tools\icons\career.png" (
+    echo ERROR: tools\icons\career.png not found!
     pause
     exit /b 1
 )
@@ -323,6 +333,7 @@ for %%F in (
         "campaign_service_record\utils\i18n.py"
         "utils\locale_config.py"
         "tools\il2_tracker_control_gui.py"
+        "campaign_service_record\career_main.py"
 ) do (
     if exist %%F (
         echo Testing %%F ...
@@ -413,6 +424,19 @@ if errorlevel 1 (
 echo ✓ Campaign_Service_Record.exe built successfully
 echo.
 
+REM Build Career Service Record EXE
+echo Building Career_Service_Record.exe...
+pyinstaller %PYINSTALLER_OPTS% campaign_service_record\career_service_record.spec
+if errorlevel 1 (
+    echo.
+    echo ERROR: Build failed for Career_Service_Record.exe!
+    echo Check the error messages above.
+    pause
+    exit /b 1
+)
+echo ✓ Career_Service_Record.exe built successfully
+echo.
+
 REM Build Settings Manager EXE
 echo Building IL2_Settings_Manager.exe...
 pyinstaller %PYINSTALLER_OPTS% settings_manager.spec
@@ -471,6 +495,16 @@ if exist "dist\Campaign_Service_Record" (
     xcopy /E /I /Y "dist\Campaign_Service_Record" "IL2_Campaign_Tracker_v2.2_ML\" >NUL
     if errorlevel 2 (
         echo ERROR: Could not copy Campaign_Service_Record bundle!
+        pause
+        exit /b 1
+    )
+)
+
+REM Copy Career Service Record bundle
+if exist "dist\Career_Service_Record" (
+    xcopy /E /I /Y "dist\Career_Service_Record" "IL2_Campaign_Tracker_v2.2_ML\" >NUL
+    if errorlevel 2 (
+        echo ERROR: Could not copy Career_Service_Record bundle!
         pause
         exit /b 1
     )

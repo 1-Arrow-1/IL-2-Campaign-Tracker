@@ -1,0 +1,57 @@
+country	rankId	eng	ger	fra	spa	pol	rus	chs
+101	0	Efreitor	Efreitor	Efreitor	Efreitor	Efreitor	Ефрейтор	下等兵
+101	1	Junior Sergeant	Mladshiy serzhant	Junior Sergeant	Mladshiy serzhant	Junior Sergeant	Младший сержант	少士
+101	2	Sergeant	Serzhant	Sergeant	Serzhant	Serzhant	Сержант	中士
+101	3	Senior Sergeant	Starshiy serzhant	Senior Sergeant	Starshiy serzhant	Senior Sergeant	Старший сержант	上士
+101	4	Junior Lieutenant	Mladschi Leitenant	Junior Lieutenant	Mladshiy leytenant	Junior Lieutenant	младший лейтенант	上士
+101	5	Lieutenant	Leitenant	Lieutenant	Leytenant	Lieutenant	лейтенант	少尉
+101	6	Senior Lieutenant	Starschi Leitenant	Senior Lieutenant	Starshiy leytenant	Senior Lieutenant	старший лейтенант	中尉
+101	7	Captain	Kapitan	Captain	Kapitan	Captain	капитан	上尉
+101	8	Major	Major	Major	Mayor	Major	майор	少校
+101	9	Sub-Colonel	Podpolkovnik	Podpolkovnik	Podpolkovnik	Podpolkovnik	Подполковник	中校
+101	10	Colonel	Polkovnik	Polkovnik	Polkovnik	Polkovnik	Полковник	上校
+101	11	Major General	Generalmajor	Major General	General-mayor	General-mayor	Генерал-майор	少將
+101	12	Lieutenant General	Generalleutnant	General Leytenant	General-Leytenant	General-leytenant	Генерал-лейтенaнт	中將
+101	13	Colonel General	Generaloberst	General-polkovnik	General-polkovnik	General-polkovnik	Генерал-полкoвник	大将
+102	0	Corporal	Corporal	Corporal	Corporal	Corporal	Капрал	下士
+102	1	Sergeant	Sergeant	Sergeant	Sergeant	Sergeant	сержант	中士
+102	2	Flight Sergeant	Flight Sergeant	Flight Sergeant	Flight Sergeant	Flight Sergeant	старший сержант	上士
+102	3	Warrant Officer	Warrant Officer	Warrant Officer	Warrant Officer	Warrant Officer	Уорент-офицер	准尉
+102	4	Pilot Officer	Pilot Officer	Pilot Officer	Pilot Officer	Pilot Officer	лейтенант	少尉
+102	5	Flying Officer	Flying Officer	Flying Officer	Flying Officer	Flying Officer	старший лейтенант	中尉
+102	6	Flight Lieutenant	Flight Lieutenant	Flight Lieutenant	Flight Lieutenant	Flight Lieutenant	капитан	上尉
+102	7	Squadron Leader	Squadron Leader	Squadron Leader	Squadron Leader	Squadron Leader	майор	少校
+102	8	Wing Commander	Wing Commander	Wing Commander	Wing Commander	Wing Commander	Винг Коммандер	中校
+102	9	Group Captain	Group Captain	Group Captain	Group Captain	Group Captain	Груп Каптен	上校
+102	10	Air Commodore	Air Commodore	Air Commodore	Air Commodore	Air Commodore	авиакоммодор	空军准将
+102	11	Air Vice Marshal	Air Vice Marshal	Air Vice Marshal	Air Vice Marshal	Air Vice Marshal	вице-маршал авиации	空军中将
+102	12	Air Marshal	Air Marshal	Air Marshal	Air Marshal	Air Marshal	маршал авиации	空军上将
+102	13	Air Chief Marshal	Air Chief Marshal	Air Chief Marshal	Air Chief Marshal	Air Chief Marshal	Главный маршал авиации	空军上将
+103	0	Staff Sergeant	Staff Sergeant	Staff Sergeant	Staff Sergeant	Staff Sergeant	Стафф Сержент	上士
+103	1	Technical Sergeant	Technical Sergeant	Technical Sergeant	Technical Sergeant	Technical Sergeant	Текникал Сержент	技术军士
+103	2	First Sergeant	First Sergeant	First Sergeant	First Sergeant	First Sergeant	Фёрст Сержент	第一军士
+103	3	Flight Officer	Flight Officer	Flight Officer	Flight Officer	Flight Officer	флайт офицер	准尉
+103	4	Chief Warrant Officer	Chief Warrant Officer	Chief Warrant Officer	Chief Warrant Officer	Chief Warrant Officer	Чиф Уорент Офицер	高级准尉
+103	5	2nd Lieutenant	2nd Lieutenant	2nd Lieutenant	2nd Lieutenant	2nd Lieutenant	лейтенант	少尉
+103	6	1st Lieutenant	1st Lieutenant	1st Lieutenant	1st Lieutenant	1st Lieutenant	старший лейтенант	中尉
+103	7	Captain	Captain	Captain	Captain	Captain	капитан	上尉
+103	8	Major	Major	Major	Major	Major	майор	少校
+103	9	Lt. Colonel	Lt. Colonel	Lt. Colonel	Lt. Colonel	Lt. Colonel	Лт. Колонел	中校
+103	10	Colonel	Colonel	Colonel	Colonel	Colonel	Колонел	上校
+103	11	Brigadier General	Brigadier General	Brigadier General	Brigadier General	Brigadier General	бригадный генерал	准将
+103	12	Major General	Major General	Major General	Major General	Major General	генерал-майор	少将
+103	13	Lt. General	Lt. General	Lt. General	Lt. General	Lt. General	генерал-лейтенант	中将
+201	0	Gefreiter	Gefreiter	Gefreiter	Gefreiter	Gefreiter	Фхй. Гефрайтер	下等兵
+201	1	Unteroffizier	Unteroffizier	Unteroffizier	Unteroffizier	Unteroffizier	Унтерофицер	下士
+201	2	Feldwebel	Feldwebel	Feldwebel	Feldwebel	Feldwebel	Фельдфебель	中士
+201	3	Oberfeldwebel	Oberfeldwebel	Oberfeldwebel	Oberfeldwebel	Oberfeldwebel	оберфельдфебель	上士
+201	4	Fhj. Oberfeldwebel	Fhj. Oberfeldwebel	Fhj. Oberfeldwebel	Fhj. Oberfeldwebel	Fhj. Oberfeldwebel	Фхй. оберфельдфебель	候补军官上士
+201	5	Leutnant	Leutnant	Leutnant	Leutnant	Leutnant	лейтенант	少尉
+201	6	Oberleutnant	Oberleutnant	Oberleutnant	Oberleutnant	Oberleutnant	оберлейтенант	中尉
+201	7	Hauptmann	Hauptmann	Hauptmann	Hauptmann	Hauptmann	гауптман	上尉
+201	8	Major	Major	Major	Major	Major	майор	少校
+201	9	Oberstleutnant	Oberstleutnant	Oberstleutnant	Oberstleutnant	Oberstleutnant	Оберстлейтнант	中校
+201	10	Oberst	Oberst	Oberst	Oberst	Oberst	Оберст	上校
+201	11	Generalmajor	Generalmajor	Oberst	Generalmajor	Generalmajor	Генерал-майор	少將
+201	12	Generalleutnant	Generalleutnant	Generalleutnant	Generalleutnant	Generalleutnant	Генерал-лейтенант	中將
+201	13	General der Jagdflieger	General der Jagdflieger	General der Jagdflieger	General der Jagdflieger	General der Jagdflieger	Генерал истребительной авиации	戰鬥機部隊上將

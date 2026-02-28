@@ -12,6 +12,7 @@
    ============================================================================ */
 
 .detail-container {
+    --page-max-width: 1811px; /* widened: left col now equals right col width (was 1700px) */
     max-width: var(--page-max-width);
     margin: 0 auto;
     width: 100%;
@@ -160,17 +161,17 @@
 
 .detail-columns {
     display: grid;
-    grid-template-columns: 0.9fr 1.9fr 1.2fr;
+    grid-template-columns: 1.2fr 1.9fr 1.2fr;
     gap: 2rem;
 }
 
-@media (min-width: 1700px) {
+@media (min-width: 1811px) {
     .detail-columns {
         --detail-column-gap: 2rem;
         --detail-base-width: calc((var(--page-max-width) - var(--page-width-delta)) - (var(--page-content-padding) * 2));
         --detail-columns-width: calc(var(--detail-base-width) - (2 * var(--detail-column-gap)));
-        --detail-left-width: calc((0.9 / 4) * var(--detail-columns-width));
-        --detail-right-width: calc((1.2 / 4) * var(--detail-columns-width));
+        --detail-left-width: calc((1.2 / 4.3) * var(--detail-columns-width));
+        --detail-right-width: calc((1.2 / 4.3) * var(--detail-columns-width));
         grid-template-columns:
             minmax(0, var(--detail-left-width))
             minmax(0, calc(100% - var(--detail-left-width) - var(--detail-right-width) - (2 * var(--detail-column-gap))))
@@ -551,6 +552,53 @@
 }
 
 /* ============================================================================
+   Career Theatre Sections (collapsible <details> groups in debriefings column)
+   ============================================================================ */
+
+.theatre-section {
+    margin-bottom: 1.25rem;
+    border: 1px solid rgba(180, 148, 100, 0.35);
+    border-radius: 4px;
+}
+
+.theatre-section[open] > .theatre-header {
+    border-bottom: 1px solid rgba(180, 148, 100, 0.35);
+}
+
+.theatre-header {
+    display: flex;
+    align-items: center;
+    padding: 0.45rem 0.75rem;
+    background: rgba(235, 224, 202, 0.55);
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: 0.02em;
+    color: #4a3620;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+}
+
+.theatre-header::-webkit-details-marker {
+    display: none;
+}
+
+.theatre-header::before {
+    content: "▶";
+    font-size: 0.65rem;
+    margin-right: 0.5rem;
+    transition: transform 0.15s ease;
+}
+
+.theatre-section[open] > .theatre-header::before {
+    transform: rotate(90deg);
+}
+
+.theatre-missions {
+    padding: 0.75rem 0.75rem 0.25rem;
+}
+
+/* ============================================================================
    Summary Content (Right Column)
    ============================================================================ */
 
@@ -914,37 +962,46 @@
    ============================================================================ */
 
 .medal-showcase-section {
-    padding: 0.5rem 0 0.25rem;
+    padding: 0.5rem 1rem 0.25rem;
     text-align: center;
 }
 
 .medal-showcase-btn {
     display: inline-flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 0.4em;
-    padding: 0.55rem 1.25rem;
+    padding: 0.75rem 1rem;
     font-size: 0.85rem;
     font-family: inherit;
     font-weight: 600;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.04em;
     cursor: pointer;
-    border: 1.5px solid var(--border, #c8b87a);
-    border-radius: 5px;
-    background: linear-gradient(135deg, #f5ead5 0%, #e8d9b5 100%);
+    /* Match .event-item.award */
+    border: 1px solid rgba(143, 111, 74, 0.3);
+    border-left: 3px solid #6b4b2c;
+    border-radius: 4px;
+    background: rgba(221, 212, 193, 0.5);
     color: #4a3a1a;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.5);
-    transition: background 0.15s, box-shadow 0.15s, transform 0.08s;
+    box-shadow: none;
+    transition: background 0.2s ease, border-left-color 0.2s ease, transform 0.08s;
     width: 100%;
 }
 
 .medal-showcase-btn:hover:not(:disabled) {
-    background: linear-gradient(135deg, #fdf4e0 0%, #f0e0c0 100%);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+    /* Match .event-item.award:hover */
+    background: rgba(203, 186, 155, 0.7);
+    border-left-color: #4e3822;
 }
 
 .medal-showcase-btn:active:not(:disabled) {
     transform: translateY(1px);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    background: rgba(191, 174, 143, 0.7);
+}
+
+.medal-showcase-btn:focus-visible {
+    outline: 2px solid #6b4b2c;
+    outline-offset: 2px;
 }
 
 .medal-showcase-btn:disabled {

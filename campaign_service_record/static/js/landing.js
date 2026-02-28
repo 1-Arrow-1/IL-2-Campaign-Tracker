@@ -26,6 +26,11 @@ const LandingPage = {
      */
     campaigns: [],
 
+    /**
+     * Current career entries
+     */
+    careers: [],
+
     backgroundImages: [
         'static/images/background_Britain.png',
         'static/images/background_Germany.png',
@@ -40,7 +45,7 @@ const LandingPage = {
     init() {
         this.cacheElements();
         this.selectBackground();
-        this.loadCampaigns();
+        this.loadAll();
     },
     
     /**
@@ -97,40 +102,92 @@ const LandingPage = {
     },
     
     /**
-     * Load campaigns from API
+     * Load all entries (campaigns + careers if career mode is active)
      */
-    async loadCampaigns() {
+    async loadAll() {
         this.showLoading();
-        
+
         try {
-            const campaigns = await API.getCampaigns();
-            
-            if (!campaigns || campaigns.length === 0) {
+            // Determine active modes
+            let modes = ['campaign'];
+            try {
+                const modeData = await API.getMode();
+                modes = modeData.modes || ['campaign'];
+            } catch (e) {
+                console.warn('Could not fetch /api/mode; assuming campaign-only', e);
+            }
+
+            const hasCampaign = modes.includes('campaign');
+            const hasCareer = modes.includes('career');
+
+            const [campaigns, careers] = await Promise.all([
+                hasCampaign ? API.getCampaigns().catch(() => []) : Promise.resolve([]),
+                hasCareer   ? API.getCareers().catch(() => [])   : Promise.resolve([]),
+            ]);
+
+            this.campaigns = campaigns || [];
+            this.careers   = careers   || [];
+
+            if (this.campaigns.length === 0 && this.careers.length === 0) {
                 this.showEmpty();
                 return;
             }
-            
-            this.campaigns = campaigns;
-            this.renderCampaigns();
-            
+
+            this.renderAll(hasCareer && this.careers.length > 0);
+
         } catch (error) {
-            console.error('Failed to load campaigns:', error);
+            console.error('Failed to load entries:', error);
             this.showError(error.message);
         }
     },
-    
+
     /**
-     * Render campaign list
+     * Render campaign list (legacy name, kept for any external callers)
+     */
+    async loadCampaigns() {
+        return this.loadAll();
+    },
+
+    /**
+     * Render all sections
+     */
+    renderAll(showCareerSection) {
+        this.elements.campaignsList.innerHTML = '';
+
+        if (this.campaigns.length > 0) {
+            if (showCareerSection) {
+                // Show section header for campaigns when both sections are present
+                const header = document.createElement('div');
+                header.className = 'section-header';
+                header.textContent = i18n.t('ui.landing.campaign_section') || 'Campaign Tracker';
+                this.elements.campaignsList.appendChild(header);
+            }
+            this.campaigns.forEach(campaign => {
+                const item = this.createCampaignItem(campaign);
+                this.elements.campaignsList.appendChild(item);
+            });
+        }
+
+        if (showCareerSection && this.careers.length > 0) {
+            const header = document.createElement('div');
+            header.className = 'section-header';
+            header.textContent = i18n.t('ui.landing.career_section') || 'IL-2 Career';
+            this.elements.campaignsList.appendChild(header);
+
+            this.careers.forEach(career => {
+                const item = this.createCareerItem(career);
+                this.elements.campaignsList.appendChild(item);
+            });
+        }
+
+        this.showList();
+    },
+
+    /**
+     * Render campaign list (when no career section present)
      */
     renderCampaigns() {
-        this.elements.campaignsList.innerHTML = '';
-        
-        this.campaigns.forEach(campaign => {
-            const item = this.createCampaignItem(campaign);
-            this.elements.campaignsList.appendChild(item);
-        });
-        
-        this.showList();
+        this.renderAll(false);
     },
     
     /**
@@ -233,14 +290,84 @@ const LandingPage = {
     },
 
     /**
+     * Create career list item element
+     */
+    createCareerItem(career) {
+        const item = document.createElement('div');
+        item.className = 'campaign-item career-item';
+        item.dataset.careerId = career.name;
+
+        const localizedCountry = this.getLocalizedCountryName(career.country);
+        const theatreChain = Array.isArray(career.theatre_chain)
+            ? career.theatre_chain.join(' \u2192 ')
+            : '';
+
+        const statsHTML = `
+            <span class="stat-item">
+                <span class="stat-label">${i18n.t('web.label.missions')}:</span>
+                <span class="stat-value">${career.missions_completed}</span>
+            </span>
+            <span class="stat-item">
+                <span class="stat-label">${i18n.t('web.label.promotions')}:</span>
+                <span class="stat-value">${career.promotions_count}</span>
+            </span>
+            <span class="stat-item">
+                <span class="stat-label">${i18n.t('web.label.awards')}:</span>
+                <span class="stat-value">${career.awards_count}</span>
+            </span>
+        `;
+
+        const content = document.createElement('div');
+        content.className = 'campaign-item__content';
+        content.innerHTML = `
+            <div class="campaign-name">
+                ${this.escapeHTML(career.display_name)}
+                <span class="campaign-country">${this.escapeHTML(localizedCountry || career.country)}</span>
+            </div>
+            ${theatreChain ? `<div class="career-theatre-chain">${this.escapeHTML(theatreChain)}</div>` : ''}
+            <div class="campaign-stats">${statsHTML}</div>
+        `;
+
+        const flagContainer = document.createElement('div');
+        flagContainer.className = 'campaign-flag';
+        const flagSrc = this.getFlagForCountry(career.country);
+        if (flagSrc) {
+            const flagImg = document.createElement('img');
+            flagImg.src = flagSrc;
+            flagImg.alt = localizedCountry ? `${localizedCountry} flag` : `${career.country} flag`;
+            flagContainer.appendChild(flagImg);
+        }
+
+        item.appendChild(content);
+        item.appendChild(flagContainer);
+
+        item.addEventListener('click', () => {
+            this.navigateToCareerDetail(career.name, career.country);
+        });
+
+        return item;
+    },
+
+    /**
      * Navigate to campaign detail page
      */
     navigateToDetail(campaignName, campaignCountry) {
         console.log('Navigating to campaign:', campaignName);
-        
-        // Dispatch custom event for app-level navigation
+
         const event = new CustomEvent('navigate-to-detail', {
-            detail: { campaignName, campaignCountry }
+            detail: { campaignName, campaignCountry, source: 'campaign' }
+        });
+        document.dispatchEvent(event);
+    },
+
+    /**
+     * Navigate to career detail page
+     */
+    navigateToCareerDetail(careerId, careerCountry) {
+        console.log('Navigating to career:', careerId);
+
+        const event = new CustomEvent('navigate-to-detail', {
+            detail: { campaignName: careerId, campaignCountry: careerCountry, source: 'career' }
         });
         document.dispatchEvent(event);
     },

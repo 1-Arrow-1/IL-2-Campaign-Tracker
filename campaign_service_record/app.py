@@ -16,6 +16,7 @@ import logging
 import threading
 import webbrowser
 from pathlib import Path
+from typing import Optional
 from flask import Flask, send_from_directory
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -28,7 +29,7 @@ from campaign_service_record.config import get_config
 from utils.supported_locales import get_locales_dir
 
 # Import API
-from campaign_service_record.api import api_bp, init_api
+from campaign_service_record.api import api_bp, init_api, init_career
 
 
 # ============================================================================
@@ -94,9 +95,55 @@ def create_app():
     app.config['PERSONAL_DATA_DIR'] = config.user_data_dir
     app.config['FROZEN'] = config.frozen
     
-    # Initialize API
-    init_api(config.data_dir, config.data_dir / 'reports')
-    
+    if config.app_mode == 'career':
+        # Career-only mode: skip campaign API, init career provider only.
+        # cp.db path: env var override first, then auto-detect from game dir.
+        if config.career_mode_enabled and config.career_db_path:
+            # CAREER_DB_PATH env var set: game_dir cannot be derived from db_path
+            # (cp.db may be a copy outside the game folder).
+            # Try to read game_dir from mission_dates.json in data_dir (written by
+            # Campaign Tracker; may exist when career and campaign share data_dir).
+            from campaign_service_record.utils.path_utils import get_game_directory
+            from campaign_service_record.core.data_loader import DataLoader
+            game_dir_path: Optional[Path] = None
+            try:
+                _tmp_loader = DataLoader(config.data_dir, enable_cache=False)
+                mission_dates = _tmp_loader.get_campaign_mission_dates()
+                game_dir_str = get_game_directory(mission_dates)
+                if game_dir_str:
+                    game_dir_path = Path(game_dir_str)
+                    logger.info("Career mode: game_dir detected from mission_dates: %s", game_dir_path)
+            except Exception as exc:
+                logger.debug("Career mode: could not detect game_dir from mission_dates: %s", exc)
+            init_career(
+                config.career_db_path,
+                game_dir=game_dir_path,
+                data_dir=config.data_dir,
+            )
+        else:
+            from campaign_service_record.utils.path_utils import get_game_directory
+            from campaign_service_record.core.data_loader import DataLoader
+            _tmp_loader = DataLoader(config.data_dir, enable_cache=False)
+            mission_dates = _tmp_loader.get_campaign_mission_dates()
+            game_dir = get_game_directory(mission_dates)
+            if game_dir:
+                candidate = Path(game_dir) / 'data' / 'Career' / 'cp.db'
+                if candidate.exists():
+                    config.set_career_db_path(candidate)
+                    init_career(
+                        candidate,
+                        game_dir=Path(game_dir),
+                        data_dir=config.data_dir,
+                    )
+                    logger.info("Career mode enabled: cp.db found at %s", candidate)
+                else:
+                    logger.warning("Career mode: cp.db not found at %s", candidate)
+            else:
+                logger.warning("Career mode: game directory not configured; cp.db not found")
+    else:
+        # Campaign-only mode: init campaign API only; career is not started.
+        init_api(config.data_dir, config.data_dir / 'reports')
+
     # Register blueprints
     app.register_blueprint(api_bp)
     
@@ -236,8 +283,13 @@ def main():
         monitor_thread.start()
     
     # Print startup message
+    app_label = (
+        "IL-2 Career Service Record"
+        if config.app_mode == 'career'
+        else "IL-2 Campaign Service Record"
+    )
     print("\n" + "="*70)
-    print("  IL-2 Campaign Service Record")
+    print(f"  {app_label}")
     print("="*70)
     print(f"\n  Server running at: {url}")
     print(f"  Data directory: {config.data_dir}")

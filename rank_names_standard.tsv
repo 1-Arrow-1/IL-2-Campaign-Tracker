@@ -1,0 +1,21 @@
+country	rankId	eng	ger	fra	spa	pol	rus	chs
+101	0	Junior Lieutenant	Mladschi Leitenant	Junior Lieutenant	Mladshiy leytenant	Junior Lieutenant	младший лейтенант	上士
+101	1	Lieutenant	Leitenant	Lieutenant	Leytenant	Lieutenant	лейтенант	少尉
+101	2	Senior Lieutenant	Starschi Leitenant	Senior Lieutenant	Starshiy leytenant	Senior Lieutenant	старший лейтенант	中尉
+101	3	Captain	Kapitan	Captain	Kapitan	Captain	капитан	上尉
+101	4	Major	Major	Major	Mayor	Major	майор	少校
+102	0	Flight Sergeant	Flight Sergeant	Flight Sergeant	Flight Sergeant	Flight Sergeant	старший сержант	上士
+102	1	Pilot Officer	Pilot Officer	Pilot Officer	Pilot Officer	Pilot Officer	лейтенант	少尉
+102	2	Flying Officer	Flying Officer	Flying Officer	Flying Officer	Flying Officer	старший лейтенант	中尉
+102	3	Flight Lieutenant	Flight Lieutenant	Flight Lieutenant	Flight Lieutenant	Flight Lieutenant	капитан	上尉
+102	4	Squadron Leader	Squadron Leader	Squadron Leader	Squadron Leader	Squadron Leader	майор	少校
+103	0	Flight Officer	Flight Officer	Flight Officer	Flight Officer	Flight Officer	флайт офицер	准尉
+103	1	2nd Lieutenant	2nd Lieutenant	2nd Lieutenant	2nd Lieutenant	2nd Lieutenant	лейтенант	少尉
+103	2	1st Lieutenant	1st Lieutenant	1st Lieutenant	1st Lieutenant	1st Lieutenant	старший лейтенант	中尉
+103	3	Captain	Captain	Captain	Captain	Captain	капитан	上尉
+103	4	Major	Major	Major	Major	Major	майор	少校
+201	0	Feldwebel	Feldwebel	Feldwebel	Feldwebel	Feldwebel	Фельдфебель	技术军士
+201	1	Oberfeldwebel	Oberfeldwebel	Oberfeldwebel	Oberfeldwebel	Oberfeldwebel	оберфельдфебель	军士长
+201	2	Leutnant	Leutnant	Leutnant	Leutnant	Leutnant	лейтенант	少尉
+201	3	Oberleutnant	Oberleutnant	Oberleutnant	Oberleutnant	Oberleutnant	оберлейтенант	中尉
+201	4	Hauptmann	Hauptmann	Hauptmann	Hauptmann	Hauptmann	гауптман	上尉

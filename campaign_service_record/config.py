@@ -32,9 +32,14 @@ class Config:
         self.user_data_dir = self._resolve_user_data_dir()
         self.pilot_photo_dir = self._resolve_pilot_photo_dir()
         
+        # App mode: 'campaign' (default) or 'career'
+        # Set by CSR_APP_MODE env var; controls which providers are initialised
+        # and which default port is used.
+        self.app_mode = os.environ.get('CSR_APP_MODE', 'campaign')
+
         # Server configuration
         self.host = '127.0.0.1'
-        self.port = 5000
+        self.port = 5001 if self.app_mode == 'career' else 5000
         self.debug = not self.frozen
         
         # Feature flags
@@ -45,6 +50,12 @@ class Config:
         # Caching
         self.enable_json_cache = True
         self.cache_ttl_seconds = 5  # Refresh if file modified
+
+        # Career mode
+        self.career_db_path = self._resolve_career_db_path()
+        self.career_mode_enabled = (
+            self.career_db_path is not None and self.career_db_path.exists()
+        )
     
     def _resolve_base_dir(self) -> Path:
         """
@@ -112,6 +123,30 @@ class Config:
             return self.user_data_dir / 'pilot_photos'
         return self.static_dir / 'pilot_photos'
     
+    def _resolve_career_db_path(self) -> Optional[Path]:
+        """
+        Resolve path to cp.db (IL-2 Career Mode database).
+
+        Priority:
+        1. CAREER_DB_PATH environment variable (explicit override)
+        2. <game_directory>/data/Career/cp.db
+           The game directory is resolved later (requires mission_dates.json),
+           so this returns None here if not set via env var.
+           routes.py calls _update_career_db_path() after the data loader is ready.
+
+        Returns:
+            Absolute Path to cp.db, or None.
+        """
+        env_path = os.environ.get('CAREER_DB_PATH')
+        if env_path:
+            return Path(env_path).absolute()
+        return None
+
+    def set_career_db_path(self, path: Path) -> None:
+        """Update career_db_path and career_mode_enabled after game directory is known."""
+        self.career_db_path = path
+        self.career_mode_enabled = path.exists() if path else False
+
     def get_json_path(self, filename: str) -> Path:
         """
         Get full path to a JSON data file.
@@ -144,9 +179,11 @@ class Config:
     def __repr__(self) -> str:
         return (
             f"Config(frozen={self.frozen}, "
+            f"app_mode={self.app_mode}, "
             f"base_dir={self.base_dir}, "
             f"data_dir={self.data_dir}, "
-            f"static_dir={self.static_dir})"
+            f"static_dir={self.static_dir}, "
+            f"career_mode_enabled={self.career_mode_enabled})"
         )
 
 

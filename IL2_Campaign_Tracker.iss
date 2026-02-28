@@ -159,6 +159,11 @@ Source: "locales\*.json"; DestDir: "{app}\locales"; Flags: ignoreversion
 
 ; --- Campaign Service Record ---
 Source: "Campaign_Service_Record.exe"; DestDir: "{app}"; Flags: ignoreversion
+
+; --- Career Service Record ---
+Source: "Career_Service_Record.exe"; DestDir: "{app}"; Flags: ignoreversion
+
+; --- Shared internal bundle (covers both Service Record builds) ---
 Source: "_internal\*"; DestDir: "{app}\_internal"; Flags: recursesubdirs createallsubdirs ignoreversion
 Source: "IL-2_Tracker_award_coordinates.json"; DestDir: "{app}"; Flags: ignoreversion
 

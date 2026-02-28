@@ -75,6 +75,7 @@ except ImportError:
 # EXE names (relative to INSTALL_DIR)
 TRACKER_EXE = "IL2_CampaignTracker_v2.2_ML.exe"
 SERVICE_RECORD_EXE = "Campaign_Service_Record.exe"
+CAREER_SERVICE_RECORD_EXE = "Career_Service_Record.exe"
 SETTINGS_MANAGER_EXE = "IL2_Settings_Manager.exe"
 UNINSTALLER_EXE = "unins000.exe"
 
@@ -82,6 +83,7 @@ UNINSTALLER_EXE = "unins000.exe"
 # These are in tools/icons/ directory
 TRACKER_ICON_PNG = "tools/icons/tracker.png"
 SERVICE_RECORD_ICON_PNG = "tools/icons/service_record.png"
+CAREER_ICON_PNG = "tools/icons/career.png"
 SETTINGS_ICON_PNG = "tools/icons/settings.png"
 STOP_ICON_PNG = "tools/icons/stop.png"
 UNINSTALL_ICON_PNG = "tools/icons/uninstall.png"
@@ -271,6 +273,7 @@ class ControlGUI(tk.Tk):
         icon_configs = [
             ("tracker", TRACKER_ICON_PNG),
             ("service_record", SERVICE_RECORD_ICON_PNG),
+            ("career", CAREER_ICON_PNG),
             ("settings", SETTINGS_ICON_PNG),
             ("stop", STOP_ICON_PNG),
             ("uninstall", UNINSTALL_ICON_PNG),
@@ -423,7 +426,7 @@ class ControlGUI(tk.Tk):
             0, 1
         )
 
-        # Row 2: Service Record / Settings
+        # Row 2: Campaign Service Record / Career Service Record
         self.btn_service_record = self._create_button(
             btn_frame, t('control_gui.button.service_record'),
             self._icons.get("service_record"),
@@ -431,26 +434,35 @@ class ControlGUI(tk.Tk):
             1, 0
         )
 
+        self.btn_career_service_record = self._create_button(
+            btn_frame, t('control_gui.button.career_service_record'),
+            self._icons.get("career"),
+            self._on_open_career_service_record,
+            1, 1
+        )
+
+        # Row 3: Settings Manager / PDF Reports
         self.btn_settings = self._create_button(
             btn_frame, t('control_gui.button.settings_manager'),
             self._icons.get("settings"),
             self._on_open_settings,
-            1, 1
+            2, 0
         )
 
-        # Row 3: PDF Reports / Uninstall
         self.btn_pdf = self._create_button(
             btn_frame, t('control_gui.button.pdf_reports'),
             self._icons.get("pdf"),
             self._on_pdf_reports,
-            2, 0
+            2, 1
         )
 
+        # Row 4: Uninstall (full width)
         self.btn_uninstall = self._create_button(
             btn_frame, t('control_gui.button.uninstall'),
             self._icons.get("uninstall"),
             self._on_uninstall,
-            2, 1
+            3, 0,
+            columnspan=2
         )
 
     def _create_button(
@@ -733,6 +745,23 @@ class ControlGUI(tk.Tk):
             messagebox.showerror(
                 t('settings_manager.message.error_title'),
                 t('control_gui.message.error_open_service_record')
+            )
+
+    def _on_open_career_service_record(self):
+        """Open the Career Service Record."""
+        exe_path = INSTALL_DIR / CAREER_SERVICE_RECORD_EXE
+
+        if not exe_path.exists():
+            messagebox.showerror(
+                t('settings_manager.message.error_title'),
+                f"{t('control_gui.message.career_service_record_not_found')}\n{exe_path}"
+            )
+            return
+
+        if not run_normal(str(exe_path), "", str(INSTALL_DIR)):
+            messagebox.showerror(
+                t('settings_manager.message.error_title'),
+                t('control_gui.message.error_open_career_service_record')
             )
 
     def _on_open_settings(self):

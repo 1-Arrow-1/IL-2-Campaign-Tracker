@@ -625,6 +625,8 @@ const DetailPage = {
         this.elements.personalDisplayBirthday = document.getElementById('personal-display-birthday');
         this.elements.personalDisplayBirthPlace = document.getElementById('personal-display-birth-place');
         this.elements.personalDisplayBirthCountry = document.getElementById('personal-display-birth-country');
+        this.elements.personalDisplaySquadron = document.getElementById('personal-display-current-squadron');
+        this.elements.personalSquadronRow = document.getElementById('personal-squadron-row');
         this.elements.personalStatus = document.getElementById('personal-data-status');
         this.elements.cropperModal = document.getElementById('cropper-modal');
         this.elements.cropperImg = document.getElementById('cropper-img');
@@ -639,6 +641,7 @@ const DetailPage = {
         this.elements.additionalNotesSaveBtn = document.getElementById('additional-notes-save-btn');
         this.elements.additionalNotesCancelBtn = document.getElementById('additional-notes-cancel-btn');
         this.elements.additionalNotesEmpty = document.querySelector('.additional-notes-empty');
+        this.elements.summaryHeading = document.querySelector('[data-i18n="web.section.campaign_summary"]');
     },
 
     setupPhotoHandlers() {
@@ -866,10 +869,15 @@ const DetailPage = {
 
 
     /**
-     * Load and display campaign details
+     * Load and display campaign or career details
+     *
+     * @param {string} entryId - Campaign name or career root id
+     * @param {string} source  - "campaign" (default) | "career"
      */
-    async load(campaignName) {
-        console.log('Loading campaign details:', campaignName);
+    async load(entryId, source) {
+        const resolvedSource = source || 'campaign';
+        this._source = resolvedSource;
+        console.log('Loading details:', resolvedSource, entryId);
 
         try {
             // Show loading state
@@ -878,11 +886,13 @@ const DetailPage = {
             this.elements.debriefingsContainer.innerHTML = '<p>Loading debriefings...</p>';
             this.elements.summaryContent.innerHTML = '<p>Loading summary...</p>';
 
-            // Fetch campaign data
-            const campaign = await API.getCampaignDetail(campaignName);
+            // Fetch data from the appropriate provider
+            const campaign = resolvedSource === 'career'
+                ? await API.getCareerDetail(entryId)
+                : await API.getCampaignDetail(entryId);
 
             if (!campaign) {
-                throw new Error('Campaign not found');
+                throw new Error(resolvedSource === 'career' ? 'Career not found' : 'Campaign not found');
             }
 
             this.currentCampaign = campaign;
@@ -903,7 +913,55 @@ const DetailPage = {
             this.renderEvents(campaign.events);
             this.renderDebriefings(campaign.debriefings_html);
             this.renderSummary(campaign.summary);
-            await this.loadPersonalData(campaign.name);
+
+            // Update middle-column heading to match data source
+            if (this.elements.summaryHeading) {
+                const summaryKey = resolvedSource === 'career'
+                    ? 'web.section.career_summary'
+                    : 'web.section.campaign_summary';
+                this.elements.summaryHeading.dataset.i18n = summaryKey;
+                this.elements.summaryHeading.textContent = i18n.t(summaryKey);
+            }
+
+            if (resolvedSource === 'career') {
+                // Career mode: prefill personal data from the career API response
+                // (no separate personal_data endpoint; data comes from cp.db)
+                this.setPersonalDataDisplay({
+                    name: campaign.pilot_last_name || '',
+                    first_name: campaign.pilot_first_name || '',
+                    birthday: campaign.birth_date || '',
+                    birth_country: getLocalizedCountryName(campaign.country) || campaign.country || '',
+                    squadron: campaign.squadron_short_name || '',
+                });
+                this.setPersonalDataFields({
+                    name: campaign.pilot_last_name || '',
+                    first_name: campaign.pilot_first_name || '',
+                    birthday: campaign.birth_date || '',
+                });
+                // Show squadron row, hide birth-place row
+                const birthPlaceRow = this.elements.personalDisplayBirthPlace?.closest('.personal-data-row');
+                if (birthPlaceRow) birthPlaceRow.style.display = 'none';
+                if (this.elements.personalSquadronRow) {
+                    this.elements.personalSquadronRow.style.display = '';
+                }
+                // Hide additional notes edit controls (career uses display-only)
+                if (this.elements.additionalNotesEditBtn) {
+                    this.elements.additionalNotesEditBtn.style.display = 'none';
+                }
+                this.displayAdditionalNotes('');
+            } else {
+                // Campaign mode: restore row visibility and load from personal_data API
+                const birthPlaceRow = this.elements.personalDisplayBirthPlace?.closest('.personal-data-row');
+                if (birthPlaceRow) birthPlaceRow.style.display = '';
+                if (this.elements.personalSquadronRow) {
+                    this.elements.personalSquadronRow.style.display = 'none';
+                }
+                if (this.elements.additionalNotesEditBtn) {
+                    this.elements.additionalNotesEditBtn.style.display = '';
+                }
+                await this.loadPersonalData(campaign.name);
+            }
+
             await this.loadPilotPhoto(campaign.name);
 
             // Check for PDF
@@ -1218,6 +1276,9 @@ const DetailPage = {
         }
         if (this.elements.personalDisplayBirthCountry) {
             this.elements.personalDisplayBirthCountry.textContent = this.formatPersonalDataValue(data.birth_country);
+        }
+        if (this.elements.personalDisplaySquadron) {
+            this.elements.personalDisplaySquadron.textContent = this.formatPersonalDataValue(data.squadron);
         }
     },
 
@@ -1664,8 +1725,11 @@ const DetailPage = {
         }
 
         if (summary.timeline && summary.timeline.first_mission_date) {
+            const timelineKey = this._source === 'career'
+                ? 'web.section.career_timeline'
+                : 'web.section.campaign_timeline';
             sections.push(this.createSummarySection(
-                i18n.t('web.section.campaign_timeline'),
+                i18n.t(timelineKey),
                 this.renderTimeline(summary.timeline)
             ));
         }
@@ -1699,7 +1763,10 @@ const DetailPage = {
 
         const summaryStats = document.createElement('div');
         summaryStats.className = 'combat-summary-stats';
-        summaryStats.appendChild(this.createInlineStat(i18n.t('web.stat.overall_score'), results.total_score ?? 0));
+        const hasPcp = results.pcp_score !== undefined;
+        const scoreLabel = hasPcp ? i18n.t('web.stat.pcp_score') : i18n.t('web.stat.overall_score');
+        const scoreValue = hasPcp ? (results.pcp_score ?? 0) : (results.total_score ?? 0);
+        summaryStats.appendChild(this.createInlineStat(scoreLabel, scoreValue));
         summaryStats.appendChild(this.createInlineStat(i18n.t('web.stat.total_kills'), results.total_kills ?? 0));
         container.appendChild(summaryStats);
 
