@@ -175,13 +175,9 @@ class MissionReportLinker:
             report_start = self._parse_report_header(txt_path)
             if report_start is None:
                 continue
-            # cp.db mission.startTime is an IN-GAME date stored as a date-only
-            # string (e.g. "1941-09-27"), so start_time has time=00:00:00.
-            # The report header encodes the full in-game datetime.  Compare on
-            # date only to avoid false negatives from the time mismatch.
-            if report_start.date() != start_time.date():
+            if report_start != start_time:
                 continue
-            # Date matched — verify duration as safeguard
+            # GDate/GTime matched — verify duration as safeguard
             if self._verify_duration(txt_path, start_time, end_time_raw):
                 logger.debug(
                     "Career report linked: %s → %s", mlg_path.name, txt_path.name
@@ -333,6 +329,16 @@ class MissionReportLinker:
 
         if not gdate or not gtime:
             return None
+
+        # IL-2 omits leading zeros in GDate (e.g. "1941.9.7") and GTime
+        # (e.g. "7:24:34").  Pad each component so strptime can match.
+        date_parts = gdate.split(".")
+        if len(date_parts) == 3:
+            gdate = f"{date_parts[0]}.{date_parts[1].zfill(2)}.{date_parts[2].zfill(2)}"
+        time_parts = gtime.split(":")
+        if time_parts:
+            time_parts[0] = time_parts[0].zfill(2)
+            gtime = ":".join(time_parts)
 
         combined = f"{gdate} {gtime}"
         for fmt in ("%Y.%m.%d %H:%M:%S", "%d.%m.%Y %H:%M:%S", "%Y-%m-%d %H:%M:%S"):
