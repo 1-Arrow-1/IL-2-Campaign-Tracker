@@ -3,12 +3,25 @@ CareerDebriefingManager: generates mission debriefing HTML for career mode.
 
 Architecture:
     For each theatre segment in the career chain, retrieves missions from cp.db
-    that the player flew, links each to its missionReport .txt file via
-    MissionReportLinker, parses with MissionDebriefParser (il2_mission_debrief),
-    and caches the per-mission HTML.
+    that the player flew, links each to its missionReport .txt file, parses with
+    MissionDebriefParser (il2_mission_debrief), and caches the per-mission HTML.
 
     Theatre sections are rendered as native <details>/<summary> collapsible blocks.
     HTML labels are English; frontend localizeDebriefingsHtml() translates them.
+
+Report matching strategy:
+    cp.db stores IN-GAME dates in mission.startTime and REAL-WORLD Unix timestamps
+    in mission.insDate.  IL-2 names missionReport files with REAL-WORLD dates:
+        missionReport(2025-02-15_14-30-00).mlg
+    IL-2 writes binary .mlg files only; .txt files only exist after mlg2txt
+    conversion.  For each mission, MissionReportLinker.find_career_report():
+        1. Globs .mlg files whose filename date is within ±1 day of insDate
+           (covers UTC vs local-time differences stored in cp.db).
+        2. Converts each candidate to .txt via mlg2txt subprocess (skips if .txt
+           already up-to-date).
+        3. Parses the GDate/GTime header from the .txt (which is the IN-GAME date).
+        4. Matches against mission.startTime; verifies duration.
+    Only the matched .txt is parsed for event HTML.
 
 Cache layout:
     <cache_dir>/career/<root_career_id>/cache_index.json
@@ -25,6 +38,7 @@ Cache layout:
 
 import json
 import logging
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -78,6 +92,18 @@ class CareerDebriefingManager:
             cache_dir / "career" / str(career.root_career_id) / "cache_index.json"
         )
         self._results: Optional[List[_MissionResult]] = None  # lazily computed
+
+        # Resolve mlg2txt converter path for career report linking.
+        # In frozen mode: mlg2txt.exe sits next to the EXE.
+        # In dev mode: mlg2txt.py lives at the repo root (three levels up from
+        # this file: career/ → campaign_service_record/ → repo root).
+        if getattr(sys, 'frozen', False):
+            _candidate = Path(sys.executable).parent / 'mlg2txt.exe'
+        else:
+            _candidate = Path(__file__).parent.parent.parent / 'mlg2txt.py'
+        self._mlg2txt_path: Optional[Path] = _candidate if _candidate.exists() else None
+        if self._mlg2txt_path is None:
+            logger.warning("mlg2txt not found at %s; .mlg conversion unavailable", _candidate)
 
     # ------------------------------------------------------------------
     # Public API
@@ -225,10 +251,19 @@ class CareerDebriefingManager:
                 except OSError:
                     pass  # File gone — fall through and re-link
 
-        # --- Attempt to link missionReport ---
-        report_path = self._linker.find_report(mission_row)
+        # --- Attempt to link missionReport via .mlg scan ---
+        # mission.insDate is a real-world timestamp used to find candidate .mlg
+        # files by filename date (±1 day for timezone differences).  Each
+        # candidate is converted to .txt and its GDate/GTime header is matched
+        # against mission.startTime (in-game date).
+        report_path = self._linker.find_career_report(
+            mission_row, self._mlg2txt_path
+        )
         if report_path is None:
-            logger.debug("No missionReport linked for mission id=%d", mission_id)
+            logger.debug(
+                "No missionReport linked for mission id=%d (startTime=%s)",
+                mission_id, mission_row["startTime"],
+            )
             return _MissionResult(
                 mission_id=mission_id,
                 career_id=career_id,

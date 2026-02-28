@@ -1,9 +1,7 @@
 """
-MissionReportLinker: matches cp.db mission rows to missionReport text files.
+MissionReportLinker: matches cp.db mission rows to missionReport log files.
 
-Career missions use a generic name (MFile:Missions_gen.msnbin) so the filename
-cannot be used to locate the report. Instead, a 3-step algorithm is used:
-
+Campaign mode — 3-step algorithm using .txt files:
     STEP 1 — Date filter
         Derive a date string from mission.insDate.
         Glob for missionReport(YYYY-MM-DD_*.txt) in the reports directory.
@@ -19,15 +17,31 @@ cannot be used to locate the report. Instead, a 3-step algorithm is used:
         Compare against mission.endTime (±30 s tolerance).
         Reject the file if duration is implausible.
 
+Career mode — find_career_report():
+    IL-2 writes only binary .mlg files to FlightLogs; there are no .txt files
+    unless they have been converted by mlg2txt.  cp.db stores:
+        mission.insDate   — real-world Unix timestamp (may be UTC while filenames
+                            use local time, hence the ±1 day search window)
+        mission.startTime — IN-GAME date (e.g. 1941-09-27); this is what GDate/
+                            GTime in the report header contains.
+    Algorithm:
+        1. Parse insDate as a real-world datetime.
+        2. Glob for .mlg files whose filename date is within ±1 day of insDate.
+        3. For each candidate (newest mtime first):
+              a. If <stem>[0].txt already exists and is newer than the .mlg, use it.
+              b. Otherwise convert via mlg2txt subprocess → <stem>[0].txt.
+              c. Parse GDate/GTime header from the .txt.
+              d. If it matches mission.startTime (in-game), this is our file.
+        4. Return the matched .txt path, or None.
+
 MissionReport files are used ONLY for sortie debriefing and narrative
 reconstruction. Statistics must never be derived from these files.
-
-The report format is confirmed to be identical to Campaign mode reports,
-so the same parsing logic applies.
 """
 
 import logging
 import re
+import subprocess
+import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional
@@ -42,10 +56,14 @@ _TICKS_PER_SECOND = 50
 # Tolerance for duration verification (seconds)
 _DURATION_TOLERANCE_SECONDS = 30
 
+# Search window (days) around insDate when scanning .mlg candidates.
+# Covers UTC vs local-time mismatches stored in cp.db.
+_MLG_DATE_WINDOW_DAYS = 1
+
 
 class MissionReportLinker:
     """
-    Matches cp.db mission rows to missionReport log files using a 3-step algorithm.
+    Matches cp.db mission rows to missionReport log files.
 
     Used exclusively for sortie debriefing and narrative text.
     Statistics are never derived from these files.
@@ -54,15 +72,20 @@ class MissionReportLinker:
     def __init__(self, reports_dir: Path):
         self._reports_dir = reports_dir
 
+    # ------------------------------------------------------------------
+    # Campaign mode: txt-based matching
+    # ------------------------------------------------------------------
+
     def find_report(self, mission_row: sqlite3.Row) -> Optional[Path]:
         """
-        Locate the missionReport file for a given mission row.
+        Locate the missionReport .txt file for a given mission row.
+        Intended for campaign mode where IL-2 writes .txt files directly.
 
         Args:
             mission_row: sqlite3.Row from the mission table.
 
         Returns:
-            Path to the matched missionReport file, or None if no match found.
+            Path to the matched missionReport .txt file, or None.
         """
         try:
             ins_date = self._parse_datetime(mission_row["insDate"])
@@ -76,20 +99,17 @@ class MissionReportLinker:
             logger.debug("Mission row missing insDate or startTime; cannot link report")
             return None
 
-        # Step 1: collect candidates by date
         candidates = self._candidates_by_date(ins_date)
         if not candidates:
             logger.debug("No missionReport candidates for date %s", ins_date.date())
             return None
 
-        # Step 2 + 3: match by header, verify duration
         for candidate in candidates:
             report_start = self._parse_report_header(candidate)
             if report_start is None:
                 continue
             if report_start != start_time:
                 continue
-            # Header matched — verify duration
             if self._verify_duration(candidate, start_time, end_time_raw):
                 logger.debug("Linked mission to report: %s", candidate.name)
                 return candidate
@@ -105,13 +125,83 @@ class MissionReportLinker:
         )
         return None
 
+    # ------------------------------------------------------------------
+    # Career mode: mlg-based matching
+    # ------------------------------------------------------------------
+
+    def find_career_report(
+        self,
+        mission_row: sqlite3.Row,
+        mlg2txt_path: Optional[Path] = None,
+    ) -> Optional[Path]:
+        """
+        Find and convert the missionReport .mlg for a career mission.
+
+        Args:
+            mission_row:  sqlite3.Row from the mission table.
+            mlg2txt_path: Path to mlg2txt.exe (frozen) or mlg2txt.py (dev).
+                          If None, only pre-converted .txt files are used.
+
+        Returns:
+            Path to the matched .txt file (converting from .mlg if needed),
+            or None if no match found.
+        """
+        try:
+            ins_date = self._parse_datetime(mission_row["insDate"])
+            start_time = self._parse_datetime(mission_row["startTime"])
+            end_time_raw = mission_row["endTime"]
+        except (KeyError, TypeError) as exc:
+            logger.warning("Cannot link career report: missing fields: %s", exc)
+            return None
+
+        if ins_date is None or start_time is None:
+            logger.debug(
+                "Career mission row missing insDate or startTime; cannot link"
+            )
+            return None
+
+        candidates = self._candidates_mlg_by_date(ins_date)
+        if not candidates:
+            logger.debug(
+                "No .mlg candidates for insDate=%s (±%d day window)",
+                ins_date.date(), _MLG_DATE_WINDOW_DAYS,
+            )
+            return None
+
+        for mlg_path in candidates:
+            txt_path = self._ensure_txt(mlg_path, mlg2txt_path)
+            if txt_path is None:
+                continue
+            report_start = self._parse_report_header(txt_path)
+            if report_start is None:
+                continue
+            if report_start != start_time:
+                continue
+            # GDate/GTime matched — verify duration as safeguard
+            if self._verify_duration(txt_path, start_time, end_time_raw):
+                logger.debug(
+                    "Career report linked: %s → %s", mlg_path.name, txt_path.name
+                )
+                return txt_path
+            else:
+                logger.warning(
+                    "Header matched %s but duration verification failed; skipping",
+                    txt_path.name,
+                )
+
+        logger.debug(
+            "No career missionReport matched for startTime=%s",
+            start_time.isoformat(),
+        )
+        return None
+
+    # ------------------------------------------------------------------
+    # Shared utility
+    # ------------------------------------------------------------------
+
     def extract_debriefing_html(self, report_path: Path) -> str:
         """
         Return the raw text content of a matched missionReport file.
-
-        The content is passed to the existing debriefing HTML renderer.
-        Since the report format is confirmed identical to Campaign mode,
-        the same downstream parsing applies.
 
         Returns empty string on read error.
         """
@@ -126,21 +216,94 @@ class MissionReportLinker:
     # ------------------------------------------------------------------
 
     def _candidates_by_date(self, ins_date: datetime) -> List[Path]:
-        """Glob for missionReport files matching the given date.
-
-        Returns files sorted by modification time descending so that the most
-        recent attempt (the one whose startTime cp.db records) is tried first.
-        """
+        """Glob for missionReport .txt files matching the given date (mtime desc)."""
         date_str = ins_date.strftime("%Y-%m-%d")
-        # Filename format: missionReport(YYYY-MM-DD_HH-MM-SS).txt
         pattern = f"missionReport({date_str}_*.txt"
         results = list(self._reports_dir.glob(pattern))
         if not results:
-            # Also search one level deep (reports may be in per-campaign subdirectories)
             results = list(self._reports_dir.rglob(pattern))
-        # Sort by mtime descending: latest-attempt file is tried first,
-        # matching the startTime that cp.db records for the final attempt.
         return sorted(results, key=lambda p: p.stat().st_mtime, reverse=True)
+
+    def _candidates_mlg_by_date(self, ins_date: datetime) -> List[Path]:
+        """
+        Glob for missionReport .mlg files whose filename date is within
+        ±_MLG_DATE_WINDOW_DAYS of ins_date.
+
+        Returns deduplicated list sorted by mtime descending (newest first,
+        so the final accepted attempt is tried first).
+        """
+        seen: set = set()
+        results: List[Path] = []
+        for delta in range(-_MLG_DATE_WINDOW_DAYS, _MLG_DATE_WINDOW_DAYS + 1):
+            date_str = (ins_date + timedelta(days=delta)).strftime("%Y-%m-%d")
+            pattern = f"missionReport({date_str}_*.mlg"
+            found = list(self._reports_dir.glob(pattern))
+            if not found:
+                found = list(self._reports_dir.rglob(pattern))
+            for p in found:
+                if p not in seen:
+                    seen.add(p)
+                    results.append(p)
+        return sorted(results, key=lambda p: p.stat().st_mtime, reverse=True)
+
+    def _ensure_txt(
+        self, mlg_path: Path, mlg2txt_path: Optional[Path]
+    ) -> Optional[Path]:
+        """
+        Return the .txt version of an .mlg file, converting via mlg2txt if needed.
+
+        mlg2txt always writes <stem>[0].txt in the same directory as the .mlg.
+        If the .txt already exists and is at least as new as the .mlg, it is
+        returned directly without re-conversion.
+
+        Returns None if conversion is unavailable or fails.
+        """
+        txt_path = mlg_path.parent / f"{mlg_path.stem}[0].txt"
+
+        # Use existing .txt if it is up-to-date
+        try:
+            if txt_path.exists() and txt_path.stat().st_mtime >= mlg_path.stat().st_mtime:
+                return txt_path
+        except OSError:
+            pass
+
+        if mlg2txt_path is None:
+            logger.debug(
+                "mlg2txt not configured; cannot convert %s", mlg_path.name
+            )
+            # Return the .txt if it exists at all, even if stale
+            return txt_path if txt_path.exists() else None
+
+        if not mlg2txt_path.exists():
+            logger.warning("mlg2txt not found at %s", mlg2txt_path)
+            return txt_path if txt_path.exists() else None
+
+        # Build the subprocess command
+        if getattr(sys, 'frozen', False):
+            cmd = [str(mlg2txt_path), '--output', str(mlg_path.parent), str(mlg_path)]
+        else:
+            cmd = [sys.executable, str(mlg2txt_path), '--output', str(mlg_path.parent), str(mlg_path)]
+
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=30,
+                creationflags=(
+                    subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+                ),
+            )
+            if result.returncode != 0:
+                logger.warning(
+                    "mlg2txt failed for %s: %s", mlg_path.name, result.stderr.strip()
+                )
+                return None
+        except Exception as exc:
+            logger.warning("mlg2txt error for %s: %s", mlg_path.name, exc)
+            return None
+
+        return txt_path if txt_path.exists() else None
 
     def _parse_report_header(self, path: Path) -> Optional[datetime]:
         """
@@ -193,13 +356,11 @@ class MissionReportLinker:
         """
         end_time = self._parse_datetime(end_time_raw)
         if end_time is None:
-            # Cannot verify — accept the match (header already confirmed)
-            return True
+            return True  # Cannot verify — accept the match
 
         last_t = self._read_last_t_value(path)
         if last_t is None:
-            # Cannot verify — accept the match
-            return True
+            return True  # Cannot verify — accept the match
 
         duration_seconds = last_t / _TICKS_PER_SECOND
         estimated_end = start_time + timedelta(seconds=duration_seconds)
@@ -231,6 +392,7 @@ class MissionReportLinker:
             - ISO string "YYYY-MM-DD HH:MM:SS"
             - ISO string "YYYY-MM-DDTHH:MM:SS"
             - Date-only string "YYYY-MM-DD"
+            - IL-2 dot-separated "YYYY.MM.DD HH:MM:SS"
         """
         if raw is None:
             return None
