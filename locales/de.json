@@ -604,7 +604,23 @@
       "attack_silver": "Kampfabzeichen für Schlachtflieger in Silber",
       "attack_gold": "Kampfabzeichen für Schlachtflieger in Gold",
       "attack_gold_clasp": "Kampfabzeichen für Schlachtflieger in Gold mit Anhänger",
-      "honor_clasp": "Ehrenblattspange der Luftwaffe"
+      "honor_clasp": "Ehrenblattspange der Luftwaffe",
+      "third_bar_to_the_distinguished_service_order": "Dritter Balken zum Distinguished Service Order",
+      "france_and_germany_star": "Frankreich- und Deutschland-Stern",
+      "air_medal_and_four_oak_leaf_clusters": "Air Medal mit vier Eichenblattträgern",
+      "air_medal_and_one_silver_leaf_cluster": "Air Medal mit einem Silbereichenblattträger",
+      "european_african_middle_eastern_campaign_medal": "Europäisch-Afrikanisch-Nahöstliche Kampagnenmedaille",
+      "medal_for_the_defense_of_moscow": "Medaille 'Für die Verteidigung von Moskau'",
+      "medal_for_the_defense_of_stalingrad": "Medaille 'Für die Verteidigung von Stalingrad'",
+      "medal_for_the_defense_of_the_caucasus": "Medaille 'Für die Verteidigung des Kaukasus'",
+      "aircraft_kill_bonus_1000_rubles": "Flugzeugabschuss-Prämie (1.000 Rubel)",
+      "fighter_kill_bonus_1000_rubles": "Jägerabschuss-Prämie (1.000 Rubel)",
+      "transport_plane_kill_bonus_1500_rubles": "Transportflugzeug-Abschuss-Prämie (1.500 Rubel)",
+      "bomber_kill_bonus_1500_rubles": "Bomberabschuss-Prämie (1.500 Rubel)",
+      "bomber_kill_bonus_2000_rubles": "Bomberabschuss-Prämie (2.000 Rubel)",
+      "small_ship_kill_bonus_1000_rubles": "Kleines-Schiff-Abschuss-Prämie (1.000 Rubel)",
+      "transport_ship_kill_bonus_3000_rubles": "Transportschiff-Abschuss-Prämie (3.000 Rubel)",
+      "destroyer_or_submarine_kill_bonus_10000_rubles": "Zerstörer-/U-Boot-Abschuss-Prämie (10.000 Rubel)"
     },
     "ranks": {
       "1st_lieutenant": "1st Lieutenant",
@@ -651,7 +667,19 @@
       "vvs_major_general": "General-Mayor",
       "vvs_sergeant": "Serzhant",
       "warrant_officer": "Warrant Officer",
-      "wing_commander": "Wing Commander"
+      "wing_commander": "Wing Commander",
+      "corporal": "Corporal",
+      "air_marshal": "Air Marshal",
+      "air_chief_marshal": "Air Chief Marshal",
+      "gefreiter": "Gefreiter",
+      "fhj_oberfeldwebel": "Fahnenjunker-Oberfeldwebel",
+      "general_der_jagdflieger": "General der Jagdflieger",
+      "staff_sergeant": "Staff Sergeant (US)",
+      "technical_sergeant": "Technical Sergeant (US)",
+      "lt_general": "Generalleutnant (US)",
+      "efreitor": "Jefrejtor",
+      "mladshiy_serzhant": "Mladschij Serschant",
+      "general_polkovnik": "General-Polkownik"
     }
   },
   "service_record": {

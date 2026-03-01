@@ -954,6 +954,11 @@ const DetailPage = {
                     notesHeadingCareer.dataset.i18n = 'web.section.other_incidences';
                     notesHeadingCareer.textContent = i18n.t('web.section.other_incidences');
                 }
+                // Hide the static h3 — the <details><summary> inside display replaces it
+                const notesH3Career = this.elements.additionalNotesDisplay
+                    ?.closest('.additional-notes-section')
+                    ?.querySelector('h3');
+                if (notesH3Career) notesH3Career.style.display = 'none';
                 // Render database-driven incidences instead of user notes
                 this.renderOtherIncidences(campaign.other_incidences || []);
             } else {
@@ -974,6 +979,11 @@ const DetailPage = {
                     notesHeadingCampaign.dataset.i18n = 'web.section.additional_notes';
                     notesHeadingCampaign.textContent = i18n.t('web.section.additional_notes');
                 }
+                // Restore the static h3 hidden in career mode
+                const notesH3Campaign = this.elements.additionalNotesDisplay
+                    ?.closest('.additional-notes-section')
+                    ?.querySelector('h3');
+                if (notesH3Campaign) notesH3Campaign.style.display = '';
                 await this.loadPersonalData(campaign.name);
             }
 
@@ -1462,9 +1472,9 @@ const DetailPage = {
     /**
      * Render database-driven "Other Incidences" entries (career mode only).
      *
-     * Populates the additional-notes-display div with one <p> per incidence.
-     * Supported types: RECOVERY, COMMAND, TRANSFER.
-     * Falls back to "(No entries)" when the list is empty.
+     * Wraps all content in a collapsible <details open class="theatre-section">
+     * element using the same CSS classes as theatre debriefing groups in the
+     * right column. Supported types: RECOVERY, COMMAND, TRANSFER, BONUS.
      */
     renderOtherIncidences(incidences) {
         const display = this.elements.additionalNotesDisplay;
@@ -1472,45 +1482,59 @@ const DetailPage = {
 
         display.innerHTML = '';
 
+        const details = document.createElement('details');
+        details.className = 'theatre-section';
+        details.open = true;
+
+        const summary = document.createElement('summary');
+        summary.className = 'theatre-header';
+        summary.setAttribute('data-i18n', 'web.section.other_incidences');
+        summary.textContent = i18n.t('web.section.other_incidences');
+        details.appendChild(summary);
+
+        const inner = document.createElement('div');
+        inner.className = 'theatre-missions';
+
         if (!incidences || incidences.length === 0) {
             const empty = document.createElement('span');
             empty.className = 'additional-notes-empty';
             empty.setAttribute('data-i18n', 'web.message.no_entries');
             empty.textContent = i18n.t('web.message.no_entries');
-            display.appendChild(empty);
-            return;
-        }
+            inner.appendChild(empty);
+        } else {
+            for (const inc of incidences) {
+                const p = document.createElement('p');
+                p.className = 'other-incidence-entry';
 
-        for (const inc of incidences) {
-            const p = document.createElement('p');
-            p.className = 'other-incidence-entry';
+                if (inc.type === 'RECOVERY') {
+                    p.textContent = [
+                        inc.start_date, '\u2013', inc.end_date, '\u2013',
+                        i18n.t('web.label.recovery_from_injury'), '\u2013',
+                        `${inc.duration_days} ${i18n.t('web.stat.days_word')}`,
+                    ].join(' ');
+                } else if (inc.type === 'COMMAND') {
+                    p.textContent = [
+                        inc.date, '\u2013',
+                        i18n.t('web.label.appointment_commander'),
+                    ].join(' ');
+                } else if (inc.type === 'TRANSFER') {
+                    p.textContent = [
+                        inc.date, '\u2013',
+                        i18n.t('web.label.squadron_change_to', { squadron: inc.squadron_name }),
+                    ].join(' ');
+                } else if (inc.type === 'BONUS') {
+                    p.textContent = [
+                        inc.date, '\u2013',
+                        i18n.t(`progression.awards.${inc.name}`, { defaultValue: inc.name }),
+                    ].join(' ');
+                }
 
-            if (inc.type === 'RECOVERY') {
-                p.textContent = [
-                    inc.start_date,
-                    '\u2013',
-                    inc.end_date,
-                    '\u2013',
-                    i18n.t('web.label.recovery_from_injury'),
-                    '\u2013',
-                    `${inc.duration_days} ${i18n.t('web.stat.days_word')}`,
-                ].join(' ');
-            } else if (inc.type === 'COMMAND') {
-                p.textContent = [
-                    inc.date,
-                    '\u2013',
-                    i18n.t('web.label.appointment_commander'),
-                ].join(' ');
-            } else if (inc.type === 'TRANSFER') {
-                p.textContent = [
-                    inc.date,
-                    '\u2013',
-                    i18n.t('web.label.squadron_change_to', { squadron: inc.squadron_name }),
-                ].join(' ');
+                inner.appendChild(p);
             }
-
-            display.appendChild(p);
         }
+
+        details.appendChild(inner);
+        display.appendChild(details);
     },
 
     /**

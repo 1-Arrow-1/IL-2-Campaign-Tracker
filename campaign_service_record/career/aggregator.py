@@ -154,10 +154,17 @@ class CareerAggregator:
         events_raw = self._db.get_events_for_pilot(
             career.pilot_id, types=_CONFIRMED_EVENT_TYPES
         )
-        mapped_events = [
-            ev for ev in (self._map_event(row, career.country) for row in events_raw)
-            if ev is not None
-        ]
+        seen_bonus_codes: set = set()
+        bonus_incidences: list = []
+        mapped_events = []
+        for row in events_raw:
+            ev = self._map_event(
+                row, career.country,
+                seen_bonus_codes=seen_bonus_codes,
+                bonus_incidences=bonus_incidences,
+            )
+            if ev is not None:
+                mapped_events.append(ev)
 
         # Build combat results from the most current pilot row (all-theatre totals)
         combat_results = self._stats.build_combat_results(current_pilot_row)
@@ -206,8 +213,13 @@ class CareerAggregator:
         )
         squadron_short_name = self._resolve_squadron_name(current_career_squadron_id)
 
-        # Build other incidences (recovery, commander, transfer)
+        # Build other incidences (recovery, commander, transfer) and merge bonus duplicates
         other_incidences = self._load_other_incidences(career)
+        if bonus_incidences:
+            other_incidences = sorted(
+                other_incidences + bonus_incidences,
+                key=lambda e: e["sort_key"],
+            )
 
         return {
             # 'name' mirrors campaign convention so existing frontend code works
@@ -273,13 +285,26 @@ class CareerAggregator:
     # Private: event mapper
     # ------------------------------------------------------------------
 
-    def _map_event(self, row, country: Optional[str]) -> Optional[Dict]:
+    def _map_event(
+        self,
+        row,
+        country: Optional[str],
+        seen_bonus_codes: Optional[set] = None,
+        bonus_incidences: Optional[list] = None,
+    ) -> Optional[Dict]:
         """
         Map a single event row to the frontend event dict shape.
 
         Placeholders are used for rank/award names until translation tables
         are provided. The placeholder keys (rank_<id>, award_<code>) surface
         visibly so missing translations are immediately obvious.
+
+        Args:
+            seen_bonus_codes: Mutable set tracking USSR bonus award_codes already
+                              emitted into the Awards timeline. Pass None to skip
+                              bonus deduplication (e.g. list-page callers).
+            bonus_incidences: Mutable list that receives BONUS entries for duplicate
+                              USSR bonus awards. Ignored when seen_bonus_codes is None.
         """
         event_type = row["type"]
         event_date = self._format_date(row["date"])
@@ -295,6 +320,15 @@ class CareerAggregator:
                 eng = rank_name.english
                 normal = self._rank_index.get(subfolder, eng, 'normal')
                 big = self._rank_index.get_with_normal_fallback(subfolder, eng, 'big')
+
+                # USSR early/late cross-subfolder fallback
+                if (normal is None or big is None) and subfolder in ('USSR/early', 'USSR/late'):
+                    alt = 'USSR/late' if subfolder == 'USSR/early' else 'USSR/early'
+                    if normal is None:
+                        normal = self._rank_index.get(alt, eng, 'normal')
+                    if big is None:
+                        big = self._rank_index.get_with_normal_fallback(alt, eng, 'big')
+
                 if normal:
                     image_url = (
                         f"/api/career_assets/CampaignRanksAwards"
@@ -336,6 +370,26 @@ class CareerAggregator:
                         f"/api/career_assets/CampaignRanksAwards"
                         f"/{big.subfolder}/{big.filename}"
                     )
+
+            # USSR bonus deduplication: first occurrence stays in Awards;
+            # subsequent occurrences are diverted to Other Incidences.
+            if seen_bonus_codes is not None and award_code:
+                is_ussr = (country or '').lower() == 'ussr'
+                is_bonus = (
+                    normal is not None
+                    and 'bonus' in normal.filename.lower()
+                )
+                if is_ussr and is_bonus:
+                    if award_code in seen_bonus_codes:
+                        if bonus_incidences is not None:
+                            bonus_incidences.append({
+                                "type":     "BONUS",
+                                "date":     event_date,
+                                "name":     name_key or f"award_{award_code}",
+                                "sort_key": event_date or "9999-99-99",
+                            })
+                        return None  # suppress from Awards timeline
+                    seen_bonus_codes.add(award_code)
 
             return {
                 "type": "award",

@@ -570,7 +570,23 @@
       "air_force_cross": "空军十字勋章",
       "bar_to_the_air_force_cross": "空军十字勋章附条",
       "second_bar_to_the_air_force_cross": "空军十字勋章第二附条",
-      "luftwaffe_honor_roll_clasp": "德国空军荣誉名册扣"
+      "luftwaffe_honor_roll_clasp": "德国空军荣誉名册扣",
+      "third_bar_to_the_distinguished_service_order": "Third Bar to the Distinguished Service Order",
+      "france_and_germany_star": "法德之星",
+      "air_medal_and_four_oak_leaf_clusters": "Air Medal and Four Oak Leaf Clusters",
+      "air_medal_and_one_silver_leaf_cluster": "Air Medal and One Silver Oak Leaf Cluster",
+      "european_african_middle_eastern_campaign_medal": "European-African-Middle Eastern Campaign Medal",
+      "medal_for_the_defense_of_moscow": "保卫莫斯科奖章",
+      "medal_for_the_defense_of_stalingrad": "保卫斯大林格勒奖章",
+      "medal_for_the_defense_of_the_caucasus": "保卫高加索奖章",
+      "aircraft_kill_bonus_1000_rubles": "Aircraft Kill Bonus (1000 rubles)",
+      "fighter_kill_bonus_1000_rubles": "Fighter Kill Bonus (1000 rubles)",
+      "transport_plane_kill_bonus_1500_rubles": "Transport Plane Kill Bonus (1500 rubles)",
+      "bomber_kill_bonus_1500_rubles": "Bomber Kill Bonus (1500 rubles)",
+      "bomber_kill_bonus_2000_rubles": "Bomber Kill Bonus (2000 rubles)",
+      "small_ship_kill_bonus_1000_rubles": "Small Ship Kill Bonus (1000 rubles)",
+      "transport_ship_kill_bonus_3000_rubles": "Transport Ship Kill Bonus (3000 rubles)",
+      "destroyer_or_submarine_kill_bonus_10000_rubles": "Destroyer or Submarine Kill Bonus (10000 rubles)"
     },
     "ranks": {
       "1st_lieutenant": "中尉",
@@ -617,7 +633,19 @@
       "vvs_major_general": "少将",
       "vvs_sergeant": "军士",
       "warrant_officer": "准尉",
-      "wing_commander": "联队指挥官"
+      "wing_commander": "联队指挥官",
+      "corporal": "下士",
+      "air_marshal": "空军元帅",
+      "air_chief_marshal": "空军大元帅",
+      "gefreiter": "一等兵",
+      "fhj_oberfeldwebel": "Fahnenjunker-Oberfeldwebel",
+      "general_der_jagdflieger": "战斗机航空兵上将",
+      "staff_sergeant": "上士",
+      "technical_sergeant": "技术军士",
+      "lt_general": "中将",
+      "efreitor": "上等兵",
+      "mladshiy_serzhant": "下士",
+      "general_polkovnik": "大将"
     }
   },
   "service_record": {

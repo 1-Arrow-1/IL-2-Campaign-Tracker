@@ -570,7 +570,23 @@
       "air_force_cross": "Крест Воздушных сил",
       "bar_to_the_air_force_cross": "Повторная награда крестом Воздушных сил",
       "second_bar_to_the_air_force_cross": "Вторая повторная награда крестом Воздушных сил",
-      "luftwaffe_honor_roll_clasp": "Зажим Почётного листка Люфтваффе"
+      "luftwaffe_honor_roll_clasp": "Зажим Почётного листка Люфтваффе",
+      "third_bar_to_the_distinguished_service_order": "Third Bar to the Distinguished Service Order",
+      "france_and_germany_star": "Звезда Франции и Германии",
+      "air_medal_and_four_oak_leaf_clusters": "Air Medal and Four Oak Leaf Clusters",
+      "air_medal_and_one_silver_leaf_cluster": "Air Medal and One Silver Oak Leaf Cluster",
+      "european_african_middle_eastern_campaign_medal": "European-African-Middle Eastern Campaign Medal",
+      "medal_for_the_defense_of_moscow": "Медаль «За оборону Москвы»",
+      "medal_for_the_defense_of_stalingrad": "Медаль «За оборону Сталинграда»",
+      "medal_for_the_defense_of_the_caucasus": "Медаль «За оборону Кавказа»",
+      "aircraft_kill_bonus_1000_rubles": "Премия за уничтожение самолёта (1000 рублей)",
+      "fighter_kill_bonus_1000_rubles": "Премия за уничтожение истребителя (1000 рублей)",
+      "transport_plane_kill_bonus_1500_rubles": "Премия за уничтожение транспортного самолёта (1500 рублей)",
+      "bomber_kill_bonus_1500_rubles": "Премия за уничтожение бомбардировщика (1500 рублей)",
+      "bomber_kill_bonus_2000_rubles": "Премия за уничтожение бомбардировщика (2000 рублей)",
+      "small_ship_kill_bonus_1000_rubles": "Премия за уничтожение малого корабля (1000 рублей)",
+      "transport_ship_kill_bonus_3000_rubles": "Премия за уничтожение транспортного корабля (3000 рублей)",
+      "destroyer_or_submarine_kill_bonus_10000_rubles": "Премия за уничтожение эсминца или подводной лодки (10000 рублей)"
     },
     "ranks": {
       "1st_lieutenant": "Лейтенант",
@@ -617,7 +633,19 @@
       "vvs_major_general": "Генерал-майор",
       "vvs_sergeant": "Сержант",
       "warrant_officer": "Уорэнт-офицер",
-      "wing_commander": "Командир крыла"
+      "wing_commander": "Командир крыла",
+      "corporal": "Капрал",
+      "air_marshal": "Маршал авиации",
+      "air_chief_marshal": "Главный маршал авиации",
+      "gefreiter": "Ефрейтор (нем.)",
+      "fhj_oberfeldwebel": "Фаненюнкер-обер-фельдфебель",
+      "general_der_jagdflieger": "Генерал истребительной авиации",
+      "staff_sergeant": "Штаб-сержант",
+      "technical_sergeant": "Технический сержант",
+      "lt_general": "Генерал-лейтенант (США)",
+      "efreitor": "Ефрейтор",
+      "mladshiy_serzhant": "Младший сержант",
+      "general_polkovnik": "Генерал-полковник"
     }
   },
   "service_record": {
