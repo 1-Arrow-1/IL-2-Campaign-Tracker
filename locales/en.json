@@ -928,8 +928,11 @@
       "missions": "Missions",
       "name": "Name",
       "place_of_birth": "Place of Birth",
+      "appointment_commander": "Appointment as squadron commander",
       "promotion": "Promotion",
-      "promotions": "Promotions"
+      "promotions": "Promotions",
+      "recovery_from_injury": "Recovery from injury",
+      "squadron_change_to": "Squadron change to {squadron}"
     },
     "message": {
       "birth_country_placeholder": "Country",
@@ -979,6 +982,7 @@
       "mission_debriefings": "Mission Debriefings",
       "missions": "Missions",
       "missions_flown": "Missions Flown",
+      "other_incidences": "Other Incidences",
       "overview": "Overview",
       "pilot_information": "Pilot Information",
       "promotions_awards": "Promotions & Awards",
@@ -993,6 +997,7 @@
       "bailouts": "Bailouts",
       "combat_score": "Combat Score",
       "current_rank": "Current Rank",
+      "days_word": "days",
       "duration": "Duration",
       "duration_days": "{days} days",
       "final_rank": "Final Rank",

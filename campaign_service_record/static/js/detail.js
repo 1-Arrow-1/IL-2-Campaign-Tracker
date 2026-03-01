@@ -948,7 +948,14 @@ const DetailPage = {
                 if (this.elements.additionalNotesEditBtn) {
                     this.elements.additionalNotesEditBtn.style.display = 'none';
                 }
-                this.displayAdditionalNotes('');
+                // Switch section heading to "Other Incidences" for career mode
+                const notesHeadingCareer = document.querySelector('[data-i18n="web.section.additional_notes"]');
+                if (notesHeadingCareer) {
+                    notesHeadingCareer.dataset.i18n = 'web.section.other_incidences';
+                    notesHeadingCareer.textContent = i18n.t('web.section.other_incidences');
+                }
+                // Render database-driven incidences instead of user notes
+                this.renderOtherIncidences(campaign.other_incidences || []);
             } else {
                 // Campaign mode: restore row visibility and load from personal_data API
                 const birthPlaceRow = this.elements.personalDisplayBirthPlace?.closest('.personal-data-row');
@@ -958,6 +965,14 @@ const DetailPage = {
                 }
                 if (this.elements.additionalNotesEditBtn) {
                     this.elements.additionalNotesEditBtn.style.display = '';
+                }
+                // Restore section heading to "Additional Incidents" for campaign mode
+                const notesHeadingCampaign = document.querySelector(
+                    '[data-i18n="web.section.other_incidences"], [data-i18n="web.section.additional_notes"]'
+                );
+                if (notesHeadingCampaign) {
+                    notesHeadingCampaign.dataset.i18n = 'web.section.additional_notes';
+                    notesHeadingCampaign.textContent = i18n.t('web.section.additional_notes');
                 }
                 await this.loadPersonalData(campaign.name);
             }
@@ -1444,6 +1459,60 @@ const DetailPage = {
         }
     },
     
+    /**
+     * Render database-driven "Other Incidences" entries (career mode only).
+     *
+     * Populates the additional-notes-display div with one <p> per incidence.
+     * Supported types: RECOVERY, COMMAND, TRANSFER.
+     * Falls back to "(No entries)" when the list is empty.
+     */
+    renderOtherIncidences(incidences) {
+        const display = this.elements.additionalNotesDisplay;
+        if (!display) return;
+
+        display.innerHTML = '';
+
+        if (!incidences || incidences.length === 0) {
+            const empty = document.createElement('span');
+            empty.className = 'additional-notes-empty';
+            empty.setAttribute('data-i18n', 'web.message.no_entries');
+            empty.textContent = i18n.t('web.message.no_entries');
+            display.appendChild(empty);
+            return;
+        }
+
+        for (const inc of incidences) {
+            const p = document.createElement('p');
+            p.className = 'other-incidence-entry';
+
+            if (inc.type === 'RECOVERY') {
+                p.textContent = [
+                    inc.start_date,
+                    '\u2013',
+                    inc.end_date,
+                    '\u2013',
+                    i18n.t('web.label.recovery_from_injury'),
+                    '\u2013',
+                    `${inc.duration_days} ${i18n.t('web.stat.days_word')}`,
+                ].join(' ');
+            } else if (inc.type === 'COMMAND') {
+                p.textContent = [
+                    inc.date,
+                    '\u2013',
+                    i18n.t('web.label.appointment_commander'),
+                ].join(' ');
+            } else if (inc.type === 'TRANSFER') {
+                p.textContent = [
+                    inc.date,
+                    '\u2013',
+                    i18n.t('web.label.squadron_change_to', { squadron: inc.squadron_name }),
+                ].join(' ');
+            }
+
+            display.appendChild(p);
+        }
+    },
+
     /**
      * Create event item element
      */

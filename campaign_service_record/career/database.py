@@ -255,6 +255,61 @@ class CareerDatabase:
         )
         return cursor.fetchone()
 
+    def get_incidence_events_for_career(
+        self,
+        career_id: int,
+        player_id: int,
+        types: List[int],
+    ) -> List[sqlite3.Row]:
+        """
+        Return events filtered by careerId AND pilotId AND type, with isDeleted=0.
+
+        Unlike get_events_for_pilot(), this enforces the careerId constraint so that
+        events from other career chains sharing the same pilot id are excluded.
+
+        Args:
+            career_id:  career.id for the specific theatre segment.
+            player_id:  career.playerId for that segment.
+            types:      List of event.type integers to include.
+
+        Returns:
+            List of sqlite3.Row ordered by event.date ASC.
+        """
+        conn = self._connect()
+        placeholders = ",".join("?" * len(types))
+        cursor = conn.execute(
+            f"SELECT * FROM event "
+            f"WHERE careerId = ? AND pilotId = ? AND type IN ({placeholders}) "
+            f"AND isDeleted = 0 ORDER BY date ASC",
+            [career_id, player_id, *types],
+        )
+        return cursor.fetchall()
+
+    def get_squadron_by_career_and_config(
+        self,
+        career_id: int,
+        config_id: int,
+    ) -> Optional[sqlite3.Row]:
+        """
+        Return the squadron row matching a careerId + configId pair.
+
+        Used to resolve squadron transfer events (event.type = 9), where
+        event.squadronId carries the squadron configId (not the primary key).
+
+        Args:
+            career_id:  career.id of the theatre segment that owns the squadron.
+            config_id:  squadron.configId value stored in event.squadronId.
+
+        Returns:
+            sqlite3.Row or None if not found.
+        """
+        conn = self._connect()
+        cursor = conn.execute(
+            "SELECT * FROM squadron WHERE careerId = ? AND configId = ?",
+            [career_id, config_id],
+        )
+        return cursor.fetchone()
+
     def get_missions_for_career(
         self, career_id: int, player_id: int
     ) -> List[sqlite3.Row]:

@@ -918,8 +918,11 @@
       "missions": "Missionen",
       "name": "Name",
       "place_of_birth": "Geburtsort",
+      "appointment_commander": "Ernennung zum Staffelkapitän",
       "promotion": "Beförderung",
-      "promotions": "Beförderungen"
+      "promotions": "Beförderungen",
+      "recovery_from_injury": "Genesungsurlaub",
+      "squadron_change_to": "Geschwaderwechsel zu {squadron}"
     },
     "message": {
       "birth_country_placeholder": "Land",
@@ -968,6 +971,7 @@
       "mission_debriefings": "Missions-Nachbesprechungen",
       "missions": "Missionen",
       "missions_flown": "Geflogene Missionen",
+      "other_incidences": "Sonstige Ereignisse",
       "overview": "Übersicht",
       "pilot_information": "Piloten-Information",
       "promotions_awards": "Beförderungen & Auszeichnungen",
@@ -982,6 +986,7 @@
       "bailouts": "Absprünge",
       "combat_score": "Kampfpunkte",
       "current_rank": "Aktueller Rang",
+      "days_word": "Tage",
       "duration": "Dauer",
       "duration_days": "{days} Tage",
       "final_rank": "Endrang",

@@ -30,6 +30,7 @@ from campaign_service_record.career.award_index import AwardIndex
 from campaign_service_record.career.rank_index import RankIndex
 from campaign_service_record.career.rank_resolver import RankResolver
 from campaign_service_record.career.debriefing_manager import CareerDebriefingManager
+from campaign_service_record.career.other_incidences import load_other_incidences
 from campaign_service_record.utils.path_utils import USSR_TRANSITION_DATE
 
 logger = logging.getLogger(__name__)
@@ -205,6 +206,9 @@ class CareerAggregator:
         )
         squadron_short_name = self._resolve_squadron_name(current_career_squadron_id)
 
+        # Build other incidences (recovery, commander, transfer)
+        other_incidences = self._load_other_incidences(career)
+
         return {
             # 'name' mirrors campaign convention so existing frontend code works
             "name": str(career.root_career_id),
@@ -223,6 +227,7 @@ class CareerAggregator:
             "birth_date": career.birth_date,
             "pcp_score": pcp_score,
             "squadron_short_name": squadron_short_name or "",
+            "other_incidences": other_incidences,
         }
 
     # ------------------------------------------------------------------
@@ -603,6 +608,89 @@ class CareerAggregator:
         except Exception as exc:
             logger.info("Failed to read squadron info file %s: %s", info_path, exc)
             return None
+
+    def _resolve_squadron_name_by_config(
+        self, career_id: int, config_id: int
+    ) -> Optional[str]:
+        """
+        Look up a squadron display name given a careerId + configId pair.
+
+        This is the counterpart to _resolve_squadron_name() for cases where the
+        configId is already known (e.g. from event.squadronId on a type-9 event)
+        and we do not need the intermediate squadron.id lookup.
+
+        Returns the short name string, or None if unavailable.
+        """
+        if not config_id:
+            return None
+
+        if self._game_dir is None and self._data_dir is None:
+            return None
+
+        candidate_paths = []
+        if self._game_dir:
+            candidate_paths.append(
+                self._game_dir / "data" / "swf" / "CampaignRanksAwards" / "squadrons"
+                / str(config_id) / "info.locale=eng.txt"
+            )
+        if self._data_dir:
+            candidate_paths.append(
+                self._data_dir / "CampaignRanksAwards" / "squadrons"
+                / str(config_id) / "info.locale=eng.txt"
+            )
+
+        for p in candidate_paths:
+            if p.exists():
+                try:
+                    content = p.read_text(encoding="utf-8", errors="replace")
+                    name = self._parse_squadron_short_name(content)
+                    if name:
+                        logger.debug(
+                            "Squadron configId=%d resolved to %r", config_id, name
+                        )
+                        return name
+                except Exception as exc:
+                    logger.debug(
+                        "Failed to read squadron info for configId=%d: %s", config_id, exc
+                    )
+
+        logger.debug(
+            "Squadron configId=%d info file not found (tried %d path(s))",
+            config_id, len(candidate_paths),
+        )
+        return None
+
+    def _load_other_incidences(self, career: "VirtualPilotCareer") -> List[Dict]:
+        """
+        Build the full list of 'Other Incidences' entries across all theatre
+        segments in the career chain.
+
+        Each segment is queried independently (careerId + playerId) so that the
+        careerId constraint is enforced per the spec.  Results are merged and
+        re-sorted by sort_key (date) ascending.
+        """
+        results: List[Dict] = []
+
+        for segment in career.chain:
+            seg_career_id = int(segment["id"])
+            seg_player_id = int(segment["playerId"])
+
+            def _resolve(cid: int, cfgid: int, _self=self) -> Optional[str]:
+                return _self._resolve_squadron_name_by_config(cid, cfgid)
+
+            try:
+                entries = load_other_incidences(
+                    self._db, seg_career_id, seg_player_id, _resolve
+                )
+                results.extend(entries)
+            except Exception as exc:
+                logger.warning(
+                    "Failed to load other incidences for segment careerId=%d: %s",
+                    seg_career_id, exc,
+                )
+
+        results.sort(key=lambda e: e["sort_key"])
+        return results
 
     @staticmethod
     def _parse_squadron_short_name(content: str) -> Optional[str]:
