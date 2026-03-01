@@ -158,40 +158,35 @@ class MissionReportLinker:
             logger.debug("Career mission row missing insDate or startTime; cannot link")
             return None
 
+        # Primary search: ±1 day window around insDate (covers timezone offsets).
         candidates = self._candidates_mlg_by_date(ins_date)
-        if not candidates:
-            logger.debug(
-                "No .mlg candidates for insDate=%s (±%d day window)",
-                ins_date.date(), _MLG_DATE_WINDOW_DAYS,
-            )
-            return None
+        result = self._match_from_candidates(candidates, start_time, end_time_raw, mlg2txt_path)
+        if result is not None:
+            return result
 
-        for mlg_path in candidates:
-            txt_path = self._ensure_txt(mlg_path, mlg2txt_path)
-            if txt_path is None:
-                continue
-            report_start = self._parse_report_header(txt_path)
-            if report_start is None:
-                continue
-            if report_start != start_time:
-                continue
-            # GDate/GTime matched — verify duration as safeguard
-            if self._verify_duration(txt_path, start_time, end_time_raw):
-                logger.debug(
-                    "Career report linked: %s → %s", mlg_path.name, txt_path.name
-                )
-                return txt_path
-            else:
-                logger.warning(
-                    "Header matched %s but duration verification failed; skipping",
-                    txt_path.name,
-                )
-
-        logger.debug(
-            "No career missionReport matched for startTime=%s",
-            start_time.isoformat(),
+        # Fallback: insDate is a batch-save time and may not reflect the actual
+        # flight date.  Scan all .mlg files in the directory.
+        all_mlg = sorted(
+            self._reports_dir.rglob("missionReport(*.mlg"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
         )
-        return None
+        fallback_candidates = [p for p in all_mlg if p not in set(candidates)]
+        if fallback_candidates:
+            logger.debug(
+                "±%d day window missed startTime=%s; falling back to full scan (%d files)",
+                _MLG_DATE_WINDOW_DAYS, start_time.isoformat(), len(fallback_candidates),
+            )
+            result = self._match_from_candidates(
+                fallback_candidates, start_time, end_time_raw, mlg2txt_path
+            )
+
+        if result is None:
+            logger.debug(
+                "No career missionReport matched for startTime=%s",
+                start_time.isoformat(),
+            )
+        return result
 
     # ------------------------------------------------------------------
     # Shared utility
@@ -221,6 +216,33 @@ class MissionReportLinker:
         if not results:
             results = list(self._reports_dir.rglob(pattern))
         return sorted(results, key=lambda p: p.stat().st_mtime, reverse=True)
+
+    def _match_from_candidates(
+        self,
+        candidates: List[Path],
+        start_time: datetime,
+        end_time_raw,
+        mlg2txt_path: Optional[Path],
+    ) -> Optional[Path]:
+        """Try each .mlg candidate; return first .txt whose GDate/GTime matches start_time."""
+        for mlg_path in candidates:
+            txt_path = self._ensure_txt(mlg_path, mlg2txt_path)
+            if txt_path is None:
+                continue
+            report_start = self._parse_report_header(txt_path)
+            if report_start is None:
+                continue
+            if report_start != start_time:
+                continue
+            if self._verify_duration(txt_path, start_time, end_time_raw):
+                logger.debug("Career report linked: %s → %s", mlg_path.name, txt_path.name)
+                return txt_path
+            else:
+                logger.warning(
+                    "Header matched %s but duration verification failed; skipping",
+                    txt_path.name,
+                )
+        return None
 
     def _candidates_mlg_by_date(self, ins_date: datetime) -> List[Path]:
         """
