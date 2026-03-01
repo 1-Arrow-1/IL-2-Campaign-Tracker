@@ -271,7 +271,9 @@
         "second_bar_to_the_air_force_medal": "Tenacidad sostenida a altura operativa. No un solo acto — sino un patrón de determinación.",
         "air_force_cross": "Mando y temple en el aire. La responsabilidad pesa más ahora, y has demostrado que puedes con ella.",
         "bar_to_the_air_force_cross": "Distinción renovada al mando. El peso de las decisiones crece, y también la confianza en tu criterio.",
-        "second_bar_to_the_air_force_cross": "Prueba repetida en primera línea. Autoridad sometida al fuego — y sostenida."
+        "second_bar_to_the_air_force_cross": "Prueba repetida en primera línea. Autoridad sometida al fuego — y sostenida.",
+        "third_bar_to_the_distinguished_service_order": "Un tercer pasador al DSO. Tres reconocimientos separados, cada uno exigiendo un estándar que la mayoría de los oficiales nunca alcanzan. La cinta ha crecido—igual que lo que se espera de ti.",
+        "france_and_germany_star": "La campaña final. Desde Normandía hasta el Reich—estabas volando cuando la guerra en Europa occidental llegó a su conclusión. La estrella marca un camino que terminó en espacio aéreo alemán."
       },
       "ranks": {
         "air_commodore": "Diriges batallas aéreas enteras desde informes y mapas. Si vuelas, es una excepción… y todos lo notan.",
@@ -284,7 +286,10 @@
         "sergeant": "Alas recién ganadas, cabina helada y el viento del Canal cortándolo todo. Mantente con tu jefe y no dejes de barrer el cielo con la mirada.",
         "squadron_leader": "El ritmo del escuadrón lo marcas tú: aprietas demasiado y lo rompes. Vuelas cuando el momento exige una mano serena.",
         "warrant_officer": "Veterano duro bajo un uniforme suave. Vuelas como si cada lección te hubiera costado… y así fue.",
-        "wing_commander": "Mandas alas y sientes cada pérdida. Subes de vez en cuando, lo suficiente para que la guerra no se vuelva una mentira cómoda."
+        "wing_commander": "Mandas alas y sientes cada pérdida. Subes de vez en cuando, lo suficiente para que la guerra no se vuelva una mentira cómoda.",
+        "corporal": "Dos galones y una pequeña sección que depende de ti. La RAF funciona gracias a hombres que aguantan en este nivel. Sé ese hombre.",
+        "air_marshal": "Piensas en campañas aéreas, no en salidas. Recursos, estrategia y política al más alto nivel. Quizás aún vuelas—pero la guerra pasa primero por tus decisiones.",
+        "air_chief_marshal": "La cúspide del rango operativo. Lo que decides moldea la guerra aérea. Cada ala de la RAF en el teatro responde, en última instancia, a una cadena que termina aquí."
       }
     },
     "germany": {
@@ -320,7 +325,10 @@
         "oberleutnant": "Conduces vuelos hacia el mal tiempo, la flak y las probabilidades en contra. La Staffel observa cómo respondes al primer estallido y a la última decisión.",
         "oberst": "Un comandante con pasado de piloto y una guerra sobre el escritorio. Si despegas, será por un motivo que nadie olvida.",
         "oberstleutnant": "Mantienes la unidad en pie y las pérdidas llevan tu firma. Vuelas rara vez, casi siempre para ver el frente con tus propios ojos.",
-        "unteroffizier": "Recién llegado a la línea, vuelas pegado al ala del jefe y aprendes deprisa o mueres deprisa. Tu cuaderno de vuelo se llena, salida tras salida."
+        "unteroffizier": "Recién llegado a la línea, vuelas pegado al ala del jefe y aprendes deprisa o mueres deprisa. Tu cuaderno de vuelo se llena, salida tras salida.",
+        "gefreiter": "Tu primer galón en una guerra que no espera el papeleo. Te has ganado la confianza suficiente para ese chevrón—ahora consérvalo.",
+        "fhj_oberfeldwebel": "Candidato a oficial con rango de suboficial—a la espera del nombramiento mientras vueló como si ya lo tuvieras. Los trámites te alcanzarán. Sigue rindiendo.",
+        "general_der_jagdflieger": "Diriges todo el arma de caza. Prioridades operativas, disposiciones de unidad, doctrina bajo el fuego—estos son tus instrumentos ahora. El cielo pertenece a los hombres que envías a él."
       }
     },
     "soviet": {
@@ -349,7 +357,18 @@
         "order_of_the_red_star_2nd_awarding": "Te reconocen otra vez. La misma guerra, apuestas más altas y más prueba de que sigues cumpliendo.",
         "order_of_the_red_star_3rd_awarding": "Una tercera vez no es casualidad. Has hecho carrera de sobrevivir… y de ganar.",
         "red_wound_stripe": "Fuiste herido y aun así regresaste. El galón es sencillo; la historia no.",
-        "yellow_wound_stripe": "Otra marca de lesión que te llevas hacia delante. Volaste herido, aterrizaste vivo y volviste al deber."
+        "yellow_wound_stripe": "Otra marca de lesión que te llevas hacia delante. Volaste herido, aterrizaste vivo y volviste al deber.",
+        "aircraft_kill_bonus_1000_rubles": "El Estado paga por las victorias. Mil rublos confirman que apuntaste, conectaste y retiraste un avión del cómputo enemigo.",
+        "fighter_kill_bonus_1000_rubles": "Caza derribado. La amenaza ha sido eliminada—el pago sigue. Mil rublos por un derribo que pudo haber salvado a un compañero.",
+        "transport_plane_kill_bonus_1500_rubles": "Un transporte retirado de la ecuación logística. Mil quinientos rublos por cortar un hilo del que dependía el enemigo.",
+        "bomber_kill_bonus_1500_rubles": "Bombardero interceptado antes de su objetivo. Mil quinientos rublos por la misión que nunca completó.",
+        "bomber_kill_bonus_2000_rubles": "Otro bombardero retirado del orden de batalla enemigo. La bonificación refleja el nivel de amenaza. Dos mil rublos por proteger lo que hay abajo.",
+        "small_ship_kill_bonus_1000_rubles": "Un pequeño buque puesto fuera de combate. La bonificación es modesta; el resultado—un activo enemigo menos en el agua—no lo es.",
+        "transport_ship_kill_bonus_3000_rubles": "Un buque de transporte no es solo un objetivo—es una cadena de suministro. Tres mil rublos porque lo que transportaba no llegó.",
+        "destroyer_or_submarine_kill_bonus_10000_rubles": "Un buque de guerra de importancia—destructor o submarino. Diez mil rublos porque la amenaza para las fuerzas propias era correspondientemente grave. No volverá al agua.",
+        "medal_for_the_defense_of_moscow": "Moscú misma estaba en juego. Volaste sobre una ciudad que no podía caer, y no cayó. Esta medalla registra la batalla que mantuvo viva la guerra.",
+        "medal_for_the_defense_of_stalingrad": "Stalingrado—la batalla que rompió el impulso estratégico de la Wehrmacht. Estabas en el aire sobre la ciudad mientras absorbía lo peor del enemigo. La medalla marca un momento que cambió la guerra entera.",
+        "medal_for_the_defense_of_the_caucasus": "La campaña del Cáucaso: petróleo, pasos de montaña y el borde de una catástrofe que fue repelida. Volaste en las batallas que mantuvieron el combustible y el flanco sur fuera del alcance enemigo."
       },
       "ranks": {
         "captain": "Mandas y sigues volando duro. Las mejores órdenes son las que probaste en tu propia cabina.",
@@ -362,7 +381,10 @@
         "senior_lieutenant": "Conduces salidas entre flak y mal tiempo como si fuera rutina. Tu escuadrón vive de disciplina y terquedad.",
         "senior_sergeant": "Has sobrevivido lo bastante como para enseñar a otros. Los nuevos miran tus manos más de lo que escuchan tus palabras.",
         "sergeant": "Piloto de primera línea, con poco margen y sin ilusiones. Vuelas, luchas y rezas para que el motor aguante.",
-        "sub_colonel": "El mando te aleja de la línea, pero vuelves cuando importa. Una salida rara, el olor familiar a combustible y escarcha."
+        "sub_colonel": "El mando te aleja de la línea, pero vuelves cuando importa. Una salida rara, el olor familiar a combustible y escarcha.",
+        "efreitor": "Un peldáño por encima del fondo. El galón es pequeño; las expectativas acaban de crecer. Preséntate, mantén la línea, no le cuestes esfuerzo extra a nadie. Eso es el trabajo.",
+        "mladshiy_serzhant": "Sargento junior. El título es modesto pero el papel es real. Alguien está observando ahora cómo manejas la presión. No lo decepciones.",
+        "general_polkovnik": "Mando a escala de ejército. Coordinas frentes, asignas ejércitos aéreos y respondes al Stavka. Los aviones individuales son abstracciones; tú mueves el instrumento completo del poder aéreo."
       }
     },
     "usa": {
@@ -396,7 +418,10 @@
         "silver_star_plus_one_oak_leaf_cluster": "Otra vez, te mantuviste firme donde otros quizá no. Valentía repetida bajo fuego.",
         "silver_star_plus_two_oak_leaf_clusters": "Una tercera mención a la gallardía es una declaración dura: no solo sobrevives al problema, lo enfrentas.",
         "united_states": "static/images/background_US.png",
-        "usa": "static/images/background_US.png"
+        "usa": "static/images/background_US.png",
+        "air_medal_plus_four_oak_leaf_clusters": "Cinco reconocimientos por actuación en condiciones de combate. Los racimos de hojas de roble son la aritmética de la guerra: más salidas, más riesgo, el mismo cielo que no se vuelve más seguro.",
+        "air_medal_plus_one_silver_leaf_cluster": "Un racimo plateado en lugar de cinco condecoraciones adicionales. La cinta no puede seguir el ritmo de las misiones. Los vuelos continuaron de todos modos.",
+        "european_african_middle_eastern_campaign_medal": "A través de los teatros que giraron la guerra. África del Norte, el Mediterráneo, los accesos a Europa—estabas allí mientras el equilibrio estratégico se inclinaba."
       },
       "ranks": {
         "1st_lieutenant": "Has visto lo suficiente como para dejar de fingir que es fácil. Ahora lideras vuelos y arrastras a los tuyos por mal tiempo y cielos peores.",
@@ -409,7 +434,10 @@
         "flight_officer": "Te habilitaron para volar y te arrojaron al molino. Aprende rápido, golpea fuerte y no malgastes la suerte.",
         "lt_colonel": "Más mando, menos despegues. Cuando vuelas, es para ver la verdad más allá del papeleo.",
         "major": "Planes, informes y decisiones más duras que un gatillo. Vuelas con criterio, casi siempre cuando la misión necesita una mano probada.",
-        "major_general": "Estrategia, logística y el peso de formaciones enteras. Tus días de vuelo son casi memoria, pero el cielo sigue siendo tuyo."
+        "major_general": "Estrategia, logística y el peso de formaciones enteras. Tus días de vuelo son casi memoria, pero el cielo sigue siendo tuyo.",
+        "staff_sergeant": "Tres arriba, dos abajo. Eres la memoria institucional de tu unidad y la columna vertebral de su disciplina. Los oficiales fijan el rumbo; tú lo haces posible.",
+        "technical_sergeant": "Sargento técnico. Mantienes las máquinas en funcionamiento y las tripulaciones al tanto. Lo que sabes sobre este avión es lo que lo mantiene volando y a los hombres con vida.",
+        "lieutenant_general": "Tres estrellas. Conduces campañas aéreas a través de teatros y moldeas la estrategia que las tripulaciones ejecutan en altura. Los hombres en primera línea están lejos—pero cada decisión resuena en el cielo sobre ellos."
       }
     }
   },
@@ -586,7 +614,41 @@
       "bomber_kill_bonus_2000_rubles": "Bomber Kill Bonus (2000 rubles)",
       "small_ship_kill_bonus_1000_rubles": "Small Ship Kill Bonus (1000 rubles)",
       "transport_ship_kill_bonus_3000_rubles": "Transport Ship Kill Bonus (3000 rubles)",
-      "destroyer_or_submarine_kill_bonus_10000_rubles": "Destroyer or Submarine Kill Bonus (10000 rubles)"
+      "destroyer_or_submarine_kill_bonus_10000_rubles": "Destroyer or Submarine Kill Bonus (10000 rubles)",
+      "attack_bronze": "Insignia de ataque al suelo en bronce",
+      "attack_gold": "Insignia de ataque al suelo en oro",
+      "attack_gold_clasp": "Insignia de ataque al suelo en oro con colgante",
+      "attack_heavy_fighters_bronze": "Insignia de ataque para cazas pesados en bronce",
+      "attack_heavy_fighters_gold": "Insignia de ataque para cazas pesados en oro",
+      "attack_heavy_fighters_gold_clasp": "Insignia de ataque para cazas pesados en oro con colgante",
+      "attack_heavy_fighters_silver": "Insignia de ataque para cazas pesados en plata",
+      "attack_silver": "Insignia de ataque al suelo en plata",
+      "bomber_gold": "Presilla de vuelo de frente para bombarderos en oro",
+      "bombers_bronze": "Presilla de vuelo de frente para bombarderos en bronce",
+      "bombers_gold_clasp": "Presilla de vuelo de frente para bombarderos en oro con colgante",
+      "bombers_silver": "Presilla de vuelo de frente para bombarderos en plata",
+      "eastern_front_medal": "Medalla de la campaña de invierno en el Este",
+      "fighters_bronze": "Presilla de vuelo de frente para cazas en bronce",
+      "fighters_gold": "Presilla de vuelo de frente para cazas en oro",
+      "fighters_gold_clasp": "Presilla de vuelo de frente para cazas en oro con colgante",
+      "fighters_silver": "Presilla de vuelo de frente para cazas en plata",
+      "german_cross_gold": "Cruz alemana en oro",
+      "honor_clasp": "Hebilla de honor de la Luftwaffe",
+      "iron_cross_1st": "Cruz de Hierro de 1.ª clase",
+      "iron_cross_2nd": "Cruz de Hierro de 2.ª clase",
+      "knights_cross": "Cruz de Caballero de la Cruz de Hierro",
+      "knights_cross_diamonds": "Cruz de Caballero con diamantes",
+      "knights_cross_gold_diamonds": "Cruz de Caballero con hojas de roble doradas, espadas y diamantes",
+      "knights_cross_oak_leaves": "Cruz de Caballero con hojas de roble",
+      "knights_cross_swords": "Cruz de Caballero con hojas de roble y espadas",
+      "kuban_shield": "Escudo del Kubán",
+      "transport_bronze": "Presilla de vuelo de frente para transportes en bronce",
+      "transport_gold": "Presilla de vuelo de frente para transportes en oro",
+      "transport_gold_clasp": "Presilla de vuelo de frente para transportes en oro con colgante",
+      "transport_silver": "Presilla de vuelo de frente para transportes en plata",
+      "wound_badge_black": "Insignia de herido en negro",
+      "wound_badge_gold": "Insignia de herido en oro",
+      "wound_badge_silver": "Insignia de herido en plata"
     },
     "ranks": {
       "1st_lieutenant": "1st Lieutenant",
@@ -654,7 +716,8 @@
       "country_label": "País:",
       "missions_completed": "{count} completadas",
       "missions_label": "Misiones:"
-    }
+    },
+    "career_app_title": "IL-2 Historial de servicio de carrera"
   },
   "settings_manager": {
     "app_title": "IL-2 Campaign Tracker - Configuración",
@@ -831,6 +894,15 @@
       "loading": "Cargando…",
       "not_available": "No disponible",
       "error": "Error al cargar"
+    },
+    "career": {
+      "no_careers_found": "No se encontraron datos de carrera.",
+      "section_title": "Carrera IL-2",
+      "theatre_chain_label": "Cadena de teatros"
+    },
+    "landing": {
+      "campaign_section": "Rastreador de campañas",
+      "career_section": "Carrera IL-2"
     }
   },
   "validation": {
@@ -912,7 +984,11 @@
       "name": "Nombre",
       "place_of_birth": "Lugar de nacimiento",
       "promotion": "Ascenso",
-      "promotions": "Ascensos"
+      "promotions": "Ascensos",
+      "appointment_commander": "Nombramiento como comandante",
+      "current_squadron": "Escuadrón actual",
+      "recovery_from_injury": "Recuperación de herida",
+      "squadron_change_to": "Traslado al {squadron}"
     },
     "message": {
       "birth_country_placeholder": "País",
@@ -946,7 +1022,8 @@
     "nav": {
       "back_to_campaigns": "← Volver a campañas",
       "next_campaign": "Siguiente campaña →",
-      "previous_campaign": "← Campaña anterior"
+      "previous_campaign": "← Campaña anterior",
+      "back_to_careers": "← Volver a carreras"
     },
     "section": {
       "additional_notes": "Incidentes adicionales",
@@ -963,7 +1040,10 @@
       "pilot_information": "Información del piloto",
       "promotions_awards": "Ascensos y condecoraciones",
       "statistics": "Estadísticas",
-      "timeline": "Cronología"
+      "timeline": "Cronología",
+      "career_summary": "Resumen de carrera",
+      "career_timeline": "Cronología de la carrera",
+      "other_incidences": "Otros incidentes"
     },
     "stat": {
       "air_kills": "Derribos aéreos",
@@ -991,7 +1071,9 @@
       "starting_rank": "Rango inicial",
       "success_rate": "Tasa de éxito",
       "total_kills": "Derribos totales",
-      "wounded_landings": "Aterrizajes herido"
+      "wounded_landings": "Aterrizajes herido",
+      "days_word": "días",
+      "pcp_score": "Puntuación PCP"
     },
     "title": {
       "campaign_detail": "{campaign_name} - Registro de servicio de campaña",
@@ -1008,7 +1090,8 @@
       "service_record": "Registro de Servicio",
       "settings_manager": "Configuración",
       "uninstall": "Desinstalar",
-      "pdf_reports": "Informes PDF"
+      "pdf_reports": "Informes PDF",
+      "career_service_record": "Historial de servicio de carrera"
     },
     "status": {
       "checking": "Comprobando estado del rastreador...",
@@ -1031,7 +1114,9 @@
       "error_open_service_record": "Error al abrir el registro de servicio.",
       "error_open_settings": "Error al abrir el administrador de configuración.",
       "error_open_pdf": "Error al abrir el informe PDF.",
-      "no_pdfs_found": "No se encontraron PDFs de campaña"
+      "no_pdfs_found": "No se encontraron PDFs de campaña",
+      "career_service_record_not_found": "No se encontró el ejecutable del historial de servicio de carrera:",
+      "error_open_career_service_record": "No se pudo abrir el historial de servicio de carrera."
     }
   }
 }

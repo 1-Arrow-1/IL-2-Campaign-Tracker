@@ -271,7 +271,9 @@
         "second_bar_to_the_air_force_medal": "Sustained grit at operational height. Not a single act—but a pattern of resolve.",
         "air_force_cross": "Leadership and nerve in the air. Responsibility now sits heavier, and you’ve shown you can carry it.",
         "bar_to_the_air_force_cross": "Further distinction under command. The weight of decisions grows, and so does trust in your judgment.",
-        "second_bar_to_the_air_force_cross": "Repeated proof at the sharp end. Authority tested in fire—and held."
+        "second_bar_to_the_air_force_cross": "Repeated proof at the sharp end. Authority tested in fire—and held.",
+        "third_bar_to_the_distinguished_service_order": "A third bar to the DSO. Three separate recognitions, each requiring a standard most officers never meet once. The ribbon has grown; so has what's expected of you.",
+        "france_and_germany_star": "The final campaign. From Normandy to the Reich—you were flying when the war in Western Europe reached its conclusion. The star marks a road that ended in German airspace."
       },
       "ranks": {
         "air_commodore": "You direct whole air battles from reports and maps. If you fly, it’s exceptional—and everyone notices.",
@@ -284,7 +286,10 @@
         "sergeant": "Fresh wings, cold cockpit, and the Channel wind cutting through everything. Stay with your leader and keep your eyes moving.",
         "squadron_leader": "The squadron’s tempo is yours to set: push too hard and you break it. You fly when the moment needs a steady hand.",
         "warrant_officer": "A hard veteran in a soft uniform. You fly like you’ve paid for every lesson—and you have.",
-        "wing_commander": "You command wings and you feel every loss. You go up sometimes—enough to keep the war honest."
+        "wing_commander": "You command wings and you feel every loss. You go up sometimes—enough to keep the war honest.",
+        "corporal": "Two chevrons and a small section depending on you. The RAF runs on men who keep it together at this level. Be that man.",
+        "air_marshal": "You think in air campaigns, not sorties. Resources, strategy, and politics at the highest level. You may still fly—but the war moves through your decisions first.",
+        "air_chief_marshal": "The peak of operational rank. What you decide shapes the shape of the air war. Every RAF wing in the theatre answers, ultimately, to a chain that ends here."
       }
     },
     "germany": {
@@ -320,7 +325,10 @@
         "oberleutnant": "You lead flights into weather, flak, and bad odds. The Staffel watches how you handle the first burst and the last decision.",
         "oberst": "A commander with a pilot’s past and a war on his desk. If you take off, it’s for a reason everyone remembers.",
         "oberstleutnant": "You keep the unit running and the losses bear your signature. You fly rarely—usually to see the front with your own eyes.",
-        "unteroffizier": "New to the line, you fly tight on a leader’s wing and learn fast or die fast. Your logbook fills one sortie at a time."
+        "unteroffizier": "New to the line, you fly tight on a leader’s wing and learn fast or die fast. Your logbook fills one sortie at a time.",
+        "gefreiter": "Your first stripe in a war that doesn't slow down for paperwork. You've earned enough trust for a chevron; now earn enough to keep it.",
+        "fhj_oberfeldwebel": "Officer candidate with NCO rank—still waiting on the commission while flying like it's already yours. The paperwork will catch up. Keep performing.",
+        "general_der_jagdflieger": "You direct the entire fighter arm. Operational priorities, unit dispositions, doctrine under fire—these are your instruments now. The sky belongs to the men you send into it."
       }
     },
     "soviet": {
@@ -349,7 +357,18 @@
         "order_of_the_red_star_2nd_awarding": "They’re recognizing you again. Same war, higher stakes, more proof you’re still delivering.",
         "order_of_the_red_star_3rd_awarding": "A third time is no accident. You’ve made a career out of surviving—and winning.",
         "red_wound_stripe": "You were wounded and still came back. The stripe is simple; the story isn’t.",
-        "yellow_wound_stripe": "Another mark of injury carried forward. You flew hurt, landed alive, and returned to duty."
+        "yellow_wound_stripe": "Another mark of injury carried forward. You flew hurt, landed alive, and returned to duty.",
+        "aircraft_kill_bonus_1000_rubles": "The state pays for kills. One thousand rubles confirms that you fired, connected, and removed an aircraft from the enemy's count.",
+        "fighter_kill_bonus_1000_rubles": "Fighter downed. The threat is gone and the payment follows. A thousand rubles for a kill that may have saved a wingman.",
+        "transport_plane_kill_bonus_1500_rubles": "A transport removed from the supply equation. Fifteen hundred rubles for cutting a logistics thread the enemy was counting on.",
+        "bomber_kill_bonus_1500_rubles": "Bomber down before it reached the target. Fifteen hundred rubles for the mission it never completed.",
+        "bomber_kill_bonus_2000_rubles": "Another bomber removed from the enemy's order of battle. The bonus reflects the threat level. Two thousand rubles for keeping what lies below intact.",
+        "small_ship_kill_bonus_1000_rubles": "A small vessel put out of action. The bonus is modest; the result—one fewer enemy asset on the water—is not.",
+        "transport_ship_kill_bonus_3000_rubles": "A transport ship is not just a target—it is a supply chain. Three thousand rubles for stopping what it was carrying from arriving.",
+        "destroyer_or_submarine_kill_bonus_10000_rubles": "A warship of substance—destroyer or submarine. Ten thousand rubles because the threat to friendly forces and supply lines was correspondingly serious. It won't be on the water again.",
+        "medal_for_the_defense_of_moscow": "Moscow itself was in the balance. You flew above a city that couldn't afford to fall, and it didn't. This medal records the battle that kept the war alive.",
+        "medal_for_the_defense_of_stalingrad": "Stalingrad—the battle that broke the Wehrmacht's strategic momentum. You were in the air above the city while it absorbed the worst the enemy could send. The medal marks a moment that changed the entire war.",
+        "medal_for_the_defense_of_the_caucasus": "The Caucasus campaign: oil, mountain passes, and the edge of a disaster that was turned back. You flew in the battles that kept the fuel and the southern flank out of enemy hands."
       },
       "ranks": {
         "captain": "You command and you still fly hard. The best orders are the ones you’ve tested in your own cockpit.",
@@ -362,7 +381,10 @@
         "senior_lieutenant": "You lead sorties into flak and weather like it’s routine. Your squadron runs on discipline and stubbornness.",
         "senior_sergeant": "You’ve survived enough to teach others how to. The new men watch your hands more than they hear your words.",
         "sergeant": "A frontline pilot with little margin and no illusions. You fly, you fight, you hope the engine holds.",
-        "sub_colonel": "Command pulls you away from the line, but you return when it matters. A rare sortie, a familiar smell of fuel and frost."
+        "sub_colonel": "Command pulls you away from the line, but you return when it matters. A rare sortie, a familiar smell of fuel and frost.",
+        "efreitor": "One step above the bottom. The stripe is small; the expectations just got larger. You show up, you hold the line, you don't cost anyone extra effort. That's the job.",
+        "mladshiy_serzhant": "Junior sergeant. The title is small but the role is real. Someone is now watching how you handle pressure. Don't let them down.",
+        "general_polkovnik": "Command at the scale of armies. You coordinate fronts, allocate air armies, and answer to the Stavka. The individual aircraft are abstractions; you move the whole instrument of air power."
       }
     },
     "usa": {
@@ -396,7 +418,10 @@
         "silver_star_plus_one_oak_leaf_cluster": "Again, you stood when others might not. Repeated bravery under fire.",
         "silver_star_plus_two_oak_leaf_clusters": "A third gallantry award is a hard statement. You don’t just survive trouble—you face it.",
         "united_states": "static/images/background_US.png",
-        "usa": "static/images/background_US.png"
+        "usa": "static/images/background_US.png",
+        "air_medal_plus_four_oak_leaf_clusters": "Five awards for aerial achievement under combat conditions. The clusters are the war's arithmetic: each one is more sorties, more exposure, more of the same sky that doesn't get any safer.",
+        "air_medal_plus_one_silver_leaf_cluster": "A silver oak leaf cluster in lieu of five additional awards. The ribbon can't keep up with the missions. The flying kept going anyway.",
+        "european_african_middle_eastern_campaign_medal": "Across the theaters that turned the war. North Africa, the Mediterranean, the approaches to Europe—you were there while the strategic balance shifted. The medal marks the geography of a victory that wasn't guaranteed."
       },
       "ranks": {
         "1st_lieutenant": "You’ve seen enough to stop pretending it’s easy. Now you lead flights and carry men through bad weather and worse skies.",
@@ -409,7 +434,10 @@
         "flight_officer": "You’re rated to fly and thrown into the grinder. Learn fast, hit hard, and don’t waste luck.",
         "lt_colonel": "Bigger command, fewer takeoffs. When you do fly, it’s to see the truth beyond the paperwork.",
         "major": "Plans, briefings, and harder calls than trigger pulls. You fly selectively now, usually when the mission needs a proven hand.",
-        "major_general": "Strategy, logistics, and the weight of whole formations. Your flying days are mostly memory, but the sky is still yours."
+        "major_general": "Strategy, logistics, and the weight of whole formations. Your flying days are mostly memory, but the sky is still yours.",
+        "staff_sergeant": "Three up, two down. You are the institutional memory of your unit and the backbone of its discipline. Officers set direction; you make it work.",
+        "technical_sergeant": "Technical Sergeant. You keep the machines running and the crews honest. What you know about this aircraft is what keeps it flying and the men in it alive.",
+        "lieutenant_general": "Three stars. You run air campaigns across theaters and shape the strategy that aircrew execute at altitude. The men at the sharp end are distant—but every decision you make echoes in the sky over them."
       }
     }
   },

@@ -221,7 +221,9 @@ const getAwardNarrativeCodeFromName = (countryKey, awardName) => {
 
 const getAwardNarrativeCode = (event, countryKey) => {
     const rawCode = event?.award_code || event?.awardCode;
-    if (rawCode) {
+    // Skip numeric IDs (e.g. career numeric award codes like "201001") — fall through
+    // to name-based lookup so the human-readable name_key in event.name is used instead.
+    if (rawCode && !/^\d/.test(String(rawCode))) {
         let key = nameToI18nKey(rawCode);
         if (countryKey === 'usa') {
             key = normalizeUSAwardNarrativeKey(key);
@@ -260,10 +262,28 @@ const normalizeGermanyAwardNarrativeKey = (key) => {
         return key;
     }
     const mappings = {
-        front_flying_clasp_for_fighters_in_bronze:           'front_flying_clasp_fighters_bronze',
-        front_flying_clasp_for_fighters_in_silver:           'front_flying_clasp_fighters_silver',
-        front_flying_clasp_for_fighters_in_gold:             'front_flying_clasp_fighters_gold',
-        front_flying_clasp_for_fighters_in_gold_with_pendant:'front_flying_clasp_fighters_gold'
+        // Long display-name keys → narrative keys (campaign events)
+        front_flying_clasp_for_fighters_in_bronze:            'front_flying_clasp_fighters_bronze',
+        front_flying_clasp_for_fighters_in_silver:            'front_flying_clasp_fighters_silver',
+        front_flying_clasp_for_fighters_in_gold:              'front_flying_clasp_fighters_gold',
+        front_flying_clasp_for_fighters_in_gold_with_pendant: 'front_flying_clasp_fighters_gold',
+        // Short asset name_key mappings (career events use AwardAsset.name_key)
+        iron_cross_1st:              'iron_cross_1st_class',
+        iron_cross_2nd:              'iron_cross_2nd_class',
+        knights_cross:               'knights_cross_of_the_iron_cross',
+        knights_cross_oak_leaves:    'with_oak_leaves',
+        knights_cross_swords:        'with_oak_leaves_and_swords',
+        knights_cross_diamonds:      'with_oak_leaves_swords_and_diamonds',
+        knights_cross_gold_diamonds: 'with_golden_oak_leaves_swords_and_diamonds',
+        german_cross_gold:           'german_cross_in_gold',
+        honor_clasp:                 'luftwaffe_honor_roll_clasp',
+        fighters_bronze:             'front_flying_clasp_fighters_bronze',
+        fighters_silver:             'front_flying_clasp_fighters_silver',
+        fighters_gold:               'front_flying_clasp_fighters_gold',
+        fighters_gold_clasp:         'front_flying_clasp_fighters_gold',
+        wound_badge_black:           'wound_badge_in_black',
+        wound_badge_silver:          'wound_badge_in_silver',
+        wound_badge_gold:            'wound_badge_in_gold',
     };
     return mappings[key] || key;
 };

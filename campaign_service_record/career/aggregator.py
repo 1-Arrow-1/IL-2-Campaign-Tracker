@@ -343,6 +343,7 @@ class CareerAggregator:
                 "type": "promotion",
                 "date": event_date,
                 "rank": rank_name.display if rank_name else f"rank_{rank_id}",
+                "rank_code": rank_name.english if rank_name else f"rank_{rank_id}",
                 "rank_id": rank_id,
                 "image": None,
                 "image_url": image_url,

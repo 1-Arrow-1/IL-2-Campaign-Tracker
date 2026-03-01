@@ -271,7 +271,9 @@
         "second_bar_to_the_air_force_medal": "在战斗高度持续的坚韧。不是单一的行动——而是一贯的意志。",
         "air_force_cross": "空中的指挥力与胆量。责任现在更沉——你已证明能够承担。",
         "bar_to_the_air_force_cross": "指挥中再度获得荣誉。决策的重量在增加，对你判断的信任也随之加深。",
-        "second_bar_to_the_air_force_cross": "在最前沿一再证明自身。权威经历了炮火考验——并坚守住了。"
+        "second_bar_to_the_air_force_cross": "在最前沿一再证明自身。权威经历了炮火考验——并坚守住了。",
+        "third_bar_to_the_distinguished_service_order": "A third bar to the DSO. Three separate recognitions, each requiring a standard most officers never meet once. The ribbon has grown; so has what's expected of you.",
+        "france_and_germany_star": "The final campaign. From Normandy to the Reich—you were flying when the war in Western Europe reached its conclusion. The star marks a road that ended in German airspace."
       },
       "ranks": {
         "air_commodore": "你从报告与地图上指挥整场空战。若你亲自飞，那必是破例——所有人都会注意到。",
@@ -284,7 +286,10 @@
         "sergeant": "新缝上的飞行翼还没捂热，座舱却冷得刺骨；海峡的风像刀子一样穿透一切。紧跟长机，眼睛不停扫视——别给敌人机会。",
         "squadron_leader": "中队的节奏由你定：压得太狠就会把它压碎。关键时刻你必须升空，让队伍有一只稳的手。",
         "warrant_officer": "柔软的制服里，是一副硬骨头。你飞行的每一课都像用代价换来的——而你确实付过。",
-        "wing_commander": "你统率联队，也感受每一次损失的重量。你偶尔仍会上天——足以让这场战争不至于只停留在纸面上。"
+        "wing_commander": "你统率联队，也感受每一次损失的重量。你偶尔仍会上天——足以让这场战争不至于只停留在纸面上。",
+        "corporal": "Two chevrons and a small section depending on you. The RAF runs on men who keep it together at this level. Be that man.",
+        "air_marshal": "You think in air campaigns, not sorties. Resources, strategy, and politics at the highest level. You may still fly—but the war moves through your decisions first.",
+        "air_chief_marshal": "The peak of operational rank. What you decide shapes the shape of the air war. Every RAF wing in the theatre answers, ultimately, to a chain that ends here."
       }
     },
     "germany": {
@@ -320,7 +325,10 @@
         "oberleutnant": "你带队穿越恶劣天气与密集火力。整个中队都在看你如何面对第一轮炮火和最后的抉择。",
         "oberst": "曾是飞行员的指挥官，桌上是一场战争。若你起飞，那必定是所有人都会记住的理由。",
         "oberstleutnant": "你维持着部队运转，伤亡都由你签字。你很少飞行——通常只是亲眼去看前线。",
-        "unteroffizier": "初上前线，你紧贴长机飞行，学得慢就会送命。你的飞行日志一页一页地被出击填满。"
+        "unteroffizier": "初上前线，你紧贴长机飞行，学得慢就会送命。你的飞行日志一页一页地被出击填满。",
+        "gefreiter": "第一条襢章—这场战争不等主义文山。你已赢得信任，现在要守住它。",
+        "fhj_oberfeldwebel": "官候生待爆，却已像老手一样飞行。文件会追上你的。",
+        "general_der_jagdflieger": "执掉整个战斗机集团的指挥棒。天空属于你派出去的人。"
       }
     },
     "soviet": {
@@ -349,7 +357,18 @@
         "order_of_the_red_star_2nd_awarding": "他们再次表彰你。同一场战争，更高的赌注——更多证据表明你仍在交付战果。",
         "order_of_the_red_star_3rd_awarding": "第三次绝非偶然。你把生存与胜利做成了职业。",
         "red_wound_stripe": "你负伤了，却仍然回来。条纹很简单，故事却不简单。",
-        "yellow_wound_stripe": "又一道伤痕被带进明天。你带伤起飞，活着落地，然后继续服役。"
+        "yellow_wound_stripe": "又一道伤痕被带进明天。你带伤起飞，活着落地，然后继续服役。",
+        "aircraft_kill_bonus_1000_rubles": "击落一架敌机，国家奖励1000卢布。证明你准了、打了、抜除了一个威胁。",
+        "fighter_kill_bonus_1000_rubles": "攟将4击落，奖金1000卢布。消除了一个战斗机威胁，也许救了一个战友。",
+        "transport_plane_kill_bonus_1500_rubles": "运输机击落，奖金1500卢布。切断了敌方依赖的一根补给线。",
+        "bomber_kill_bonus_1500_rubles": "轰炸机在到达目标前被拦截，奖金1500卢布。终止了它未能完成的任务。",
+        "bomber_kill_bonus_2000_rubles": "又一架轰炸机被从敌单中剔除，奖金2000卢布。奖金反映了威胁等级，保护了地面上的一切。",
+        "small_ship_kill_bonus_1000_rubles": "小舰击沉，奖金1000卢布。奖金不多，但结果实在—海面上少了一个敌方资产。",
+        "transport_ship_kill_bonus_3000_rubles": "运输船不仅是目标，更是一条补给链。奖金3000卢布，因为它装载的东西永远没到达。",
+        "destroyer_or_submarine_kill_bonus_10000_rubles": "驱逐舰或潜水艇—重量级目标。奖金1万卢布，因为它对我方造成的威胁同样严重。它不会再回来了。",
+        "medal_for_the_defense_of_moscow": "莫斯科己均面临危险。你在这座不能陷落的城市上空执行任务—它没有陷落。这枚勋章记录了那场使战争继续的战役。",
+        "medal_for_the_defense_of_stalingrad": "斯大林格勒—折断德军战略势头的战役。你在城市上空主战，她承受并吸收了敌方最笸的进攻。这枚勋章标志着改变整场战争的转折点。",
+        "medal_for_the_defense_of_the_caucasus": "高加索战役：石油、山岳山口和一场未发生的凄惨。你在将燃料与南翼守住的战斗中飞行。"
       },
       "ranks": {
         "captain": "你既指挥也硬飞。最好的命令，是你在自己座舱里验证过的命令。",
@@ -362,7 +381,10 @@
         "senior_lieutenant": "你把穿越高射炮火与恶劣天气当成日常。你的中队靠纪律与倔强运转。",
         "senior_sergeant": "你活得够久，已经能教别人怎么活下去。新人更多看你的手怎么动，而不是听你怎么说。",
         "sergeant": "前线飞行员，余地很小，幻想更少。你起飞、你战斗，只盼引擎别在关键时刻罢工。",
-        "sub_colonel": "指挥把你拉离一线，但关键时刻你总会回来。一次罕见出击，燃油与寒霜的气味依旧熟悉。"
+        "sub_colonel": "指挥把你拉离一线，但关键时刻你总会回来。一次罕见出击，燃油与寒霜的气味依旧熟悉。",
+        "efreitor": "比普通士高一级，要求却大了一倍。出勤、守岗、不占小便—这就是任务。",
+        "mladshiy_serzhant": "初级中士。有人盯着你看你如何承压。别让他失望。",
+        "general_polkovnik": "大将级指挥官，调度整个局面的空中力量。单架飞机是抽象，你掌控的是整个战斗动作。"
       }
     },
     "usa": {
@@ -396,7 +418,10 @@
         "silver_star_plus_one_oak_leaf_cluster": "你再次站住了——在别人可能倒下的地方。重复的炮火下英勇。",
         "silver_star_plus_two_oak_leaf_clusters": "第三次英勇授勋是一种沉重的宣言：你不只是躲过麻烦，你正面迎上它。",
         "united_states": "static/images/background_US.png",
-        "usa": "static/images/background_US.png"
+        "usa": "static/images/background_US.png",
+        "air_medal_plus_four_oak_leaf_clusters": "Five awards for aerial achievement under combat conditions. The clusters are the war's arithmetic: each one is more sorties, more exposure, more of the same sky that doesn't get any safer.",
+        "air_medal_plus_one_silver_leaf_cluster": "A silver oak leaf cluster in lieu of five additional awards. The ribbon can't keep up with the missions. The flying kept going anyway.",
+        "european_african_middle_eastern_campaign_medal": "Across the theaters that turned the war. North Africa, the Mediterranean, the approaches to Europe—you were there while the strategic balance shifted. The medal marks the geography of a victory that wasn't guaranteed."
       },
       "ranks": {
         "1st_lieutenant": "你见得够多，已经不再假装这很轻松。现在你带队飞行，带着人穿过恶劣天气与更恶劣的天空。",
@@ -409,7 +434,10 @@
         "flight_officer": "你拿到飞行资质，就被扔进绞肉机。学得快，打得狠，别把运气浪费在无谓的地方。",
         "lt_colonel": "更大的指挥权，更少的起飞次数。你若亲飞，多半是为了看清纸面之外的真相。",
         "major": "计划、简报、比扣扳机更难的决定。你如今选择性出击，往往只在任务需要可靠之手时才上天。",
-        "major_general": "战略、补给，以及整支编队的重量。你的飞行日子多半成了回忆，但天空仍属于你。"
+        "major_general": "战略、补给，以及整支编队的重量。你的飞行日子多半成了回忆，但天空仍属于你。",
+        "staff_sergeant": "Three up, two down. You are the institutional memory of your unit and the backbone of its discipline. Officers set direction; you make it work.",
+        "technical_sergeant": "Technical Sergeant. You keep the machines running and the crews honest. What you know about this aircraft is what keeps it flying and the men in it alive.",
+        "lieutenant_general": "Three stars. You run air campaigns across theaters and shape the strategy that aircrew execute at altitude. The men at the sharp end are distant—but every decision you make echoes in the sky over them."
       }
     }
   },
@@ -586,7 +614,41 @@
       "bomber_kill_bonus_2000_rubles": "Bomber Kill Bonus (2000 rubles)",
       "small_ship_kill_bonus_1000_rubles": "Small Ship Kill Bonus (1000 rubles)",
       "transport_ship_kill_bonus_3000_rubles": "Transport Ship Kill Bonus (3000 rubles)",
-      "destroyer_or_submarine_kill_bonus_10000_rubles": "Destroyer or Submarine Kill Bonus (10000 rubles)"
+      "destroyer_or_submarine_kill_bonus_10000_rubles": "Destroyer or Submarine Kill Bonus (10000 rubles)",
+      "attack_bronze": "对地攻击勋章（铜级）",
+      "attack_gold": "对地攻击勋章（金级）",
+      "attack_gold_clasp": "对地攻击勋章（金级带挂件）",
+      "attack_heavy_fighters_bronze": "驱逐机攻击勋章（铜级）",
+      "attack_heavy_fighters_gold": "驱逐机攻击勋章（金级）",
+      "attack_heavy_fighters_gold_clasp": "驱逐机攻击勋章（金级带挂件）",
+      "attack_heavy_fighters_silver": "驱逐机攻击勋章（銀级）",
+      "attack_silver": "对地攻击勋章（銀级）",
+      "bomber_gold": "轰炸机前线飞行扭（金级）",
+      "bombers_bronze": "轰炸机前线飞行扭（铜级）",
+      "bombers_gold_clasp": "轰炸机前线飞行扭（金级带挂件）",
+      "bombers_silver": "轰炸机前线飞行扭（銀级）",
+      "eastern_front_medal": "东线冬季战役勋章",
+      "fighters_bronze": "战斗机前线飞行扭（铜级）",
+      "fighters_gold": "战斗机前线飞行扭（金级）",
+      "fighters_gold_clasp": "战斗机前线飞行扭（金级带挂件）",
+      "fighters_silver": "战斗机前线飞行扭（銀级）",
+      "german_cross_gold": "德意十字勋章（金级）",
+      "honor_clasp": "空军荣誉花名册扭",
+      "iron_cross_1st": "铁十字勋章（一级）",
+      "iron_cross_2nd": "铁十字勋章（二级）",
+      "knights_cross": "骑士十字铁十字勋章",
+      "knights_cross_diamonds": "骑士十字勋章（锃石级）",
+      "knights_cross_gold_diamonds": "骑士十字勋章（金橡树叶、剑和锃石级）",
+      "knights_cross_oak_leaves": "骑士十字勋章（橡树叶级）",
+      "knights_cross_swords": "骑士十字勋章（橡树叶和剑级）",
+      "kuban_shield": "库班盾牌",
+      "transport_bronze": "运输机前线飞行扭（铜级）",
+      "transport_gold": "运输机前线飞行扭（金级）",
+      "transport_gold_clasp": "运输机前线飞行扭（金级带挂件）",
+      "transport_silver": "运输机前线飞行扭（銀级）",
+      "wound_badge_black": "战伤勋章（黑色）",
+      "wound_badge_gold": "战伤勋章（金色）",
+      "wound_badge_silver": "战伤勋章（銀色）"
     },
     "ranks": {
       "1st_lieutenant": "中尉",
@@ -654,7 +716,8 @@
       "country_label": "国家：",
       "missions_completed": "已完成 {count} 次",
       "missions_label": "任务："
-    }
+    },
+    "career_app_title": "IL-2 职业服役档案"
   },
   "settings_manager": {
     "app_title": "IL-2 战役追踪器 - 设置管理器",
@@ -831,6 +894,15 @@
       "loading": "加载中…",
       "not_available": "不可用",
       "error": "加载失败"
+    },
+    "career": {
+      "no_careers_found": "未找到职业数据。",
+      "section_title": "IL-2 职业",
+      "theatre_chain_label": "战区链"
+    },
+    "landing": {
+      "campaign_section": "战役追踪器",
+      "career_section": "IL-2 职业"
     }
   },
   "validation": {
@@ -912,7 +984,11 @@
       "name": "姓名",
       "place_of_birth": "出生地",
       "promotion": "晋升",
-      "promotions": "晋升"
+      "promotions": "晋升",
+      "appointment_commander": "晋升为指挥官",
+      "current_squadron": "当前中队",
+      "recovery_from_injury": "伤后康复",
+      "squadron_change_to": "调往 {squadron}"
     },
     "message": {
       "birth_country_placeholder": "国家",
@@ -946,7 +1022,8 @@
     "nav": {
       "back_to_campaigns": "← 返回战役列表",
       "next_campaign": "下一个战役 →",
-      "previous_campaign": "← 上一个战役"
+      "previous_campaign": "← 上一个战役",
+      "back_to_careers": "← 返回职业列表"
     },
     "section": {
       "additional_notes": "其他事件",
@@ -963,7 +1040,10 @@
       "pilot_information": "飞行员信息",
       "promotions_awards": "晋升与勋章",
       "statistics": "统计",
-      "timeline": "时间线"
+      "timeline": "时间线",
+      "career_summary": "职业概要",
+      "career_timeline": "职业时间线",
+      "other_incidences": "其他事件"
     },
     "stat": {
       "air_kills": "空战击毁",
@@ -991,7 +1071,9 @@
       "starting_rank": "起始军衔",
       "success_rate": "成功率",
       "total_kills": "总击毁数",
-      "wounded_landings": "负伤降落"
+      "wounded_landings": "负伤降落",
+      "days_word": "天",
+      "pcp_score": "PCP 分数"
     },
     "title": {
       "campaign_detail": "{campaign_name} - 战役服役记录",
@@ -1008,7 +1090,8 @@
       "service_record": "服役记录",
       "settings_manager": "设置管理",
       "uninstall": "卸载",
-      "pdf_reports": "PDF报告"
+      "pdf_reports": "PDF报告",
+      "career_service_record": "职业服役档案"
     },
     "status": {
       "checking": "正在检查追踪器状态...",
@@ -1031,7 +1114,9 @@
       "error_open_service_record": "无法打开服役记录。",
       "error_open_settings": "无法打开设置管理器。",
       "error_open_pdf": "无法打开PDF报告。",
-      "no_pdfs_found": "未找到战役PDF文件"
+      "no_pdfs_found": "未找到战役PDF文件",
+      "career_service_record_not_found": "未找到职业服役档案可执行文件：",
+      "error_open_career_service_record": "无法打开职业服役档案。"
     }
   }
 }

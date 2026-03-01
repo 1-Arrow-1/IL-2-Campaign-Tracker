@@ -271,7 +271,9 @@
         "second_bar_to_the_air_force_medal": "Ausdauernde Entschlossenheit auf Einsatzhöhe. Nicht eine einzelne Tat — sondern ein Muster aus Haltung.",
         "air_force_cross": "Führung und Kaltblütigkeit in der Luft. Die Verantwortung wiegt schwerer — und du hast gezeigt, dass du sie tragen kannst.",
         "bar_to_the_air_force_cross": "Weitere Auszeichnung in verantwortlicher Stellung. Das Gewicht der Entscheidungen wächst — und damit das Vertrauen in dein Urteil.",
-        "second_bar_to_the_air_force_cross": "Wiederholter Beweis an vorderster Front. Autorität im Feuer erprobt — und bestanden."
+        "second_bar_to_the_air_force_cross": "Wiederholter Beweis an vorderster Front. Autorität im Feuer erprobt — und bestanden.",
+        "third_bar_to_the_distinguished_service_order": "Ein dritter Balken zum DSO. Dreimal haben sie einen Standard angelegt, den die meisten Offiziere nie einmal erreichen. Das Band ist länger; die Erwartungen auch.",
+        "france_and_germany_star": "Die letzte Kampagne. Von der Normandie bis zum Reich—du hast geflogen, als der Krieg in Westeuropa zu Ende ging. Der Stern markiert einen Weg, der im deutschen Luftraum endete."
       },
       "ranks": {
         "air_commodore": "Du lenkst Luftschlachten von Karten und Meldungen aus. Wenn du fliegst, ist es außergewöhnlich – und allen bewusst.",
@@ -284,7 +286,10 @@
         "sergeant": "Frische Flügel, kaltes Cockpit, der Wind über dem Kanal schneidet durch alles. Bleib beim Führer und halte die Augen offen.",
         "squadron_leader": "Das Tempo der Staffel liegt in deiner Hand. Zu viel Druck zerbricht sie. Du fliegst, wenn Ruhe gebraucht wird.",
         "warrant_officer": "Ein harter Veteran in unscheinbarer Uniform. Du fliegst, als hättest du jede Lektion teuer bezahlt – was auch stimmt.",
-        "wing_commander": "Du führst ganze Wings und spürst jeden Verlust. Du steigst noch auf – oft genug, um den Krieg ehrlich zu halten."
+        "wing_commander": "Du führst ganze Wings und spürst jeden Verlust. Du steigst noch auf – oft genug, um den Krieg ehrlich zu halten.",
+        "corporal": "Zwei Winkel und ein kleiner Trupp, der auf dich zählt. Die RAF steht und fällt mit Männern, die auf dieser Ebene zusammenhalten. Sei dieser Mann.",
+        "air_marshal": "Du denkst in Luftkampagnen, nicht in Einsätzen. Ressourcen, Strategie und Entscheidungen auf höchster Ebene. Du fliegst vielleicht noch—aber der Krieg läuft zuerst durch deine Befehle.",
+        "air_chief_marshal": "Der Gipfel des operativen Dienstgrades. Deine Entscheidungen prägen den Luftkrieg. Jeder RAF-Verband im Theater antwortet letztlich auf eine Kette, die hier endet."
       }
     },
     "germany": {
@@ -320,7 +325,10 @@
         "oberleutnant": "Du führst Rotten und Schwärme in Wetter, Flak und ungünstige Lagen. Die Staffel beobachtet, wie du den ersten Treffer und die letzte Entscheidung meisterst.",
         "oberst": "Ein Kommandeur mit fliegerischer Vergangenheit und einem Krieg auf dem Schreibtisch. Wenn du startest, dann aus einem Grund, den niemand vergisst.",
         "oberstleutnant": "Du hältst den Verband zusammen, und jede Verlustmeldung trägt deine Verantwortung. Du fliegst selten – meist, um dir die Front selbst anzusehen.",
-        "unteroffizier": "Neu an der Front fliegst du dicht am Führer und lernst schnell – oder gar nicht. Dein Flugbuch füllt sich Einsatz für Einsatz."
+        "unteroffizier": "Neu an der Front fliegst du dicht am Führer und lernst schnell – oder gar nicht. Dein Flugbuch füllt sich Einsatz für Einsatz.",
+        "gefreiter": "Dein erster Streifen in einem Krieg, der nicht auf Papierarbeit wartet. Du hast genug Vertrauen für ein Chevron erworben—jetzt halte es.",
+        "fhj_oberfeldwebel": "Offiziersanwärter mit Unteroffiziersdienstgrad—wartest auf die Bestellung und fliegst, als ob sie schon erteilt wäre. Der Papierkram holt dich ein. Bleib dran.",
+        "general_der_jagdflieger": "Du führst den gesamten Jagdfliegerverband. Einsatzprioriäten, Verbandsstellung, Doktrin unter Feuer—das sind jetzt deine Werkzeuge. Der Himmel gehört den Männern, die du hinaufschickst."
       }
     },
     "soviet": {
@@ -349,7 +357,18 @@
         "order_of_the_red_star_2nd_awarding": "Erneute Anerkennung. Gleicher Krieg, höhere Einsätze.",
         "order_of_the_red_star_3rd_awarding": "Dreimal ist kein Zufall. Du hast Überleben und Erfolg verbunden.",
         "red_wound_stripe": "Verwundet und zurückgekehrt. Das Abzeichen ist schlicht – die Erfahrung nicht.",
-        "yellow_wound_stripe": "Erneut verletzt. Du bist angeschlagen gelandet und wieder angetreten."
+        "yellow_wound_stripe": "Erneut verletzt. Du bist angeschlagen gelandet und wieder angetreten.",
+        "aircraft_kill_bonus_1000_rubles": "Der Staat zahlt für Abschüsse. Tausend Rubel bestätigen, dass du gezielt, getroffen und ein Flugzeug aus der Feindrechnung gestrichen hast.",
+        "fighter_kill_bonus_1000_rubles": "Jäger abgeschossen. Die Bedrohung ist beseitigt, die Zahlung folgt. Tausend Rubel für einen Abschuss, der vielleicht einen Kameraden gerettet hat.",
+        "transport_plane_kill_bonus_1500_rubles": "Ein Transportflugzeug aus der Nachschubkette herausgerissen. Fifünfzehnhundert Rubel für das Durchschneiden eines Fadens, auf den der Feind zählte.",
+        "bomber_kill_bonus_1500_rubles": "Bomber vor dem Ziel abgefangen. Fünfzehnhundert Rubel für die Mission, die er nie abgeschlossen hat.",
+        "bomber_kill_bonus_2000_rubles": "Noch ein Bomber aus dem Kampfauftrag des Feindes herausgelöst. Die Prämie spiegelt die Bedrohungsstufe wider. Zweitausend Rubel, damit bleibt, was unten liegt, heil.",
+        "small_ship_kill_bonus_1000_rubles": "Ein kleines Fahrzeug außer Gefecht gesetzt. Die Prämie ist bescheiden; das Ergebnis—ein feindliches Mittel weniger auf dem Wasser—ist es nicht.",
+        "transport_ship_kill_bonus_3000_rubles": "Ein Transportschiff ist nicht nur ein Ziel—es ist eine Versorgungslinie. Dreitausend Rubel dafür, dass das, was es transportierte, nicht ankam.",
+        "destroyer_or_submarine_kill_bonus_10000_rubles": "Ein Kriegsschiff von Bedeutung—Zerstörer oder U-Boot. Zehntausend Rubel, weil die Bedrohung für eigene Kräfte und Versorgungsrouten entsprechend ernst war. Es wird nicht wieder auftauchen.",
+        "medal_for_the_defense_of_moscow": "Moskau selbst stand auf dem Spiel. Du hast über einer Stadt geflogen, die nicht fallen durfte—und sie fiel nicht. Diese Medaille dokumentiert die Schlacht, die den Krieg am Leben hielt.",
+        "medal_for_the_defense_of_stalingrad": "Stalingrad—die Schlacht, die den strategischen Schwung der Wehrmacht brach. Du warst in der Luft über der Stadt, während sie das Schlimmste auffing. Die Medaille markiert einen Moment, der den gesamten Krieg veränderte.",
+        "medal_for_the_defense_of_the_caucasus": "Die Kaukasuskampagne: Öl, Gebirgspass und der Rand einer Katastrophe, die zurückgewendet wurde. Du hast in den Kämpfen geflogen, die Treibstoff und Südflanke vor dem Feind bewahrten."
       },
       "ranks": {
         "captain": "Du befiehlst und fliegst selbst. Die besten Befehle hast du im eigenen Cockpit geprüft.",
@@ -362,7 +381,10 @@
         "senior_lieutenant": "Du führst Einsätze in Flak und Wetter wie Alltag. Disziplin und Härte tragen die Einheit.",
         "senior_sergeant": "Du hast lange genug überlebt, um andere anzuleiten. Die Neuen beobachten deine Hände.",
         "sergeant": "Frontpilot mit wenig Spielraum und keinen Illusionen. Du fliegst, kämpfst und hoffst, dass der Motor hält.",
-        "sub_colonel": "Das Kommando zieht dich weg von der Front – doch du kehrst zurück, wenn es zählt."
+        "sub_colonel": "Das Kommando zieht dich weg von der Front – doch du kehrst zurück, wenn es zählt.",
+        "efreitor": "Einen Schritt über dem Boden. Der Streifen ist klein; die Erwartungen sind gerade größer geworden. Erschein, halte die Linie, koste niemanden zusätzlich Aufwand. Das ist der Job.",
+        "mladshiy_serzhant": "Junger Unteroffizier. Der Titel ist bescheiden, aber die Rolle ist real. Jemand beobachtet, wie du mit Druck umgehst. Enttäusch ihn nicht.",
+        "general_polkovnik": "Befehlsgewalt auf Armeeebene. Du koordinierst Fronten, verteilst Luftarmeen und berichtest an das Stawka. Die einzelnen Flugzeuge sind Abstraktion; du bewegst das gesamte Instrument der Luftmacht."
       }
     },
     "usa": {
@@ -396,7 +418,10 @@
         "silver_star_plus_one_oak_leaf_cluster": "Erneut standgehalten, wo andere gebrochen wären.",
         "silver_star_plus_two_oak_leaf_clusters": "Dreifache Tapferkeit. Du stellst dich der Gefahr bewusst.",
         "united_states": "static/images/background_US.png",
-        "usa": "static/images/background_US.png"
+        "usa": "static/images/background_US.png",
+        "air_medal_plus_four_oak_leaf_clusters": "Fünf Auszeichnungen für Leistungen unter Feindeinwirkung. Die Eichenblatt-Cluster sind die Arithmetik des Krieges: mehr Einsätze, mehr Risiko, derselbe Himmel, der nicht sicherer wird.",
+        "air_medal_plus_one_silver_leaf_cluster": "Ein silbernes Eichenblatt als Ersatz für fünf weitere Auszeichnungen. Das Band kann mit den Missionen nicht mithalten. Die Flüge gingen trotzdem weiter.",
+        "european_african_middle_eastern_campaign_medal": "Über die Kriegsschaupltze, die den Krieg wendeten. Nordafrika, das Mittelmeer, der Weg nach Europa—du warst dabei, während das strategische Gleichgewicht kippte."
       },
       "ranks": {
         "1st_lieutenant": "Genug gesehen, um nichts mehr zu beschönigen. Du führst Flüge durch schlechtes Wetter und schlimmere Lagen.",
@@ -409,7 +434,10 @@
         "flight_officer": "Flugberechtigt und direkt in den Einsatz geworfen. Lerne schnell, schlag hart, verschwende kein Glück.",
         "lt_colonel": "Größeres Kommando, weniger Starts. Wenn du fliegst, dann um die Wahrheit jenseits der Akten zu sehen.",
         "major": "Planung, Briefings und Entscheidungen schwerer als jeder Abzug. Du fliegst gezielt, wenn Erfahrung gefragt ist.",
-        "major_general": "Strategie, Logistik und die Last ganzer Verbände. Deine Flugtage sind Erinnerung, der Himmel bleibt präsent."
+        "major_general": "Strategie, Logistik und die Last ganzer Verbände. Deine Flugtage sind Erinnerung, der Himmel bleibt präsent.",
+        "staff_sergeant": "Drei oben, zwei unten. Du bist das institutionelle Gedächtnis deiner Einheit und der Rückgrat ihrer Disziplin. Offiziere geben die Richtung vor; du machst es möglich.",
+        "technical_sergeant": "Technical Sergeant. Du hältst die Maschinen am Laufen und die Besatzungen bei der Sache. Was du über dieses Flugzeug weißt, hält es in der Luft und die Männer am Leben.",
+        "lieutenant_general": "Drei Sterne. Du führst Luftkampagnen über ganze Kriegsschaupltze und prägst die Strategie, die Besatzungen in der Höhe ausführen. Die Männer an der Front sind weit weg—aber jede Entscheidung hallt im Himmel über ihnen wider."
       }
     }
   },
@@ -688,7 +716,8 @@
       "country_label": "Land:",
       "missions_completed": "{count} abgeschlossen",
       "missions_label": "Missionen:"
-    }
+    },
+    "career_app_title": "IL-2 Karriere-Gefechtsbericht"
   },
   "settings_manager": {
     "app_title": "IL-2 Campaign Tracker - Einstellungen",
@@ -865,6 +894,15 @@
       "loading": "Laden…",
       "not_available": "Nicht verfügbar",
       "error": "Fehler beim Laden"
+    },
+    "career": {
+      "no_careers_found": "Keine Karrieredaten gefunden.",
+      "section_title": "IL-2 Karriere",
+      "theatre_chain_label": "Theaterkette"
+    },
+    "landing": {
+      "campaign_section": "Kampagnen-Tracker",
+      "career_section": "IL-2 Karriere"
     }
   },
   "validation": {
@@ -984,7 +1022,8 @@
     "nav": {
       "back_to_campaigns": "← Zurück zu Kampagnen",
       "next_campaign": "Nächste Kampagne →",
-      "previous_campaign": "← Vorherige Kampagne"
+      "previous_campaign": "← Vorherige Kampagne",
+      "back_to_careers": "← Zurück zu Karrieren"
     },
     "section": {
       "additional_notes": "Weitere Vorkommnisse",
@@ -1051,7 +1090,8 @@
       "service_record": "Dienstakte",
       "settings_manager": "Einstellungen",
       "uninstall": "Deinstallieren",
-      "pdf_reports": "PDF-Berichte"
+      "pdf_reports": "PDF-Berichte",
+      "career_service_record": "Karriere-Gefechtsbericht"
     },
     "status": {
       "checking": "Tracker-Status wird geprüft...",
@@ -1074,7 +1114,9 @@
       "error_open_service_record": "Dienstakte konnte nicht geöffnet werden.",
       "error_open_settings": "Einstellungs-Manager konnte nicht geöffnet werden.",
       "error_open_pdf": "PDF-Bericht konnte nicht geöffnet werden.",
-      "no_pdfs_found": "Keine Kampagnen-PDFs gefunden"
+      "no_pdfs_found": "Keine Kampagnen-PDFs gefunden",
+      "career_service_record_not_found": "Karriere-Gefechtsbericht-Programm nicht gefunden:",
+      "error_open_career_service_record": "Karriere-Gefechtsbericht konnte nicht geöffnet werden."
     }
   }
 }
