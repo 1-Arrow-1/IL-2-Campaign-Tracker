@@ -65,7 +65,9 @@ class _MissionResult:
     html: str
     duration_seconds: Optional[float]
     linked: bool
-    final_state: str = ""  # e.g. "Landed", "Crashed", "Bailed out" — empty if not linked
+    final_state: str = ""   # e.g. "Landed", "Crashed", "Bailed out" — empty if not linked
+    aircraft: str = ""      # aircraft type flown, e.g. "Bf 109 G-6"
+    kills: int = 0          # air + ground kills scored this mission
 
 
 class CareerDebriefingManager:
@@ -194,6 +196,28 @@ class CareerDebriefingManager:
             ],
         }
 
+    def get_aircraft_usage(self) -> Dict:
+        """
+        Return an aircraft_usage dict for injection into the career summary.
+
+        Dict maps aircraft name → {"missions": N, "kills": K}, sorted by
+        missions descending (matching CampaignAggregator._calculate_aircraft_usage()).
+        Only linked missions (with parsed report data) contribute.
+        """
+        results = self._get_results()
+        usage: Dict[str, Dict] = {}
+        for r in results:
+            if not r.linked or not r.aircraft:
+                continue
+            name = r.aircraft
+            if name not in usage:
+                usage[name] = {"missions": 0, "kills": 0}
+            usage[name]["missions"] += 1
+            usage[name]["kills"] += r.kills
+        return dict(
+            sorted(usage.items(), key=lambda x: (x[1]["missions"], x[1]["kills"]), reverse=True)
+        )
+
     # ------------------------------------------------------------------
     # Private: processing pipeline
     # ------------------------------------------------------------------
@@ -273,6 +297,8 @@ class CareerDebriefingManager:
                             duration_seconds=cached.get("duration_seconds"),
                             linked=True,
                             final_state=cached.get("final_state", ""),
+                            aircraft=cached.get("aircraft", ""),
+                            kills=cached.get("kills", 0),
                         ), False
                 except OSError:
                     pass  # File gone — fall through and re-link
@@ -314,8 +340,15 @@ class CareerDebriefingManager:
             ), False
 
         summary = data.get("summary", {})
+        player = data.get("player", {})
+        events = data.get("events", [])
         duration_seconds = _parse_duration_seconds(summary.get("flight_duration", ""))
         final_state = str(summary.get("final_state", "") or "")
+        aircraft = str(player.get("aircraft", "") or "Unknown")
+        kills = sum(
+            1 for e in events
+            if e.get("type", e.get("event", "")) == "Kill"
+        )
         html = _render_mission_html(data, mission_num, mission_date)
 
         try:
@@ -329,6 +362,8 @@ class CareerDebriefingManager:
             "html": html,
             "duration_seconds": duration_seconds,
             "final_state": final_state,
+            "aircraft": aircraft,
+            "kills": kills,
             "linked": True,
         }
 
@@ -341,6 +376,8 @@ class CareerDebriefingManager:
             duration_seconds=duration_seconds,
             linked=True,
             final_state=final_state,
+            aircraft=aircraft,
+            kills=kills,
         ), True
 
     # ------------------------------------------------------------------
@@ -348,7 +385,7 @@ class CareerDebriefingManager:
     # ------------------------------------------------------------------
 
     # Increment when the HTML rendering format changes to force cache rebuild.
-    _CACHE_VERSION = 3
+    _CACHE_VERSION = 4
 
     def _load_cache(self) -> Dict:
         if not self._cache_path.exists():

@@ -12,8 +12,8 @@ Differences from CampaignAggregator:
     - Rank and award names use placeholder strings until translation tables are
       provided (rank_<id> and award_<code>). When translation tables arrive,
       only _map_event() needs updating.
-    - flight_time and aircraft_usage are left as stubs — the sortie table
-      columns needed for these have not yet been confirmed.
+    - flight_time and aircraft_usage are derived from parsed missionReport files
+      via CareerDebriefingManager; empty dicts are returned when no reports are linked.
 """
 
 import logging
@@ -182,10 +182,12 @@ class CareerAggregator:
 
         debriefings_html = ""
         mission_stats_override: Optional[Dict] = None
+        aircraft_usage_override: Optional[Dict] = None
         if debrief_manager is not None:
             try:
                 debriefings_html = debrief_manager.build_debriefings_html()
                 mission_stats_override = debrief_manager.get_mission_stats()
+                aircraft_usage_override = debrief_manager.get_aircraft_usage()
             except Exception as exc:
                 logger.warning("CareerDebriefingManager build failed: %s", exc)
 
@@ -194,6 +196,7 @@ class CareerAggregator:
             career, mapped_events, sorties, combat_results, mission_stats_override,
             first_pilot_row=first_pilot_row,
             last_pilot_row=current_pilot_row,
+            aircraft_usage_override=aircraft_usage_override,
         )
 
         # Resolve current squadron short name via career chain's current squadronId
@@ -363,6 +366,7 @@ class CareerAggregator:
         mission_stats_override: Optional[Dict] = None,
         first_pilot_row=None,
         last_pilot_row=None,
+        aircraft_usage_override: Optional[Dict] = None,
     ) -> Dict:
         """
         Build the summary dict matching CampaignAggregator._calculate_summary() shape.
@@ -373,6 +377,8 @@ class CareerAggregator:
                 flight-time data derived from parsed missionReport files.
             first_pilot_row: pilot row for the root career (used for starting_rank fallback).
             last_pilot_row:  pilot row for the most recent theatre (used for final_rank fallback).
+            aircraft_usage_override: If supplied (from CareerDebriefingManager),
+                provides aircraft_usage dict built from linked missionReport files.
         """
         promotions = [e for e in events if e.get("type") == "promotion"]
         awards = [e for e in events if e.get("type") == "award"]
@@ -419,7 +425,7 @@ class CareerAggregator:
         return {
             "combat_results": combat_results,
             "missions_stats": missions_stats,
-            "aircraft_usage": {},               # stub: sortie aircraft column TBD
+            "aircraft_usage": aircraft_usage_override if aircraft_usage_override is not None else {},
             "career_progression": {
                 "starting_rank": starting_rank,
                 "final_rank": final_rank,
