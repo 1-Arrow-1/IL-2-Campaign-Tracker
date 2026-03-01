@@ -189,8 +189,11 @@ class CareerAggregator:
             except Exception as exc:
                 logger.warning("CareerDebriefingManager build failed: %s", exc)
 
+        first_pilot_row = self._db.get_pilot_by_id(career.pilot_id)
         summary = self._build_summary(
-            career, mapped_events, sorties, combat_results, mission_stats_override
+            career, mapped_events, sorties, combat_results, mission_stats_override,
+            first_pilot_row=first_pilot_row,
+            last_pilot_row=current_pilot_row,
         )
 
         # Resolve current squadron short name via career chain's current squadronId
@@ -358,6 +361,8 @@ class CareerAggregator:
         sorties: list,
         combat_results: Dict,
         mission_stats_override: Optional[Dict] = None,
+        first_pilot_row=None,
+        last_pilot_row=None,
     ) -> Dict:
         """
         Build the summary dict matching CampaignAggregator._calculate_summary() shape.
@@ -366,12 +371,33 @@ class CareerAggregator:
             mission_stats_override: If supplied (from CareerDebriefingManager),
                 replaces the sortie-count-based missions_stats stub with real
                 flight-time data derived from parsed missionReport files.
+            first_pilot_row: pilot row for the root career (used for starting_rank fallback).
+            last_pilot_row:  pilot row for the most recent theatre (used for final_rank fallback).
         """
         promotions = [e for e in events if e.get("type") == "promotion"]
         awards = [e for e in events if e.get("type") == "award"]
 
-        starting_rank = promotions[0].get("rank", "Unknown") if promotions else "Unknown"
-        final_rank = promotions[-1].get("rank", "Unknown") if promotions else "Unknown"
+        if promotions:
+            starting_rank = promotions[0].get("rank", "Unknown")
+            final_rank = promotions[-1].get("rank", "Unknown")
+        else:
+            # No promotion events — read rankId directly from the pilot rows.
+            country_int = _COUNTRY_CODE_MAP.get((career.country or "").lower(), 0)
+
+            def _rank_from_pilot(row) -> str:
+                if row is None:
+                    return "Unknown"
+                try:
+                    rank_id = row["rankId"]
+                except (IndexError, KeyError):
+                    return "Unknown"
+                if rank_id is None:
+                    return "Unknown"
+                rank_name = self._rank_resolver.resolve(country_int, int(rank_id))
+                return rank_name.display if rank_name else f"rank_{rank_id}"
+
+            starting_rank = _rank_from_pilot(first_pilot_row)
+            final_rank = _rank_from_pilot(last_pilot_row)
 
         event_dates = [e["date"] for e in events if e.get("date")]
         first_date = min(event_dates) if event_dates else None

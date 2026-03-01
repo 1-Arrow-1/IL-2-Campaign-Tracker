@@ -65,6 +65,7 @@ class _MissionResult:
     html: str
     duration_seconds: Optional[float]
     linked: bool
+    final_state: str = ""  # e.g. "Landed", "Crashed", "Bailed out" — empty if not linked
 
 
 class CareerDebriefingManager:
@@ -159,6 +160,24 @@ class CareerDebriefingManager:
         total_seconds = sum(durations)
         avg_seconds = total_seconds / len(durations) if durations else 0.0
 
+        # Count landing outcomes from linked mission statuses.
+        # Keywords match campaign_aggregator._aggregate_landing_outcomes().
+        safe = hard = wounded = bailout = kia = 0
+        for r in results:
+            if not r.linked or not r.final_state:
+                continue
+            s = r.final_state.lower()
+            if "bail" in s:
+                bailout += 1
+            elif "kia" in s or "killed" in s or "dead" in s:
+                kia += 1
+            elif "wound" in s:
+                wounded += 1
+            elif "crash" in s or "hard" in s:
+                hard += 1
+            elif "land" in s:
+                safe += 1
+
         return {
             "total_missions": total,
             "completed_missions": total,
@@ -166,7 +185,13 @@ class CareerDebriefingManager:
             "success_rate": 100 if total else 0,
             "total_flight_time": _format_duration(total_seconds),
             "average_duration": _format_duration(avg_seconds),
-            "landings": [],
+            "landings": [
+                {"label": "Safe Landings",          "value": safe},
+                {"label": "Hard Landings / Crashes", "value": hard},
+                {"label": "Wounded Landings",        "value": wounded},
+                {"label": "Bailouts",                "value": bailout},
+                {"label": "KIA / MIA",               "value": kia},
+            ],
         }
 
     # ------------------------------------------------------------------
@@ -247,6 +272,7 @@ class CareerDebriefingManager:
                             html=cached["html"],
                             duration_seconds=cached.get("duration_seconds"),
                             linked=True,
+                            final_state=cached.get("final_state", ""),
                         ), False
                 except OSError:
                     pass  # File gone — fall through and re-link
@@ -287,9 +313,9 @@ class CareerDebriefingManager:
                 linked=False,
             ), False
 
-        duration_seconds = _parse_duration_seconds(
-            data.get("summary", {}).get("flight_duration", "")
-        )
+        summary = data.get("summary", {})
+        duration_seconds = _parse_duration_seconds(summary.get("flight_duration", ""))
+        final_state = str(summary.get("final_state", "") or "")
         html = _render_mission_html(data, mission_num, mission_date)
 
         try:
@@ -302,6 +328,7 @@ class CareerDebriefingManager:
             "report_mtime": report_mtime,
             "html": html,
             "duration_seconds": duration_seconds,
+            "final_state": final_state,
             "linked": True,
         }
 
@@ -313,17 +340,25 @@ class CareerDebriefingManager:
             html=html,
             duration_seconds=duration_seconds,
             linked=True,
+            final_state=final_state,
         ), True
 
     # ------------------------------------------------------------------
     # Private: cache I/O
     # ------------------------------------------------------------------
 
+    # Increment when the HTML rendering format changes to force cache rebuild.
+    _CACHE_VERSION = 3
+
     def _load_cache(self) -> Dict:
         if not self._cache_path.exists():
             return {}
         try:
-            return json.loads(self._cache_path.read_text(encoding="utf-8"))
+            data = json.loads(self._cache_path.read_text(encoding="utf-8"))
+            if data.get("_version") != self._CACHE_VERSION:
+                logger.debug("Career debrief cache version mismatch; rebuilding")
+                return {}
+            return data
         except (OSError, json.JSONDecodeError) as exc:
             logger.warning("Career debrief cache unreadable (%s); starting fresh", exc)
             return {}
@@ -331,6 +366,7 @@ class CareerDebriefingManager:
     def _save_cache(self, cache: Dict) -> None:
         try:
             self._cache_path.parent.mkdir(parents=True, exist_ok=True)
+            cache["_version"] = self._CACHE_VERSION
             self._cache_path.write_text(
                 json.dumps(cache, indent=2, ensure_ascii=False),
                 encoding="utf-8",
@@ -370,12 +406,16 @@ def _parse_report(report_path: Path) -> Optional[Dict]:
         return None
 
 
+_SEPARATOR = "-" * 50
+
+
 def _render_mission_html(data: Dict, mission_num: int, mission_date: str) -> str:
     """
     Render a mission-box HTML block from parsed debrief data.
 
     Produces English labels matching the patterns replaced by
     detail.js localizeDebriefingsHtml() for client-side translation.
+    Format matches the campaign debriefings generated by step3_generate_events.py.
     """
     summary = data.get("summary", {})
     player = data.get("player", {})
@@ -387,8 +427,10 @@ def _render_mission_html(data: Dict, mission_num: int, mission_date: str) -> str
     aircraft_dmg = int(summary.get("aircraft_damage", 0) or 0)
     pilot_dmg = int(summary.get("pilot_damage", 0) or 0)
 
-    lines: List[str] = [f'<div class="mission-box">']
-    lines.append(f"<b>MISSION {mission_num}</b> &mdash; {mission_date}<br>")
+    lines: List[str] = ['<div class="mission-box">']
+    lines.append(f"{_SEPARATOR}<br>")
+    lines.append(f"<b>MISSION {mission_num:02d} | {mission_date}</b><br>")
+    lines.append(f"{_SEPARATOR}<br>")
 
     summary_parts = [
         f"Aircraft: {aircraft}",
@@ -432,8 +474,10 @@ def _render_stub_html(mission_num: int, mission_date: str) -> str:
     """Minimal mission-box for missions with no linked report."""
     return (
         f'<div class="mission-box">'
-        f"<b>MISSION {mission_num}</b> &mdash; {mission_date}<br>"
-        f"<i>No flight log available</i>"
+        f"{_SEPARATOR}<br>"
+        f"<b>MISSION {mission_num:02d} | {mission_date}</b><br>"
+        f"{_SEPARATOR}<br>"
+        f"<i>No FLIGHT LOG available</i>"
         f"</div>"
     )
 

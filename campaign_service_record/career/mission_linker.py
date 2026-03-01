@@ -165,7 +165,9 @@ class MissionReportLinker:
             return result
 
         # Fallback: insDate is a batch-save time and may not reflect the actual
-        # flight date.  Scan all .mlg files in the directory.
+        # flight date.  Scan all .mlg files in the directory, but use ONLY
+        # already-converted .txt files (mlg2txt_path=None) so we never block
+        # the request with subprocess calls for files that may not exist.
         all_mlg = sorted(
             self._reports_dir.rglob("missionReport(*.mlg"),
             key=lambda p: p.stat().st_mtime,
@@ -174,11 +176,11 @@ class MissionReportLinker:
         fallback_candidates = [p for p in all_mlg if p not in set(candidates)]
         if fallback_candidates:
             logger.debug(
-                "±%d day window missed startTime=%s; falling back to full scan (%d files)",
+                "±%d day window missed startTime=%s; falling back to full scan (%d files, txt-only)",
                 _MLG_DATE_WINDOW_DAYS, start_time.isoformat(), len(fallback_candidates),
             )
             result = self._match_from_candidates(
-                fallback_candidates, start_time, end_time_raw, mlg2txt_path
+                fallback_candidates, start_time, end_time_raw, mlg2txt_path=None
             )
 
         if result is None:
