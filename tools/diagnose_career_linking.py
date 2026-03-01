@@ -39,11 +39,11 @@ def parse_report_header(path):
     try:
         with open(path, encoding='utf-8', errors='replace') as fh:
             for line in fh:
-                s = line.strip()
-                if s.startswith("GDate:"):
-                    gdate = s.split(":", 1)[1].strip()
-                elif s.startswith("GTime:"):
-                    gtime = s.split(":", 1)[1].strip()
+                for token in line.split():
+                    if token.startswith("GDate:"):
+                        gdate = token.split(":", 1)[1]
+                    elif token.startswith("GTime:"):
+                        gtime = token.split(":", 1)[1]
                 if gdate and gtime:
                     break
     except OSError as e:
@@ -136,6 +136,7 @@ def main():
             continue
 
         print(f"  .mlg candidates ({len(candidates)}):")
+        first_txt_shown = False
         for mlg in candidates:
             txt_path = mlg.parent / f"{mlg.stem}[0].txt"
             if txt_path.exists():
@@ -145,6 +146,19 @@ def main():
                 print(f"      .txt exists: {txt_path.name}")
                 print(f"      header: {status}")
                 print(f"      report_start={report_dt}  startTime={start_dt}  → {match}")
+                # Show raw first 30 lines of the FIRST .txt to diagnose format
+                if not first_txt_shown:
+                    first_txt_shown = True
+                    print(f"      ── first 30 lines of {txt_path.name} ──")
+                    try:
+                        with open(txt_path, encoding='utf-8', errors='replace') as f:
+                            for i, line in enumerate(f):
+                                if i >= 30:
+                                    break
+                                print(f"        {i+1:3d}: {line.rstrip()}")
+                    except OSError as e:
+                        print(f"        ERROR: {e}")
+                    print(f"      ────────────────────────────────────────")
             else:
                 print(f"    {mlg.name}  (no .txt yet)")
         print()

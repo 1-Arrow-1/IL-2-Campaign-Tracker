@@ -20,18 +20,19 @@ Campaign mode — 3-step algorithm using .txt files:
 Career mode — find_career_report():
     IL-2 writes only binary .mlg files to FlightLogs; there are no .txt files
     unless they have been converted by mlg2txt.  cp.db stores:
-        mission.insDate   — real-world Unix timestamp (may be UTC while filenames
-                            use local time, hence the ±1 day search window)
-        mission.startTime — IN-GAME date (e.g. 1941-09-27); this is what GDate/
-                            GTime in the report header contains.
+        mission.insDate   — real-world timestamp (may differ from the missionReport
+                            filename date by up to ±1 day due to timezone offsets
+                            between cp.db UTC and local filename time)
+        mission.startTime — IN-GAME date/time (e.g. "1941.09.27 07:24:34");
+                            this matches GDate/GTime in the report AType:0 record.
     Algorithm:
         1. Parse insDate as a real-world datetime.
         2. Glob for .mlg files whose filename date is within ±1 day of insDate.
         3. For each candidate (newest mtime first):
               a. If <stem>[0].txt already exists and is newer than the .mlg, use it.
               b. Otherwise convert via mlg2txt subprocess → <stem>[0].txt.
-              c. Parse GDate/GTime header from the .txt.
-              d. If it matches mission.startTime (in-game), this is our file.
+              c. Parse GDate/GTime tokens from the AType:0 record in the .txt.
+              d. If it matches mission.startTime exactly, this is our file.
         4. Return the matched .txt path, or None.
 
 MissionReport files are used ONLY for sortie debriefing and narrative
@@ -143,8 +144,7 @@ class MissionReportLinker:
                           If None, only pre-converted .txt files are used.
 
         Returns:
-            Path to the matched .txt file (converting from .mlg if needed),
-            or None if no match found.
+            Path to the matched .txt file, or None if no match found.
         """
         try:
             ins_date = self._parse_datetime(mission_row["insDate"])
@@ -155,9 +155,7 @@ class MissionReportLinker:
             return None
 
         if ins_date is None or start_time is None:
-            logger.debug(
-                "Career mission row missing insDate or startTime; cannot link"
-            )
+            logger.debug("Career mission row missing insDate or startTime; cannot link")
             return None
 
         candidates = self._candidates_mlg_by_date(ins_date)
@@ -229,8 +227,7 @@ class MissionReportLinker:
         Glob for missionReport .mlg files whose filename date is within
         ±_MLG_DATE_WINDOW_DAYS of ins_date.
 
-        Returns deduplicated list sorted by mtime descending (newest first,
-        so the final accepted attempt is tried first).
+        Returns deduplicated list sorted by mtime descending (newest first).
         """
         seen: set = set()
         results: List[Path] = []
@@ -316,11 +313,14 @@ class MissionReportLinker:
         try:
             with open(path, encoding='utf-8', errors='replace') as fh:
                 for line in fh:
-                    stripped = line.strip()
-                    if stripped.startswith("GDate:"):
-                        gdate = stripped.split(":", 1)[1].strip()
-                    elif stripped.startswith("GTime:"):
-                        gtime = stripped.split(":", 1)[1].strip()
+                    # GDate and GTime are space-separated tokens within the
+                    # AType:0 record, e.g.:
+                    #   T:0 AType:0 GDate:1941.9.27 GTime:7:24:34 MFile:...
+                    for token in line.split():
+                        if token.startswith("GDate:"):
+                            gdate = token.split(":", 1)[1]
+                        elif token.startswith("GTime:"):
+                            gtime = token.split(":", 1)[1]
                     if gdate and gtime:
                         break
         except OSError as exc:
