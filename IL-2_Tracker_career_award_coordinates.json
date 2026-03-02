@@ -531,9 +531,9 @@
     "overlay": {
       "name": "Germany_overlay",
       "x": 32,
-      "y": 0,
+      "y": 30,
       "w": 2018,
-      "h": 961,
+      "h": 966,
       "replacements": []
     }
   },

@@ -361,34 +361,111 @@ def award_image_to_showcase_name(image_field: str) -> str:
     return stem + '_big1'
 
 
-def _resolve_asset_file(
-    showcase_name: str,
+def _split_award_size_suffix(name: str) -> tuple[str, str]:
+    """Return (base_name, size_suffix) where suffix is '', '_big', or '_big1'."""
+    n = (name or '').strip()
+    if n.endswith('_big1'):
+        return n[:-5], '_big1'
+    if n.endswith('_big'):
+        return n[:-4], '_big'
+    return n, ''
+
+
+def _award_name_candidates_for_context(
+    base_name: str,
+    context: str,
+) -> list[str]:
+    """
+    Build deterministic filename stem candidates for the requested context.
+
+    Career detail showcase prefers large medal variants:
+      *_big1 -> *_big -> original.
+    Other contexts preserve the incoming name.
+    """
+    stem_base, _ = _split_award_size_suffix(base_name)
+    if not stem_base:
+        return []
+
+    if context == 'career_detail_showcase':
+        return [f"{stem_base}_big1", f"{stem_base}_big", stem_base]
+
+    return [base_name.strip()]
+
+
+def _with_known_typo_variants(name: str) -> list[str]:
+    """Return name plus known typo-normalized alternatives."""
+    variants = [name]
+    # Known typo in coordinate files: order_surov_* -> order_suvorov_*
+    if 'surov' in name and 'suvorov' not in name:
+        variants.append(name.replace('surov', 'suvorov'))
+    return variants
+
+
+def resolve_award_asset_path(
+    base_name: str,
     country_key: str,
     assets_dir: Path,
+    context: str = 'campaign_showcase',
 ) -> Optional[Path]:
     """
-    Attempt to find the physical file for a showcase name.
-    Applies known typo corrections (e.g. order_surov -> order_suvorov).
-    Logs a warning and returns None when not found.
+    Resolve the medal asset path for showcase rendering.
+
+    For `career_detail_showcase`, variant preference is:
+      *_big1 -> *_big -> original.
+    For other contexts, the incoming name is used as-is.
+
+    Returns:
+        Path to existing PNG or DDS asset, or None if none found.
     """
     folder = ASSET_FOLDER.get(country_key, '')
-    candidates: list[str] = [showcase_name]
+    if not folder:
+        return None
+    name_candidates = _award_name_candidates_for_context(base_name, context)
+    tried: list[str] = []
 
-    # Known typo in Excel: order_surov_big1 -> order_suvorov_big1
-    if 'surov' in showcase_name and 'suvorov' not in showcase_name:
-        candidates.append(showcase_name.replace('surov', 'suvorov'))
-
-    for candidate in candidates:
-        path = assets_dir / folder / f"{candidate}.png"
-        if path.exists():
-            return path
+    for stem in name_candidates:
+        for candidate in _with_known_typo_variants(stem):
+            for ext in ('.png', '.dds'):
+                path = assets_dir / folder / f"{candidate}{ext}"
+                tried.append(path.name)
+                if path.exists():
+                    logger.debug(
+                        "[medal_showcase] Resolved asset context=%s country=%s "
+                        "base=%s -> %s",
+                        context, country_key, base_name, path.name,
+                    )
+                    return path
 
     logger.warning(
-        "[medal_showcase] Asset not found for showcase name '%s' "
-        "(country='%s', tried %s)",
-        showcase_name, country_key, candidates,
+        "[medal_showcase] Asset not found context=%s country=%s base=%s tried=%s",
+        context, country_key, base_name, tried,
     )
     return None
+
+
+@lru_cache(maxsize=512)
+def _infer_asset_geometry(asset_path_str: str) -> tuple[int, int, int, int]:
+    """
+    Infer (img_w, img_h, img_x, img_y) from image alpha bounds.
+
+    This is a runtime fallback for coordinate sets that do not include img_*
+    metadata. Returns zeros when Pillow is unavailable or parsing fails.
+    """
+    try:
+        from PIL import Image  # local import to avoid hard dependency at import time
+    except Exception:
+        return (0, 0, 0, 0)
+
+    try:
+        with Image.open(asset_path_str) as img:
+            rgba = img.convert('RGBA')
+            alpha = rgba.getchannel('A')
+            bbox = alpha.getbbox()
+            if bbox is None:
+                return (rgba.width, rgba.height, 0, 0)
+            return (rgba.width, rgba.height, int(bbox[0]), int(bbox[1]))
+    except Exception:
+        return (0, 0, 0, 0)
 
 
 # ---------------------------------------------------------------------------
@@ -403,6 +480,7 @@ def build_showcase_data(
     tracker_asset_url_prefix: str = '/api/tracker_assets',
     canvas_filenames: Optional[dict] = None,
     overlay_filenames: Optional[dict] = None,
+    asset_context: str = 'campaign_showcase',
 ) -> dict:
     """
     Build the JSON-serialisable showcase payload for the frontend.
@@ -482,11 +560,21 @@ def build_showcase_data(
             continue  # player hasn't earned this award
 
         # Verify asset file exists
-        asset_path = _resolve_asset_file(chosen, country_key, assets_dir)
+        asset_path = resolve_award_asset_path(
+            chosen,
+            country_key,
+            assets_dir,
+            context=asset_context,
+        )
         if asset_path is None:
             # Try base entry as fallback
             if chosen != entry.name:
-                asset_path = _resolve_asset_file(entry.name, country_key, assets_dir)
+                asset_path = resolve_award_asset_path(
+                    entry.name,
+                    country_key,
+                    assets_dir,
+                    context=asset_context,
+                )
             if asset_path is None:
                 continue  # no usable image
 
@@ -503,6 +591,13 @@ def build_showcase_data(
             slot['img_h'] = entry.img_h
             slot['img_x'] = entry.img_x
             slot['img_y'] = entry.img_y
+        elif asset_context == 'career_detail_showcase':
+            img_w, img_h, img_x, img_y = _infer_asset_geometry(str(asset_path))
+            if img_w and img_h:
+                slot['img_w'] = img_w
+                slot['img_h'] = img_h
+                slot['img_x'] = img_x
+                slot['img_y'] = img_y
         placed_medals.append(slot)
 
     return {

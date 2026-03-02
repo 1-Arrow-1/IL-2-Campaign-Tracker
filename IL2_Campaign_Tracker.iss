@@ -166,6 +166,7 @@ Source: "Career_Service_Record.exe"; DestDir: "{app}"; Flags: ignoreversion
 ; --- Shared internal bundle (covers both Service Record builds) ---
 Source: "_internal\*"; DestDir: "{app}\_internal"; Flags: recursesubdirs createallsubdirs ignoreversion
 Source: "IL-2_Tracker_award_coordinates.json"; DestDir: "{app}"; Flags: ignoreversion
+Source: "IL-2_Tracker_career_award_coordinates.json"; DestDir: "{app}"; Flags: ignoreversion
 
 ; --- Setting Manager ---
 Source: "IL2_Settings_Manager.exe"; DestDir: "{app}"; Flags: ignoreversion

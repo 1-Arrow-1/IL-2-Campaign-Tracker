@@ -1056,6 +1056,10 @@ def get_career_showcase(root_career_id: int):
             name = award_image_to_showcase_name(Path(modal_url).name)
             if name:
                 earned.add(name)
+                logger.debug(
+                    "Career showcase earned award: code=%s modal=%s showcase=%s",
+                    ev.get('award_code'), Path(modal_url).name, name
+                )
 
     # --- Load career coordinates ---
     try:
@@ -1074,6 +1078,7 @@ def get_career_showcase(root_career_id: int):
         tracker_asset_url_prefix='/api/career_assets',
         canvas_filenames=CAREER_CANVAS_FILENAME,
         overlay_filenames=CAREER_OVERLAY_FILENAME,
+        asset_context='career_detail_showcase',
     ))
 
 
