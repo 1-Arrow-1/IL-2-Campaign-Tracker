@@ -193,6 +193,10 @@ class RankResolver:
             if candidate.is_dir():
                 self._mod_dir = candidate
                 logger.info("RankResolver: mod mode active (%s)", candidate)
+            else:
+                logger.info("RankResolver: charactersranks not found at %s; using standard mode", candidate)
+        else:
+            logger.info("RankResolver: no game_dir configured; using standard mode")
 
         tsv = _MOD_TSV if self._mod_dir else _STANDARD_TSV
         self._tsv_table = _parse_tsv(tsv)

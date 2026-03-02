@@ -244,6 +244,40 @@ def debug_data():
         }), 500
 
 
+@api_bp.route('/api/career/debug')
+def career_debug():
+    """
+    Career mode debug endpoint.
+
+    Returns the current rank resolver mode, game_dir, and the exact
+    charactersranks path being checked.  Useful for diagnosing why mod
+    ranks are not being detected after moving the folder.
+    """
+    if not _career_provider:
+        return jsonify({'error': 'Career provider not initialized'}), 503
+
+    aggregator = _career_provider._aggregator
+    resolver = aggregator._rank_resolver
+    game_dir = aggregator._game_dir
+
+    charactersranks_path = (
+        str(game_dir / 'data' / 'swf' / 'il2' / 'charactersranks')
+        if game_dir else None
+    )
+    charactersranks_exists = (
+        (game_dir / 'data' / 'swf' / 'il2' / 'charactersranks').is_dir()
+        if game_dir else False
+    )
+
+    return jsonify({
+        'rank_mode': 'mod' if resolver._mod_dir else 'standard',
+        'mod_dir': str(resolver._mod_dir) if resolver._mod_dir else None,
+        'game_dir': str(game_dir) if game_dir else None,
+        'charactersranks_path_checked': charactersranks_path,
+        'charactersranks_exists_now': charactersranks_exists,
+    })
+
+
 # ============================================================================
 # Health & Status Endpoints
 # ============================================================================

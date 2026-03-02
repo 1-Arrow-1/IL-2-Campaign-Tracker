@@ -273,7 +273,7 @@
         "bar_to_the_air_force_cross": "Weitere Auszeichnung in verantwortlicher Stellung. Das Gewicht der Entscheidungen wächst — und damit das Vertrauen in dein Urteil.",
         "second_bar_to_the_air_force_cross": "Wiederholter Beweis an vorderster Front. Autorität im Feuer erprobt — und bestanden.",
         "third_bar_to_the_distinguished_service_order": "Ein dritter Balken zum DSO. Dreimal haben sie einen Standard angelegt, den die meisten Offiziere nie einmal erreichen. Das Band ist länger; die Erwartungen auch.",
-        "france_and_germany_star": "Die letzte Kampagne. Von der Normandie bis zum Reich—du hast geflogen, als der Krieg in Westeuropa zu Ende ging. Der Stern markiert einen Weg, der im deutschen Luftraum endete."
+        "france_and_germany_star": "Die letzte Kampagne. Von der Normandie bis zum Reich—du bist geflogen, als der Krieg in Westeuropa zu Ende ging. Der Stern markiert einen Weg, der im deutschen Luftraum endete."
       },
       "ranks": {
         "air_commodore": "Du lenkst Luftschlachten von Karten und Meldungen aus. Wenn du fliegst, ist es außergewöhnlich – und allen bewusst.",
@@ -705,9 +705,9 @@
       "staff_sergeant": "Staff Sergeant (US)",
       "technical_sergeant": "Technical Sergeant (US)",
       "lt_general": "Generalleutnant (US)",
-      "efreitor": "Jefrejtor",
-      "mladshiy_serzhant": "Mladschij Serschant",
-      "general_polkovnik": "General-Polkownik"
+      "efreitor": "Efreitor",
+      "mladshiy_serzhant": "Mladshiy Serzhant",
+      "general_polkovnik": "General-Polkovnik"
     }
   },
   "service_record": {

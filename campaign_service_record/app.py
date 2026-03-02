@@ -36,18 +36,27 @@ from campaign_service_record.api import api_bp, init_api, init_career
 # Logging Setup
 # ============================================================================
 
-def setup_logging(debug: bool = False):
+def setup_logging(debug: bool = False, log_file: Optional[Path] = None):
     """Setup application logging."""
     level = logging.DEBUG if debug else logging.INFO
-    
-    logging.basicConfig(
-        level=level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.StreamHandler(sys.stdout)
-        ]
-    )
-    
+    fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
+    handlers = [logging.StreamHandler(sys.stdout)]
+
+    if log_file:
+        from logging.handlers import RotatingFileHandler
+        file_handler = RotatingFileHandler(
+            log_file,
+            maxBytes=1 * 1024 * 1024,  # 1 MB per file
+            backupCount=2,
+            encoding='utf-8',
+        )
+        file_handler.setLevel(level)
+        file_handler.setFormatter(logging.Formatter(fmt))
+        handlers.append(file_handler)
+
+    logging.basicConfig(level=level, format=fmt, handlers=handlers)
+
     # Reduce Flask's verbose logging
     if not debug:
         logging.getLogger('werkzeug').setLevel(logging.WARNING)
@@ -70,8 +79,13 @@ def create_app():
     # Get configuration
     config = get_config()
     
-    # Setup logging
-    setup_logging(debug=config.debug)
+    # Setup logging — write to file in career mode (no console window)
+    log_file = (
+        config.base_dir / 'career_service_record.log'
+        if config.frozen and config.app_mode == 'career'
+        else None
+    )
+    setup_logging(debug=config.debug, log_file=log_file)
     
     # Validate configuration
     is_valid, error = config.validate()
