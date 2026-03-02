@@ -999,7 +999,21 @@ def get_career_showcase(root_career_id: int):
                 break
 
     if career_json is None:
-        return jsonify({'error': 'Career coordinate file not found'}), 404
+        candidates_tried = []
+        if _career_data_dir:
+            candidates_tried = [
+                str(_career_data_dir / 'IL-2_Tracker_career_award_coordinates.json'),
+                str(_career_data_dir.parent / 'IL-2_Tracker_career_award_coordinates.json'),
+            ]
+        logger.error(
+            "Career coordinate JSON not found. data_dir=%s, tried=%s",
+            _career_data_dir, candidates_tried
+        )
+        return jsonify({
+            'error': 'Career coordinate file not found',
+            'data_dir': str(_career_data_dir),
+            'searched': candidates_tried,
+        }), 404
 
     # --- Assets dir (for _resolve_asset_file file-existence checks) ---
     # Prefer game_dir (where IL-2 stores CampaignRanksAwards PNGs); fall back to data_dir.
@@ -1013,7 +1027,8 @@ def get_career_showcase(root_career_id: int):
     # --- Career detail (events + country) ---
     detail = _career_provider.get_entry_detail(str(root_career_id))
     if not detail:
-        return jsonify({'error': 'Career not found'}), 404
+        logger.error("Career not found: root_career_id=%s", root_career_id)
+        return jsonify({'error': 'Career not found', 'root_career_id': root_career_id}), 404
 
     country = detail.get('country', '')
     showcase_base = resolve_showcase_country(country)
