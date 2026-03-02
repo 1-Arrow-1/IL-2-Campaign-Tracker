@@ -557,6 +557,9 @@ if exist "IL2_Campaign_Tracker.iss" copy "IL2_Campaign_Tracker.iss" "IL2_Campaig
 REM Copy iss file if exists
 if exist "IL-2_Tracker_award_coordinates.json" copy "IL-2_Tracker_award_coordinates.json" "IL2_Campaign_Tracker_v2.2_ML\IL-2_Tracker_award_coordinates.json" >NUL
 
+REM Copy career medal showcase coordinates
+if exist "IL-2_Tracker_career_award_coordinates.json" copy "IL-2_Tracker_career_award_coordinates.json" "IL2_Campaign_Tracker_v2.2_ML\IL-2_Tracker_career_award_coordinates.json" >NUL
+
 REM Copy iss file if exists
 if exist "*.yaml" copy "*.yaml" "IL2_Campaign_Tracker_v2.2_ML\" >NUL
 

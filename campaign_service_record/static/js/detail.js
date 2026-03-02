@@ -2139,7 +2139,8 @@ const DetailPage = {
 
     getGameAssetUrl(relativePath) {
         const normalized = String(relativePath || '').replace(/^[/\\\\]+/, '');
-        return `/api/game_assets/${normalized}`;
+        const prefix = this._source === 'career' ? '/api/career_assets' : '/api/game_assets';
+        return `${prefix}/${normalized}`;
     },
 
     scaleEventImage(img) {
