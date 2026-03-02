@@ -453,6 +453,7 @@ async function openCareerMedalShowcase(careerId, btn) {
 
         if (!response.ok) {
             const body = await response.json().catch(() => ({}));
+            console.warn('[MedalShowcase] Career API error:', response.status, body);
 
             if (response.status === 404) {
                 btn.textContent = (i18n && i18n.t)

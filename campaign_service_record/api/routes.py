@@ -1002,10 +1002,11 @@ def get_career_showcase(root_career_id: int):
         return jsonify({'error': 'Career coordinate file not found'}), 404
 
     # --- Assets dir (for _resolve_asset_file file-existence checks) ---
-    if _career_data_dir:
-        assets_dir = _career_data_dir / 'CampaignRanksAwards'
-    elif _career_game_dir:
+    # Prefer game_dir (where IL-2 stores CampaignRanksAwards PNGs); fall back to data_dir.
+    if _career_game_dir:
         assets_dir = _career_game_dir / 'data' / 'swf' / 'CampaignRanksAwards'
+    elif _career_data_dir:
+        assets_dir = _career_data_dir / 'CampaignRanksAwards'
     else:
         return jsonify({'error': 'Career data directory not configured'}), 500
 
