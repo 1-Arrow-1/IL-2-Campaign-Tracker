@@ -444,9 +444,22 @@ class CareerAggregator:
         promotions = [e for e in events if e.get("type") == "promotion"]
         awards = [e for e in events if e.get("type") == "award"]
 
-        # Read rank directly from pilot rows for reliable "career start" and
-        # "current/final" values even when promotion history is incomplete.
+        # Starting rank is the rank immediately before the first promotion.
+        # Promotion events store the rank gained at that event, so we derive
+        # start as (first_promotion_rank_id - 1) when possible.
         country_int = _COUNTRY_CODE_MAP.get((career.country or "").lower(), 0)
+
+        def _rank_from_id(rank_id) -> str:
+            if rank_id is None:
+                return "Unknown"
+            try:
+                rank_id_int = int(rank_id)
+            except (TypeError, ValueError):
+                return "Unknown"
+            if rank_id_int < 0:
+                return "Unknown"
+            rank_name = self._rank_resolver.resolve(country_int, rank_id_int)
+            return rank_name.display if rank_name else f"rank_{rank_id_int}"
 
         def _rank_from_pilot(row) -> str:
             if row is None:
@@ -455,13 +468,35 @@ class CareerAggregator:
                 rank_id = row["rankId"]
             except (IndexError, KeyError):
                 return "Unknown"
-            if rank_id is None:
-                return "Unknown"
-            rank_name = self._rank_resolver.resolve(country_int, int(rank_id))
-            return rank_name.display if rank_name else f"rank_{rank_id}"
+            return _rank_from_id(rank_id)
 
-        starting_rank = _rank_from_pilot(first_pilot_row)
+        valid_promotion_rank_ids = []
+        valid_promotion_ranks = []
+        for p in promotions:
+            rank_text = p.get("rank")
+            if not rank_text or str(rank_text).lower() in {"unknown", "rank_-1"}:
+                continue
+            try:
+                rank_id_int = int(p.get("rank_id", -1))
+            except (TypeError, ValueError):
+                continue
+            if rank_id_int < 0:
+                continue
+            valid_promotion_rank_ids.append(rank_id_int)
+            valid_promotion_ranks.append(rank_text)
+
+        if valid_promotion_rank_ids:
+            derived_start_rank = _rank_from_id(valid_promotion_rank_ids[0] - 1)
+            if derived_start_rank != "Unknown":
+                starting_rank = derived_start_rank
+            else:
+                starting_rank = _rank_from_pilot(first_pilot_row)
+        else:
+            starting_rank = _rank_from_pilot(first_pilot_row)
+
         final_rank = _rank_from_pilot(last_pilot_row)
+        if final_rank == "Unknown" and valid_promotion_ranks:
+            final_rank = valid_promotion_ranks[-1]
 
         event_dates = [e["date"] for e in events if e.get("date")]
         first_date = min(event_dates) if event_dates else None
