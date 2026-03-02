@@ -751,6 +751,8 @@
     "label": {
       "bracket": "Rango",
       "campaign_name": "Campaña",
+      "career_languages_helper": "Sets the display language for each Career Service Record. 'Default' uses your installation language.",
+      "career_pilot": "Piloto",
       "country": "País",
       "detail_page_language": "Idioma de página de detalle",
       "enable_popups": "Activar popups en juego:",
@@ -782,10 +784,13 @@
       "save_success": "Configuración guardada correctamente.",
       "tracker_running_warning": "El Campaign Tracker está en ejecución.\n\nGuardar la configuración mientras el Tracker está activo puede causar conflictos de archivos.\n\n¿Desea continuar de todos modos?",
       "unsaved_changes": "Tienes cambios sin guardar. ¿Descartar?",
+      "career_db_not_found": "Career database not found. Set up the Campaign Tracker first to enable career language settings.",
+      "no_careers": "No careers found. Complete at least one mission in IL-2 Career mode.",
       "warning_title": "Advertencia"
     },
     "tab": {
       "campaigns": "Campañas",
+      "career_languages": "Configuración de idioma de carrera",
       "general": "General",
       "rank_scaling": "Escalado de Rango",
       "rank_values": "Valores de Rango"

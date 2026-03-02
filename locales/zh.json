@@ -751,6 +751,8 @@
     "label": {
       "bracket": "区间",
       "campaign_name": "战役",
+      "career_languages_helper": "设置每个职业服役记录的显示语言。'默认'使用您的安装语言。",
+      "career_pilot": "飞行员",
       "country": "国家",
       "detail_page_language": "详情页语言",
       "enable_popups": "启用游戏内弹窗：",
@@ -782,10 +784,13 @@
       "save_success": "设置保存成功。",
       "tracker_running_warning": "Campaign Tracker 正在运行。\n\n在 Tracker 运行时保存设置可能会导致文件冲突。\n\n是否仍要继续？",
       "unsaved_changes": "有未保存的更改。是否放弃？",
+      "career_db_not_found": "未找到职业数据库。请先设置战役追踪器以启用职业语言设置。",
+      "no_careers": "未找到职业。请在IL-2职业模式中至少完成一次任务。",
       "warning_title": "警告"
     },
     "tab": {
       "campaigns": "战役",
+      "career_languages": "职业语言设置",
       "general": "通用",
       "rank_scaling": "军衔缩放",
       "rank_values": "军衔数值"

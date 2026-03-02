@@ -751,6 +751,8 @@
     "label": {
       "bracket": "Bereich",
       "campaign_name": "Kampagne",
+      "career_languages_helper": "Legt die Anzeigesprache für jeden Karriere-Servicerekord fest. 'Standard' verwendet Ihre Installationssprache.",
+      "career_pilot": "Pilot",
       "country": "Land",
       "detail_page_language": "Detailseiten-Sprache",
       "enable_popups": "In-Game Popups aktivieren:",
@@ -782,10 +784,13 @@
       "save_success": "Einstellungen erfolgreich gespeichert.",
       "tracker_running_warning": "Der Campaign Tracker läuft gerade.\n\nDas Speichern während der Tracker läuft kann zu Dateikonflikten führen.\n\nTrotzdem fortfahren?",
       "unsaved_changes": "Ungespeicherte Änderungen. Verwerfen?",
+      "career_db_not_found": "Karrieredatenbank nicht gefunden. Richten Sie zuerst den Campaign Tracker ein, um Karriere-Spracheinstellungen zu aktivieren.",
+      "no_careers": "Keine Karrieren gefunden. Absolvieren Sie mindestens eine Mission im IL-2-Karrieremodus.",
       "warning_title": "Warnung"
     },
     "tab": {
       "campaigns": "Kampagnen",
+      "career_languages": "Karriere-Spracheinstellungen",
       "general": "Allgemein",
       "rank_scaling": "Rang-Skalierung",
       "rank_values": "Rang-Werte"

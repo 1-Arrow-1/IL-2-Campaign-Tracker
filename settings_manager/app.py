@@ -7,6 +7,7 @@ The main application window with tabbed interface.
 import os
 import queue
 import re
+import sqlite3
 import subprocess
 import threading
 import tkinter as tk
@@ -221,6 +222,14 @@ class SettingsManagerApp(tk.Tk):
         "de": "lbl_language_german",
         "ru": "lbl_language_russian",
     }
+
+    # Career language override options: stored value -> i18n key
+    CAREER_LOCALE_OPTIONS = {
+        None: "lbl_language_default",
+        "en": "lbl_language_english",
+        "de": "lbl_language_german",
+        "ru": "lbl_language_russian",
+    }
     
     def __init__(self):
         super().__init__()
@@ -255,6 +264,10 @@ class SettingsManagerApp(tk.Tk):
         self._campaign_display_name_map: Optional[Dict[str, str]] = None
         # Track campaigns that need localized debriefings regeneration
         self._campaigns_needing_debriefings_regen: set = set()
+        # Career language tab editor state
+        self._career_lang_editor: Optional[ttk.Combobox] = None
+        self._career_lang_editor_item: Optional[str] = None
+        self._career_list_cache: List[Tuple[int, str]] = []
 
         # Load all data
         self._load_all_data()
@@ -336,7 +349,10 @@ class SettingsManagerApp(tk.Tk):
         
         # Tab 4: Campaigns (conditional)
         self._create_campaigns_tab()
-        
+
+        # Tab 5: Career Language Settings
+        self._create_career_languages_tab()
+
         # Button frame
         self._create_button_bar(main_frame)
     
@@ -692,7 +708,188 @@ class SettingsManagerApp(tk.Tk):
             language_display = self.tr.t(lang_key)
 
             self.campaigns_tree.insert('', tk.END, values=(campaign_name, country, language_display, offset))
-    
+
+    # === Career Language Settings Tab ===
+
+    def _create_career_languages_tab(self) -> None:
+        """Create Career Language Settings tab."""
+        frame = ttk.Frame(self.notebook, padding=20)
+        self.notebook.add(frame, text=self.tr.t("tab_career_languages"))
+
+        # Helper description
+        ttk.Label(
+            frame,
+            text=self.tr.t("lbl_career_languages_helper"),
+            foreground='gray',
+            wraplength=500,
+            justify=tk.LEFT,
+        ).pack(anchor=tk.W, pady=(0, 10))
+
+        careers = self._load_careers_from_db()
+
+        if careers is None:
+            # cp.db not found or game_dir unavailable
+            ttk.Label(
+                frame,
+                text=self.tr.t("msg_career_db_not_found"),
+                foreground='gray',
+            ).pack(pady=50)
+            return
+
+        if not careers:
+            # db accessible but no careers yet
+            ttk.Label(
+                frame,
+                text=self.tr.t("msg_no_careers"),
+                foreground='gray',
+            ).pack(pady=50)
+            return
+
+        # Treeview
+        columns = ('pilot', 'language')
+        self.career_lang_tree = ttk.Treeview(
+            frame, columns=columns, show='headings', height=12
+        )
+        self.career_lang_tree.heading('pilot',    text=self.tr.t("lbl_career_pilot"))
+        self.career_lang_tree.heading('language', text=self.tr.t("lbl_detail_page_language"))
+        self.career_lang_tree.column('pilot',    width=300, anchor=tk.W)
+        self.career_lang_tree.column('language', width=160, anchor=tk.CENTER)
+
+        scrollbar = ttk.Scrollbar(frame, orient=tk.VERTICAL,
+                                   command=self.career_lang_tree.yview)
+        self.career_lang_tree.configure(yscrollcommand=scrollbar.set)
+        self.career_lang_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.LEFT, fill=tk.Y)
+
+        self._career_list_cache = careers
+        self._populate_career_lang_tree()
+        self.career_lang_tree.bind('<ButtonRelease-1>', self._on_career_lang_tree_click)
+
+    def _load_careers_from_db(self) -> Optional[List[Tuple[int, str]]]:
+        """
+        Query cp.db for all root careers (extends = -1).
+
+        Returns:
+            List of (root_career_id, pilot_display_name) sorted by id DESC,
+            None if game_dir cannot be determined or cp.db is missing,
+            [] if the db is present but contains no careers.
+        """
+        game_dir = (self.mission_dates_data or {}).get('game_directory')
+        if not game_dir or not os.path.isdir(str(game_dir)):
+            return None
+
+        db_path = os.path.join(str(game_dir), 'data', 'Career', 'cp.db')
+        if not os.path.isfile(db_path):
+            return None
+
+        try:
+            uri = f"file:{db_path}?mode=ro"
+            con = sqlite3.connect(uri, uri=True, timeout=5)
+            con.row_factory = sqlite3.Row
+            cur = con.execute(
+                """
+                SELECT c.id,
+                       COALESCE(p.name, '') || ' ' || COALESCE(p.lastName, '') AS pilot_name
+                FROM career c
+                JOIN pilot p ON c.playerId = p.id
+                WHERE c.extends = -1
+                ORDER BY c.id DESC
+                """
+            )
+            rows = cur.fetchall()
+            con.close()
+            return [
+                (row['id'], row['pilot_name'].strip() or f"Career {row['id']}")
+                for row in rows
+            ]
+        except Exception as exc:
+            logger.warning("Could not read cp.db for career list: %s", exc)
+            return []
+
+    def _populate_career_lang_tree(self) -> None:
+        """Populate the career language treeview from settings_data."""
+        overrides = self.settings_data.get('careerLanguageOverrides', {})
+        for item in self.career_lang_tree.get_children():
+            self.career_lang_tree.delete(item)
+        for career_id, pilot_name in self._career_list_cache:
+            stored = overrides.get(str(career_id))
+            lang_key = self.CAREER_LOCALE_OPTIONS.get(stored, "lbl_language_default")
+            self.career_lang_tree.insert(
+                '', tk.END,
+                iid=str(career_id),
+                values=(pilot_name, self.tr.t(lang_key)),
+            )
+
+    def _on_career_lang_tree_click(self, event: tk.Event) -> None:
+        """Handle single click for career language editing."""
+        region = self.career_lang_tree.identify("region", event.x, event.y)
+        if region != "cell":
+            self._destroy_career_lang_editor()
+            return
+        column = self.career_lang_tree.identify_column(event.x)
+        item   = self.career_lang_tree.identify_row(event.y)
+        if not item:
+            self._destroy_career_lang_editor()
+            return
+        if column == "#2":
+            self._start_career_lang_edit(item)
+        else:
+            self._destroy_career_lang_editor()
+
+    def _start_career_lang_edit(self, item: str) -> None:
+        """Begin inline editing of a career's language override."""
+        self._destroy_career_lang_editor()
+        values = self.career_lang_tree.item(item, 'values')
+        if not values:
+            return
+        current_display = values[1]
+        bbox = self.career_lang_tree.bbox(item, "#2")
+        if not bbox:
+            return
+        x, y, width, height = bbox
+
+        options = [self.tr.t(k) for k in self.CAREER_LOCALE_OPTIONS.values()]
+        editor = ttk.Combobox(self.career_lang_tree, values=options, state='readonly')
+        editor.set(current_display if current_display in options else options[0])
+        editor.place(x=x, y=y, width=width, height=height)
+        editor.focus_set()
+        editor.bind(
+            "<<ComboboxSelected>>",
+            lambda e: self._on_career_lang_selected(item, editor.get()),
+        )
+        editor.bind("<FocusOut>", lambda e: self._destroy_career_lang_editor())
+        editor.bind("<Escape>",   lambda e: self._destroy_career_lang_editor())
+        self._career_lang_editor = editor
+        self._career_lang_editor_item = item
+
+    def _destroy_career_lang_editor(self) -> None:
+        """Destroy any active career language editor."""
+        if self._career_lang_editor is not None:
+            self._career_lang_editor.destroy()
+        self._career_lang_editor = None
+        self._career_lang_editor_item = None
+
+    def _on_career_lang_selected(self, item: str, selected_display: str) -> None:
+        """Persist career language selection to settings_data."""
+        self._destroy_career_lang_editor()
+        if not selected_display:
+            return
+
+        # Convert display text back to stored value (None, 'en', 'de', 'ru')
+        stored_value = None
+        for locale_val, key in self.CAREER_LOCALE_OPTIONS.items():
+            if self.tr.t(key) == selected_display:
+                stored_value = locale_val
+                break
+
+        # item is the iid which equals str(career_id)
+        overrides = self.settings_data.setdefault('careerLanguageOverrides', {})
+        if stored_value is None:
+            overrides.pop(item, None)
+        else:
+            overrides[item] = stored_value
+        self._populate_career_lang_tree()
+
     def _create_button_bar(self, parent) -> None:
         """Create bottom button bar."""
         btn_frame = ttk.Frame(parent)

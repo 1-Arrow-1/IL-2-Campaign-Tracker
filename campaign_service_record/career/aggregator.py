@@ -32,6 +32,7 @@ from campaign_service_record.career.rank_resolver import RankResolver
 from campaign_service_record.career.debriefing_manager import CareerDebriefingManager
 from campaign_service_record.career.other_incidences import load_other_incidences
 from campaign_service_record.utils.path_utils import USSR_TRANSITION_DATE
+from utils.locale_config import get_career_effective_locale
 
 logger = logging.getLogger(__name__)
 
@@ -231,7 +232,7 @@ class CareerAggregator:
             "missions_completed": len(sorties),
             "events": mapped_events,
             "debriefings_html": debriefings_html,
-            "effective_locale": "en",
+            "effective_locale": get_career_effective_locale(str(career.root_career_id)),
             "summary": summary,
             # Career-specific extras
             "source": "career",

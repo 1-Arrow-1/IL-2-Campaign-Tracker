@@ -102,6 +102,24 @@ OVERLAY_FILENAME: dict[str, str] = {
     'britain':    'Britain_overlay.png',
 }
 
+# Career-specific canvas filenames (use _career suffix)
+CAREER_CANVAS_FILENAME: dict[str, str] = {
+    'ussr_early': 'USSR_canvas_career.png',
+    'ussr_late':  'USSR_canvas_career.png',
+    'usa':        'usa_canvas_career.png',
+    'germany':    'Germany_canvas_career.png',
+    'britain':    'Britain_canvas_career.png',
+}
+
+# Career-specific overlay filenames (USSR has _career suffix; others shared with campaign)
+CAREER_OVERLAY_FILENAME: dict[str, str] = {
+    'ussr_early': 'USSR_overlay_career.png',
+    'ussr_late':  'USSR_overlay_career.png',
+    'usa':        'usa_overlay.png',
+    'germany':    'Germany_overlay.png',
+    'britain':    'Britain_overlay.png',
+}
+
 # Normalise "Soviet Union" / "USSR" from campaign data to internal key
 _CAMPAIGN_COUNTRY_MAP: dict[str, str] = {
     'germany':             'germany',
@@ -267,6 +285,30 @@ def load_coordinates(json_path: Path) -> dict[str, CountryShowcase]:
     return _cached_coordinates
 
 
+_cached_career_coordinates: Optional[dict[str, CountryShowcase]] = None
+_cached_career_mtime: Optional[float] = None
+
+
+def load_career_coordinates(json_path: Path) -> dict[str, CountryShowcase]:
+    """
+    Return parsed career coordinates, re-parsing if the JSON file has changed.
+    Uses a separate cache from load_coordinates() (campaign cache).
+    Thread-safe via GIL (single writer, dict swap).
+    """
+    global _cached_career_coordinates, _cached_career_mtime
+
+    try:
+        mtime = json_path.stat().st_mtime
+    except OSError:
+        mtime = None
+
+    if _cached_career_coordinates is None or mtime != _cached_career_mtime:
+        _cached_career_coordinates = parse_json_coordinates(json_path)
+        _cached_career_mtime = mtime
+
+    return _cached_career_coordinates
+
+
 # ---------------------------------------------------------------------------
 # Country resolution helpers
 # ---------------------------------------------------------------------------
@@ -359,6 +401,8 @@ def build_showcase_data(
     coordinates: dict[str, CountryShowcase],
     assets_dir: Path,
     tracker_asset_url_prefix: str = '/api/tracker_assets',
+    canvas_filenames: Optional[dict] = None,
+    overlay_filenames: Optional[dict] = None,
 ) -> dict:
     """
     Build the JSON-serialisable showcase payload for the frontend.
@@ -393,20 +437,23 @@ def build_showcase_data(
         )
         return {}
 
+    _canvas_map  = canvas_filenames  or CANVAS_FILENAME
+    _overlay_map = overlay_filenames or OVERLAY_FILENAME
+
     folder = ASSET_FOLDER.get(country_key, '')
 
     def _make_url(filename: str) -> str:
         return f"{tracker_asset_url_prefix}/CampaignRanksAwards/{folder}/{filename}"
 
     # Canvas URL
-    canvas_file = CANVAS_FILENAME.get(country_key, '')
+    canvas_file = _canvas_map.get(country_key, '')
     canvas_url  = _make_url(canvas_file) if canvas_file else ''
 
     # Overlay
     overlay_dict: Optional[dict] = None
     if showcase.overlay:
         ovl = showcase.overlay
-        overlay_file = OVERLAY_FILENAME.get(country_key, '')
+        overlay_file = _overlay_map.get(country_key, '')
         if overlay_file:
             overlay_dict = {
                 'url': _make_url(overlay_file),

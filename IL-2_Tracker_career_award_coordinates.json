@@ -1,0 +1,653 @@
+{
+  "ussr_early": {
+    "medals": [
+      {
+        "name": "medal_courage_big1",
+        "x": 142,
+        "y": 141,
+        "w": 316,
+        "h": 473,
+        "replacements": []
+      },
+      {
+        "name": "medal_battle_merit_big1",
+        "x": 517,
+        "y": 141,
+        "w": 316,
+        "h": 489,
+        "replacements": []
+      },
+      {
+        "name": "hero_soviet_union_big1",
+        "x": 898,
+        "y": 141,
+        "w": 307,
+        "h": 440,
+        "replacements": []
+      },
+      {
+        "name": "order_lenin_big1",
+        "x": 1259,
+        "y": 277,
+        "w": 335,
+        "h": 347,
+        "replacements": []
+      },
+      {
+        "name": "order_surov_big1",
+        "x": 882,
+        "y": 1071,
+        "w": 335,
+        "h": 464,
+        "replacements": []
+      },
+      {
+        "name": "order_patriotic_war_2nd_big1",
+        "x": 498,
+        "y": 636,
+        "w": 355,
+        "h": 493,
+        "replacements": []
+      },
+      {
+        "name": "order_nevsky_big1",
+        "x": 871,
+        "y": 636,
+        "w": 364,
+        "h": 503,
+        "replacements": []
+      },
+      {
+        "name": "order_patriotic_war_1st_big1",
+        "x": 1250,
+        "y": 635,
+        "w": 351,
+        "h": 496,
+        "replacements": []
+      },
+      {
+        "name": "pilots_badge_big1",
+        "x": 130,
+        "y": 1243,
+        "w": 332,
+        "h": 238,
+        "replacements": []
+      },
+      {
+        "name": "order_red_star_big1",
+        "x": 495,
+        "y": 1167,
+        "w": 363,
+        "h": 364,
+        "replacements": []
+      },
+      {
+        "name": "order_red_banner_big1",
+        "x": 123,
+        "y": 760,
+        "w": 359,
+        "h": 390,
+        "replacements": [
+          "order_red_banner_2_big1",
+          "order_red_banner_3_big1"
+        ]
+      },
+      {
+        "name": "red_wound_stripe_big1",
+        "x": 1214,
+        "y": 1243,
+        "w": 425,
+        "h": 212,
+        "replacements": [
+          "yellow_wound_stripe_big1"
+        ]
+      },
+      {
+        "name": "DFM_Stalingrad_big1",
+        "x": 129,
+        "y": 1531,
+        "w": 343,
+        "h": 503,
+        "replacements": []
+      },
+      {
+        "name": "DFM_Caucasus_big1",
+        "x": 499,
+        "y": 1531,
+        "w": 352,
+        "h": 503,
+        "replacements": []
+      },
+      {
+        "name": "DFM_Moscow_big1",
+        "x": 885,
+        "y": 1531,
+        "w": 324,
+        "h": 503,
+        "replacements": []
+      },
+      {
+        "name": "DSM_big1",
+        "x": 1270,
+        "y": 1546,
+        "w": 311,
+        "h": 503,
+        "replacements": []
+      }
+    ],
+    "overlay": {
+      "name": "USSR_overlay_career",
+      "x": 101,
+      "y": 139,
+      "w": 1521,
+      "h": 1438,
+      "replacements": []
+    }
+  },
+  "ussr_late": {
+    "medals": [
+      {
+        "name": "medal_courage_big1",
+        "x": 136,
+        "y": 162,
+        "w": 329,
+        "h": 503,
+        "replacements": []
+      },
+      {
+        "name": "medal_battle_merit_big1",
+        "x": 523,
+        "y": 159,
+        "w": 304,
+        "h": 503,
+        "replacements": []
+      },
+      {
+        "name": "hero_soviet_union_big1",
+        "x": 903,
+        "y": 139,
+        "w": 298,
+        "h": 496,
+        "replacements": []
+      },
+      {
+        "name": "order_lenin_big1",
+        "x": 1259,
+        "y": 178,
+        "w": 332,
+        "h": 503,
+        "replacements": []
+      },
+      {
+        "name": "order_surov_big1",
+        "x": 858,
+        "y": 1177,
+        "w": 382,
+        "h": 372,
+        "replacements": []
+      },
+      {
+        "name": "order_patriotic_war_2nd_big1",
+        "x": 495,
+        "y": 696,
+        "w": 355,
+        "h": 365,
+        "replacements": []
+      },
+      {
+        "name": "order_nevsky_big1",
+        "x": 868,
+        "y": 681,
+        "w": 364,
+        "h": 378,
+        "replacements": []
+      },
+      {
+        "name": "order_patriotic_war_1st_big1",
+        "x": 1250,
+        "y": 697,
+        "w": 351,
+        "h": 363,
+        "replacements": []
+      },
+      {
+        "name": "pilots_badge_big1",
+        "x": 166,
+        "y": 1253,
+        "w": 270,
+        "h": 216,
+        "replacements": []
+      },
+      {
+        "name": "order_red_star_big1",
+        "x": 495,
+        "y": 1165,
+        "w": 363,
+        "h": 364,
+        "replacements": []
+      },
+      {
+        "name": "order_red_banner_big1",
+        "x": 126,
+        "y": 681,
+        "w": 339,
+        "h": 503,
+        "replacements": [
+          "order_red_banner_2_big1",
+          "order_red_banner_3_big1"
+        ]
+      },
+      {
+        "name": "red_wound_stripe_big1",
+        "x": 1213,
+        "y": 1257,
+        "w": 425,
+        "h": 212,
+        "replacements": [
+          "yellow_wound_stripe_big1"
+        ]
+      },
+      {
+        "name": "DFM_Stalingrad_big1",
+        "x": 129,
+        "y": 1531,
+        "w": 343,
+        "h": 503,
+        "replacements": []
+      },
+      {
+        "name": "DFM_Caucasus_big1",
+        "x": 499,
+        "y": 1531,
+        "w": 352,
+        "h": 503,
+        "replacements": []
+      },
+      {
+        "name": "DFM_Moscow_big1",
+        "x": 885,
+        "y": 1531,
+        "w": 324,
+        "h": 503,
+        "replacements": []
+      },
+      {
+        "name": "DSM_big1",
+        "x": 1270,
+        "y": 1546,
+        "w": 311,
+        "h": 503,
+        "replacements": []
+      }
+    ],
+    "overlay": {
+      "name": "USSR_overlay_career",
+      "x": 101,
+      "y": 139,
+      "w": 1521,
+      "h": 1438,
+      "replacements": []
+    }
+  },
+  "usa": {
+    "medals": [
+      {
+        "name": "distinguished_flying_cross_big1",
+        "x": 156,
+        "y": 160,
+        "w": 264,
+        "h": 455,
+        "replacements": [
+          "dfc_1_oak_big1",
+          "dfc_2_oak_big1",
+          "dfc_3_oak_big1",
+          "dfc_4_oak_big1",
+          "dfc_1_silver_oak_big1"
+        ]
+      },
+      {
+        "name": "distinguished_service_cross_big1",
+        "x": 454,
+        "y": 160,
+        "w": 307,
+        "h": 485,
+        "replacements": [
+          "dsc_1_oak_big1",
+          "dsc_2_oak_big1",
+          "dsc_3_oak_big1",
+          "dsc_4_oak_big1"
+        ]
+      },
+      {
+        "name": "medal_of_honor_big1",
+        "x": 772,
+        "y": 160,
+        "w": 498,
+        "h": 503,
+        "replacements": [
+          "medal_of_honor_1_oak_big1"
+        ]
+      },
+      {
+        "name": "silver_star_big1",
+        "x": 1304,
+        "y": 160,
+        "w": 294,
+        "h": 465,
+        "replacements": [
+          "silver_star_1_oak_big1",
+          "silver_star_2_oak_big1"
+        ]
+      },
+      {
+        "name": "legion_of_merit_big1",
+        "x": 1632,
+        "y": 160,
+        "w": 300,
+        "h": 467,
+        "replacements": []
+      },
+      {
+        "name": "air_medal_big1",
+        "x": 477,
+        "y": 627,
+        "w": 262,
+        "h": 455,
+        "replacements": [
+          "air_medal_1_oak_big1",
+          "air_medal_2_oak_big1",
+          "air_medal_3_oak_big1",
+          "air_medal_4_oak_big1",
+          "air_medal_1silver_oak_big1"
+        ]
+      },
+      {
+        "name": "pilots_badge_big1",
+        "x": 820,
+        "y": 855,
+        "w": 410,
+        "h": 197,
+        "replacements": []
+      },
+      {
+        "name": "bronze_star_big1",
+        "x": 1297,
+        "y": 641,
+        "w": 311,
+        "h": 493,
+        "replacements": [
+          "bronze_star_1_oak_big1",
+          "bronze_star_2_oak_big1"
+        ]
+      },
+      {
+        "name": "purple_heart_big1",
+        "x": 1640,
+        "y": 636,
+        "w": 284,
+        "h": 479,
+        "replacements": [
+          "purple_heart_1_oak_big1",
+          "purple_heart_2_oak_big1"
+        ]
+      },
+      {
+        "name": "EU_AF_ME_medal_big1",
+        "x": 138,
+        "y": 624,
+        "w": 304,
+        "h": 491,
+        "replacements": []
+      }
+    ],
+    "overlay": {
+      "name": "usa_overlay",
+      "x": 32,
+      "y": 0,
+      "w": 2018,
+      "h": 961,
+      "replacements": []
+    }
+  },
+  "germany": {
+    "medals": [
+      {
+        "name": "iron_cross_2nd_big1",
+        "x": 141,
+        "y": 134,
+        "w": 363,
+        "h": 503,
+        "replacements": []
+      },
+      {
+        "name": "iron_cross_1st_big1",
+        "x": 504,
+        "y": 306,
+        "w": 363,
+        "h": 365,
+        "replacements": []
+      },
+      {
+        "name": "knights_cross_big1",
+        "x": 838,
+        "y": 134,
+        "w": 459,
+        "h": 503,
+        "replacements": [
+          "knights_cross_oak_leaves_big1",
+          "knights_cross_swords_big1",
+          "knights_cross_diamonds_big1",
+          "knights_cross_gold_diamonds_big1"
+        ]
+      },
+      {
+        "name": "german_cross_gold_big1",
+        "x": 1262,
+        "y": 288,
+        "w": 369,
+        "h": 370,
+        "replacements": []
+      },
+      {
+        "name": "honor_clasp_big1",
+        "x": 1631,
+        "y": 186,
+        "w": 306,
+        "h": 485,
+        "replacements": []
+      },
+      {
+        "name": "pilots_badge_big1",
+        "x": 471,
+        "y": 757,
+        "w": 430,
+        "h": 362,
+        "replacements": []
+      },
+      {
+        "name": "honor_goblet_big1",
+        "x": 919,
+        "y": 671,
+        "w": 280,
+        "h": 497,
+        "replacements": []
+      },
+      {
+        "name": "fighters_bronze_big1",
+        "x": 1199,
+        "y": 918,
+        "w": 496,
+        "h": 250,
+        "replacements": [
+          "fighters_silver_big1",
+          "fighters_gold_big1",
+          "fighters_gold_clasp_big1",
+          "bombers_bronze_big1",
+          "bombers_silver_big1",
+          "bomber_gold_big1",
+          "bombers_gold_clasp_big1",
+          "attack_heavy_fighters_bronze_big1",
+          "attack_heavy_fighters_silver_big1",
+          "attack_heavy_fighters_gold_big1",
+          "attack_heavy_fighters_gold_clasp_big1",
+          "attack_bronze_big1",
+          "attack_silver_big1",
+          "attack_gold_big1",
+          "attack_gold_clasp_big1",
+          "transport_bronze_big1",
+          "transport_silver_big1",
+          "transport_gold_big1",
+          "transport_gold_clasp_big1"
+        ]
+      },
+      {
+        "name": "wound_badge_black_big1",
+        "x": 1290,
+        "y": 637,
+        "w": 314,
+        "h": 353,
+        "replacements": [
+          "wound_badge_silver_big1",
+          "wound_badge_gold_big1"
+        ]
+      },
+      {
+        "name": "eastern_front_medal_big1",
+        "x": 174,
+        "y": 671,
+        "w": 298,
+        "h": 457,
+        "replacements": []
+      },
+      {
+        "name": "kuban_shield_big1",
+        "x": 1640,
+        "y": 780,
+        "w": 288,
+        "h": 339,
+        "replacements": []
+      }
+    ],
+    "overlay": {
+      "name": "Germany_overlay",
+      "x": 32,
+      "y": 0,
+      "w": 2018,
+      "h": 961,
+      "replacements": []
+    }
+  },
+  "britain": {
+    "medals": [
+      {
+        "name": "dfm_big1",
+        "x": 178,
+        "y": 141,
+        "w": 258,
+        "h": 494,
+        "replacements": [
+          "dfm_bar_big1",
+          "dfm_2bar_big1"
+        ]
+      },
+      {
+        "name": "dfc_big1",
+        "x": 513,
+        "y": 141,
+        "w": 302,
+        "h": 493,
+        "replacements": [
+          "dfc_bar_big1",
+          "dfc_2bar_big1"
+        ]
+      },
+      {
+        "name": "victoria_cross_big1",
+        "x": 881,
+        "y": 180,
+        "w": 288,
+        "h": 504,
+        "replacements": [
+          "victoria_cross_bar_big1"
+        ]
+      },
+      {
+        "name": "dso_big1",
+        "x": 1257,
+        "y": 141,
+        "w": 280,
+        "h": 498,
+        "replacements": [
+          "dso_bar_big1",
+          "dso_bar2_big1",
+          "dso_bar3_big1"
+        ]
+      },
+      {
+        "name": "AF_medal_big1",
+        "x": 1614,
+        "y": 141,
+        "w": 258,
+        "h": 494,
+        "replacements": [
+          "AF_medal_bar_big1",
+          "AF_medal_2bars_big1"
+        ]
+      },
+      {
+        "name": "raf_pilots_badge_big1",
+        "x": 1087,
+        "y": 639,
+        "w": 471,
+        "h": 265,
+        "replacements": []
+      },
+      {
+        "name": "mentioned_in_despatches_big1",
+        "x": 580,
+        "y": 657,
+        "w": 470,
+        "h": 500,
+        "replacements": []
+      },
+      {
+        "name": "wound_stripe_big1",
+        "x": 1073,
+        "y": 861,
+        "w": 502,
+        "h": 284,
+        "replacements": [
+          "wound_stripe_2_big1",
+          "wound_stripe_3_big1"
+        ]
+      },
+      {
+        "name": "AF_cross_big1",
+        "x": 1597,
+        "y": 648,
+        "w": 293,
+        "h": 497,
+        "replacements": [
+          "AF_cross_bar_big1",
+          "AF_cross_2bars_big"
+        ]
+      },
+      {
+        "name": "France_Germany_star_big1",
+        "x": 158,
+        "y": 654,
+        "w": 299,
+        "h": 486,
+        "replacements": []
+      }
+    ],
+    "overlay": {
+      "name": "Britain_overlay",
+      "x": 32,
+      "y": 0,
+      "w": 2018,
+      "h": 961,
+      "replacements": []
+    }
+  }
+}

@@ -2190,11 +2190,19 @@ const DetailPage = {
                 return b;
             })();
 
-        btn.addEventListener('click', () => {
-            if (typeof openMedalShowcase === 'function') {
-                openMedalShowcase(campaignName, btn);
-            }
-        });
+        if (this._source === 'career') {
+            btn.addEventListener('click', () => {
+                if (typeof openCareerMedalShowcase === 'function') {
+                    openCareerMedalShowcase(campaignName, btn);
+                }
+            });
+        } else {
+            btn.addEventListener('click', () => {
+                if (typeof openMedalShowcase === 'function') {
+                    openMedalShowcase(campaignName, btn);
+                }
+            });
+        }
 
         section.appendChild(btn);
         section.style.display = '';

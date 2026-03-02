@@ -27,11 +27,15 @@ from campaign_service_record.core.locale_resolver import resolve_detail_page_loc
 from campaign_service_record.providers.career_provider import CareerDataProvider
 from campaign_service_record.core.medal_showcase import (
     load_coordinates,
+    load_career_coordinates,
     resolve_showcase_country,
     resolve_ussr_variant,
     earned_showcase_names_from_events,
+    award_image_to_showcase_name,
     build_showcase_data,
     ASSET_FOLDER,
+    CAREER_CANVAS_FILENAME,
+    CAREER_OVERLAY_FILENAME,
 )
 from utils.formatting import safe_campaign_filename
 from campaign_service_record.utils.path_utils import get_game_directory
@@ -974,21 +978,87 @@ def get_career_showcase(root_career_id: int):
     """
     Medal showcase for a career pilot.
 
-    Currently returns 503 until award translation tables are provided.
-    Once event.tpar2 codes are mapped to image filenames, this endpoint
-    will delegate to the existing build_showcase_data() function.
+    Reads IL-2_Tracker_career_award_coordinates.json for placement data,
+    resolves earned awards from career event modal_image_url fields, and
+    delegates to build_showcase_data() with career-specific canvas/overlay maps.
     """
     _last_ping[0] = time.time()
 
     if not _career_provider:
         return jsonify({'error': 'Career mode not available'}), 503
 
-    # Showcase requires award image mapping (event.tpar2 → image filename).
-    # Translation table not yet available — return explicit "not yet" response.
-    return jsonify({
-        'error': 'Career showcase not yet available',
-        'reason': 'Award image mapping pending translation table'
-    }), 503
+    # --- Locate career JSON coordinate file ---
+    career_json: Optional[Path] = None
+    if _career_data_dir:
+        for candidate in (
+            _career_data_dir / 'IL-2_Tracker_career_award_coordinates.json',
+            _career_data_dir.parent / 'IL-2_Tracker_career_award_coordinates.json',
+        ):
+            if candidate.exists():
+                career_json = candidate
+                break
+
+    if career_json is None:
+        return jsonify({'error': 'Career coordinate file not found'}), 404
+
+    # --- Assets dir (for _resolve_asset_file file-existence checks) ---
+    if _career_data_dir:
+        assets_dir = _career_data_dir / 'CampaignRanksAwards'
+    elif _career_game_dir:
+        assets_dir = _career_game_dir / 'data' / 'swf' / 'CampaignRanksAwards'
+    else:
+        return jsonify({'error': 'Career data directory not configured'}), 500
+
+    # --- Career detail (events + country) ---
+    detail = _career_provider.get_entry_detail(str(root_career_id))
+    if not detail:
+        return jsonify({'error': 'Career not found'}), 404
+
+    country = detail.get('country', '')
+    showcase_base = resolve_showcase_country(country)
+    if not showcase_base:
+        return jsonify({'error': f'Unsupported country for showcase: {country}'}), 404
+
+    events = detail.get('events', [])
+
+    # --- USSR early/late ---
+    if showcase_base == 'ussr':
+        dates = [ev.get('date') for ev in events if ev.get('date')]
+        country_key = resolve_ussr_variant(max(dates) if dates else None)
+    else:
+        country_key = showcase_base
+
+    # --- Earned showcase names from modal_image_url (big asset) ---
+    # modal_image_url points to the 'big' asset (e.g. iron_cross_2nd_big.dds);
+    # award_image_to_showcase_name converts the filename to the big1 showcase key.
+    earned: set[str] = set()
+    for ev in events:
+        if ev.get('type') != 'award':
+            continue
+        modal_url = ev.get('modal_image_url') or ''
+        if modal_url:
+            name = award_image_to_showcase_name(Path(modal_url).name)
+            if name:
+                earned.add(name)
+
+    # --- Load career coordinates ---
+    try:
+        coordinates = load_career_coordinates(career_json)
+    except Exception as exc:
+        logger.error(
+            "Failed to parse career medal coordinates: %s", exc, exc_info=True
+        )
+        return jsonify({'error': 'Failed to parse coordinate file', 'detail': str(exc)}), 500
+
+    return jsonify(build_showcase_data(
+        country_key=country_key,
+        earned_showcase_names=earned,
+        coordinates=coordinates,
+        assets_dir=assets_dir,
+        tracker_asset_url_prefix='/api/career_assets',
+        canvas_filenames=CAREER_CANVAS_FILENAME,
+        overlay_filenames=CAREER_OVERLAY_FILENAME,
+    ))
 
 
 # ============================================================================

@@ -165,22 +165,83 @@ def resolve_locale(explicit_locale: Optional[str] = None) -> str:
 def set_user_locale(locale: str) -> bool:
     """
     Set user's preferred locale.
-    
+
     Args:
         locale: Locale code to set (e.g., 'en', 'de')
-        
+
     Returns:
         True if successful, False otherwise
     """
     settings = load_settings()
     settings['locale'] = normalize_locale(locale)
-    
+
     if save_settings(settings):
         logger.info(f"User locale set to: {locale}")
         return True
     else:
         logger.error(f"Failed to set user locale: {locale}")
         return False
+
+
+# Valid per-career locale overrides (explicit override options)
+VALID_CAREER_OVERRIDE_LOCALES = ('en', 'de', 'ru')
+
+
+def get_career_language_overrides() -> dict:
+    """
+    Return the full careerLanguageOverrides dict from settings.
+
+    Returns:
+        Dict mapping career_id strings to locale codes (may be empty).
+    """
+    settings = load_settings()
+    raw = settings.get('careerLanguageOverrides', {})
+    return raw if isinstance(raw, dict) else {}
+
+
+def set_career_language_override(career_id: str, locale: Optional[str]) -> bool:
+    """
+    Persist a per-career language override.
+
+    Args:
+        career_id: str(root_career_id)
+        locale: 'en' | 'de' | 'ru' | 'default' | None
+                None or 'default' clears the override (career uses global locale).
+
+    Returns:
+        True if saved successfully, False otherwise.
+    """
+    settings = load_settings()
+    overrides = settings.setdefault('careerLanguageOverrides', {})
+    if locale is None or locale == 'default':
+        overrides.pop(str(career_id), None)
+    else:
+        overrides[str(career_id)] = normalize_locale(locale)
+    return save_settings(settings)
+
+
+def get_career_effective_locale(career_id: str) -> str:
+    """
+    Resolve effective display locale for a career's Service Record.
+
+    Resolution order:
+    1. Per-career override (if set and valid) → use it directly
+    2. Otherwise → global locale via resolve_locale()
+       (Career UI strings work in all 7 supported languages; no pre-generated
+       debriefing HTML constraint unlike campaigns.)
+
+    Args:
+        career_id: str(root_career_id)
+
+    Returns:
+        Two-letter locale code (e.g., 'en', 'de', 'ru', 'fr', ...)
+    """
+    overrides = get_career_language_overrides()
+    override = overrides.get(str(career_id))
+    if override and override != 'default' and override in VALID_CAREER_OVERRIDE_LOCALES:
+        logger.debug("Career %s using override locale: %s", career_id, override)
+        return override
+    return resolve_locale()
 
 
 def get_system_locale() -> Optional[str]:

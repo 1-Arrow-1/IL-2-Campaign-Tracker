@@ -428,3 +428,62 @@ async function openMedalShowcase(campaignName, btn) {
     btn.disabled = false;
     btn.textContent = originalText;
 }
+
+
+/**
+ * Fetch career showcase data and open the modal.
+ * Mirror of openMedalShowcase() but calls the career endpoint.
+ *
+ * @param {string|number} careerId  root_career_id
+ * @param {HTMLButtonElement} btn
+ */
+async function openCareerMedalShowcase(careerId, btn) {
+    if (!careerId) return;
+
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = (i18n && i18n.t)
+        ? i18n.t('ui.medal_showcase.loading')
+        : 'Loading\u2026';
+
+    try {
+        const response = await fetch(
+            `/api/career/${encodeURIComponent(careerId)}/showcase`
+        );
+
+        if (!response.ok) {
+            const body = await response.json().catch(() => ({}));
+
+            if (response.status === 404) {
+                btn.textContent = (i18n && i18n.t)
+                    ? i18n.t('ui.medal_showcase.not_available')
+                    : 'Not available';
+                btn.disabled = true;
+                return;
+            }
+
+            const msg = body.error || `HTTP ${response.status}`;
+            const detail = body.detail ? ` \u2014 ${body.detail}` : '';
+            throw new Error(msg + detail);
+        }
+
+        const data = await response.json();
+        MedalShowcaseModal.open(data);
+    } catch (err) {
+        console.error('[MedalShowcase] Failed to load career showcase:', err);
+        btn.textContent = (i18n && i18n.t)
+            ? i18n.t('ui.medal_showcase.error')
+            : 'Error loading';
+        btn.title = err.message || '';
+        btn.disabled = true;
+        return;
+    } finally {
+        if (!btn.disabled || btn.textContent === originalText) {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    }
+
+    btn.disabled = false;
+    btn.textContent = originalText;
+}
