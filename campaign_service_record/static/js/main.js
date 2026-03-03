@@ -44,24 +44,26 @@ const App = {
         const titleKey = isCareer ? 'service_record.career_app_title' : 'service_record.app_title';
         document.title = i18n.t(titleKey);
 
-        // Header h1
+        // Header h1 — update data-i18n so translatePage() uses the correct key on locale changes
         const h1 = document.querySelector('#app-header h1');
         if (h1) {
+            h1.setAttribute('data-i18n', titleKey);
             h1.textContent = i18n.t(titleKey);
         }
 
         // Landing page h2 ("Campaigns Flown" → "Careers" in career mode)
-        if (isCareer) {
-            const h2 = document.querySelector('.campaigns-section h2');
-            if (h2) {
-                h2.textContent = i18n.t('ui.career.section_title') || 'IL-2 Careers';
-            }
+        const h2 = document.querySelector('.campaigns-section h2');
+        if (h2) {
+            const h2Key = isCareer ? 'ui.career.section_title' : 'web.label.campaigns_flown';
+            h2.setAttribute('data-i18n', h2Key);
+            h2.textContent = i18n.t(h2Key);
         }
 
-        // Back button label
+        // Back button label — update data-i18n so translatePage() uses the correct key
         const backBtn = document.getElementById('back-btn');
         if (backBtn) {
             const backKey = isCareer ? 'web.nav.back_to_careers' : 'web.nav.back_to_campaigns';
+            backBtn.setAttribute('data-i18n', backKey);
             backBtn.textContent = i18n.t(backKey);
         }
     },

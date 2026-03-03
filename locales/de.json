@@ -717,7 +717,7 @@
       "missions_completed": "{count} abgeschlossen",
       "missions_label": "Missionen:"
     },
-    "career_app_title": "IL-2 Karriere-Gefechtsbericht"
+    "career_app_title": "IL-2 Karriere-Dienstakte",
   },
   "settings_manager": {
     "app_title": "IL-2 Campaign Tracker - Einstellungen",
@@ -1096,7 +1096,7 @@
       "settings_manager": "Einstellungen",
       "uninstall": "Deinstallieren",
       "pdf_reports": "PDF-Berichte",
-      "career_service_record": "Karriere-Gefechtsbericht"
+      "career_service_record": "Karriere-Dienstakte"
     },
     "status": {
       "checking": "Tracker-Status wird geprüft...",
@@ -1120,8 +1120,8 @@
       "error_open_settings": "Einstellungs-Manager konnte nicht geöffnet werden.",
       "error_open_pdf": "PDF-Bericht konnte nicht geöffnet werden.",
       "no_pdfs_found": "Keine Kampagnen-PDFs gefunden",
-      "career_service_record_not_found": "Karriere-Gefechtsbericht-Programm nicht gefunden:",
-      "error_open_career_service_record": "Karriere-Gefechtsbericht konnte nicht geöffnet werden."
+      "career_service_record_not_found": "Karriere-Dienstakte-Programm nicht gefunden:",
+      "error_open_career_service_record": "Karriere-Dienstakte konnte nicht geöffnet werden."
     }
   }
 }
