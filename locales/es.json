@@ -993,7 +993,7 @@
       "appointment_commander": "Nombramiento como comandante",
       "current_squadron": "Escuadrón actual",
       "recovery_from_injury": "Recuperación de herida",
-      "squadron_change_to": "Traslado al {squadron}"
+      "squadron_transfer_from_to": "Traslado de {from} a {to}"
     },
     "message": {
       "birth_country_placeholder": "País",

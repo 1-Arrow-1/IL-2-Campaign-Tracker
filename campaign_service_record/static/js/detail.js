@@ -1494,7 +1494,7 @@ const DetailPage = {
      *
      * Wraps all content in a collapsible <details open class="theatre-section">
      * element using the same CSS classes as theatre debriefing groups in the
-     * right column. Supported types: RECOVERY, COMMAND, TRANSFER, BONUS.
+     * right column. Supported types: RECOVERY, COMMAND, SQUADRON_CHANGE, BONUS.
      */
     renderOtherIncidences(incidences) {
         const display = this.elements.additionalNotesDisplay;
@@ -1537,10 +1537,10 @@ const DetailPage = {
                         inc.date, '\u2013',
                         i18n.t('web.label.appointment_commander'),
                     ].join(' ');
-                } else if (inc.type === 'TRANSFER') {
+                } else if (inc.type === 'SQUADRON_CHANGE') {
                     p.textContent = [
                         inc.date, '\u2013',
-                        i18n.t('web.label.squadron_change_to', { squadron: inc.squadron_name }),
+                        i18n.t('web.label.squadron_transfer_from_to', { from: inc.old_squadron, to: inc.new_squadron }),
                     ].join(' ');
                 } else if (inc.type === 'BONUS') {
                     p.textContent = [

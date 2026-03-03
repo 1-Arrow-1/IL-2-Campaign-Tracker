@@ -993,7 +993,7 @@
       "promotion": "Promotion",
       "promotions": "Promotions",
       "recovery_from_injury": "Recovery from injury",
-      "squadron_change_to": "Squadron change to {squadron}"
+      "squadron_transfer_from_to": "Transfer from {from} to {to}"
     },
     "message": {
       "birth_country_placeholder": "Country",

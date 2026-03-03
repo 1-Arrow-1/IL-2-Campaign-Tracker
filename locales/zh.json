@@ -993,7 +993,7 @@
       "appointment_commander": "晋升为指挥官",
       "current_squadron": "当前中队",
       "recovery_from_injury": "伤后康复",
-      "squadron_change_to": "调往 {squadron}"
+      "squadron_transfer_from_to": "从 {from} 调往 {to}"
     },
     "message": {
       "birth_country_placeholder": "国家",

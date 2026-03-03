@@ -993,7 +993,7 @@
       "promotion": "Beförderung",
       "promotions": "Beförderungen",
       "recovery_from_injury": "Genesungsurlaub",
-      "squadron_change_to": "Geschwaderwechsel zu {squadron}"
+      "squadron_transfer_from_to": "Versetzung von {from} nach {to}"
     },
     "message": {
       "birth_country_placeholder": "Land",

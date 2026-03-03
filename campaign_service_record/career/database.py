@@ -285,6 +285,28 @@ class CareerDatabase:
         )
         return cursor.fetchall()
 
+    def get_events_with_squadron_for_career(
+        self,
+        career_id: int,
+        player_id: int,
+    ) -> List[sqlite3.Row]:
+        """
+        Return all non-deleted events for this career that carry a non-null
+        squadronId, ordered by date ASC.
+
+        Used by the squadron-change (event.type = 10) handler to determine the
+        pilot's previous squadron just before each change event.
+        """
+        conn = self._connect()
+        cursor = conn.execute(
+            "SELECT * FROM event "
+            "WHERE careerId = ? AND pilotId = ? AND isDeleted = 0 "
+            "AND squadronId IS NOT NULL "
+            "ORDER BY date ASC",
+            [career_id, player_id],
+        )
+        return cursor.fetchall()
+
     def get_squadron_by_career_and_config(
         self,
         career_id: int,

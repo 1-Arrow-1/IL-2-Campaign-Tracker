@@ -993,7 +993,7 @@
       "appointment_commander": "Назначение командиром",
       "current_squadron": "Текущая эскадрилья",
       "recovery_from_injury": "Восстановление после ранения",
-      "squadron_change_to": "Перевод в {squadron}"
+      "squadron_transfer_from_to": "Перевод из {from} в {to}"
     },
     "message": {
       "birth_country_placeholder": "Страна",

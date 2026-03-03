@@ -1,12 +1,12 @@
 """
 Other incidences loader for the Career Service Record.
 
-Queries cp.db for three new event types and returns normalised entry dicts
-suitable for JSON serialisation and frontend rendering:
+Queries cp.db for event types and returns normalised entry dicts suitable for
+JSON serialisation and frontend rendering:
 
-    RECOVERY  — collapsed consecutive medical-leave days (event.type = 13)
-    COMMAND   — commander/leadership appointment     (event.type =  7)
-    TRANSFER  — squadron transfer                    (event.type =  9)
+    RECOVERY        — collapsed consecutive medical-leave days (event.type = 13)
+    COMMAND         — commander/leadership appointment     (event.type =  7)
+    SQUADRON_CHANGE — squadron change with from/to names   (event.type = 10)
 
 All queries enforce both careerId AND pilotId filters so that events from
 other career chains (even with the same pilot id) are never included.
@@ -29,11 +29,12 @@ COMMAND:
         "sort_key": "YYYY-MM-DD",
     }
 
-TRANSFER:
+SQUADRON_CHANGE:
     {
-        "type":          "TRANSFER",
+        "type":          "SQUADRON_CHANGE",
         "date":          "YYYY-MM-DD",
-        "squadron_name": str,   # resolved display name or "Squadron <configId>"
+        "old_squadron":  str,   # resolved display name of previous squadron
+        "new_squadron":  str,   # resolved display name of new squadron (event.squadronId)
         "sort_key":      "YYYY-MM-DD",
     }
 """
@@ -47,7 +48,7 @@ logger = logging.getLogger(__name__)
 # Event type constants
 _TYPE_RECOVERY = 13
 _TYPE_COMMAND = 7
-_TYPE_TRANSFER = 9
+_TYPE_SQUADRON_CHANGE = 10
 
 
 # ---------------------------------------------------------------------------
@@ -224,36 +225,60 @@ def load_other_incidences(
         )
 
     # ------------------------------------------------------------------ #
-    # Squadron transfers (event.type = 9)
+    # Squadron change events (event.type = 10)
+    # new squadron = event.squadronId of the type-10 event
+    # old squadron = squadronId of the most recent prior event that carries one
     # ------------------------------------------------------------------ #
     try:
-        transfer_rows = db.get_incidence_events_for_career(
-            career_id, player_id, [_TYPE_TRANSFER]
+        squadron_change_rows = db.get_incidence_events_for_career(
+            career_id, player_id, [_TYPE_SQUADRON_CHANGE]
         )
-        for row in transfer_rows:
+        # All events with a non-null squadronId, ordered by date — used to
+        # determine which squadron the pilot was in just before each change.
+        squadron_history = db.get_events_with_squadron_for_career(career_id, player_id)
+
+        for row in squadron_change_rows:
             d = _parse_iso(row["date"])
             if d is None:
-                logger.debug("TRANSFER event has unparseable date; skipping")
+                logger.debug("SQUADRON_CHANGE event has unparseable date; skipping")
                 continue
 
-            config_id = _safe_int(row, "squadronId")
-            if config_id:
-                display_name = resolve_squadron_fn(career_id, config_id)
+            # New squadron: from the type-10 event itself
+            new_config_id = _safe_int(row, "squadronId")
+            if new_config_id:
+                new_display = resolve_squadron_fn(career_id, new_config_id)
+                new_squadron = new_display if new_display else f"Squadron {new_config_id}"
             else:
-                display_name = None
+                new_squadron = "?"
 
-            squadron_name = display_name if display_name else f"Squadron {config_id or '?'}"
+            # Old squadron: most recent event with a non-null squadronId
+            # that occurred strictly before this event's date
+            old_config_id = 0
+            for h in reversed(squadron_history):
+                h_date = _parse_iso(h["date"])
+                if h_date is not None and h_date < d:
+                    cid = _safe_int(h, "squadronId")
+                    if cid:
+                        old_config_id = cid
+                        break
+
+            if old_config_id:
+                old_display = resolve_squadron_fn(career_id, old_config_id)
+                old_squadron = old_display if old_display else f"Squadron {old_config_id}"
+            else:
+                old_squadron = "?"
 
             iso = _iso(d)
             entries.append({
-                "type":          "TRANSFER",
-                "date":          iso,
-                "squadron_name": squadron_name,
-                "sort_key":      iso,
+                "type":         "SQUADRON_CHANGE",
+                "date":         iso,
+                "old_squadron": old_squadron,
+                "new_squadron": new_squadron,
+                "sort_key":     iso,
             })
     except Exception as exc:
         logger.warning(
-            "Failed to load transfer events for careerId=%d pilotId=%d: %s",
+            "Failed to load squadron change events for careerId=%d pilotId=%d: %s",
             career_id, player_id, exc,
         )
 

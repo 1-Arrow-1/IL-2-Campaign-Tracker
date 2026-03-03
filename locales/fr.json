@@ -994,7 +994,7 @@
       "appointment_commander": "Nomination comme commandant",
       "current_squadron": "Escadron actuel",
       "recovery_from_injury": "Convalescence après blessure",
-      "squadron_change_to": "Transfert vers {squadron}"
+      "squadron_transfer_from_to": "Mutation de {from} à {to}"
     },
     "message": {
       "birth_country_placeholder": "Pays",

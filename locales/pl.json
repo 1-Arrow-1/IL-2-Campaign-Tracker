@@ -993,7 +993,7 @@
       "appointment_commander": "Mianowanie dowódcą",
       "current_squadron": "Bieżąca eskadra",
       "recovery_from_injury": "Rekonwalescencja po urazie",
-      "squadron_change_to": "Przeniesienie do {squadron}"
+      "squadron_transfer_from_to": "Przeniesienie z {from} do {to}"
     },
     "message": {
       "birth_country_placeholder": "Kraj",
