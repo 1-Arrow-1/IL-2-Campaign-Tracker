@@ -306,9 +306,11 @@ class MissionDebriefParser:
 
                 self.stats.add_hit(a, tgt, dmg, ts)
 
-                # Track last damager per Air target for delayed-kill attribution.
+                # Track last *human* damager per Air target for delayed-kill attribution.
+                # Ignore AID:-1 (fire / environmental damage) so burning wreckage
+                # does not overwrite the actual attacker who set the aircraft alight.
                 _tgt_obj = self.stats.objects.get(tgt)
-                if _tgt_obj and _tgt_obj.category == "Air":
+                if _tgt_obj and _tgt_obj.category == "Air" and a != -1:
                     self._last_damager[tgt] = a
                     self._last_damage_tick[tgt] = t
                 
