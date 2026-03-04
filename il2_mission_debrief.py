@@ -668,6 +668,21 @@ class MissionDebriefParser:
             if total > 0 and player / total >= 0.8:
                 credited = True
 
+        # --- Priority 3: sole human damager (no time limit) ---
+        # Fire/environment ticks (AID=-1) inflate the denominator and can push
+        # the player's fraction below 80%.  If the player is the ONLY human who
+        # ever hit this target, the kill was inevitably caused by the player
+        # alone — credit it regardless of elapsed time.
+        if not credited:
+            hits = [h for h in self.stats.hits if h["target"] == tid]
+            human_hits = [h for h in hits if h["attacker"] != -1]
+            if human_hits and all(h["attacker"] in player_ids for h in human_hits):
+                credited = True
+                log_message(
+                    logger,
+                    f"[SOLE ATTACKER] Credited: TID={tid}, player was the only human damager",
+                )
+
         if credited:
             obj = self.stats.objects.get(tid)
             if obj and pos_match:
