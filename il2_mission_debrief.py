@@ -302,7 +302,19 @@ class MissionDebriefParser:
         for ln in lines:
             t = self._i(ln, r"T:(\d+)")
             ts = self.mission_time_to_hhmmss(t)
-                        
+
+            # AType:12 lines are also processed inline here (in addition to the
+            # first pass above) so that reused TIDs (BlocksArray objects that
+            # cycle through many types during a mission) reflect the correct
+            # object type at the moment a kill event fires.
+            if "AType:12" in ln:
+                gid = self._i(ln, r"ID:(\d+)")
+                self.stats.add_object(GameObject(gid,
+                    self._s(ln, r"NAME:([^ ]+)"),
+                    self._s(ln, r"TYPE:([^\r\n]+?)\s+COUNTRY:") or self._s(ln, r"TYPE:([^ ]+)"),
+                    self._s(ln, r"COUNTRY:(\d+)")
+                ))
+
             if "AType:2" in ln:
                 a, tgt, dmg = self._i(ln, r"AID:(-?\d+)"), self._i(ln, r"TID:(-?\d+)"), self._f(ln, r"DMG:([\d.]+)")
                 pos_match = re.search(r"POS\((-?[\d.]+),(-?[\d.]+),(-?[\d.]+)\)", ln)
