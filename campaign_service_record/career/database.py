@@ -246,6 +246,17 @@ class CareerDatabase:
         )
         return cursor.fetchall()
 
+    def get_sortie_for_mission(self, mission_id: int, pilot_id: int) -> Optional[sqlite3.Row]:
+        """Return the human player's sortie row for a specific mission."""
+        conn = self._connect()
+        cursor = conn.execute(
+            "SELECT * FROM sortie"
+            " WHERE missionId = :mission_id AND pilotId = :pilot_id"
+            " AND pilotAi = 0 AND isDeleted = 0",
+            {"mission_id": mission_id, "pilot_id": pilot_id},
+        )
+        return cursor.fetchone()
+
     def get_mission_by_id(self, mission_id: int) -> Optional[sqlite3.Row]:
         """Return a single mission row by id."""
         conn = self._connect()

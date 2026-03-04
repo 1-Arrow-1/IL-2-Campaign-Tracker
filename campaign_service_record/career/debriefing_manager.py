@@ -258,7 +258,7 @@ class CareerDebriefingManager:
             for mission_row in missions:
                 mission_num += 1
                 result, updated = self._process_one_mission(
-                    mission_row, career_id, label, mission_num, cache
+                    mission_row, career_id, player_id, label, mission_num, cache
                 )
                 results.append(result)
                 if updated:
@@ -283,6 +283,7 @@ class CareerDebriefingManager:
         self,
         mission_row: sqlite3.Row,
         career_id: int,
+        player_id: int,
         theatre_label: str,
         mission_num: int,
         cache: Dict,
@@ -346,8 +347,21 @@ class CareerDebriefingManager:
                 linked=False,
             ), False
 
+        # --- Query DB for expected plane kills (career reconciliation) ---
+        expected_plane_kills = 0
+        try:
+            sortie = self._db.get_sortie_for_mission(mission_id, player_id)
+            if sortie:
+                expected_plane_kills = (
+                    (sortie["killLightPlane"]  or 0) +
+                    (sortie["killMediumPlane"] or 0) +
+                    (sortie["killHeavyPlane"]  or 0)
+                )
+        except Exception as exc:
+            logger.debug("Could not query sortie for mission %d: %s", mission_id, exc)
+
         # --- Parse report ---
-        data = _parse_report(report_path)
+        data = _parse_report(report_path, expected_plane_kills=expected_plane_kills)
         if data is None:
             return _MissionResult(
                 mission_id=mission_id,
@@ -436,12 +450,16 @@ class CareerDebriefingManager:
 # Module-level helpers
 # ---------------------------------------------------------------------------
 
-def _parse_report(report_path: Path) -> Optional[Dict]:
+def _parse_report(report_path: Path, expected_plane_kills: int = 0) -> Optional[Dict]:
     """
     Parse a missionReport .txt file using il2_mission_debrief.MissionDebriefParser.
 
     Lazy-imports il2_mission_debrief to avoid argparse side effects at module load.
     Saves a .events.json sidecar next to the report for reuse by downstream tools.
+
+    If expected_plane_kills > 0 (career mode, sourced from cp.db sortie table),
+    reconcile_plane_kills() is called before export to credit wingman-finish kills
+    where the player held the plurality of damage.
 
     Returns:
         Parsed data dict with keys player, summary, events; or None on failure.
@@ -450,6 +468,8 @@ def _parse_report(report_path: Path) -> Optional[Dict]:
         import il2_mission_debrief  # noqa: PLC0415 — intentional lazy import
         parser = il2_mission_debrief.MissionDebriefParser(report_path, verbose=False)
         parser.parse()
+        if expected_plane_kills > 0:
+            parser.reconcile_plane_kills(expected_plane_kills)
         json_path = report_path.with_suffix(".events.json")
         parser.to_json(json_path)
         if not json_path.exists():

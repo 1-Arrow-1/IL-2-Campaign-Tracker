@@ -152,6 +152,9 @@ class MissionDebriefParser:
         # Per-target tracking for delayed-kill attribution (populated in parse())
         self._last_damager: dict = {}      # {TID: AID}  most recent attacker per Air target
         self._last_damage_tick: dict = {}  # {TID: int}  raw tick of most recent damage per Air target
+        # Wingman-finish candidates: Air targets killed by a non-player attacker where the
+        # player contributed damage.  Used by reconcile_plane_kills() for DB reconciliation.
+        self._wingman_candidates: list = []  # [(tid, ts, player_fraction, pos_match)]
 
     @staticmethod
     def mission_time_to_hhmmss(t):
@@ -390,6 +393,18 @@ class MissionDebriefParser:
                     self.stats.add_kill(tgt, ts)
                 elif a == -1:
                     self._resolve_indirect_kill(tgt, ts, t, pos_match)
+                else:
+                    # Killed by a non-player, non-environment attacker (e.g. wingman).
+                    # Record as a reconciliation candidate if the player dealt any damage.
+                    if obj and obj.category == "Air":
+                        player_ids = (self.stats.player_pid, self.stats.player_plid)
+                        hits   = [h for h in self.stats.hits if h["target"] == tgt]
+                        total  = sum(h["damage"] for h in hits)
+                        player = sum(h["damage"] for h in hits if h["attacker"] in player_ids)
+                        if total > 0 and player > 0:
+                            self._wingman_candidates.append(
+                                (tgt, ts, player / total, pos_match)
+                            )
 
             elif "AType:5" in ln:  # ✅ Takeoff
                 pid = self._i(ln, r"PID:(-?\d+)")
@@ -658,6 +673,58 @@ class MissionDebriefParser:
             if obj and pos_match:
                 obj.altitude = int(float(pos_match.group(2)))
             self.stats.add_kill(tid, ts)
+
+    def reconcile_plane_kills(self, expected_total: int) -> None:
+        """
+        Career-mode DB reconciliation for plane kills only.
+
+        After parse(), if the career DB credits more Air (plane) kills than the
+        log attributed directly to the player, try to bridge the gap using
+        wingman-finish candidates — Air targets killed by a non-player attacker
+        where the player contributed damage (stored in _wingman_candidates).
+
+        Candidates are sorted by player damage fraction descending; only the
+        best-matching ones are credited, up to the deficit.
+
+        Called by the career debriefing manager after querying the sortie table;
+        never called by the Campaign Service Record.
+        """
+        def _air_kill_count():
+            return sum(
+                1 for k in self.stats.kills
+                if k.category == "Air"
+                and not any(x in k.type.lower() for x in ["botpilot", "botgunner"])
+            )
+
+        deficit = expected_total - _air_kill_count()
+        if deficit <= 0:
+            return
+
+        # Deduplicate candidates: keep best fraction per TID
+        best: dict = {}
+        for tid, ts, fraction, pos_match in self._wingman_candidates:
+            if tid not in best or fraction > best[tid][1]:
+                best[tid] = (ts, fraction, pos_match)
+
+        # Sort by player damage fraction descending
+        ranked = sorted(best.items(), key=lambda x: -x[1][1])
+
+        for tid, (ts, fraction, pos_match) in ranked:
+            if deficit <= 0:
+                break
+            if any(k.id == tid for k in self.stats.kills):
+                continue
+            obj = self.stats.objects.get(tid)
+            if obj and obj.category == "Air":
+                if pos_match:
+                    obj.altitude = int(float(pos_match.group(2)))
+                log_message(
+                    logger,
+                    f"[DB RECONCILE] Credited: TID={tid} ({obj.type}), "
+                    f"player_damage={fraction:.1%}, expected_total={expected_total}",
+                )
+                self.stats.add_kill(tid, ts)
+                deficit -= 1
 
     # ------------------------------------------------------
     def _detect_landing_damage(self, events, data):
