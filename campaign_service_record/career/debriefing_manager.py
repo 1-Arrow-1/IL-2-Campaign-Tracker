@@ -356,7 +356,8 @@ class CareerDebriefingManager:
                 expected_plane_kills = (
                     (sortie["killLightPlane"]  or 0) +
                     (sortie["killMediumPlane"] or 0) +
-                    (sortie["killHeavyPlane"]  or 0)
+                    (sortie["killHeavyPlane"]  or 0) +
+                    (sortie["killStaticPlane"] or 0)
                 )
         except Exception as exc:
             logger.debug("Could not query sortie for mission %d: %s", mission_id, exc)
