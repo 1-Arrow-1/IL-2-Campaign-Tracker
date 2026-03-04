@@ -67,7 +67,7 @@ class _MissionResult:
     linked: bool
     final_state: str = ""   # e.g. "Landed", "Crashed", "Bailed out" — empty if not linked
     aircraft: str = ""      # aircraft type flown, e.g. "Bf 109 G-6"
-    kills: int = 0          # air + ground kills scored this mission
+    kills: int = 0          # air kills scored this mission (category == "Air" only)
 
 
 class CareerDebriefingManager:
@@ -205,6 +205,7 @@ class CareerDebriefingManager:
         Dict maps aircraft name → {"missions": N, "kills": K}, sorted by
         missions descending (matching CampaignAggregator._calculate_aircraft_usage()).
         Only linked missions (with parsed report data) contribute.
+        ``kills`` counts air kills only (category == "Air").
         """
         results = self._get_results()
         usage: Dict[str, Dict] = {}
@@ -382,6 +383,7 @@ class CareerDebriefingManager:
         kills = sum(
             1 for e in events
             if e.get("type", e.get("event", "")) == "Kill"
+            and e.get("category") == "Air"
         )
         html = _render_mission_html(data, mission_num, mission_date)
 
