@@ -1015,6 +1015,11 @@ const DetailPage = {
             // Medal Showcase button
             this.setupMedalShowcase(campaign.name, campaign.country);
 
+            // Career first-run debriefing parse (inline panel indicator, 3-second grace period)
+            if (resolvedSource === 'career' && campaign.debriefings_pending) {
+                this._startDebriefParse(entryId);
+            }
+
         } catch (error) {
             console.error('Failed to load campaign details:', error);
             this.showError(error.message);
@@ -1678,6 +1683,79 @@ const DetailPage = {
     /**
      * Render debriefings (inject HTML from Campaign Tracker)
      */
+    /**
+     * Start a background debrief parse job for a career.
+     * Shows an inline spinner in the debriefings panel only if parsing exceeds 3 seconds.
+     */
+    _startDebriefParse(entryId) {
+        const container = this.elements.debriefingsContainer;
+        let jobDone = false;
+        let elapsedSeconds = 0;
+        let elapsedInterval = null;
+        let gracePeriodTimer = null;
+        let pollInterval = null;
+
+        function stopTimers() {
+            if (gracePeriodTimer !== null) { clearTimeout(gracePeriodTimer); gracePeriodTimer = null; }
+            if (elapsedInterval !== null) { clearInterval(elapsedInterval); elapsedInterval = null; }
+            if (pollInterval !== null) { clearInterval(pollInterval); pollInterval = null; }
+        }
+
+        API.startCareerParse(entryId).then(({ job_id }) => {
+            // After 3 s, show inline indicator if job is still running.
+            gracePeriodTimer = setTimeout(() => {
+                if (jobDone) return;
+                elapsedSeconds = 3;
+                const mm = String(Math.floor(elapsedSeconds / 60)).padStart(2, '0');
+                const ss = String(elapsedSeconds % 60).padStart(2, '0');
+                container.innerHTML =
+                    `<div class="debriefings-parsing">` +
+                    `<div class="spinner debriefings-parsing__spinner"></div>` +
+                    `<p class="debriefings-parsing__text">` +
+                    `${i18n.t('ui.progress.preparing_debriefings')} ` +
+                    `<span class="debriefings-parsing__elapsed" id="debrief-elapsed">${mm}:${ss}</span>` +
+                    `</p></div>`;
+                elapsedInterval = setInterval(() => {
+                    elapsedSeconds++;
+                    const m = String(Math.floor(elapsedSeconds / 60)).padStart(2, '0');
+                    const s = String(elapsedSeconds % 60).padStart(2, '0');
+                    const el = document.getElementById('debrief-elapsed');
+                    if (el) el.textContent = `${m}:${s}`;
+                }, 1000);
+            }, 3000);
+
+            // Poll job status every second.
+            pollInterval = setInterval(async () => {
+                try {
+                    const status = await API.getJobStatus(job_id);
+                    if (status.status === 'done') {
+                        stopTimers();
+                        jobDone = true;
+                        try {
+                            const fresh = await API.getCareerDetail(entryId);
+                            if (fresh) {
+                                this.renderDebriefings(fresh.debriefings_html);
+                                this.renderSummary(fresh.summary);
+                            }
+                        } catch (err) {
+                            console.warn('[DetailPage] Re-fetch after parse failed:', err);
+                        }
+                    } else if (status.status === 'error') {
+                        stopTimers();
+                        jobDone = true;
+                        console.error('[DetailPage] Career parse job failed:', status.error);
+                        this.renderDebriefings('');
+                    }
+                } catch (_) {
+                    // transient network glitch – keep polling
+                }
+            }, 1000);
+        }).catch(err => {
+            console.error('[DetailPage] Failed to start career parse job:', err);
+            this.renderDebriefings('');
+        });
+    },
+
     renderDebriefings(html) {
         if (!html || html.trim() === '') {
             this.elements.debriefingsContainer.innerHTML = `<p class="empty-message">${this.escapeHTML(i18n.t('web.message.no_debriefings'))}</p>`;

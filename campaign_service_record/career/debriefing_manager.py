@@ -41,7 +41,7 @@ import logging
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import sqlite3
 
@@ -87,6 +87,7 @@ class CareerDebriefingManager:
         career: VirtualPilotCareer,
         linker: MissionReportLinker,
         cache_dir: Path,
+        progress_callback: Optional[Callable[[int, int, str], None]] = None,
     ):
         self._db = db
         self._career = career
@@ -95,6 +96,7 @@ class CareerDebriefingManager:
             cache_dir / "career" / str(career.root_career_id) / "cache_index.json"
         )
         self._results: Optional[List[_MissionResult]] = None  # lazily computed
+        self._progress_callback = progress_callback
 
         # Resolve mlg2txt converter path for career report linking.
         # In frozen mode: mlg2txt.exe sits next to the EXE.
@@ -235,6 +237,14 @@ class CareerDebriefingManager:
         mission_num = 0
         cache_dirty = False
 
+        # Pre-count total missions so the progress callback can report X/total.
+        total_missions = sum(
+            self._db.get_mission_count_for_career(
+                int(career_row["id"]), int(career_row["playerId"])
+            )
+            for career_row in self._career.chain
+        )
+
         for i, career_row in enumerate(self._career.chain):
             career_id = int(career_row["id"])
             player_id = int(career_row["playerId"])
@@ -253,6 +263,16 @@ class CareerDebriefingManager:
                 results.append(result)
                 if updated:
                     cache_dirty = True
+
+                if self._progress_callback is not None:
+                    try:
+                        self._progress_callback(
+                            mission_num,
+                            total_missions,
+                            f"Mission {mission_num}/{total_missions} – {label}",
+                        )
+                    except Exception:
+                        pass  # Never let a callback error interrupt processing
 
         if cache_dirty:
             self._save_cache(cache)

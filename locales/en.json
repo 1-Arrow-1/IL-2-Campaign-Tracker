@@ -908,6 +908,15 @@
       "section_title": "IL-2 Career",
       "theatre_chain_label": "Theatre Chain",
       "no_careers_found": "No career data found."
+    },
+    "progress": {
+      "applying_language": "Applying language…",
+      "language_applied": "Language applied.",
+      "preparing_debriefings": "Preparing mission debriefings…",
+      "first_run_note": "This can take several minutes on first run.",
+      "debriefings_ready": "Mission debriefings ready.",
+      "run_in_background": "Run in background",
+      "error_title": "An error occurred"
     }
   },
   "validation": {

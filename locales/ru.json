@@ -905,6 +905,15 @@
       "section_title": "Карьера IL-2",
       "theatre_chain_label": "Цепочка театров"
     },
+    "progress": {
+      "applying_language": "Применение языка…",
+      "language_applied": "Язык применён.",
+      "preparing_debriefings": "Подготовка разборов миссий…",
+      "first_run_note": "При первом запуске это может занять несколько минут.",
+      "debriefings_ready": "Разборы миссий готовы.",
+      "run_in_background": "Выполнять в фоне",
+      "error_title": "Произошла ошибка"
+    },
     "landing": {
       "campaign_section": "Трекер кампаний",
       "career_section": "Карьера IL-2"

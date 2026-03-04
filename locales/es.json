@@ -905,6 +905,15 @@
       "section_title": "Carrera IL-2",
       "theatre_chain_label": "Cadena de teatros"
     },
+    "progress": {
+      "applying_language": "Aplicando idioma…",
+      "language_applied": "Idioma aplicado.",
+      "preparing_debriefings": "Preparando informes de misión…",
+      "first_run_note": "Esto puede tardar varios minutos la primera vez.",
+      "debriefings_ready": "Informes de misión listos.",
+      "run_in_background": "Ejecutar en segundo plano",
+      "error_title": "Se ha producido un error"
+    },
     "landing": {
       "campaign_section": "Rastreador de campañas",
       "career_section": "Carrera IL-2"

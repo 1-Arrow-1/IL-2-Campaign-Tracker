@@ -905,6 +905,15 @@
       "section_title": "Kariera IL-2",
       "theatre_chain_label": "Łańcuch teatrów"
     },
+    "progress": {
+      "applying_language": "Stosowanie języka…",
+      "language_applied": "Język zastosowany.",
+      "preparing_debriefings": "Przygotowywanie odpraw misji…",
+      "first_run_note": "Może to potrwać kilka minut przy pierwszym uruchomieniu.",
+      "debriefings_ready": "Odprawy misji gotowe.",
+      "run_in_background": "Uruchom w tle",
+      "error_title": "Wystąpił błąd"
+    },
     "landing": {
       "campaign_section": "śledzenie kampanii",
       "career_section": "Kariera IL-2"

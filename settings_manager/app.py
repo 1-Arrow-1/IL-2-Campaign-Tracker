@@ -257,6 +257,8 @@ class SettingsManagerApp(tk.Tk):
         self._refresh_queue: "queue.Queue[Optional[str]]" = queue.Queue()
         self._refresh_poll_id: Optional[str] = None
         self._refresh_running: bool = False
+        self._refresh_start_time: float = 0.0
+        self._pending_locale: Optional[str] = None  # set when locale change triggered restart
         self._country_editor: Optional[ttk.Combobox] = None
         self._country_editor_item: Optional[str] = None
         self._language_editor: Optional[ttk.Combobox] = None
@@ -1869,6 +1871,9 @@ class SettingsManagerApp(tk.Tk):
                 # Full regeneration will handle all campaigns, so clear the per-campaign set
                 self._campaigns_needing_debriefings_regen.clear()
 
+                # Track locale change so _on_locale_refresh_complete can restart the GUI
+                self._pending_locale = current_locale if locale_changed else None
+
                 self._start_locale_refresh(regen_locale, close_after=close_after)
                 return True
 
@@ -1913,6 +1918,7 @@ class SettingsManagerApp(tk.Tk):
         self._refresh_status_var.set(self.tr.t("msg_locale_refresh_running"))
         self._set_refresh_controls(True)
         self._refresh_running = True
+        self._refresh_start_time = time.monotonic()
         self._refresh_queue = queue.Queue()
         if self._refresh_poll_id:
             self.after_cancel(self._refresh_poll_id)
@@ -1927,12 +1933,16 @@ class SettingsManagerApp(tk.Tk):
         self._poll_refresh_queue()
 
     def _poll_refresh_queue(self) -> None:
-        """Poll the refresh queue for completion."""
+        """Poll the refresh queue for completion; update elapsed-time label while waiting."""
         if not self._refresh_running:
             return
         try:
             refresh_errors = self._refresh_queue.get_nowait()
         except queue.Empty:
+            elapsed_s = int(time.monotonic() - self._refresh_start_time)
+            mm, ss = elapsed_s // 60, elapsed_s % 60
+            base = self.tr.t("msg_locale_refresh_running")
+            self._refresh_status_var.set(f"{base} {mm:02d}:{ss:02d}")
             self._refresh_poll_id = self.after(200, self._poll_refresh_queue)
             return
         self._on_locale_refresh_complete(refresh_errors)
@@ -1946,19 +1956,46 @@ class SettingsManagerApp(tk.Tk):
         self._refresh_status_var.set("")
         self._set_refresh_controls(False)
 
+        locale_did_change = bool(self._pending_locale)
+        self._pending_locale = None
+
         if refresh_errors:
             messagebox.showerror(
                 self.tr.t("msg_error_title"),
                 self.tr.t("msg_locale_refresh_failed", error=refresh_errors)
             )
-        else:
+            if self._close_after_refresh:
+                self.destroy()
+            return
+
+        if locale_did_change:
+            # Language changed: restart the Settings Manager so the GUI reflects the new locale.
             messagebox.showinfo(
                 self.tr.t("msg_confirm_title"),
-                f"{self.tr.t('msg_save_success')}\n\n{self.tr.t('msg_locale_refresh')}"
+                f"{self.tr.t('msg_save_success')}\n\n{self.tr.t('msg_locale_refresh')}\n\n"
+                "Settings Manager will restart to apply the new language."
             )
+            self._restart_app()
+            return
 
+        messagebox.showinfo(
+            self.tr.t("msg_confirm_title"),
+            f"{self.tr.t('msg_save_success')}\n\n{self.tr.t('msg_locale_refresh')}"
+        )
         if self._close_after_refresh:
             self.destroy()
+
+    def _restart_app(self) -> None:
+        """Close and relaunch the Settings Manager so the GUI picks up the new locale."""
+        import subprocess
+        try:
+            if getattr(sys, 'frozen', False):
+                subprocess.Popen([sys.executable])
+            else:
+                subprocess.Popen([sys.executable] + sys.argv)
+        except Exception as exc:
+            print(f"[Settings Manager] Failed to restart: {exc}")
+        self.destroy()
 
     def _regenerate_debriefings_subprocess(self, campaigns: List[str]) -> Optional[str]:
         """Regenerate localized debriefings for specific campaigns via Tracker EXE.
@@ -2216,7 +2253,7 @@ class SettingsManagerApp(tk.Tk):
             completion_marker = "COMPLETE!"
             timeout_seconds = 600
             poll_interval = 0.5
-            log_interval = 5.0
+            log_interval = 1.0
             start_time = time.monotonic()
             next_log_time = start_time + log_interval
             log_position = 0
@@ -2226,26 +2263,32 @@ class SettingsManagerApp(tk.Tk):
                 while True:
                     return_code = process.poll()
                     if return_code is not None:
+                        elapsed_s = int(time.monotonic() - start_time)
+                        mm, ss = elapsed_s // 60, elapsed_s % 60
                         print(f"[Settings Manager] Tracker EXE exited with return code: {return_code}")
                         if return_code != 0 and not completion_detected:
                             error_output = self._read_log_excerpt(log_path)
                             print(f"[Settings Manager] Tracker output: {error_output[:1000]}")
                             return (
                                 "Tracker EXE error. "
-                                f"Exit code: {return_code}. "
+                                f"Exit code: {return_code}.\n\n"
+                                f"Log: {log_path}\n\n"
                                 f"Log excerpt:\n{error_output}"
                             )
-                        print("[Settings Manager] Locale refresh completed successfully via Tracker EXE")
+                        print(f"[Settings Manager] Completed in {mm:02d}:{ss:02d}")
                         return None
 
                     now = time.monotonic()
                     if now >= next_log_time:
-                        elapsed = int(now - start_time)
-                        print(f"[Settings Manager] Regeneration still running ({elapsed}s)...")
+                        elapsed_s = int(now - start_time)
+                        mm, ss = elapsed_s // 60, elapsed_s % 60
+                        print(f"[Settings Manager] Applying language\u2026 elapsed {mm:02d}:{ss:02d}")
                         next_log_time = now + log_interval
 
                     if now - start_time > timeout_seconds:
-                        print("[Settings Manager] Tracker EXE timed out after 10 minutes")
+                        elapsed_s = int(now - start_time)
+                        mm, ss = elapsed_s // 60, elapsed_s % 60
+                        print(f"[Settings Manager] Tracker EXE timed out after {mm:02d}:{ss:02d}")
                         self._terminate_process(process)
                         return "Tracker process timed out (10 minutes)"
 
@@ -2258,7 +2301,9 @@ class SettingsManagerApp(tk.Tk):
                     log_position = log_position_holder[0]
 
                     if completion_detected:
-                        print("[Settings Manager] Completion marker detected; stopping tracker process.")
+                        elapsed_s = int(time.monotonic() - start_time)
+                        mm, ss = elapsed_s // 60, elapsed_s % 60
+                        print(f"[Settings Manager] Completion marker detected. Completed in {mm:02d}:{ss:02d}")
                         self._terminate_process(process)
                         return None
 

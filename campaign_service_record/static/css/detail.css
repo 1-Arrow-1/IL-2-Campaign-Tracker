@@ -1118,3 +1118,35 @@
     background: rgba(200, 184, 122, 0.2);
     color: #fff;
 }
+
+/* ============================================================================
+   Debriefings parse inline indicator
+   Shown in the debriefings panel only when first-run parse exceeds 3 seconds.
+   ============================================================================ */
+
+.debriefings-parsing {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem;
+    gap: 0.75rem;
+    color: var(--ink-muted, #6b5b44);
+}
+
+.debriefings-parsing__spinner {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 0;
+}
+
+.debriefings-parsing__text {
+    font-size: 0.9rem;
+    margin: 0;
+    text-align: center;
+}
+
+.debriefings-parsing__elapsed {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1rem;
+    color: var(--accent-dark, #5a4022);
+}

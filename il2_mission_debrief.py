@@ -19,6 +19,11 @@ from utils.pathing import get_base_path
 
 logger = get_logger(__name__)
 
+# Maximum gap between the last player-damage hit on a target and an AID:-1
+# AType:3 destruction for the kill to still be credited to the player.
+# 600 s × 50 ticks/s = 30 000 ticks.  Adjust or set to 0 to disable.
+_DELAYED_KILL_MAX_TICKS = 600 * 50  # 30 000 ticks (600 seconds)
+
 # ==========================================================
 # === GameObject ==========================================
 # ==========================================================
@@ -144,6 +149,9 @@ class MissionDebriefParser:
         self.path = path
         self.stats = MissionStats()
         self.verbose = verbose
+        # Per-target tracking for delayed-kill attribution (populated in parse())
+        self._last_damager: dict = {}      # {TID: AID}  most recent attacker per Air target
+        self._last_damage_tick: dict = {}  # {TID: int}  raw tick of most recent damage per Air target
 
     @staticmethod
     def mission_time_to_hhmmss(t):
@@ -295,8 +303,14 @@ class MissionDebriefParser:
             if "AType:2" in ln:
                 a, tgt, dmg = self._i(ln, r"AID:(-?\d+)"), self._i(ln, r"TID:(-?\d+)"), self._f(ln, r"DMG:([\d.]+)")
                 pos_match = re.search(r"POS\((-?[\d.]+),(-?[\d.]+),(-?[\d.]+)\)", ln)
-                
+
                 self.stats.add_hit(a, tgt, dmg, ts)
+
+                # Track last damager per Air target for delayed-kill attribution.
+                _tgt_obj = self.stats.objects.get(tgt)
+                if _tgt_obj and _tgt_obj.category == "Air":
+                    self._last_damager[tgt] = a
+                    self._last_damage_tick[tgt] = t
                 
                 # Track damage to player or player's aircraft
                 # Create SEPARATE events for aircraft and pilot damage
@@ -373,7 +387,7 @@ class MissionDebriefParser:
                         obj.altitude = altitude
                     self.stats.add_kill(tgt, ts)
                 elif a == -1:
-                    self._resolve_indirect_kill(tgt, ts, pos_match)
+                    self._resolve_indirect_kill(tgt, ts, t, pos_match)
 
             elif "AType:5" in ln:  # ✅ Takeoff
                 pid = self._i(ln, r"PID:(-?\d+)")
@@ -589,11 +603,55 @@ class MissionDebriefParser:
         return self.stats
 
     # ------------------------------------------------------
-    def _resolve_indirect_kill(self, tid, ts, pos_match=None):
-        hits = [h for h in self.stats.hits if h["target"] == tid]
-        total = sum(h["damage"] for h in hits)
-        player = sum(h["damage"] for h in hits if h["attacker"] in (self.stats.player_pid, self.stats.player_plid))
-        if total > 0 and player / total >= 0.8:
+    def _resolve_indirect_kill(self, tid, ts, destroy_tick=None, pos_match=None):
+        """
+        Attribute an AID:-1 destruction to the player if justified.
+
+        Priority 1 – Last-damager (delayed kill):
+            If the last AType:2 hit on *tid* came from the player and the gap
+            between that hit and the AType:3 event is ≤ _DELAYED_KILL_MAX_TICKS,
+            credit the kill as a delayed crash caused by player damage.
+
+        Priority 2 – Proportional damage (legacy safety net):
+            If the player dealt ≥ 80 % of all recorded damage on *tid*, credit
+            the kill regardless of time gap (handles cases where many zero-damage
+            hits dilute the last-damager signal).
+        """
+        # Guard: already credited for this target
+        if any(k.id == tid for k in self.stats.kills):
+            return
+
+        player_ids = (self.stats.player_pid, self.stats.player_plid)
+        credited = False
+
+        # --- Priority 1: last-damager check ---
+        last_aid  = self._last_damager.get(tid)
+        last_tick = self._last_damage_tick.get(tid)
+        if last_aid is not None and last_aid in player_ids:
+            elapsed_ticks = (
+                (destroy_tick - last_tick)
+                if (destroy_tick is not None and last_tick is not None)
+                else 0
+            )
+            if elapsed_ticks <= _DELAYED_KILL_MAX_TICKS:
+                credited = True
+                elapsed_s = elapsed_ticks / 50.0
+                log_message(
+                    logger,
+                    f"[DELAYED KILL] Credited: TID={tid}, destroyed at tick={destroy_tick}, "
+                    f"last_damager=player (AID={last_aid}), last_damage_tick={last_tick}, "
+                    f"elapsed={elapsed_s:.1f}s",
+                )
+
+        # --- Priority 2: proportional damage (legacy safety net) ---
+        if not credited:
+            hits   = [h for h in self.stats.hits if h["target"] == tid]
+            total  = sum(h["damage"] for h in hits)
+            player = sum(h["damage"] for h in hits if h["attacker"] in player_ids)
+            if total > 0 and player / total >= 0.8:
+                credited = True
+
+        if credited:
             obj = self.stats.objects.get(tid)
             if obj and pos_match:
                 obj.altitude = int(float(pos_match.group(2)))

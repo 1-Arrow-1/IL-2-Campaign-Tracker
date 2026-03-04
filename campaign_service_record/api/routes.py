@@ -13,6 +13,7 @@ import base64
 import json
 import logging
 import re
+import threading
 import time
 import traceback
 from io import BytesIO
@@ -43,6 +44,7 @@ from campaign_service_record.utils.image_utils import convert_dds_to_png_bytes, 
 from campaign_service_record.utils.pilot_photo import pilot_photo_path, pilot_photo_filename, pilot_name_path
 from utils.locale_config import resolve_locale
 from utils.supported_locales import DEFAULT_LOCALE, get_supported_locales, normalize_locale
+from campaign_service_record.core.job_store import job_store, CAREER_DEBRIEF_PARSE
 
 
 logger = logging.getLogger(__name__)
@@ -275,6 +277,10 @@ def career_debug():
         'game_dir': str(game_dir) if game_dir else None,
         'charactersranks_path_checked': charactersranks_path,
         'charactersranks_exists_now': charactersranks_exists,
+        # Index sizes — 0 means CampaignRanksAwards was not found; detail page
+        # events will render without images but should not crash.
+        'award_index_entries': len(aggregator._award_index),
+        'rank_index_entries': len(aggregator._rank_index),
     })
 
 
@@ -298,6 +304,7 @@ def get_locale():
     """
     locale = resolve_locale()
     return jsonify({'locale': normalize_locale(locale, DEFAULT_LOCALE)})
+
 
 
 @api_bp.route('/api/locales')
@@ -586,31 +593,32 @@ def get_campaign_detail(campaign_name: str):
                 'campaign': campaign_name
             }), 404
 
-        # Add effective locale for detail page rendering
-        # This respects per-campaign language override if set
+        # effective_locale = UI locale for the detail page (global or explicit override)
+        # Follows the global locale unrestricted; only explicit per-campaign overrides
+        # are limited to en/de/ru (stored in campaign_mission_dates.json).
         effective_locale = resolve_detail_page_locale(
             campaign_name,
             data_loader=_data_loader
         )
         campaign_data['effective_locale'] = effective_locale
 
-        # Select the localized debriefings_html based on effective locale
-        # If the localized version exists and is not empty, use it
-        localized_key = f'debriefings_html_{effective_locale}'
+        # Select the pre-generated debriefings HTML.
+        # Pre-generated content only exists for en/de/ru, so the HTML selection
+        # is capped independently from the UI locale.
+        debriefings_locale = effective_locale if effective_locale in ('en', 'de', 'ru') else 'en'
+        localized_key = f'debriefings_html_{debriefings_locale}'
         localized_debriefings = campaign_data.get(localized_key, '')
         if localized_debriefings and localized_debriefings.strip():
             campaign_data['debriefings_html'] = localized_debriefings
-            logger.debug(f"Using localized debriefings ({effective_locale}) for {campaign_name}")
-        elif effective_locale != 'en':
-            # No pre-generated debriefings for this locale — fall back to English
-            # and correct effective_locale so the frontend doesn't re-translate
-            logger.info(f"No localized debriefings for '{effective_locale}', "
+            logger.debug(f"Using localized debriefings ({debriefings_locale}) for {campaign_name}")
+        elif debriefings_locale != 'en':
+            # debriefings_locale was de/ru but no pre-generated content — fall back to English
+            logger.info(f"No localized debriefings for '{debriefings_locale}', "
                         f"falling back to English for {campaign_name}")
             en_debriefings = campaign_data.get('debriefings_html_en', '')
             if en_debriefings and en_debriefings.strip():
                 campaign_data['debriefings_html'] = en_debriefings
-            effective_locale = 'en'
-            campaign_data['effective_locale'] = effective_locale
+        # effective_locale is intentionally NOT changed here — UI locale stays as global
 
         # Remove the localized versions from response (no need to send all 3)
         for locale in ('en', 'de', 'ru'):
@@ -971,6 +979,95 @@ def get_careers():
 
 
 # ============================================================================
+# Background Job Endpoints
+# ============================================================================
+
+def _career_parse_worker(job, career_id: int) -> None:
+    """Background thread: run the full debrief parse for career_id and update job state."""
+    try:
+        job.status = 'running'
+        job.message = 'Scanning missions…'
+        job.updated_at = time.time()
+
+        def cb(cur: int, tot: int, msg: str) -> None:
+            job.progress_current = cur
+            job.progress_total = tot
+            job.message = msg
+            job.updated_at = time.time()
+
+        _career_provider._aggregator.run_debrief_parse(career_id, cb)
+        job.status = 'done'
+        job.message = 'Complete'
+        job.updated_at = time.time()
+    except Exception as exc:
+        job.status = 'error'
+        job.error = traceback.format_exc()
+        job.updated_at = time.time()
+        logger.error('Career parse job %s failed: %s', job.id, exc, exc_info=True)
+
+
+@api_bp.route('/api/jobs/start_career_parse', methods=['POST'])
+def start_career_parse():
+    """
+    Start a background debrief parse job for a career.
+
+    Query param:  ?career_id=<int>
+    Returns:      { "job_id": "abc12345" }
+
+    If a job for the same career is already running, returns the existing job_id.
+    """
+    _last_ping[0] = time.time()
+
+    if not _career_provider:
+        return jsonify({'error': 'Career mode not available'}), 503
+
+    try:
+        career_id = int(request.args.get('career_id', ''))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'career_id must be an integer'}), 400
+
+    # Deduplicate: return existing job if one is already running for this career
+    existing = job_store.find_running(CAREER_DEBRIEF_PARSE, str(career_id))
+    if existing is not None:
+        return jsonify({'job_id': existing.id})
+
+    job = job_store.create(CAREER_DEBRIEF_PARSE, extra_key=str(career_id))
+    t = threading.Thread(
+        target=_career_parse_worker,
+        args=(job, career_id),
+        daemon=True,
+        name=f'career-parse-{career_id}',
+    )
+    t.start()
+    return jsonify({'job_id': job.id})
+
+
+_JOB_CLEANUP_INTERVAL = 20   # clean up done jobs every 20th poll call
+
+
+@api_bp.route('/api/jobs/status/<job_id>')
+def get_job_status(job_id: str):
+    """
+    Poll the status of a background job.
+
+    Returns:
+        { "id": ..., "type": ..., "status": ..., "message": ...,
+          "progress_current": ..., "progress_total": ..., "error": ... }
+    or 404 if the job is not found.
+    """
+    _last_ping[0] = time.time()
+
+    # Periodically remove stale finished jobs
+    if job_store.increment_poll() % _JOB_CLEANUP_INTERVAL == 0:
+        job_store.cleanup_done()
+
+    job = job_store.get(job_id)
+    if job is None:
+        return jsonify({'error': 'Job not found', 'job_id': job_id}), 404
+    return jsonify(job.to_dict())
+
+
+# ============================================================================
 # Career Detail Endpoint
 # ============================================================================
 
@@ -991,10 +1088,19 @@ def get_career_detail(root_career_id: int):
         return jsonify({'error': 'Career mode not available'}), 503
 
     try:
-        detail = _career_provider.get_entry_detail(str(root_career_id))
+        aggregator = _career_provider._aggregator
+        # Skip the slow debrief parse on first load when no cache exists.
+        # The frontend detects debriefings_pending=true and triggers a background job.
+        cache_exists = aggregator.has_debrief_cache(root_career_id)
+        detail = aggregator.get_career_detail(
+            root_career_id, skip_debriefs=not cache_exists
+        )
         if detail is None:
             return jsonify({'error': 'Career not found', 'id': root_career_id}), 404
-        logger.info("Served career detail: root_id=%d", root_career_id)
+        logger.info(
+            "Served career detail: root_id=%d cache_exists=%s debriefings_pending=%s",
+            root_career_id, cache_exists, detail.get('debriefings_pending'),
+        )
         return jsonify(detail)
     except Exception as exc:
         logger.error(

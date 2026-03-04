@@ -178,6 +178,24 @@ const API = {
     async getLocales() {
         return this.get('/locales');
     },
+
+    /**
+     * Start a background career debrief parse job.
+     * @param {number|string} careerId - root_career_id
+     * @returns {{ job_id: string }}
+     */
+    async startCareerParse(careerId) {
+        return this.post(`/jobs/start_career_parse?career_id=${careerId}`);
+    },
+
+    /**
+     * Poll a background job's status.
+     * @param {string} jobId
+     * @returns {{ id, type, status, message, progress_current, progress_total, error }}
+     */
+    async getJobStatus(jobId) {
+        return this.get(`/jobs/status/${jobId}`);
+    },
     
     /**
      * Health check

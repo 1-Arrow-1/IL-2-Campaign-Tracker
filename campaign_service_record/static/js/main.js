@@ -157,8 +157,31 @@ const App = {
         // Show landing page
         this.showLanding();
 
+        // Poll for locale changes made via Settings Manager and reload if detected
+        this._startLocaleWatcher();
+
         const modeLabel = this.appMode === 'career' ? 'Career' : 'Campaign';
         console.log(`${modeLabel} Service Record ready`);
+    },
+
+    /**
+     * Poll the server locale every 10 s.
+     * If it differs from the locale that was active at startup, reload the page
+     * so all translations (UI strings, debriefings HTML) match the new language.
+     */
+    _startLocaleWatcher() {
+        setInterval(async () => {
+            try {
+                const data = await API.getLocale();
+                const serverLocale = data.locale || 'en';
+                if (serverLocale !== this.globalLocale) {
+                    console.log(`[App] Locale changed to ${serverLocale} – reloading page`);
+                    window.location.reload();
+                }
+            } catch (_) {
+                // Server temporarily unavailable – keep polling
+            }
+        }, 10_000);
     },
     
     /**

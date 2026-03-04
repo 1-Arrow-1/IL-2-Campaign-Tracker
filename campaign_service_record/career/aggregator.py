@@ -105,6 +105,13 @@ class CareerAggregator:
         # Build rank resolver (detects mod mode from game_dir; defaults to English)
         self._rank_resolver: RankResolver = RankResolver(self._game_dir)
 
+        logger.info(
+            "CareerAggregator init: game_dir=%s data_dir=%s "
+            "award_index_entries=%d rank_index_entries=%d",
+            self._game_dir, self._data_dir,
+            len(self._award_index), len(self._rank_index),
+        )
+
     # ------------------------------------------------------------------
     # Landing page list
     # ------------------------------------------------------------------
@@ -132,12 +139,71 @@ class CareerAggregator:
     # Detail page
     # ------------------------------------------------------------------
 
-    def get_career_detail(self, root_career_id: int) -> Optional[Dict]:
+    def has_debrief_cache(self, root_career_id: int) -> bool:
+        """
+        Return True if a populated debrief cache_index.json exists for this career.
+
+        This is a fast file-existence check used by the API to decide whether to
+        skip the slow debriefing parse on the first GET /api/career/<id> request.
+        """
+        if self._cache_dir is None:
+            return False
+        cache_path = self._cache_dir / "career" / str(root_career_id) / "cache_index.json"
+        return cache_path.exists()
+
+    def run_debrief_parse(
+        self,
+        root_career_id: int,
+        progress_callback=None,
+    ) -> None:
+        """
+        Build and cache the debriefing HTML for a career in a background thread.
+
+        Creates a CareerDebriefingManager with an optional progress_callback and
+        drives the full pipeline (build_debriefings_html → get_mission_stats →
+        get_aircraft_usage).  Results are written to the cache by the manager;
+        this method does not return HTML.
+
+        Args:
+            root_career_id:    The career.id of the chain root (extends = -1).
+            progress_callback: Optional callable(current, total, message) called
+                               after each mission is processed.
+
+        Raises:
+            ValueError if the career is not found.
+            Any exception from CareerDebriefingManager propagates to the caller
+            (background worker) for job-level error reporting.
+        """
+        career = self._resolver.get_career(root_career_id)
+        if career is None:
+            raise ValueError(f"Career not found: root_career_id={root_career_id}")
+        if self._cache_dir is None:
+            raise ValueError("cache_dir is not configured; cannot run debrief parse")
+
+        debrief_manager = CareerDebriefingManager(
+            db=self._db,
+            career=career,
+            linker=self._linker,
+            cache_dir=self._cache_dir,
+            progress_callback=progress_callback,
+        )
+        debrief_manager.build_debriefings_html()
+        debrief_manager.get_mission_stats()
+        debrief_manager.get_aircraft_usage()
+
+    def get_career_detail(
+        self, root_career_id: int, skip_debriefs: bool = False
+    ) -> Optional[Dict]:
         """
         Get full career detail payload for a virtual pilot career.
 
         Args:
             root_career_id: The career.id of the chain root (extends = -1).
+            skip_debriefs:  When True AND no cache exists, skip the slow
+                            debriefing parse and return debriefings_pending=True
+                            in the response so the frontend can trigger a
+                            background parse job.  When False (default) or when
+                            a cache already exists, the full parse runs inline.
 
         Returns:
             Detail dict matching CampaignAggregator.get_campaign_detail() shape, or None.
@@ -159,11 +225,21 @@ class CareerAggregator:
         bonus_incidences: list = []
         mapped_events = []
         for row in events_raw:
-            ev = self._map_event(
-                row, career.country,
-                seen_bonus_codes=seen_bonus_codes,
-                bonus_incidences=bonus_incidences,
-            )
+            try:
+                ev = self._map_event(
+                    row, career.country,
+                    seen_bonus_codes=seen_bonus_codes,
+                    bonus_incidences=bonus_incidences,
+                )
+            except Exception as exc:
+                logger.warning(
+                    "Skipping event id=%s type=%s due to mapping error: %s",
+                    row["id"] if "id" in row.keys() else "?",
+                    row["type"] if "type" in row.keys() else "?",
+                    exc,
+                    exc_info=True,
+                )
+                continue
             if ev is not None:
                 mapped_events.append(ev)
 
@@ -176,9 +252,13 @@ class CareerAggregator:
 
         sorties = self._db.get_sorties_for_pilot(career.pilot_id)
 
-        # Build mission debriefings and flight-time statistics
+        # Determine whether to run the debriefing pipeline or defer it.
+        # skip_debriefs=True defers parsing to a background job when no cache exists.
+        cache_exists = self.has_debrief_cache(root_career_id)
+        debriefings_pending = False
+
         debrief_manager: Optional[CareerDebriefingManager] = None
-        if self._cache_dir is not None:
+        if self._cache_dir is not None and (cache_exists or not skip_debriefs):
             try:
                 debrief_manager = CareerDebriefingManager(
                     db=self._db,
@@ -188,6 +268,8 @@ class CareerAggregator:
                 )
             except Exception as exc:
                 logger.warning("CareerDebriefingManager init failed: %s", exc)
+        elif skip_debriefs and not cache_exists:
+            debriefings_pending = True
 
         debriefings_html = ""
         mission_stats_override: Optional[Dict] = None
@@ -232,6 +314,7 @@ class CareerAggregator:
             "missions_completed": len(sorties),
             "events": mapped_events,
             "debriefings_html": debriefings_html,
+            "debriefings_pending": debriefings_pending,
             "effective_locale": get_career_effective_locale(str(career.root_career_id)),
             "summary": summary,
             # Career-specific extras
@@ -357,6 +440,8 @@ class CareerAggregator:
             name_key = None
             image_url = None
             modal_image_url = None
+            normal = None  # initialised here so USSR bonus-dedup block can safely reference it
+            big = None
 
             if award_code and self._award_index:
                 normal = self._award_index.get(award_code, 'normal')

@@ -324,7 +324,8 @@ def main():
             host=config.host,
             port=config.port,
             debug=config.debug,
-            use_reloader=False  # Disable reloader (causes issues with threads)
+            use_reloader=False,  # Disable reloader (causes issues with threads)
+            threaded=True,       # Allow concurrent requests (needed for background job polling)
         )
     except KeyboardInterrupt:
         logger.info("Shutdown requested by user")

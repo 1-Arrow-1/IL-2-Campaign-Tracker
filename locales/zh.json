@@ -905,6 +905,15 @@
       "section_title": "IL-2 职业",
       "theatre_chain_label": "战区链"
     },
+    "progress": {
+      "applying_language": "正在应用语言…",
+      "language_applied": "语言已应用。",
+      "preparing_debriefings": "正在准备任务汇报…",
+      "first_run_note": "首次运行可能需要几分钟时间。",
+      "debriefings_ready": "任务汇报已就绪。",
+      "run_in_background": "在后台运行",
+      "error_title": "发生错误"
+    },
     "landing": {
       "campaign_section": "战役追踪器",
       "career_section": "IL-2 职业"

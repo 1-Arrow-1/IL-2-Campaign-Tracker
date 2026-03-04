@@ -717,7 +717,7 @@
       "missions_completed": "{count} abgeschlossen",
       "missions_label": "Missionen:"
     },
-    "career_app_title": "IL-2 Karriere-Dienstakte",
+    "career_app_title": "IL-2 Karriere-Dienstakte"
   },
   "settings_manager": {
     "app_title": "IL-2 Campaign Tracker - Einstellungen",
@@ -904,6 +904,15 @@
       "no_careers_found": "Keine Karrieredaten gefunden.",
       "section_title": "IL-2 Karriere",
       "theatre_chain_label": "Theaterkette"
+    },
+    "progress": {
+      "applying_language": "Sprache wird angewendet…",
+      "language_applied": "Sprache angewendet.",
+      "preparing_debriefings": "Missionsnachbesprechungen werden vorbereitet…",
+      "first_run_note": "Dies kann beim ersten Ausführen einige Minuten dauern.",
+      "debriefings_ready": "Missionsnachbesprechungen bereit.",
+      "run_in_background": "Im Hintergrund ausführen",
+      "error_title": "Ein Fehler ist aufgetreten"
     },
     "landing": {
       "campaign_section": "Kampagnen-Tracker",

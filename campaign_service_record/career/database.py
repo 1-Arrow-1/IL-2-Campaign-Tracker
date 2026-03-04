@@ -364,3 +364,32 @@ class CareerDatabase:
                 {"career_id": career_id},
             )
             return cursor.fetchall()
+
+    def get_mission_count_for_career(
+        self, career_id: int, player_id: int
+    ) -> int:
+        """
+        Return the count of missions for a career segment where the player flew.
+
+        Mirrors the filter logic of get_missions_for_career() but uses COUNT(*)
+        to avoid fetching full rows — used to pre-calculate progress totals.
+
+        Falls back to zero on OperationalError (older schema without pilot slots).
+        """
+        conn = self._connect()
+        try:
+            cursor = conn.execute(
+                """SELECT COUNT(*) FROM mission
+                   WHERE careerId = :career_id
+                     AND (   pilot0 = :pid OR pilot1 = :pid OR pilot2 = :pid
+                          OR pilot3 = :pid OR pilot4 = :pid OR pilot5 = :pid
+                          OR pilot6 = :pid OR pilot7 = :pid OR pilot8 = :pid)""",
+                {"career_id": career_id, "pid": player_id},
+            )
+            row = cursor.fetchone()
+            return int(row[0]) if row else 0
+        except sqlite3.OperationalError as exc:
+            logger.warning(
+                "Mission count failed (%s); returning 0", exc
+            )
+            return 0

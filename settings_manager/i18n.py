@@ -38,8 +38,7 @@ class Translator:
 
     def __init__(self):
         self.locale_data: Dict[str, dict] = {}
-        # Initialize with English as default
-        init_i18n('en')
+        # i18n is already initialized by main.py with the user's locale before Translator is created
         self.current_locale = i18n_get_locale()
 
     def _load_locale_data(self, locale: str) -> dict:
