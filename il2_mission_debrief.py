@@ -495,8 +495,17 @@ class MissionDebriefParser:
                                 log_message(logger, f"  Pilot touchdown at {ts} (post-bailout AType:6)")
                     else:
                         # NO bailout occurred (or AType:6 is before separation - rare)
-                        # → This is aircraft landing
-                        if not self.stats.landing_time:
+                        # → This is aircraft landing, BUT only if the altitude is
+                        # consistent with a ground landing.  When a player ends the
+                        # mission via ESC while still airborne, IL-2 emits an AType:6
+                        # at the aircraft's current (non-zero) altitude.  A real
+                        # landing rolls out at <50 m; anything above that is treated
+                        # as a forced mission abort in the air (final_state left unset).
+                        _LANDING_ALT_THRESHOLD = 50  # metres
+                        if altitude is not None and altitude > _LANDING_ALT_THRESHOLD:
+                            if self.verbose:
+                                log_message(logger, f"  [SKIP LANDING] AType:6 at alt={altitude}m (>{_LANDING_ALT_THRESHOLD}m) — mission ended in air, not a real landing")
+                        elif not self.stats.landing_time:
                             self.stats.landing_time = t
                             self.stats.landed = True
 
@@ -722,6 +731,30 @@ class MissionDebriefParser:
                 if k.category == "Air"
                 and not any(x in k.type.lower() for x in ["botpilot", "botgunner"])
             )
+
+        # --- Downward reconciliation: parser over-counts vs DB ---
+        # When a mission is aborted via ESC, kills near the end may not be
+        # committed to the career DB. Remove excess air kills latest-first.
+        excess = _air_kill_count() - expected_total
+        if excess > 0:
+            air_kills_sorted = sorted(
+                [k for k in self.stats.kills
+                 if k.category == "Air"
+                 and not any(x in k.type.lower() for x in ["botpilot", "botgunner"])],
+                key=lambda k: k.time_of_kill or "",
+                reverse=True,
+            )
+            for k in air_kills_sorted[:excess]:
+                self.stats.kills.remove(k)
+                self.stats.events = [
+                    e for e in self.stats.events
+                    if not (e.get("type") == "Kill" and e.get("target") == k.type
+                            and e.get("time") == k.time_of_kill)
+                ]
+                log_message(
+                    logger,
+                    f"[DB RECONCILE] Removed excess kill: {k.type} at {k.time_of_kill}",
+                )
 
         deficit = expected_total - _air_kill_count()
         if deficit <= 0:

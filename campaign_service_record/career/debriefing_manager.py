@@ -422,7 +422,7 @@ class CareerDebriefingManager:
     # ------------------------------------------------------------------
 
     # Increment when the HTML rendering format changes to force cache rebuild.
-    _CACHE_VERSION = 7
+    _CACHE_VERSION = 8
 
     def _load_cache(self) -> Dict:
         if not self._cache_path.exists():
