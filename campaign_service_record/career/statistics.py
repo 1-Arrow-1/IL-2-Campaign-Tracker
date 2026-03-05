@@ -34,7 +34,7 @@ _KILL_BUCKETS: List[Tuple[str, List[str]]] = [
     ("air_kills",         ["killLightPlane", "killMediumPlane", "killHeavyPlane"]),
     ("static_air_kills",  ["killStaticPlane"]),
     # Vehicles
-    ("ground_kills",      ["killVehicle", "killLightTank", "killMediumTank", "killHeavyTank"]),
+    ("ground_kills",      ["killTruck", "killCar", "killLightTank", "killMediumTank", "killHeavyTank"]),
     # Railroad
     ("rail_kills",        ["killTrainLocomotive", "killTrainVagon", "killRailwayStationFacility"]),
     # Armaments
@@ -70,7 +70,7 @@ _BY_CATEGORY_MAP: List[Tuple[str, List[Tuple[str, List[str]]]]] = [
         ("Balloons", []),
     ]),
     ("Vehicles", [
-        ("Transport",        ["killVehicle"]),
+        ("Transport",        ["killTruck", "killCar"]),
         ("Armored (Light)",  ["killLightTank"]),
         ("Armored (Medium)", ["killMediumTank"]),
         ("Armored (Heavy)",  ["killHeavyTank"]),
