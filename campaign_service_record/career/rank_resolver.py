@@ -209,6 +209,11 @@ class RankResolver:
             len(self._tsv_table),
         )
 
+    @property
+    def is_mod_mode(self) -> bool:
+        """True when the expanded charactersranks mod is installed."""
+        return self._mod_dir is not None
+
     @classmethod
     def disabled(cls) -> "RankResolver":
         """Return a no-op resolver (standard TSV, English only, no game_dir)."""

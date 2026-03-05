@@ -336,7 +336,11 @@ class CareerAggregator:
         events_raw = self._db.get_events_for_pilot(
             career.pilot_id, types=_CONFIRMED_EVENT_TYPES
         )
-        promotions = [e for e in events_raw if e["type"] == 6]
+        promotions = [
+            e for e in events_raw
+            if e["type"] == 6
+            and (self._rank_resolver.is_mod_mode or int(e.get("rankId") or -1) <= 4)
+        ]
         awards = [e for e in events_raw if e["type"] == 8]
         sorties = self._db.get_sorties_for_pilot(career.pilot_id)
 
@@ -395,6 +399,10 @@ class CareerAggregator:
 
         if event_type == 6:  # Promotion
             rank_id = row["rankId"]
+            # Ranks > 4 only exist in the expanded mod. Hide them when the mod
+            # is not installed so that rank_5 / rank_6 … placeholders never surface.
+            if not self._rank_resolver.is_mod_mode and int(rank_id or -1) > 4:
+                return None
             country_int = _COUNTRY_CODE_MAP.get((country or '').lower(), 0)
             rank_name = self._rank_resolver.resolve(country_int, int(rank_id or -1))
             image_url = None
