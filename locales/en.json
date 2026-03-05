@@ -999,6 +999,7 @@
       "name": "Name",
       "place_of_birth": "Place of Birth",
       "appointment_commander": "Appointment as squadron commander",
+      "appointment_commander_squadron": "Appointment as squadron commander {squadron}",
       "promotion": "Promotion",
       "promotions": "Promotions",
       "recovery_from_injury": "Recovery from injury",

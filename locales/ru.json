@@ -1000,6 +1000,7 @@
       "promotion": "Повышение",
       "promotions": "Повышения",
       "appointment_commander": "Назначение командиром",
+      "appointment_commander_squadron": "Назначение командиром {squadron}",
       "current_squadron": "Текущая эскадрилья",
       "recovery_from_injury": "Восстановление после ранения",
       "squadron_transfer_from_to": "Перевод из {from} в {to}"

@@ -999,6 +999,7 @@
       "name": "Name",
       "place_of_birth": "Geburtsort",
       "appointment_commander": "Ernennung zum Staffelkapitän",
+      "appointment_commander_squadron": "Ernennung zum Staffelkapitän {squadron}",
       "promotion": "Beförderung",
       "promotions": "Beförderungen",
       "recovery_from_injury": "Genesungsurlaub",

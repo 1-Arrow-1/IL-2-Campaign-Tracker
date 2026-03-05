@@ -1000,6 +1000,7 @@
       "promotion": "Ascenso",
       "promotions": "Ascensos",
       "appointment_commander": "Nombramiento como comandante",
+      "appointment_commander_squadron": "Nombramiento como comandante {squadron}",
       "current_squadron": "Escuadrón actual",
       "recovery_from_injury": "Recuperación de herida",
       "squadron_transfer_from_to": "Traslado de {from} a {to}"

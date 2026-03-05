@@ -1000,6 +1000,7 @@
       "promotion": "Awans",
       "promotions": "Awanse",
       "appointment_commander": "Mianowanie dowódcą",
+      "appointment_commander_squadron": "Mianowanie dowódcą {squadron}",
       "current_squadron": "Bieżąca eskadra",
       "recovery_from_injury": "Rekonwalescencja po urazie",
       "squadron_transfer_from_to": "Przeniesienie z {from} do {to}"

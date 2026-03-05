@@ -1540,7 +1540,9 @@ const DetailPage = {
                 } else if (inc.type === 'COMMAND') {
                     p.textContent = [
                         inc.date, '\u2013',
-                        i18n.t('web.label.appointment_commander'),
+                        inc.squadron
+                            ? i18n.t('web.label.appointment_commander_squadron', { squadron: inc.squadron })
+                            : i18n.t('web.label.appointment_commander'),
                     ].join(' ');
                 } else if (inc.type === 'SQUADRON_CHANGE') {
                     p.textContent = [

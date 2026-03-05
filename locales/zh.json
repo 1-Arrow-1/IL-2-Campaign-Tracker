@@ -1000,6 +1000,7 @@
       "promotion": "晋升",
       "promotions": "晋升",
       "appointment_commander": "晋升为指挥官",
+      "appointment_commander_squadron": "晋升为{squadron}指挥官",
       "current_squadron": "当前中队",
       "recovery_from_injury": "伤后康复",
       "squadron_transfer_from_to": "从 {from} 调往 {to}"

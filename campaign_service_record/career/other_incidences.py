@@ -213,10 +213,16 @@ def load_other_incidences(
                 logger.debug("COMMAND event has unparseable date; skipping")
                 continue
             iso = _iso(d)
+            config_id = _safe_int(row, "squadronId")
+            squadron = None
+            if config_id:
+                display = resolve_squadron_fn(career_id, config_id)
+                squadron = display if display else f"Squadron {config_id}"
             entries.append({
-                "type":     "COMMAND",
-                "date":     iso,
-                "sort_key": iso,
+                "type":      "COMMAND",
+                "date":      iso,
+                "squadron":  squadron,
+                "sort_key":  iso,
             })
     except Exception as exc:
         logger.warning(

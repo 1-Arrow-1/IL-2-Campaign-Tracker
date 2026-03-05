@@ -1001,6 +1001,7 @@
       "promotion": "Promotion",
       "promotions": "Promotions",
       "appointment_commander": "Nomination comme commandant",
+      "appointment_commander_squadron": "Nomination comme commandant {squadron}",
       "current_squadron": "Escadron actuel",
       "recovery_from_injury": "Convalescence après blessure",
       "squadron_transfer_from_to": "Mutation de {from} à {to}"
