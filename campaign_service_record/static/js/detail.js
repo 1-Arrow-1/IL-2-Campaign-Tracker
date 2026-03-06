@@ -1552,7 +1552,7 @@ const DetailPage = {
                 } else if (inc.type === 'BONUS') {
                     p.textContent = [
                         inc.date, '\u2013',
-                        i18n.t(`progression.awards.${inc.name}`, { defaultValue: inc.name }),
+                        i18n.tr(`progression.awards.${inc.name}`, { defaultText: inc.name }),
                     ].join(' ');
                 }
 
