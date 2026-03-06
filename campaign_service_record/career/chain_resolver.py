@@ -31,9 +31,9 @@ THEATRE_LABELS: Dict[int, str] = {
     15: "Battle of Kuban",
     18: "Battle of Normandy",
     22: "Battle of Rheinland",
-    32: "Battle of Odessa 1941",
-    33: "Battle of Odessa 1944",
-    37: "Battle of Leningrad",
+    32: "Defence of Odessa",
+    33: "Liberation of Odessa",
+    37: "Battle of Leningrad 1941",
 }
 
 
