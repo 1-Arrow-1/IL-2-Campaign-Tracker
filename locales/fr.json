@@ -388,7 +388,7 @@
         "medal_for_the_defense_of_stalingrad": "Stalingrad—la bataille qui a brisé l’élan stratégique de la Wehrmacht. Vous étiez dans les airs au-dessus de la ville pendant qu’elle absorbait le pire de l’ennemi. La médaille marque un moment qui a changé la guerre.",
         "medal_for_the_defense_of_the_caucasus": "La campagne du Caucase—pétrole, cols de montagne, et le bord d’une catastrophe qui a été repoussée. Vous avez volé dans les batailles qui ont protégé le carburant et le flanc sud de l’ennemi.",
         "dsm": "Long, dependable service to the Soviet air force, recognized in metal. Not a single act of heroism, but a record that proved its value again and again. The state acknowledges what quiet, sustained contribution looks like.",
-        "order_Lenin": "One of the Soviet Union's highest honors - awarded for extraordinary contribution to the socialist state and the defense of the Motherland. The Order of Lenin carries institutional weight that few decorations match. It means the Motherland is watching, and what it has seen, it recognizes."
+        "order_lenin": "One of the Soviet Union's highest honors - awarded for extraordinary contribution to the socialist state and the defense of the Motherland. The Order of Lenin carries institutional weight that few decorations match. It means the Motherland is watching, and what it has seen, it recognizes."
       },
       "ranks": {
         "captain": "Tu commandes et tu continues de voler dur. Les meilleurs ordres sont ceux que tu as éprouvés dans ton propre cockpit.",
@@ -602,7 +602,7 @@
       "hero_soviet_union": "Héros de l’Union soviétique",
       "hero_soviet_union_2": "Héros de l’Union soviétique (2e attribution)",
       "hero_soviet_union_3": "Héros de l’Union soviétique (3e attribution)",
-      "order_Lenin": "Ordre de Lénine",
+      "order_lenin": "Ordre de Lénine",
       "order_Lenin_2": "Ordre de Lénine (2e attribution)",
       "order_Lenin_3": "Ordre de Lénine (3e attribution)",
       "bonus_15_sorties": "Prime pour 15 sorties de combat",

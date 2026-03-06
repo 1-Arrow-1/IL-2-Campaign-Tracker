@@ -388,7 +388,7 @@
         "medal_for_the_defense_of_stalingrad": "Сталинград—сражение, сломавшее стратегический импульс вермахта. Вы летели над городом, пока он принимал всё самое страшное от врага. Медаль означает момент, изменивший всю войну.",
         "medal_for_the_defense_of_the_caucasus": "Кавказская кампания—нефть, горные перевалы и край катастрофы, которая была отогнана. Вы летели в сражениях, удержавших топливо и южный фланг от врага.",
         "dsm": "Long, dependable service to the Soviet air force, recognized in metal. Not a single act of heroism, but a record that proved its value again and again. The state acknowledges what quiet, sustained contribution looks like.",
-        "order_Lenin": "One of the Soviet Union's highest honors - awarded for extraordinary contribution to the socialist state and the defense of the Motherland. The Order of Lenin carries institutional weight that few decorations match. It means the Motherland is watching, and what it has seen, it recognizes."
+        "order_lenin": "One of the Soviet Union's highest honors - awarded for extraordinary contribution to the socialist state and the defense of the Motherland. The Order of Lenin carries institutional weight that few decorations match. It means the Motherland is watching, and what it has seen, it recognizes."
       },
       "ranks": {
         "captain": "Ты командуешь — и всё ещё летаешь в пекло. Лучшие приказы — те, что ты проверил лично в кабине.",
@@ -601,7 +601,7 @@
       "hero_soviet_union": "Герой Советского Союза",
       "hero_soviet_union_2": "Герой Советского Союза (повторное присвоение)",
       "hero_soviet_union_3": "Герой Советского Союза (третий раз)",
-      "order_Lenin": "Орден Ленина",
+      "order_lenin": "Орден Ленина",
       "order_Lenin_2": "Орден Ленина (повторное вручение)",
       "order_Lenin_3": "Орден Ленина (третий раз)",
       "bonus_15_sorties": "Бонус за 15 боевых вылетов",

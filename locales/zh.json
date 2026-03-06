@@ -388,7 +388,7 @@
         "medal_for_the_defense_of_stalingrad": "斯大林格勒—折断德军战略势头的战役。你在城市上空主战，她承受并吸收了敌方最笸的进攻。这枚勋章标志着改变整场战争的转折点。",
         "medal_for_the_defense_of_the_caucasus": "高加索战役：石油、山岳山口和一场未发生的凄惨。你在将燃料与南翼守住的战斗中飞行。",
         "dsm": "Long, dependable service to the Soviet air force, recognized in metal. Not a single act of heroism, but a record that proved its value again and again. The state acknowledges what quiet, sustained contribution looks like.",
-        "order_Lenin": "One of the Soviet Union's highest honors - awarded for extraordinary contribution to the socialist state and the defense of the Motherland. The Order of Lenin carries institutional weight that few decorations match. It means the Motherland is watching, and what it has seen, it recognizes."
+        "order_lenin": "One of the Soviet Union's highest honors - awarded for extraordinary contribution to the socialist state and the defense of the Motherland. The Order of Lenin carries institutional weight that few decorations match. It means the Motherland is watching, and what it has seen, it recognizes."
       },
       "ranks": {
         "captain": "你既指挥也硬飞。最好的命令，是你在自己座舱里验证过的命令。",
@@ -601,7 +601,7 @@
       "hero_soviet_union": "苏联英雄",
       "hero_soviet_union_2": "苏联英雄（第二次）",
       "hero_soviet_union_3": "苏联英雄（第三次）",
-      "order_Lenin": "列宁勋章",
+      "order_lenin": "列宁勋章",
       "order_Lenin_2": "列宁勋章（第二次）",
       "order_Lenin_3": "列宁勋章（第三次）",
       "bonus_15_sorties": "15次作战出击奖励",

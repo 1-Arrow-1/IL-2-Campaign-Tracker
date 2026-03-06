@@ -388,7 +388,7 @@
         "medal_for_the_defense_of_stalingrad": "Stalingrad—the battle that broke the Wehrmacht's strategic momentum. You were in the air above the city while it absorbed the worst the enemy could send. The medal marks a moment that changed the entire war.",
         "medal_for_the_defense_of_the_caucasus": "The Caucasus campaign: oil, mountain passes, and the edge of a disaster that was turned back. You flew in the battles that kept the fuel and the southern flank out of enemy hands.",
         "dsm": "Long, dependable service to the Soviet air force, recognized in metal. Not a single act of heroism, but a record that proved its value again and again. The state acknowledges what quiet, sustained contribution looks like.",
-        "order_Lenin": "One of the Soviet Union's highest honors - awarded for extraordinary contribution to the socialist state and the defense of the Motherland. The Order of Lenin carries institutional weight that few decorations match. It means the Motherland is watching, and what it has seen, it recognizes."
+        "order_lenin": "One of the Soviet Union's highest honors - awarded for extraordinary contribution to the socialist state and the defense of the Motherland. The Order of Lenin carries institutional weight that few decorations match. It means the Motherland is watching, and what it has seen, it recognizes."
       },
       "ranks": {
         "captain": "You command and you still fly hard. The best orders are the ones you’ve tested in your own cockpit.",
@@ -601,7 +601,7 @@
       "hero_soviet_union": "Hero of the Soviet Union",
       "hero_soviet_union_2": "Hero of the Soviet Union (2nd awarding)",
       "hero_soviet_union_3": "Hero of the Soviet Union (3rd awarding)",
-      "order_Lenin": "Order of Lenin",
+      "order_lenin": "Order of Lenin",
       "order_Lenin_2": "Order of Lenin (2nd awarding)",
       "order_Lenin_3": "Order of Lenin (3rd awarding)",
       "bonus_15_sorties": "15 Combat Sorties Bonus",

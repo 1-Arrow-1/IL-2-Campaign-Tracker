@@ -388,7 +388,7 @@
         "medal_for_the_defense_of_stalingrad": "Stalingrado—la batalla que rompió el impulso estratégico de la Wehrmacht. Estabas en el aire sobre la ciudad mientras absorbía lo peor del enemigo. La medalla marca un momento que cambió la guerra entera.",
         "medal_for_the_defense_of_the_caucasus": "La campaña del Cáucaso: petróleo, pasos de montaña y el borde de una catástrofe que fue repelida. Volaste en las batallas que mantuvieron el combustible y el flanco sur fuera del alcance enemigo.",
         "dsm": "Long, dependable service to the Soviet air force, recognized in metal. Not a single act of heroism, but a record that proved its value again and again. The state acknowledges what quiet, sustained contribution looks like.",
-        "order_Lenin": "One of the Soviet Union's highest honors - awarded for extraordinary contribution to the socialist state and the defense of the Motherland. The Order of Lenin carries institutional weight that few decorations match. It means the Motherland is watching, and what it has seen, it recognizes."
+        "order_lenin": "One of the Soviet Union's highest honors - awarded for extraordinary contribution to the socialist state and the defense of the Motherland. The Order of Lenin carries institutional weight that few decorations match. It means the Motherland is watching, and what it has seen, it recognizes."
       },
       "ranks": {
         "captain": "Mandas y sigues volando duro. Las mejores órdenes son las que probaste en tu propia cabina.",
@@ -601,7 +601,7 @@
       "hero_soviet_union": "Héroe de la Unión Soviética",
       "hero_soviet_union_2": "Héroe de la Unión Soviética (segunda concesión)",
       "hero_soviet_union_3": "Héroe de la Unión Soviética (tercera concesión)",
-      "order_Lenin": "Orden de Lenin",
+      "order_lenin": "Orden de Lenin",
       "order_Lenin_2": "Orden de Lenin (segunda concesión)",
       "order_Lenin_3": "Orden de Lenin (tercera concesión)",
       "bonus_15_sorties": "Bono por 15 salidas de combate",

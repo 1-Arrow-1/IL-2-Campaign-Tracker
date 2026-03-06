@@ -388,7 +388,7 @@
         "medal_for_the_defense_of_stalingrad": "Stalingrad — bitwa, która złamała strategiczny impet Wehrmachtu. Byłeś w powietrzu nad miastem, które chłonęło najgorsze, co mógł posłać wrog. Medal oznacza moment, który zmienił całą wojnę.",
         "medal_for_the_defense_of_the_caucasus": "Kampania kaukaska — ropa, przełęcze i krąg katastrofy, która została odepchnięta. Latałeś w bitwach, które uratowały paliwo i południową flankę przed wrogiem.",
         "dsm": "Long, dependable service to the Soviet air force, recognized in metal. Not a single act of heroism, but a record that proved its value again and again. The state acknowledges what quiet, sustained contribution looks like.",
-        "order_Lenin": "One of the Soviet Union's highest honors - awarded for extraordinary contribution to the socialist state and the defense of the Motherland. The Order of Lenin carries institutional weight that few decorations match. It means the Motherland is watching, and what it has seen, it recognizes."
+        "order_lenin": "One of the Soviet Union's highest honors - awarded for extraordinary contribution to the socialist state and the defense of the Motherland. The Order of Lenin carries institutional weight that few decorations match. It means the Motherland is watching, and what it has seen, it recognizes."
       },
       "ranks": {
         "captain": "Dowodzisz i wciąż latasz ostro. Najlepsze rozkazy to te, które sprawdziłeś we własnej kabinie.",
@@ -601,7 +601,7 @@
       "hero_soviet_union": "Bohater Związku Radzieckiego",
       "hero_soviet_union_2": "Bohater Związku Radzieckiego (2. nadanie)",
       "hero_soviet_union_3": "Bohater Związku Radzieckiego (3. nadanie)",
-      "order_Lenin": "Order Lenina",
+      "order_lenin": "Order Lenina",
       "order_Lenin_2": "Order Lenina (2. nadanie)",
       "order_Lenin_3": "Order Lenina (3. nadanie)",
       "bonus_15_sorties": "Premia za 15 lotów bojowych",
