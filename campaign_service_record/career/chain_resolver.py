@@ -23,17 +23,17 @@ from campaign_service_record.career.database import CareerDatabase, PilotDescrip
 logger = logging.getLogger(__name__)
 
 
-# Confirmed career.tvd → theatre display label mapping.
+# career.infoId → theatre display label mapping.
 # Add entries here when new theatres are confirmed.
-THEATRE_LABELS: Dict[int, str] = {
-    13: "Battle of Moscow",
-    14: "Battle of Stalingrad",
-    15: "Battle of Kuban",
-    18: "Battle of Normandy",
-    22: "Battle of Rheinland",
-    32: "Defence of Odessa",
-    33: "Liberation of Odessa",
-    37: "Battle of Leningrad 1941",
+THEATRE_LABELS: Dict[str, str] = {
+    "BoL41": "Battle of Leningrad 1941",
+    "BoO41": "Defence of Odessa",
+    "BOM":   "Battle of Moscow",
+    "BOS":   "Battle of Stalingrad",
+    "BOK":   "Battle of Kuban",
+    "BoO44": "Liberation of Odessa",
+    "BON":   "Battle of Normandy",
+    "BOBP":  "Battle of Rheinland",
 }
 
 
@@ -160,7 +160,7 @@ class CareerChainResolver:
         last_pilot_id = int(chain[-1]["playerId"]) if chain else pilot_id
 
         theatre_labels = [
-            THEATRE_LABELS.get(int(row["tvd"]), f"Theatre {row['tvd']}")
+            THEATRE_LABELS.get(row["infoId"] or "", f"Theatre ({row['infoId']})")
             for row in chain
         ]
 
