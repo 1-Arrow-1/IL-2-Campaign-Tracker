@@ -339,7 +339,7 @@ class CareerAggregator:
         promotions = [
             e for e in events_raw
             if e["type"] == 6
-            and (self._rank_resolver.is_mod_mode or int(e.get("rankId") or -1) <= 4)
+            and (self._rank_resolver.is_mod_mode or int(e["rankId"] or -1) <= 4)
         ]
         awards = [e for e in events_raw if e["type"] == 8]
         sorties = self._db.get_sorties_for_pilot(career.pilot_id)
