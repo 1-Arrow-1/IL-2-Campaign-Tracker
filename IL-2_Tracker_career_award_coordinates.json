@@ -137,10 +137,10 @@
     ],
     "overlay": {
       "name": "USSR_overlay_career",
-      "x": 101,
-      "y": 139,
-      "w": 1521,
-      "h": 1438,
+      "x": 0,
+      "y": 0,
+      "w": 1621,
+      "h": 1532,
       "replacements": []
     }
   },
@@ -282,10 +282,10 @@
     ],
     "overlay": {
       "name": "USSR_overlay_career",
-      "x": 101,
-      "y": 139,
-      "w": 1521,
-      "h": 1438,
+      "x": 0,
+      "y": 0,
+      "w": 1621,
+      "h": 1532,
       "replacements": []
     }
   },
