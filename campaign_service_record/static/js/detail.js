@@ -214,6 +214,8 @@ const getAwardNarrativeCodeFromName = (countryKey, awardName) => {
         key = normalizeBritainAwardNarrativeKey(key);
     } else if (countryKey === 'germany') {
         key = normalizeGermanyAwardNarrativeKey(key);
+    } else if (countryKey === 'soviet') {
+        key = normalizeUSSRAwardNarrativeKey(key);
     }
 
     return key;
@@ -231,6 +233,8 @@ const getAwardNarrativeCode = (event, countryKey) => {
             key = normalizeBritainAwardNarrativeKey(key);
         } else if (countryKey === 'germany') {
             key = normalizeGermanyAwardNarrativeKey(key);
+        } else if (countryKey === 'soviet') {
+            key = normalizeUSSRAwardNarrativeKey(key);
         }
         return key;
     }
@@ -252,7 +256,28 @@ const normalizeBritainAwardNarrativeKey = (key) => {
         bar_to_the_distinguished_service_order: 'bar_to_the_dso',
         second_bar_to_the_distinguished_flying_cross: 'second_bar_to_the_dfc',
         second_bar_to_the_distinguished_flying_medal: 'second_bar_to_the_dfm',
-        second_bar_to_the_distinguished_service_order: 'second_bar_to_the_dso'
+        second_bar_to_the_distinguished_service_order: 'second_bar_to_the_dso',
+        // Short asset name_keys (career events use AwardAsset.name_key)
+        dfc:                     'distinguished_flying_cross_dfc',
+        dfc_bar:                 'bar_to_the_dfc',
+        dfc_2bar:                'second_bar_to_the_dfc',
+        dfm:                     'distinguished_flying_medal_dfm',
+        dfm_bar:                 'bar_to_the_dfm',
+        dfm_2bar:                'second_bar_to_the_dfm',
+        dso:                     'distinguished_service_order_dso',
+        dso_bar:                 'bar_to_the_dso',
+        dso_bar2:                'second_bar_to_the_dso',
+        dso_bar3:                'third_bar_to_the_distinguished_service_order',
+        af_cross:                'air_force_cross',
+        af_cross_bar:            'bar_to_the_air_force_cross',
+        af_cross_2bars:          'second_bar_to_the_air_force_cross',
+        af_medal:                'air_force_medal',
+        af_medal_bar:            'bar_to_the_air_force_medal',
+        af_medal_2bars:          'second_bar_to_the_air_force_medal',
+        france_germany_star:     'france_and_germany_star',
+        victoria_cross_bar:      'bar_to_the_vc',
+        wound_stripe_2:          'second_wound_stripe',
+        wound_stripe_3:          'third_wound_stripe',
     };
     return mappings[key] || key;
 };
@@ -292,6 +317,37 @@ const normalizeUSAwardNarrativeKey = (key) => {
     if (!key) {
         return key;
     }
+    // Short asset name_key mappings (career events use AwardAsset.name_key)
+    const directMappings = {
+        bronze_star:           'bronze_star_medal',
+        bronze_star_1_oak:     'bronze_star_plus_one_oak_leaf_cluster',
+        bronze_star_2_oak:     'bronze_star_plus_two_oak_leaf_clusters',
+        air_medal_1_oak:       'air_medal_plus_one_oak_leaf_cluster',
+        air_medal_1silver_oak: 'air_medal_plus_four_oak_leaf_clusters',
+        air_medal_2_oak:       'air_medal_plus_two_oak_leaf_clusters',
+        air_medal_3_oak:       'air_medal_plus_three_oak_leaf_clusters',
+        air_medal_4_oak:       'air_medal_plus_four_oak_leaf_clusters',
+        dfc_1_oak:             'dfc_plus_one_oak_leaf_cluster',
+        dfc_1_silver_oak:      'dfc_plus_one_silver_oak_leaf_cluster',
+        dfc_2_oak:             'dfc_plus_two_oak_leaf_clusters',
+        dfc_3_oak:             'dfc_plus_three_oak_leaf_clusters',
+        dfc_4_oak:             'dfc_plus_four_oak_leaf_clusters',
+        dsc_1_oak:             'dsc_plus_one_oak_leaf_cluster',
+        dsc_2_oak:             'dsc_plus_two_oak_leaf_clusters',
+        dsc_3_oak:             'dsc_plus_three_oak_leaf_clusters',
+        dsc_4_oak:             'dsc_plus_four_oak_leaf_clusters',
+        medal_of_honor_1_oak:  'medal_of_honor_plus_one_oak_leaf_cluster',
+        purple_heart_1_oak:    'purple_heart_plus_one_oak_leaf_cluster',
+        purple_heart_2_oak:    'purple_heart_plus_two_oak_leaf_clusters',
+        silver_star:           'silver_star_medal',
+        silver_star_1_oak:     'silver_star_plus_one_oak_leaf_cluster',
+        silver_star_2_oak:     'silver_star_plus_two_oak_leaf_clusters',
+        eu_af_me_medal:        'european_african_middle_eastern_campaign_medal',
+    };
+    if (directMappings[key]) {
+        return directMappings[key];
+    }
+    // Long display-name prefix replacements (campaign events)
     const oakLeafMappings = [
         { prefix: 'air_medal_and', replacement: 'air_medal_plus' },
         { prefix: 'bronze_star_and', replacement: 'bronze_star_plus' },
@@ -304,14 +360,48 @@ const normalizeUSAwardNarrativeKey = (key) => {
         { prefix: 'silver_star_and', replacement: 'silver_star_plus' },
         { prefix: 'silver_star_medal_and', replacement: 'silver_star_plus' }
     ];
-
     for (const mapping of oakLeafMappings) {
         if (key.startsWith(mapping.prefix)) {
             return key.replace(mapping.prefix, mapping.replacement);
         }
     }
-
     return key;
+};
+
+const normalizeUSSRAwardNarrativeKey = (key) => {
+    if (!key) {
+        return key;
+    }
+    const mappings = {
+        // Short asset name_keys → existing long narrative keys
+        hero_soviet_union:         'hero_of_the_soviet_union',
+        medal_battle_merit:        'medal_for_battle_merit',
+        medal_courage:             'medal_for_courage',
+        order_nevsky:              'order_of_alexander_nevsky',
+        order_suvorov:             'order_of_suvorov_3rd_class',
+        order_patriotic_war_1st:   'order_of_the_patriotic_war_1st_class',
+        order_patriotic_war_2nd:   'order_of_the_patriotic_war_2nd_class',
+        order_red_banner:          'order_of_the_red_banner',
+        order_red_banner_2:        'order_of_the_red_banner_2nd_awarding',
+        order_red_banner_3:        'order_of_the_red_banner_3rd_awarding',
+        order_red_star:            'order_of_the_red_star',
+        air_kill_bonus:            'aircraft_kill_bonus_1000_rubles',
+        bomber_kill_bonus:         'bomber_kill_bonus_2000_rubles',
+        bomber_kill_bonus1:        'bomber_kill_bonus_1500_rubles',
+        bonus_15_sorties:          '15_combat_sorties_bonus_2000_rubles',
+        bonus_25_sorties:          '25_combat_sorties_bonus_3000_rubles',
+        bonus_40_sorties:          '40_combat_sorties_bonus_5000_rubles',
+        bonus_5_sorties:           '5_combat_sorties_bonus_1500_rubles',
+        dest_sub_kill_bonus:       'destroyer_or_submarine_kill_bonus_10000_rubles',
+        fighter_kill_bonus:        'fighter_kill_bonus_1000_rubles',
+        small_ship_kill_bonus:     'small_ship_kill_bonus_1000_rubles',
+        transport_kill_bonus:      'transport_plane_kill_bonus_1500_rubles',
+        transport_ship_kill_bonus: 'transport_ship_kill_bonus_3000_rubles',
+        dfm_caucasus:              'medal_for_the_defense_of_the_caucasus',
+        dfm_moscow:                'medal_for_the_defense_of_moscow',
+        dfm_stalingrad:            'medal_for_the_defense_of_stalingrad',
+    };
+    return mappings[key] || key;
 };
 
 /**

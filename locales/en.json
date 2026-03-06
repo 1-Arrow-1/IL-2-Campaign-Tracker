@@ -312,7 +312,25 @@
         "wound_badge_in_black": "First blood paid to the front. You came back—this time.",
         "wound_badge_in_gold": "You’ve been hit again and again and kept returning. The badge shines; the damage doesn’t.",
         "wound_badge_in_silver": "More wounds, fewer illusions. You’re still flying, but you’ve started counting what it costs.",
-        "luftwaffe_honor_roll_clasp": "Your name is no longer just on a roster—it stands in the Honor Roll. Recognition earned the hard way, through repeated proof at the front. It’s not applause; it’s expectation."
+        "luftwaffe_honor_roll_clasp": "Your name is no longer just on a roster—it stands in the Honor Roll. Recognition earned the hard way, through repeated proof at the front. It’s not applause; it’s expectation.",
+        "eastern_front_medal": "The Ostmedaille - winter 1941-42 on the Eastern Front. Sub-zero cold, broken supply lines, and a front that refused to hold still. This medal marks endurance through conditions the Wehrmacht had not planned for and never forgot.",
+        "kuban_shield": "The Kuban bridgehead, 1943 - a brutal defensive fight in river mud, contested airspace, and relentless Soviet pressure. You flew above one of the war's most grueling attritional battles and helped keep the line.",
+        "bombers_bronze": "You've completed enough bombing sorties to earn formal recognition. The front-flying clasp marks operational time over defended targets - time when steady nerves mattered more than speed.",
+        "bombers_silver": "Extended bombing operations. You've absorbed the anti-aircraft fire, the enemy fighters, and the discipline of maintaining course when every instinct argues otherwise. The silver reflects endurance.",
+        "bomber_gold": "A substantial operational record in bombing. Your missions have cost the enemy assets they couldn't easily replace. The gold clasp records what the mission logs already say.",
+        "bombers_gold_clasp": "An exceptional commitment to bomber operations. This pendant marks a level of operational intensity that few aircrew reach - sustained, consistent, and effective.",
+        "transport_bronze": "Transport flying is essential and underappreciated - until the supply runs dry. The bronze clasp marks entry into sustained air transport operations, keeping the front supplied.",
+        "transport_silver": "Extended transport service. Consistent sorties over routes that don't get easier over time. The silver clasp records the accumulated hours keeping the Luftwaffe and the army moving.",
+        "transport_gold": "A significant transport record. You've kept the flow of fuel, ammunition, and personnel moving despite opposition and conditions. The gold clasp reflects real operational contribution.",
+        "transport_gold_clasp": "An outstanding transport record. The pendant marks sustained contribution that exceeds routine requirements - a record built on discipline and reliability above all else.",
+        "attack_bronze": "Close air support - low, slow, and directly over the fighting. The bronze marks the beginning of an operational ground-attack record where the margins are thin and the results immediate.",
+        "attack_silver": "Extended ground-attack operations. You've repeatedly gone low over defended positions and delivered ordnance when and where it was needed. The silver clasp reflects sustained risk.",
+        "attack_gold": "A significant ground-attack record. Sorties into the teeth of ground defenses, again and again, delivering results. The gold clasp marks a commitment to the infantry's sky.",
+        "attack_gold_clasp": "Exceptional ground-attack service. The pendant marks an operational record that goes well beyond required minimums - this is a record of an aircraft and crew used hard, and well.",
+        "attack_heavy_fighters_bronze": "The Zerstoerer role - heavy fighters sent against hard targets that single-engine aircraft couldn't reach or stop. The bronze clasp marks entry into this demanding operational record.",
+        "attack_heavy_fighters_silver": "Extended heavy fighter operations. You've proven the value of range, firepower, and the willingness to press into defended airspace with a heavier, less agile aircraft.",
+        "attack_heavy_fighters_gold": "A substantial heavy fighter record. Your operations have consistently required both the aircraft and the crew to do more than the minimum. The gold recognizes that commitment.",
+        "attack_heavy_fighters_gold_clasp": "Exceptional Zerstoerer service. The pendant marks an operational record that defines a career - sustained, effective, and built on missions that demanded everything the aircraft had."
       },
       "ranks": {
         "feldwebel": "You’ve seen flak and fighters up close and you don’t flinch. Men follow your turns because they’ve learned you bring them home.",
@@ -368,7 +386,9 @@
         "destroyer_or_submarine_kill_bonus_10000_rubles": "A warship of substance—destroyer or submarine. Ten thousand rubles because the threat to friendly forces and supply lines was correspondingly serious. It won't be on the water again.",
         "medal_for_the_defense_of_moscow": "Moscow itself was in the balance. You flew above a city that couldn't afford to fall, and it didn't. This medal records the battle that kept the war alive.",
         "medal_for_the_defense_of_stalingrad": "Stalingrad—the battle that broke the Wehrmacht's strategic momentum. You were in the air above the city while it absorbed the worst the enemy could send. The medal marks a moment that changed the entire war.",
-        "medal_for_the_defense_of_the_caucasus": "The Caucasus campaign: oil, mountain passes, and the edge of a disaster that was turned back. You flew in the battles that kept the fuel and the southern flank out of enemy hands."
+        "medal_for_the_defense_of_the_caucasus": "The Caucasus campaign: oil, mountain passes, and the edge of a disaster that was turned back. You flew in the battles that kept the fuel and the southern flank out of enemy hands.",
+        "order_Lenin": "One of the Soviet Union's highest honors - awarded for extraordinary contribution to the socialist state and the defense of the Motherland. The Order of Lenin carries institutional weight that few decorations match. It means the Motherland is watching, and what it has seen, it recognizes.",
+        "dsm": "Long, dependable service to the Soviet air force, recognized in metal. Not a single act of heroism, but a record that proved its value again and again. The state acknowledges what quiet, sustained contribution looks like."
       },
       "ranks": {
         "captain": "You command and you still fly hard. The best orders are the ones you’ve tested in your own cockpit.",
