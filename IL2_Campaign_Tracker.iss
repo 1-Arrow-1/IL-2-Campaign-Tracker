@@ -48,6 +48,9 @@ english.IL2PageDescription=Choose the folder where IL-2 Great Battles is install
 english.IL2PagePrompt=Please select the main IL-2 Great Battles installation directory.
 english.AdditionalIcons=Additional icons:
 english.CreateDesktopIcon=Create a &desktop icon
+english.GermanAwardsGroupDesc=German awards style:
+english.GermanAwards1957=1957 version (Bundeswehr-era, default)
+english.GermanAwardsWW2=Original WW2-era German awards
 
 ; ============================================================================
 ; GERMAN
@@ -63,6 +66,9 @@ german.IL2PageDescription=Wählen Sie den Ordner, in dem IL-2 Great Battles inst
 german.IL2PagePrompt=Bitte wählen Sie das Hauptinstallationsverzeichnis von IL-2 Great Battles.
 german.AdditionalIcons=Zusätzliche Symbole:
 german.CreateDesktopIcon=&Desktop-Symbol erstellen
+german.GermanAwardsGroupDesc=Stil der deutschen Auszeichnungen:
+german.GermanAwards1957=Version 1957 (Bundeswehr-Ära, Standard)
+german.GermanAwardsWW2=Originale deutsche Auszeichnungen (2. Weltkrieg)
 
 ; ============================================================================
 ; FRENCH
@@ -78,6 +84,9 @@ french.IL2PageDescription=Choisissez le dossier où IL-2 Great Battles est insta
 french.IL2PagePrompt=Veuillez sélectionner le répertoire d'installation principal d'IL-2 Great Battles.
 french.AdditionalIcons=Icônes supplémentaires :
 french.CreateDesktopIcon=Créer une icône sur le &bureau
+french.GermanAwardsGroupDesc=Style des décorations allemandes :
+french.GermanAwards1957=Version 1957 (ère Bundeswehr, par défaut)
+french.GermanAwardsWW2=Décorations allemandes originales de la Seconde Guerre mondiale
 
 ; ============================================================================
 ; SPANISH
@@ -93,6 +102,9 @@ spanish.IL2PageDescription=Elija la carpeta donde está instalado IL-2 Great Bat
 spanish.IL2PagePrompt=Por favor, seleccione el directorio de instalación principal de IL-2 Great Battles.
 spanish.AdditionalIcons=Iconos adicionales:
 spanish.CreateDesktopIcon=Crear un icono en el &escritorio
+spanish.GermanAwardsGroupDesc=Estilo de condecoraciones alemanas:
+spanish.GermanAwards1957=Versión 1957 (era Bundeswehr, predeterminado)
+spanish.GermanAwardsWW2=Condecoraciones alemanas originales de la Segunda Guerra Mundial
 
 ; ============================================================================
 ; POLISH
@@ -108,6 +120,9 @@ polish.IL2PageDescription=Wybierz folder, w którym zainstalowano IL-2 Great Bat
 polish.IL2PagePrompt=Proszę wybrać główny katalog instalacji IL-2 Great Battles.
 polish.AdditionalIcons=Dodatkowe ikony:
 polish.CreateDesktopIcon=Utwórz ikonę na &pulpicie
+polish.GermanAwardsGroupDesc=Styl niemieckich odznaczeń:
+polish.GermanAwards1957=Wersja 1957 (era Bundeswehry, domyślne)
+polish.GermanAwardsWW2=Oryginalne niemieckie odznaczenia z II wojny światowej
 
 ; ============================================================================
 ; RUSSIAN
@@ -123,6 +138,9 @@ russian.IL2PageDescription=Выберите папку, где установл�
 russian.IL2PagePrompt=Пожалуйста, выберите основной каталог установки IL-2 Great Battles.
 russian.AdditionalIcons=Дополнительные значки:
 russian.CreateDesktopIcon=Создать значок на &рабочем столе
+russian.GermanAwardsGroupDesc=Стиль немецких наград:
+russian.GermanAwards1957=Версия 1957 г. (эпоха Бундесвера, по умолчанию)
+russian.GermanAwardsWW2=Оригинальные немецкие награды эпохи Второй мировой войны
 
 ; ============================================================================
 ; CHINESE SIMPLIFIED
@@ -138,9 +156,14 @@ chinesesimplified.IL2PageDescription=选择 IL-2 Great Battles 的安装文件�
 chinesesimplified.IL2PagePrompt=请选择 IL-2 Great Battles 的主安装目录。
 chinesesimplified.AdditionalIcons=附加图标：
 chinesesimplified.CreateDesktopIcon=创建桌面图标(&D)
+chinesesimplified.GermanAwardsGroupDesc=德国勋章风格：
+chinesesimplified.GermanAwards1957=1957年版本（联邦国防军时代，默认）
+chinesesimplified.GermanAwardsWW2=二战时期原版德国勋章
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "awards_1957"; Description: "{cm:GermanAwards1957}"; GroupDescription: "{cm:GermanAwardsGroupDesc}"; Flags: exclusive
+Name: "awards_ww2"; Description: "{cm:GermanAwardsWW2}"; GroupDescription: "{cm:GermanAwardsGroupDesc}"; Flags: exclusive unchecked
 
 [Files]
 ; --- Tracker install folder ({app}) ---
@@ -183,7 +206,12 @@ Source: "cleanup_tracker_content.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 ; --- Copy CampaignRanksAwards into IL-2 ---
 ; This places content into: <IL-2>\data\swf\CampaignRanksAwards\*
-Source: "CampaignRanksAwards\*"; DestDir: "{code:GetIL2Dir}\data\swf\CampaignRanksAwards"; Flags: recursesubdirs createallsubdirs ignoreversion
+; The Germany subfolder is handled separately below (WW2 vs 1957 toggle).
+Source: "CampaignRanksAwards\*"; DestDir: "{code:GetIL2Dir}\data\swf\CampaignRanksAwards"; Flags: recursesubdirs createallsubdirs ignoreversion; Excludes: "Germany\*,Germany - WW2\*"
+; 1957 version (default): copy CampaignRanksAwards\Germany → <IL-2>\data\swf\CampaignRanksAwards\Germany
+Source: "CampaignRanksAwards\Germany\*"; DestDir: "{code:GetIL2Dir}\data\swf\CampaignRanksAwards\Germany"; Flags: recursesubdirs createallsubdirs ignoreversion; Tasks: awards_1957
+; WW2 version: copy CampaignRanksAwards\Germany - WW2 → <IL-2>\data\swf\CampaignRanksAwards\Germany
+Source: "CampaignRanksAwards\Germany - WW2\*"; DestDir: "{code:GetIL2Dir}\data\swf\CampaignRanksAwards\Germany"; Flags: recursesubdirs createallsubdirs ignoreversion; Tasks: awards_ww2
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
