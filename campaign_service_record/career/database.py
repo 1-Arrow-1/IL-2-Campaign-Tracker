@@ -197,6 +197,39 @@ class CareerDatabase:
     # event table
     # ------------------------------------------------------------------
 
+    def get_events_for_pilots(
+        self,
+        pilot_ids: List[int],
+        types: Optional[List[int]] = None,
+    ) -> List[sqlite3.Row]:
+        """
+        Return events for multiple pilot IDs ordered by event.date ascending.
+
+        Used when a career spans multiple theatre segments that each have their
+        own pilot row (playerId differs per theatre).
+
+        Args:
+            pilot_ids: List of pilot.id values to include.
+            types:     If provided, filter to only these event type integers.
+        """
+        if not pilot_ids:
+            return []
+        conn = self._connect()
+        id_ph = ",".join("?" * len(pilot_ids))
+        if types:
+            type_ph = ",".join("?" * len(types))
+            cursor = conn.execute(
+                f"SELECT * FROM event WHERE pilotId IN ({id_ph}) "
+                f"AND type IN ({type_ph}) ORDER BY date ASC",
+                [*pilot_ids, *types],
+            )
+        else:
+            cursor = conn.execute(
+                f"SELECT * FROM event WHERE pilotId IN ({id_ph}) ORDER BY date ASC",
+                pilot_ids,
+            )
+        return cursor.fetchall()
+
     def get_events_for_pilot(
         self,
         pilot_id: int,

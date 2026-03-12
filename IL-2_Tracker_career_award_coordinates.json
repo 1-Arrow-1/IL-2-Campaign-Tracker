@@ -458,8 +458,8 @@
       },
       {
         "name": "pilots_badge_big1",
-        "x": 471,
-        "y": 757,
+        "x": 481,
+        "y": 739,
         "w": 430,
         "h": 362,
         "replacements": []
@@ -475,7 +475,7 @@
       {
         "name": "fighters_bronze_big1",
         "x": 1199,
-        "y": 918,
+        "y": 869,
         "w": 496,
         "h": 250,
         "replacements": [
@@ -503,7 +503,7 @@
       {
         "name": "wound_badge_black_big1",
         "x": 1290,
-        "y": 637,
+        "y": 585,
         "w": 314,
         "h": 353,
         "replacements": [

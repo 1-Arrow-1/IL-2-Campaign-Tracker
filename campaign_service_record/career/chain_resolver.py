@@ -66,6 +66,7 @@ class VirtualPilotCareer:
     chain: list = field(default_factory=list)
     theatre_labels: List[str] = field(default_factory=list)
     faction: Optional[str] = None
+    all_pilot_ids: List[int] = field(default_factory=list)
 
 
 class CareerChainResolver:
@@ -164,6 +165,9 @@ class CareerChainResolver:
             for row in chain
         ]
 
+        # Collect all unique pilot IDs across the chain (each theatre may have its own)
+        all_pilot_ids = list(dict.fromkeys(int(row["playerId"]) for row in chain))
+
         return VirtualPilotCareer(
             pilot_id=pilot_id,
             pilot_first_name=first_name,
@@ -176,4 +180,5 @@ class CareerChainResolver:
             chain=chain,
             theatre_labels=theatre_labels,
             faction=country,
+            all_pilot_ids=all_pilot_ids,
         )

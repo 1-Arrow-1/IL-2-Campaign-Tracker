@@ -218,8 +218,8 @@ class CareerAggregator:
         # Root pilot_id has only the first theatre's data — always use last_pilot_id.
         current_pilot_row = self._db.get_pilot_by_id(career.last_pilot_id)
 
-        events_raw = self._db.get_events_for_pilot(
-            career.pilot_id, types=_CONFIRMED_EVENT_TYPES
+        events_raw = self._db.get_events_for_pilots(
+            career.all_pilot_ids, types=_CONFIRMED_EVENT_TYPES
         )
         seen_bonus_codes: set = set()
         bonus_incidences: list = []
@@ -333,8 +333,8 @@ class CareerAggregator:
     def _build_list_item(self, career: VirtualPilotCareer) -> Dict:
         # Use most current pilot row for kill totals (each theatre has its own pilot row)
         current_pilot_row = self._db.get_pilot_by_id(career.last_pilot_id)
-        events_raw = self._db.get_events_for_pilot(
-            career.pilot_id, types=_CONFIRMED_EVENT_TYPES
+        events_raw = self._db.get_events_for_pilots(
+            career.all_pilot_ids, types=_CONFIRMED_EVENT_TYPES
         )
         promotions = [
             e for e in events_raw
