@@ -221,6 +221,14 @@ class CareerAggregator:
         events_raw = self._db.get_events_for_pilots(
             career.all_pilot_ids, types=_CONFIRMED_EVENT_TYPES
         )
+        # Sort by (segment_index, date) to enforce theatre chain order.
+        # Pure date-sort is wrong when theatres have overlapping in-game date ranges
+        # (a game bug): the player always experiences theatres sequentially, so all
+        # events from segment 0 must precede segment 1, regardless of in-game dates.
+        _pilot_segment = {pid: i for i, pid in enumerate(career.all_pilot_ids)}
+        events_raw.sort(
+            key=lambda r: (_pilot_segment.get(r["pilotId"], 0), r["date"] or "")
+        )
         seen_bonus_codes: set = set()
         bonus_incidences: list = []
         mapped_events = []
@@ -335,6 +343,10 @@ class CareerAggregator:
         current_pilot_row = self._db.get_pilot_by_id(career.last_pilot_id)
         events_raw = self._db.get_events_for_pilots(
             career.all_pilot_ids, types=_CONFIRMED_EVENT_TYPES
+        )
+        _pilot_segment = {pid: i for i, pid in enumerate(career.all_pilot_ids)}
+        events_raw.sort(
+            key=lambda r: (_pilot_segment.get(r["pilotId"], 0), r["date"] or "")
         )
         promotions = [
             e for e in events_raw
