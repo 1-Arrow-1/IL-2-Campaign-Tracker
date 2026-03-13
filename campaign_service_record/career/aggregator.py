@@ -258,7 +258,7 @@ class CareerAggregator:
         pcp_score = self._safe_float_from_row(current_pilot_row, "pcp")
         combat_results["pcp_score"] = pcp_score
 
-        sorties = self._db.get_sorties_for_pilot(career.pilot_id)
+        sorties = self._db.get_sorties_for_pilot(career.all_pilot_ids)
 
         # Determine whether to run the debriefing pipeline or defer it.
         # skip_debriefs=True defers parsing to a background job when no cache exists.
@@ -354,7 +354,7 @@ class CareerAggregator:
             and (self._rank_resolver.is_mod_mode or int(e["rankId"] or -1) <= 4)
         ]
         awards = [e for e in events_raw if e["type"] == 8]
-        sorties = self._db.get_sorties_for_pilot(career.pilot_id)
+        sorties = self._db.get_sorties_for_pilot(career.all_pilot_ids)
 
         if promotions:
             last_rank_id = promotions[-1]["rankId"]

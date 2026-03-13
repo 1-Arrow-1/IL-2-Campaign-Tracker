@@ -265,17 +265,23 @@ class CareerDatabase:
     # sortie + mission tables
     # ------------------------------------------------------------------
 
-    def get_sorties_for_pilot(self, pilot_id: int) -> List[sqlite3.Row]:
+    def get_sorties_for_pilot(self, pilot_ids) -> List[sqlite3.Row]:
         """
-        Return all sortie rows for a pilot.
+        Return all sortie rows for one or more pilots.
 
-        Note: sortie has only a pilotId column (no careerId FK).
-        All sorties across all theatre segments are returned via pilotId.
+        Accepts a single int or a list of ints so multi-theatre careers
+        (where each theatre segment has its own pilotId) are covered in
+        one call.  sortie has no careerId FK, so pilotId is the only key.
         """
+        if isinstance(pilot_ids, int):
+            pilot_ids = [pilot_ids]
+        if not pilot_ids:
+            return []
         conn = self._connect()
+        id_ph = ",".join("?" * len(pilot_ids))
         cursor = conn.execute(
-            "SELECT * FROM sortie WHERE pilotId = :pilot_id",
-            {"pilot_id": pilot_id}
+            f"SELECT * FROM sortie WHERE pilotId IN ({id_ph})",
+            pilot_ids,
         )
         return cursor.fetchall()
 

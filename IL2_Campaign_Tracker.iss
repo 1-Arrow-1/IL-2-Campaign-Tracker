@@ -206,12 +206,21 @@ Source: "cleanup_tracker_content.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 ; --- Copy CampaignRanksAwards into IL-2 ---
 ; This places content into: <IL-2>\data\swf\CampaignRanksAwards\*
+; Both Germany variants are always installed so the user can switch later.
 ; The Germany subfolder is handled separately below (WW2 vs 1957 toggle).
 Source: "CampaignRanksAwards\*"; DestDir: "{code:GetIL2Dir}\data\swf\CampaignRanksAwards"; Flags: recursesubdirs createallsubdirs ignoreversion; Excludes: "Germany\*,Germany - WW2\*"
-; 1957 version (default): copy CampaignRanksAwards\Germany → <IL-2>\data\swf\CampaignRanksAwards\Germany
-Source: "CampaignRanksAwards\Germany\*"; DestDir: "{code:GetIL2Dir}\data\swf\CampaignRanksAwards\Germany"; Flags: recursesubdirs createallsubdirs ignoreversion; Tasks: awards_1957
-; WW2 version: copy CampaignRanksAwards\Germany - WW2 → <IL-2>\data\swf\CampaignRanksAwards\Germany
-Source: "CampaignRanksAwards\Germany - WW2\*"; DestDir: "{code:GetIL2Dir}\data\swf\CampaignRanksAwards\Germany"; Flags: recursesubdirs createallsubdirs ignoreversion; Tasks: awards_ww2
+
+; --- 1957 chosen (default) ---
+; Active:    Germany (1957) -> Germany
+; Alternate: Germany - WW2  -> Germany - WW2
+Source: "CampaignRanksAwards\Germany\*";       DestDir: "{code:GetIL2Dir}\data\swf\CampaignRanksAwards\Germany";       Flags: recursesubdirs createallsubdirs ignoreversion; Tasks: awards_1957
+Source: "CampaignRanksAwards\Germany - WW2\*"; DestDir: "{code:GetIL2Dir}\data\swf\CampaignRanksAwards\Germany - WW2"; Flags: recursesubdirs createallsubdirs ignoreversion; Tasks: awards_1957
+
+; --- WW2 chosen ---
+; Active:    Germany - WW2  -> Germany
+; Alternate: Germany (1957) -> Germany - 1957
+Source: "CampaignRanksAwards\Germany - WW2\*"; DestDir: "{code:GetIL2Dir}\data\swf\CampaignRanksAwards\Germany";       Flags: recursesubdirs createallsubdirs ignoreversion; Tasks: awards_ww2
+Source: "CampaignRanksAwards\Germany\*";       DestDir: "{code:GetIL2Dir}\data\swf\CampaignRanksAwards\Germany - 1957"; Flags: recursesubdirs createallsubdirs ignoreversion; Tasks: awards_ww2
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
