@@ -190,6 +190,22 @@ class MissionReportLinker:
             )
         return result
 
+    def get_newest_candidate_timestamp(self, ins_date: datetime) -> Optional[str]:
+        """
+        Return the filename-timestamp string of the newest .mlg candidate for
+        ins_date (e.g. '2025-01-01_11-00-00'), or None if no candidates exist.
+
+        This is a cheap probe (glob + sort only, no file reading or conversion)
+        used by the debriefing cache to detect when the player has re-flown a
+        mission and a newer report file has appeared since the last cache build.
+        """
+        candidates = self._candidates_mlg_by_date(ins_date)
+        if not candidates:
+            return None
+        # candidates is already sorted newest-first by mtime
+        m = re.search(r'\((\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\)', candidates[0].name)
+        return m.group(1) if m else None
+
     # ------------------------------------------------------------------
     # Shared utility
     # ------------------------------------------------------------------

@@ -38,6 +38,7 @@ Cache layout:
 
 import json
 import logging
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -301,6 +302,9 @@ class CareerDebriefingManager:
         mission_date = _format_mission_date(mission_row)
         cache_key = str(mission_id)
 
+        # Parse ins_date once — needed for both cache invalidation and linking.
+        ins_date = MissionReportLinker._parse_datetime(mission_row["insDate"])
+
         # --- Cache hit check ---
         cached = cache.get(cache_key)
         if cached and cached.get("linked"):
@@ -310,18 +314,48 @@ class CareerDebriefingManager:
                 try:
                     current_mtime = Path(report_path_str).stat().st_mtime
                     if abs(current_mtime - cached_mtime) < 1.0:
-                        return _MissionResult(
-                            mission_id=mission_id,
-                            career_id=career_id,
-                            theatre_label=theatre_label,
-                            mission_date=mission_date,
-                            html=cached["html"],
-                            duration_seconds=cached.get("duration_seconds"),
-                            linked=True,
-                            final_state=cached.get("final_state", ""),
-                            aircraft=cached.get("aircraft", ""),
-                            kills=cached.get("kills", 0),
-                        ), False
+                        # Guard: check whether the player has re-flown this
+                        # mission since it was cached.  If a newer .mlg exists
+                        # in FlightLogs we must re-link to pick up the latest
+                        # report rather than returning the stale failed result.
+                        cached_mlg_ts = cached.get("mlg_timestamp")
+                        if cached_mlg_ts and ins_date is not None:
+                            newest_ts = self._linker.get_newest_candidate_timestamp(ins_date)
+                            if newest_ts and newest_ts > cached_mlg_ts:
+                                logger.debug(
+                                    "Newer .mlg detected for mission %d "
+                                    "(%s > %s); invalidating cache",
+                                    mission_id, newest_ts, cached_mlg_ts,
+                                )
+                                # Fall through to re-link below
+                            else:
+                                return _MissionResult(
+                                    mission_id=mission_id,
+                                    career_id=career_id,
+                                    theatre_label=theatre_label,
+                                    mission_date=mission_date,
+                                    html=cached["html"],
+                                    duration_seconds=cached.get("duration_seconds"),
+                                    linked=True,
+                                    final_state=cached.get("final_state", ""),
+                                    aircraft=cached.get("aircraft", ""),
+                                    kills=cached.get("kills", 0),
+                                ), False
+                        else:
+                            # Old cache entry without mlg_timestamp — accept as
+                            # before; it will gain mlg_timestamp on next re-link.
+                            return _MissionResult(
+                                mission_id=mission_id,
+                                career_id=career_id,
+                                theatre_label=theatre_label,
+                                mission_date=mission_date,
+                                html=cached["html"],
+                                duration_seconds=cached.get("duration_seconds"),
+                                linked=True,
+                                final_state=cached.get("final_state", ""),
+                                aircraft=cached.get("aircraft", ""),
+                                kills=cached.get("kills", 0),
+                            ), False
                 except OSError:
                     pass  # File gone — fall through and re-link
 
@@ -393,9 +427,16 @@ class CareerDebriefingManager:
         except OSError:
             report_mtime = None
 
+        # Extract the filename-timestamp from the linked report path so the
+        # cache-hit guard can detect newer .mlg files on subsequent loads.
+        # e.g. "missionReport(2025-01-01_10-00-00)[0].txt" → "2025-01-01_10-00-00"
+        _ts_match = re.search(r'\((\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\)', str(report_path))
+        mlg_timestamp: Optional[str] = _ts_match.group(1) if _ts_match else None
+
         cache[cache_key] = {
             "report_path": str(report_path),
             "report_mtime": report_mtime,
+            "mlg_timestamp": mlg_timestamp,
             "html": html,
             "duration_seconds": duration_seconds,
             "final_state": final_state,
@@ -422,7 +463,7 @@ class CareerDebriefingManager:
     # ------------------------------------------------------------------
 
     # Increment when the HTML rendering format changes to force cache rebuild.
-    _CACHE_VERSION = 8
+    _CACHE_VERSION = 9
 
     def _load_cache(self) -> Dict:
         if not self._cache_path.exists():
