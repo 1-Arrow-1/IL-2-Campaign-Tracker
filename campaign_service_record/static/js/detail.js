@@ -1041,7 +1041,14 @@ const DetailPage = {
                     first_name: campaign.pilot_first_name || '',
                     birthday: campaign.birth_date || '',
                     birth_country: getLocalizedCountryName(campaign.country) || campaign.country || '',
-                    squadron: campaign.squadron_short_name || '',
+                    squadron: (() => {
+                        let sq = campaign.squadron_short_name || '';
+                        if (campaign.pilot_role === 'commander' || campaign.pilot_role === 'deputy_commander') {
+                            const roleLabel = i18n.t(`ui.career.role.${campaign.pilot_role}`);
+                            if (roleLabel) sq = sq ? `${sq} (${roleLabel})` : `(${roleLabel})`;
+                        }
+                        return sq;
+                    })(),
                 });
                 this.setPersonalDataFields({
                     name: campaign.pilot_last_name || '',

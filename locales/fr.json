@@ -1002,7 +1002,11 @@
     "career": {
       "no_careers_found": "Aucune donnée de carrière trouvée.",
       "section_title": "Carrière IL-2",
-      "theatre_chain_label": "Chaîne de théâtres"
+      "theatre_chain_label": "Chaîne de théâtres",
+      "role": {
+        "commander": "Commandant d'escadrille",
+        "deputy_commander": "Commandant d'escadrille adjoint"
+      }
     },
     "progress": {
       "applying_language": "Application de la langue…",

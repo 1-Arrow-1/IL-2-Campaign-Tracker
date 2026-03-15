@@ -18,7 +18,6 @@ Differences from CampaignAggregator:
 
 import json
 import logging
-import re
 from datetime import date, datetime
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -40,7 +39,6 @@ logger = logging.getLogger(__name__)
 # Matches the last double-quoted field on a data line, e.g.:
 #   *,"I. Gruppe of Jagdgeschwader 52","I./JG 52"|
 # captures "I./JG 52"
-_SQUADRON_SHORT_NAME_RE = re.compile(r'"([^"]+)"\s*\|?\s*$')
 
 # Only confirmed event types are processed. Others are silently skipped.
 _CONFIRMED_EVENT_TYPES = [6, 8, 10]
@@ -105,12 +103,14 @@ class CareerAggregator:
         self._rank_index: RankIndex = self._build_rank_index()
         # Build rank resolver (detects mod mode from game_dir; defaults to English)
         self._rank_resolver: RankResolver = RankResolver(self._game_dir)
+        # Squadron name table: configId (str) -> {locale -> shortName}
+        self._squadron_names: Dict[str, Dict[str, str]] = self._load_squadron_names()
 
         logger.info(
             "CareerAggregator init: game_dir=%s data_dir=%s "
-            "award_index_entries=%d rank_index_entries=%d",
+            "award_index_entries=%d rank_index_entries=%d squadron_name_entries=%d",
             self._game_dir, self._data_dir,
-            len(self._award_index), len(self._rank_index),
+            len(self._award_index), len(self._rank_index), len(self._squadron_names),
         )
 
     # ------------------------------------------------------------------
@@ -314,6 +314,15 @@ class CareerAggregator:
         )
         squadron_short_name = self._resolve_squadron_name(current_career_squadron_id)
 
+        # Resolve pilot role from current pilot state
+        # state=1 → Commander, state=8 → Deputy Commander
+        _pilot_state = current_pilot_row["state"] if current_pilot_row else None
+        pilot_role = (
+            "commander" if _pilot_state == 1
+            else "deputy_commander" if _pilot_state == 8
+            else ""
+        )
+
         # Build other incidences (recovery, commander, transfer) and merge bonus duplicates
         other_incidences = self._load_other_incidences(career)
         if bonus_incidences:
@@ -341,6 +350,7 @@ class CareerAggregator:
             "birth_date": career.birth_date,
             "pcp_score": pcp_score,
             "squadron_short_name": squadron_short_name or "",
+            "pilot_role": pilot_role,
             "other_incidences": other_incidences,
         }
 
@@ -737,131 +747,79 @@ class CareerAggregator:
         )
         return RankIndex.empty()
 
-    def _resolve_squadron_name(self, squadron_id: int) -> Optional[str]:
+    def _load_squadron_names(self) -> Dict[str, Dict[str, str]]:
+        """
+        Load squadrons.json from data_dir/CampaignRanksAwards/squadrons.json.
+
+        Returns a dict of {configId_str: {locale: shortName}}.
+        Falls back to an empty dict when the file is missing or unreadable.
+        """
+        if self._data_dir is None:
+            return {}
+        path = self._data_dir / "CampaignRanksAwards" / "squadrons.json"
+        if not path.exists():
+            logger.warning("squadrons.json not found at %s", path)
+            return {}
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            logger.info("Loaded %d squadron name entries from %s", len(data), path)
+            return data
+        except (OSError, ValueError) as exc:
+            logger.warning("Failed to load squadrons.json: %s", exc)
+            return {}
+
+    def _squadron_short_name(self, config_id: int, locale: str = "en") -> Optional[str]:
+        """
+        Return the localised short name for a squadron configId.
+
+        Falls back to 'en' when the requested locale is absent.
+        Returns None when configId is unknown.
+        """
+        entry = self._squadron_names.get(str(config_id))
+        if not entry:
+            return None
+        return entry.get(locale) or entry.get("en")
+
+    def _resolve_squadron_name(self, squadron_id: int, locale: str = "en") -> Optional[str]:
         """
         Look up the squadron short name for the given squadron.id.
 
-        Tries paths in order:
-          1. <game_dir>/data/swf/CampaignRanksAwards/squadrons/<configId>/info.locale=eng.txt
-          2. <data_dir>/CampaignRanksAwards/squadrons/<configId>/info.locale=eng.txt
-
-        Args:
-            squadron_id: The squadron.id (= career.squadronId for the current theatre).
+        Resolves squadron.id → configId via cp.db, then looks up the name in
+        the in-memory squadrons.json table loaded at startup.
 
         Returns the short name string, or None if not available.
         """
         if not squadron_id:
             return None
-
-        if self._game_dir is None and self._data_dir is None:
-            logger.info(
-                "Squadron name lookup skipped: neither game_dir nor data_dir is set."
-            )
-            return None
-
         try:
             squadron_row = self._db.get_squadron_by_id(squadron_id)
         except Exception as exc:
-            logger.info("Squadron lookup failed for id=%d: %s", squadron_id, exc)
+            logger.debug("Squadron lookup failed for id=%d: %s", squadron_id, exc)
             return None
-
         if squadron_row is None:
-            logger.info("Squadron row not found for id=%d", squadron_id)
+            logger.debug("Squadron row not found for id=%d", squadron_id)
             return None
-
         config_id = self._safe_int_from_row(squadron_row, "configId")
         if not config_id:
-            logger.info("Squadron id=%d has no configId", squadron_id)
             return None
-
-        # Build candidate paths, mirroring routes.py CampaignRanksAwards lookup:
-        # 1. <game_dir>/data/swf/CampaignRanksAwards/squadrons/<configId>/info.locale=eng.txt
-        # 2. <data_dir>/CampaignRanksAwards/squadrons/<configId>/info.locale=eng.txt
-        candidate_paths = []
-        if self._game_dir:
-            candidate_paths.append(
-                self._game_dir / "data" / "swf" / "CampaignRanksAwards" / "squadrons"
-                / str(config_id) / "info.locale=eng.txt"
-            )
-        if self._data_dir:
-            candidate_paths.append(
-                self._data_dir / "CampaignRanksAwards" / "squadrons"
-                / str(config_id) / "info.locale=eng.txt"
-            )
-
-        info_path = None
-        for p in candidate_paths:
-            logger.info("Squadron info candidate: %s (exists=%s)", p, p.exists())
-            if p.exists():
-                info_path = p
-                break
-
-        if info_path is None:
-            logger.info(
-                "Squadron info file not found for configId=%d (tried %d path(s))",
-                config_id, len(candidate_paths)
-            )
-            return None
-
-        try:
-            content = info_path.read_text(encoding="utf-8", errors="replace")
-            name = self._parse_squadron_short_name(content)
-            logger.info("Squadron short name resolved: %r", name)
-            return name
-        except Exception as exc:
-            logger.info("Failed to read squadron info file %s: %s", info_path, exc)
-            return None
+        name = self._squadron_short_name(config_id, locale)
+        logger.debug("Squadron id=%d configId=%d -> %r", squadron_id, config_id, name)
+        return name
 
     def _resolve_squadron_name_by_config(
-        self, career_id: int, config_id: int
+        self, career_id: int, config_id: int, locale: str = "en"
     ) -> Optional[str]:
         """
-        Look up a squadron display name given a careerId + configId pair.
+        Look up a squadron display name given a configId (no extra DB round-trip).
 
-        This is the counterpart to _resolve_squadron_name() for cases where the
-        configId is already known (e.g. from event.squadronId on a type-9 event)
-        and we do not need the intermediate squadron.id lookup.
-
+        Used for type-10 squadron-change events where configId is already known.
         Returns the short name string, or None if unavailable.
         """
         if not config_id:
             return None
-
-        if self._game_dir is None and self._data_dir is None:
-            return None
-
-        candidate_paths = []
-        if self._game_dir:
-            candidate_paths.append(
-                self._game_dir / "data" / "swf" / "CampaignRanksAwards" / "squadrons"
-                / str(config_id) / "info.locale=eng.txt"
-            )
-        if self._data_dir:
-            candidate_paths.append(
-                self._data_dir / "CampaignRanksAwards" / "squadrons"
-                / str(config_id) / "info.locale=eng.txt"
-            )
-
-        for p in candidate_paths:
-            if p.exists():
-                try:
-                    content = p.read_text(encoding="utf-8", errors="replace")
-                    name = self._parse_squadron_short_name(content)
-                    if name:
-                        logger.debug(
-                            "Squadron configId=%d resolved to %r", config_id, name
-                        )
-                        return name
-                except Exception as exc:
-                    logger.debug(
-                        "Failed to read squadron info for configId=%d: %s", config_id, exc
-                    )
-
-        logger.debug(
-            "Squadron configId=%d info file not found (tried %d path(s))",
-            config_id, len(candidate_paths),
-        )
-        return None
+        name = self._squadron_short_name(config_id, locale)
+        logger.debug("Squadron configId=%d -> %r", config_id, name)
+        return name
 
     def _load_other_incidences(self, career: "VirtualPilotCareer") -> List[Dict]:
         """
@@ -895,23 +853,3 @@ class CareerAggregator:
         results.sort(key=lambda e: e["sort_key"])
         return results
 
-    @staticmethod
-    def _parse_squadron_short_name(content: str) -> Optional[str]:
-        """
-        Parse the shortName field from an info.locale=eng.txt file.
-
-        Expected format (pipe-delimited, comma-separated quoted fields):
-            &names=date,name,shortName|
-            *,'Full Squadron Name','Short Name'|
-
-        Returns the short name (3rd field) from the first data row, or None.
-        """
-        for line in content.splitlines():
-            line = line.strip()
-            if not line.startswith("*,"):
-                continue
-            # Find the last single-quoted value on this line (the shortName field)
-            match = _SQUADRON_SHORT_NAME_RE.search(line)
-            if match:
-                return match.group(1)
-        return None

@@ -1001,7 +1001,11 @@
     "career": {
       "no_careers_found": "Nie znaleziono danych kariery.",
       "section_title": "Kariera IL-2",
-      "theatre_chain_label": "Łańcuch teatrów"
+      "theatre_chain_label": "Łańcuch teatrów",
+      "role": {
+        "commander": "Dowódca eskadry",
+        "deputy_commander": "Zastępca dowódcy eskadry"
+      }
     },
     "progress": {
       "applying_language": "Stosowanie języka…",

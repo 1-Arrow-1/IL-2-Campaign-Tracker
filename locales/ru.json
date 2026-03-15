@@ -1001,7 +1001,11 @@
     "career": {
       "no_careers_found": "Данные карьеры не найдены.",
       "section_title": "Карьера IL-2",
-      "theatre_chain_label": "Цепочка театров"
+      "theatre_chain_label": "Цепочка театров",
+      "role": {
+        "commander": "Командир эскадрильи",
+        "deputy_commander": "Заместитель командира эскадрильи"
+      }
     },
     "progress": {
       "applying_language": "Применение языка…",

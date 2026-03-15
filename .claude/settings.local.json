@@ -11,7 +11,10 @@
       "Bash(sed 's/\"\".*//')",
       "Bash(# Check if data_dir has CampaignRanksAwards with JSON sidecars ls \"\"C:/Users/bleih/Documents/IL2_Campaign_Mod/CampaignRanksAwards/\"\" ls \"\"C:/Users/bleih/Documents/IL2_Campaign_Mod/CampaignRanksAwards/Germany/\"\")",
       "WebSearch",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(SQDIR=\"c:/Users/bleih/source/repos/IL-2-Campaign-Tracker/CampaignRanksAwards/squadrons\")",
+      "Read(//c/Users/bleih/source/repos/IL-2-Campaign-Tracker/$SQDIR/**)",
+      "Bash(SQDIR=\"c:/Users/bleih/source/repos/IL-2-Campaign-Tracker/IL2_Campaign_Tracker_v2.2_ML/CampaignRanksAwards/squadrons\" find \"$SQDIR\" -name \"info.locale=*.txt\")"
     ]
   }
 }

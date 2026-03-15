@@ -1001,7 +1001,11 @@
     "career": {
       "no_careers_found": "未找到职业数据。",
       "section_title": "IL-2 职业",
-      "theatre_chain_label": "战区链"
+      "theatre_chain_label": "战区链",
+      "role": {
+        "commander": "中队长",
+        "deputy_commander": "副中队长"
+      }
     },
     "progress": {
       "applying_language": "正在应用语言…",

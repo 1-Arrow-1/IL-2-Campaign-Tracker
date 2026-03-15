@@ -1001,7 +1001,11 @@
     "career": {
       "no_careers_found": "Keine Karrieredaten gefunden.",
       "section_title": "IL-2 Karriere",
-      "theatre_chain_label": "Theaterkette"
+      "theatre_chain_label": "Theaterkette",
+      "role": {
+        "commander": "Staffelkapitän",
+        "deputy_commander": "Stellv. Staffelkapitän"
+      }
     },
     "progress": {
       "applying_language": "Sprache wird angewendet…",

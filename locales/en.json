@@ -1005,7 +1005,11 @@
     "career": {
       "section_title": "IL-2 Career",
       "theatre_chain_label": "Theatre Chain",
-      "no_careers_found": "No career data found."
+      "no_careers_found": "No career data found.",
+      "role": {
+        "commander": "Commander",
+        "deputy_commander": "Deputy Commander"
+      }
     },
     "progress": {
       "applying_language": "Applying language…",
