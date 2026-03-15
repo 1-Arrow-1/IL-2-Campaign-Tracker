@@ -542,8 +542,19 @@ if exist "dist\Campaign_Service_Record" (
 
 REM Copy README if exists
 if exist "README.html" copy "README.html" "IL2_Campaign_Tracker_v2.2_ML\README.html" >NUL
-REM Copy README_DE if exists
-if exist "README_DE.html" copy "README_DE.html" "IL2_Campaign_Tracker_v2.2_ML\README_DE.html" >NUL
+REM Copy README de if exists
+if exist "README de.html" copy "README de.html" "IL2_Campaign_Tracker_v2.2_ML\README de.html" >NUL
+REM Copy README zh_hans if exists
+if exist "README zh-Hans.html" copy "README zh-Hans.html" "IL2_Campaign_Tracker_v2.2_ML\README zh-Hans.html" >NUL
+REM Copy README ru if exists
+if exist "README ru.html" copy "README ru.html" "IL2_Campaign_Tracker_v2.2_ML\README ru.html" >NUL
+REM Copy README pl if exists
+if exist "README pl.html" copy "README pl.html" "IL2_Campaign_Tracker_v2.2_ML\README pl.html" >NUL
+REM Copy README fr if exists
+if exist "README fr.html" copy "README fr.html" "IL2_Campaign_Tracker_v2.2_ML\README fr.html" >NUL
+REM Copy README es if exists
+if exist "README es.html" copy "README es.html" "IL2_Campaign_Tracker_v2.2_ML\README es.html" >NUL
+
 
 REM Copy font if exists
 if exist "IBMPlexSans-Light.ttf" copy "IBMPlexSans-Light.ttf" "IL2_Campaign_Tracker_v2.2_ML\IBMPlexSans-Light.ttf" >NUL

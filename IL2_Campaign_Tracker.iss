@@ -182,7 +182,12 @@ Source: "IL2_Tracker_Control_GUI.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "mlg2txt.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "QUICK_START.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README.html"; DestDir: "{app}"; Flags: ignoreversion
-Source: "README_DE.html"; DestDir: "{app}"; Flags: ignoreversion
+Source: "README de.html"; DestDir: "{app}"; Flags: ignoreversion
+Source: "README es.html"; DestDir: "{app}"; Flags: ignoreversion
+Source: "README fr.html"; DestDir: "{app}"; Flags: ignoreversion
+Source: "README ru.html"; DestDir: "{app}"; Flags: ignoreversion
+Source: "README pl.html"; DestDir: "{app}"; Flags: ignoreversion
+Source: "README zh-Hans.html"; DestDir: "{app}"; Flags: ignoreversion
 
 ; i18n translation files
 Source: "locales\*.json"; DestDir: "{app}\locales"; Flags: ignoreversion

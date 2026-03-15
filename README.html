@@ -4,7 +4,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=Edge">
     <style>
         html, body {margin: 0; padding:0; min-height: 100%; display: block}
-        #___markdown-content___ {padding: 5px 5px 10px 5px; min-height: 878px}
+        #___markdown-content___ {padding: 5px 5px 10px 5px; min-height: 818.6px}
         .markdown-alert {padding: 1em 1em .5em 1em; margin-bottom: 1em; border-radius: 1em; background: #c0c0c022}
         .markdown-alert-title {font-weight: bold; color:inherit}
         .markdown-alert-title svg {margin-right: 5px; margin-top: -1px;}
@@ -966,9 +966,10 @@ code[class*=language-],pre[class*=language-]{color:#ccc;background:0 0;font-fami
 <body>
 
     
-    <div id="___markdown-content___" class="markdown-body"><h1 id="il-2-campaign-progress-tracker"><a id="pragma-line-0"></a>IL-2 Campaign Progress Tracker</h1>
+    <div id="___markdown-content___" class="markdown-body">
+        <h1 id="il-2-campaign-progress-tracker"><a id="pragma-line-0"></a>IL-2 Campaign Progress Tracker</h1>
 <p id="pragma-line-2">A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player <strong>WW2 campaigns</strong>.  Automatically monitors your campaign progress, calculates promotions and awards based on historical criteria, generates detailed mission debriefings, and creates PDF reports of your pilot's career.</p>
-<p id="pragma-line-4"><img src="https://img.shields.io/badge/version-2.1-blue" alt="Version">
+<p id="pragma-line-4"><img src="https://img.shields.io/badge/version-2.2-blue" alt="Version">
 <img src="https://img.shields.io/badge/platform-Windows-lightgrey" alt="Platform">
 <img src="https://img.shields.io/badge/game-IL--2%20Battle%20of%20Stalingrad-orange" alt="Game">
 <img src="https://img.shields.io/badge/languages-7-green" alt="Languages"></p>
@@ -988,173 +989,152 @@ code[class*=language-],pre[class*=language-]{color:#ccc;background:0 0;font-fami
 <li id="pragma-line-23"><a href="#mission-cleanup">Mission Cleanup</a></li>
 <li id="pragma-line-24"><a href="#backup--restore-system">Backup &amp; Restore System</a></li>
 <li id="pragma-line-25"><a href="#camapign-service-record">Campaign Service Record</a></li>
-<li id="pragma-line-26"><a href="#file-reference">File Reference</a></li>
-<li id="pragma-line-27"><a href="#troubleshooting">Troubleshooting</a></li>
-<li id="pragma-line-28"><a href="#faq">FAQ</a></li>
+<li id="pragma-line-26"><a href="#career-service-record">Career Service Record</a></li>
+<li id="pragma-line-27"><a href="#file-reference">File Reference</a></li>
+<li id="pragma-line-28"><a href="#troubleshooting">Troubleshooting</a></li>
+<li id="pragma-line-29"><a href="#faq">FAQ</a></li>
 </ul>
-<hr id="pragma-line-30">
-<h2 id="features"><a id="pragma-line-32"></a>✨ Features <a id="features"></a></h2>
-<table id="pragma-line-34">
+<hr id="pragma-line-31">
+<h2 id="features"><a id="pragma-line-33"></a>✨ Features <a id="features"></a></h2>
+<table id="pragma-line-35">
 <thead>
-<tr id="pragma-line-34">
-<th id="pragma-line-34">Feature</th>
-<th id="pragma-line-34">Description</th>
+<tr id="pragma-line-35">
+<th id="pragma-line-35">Feature</th>
+<th id="pragma-line-35">Description</th>
 </tr>
 </thead>
 <tbody>
-<tr id="pragma-line-36">
-<td id="pragma-line-36"><strong>Automatic Monitoring</strong></td>
-<td id="pragma-line-36">Watches your campaign save file and updates in real-time</td>
-</tr>
 <tr id="pragma-line-37">
-<td id="pragma-line-37"><strong>Promotions</strong></td>
-<td id="pragma-line-37">Calculates rank promotions based on accumulated score</td>
+<td id="pragma-line-37"><strong>Automatic Monitoring</strong></td>
+<td id="pragma-line-37">Watches your campaign save file and updates in real-time</td>
 </tr>
 <tr id="pragma-line-38">
-<td id="pragma-line-38"><strong>Awards &amp; Decorations</strong></td>
-<td id="pragma-line-38">Grants medals based on kills, missions flown, and other criteria</td>
+<td id="pragma-line-38"><strong>Promotions</strong></td>
+<td id="pragma-line-38">Calculates rank promotions based on accumulated score</td>
 </tr>
 <tr id="pragma-line-39">
-<td id="pragma-line-39"><strong>Real-time Popups</strong></td>
-<td id="pragma-line-39">Shows promotion and award notifications while playing</td>
+<td id="pragma-line-39"><strong>Awards &amp; Decorations</strong></td>
+<td id="pragma-line-39">Grants medals based on kills, missions flown, and other criteria</td>
 </tr>
 <tr id="pragma-line-40">
-<td id="pragma-line-40"><strong>Mission Debriefings</strong></td>
-<td id="pragma-line-40">Parses mission logs to generate detailed flight reports</td>
+<td id="pragma-line-40"><strong>Real-time Popups</strong></td>
+<td id="pragma-line-40">Shows promotion and award notifications while playing</td>
 </tr>
 <tr id="pragma-line-41">
-<td id="pragma-line-41"><strong>PDF Reports</strong></td>
-<td id="pragma-line-41">Creates printable career summaries with combat statistics</td>
+<td id="pragma-line-41"><strong>Mission Debriefings</strong></td>
+<td id="pragma-line-41">Parses mission logs to generate detailed flight reports</td>
 </tr>
 <tr id="pragma-line-42">
-<td id="pragma-line-42"><strong>Multi-Language Support</strong></td>
-<td id="pragma-line-42">Full support for 7 languages: English, German, French, Spanish, Polish, Russian, and Chinese</td>
+<td id="pragma-line-42"><strong>PDF Reports</strong></td>
+<td id="pragma-line-42">Creates printable career summaries with combat statistics</td>
 </tr>
 <tr id="pragma-line-43">
-<td id="pragma-line-43"><strong>Settings Manager</strong></td>
-<td id="pragma-line-43">User-friendly GUI to configure all tracker settings without editing config files</td>
+<td id="pragma-line-43"><strong>Multi-Language Support</strong></td>
+<td id="pragma-line-43">Full support for 7 languages: English, German, French, Spanish, Polish, Russian, and Chinese</td>
 </tr>
 <tr id="pragma-line-44">
-<td id="pragma-line-44"><strong>Mission Cleanup</strong></td>
-<td id="pragma-line-44">Removes incomplete missions that weren't properly finished</td>
+<td id="pragma-line-44"><strong>Settings Manager</strong></td>
+<td id="pragma-line-44">User-friendly GUI to configure all tracker settings without editing config files</td>
 </tr>
 <tr id="pragma-line-45">
-<td id="pragma-line-45"><strong>Backup System</strong></td>
-<td id="pragma-line-45">Creates backups when removing incomplete missions via cleanup tool</td>
+<td id="pragma-line-45"><strong>Mission Cleanup</strong></td>
+<td id="pragma-line-45">Removes incomplete missions that weren't properly finished</td>
 </tr>
 <tr id="pragma-line-46">
-<td id="pragma-line-46"><strong>Restore Function</strong></td>
-<td id="pragma-line-46">Easy GUI to restore previous campaign states</td>
+<td id="pragma-line-46"><strong>Backup System</strong></td>
+<td id="pragma-line-46">Creates backups when removing incomplete missions via cleanup tool</td>
 </tr>
 <tr id="pragma-line-47">
-<td id="pragma-line-47"><strong>Multi-Campaign Support</strong></td>
-<td id="pragma-line-47">Tracks multiple campaigns simultaneously</td>
+<td id="pragma-line-47"><strong>Restore Function</strong></td>
+<td id="pragma-line-47">Easy GUI to restore previous campaign states</td>
 </tr>
 <tr id="pragma-line-48">
-<td id="pragma-line-48"><strong>WW1 Detection &amp; Exclusion</strong></td>
-<td id="pragma-line-48">Detects Flying Circus (WW1) campaigns and skips them by default</td>
+<td id="pragma-line-48"><strong>Multi-Campaign Support</strong></td>
+<td id="pragma-line-48">Tracks multiple campaigns simultaneously</td>
 </tr>
 <tr id="pragma-line-49">
-<td id="pragma-line-49"><strong>Control Center GUI</strong></td>
-<td id="pragma-line-49">Central hub to launch Tracker, Settings Manager, and Service Record</td>
+<td id="pragma-line-49"><strong>WW1 Detection &amp; Exclusion</strong></td>
+<td id="pragma-line-49">Detects Flying Circus (WW1) campaigns and skips them by default</td>
 </tr>
 <tr id="pragma-line-50">
-<td id="pragma-line-50"><strong>Per-Campaign Language</strong></td>
-<td id="pragma-line-50">Override detail page language for individual campaigns in Service Record</td>
+<td id="pragma-line-50"><strong>Control Center GUI</strong></td>
+<td id="pragma-line-50">Central hub to launch Tracker, Settings Manager, and Service Record</td>
+</tr>
+<tr id="pragma-line-51">
+<td id="pragma-line-51"><strong>Per-Campaign Language</strong></td>
+<td id="pragma-line-51">Override detail page language for individual campaigns in Service Record</td>
+</tr>
+<tr id="pragma-line-52">
+<td id="pragma-line-52"><strong>Career Service Record</strong></td>
+<td id="pragma-line-52">Dedicated web viewer for IL-2 Career Mode: reads directly from the game's <code>cp.db</code>, shows theatre chain progression, all career events, and mission debriefings</td>
+</tr>
+<tr id="pragma-line-53">
+<td id="pragma-line-53"><strong>German Award Style</strong></td>
+<td id="pragma-line-53">Choose between the 1957 Bundeswehr-era (default) and the original wartime style for German award images</td>
 </tr>
 </tbody>
 </table>
-<hr id="pragma-line-52">
-<h2 id="supported-nations"><a id="pragma-line-54"></a>🌍 Supported Nations <a id="supported-nations"></a></h2>
-<p id="pragma-line-56">The tracker includes historically accurate ranks and awards for:</p>
-<table id="pragma-line-58">
+<hr id="pragma-line-55">
+<h2 id="supported-nations"><a id="pragma-line-57"></a>🌍 Supported Nations <a id="supported-nations"></a></h2>
+<p id="pragma-line-59">The tracker includes historically accurate ranks and awards for:</p>
+<table id="pragma-line-61">
 <thead>
-<tr id="pragma-line-58">
-<th id="pragma-line-58">Nation</th>
-<th id="pragma-line-58">Ranks</th>
-<th id="pragma-line-58">Awards</th>
+<tr id="pragma-line-61">
+<th id="pragma-line-61">Nation</th>
+<th id="pragma-line-61">Ranks</th>
+<th id="pragma-line-61">Awards</th>
 </tr>
 </thead>
 <tbody>
-<tr id="pragma-line-60">
-<td id="pragma-line-60">🇩🇪 <strong>Germany</strong></td>
-<td id="pragma-line-60">Unteroffizier → Generalleutnant</td>
-<td id="pragma-line-60">Iron Cross, Knight's Cross, etc.</td>
-</tr>
-<tr id="pragma-line-61">
-<td id="pragma-line-61">🇷🇺 <strong>Soviet Union</strong></td>
-<td id="pragma-line-61">Sergeant → Lieutenant General</td>
-<td id="pragma-line-61">Order of the Red Banner, Hero of the Soviet Union, etc.</td>
-</tr>
-<tr id="pragma-line-62">
-<td id="pragma-line-62">🇺🇸 <strong>USA</strong></td>
-<td id="pragma-line-62">First Sergeant → Major General</td>
-<td id="pragma-line-62">Distinguished Flying Cross, Medal of Honor, etc.</td>
-</tr>
 <tr id="pragma-line-63">
-<td id="pragma-line-63">🇬🇧 <strong>Britain</strong></td>
-<td id="pragma-line-63">Sergeant → Air Vice Marshal</td>
-<td id="pragma-line-63">Distinguished Flying Cross, Victoria Cross, etc.</td>
+<td id="pragma-line-63">🇩🇪 <strong>Germany</strong></td>
+<td id="pragma-line-63">Unteroffizier → Generalleutnant</td>
+<td id="pragma-line-63">Iron Cross, Knight's Cross, etc.</td>
+</tr>
+<tr id="pragma-line-64">
+<td id="pragma-line-64">🇷🇺 <strong>Soviet Union</strong></td>
+<td id="pragma-line-64">Sergeant → Lieutenant General</td>
+<td id="pragma-line-64">Order of the Red Banner, Hero of the Soviet Union, etc.</td>
+</tr>
+<tr id="pragma-line-65">
+<td id="pragma-line-65">🇺🇸 <strong>USA</strong></td>
+<td id="pragma-line-65">First Sergeant → Major General</td>
+<td id="pragma-line-65">Distinguished Flying Cross, Medal of Honor, etc.</td>
+</tr>
+<tr id="pragma-line-66">
+<td id="pragma-line-66">🇬🇧 <strong>Britain</strong></td>
+<td id="pragma-line-66">Sergeant → Air Vice Marshal</td>
+<td id="pragma-line-66">Distinguished Flying Cross, Victoria Cross, etc.</td>
 </tr>
 </tbody>
 </table>
-<blockquote id="pragma-line-65">
-<p id="pragma-line-65"><strong>Note 1:</strong> Soviet ranks automatically switch between early (pre-1943) and late (post-January 6, 1943) insignia based on mission dates.<br>
+<blockquote id="pragma-line-68">
+<p id="pragma-line-68"><strong>Note 1:</strong> Soviet ranks automatically switch between early (pre-1943) and late (post-January 6, 1943) insignia based on mission dates.<br>
 <strong>Note 2:</strong> The German awards shown are based on the official 1957 reissue versions. If you wish to customize their appearance, you can replace the images located in <code>CampaignRanksAwards\Germany</code>.</p>
 </blockquote>
-<p id="pragma-line-68">⚠️ Important: Keep the original filenames when replacing images — for example,
+<p id="pragma-line-71">⚠️ Important: Keep the original filenames when replacing images — for example,
 <code>iron_cross_2nd.dds</code> and <code>iron_cross_2nd_big.dds</code> must retain the exact same names after replacement.</p>
-<hr id="pragma-line-71">
-<h2 id="supported-languages"><a id="pragma-line-73"></a>🌐 Supported Languages <a id="supported-languages"></a></h2>
-<p id="pragma-line-75">The tracker supports full localization in 7 languages. All UI elements, mission debriefings, PDF reports, in-game events, and the Campaign Service Record are automatically translated based on your selected language.</p>
-<table id="pragma-line-77">
+<hr id="pragma-line-74">
+<h2 id="supported-languages"><a id="pragma-line-76"></a>🌐 Supported Languages <a id="supported-languages"></a></h2>
+<p id="pragma-line-78">The tracker supports full localization in 7 languages. All UI elements, mission debriefings, PDF reports, in-game events, and the Campaign Service Record are automatically translated based on your selected language.</p>
+<table id="pragma-line-80">
 <thead>
-<tr id="pragma-line-77">
-<th id="pragma-line-77">Language</th>
-<th id="pragma-line-77">Display Name</th>
-<th id="pragma-line-77">Code</th>
-<th id="pragma-line-77">Popups</th>
-<th id="pragma-line-77">In-Game Events</th>
-<th id="pragma-line-77">PDF Reports</th>
-<th id="pragma-line-77">Service Record</th>
-<th id="pragma-line-77">Settings Manager</th>
+<tr id="pragma-line-80">
+<th id="pragma-line-80">Language</th>
+<th id="pragma-line-80">Display Name</th>
+<th id="pragma-line-80">Code</th>
+<th id="pragma-line-80">Popups</th>
+<th id="pragma-line-80">In-Game Events</th>
+<th id="pragma-line-80">PDF Reports</th>
+<th id="pragma-line-80">Service Record</th>
+<th id="pragma-line-80">Settings Manager</th>
 </tr>
 </thead>
 <tbody>
-<tr id="pragma-line-79">
-<td id="pragma-line-79">🇬🇧 <strong>English</strong></td>
-<td id="pragma-line-79">English</td>
-<td id="pragma-line-79">en</td>
-<td id="pragma-line-79">✅</td>
-<td id="pragma-line-79">✅</td>
-<td id="pragma-line-79">✅</td>
-<td id="pragma-line-79">✅</td>
-<td id="pragma-line-79">✅</td>
-</tr>
-<tr id="pragma-line-80">
-<td id="pragma-line-80">🇩🇪 <strong>German</strong></td>
-<td id="pragma-line-80">Deutsch</td>
-<td id="pragma-line-80">de</td>
-<td id="pragma-line-80">✅</td>
-<td id="pragma-line-80">✅</td>
-<td id="pragma-line-80">✅</td>
-<td id="pragma-line-80">✅</td>
-<td id="pragma-line-80">✅</td>
-</tr>
-<tr id="pragma-line-81">
-<td id="pragma-line-81">🇫🇷 <strong>French</strong></td>
-<td id="pragma-line-81">Français</td>
-<td id="pragma-line-81">fr</td>
-<td id="pragma-line-81">✅</td>
-<td id="pragma-line-81">✅</td>
-<td id="pragma-line-81">✅</td>
-<td id="pragma-line-81">✅</td>
-<td id="pragma-line-81">✅</td>
-</tr>
 <tr id="pragma-line-82">
-<td id="pragma-line-82">🇪🇸 <strong>Spanish</strong></td>
-<td id="pragma-line-82">Español</td>
-<td id="pragma-line-82">es</td>
+<td id="pragma-line-82">🇬🇧 <strong>English</strong></td>
+<td id="pragma-line-82">English</td>
+<td id="pragma-line-82">en</td>
 <td id="pragma-line-82">✅</td>
 <td id="pragma-line-82">✅</td>
 <td id="pragma-line-82">✅</td>
@@ -1162,9 +1142,9 @@ code[class*=language-],pre[class*=language-]{color:#ccc;background:0 0;font-fami
 <td id="pragma-line-82">✅</td>
 </tr>
 <tr id="pragma-line-83">
-<td id="pragma-line-83">🇵🇱 <strong>Polish</strong></td>
-<td id="pragma-line-83">Polski</td>
-<td id="pragma-line-83">pl</td>
+<td id="pragma-line-83">🇩🇪 <strong>German</strong></td>
+<td id="pragma-line-83">Deutsch</td>
+<td id="pragma-line-83">de</td>
 <td id="pragma-line-83">✅</td>
 <td id="pragma-line-83">✅</td>
 <td id="pragma-line-83">✅</td>
@@ -1172,9 +1152,9 @@ code[class*=language-],pre[class*=language-]{color:#ccc;background:0 0;font-fami
 <td id="pragma-line-83">✅</td>
 </tr>
 <tr id="pragma-line-84">
-<td id="pragma-line-84">🇷🇺 <strong>Russian</strong></td>
-<td id="pragma-line-84">Русский</td>
-<td id="pragma-line-84">ru</td>
+<td id="pragma-line-84">🇫🇷 <strong>French</strong></td>
+<td id="pragma-line-84">Français</td>
+<td id="pragma-line-84">fr</td>
 <td id="pragma-line-84">✅</td>
 <td id="pragma-line-84">✅</td>
 <td id="pragma-line-84">✅</td>
@@ -1182,123 +1162,153 @@ code[class*=language-],pre[class*=language-]{color:#ccc;background:0 0;font-fami
 <td id="pragma-line-84">✅</td>
 </tr>
 <tr id="pragma-line-85">
-<td id="pragma-line-85">🇨🇳 <strong>Chinese (Simplified)</strong></td>
-<td id="pragma-line-85">简体中文</td>
-<td id="pragma-line-85">zh</td>
+<td id="pragma-line-85">🇪🇸 <strong>Spanish</strong></td>
+<td id="pragma-line-85">Español</td>
+<td id="pragma-line-85">es</td>
 <td id="pragma-line-85">✅</td>
 <td id="pragma-line-85">✅</td>
 <td id="pragma-line-85">✅</td>
 <td id="pragma-line-85">✅</td>
 <td id="pragma-line-85">✅</td>
 </tr>
+<tr id="pragma-line-86">
+<td id="pragma-line-86">🇵🇱 <strong>Polish</strong></td>
+<td id="pragma-line-86">Polski</td>
+<td id="pragma-line-86">pl</td>
+<td id="pragma-line-86">✅</td>
+<td id="pragma-line-86">✅</td>
+<td id="pragma-line-86">✅</td>
+<td id="pragma-line-86">✅</td>
+<td id="pragma-line-86">✅</td>
+</tr>
+<tr id="pragma-line-87">
+<td id="pragma-line-87">🇷🇺 <strong>Russian</strong></td>
+<td id="pragma-line-87">Русский</td>
+<td id="pragma-line-87">ru</td>
+<td id="pragma-line-87">✅</td>
+<td id="pragma-line-87">✅</td>
+<td id="pragma-line-87">✅</td>
+<td id="pragma-line-87">✅</td>
+<td id="pragma-line-87">✅</td>
+</tr>
+<tr id="pragma-line-88">
+<td id="pragma-line-88">🇨🇳 <strong>Chinese (Simplified)</strong></td>
+<td id="pragma-line-88">简体中文</td>
+<td id="pragma-line-88">zh</td>
+<td id="pragma-line-88">✅</td>
+<td id="pragma-line-88">✅</td>
+<td id="pragma-line-88">✅</td>
+<td id="pragma-line-88">✅</td>
+<td id="pragma-line-88">✅</td>
+</tr>
 </tbody>
 </table>
-<h3 id="what-gets-translated"><a id="pragma-line-87"></a>What Gets Translated</h3>
-<p id="pragma-line-89">When you select a language, the following content is displayed in that language:</p>
-<ul id="pragma-line-91">
-<li id="pragma-line-91"><strong>Popup Notifications</strong> - Promotion and award announcements</li>
-<li id="pragma-line-92"><strong>In-Game Events</strong> - The Events section written to campaign <code>info.locale=*.txt</code> files</li>
-<li id="pragma-line-93"><strong>Mission Debriefings</strong> - Flight logs, kill reports, status messages</li>
-<li id="pragma-line-94"><strong>PDF Reports</strong> - Complete career reports including all statistics</li>
-<li id="pragma-line-95"><strong>Campaign Service Record</strong> - The web-based service record interface</li>
-<li id="pragma-line-96"><strong>Settings Manager</strong> - All UI labels, buttons, and messages</li>
+<h3 id="what-gets-translated"><a id="pragma-line-90"></a>What Gets Translated</h3>
+<p id="pragma-line-92">When you select a language, the following content is displayed in that language:</p>
+<ul id="pragma-line-94">
+<li id="pragma-line-94"><strong>Popup Notifications</strong> - Promotion and award announcements</li>
+<li id="pragma-line-95"><strong>In-Game Events</strong> - The Events section written to campaign <code>info.locale=*.txt</code> files</li>
+<li id="pragma-line-96"><strong>Mission Debriefings</strong> - Flight logs, kill reports, status messages</li>
+<li id="pragma-line-97"><strong>PDF Reports</strong> - Complete career reports including all statistics</li>
+<li id="pragma-line-98"><strong>Campaign Service Record</strong> - The web-based service record interface</li>
+<li id="pragma-line-99"><strong>Settings Manager</strong> - All UI labels, buttons, and messages</li>
 </ul>
-<h3 id="changing-language"><a id="pragma-line-98"></a>Changing Language</h3>
-<p id="pragma-line-100">You can change the language using the <strong>Settings Manager</strong> (see <a href="#settings-manager">Settings Manager</a> section):</p>
-<ol id="pragma-line-102">
-<li id="pragma-line-102">Open <code>IL2_Settings_Manager.exe</code></li>
-<li id="pragma-line-103">Select your preferred language from the dropdown (languages are shown in their native names)</li>
-<li id="pragma-line-104">Click "Apply" or "OK"</li>
-<li id="pragma-line-105">The tracker will automatically regenerate all debriefings and PDF reports in the new language</li>
+<h3 id="changing-language"><a id="pragma-line-101"></a>Changing Language</h3>
+<p id="pragma-line-103">You can change the language using the <strong>Settings Manager</strong> (see <a href="#settings-manager">Settings Manager</a> section):</p>
+<ol id="pragma-line-105">
+<li id="pragma-line-105">Open <code>IL2_Settings_Manager.exe</code></li>
+<li id="pragma-line-106">Select your preferred language from the dropdown (languages are shown in their native names)</li>
+<li id="pragma-line-107">Click "Apply" or "OK"</li>
+<li id="pragma-line-108">The tracker will automatically regenerate all debriefings and PDF reports in the new language</li>
 </ol>
-<blockquote id="pragma-line-107">
-<p id="pragma-line-107"><strong>Note:</strong> When switching languages, all existing campaign debriefings and PDF reports are automatically regenerated in the selected language. This may take a moment depending on the number of campaigns you have.</p>
+<blockquote id="pragma-line-110">
+<p id="pragma-line-110"><strong>Note:</strong> When switching languages, all existing campaign debriefings and PDF reports are automatically regenerated in the selected language. This may take a moment depending on the number of campaigns you have.</p>
 </blockquote>
-<h3 id="il-2-language-file-mapping"><a id="pragma-line-109"></a>IL-2 Language File Mapping</h3>
-<p id="pragma-line-111">The tracker maps IL-2's language codes to standard locale codes:</p>
-<table id="pragma-line-113">
+<h3 id="il-2-language-file-mapping"><a id="pragma-line-112"></a>IL-2 Language File Mapping</h3>
+<p id="pragma-line-114">The tracker maps IL-2's language codes to standard locale codes:</p>
+<table id="pragma-line-116">
 <thead>
-<tr id="pragma-line-113">
-<th id="pragma-line-113">IL-2 Code</th>
-<th id="pragma-line-113">Tracker Code</th>
-<th id="pragma-line-113">Language</th>
+<tr id="pragma-line-116">
+<th id="pragma-line-116">IL-2 Code</th>
+<th id="pragma-line-116">Tracker Code</th>
+<th id="pragma-line-116">Language</th>
 </tr>
 </thead>
 <tbody>
-<tr id="pragma-line-115">
-<td id="pragma-line-115">eng</td>
-<td id="pragma-line-115">en</td>
-<td id="pragma-line-115">English</td>
-</tr>
-<tr id="pragma-line-116">
-<td id="pragma-line-116">ger</td>
-<td id="pragma-line-116">de</td>
-<td id="pragma-line-116">German</td>
-</tr>
-<tr id="pragma-line-117">
-<td id="pragma-line-117">fra</td>
-<td id="pragma-line-117">fr</td>
-<td id="pragma-line-117">French</td>
-</tr>
 <tr id="pragma-line-118">
-<td id="pragma-line-118">spa</td>
-<td id="pragma-line-118">es</td>
-<td id="pragma-line-118">Spanish</td>
+<td id="pragma-line-118">eng</td>
+<td id="pragma-line-118">en</td>
+<td id="pragma-line-118">English</td>
 </tr>
 <tr id="pragma-line-119">
-<td id="pragma-line-119">pol</td>
-<td id="pragma-line-119">pl</td>
-<td id="pragma-line-119">Polish</td>
+<td id="pragma-line-119">ger</td>
+<td id="pragma-line-119">de</td>
+<td id="pragma-line-119">German</td>
 </tr>
 <tr id="pragma-line-120">
-<td id="pragma-line-120">rus</td>
-<td id="pragma-line-120">ru</td>
-<td id="pragma-line-120">Russian</td>
+<td id="pragma-line-120">fra</td>
+<td id="pragma-line-120">fr</td>
+<td id="pragma-line-120">French</td>
 </tr>
 <tr id="pragma-line-121">
-<td id="pragma-line-121">chs</td>
-<td id="pragma-line-121">zh</td>
-<td id="pragma-line-121">Chinese (Simplified)</td>
+<td id="pragma-line-121">spa</td>
+<td id="pragma-line-121">es</td>
+<td id="pragma-line-121">Spanish</td>
+</tr>
+<tr id="pragma-line-122">
+<td id="pragma-line-122">pol</td>
+<td id="pragma-line-122">pl</td>
+<td id="pragma-line-122">Polish</td>
+</tr>
+<tr id="pragma-line-123">
+<td id="pragma-line-123">rus</td>
+<td id="pragma-line-123">ru</td>
+<td id="pragma-line-123">Russian</td>
+</tr>
+<tr id="pragma-line-124">
+<td id="pragma-line-124">chs</td>
+<td id="pragma-line-124">zh</td>
+<td id="pragma-line-124">Chinese (Simplified)</td>
 </tr>
 </tbody>
 </table>
-<p id="pragma-line-123">When writing events to campaign files, the tracker updates <strong>all</strong> <code>info.locale=*.txt</code> files that exist for a campaign (e.g., <code>info.locale=eng.txt</code>, <code>info.locale=ger.txt</code>, etc.), each in the appropriate language.</p>
-<hr id="pragma-line-125">
-<h2 id="installation"><a id="pragma-line-127"></a>📥 Installation <a id="installation"></a></h2>
-<h3 id="step-1-download-and-install"><a id="pragma-line-129"></a>Step 1: Download and Install</h3>
-<ol id="pragma-line-131">
-<li id="pragma-line-131"><p id="pragma-line-131"><strong>Download</strong> the latest release (<code>IL2_CampaignTracker_Setup_v2.2_ML.exe.zip</code>)</p>
+<p id="pragma-line-126">When writing events to campaign files, the tracker updates <strong>all</strong> <code>info.locale=*.txt</code> files that exist for a campaign (e.g., <code>info.locale=eng.txt</code>, <code>info.locale=ger.txt</code>, etc.), each in the appropriate language.</p>
+<hr id="pragma-line-128">
+<h2 id="installation"><a id="pragma-line-130"></a>📥 Installation <a id="installation"></a></h2>
+<h3 id="step-1-download-and-install"><a id="pragma-line-132"></a>Step 1: Download and Install</h3>
+<ol id="pragma-line-134">
+<li id="pragma-line-134"><p id="pragma-line-134"><strong>Download</strong> the latest release (<code>IL2_CampaignTracker_Setup_v2.2_ML.exe.zip</code>)</p>
 </li>
-<li id="pragma-line-133"><p id="pragma-line-133"><strong>Extract</strong> the <code>zip</code> file</p>
+<li id="pragma-line-136"><p id="pragma-line-136"><strong>Extract</strong> the <code>zip</code> file</p>
 </li>
-<li id="pragma-line-135"><p id="pragma-line-135"><strong>Run</strong> the extracted <code>IL2_CampaignTracker_Setup_v2.2_ML.exe</code></p>
+<li id="pragma-line-138"><p id="pragma-line-138"><strong>Run</strong> the extracted <code>IL2_CampaignTracker_Setup_v2.2_ML.exe</code></p>
 </li>
-<li id="pragma-line-137"><p id="pragma-line-137"><strong>Follow</strong> the installation instructions in the setup wizard</p>
+<li id="pragma-line-140"><p id="pragma-line-140"><strong>Follow</strong> the installation instructions in the setup wizard</p>
 </li>
 </ol>
-<p id="pragma-line-139">The setup wizard will guide you through selecting the installation directory and configuring basic options.</p>
-<h3 id="step-2-extract-standard-campaigns-optional-but-recommended"><a id="pragma-line-141"></a>Step 2: Extract Standard Campaigns (Optional but Recommended)</h3>
-<p id="pragma-line-143">⚠️ <strong>IMPORTANT:</strong> The tracker can monitor <strong>only</strong> campaigns located in <code>&lt;Path to IL-2 BoS&gt;\data\campaigns</code>. Standard IL-2 campaigns are not stored directly in this folder; instead, they are run internally from <code>campaigns.gtp</code>. As a result, these campaigns must be extracted before they can be tracked.</p>
-<p id="pragma-line-145">🚨 <strong>CAUTION:</strong> If you have modified missions belonging to a standard official campaign, proceed with extreme caution when copying extracted files from <code>campaigns.gtp</code> into the <code>&lt;Path to IL-2 BoS&gt;\data\campaigns</code> folder. Existing files will be <strong>overwritten</strong>, and any custom mission modifications will be replaced by the original out-of-the-box versions.</p>
-<p id="pragma-line-147"><strong>To extract standard campaigns:</strong></p>
-<ol id="pragma-line-149">
-<li id="pragma-line-149"><strong>Download</strong> unGTP-IL2 from: <a href="https://www.mediafire.com/file/caxpalaudz1hd47/unGTP-IL2.zip">https://www.mediafire.com/file/caxpalaudz1hd47/unGTP-IL2.zip</a></li>
-<li id="pragma-line-150"><strong>Unzip &amp; Move</strong> the <code>unGTP-IL2.exe</code> to <code>&lt;Path to IL-2 BoS&gt;\data</code></li>
-<li id="pragma-line-151"><strong>Drag</strong> <code>Campaigns.gtp</code> onto <code>unGTP-IL2.exe</code> (ignore the error warning in the cmd-window at the end - everything has been extracted)</li>
-<li id="pragma-line-152"><strong>Navigate</strong> to <code>&lt;Path to IL-2 BoS&gt;\data\(null)\campaigns</code></li>
-<li id="pragma-line-153"><strong>Copy</strong> all subfolders to <code>&lt;Path to IL-2 BoS&gt;\data\campaigns</code></li>
+<p id="pragma-line-142">The setup wizard will guide you through selecting the installation directory and configuring basic options.</p>
+<h3 id="step-2-extract-standard-campaigns-optional-but-recommended"><a id="pragma-line-144"></a>Step 2: Extract Standard Campaigns (Optional but Recommended)</h3>
+<p id="pragma-line-146">⚠️ <strong>IMPORTANT:</strong> The tracker can monitor <strong>only</strong> campaigns located in <code>&lt;Path to IL-2 BoS&gt;\data\campaigns</code>. Standard IL-2 campaigns are not stored directly in this folder; instead, they are run internally from <code>campaigns.gtp</code>. As a result, these campaigns must be extracted before they can be tracked.</p>
+<p id="pragma-line-148">🚨 <strong>CAUTION:</strong> If you have modified missions belonging to a standard official campaign, proceed with extreme caution when copying extracted files from <code>campaigns.gtp</code> into the <code>&lt;Path to IL-2 BoS&gt;\data\campaigns</code> folder. Existing files will be <strong>overwritten</strong>, and any custom mission modifications will be replaced by the original out-of-the-box versions.</p>
+<p id="pragma-line-150"><strong>To extract standard campaigns:</strong></p>
+<ol id="pragma-line-152">
+<li id="pragma-line-152"><strong>Download</strong> unGTP-IL2 from: <a href="https://www.mediafire.com/file/caxpalaudz1hd47/unGTP-IL2.zip">https://www.mediafire.com/file/caxpalaudz1hd47/unGTP-IL2.zip</a></li>
+<li id="pragma-line-153"><strong>Unzip &amp; Move</strong> the <code>unGTP-IL2.exe</code> to <code>&lt;Path to IL-2 BoS&gt;\data</code></li>
+<li id="pragma-line-154"><strong>Drag</strong> <code>Campaigns.gtp</code> onto <code>unGTP-IL2.exe</code> (ignore the error warning in the cmd-window at the end - everything has been extracted)</li>
+<li id="pragma-line-155"><strong>Navigate</strong> to <code>&lt;Path to IL-2 BoS&gt;\data\(null)\campaigns</code></li>
+<li id="pragma-line-156"><strong>Copy</strong> all subfolders to <code>&lt;Path to IL-2 BoS&gt;\data\campaigns</code></li>
 </ol>
-<blockquote id="pragma-line-155">
-<p id="pragma-line-155"><strong>Note:</strong> The intention of extracting the standard official campaigns is ONLY to make them usable for the Campaign Tracker. Please do not modify the official campaigns.</p>
+<blockquote id="pragma-line-158">
+<p id="pragma-line-158"><strong>Note:</strong> The intention of extracting the standard official campaigns is ONLY to make them usable for the Campaign Tracker. Please do not modify the official campaigns.</p>
 </blockquote>
-<h3 id="step-3-run-the-tracker"><a id="pragma-line-157"></a>Step 3: Run the Tracker</h3>
-<p id="pragma-line-159"><strong>Run</strong> <code>IL2_Campaign_Tracker.exe</code> from your Tracker installation directory.</p>
-<p id="pragma-line-161">ℹ️ <strong>NOTE</strong>: By default, the tracker shuts down automatically when IL-2 BoS is closed. To continue using the tracker, you must either restart it manually or configure a Windows Task Scheduler task to launch it automatically when Windows starts.</p>
-<p id="pragma-line-163">A general setup guide can be found here:
+<h3 id="step-3-run-the-tracker"><a id="pragma-line-160"></a>Step 3: Run the Tracker</h3>
+<p id="pragma-line-162"><strong>Run</strong> <code>IL2_Campaign_Tracker.exe</code> from your Tracker installation directory.</p>
+<p id="pragma-line-164">ℹ️ <strong>NOTE</strong>: By default, the tracker shuts down automatically when IL-2 BoS is closed. To continue using the tracker, you must either restart it manually or configure a Windows Task Scheduler task to launch it automatically when Windows starts.</p>
+<p id="pragma-line-166">A general setup guide can be found here:
 <a href="https://forum.il2-series.com/topic/772-expanded-career-rank-mod/#findComment-4176">https://forum.il2-series.com/topic/772-expanded-career-rank-mod/#findComment-4176</a></p>
-<h3 id="control-center-gui"><a id="pragma-line-166"></a>Control Center GUI</h3>
-<p id="pragma-line-168">The <strong>Control Center</strong> (<code>IL2_Control_Center.exe</code>) provides a central hub to launch all tracker components:</p>
-<pre class=" language-text"><code id="pragma-line-170" class=" language-text">┌─────────────────────────────────────────────────────────┐
+<h3 id="control-center-gui"><a id="pragma-line-169"></a>Control Center GUI</h3>
+<p id="pragma-line-171">The <strong>Control Center</strong> (<code>IL2_Control_Center.exe</code>) provides a central hub to launch all tracker components:</p>
+<pre class="  language-text"><code id="pragma-line-173" class="  language-text">┌─────────────────────────────────────────────────────────┐
 │              IL-2 Campaign Tracker                      │
 │                  Control Center                         │
 ├─────────────────────────────────────────────────────────┤
@@ -1315,15 +1325,15 @@ code[class*=language-],pre[class*=language-]{color:#ccc;background:0 0;font-fami
 │                                                         │
 └─────────────────────────────────────────────────────────┘
 </code></pre>
-<p id="pragma-line-189"><strong>Features:</strong></p>
-<ul id="pragma-line-190">
-<li id="pragma-line-190">One-click access to all tracker components</li>
-<li id="pragma-line-191">Visual status indicators</li>
-<li id="pragma-line-192">Clean, modern interface</li>
+<p id="pragma-line-192"><strong>Features:</strong></p>
+<ul id="pragma-line-193">
+<li id="pragma-line-193">One-click access to all tracker components</li>
+<li id="pragma-line-194">Visual status indicators</li>
+<li id="pragma-line-195">Clean, modern interface</li>
 </ul>
-<h3 id="installed-files"><a id="pragma-line-194"></a>Installed Files</h3>
-<p id="pragma-line-196">The installer places the following files in your chosen installation directory:</p>
-<pre class=" language-text"><code id="pragma-line-198" class=" language-text">IL2_Campaign_Tracker/
+<h3 id="installed-files"><a id="pragma-line-197"></a>Installed Files</h3>
+<p id="pragma-line-199">The installer places the following files in your chosen installation directory:</p>
+<pre class="  language-text"><code id="pragma-line-201" class="  language-text">IL2_Campaign_Tracker/
 ├── IL2_Control_Center.exe                # Control Center GUI (recommended entry point)
 ├── IL2_Campaign_Tracker.exe              # Main executable
 ├── IL2_Settings_Manager.exe              # Settings Manager GUI
@@ -1339,212 +1349,212 @@ code[class*=language-],pre[class*=language-]{color:#ccc;background:0 0;font-fami
 ├── cleanup_tracker_content.exe           # Helper for uninstaller
 └── (other files created automatically on first run)
 </code></pre>
-<h3 id="uninstall"><a id="pragma-line-216"></a>Uninstall</h3>
-<ol id="pragma-line-218">
-<li id="pragma-line-218"><p id="pragma-line-218"><strong>Run</strong> <code>unins000.exe</code> from Tracker installation path</p>
-<p id="pragma-line-220">🚨 <strong>DO NOT RUN</strong> <code>cleanup_tracker_content.exe</code> directly - it is a helper for the uninstaller.</p>
+<h3 id="uninstall"><a id="pragma-line-219"></a>Uninstall</h3>
+<ol id="pragma-line-221">
+<li id="pragma-line-221"><p id="pragma-line-221"><strong>Run</strong> <code>unins000.exe</code> from Tracker installation path</p>
+<p id="pragma-line-223">🚨 <strong>DO NOT RUN</strong> <code>cleanup_tracker_content.exe</code> directly - it is a helper for the uninstaller.</p>
 </li>
-<li id="pragma-line-222"><p id="pragma-line-222"><strong>Follow</strong> the uninstallation instructions in the wizard</p>
+<li id="pragma-line-225"><p id="pragma-line-225"><strong>Follow</strong> the uninstallation instructions in the wizard</p>
 </li>
 </ol>
-<p id="pragma-line-224">ℹ️ <strong>NOTE:</strong> All in-game debriefings and events will be removed, and the original <code>info.locale=[language].txt</code> files will be restored to their out-of-the-box state.</p>
-<p id="pragma-line-226">If you choose to keep the configuration files during uninstallation and later reinstall the tracker into the same folder, those files will not be overwritten. Your previously saved configuration will be retained.</p>
-<hr id="pragma-line-228">
-<h2 id="first-run-setup"><a id="pragma-line-230"></a>🚀 First Run Setup <a id="first-run-setup"></a></h2>
-<p id="pragma-line-232">When you start the tracker for the first time, a setup wizard guides you through the configuration:</p>
-<h3 id="step-1-select-game-directory"><a id="pragma-line-234"></a>Step 1: Select Game Directory</h3>
-<p id="pragma-line-236">A folder browser opens.  Navigate to your IL-2 installation folder:</p>
-<pre class=" language-bash"><code id="pragma-line-238" class=" language-bash">Example: C:\Program Files <span class="token punctuation">(</span>x86<span class="token punctuation">)</span>\Steam\steamapps\common\IL-2 Sturmovik Battle of Stalingrad
+<p id="pragma-line-227">ℹ️ <strong>NOTE:</strong> All in-game debriefings and events will be removed, and the original <code>info.locale=[language].txt</code> files will be restored to their out-of-the-box state.</p>
+<p id="pragma-line-229">If you choose to keep the configuration files during uninstallation and later reinstall the tracker into the same folder, those files will not be overwritten. Your previously saved configuration will be retained.</p>
+<hr id="pragma-line-231">
+<h2 id="first-run-setup"><a id="pragma-line-233"></a>🚀 First Run Setup <a id="first-run-setup"></a></h2>
+<p id="pragma-line-235">When you start the tracker for the first time, a setup wizard guides you through the configuration:</p>
+<h3 id="step-1-select-game-directory"><a id="pragma-line-237"></a>Step 1: Select Game Directory</h3>
+<p id="pragma-line-239">A folder browser opens.  Navigate to your IL-2 installation folder:</p>
+<pre class="  language-bash"><code id="pragma-line-241" class="  language-bash">Example: C:\Program Files <span class="token punctuation">(</span>x86<span class="token punctuation">)</span>\Steam\steamapps\common\IL-2 Sturmovik Battle of Stalingrad
 </code></pre>
-<blockquote id="pragma-line-242">
-<p id="pragma-line-242"><strong>Important:</strong> Select the main game folder, NOT the <code>data\Campaigns</code> subfolder.</p>
+<blockquote id="pragma-line-245">
+<p id="pragma-line-245"><strong>Important:</strong> Select the main game folder, NOT the <code>data\Campaigns</code> subfolder.</p>
 </blockquote>
-<h3 id="step-2-country-validation"><a id="pragma-line-244"></a>Step 2: Country Validation</h3>
-<p id="pragma-line-246">The tracker scans all installed campaigns and attempts to detect the correct country for each.  A validation GUI appears where you can:</p>
-<ul id="pragma-line-248">
-<li id="pragma-line-248">✅ Confirm automatically detected countries</li>
-<li id="pragma-line-249">✏️ Correct any misidentified campaigns</li>
-<li id="pragma-line-250">🚫 Exclude WW1 (Flying Circus) campaigns</li>
+<h3 id="step-2-country-validation"><a id="pragma-line-247"></a>Step 2: Country Validation</h3>
+<p id="pragma-line-249">The tracker scans all installed campaigns and attempts to detect the correct country for each.  A validation GUI appears where you can:</p>
+<ul id="pragma-line-251">
+<li id="pragma-line-251">✅ Confirm automatically detected countries</li>
+<li id="pragma-line-252">✏️ Correct any misidentified campaigns</li>
+<li id="pragma-line-253">🚫 Exclude WW1 (Flying Circus) campaigns</li>
 </ul>
-<p id="pragma-line-252">This is important because promotions and awards are nation-specific.<br>
+<p id="pragma-line-255">This is important because promotions and awards are nation-specific.<br>
 ℹ️ After validating/correcting countries, those campaigns are written into the <code>stock_campaigns.yaml</code>. If you accidentally assigned the wrong country, you can fix that by manually editing the country in the <code>stock_campaigns.yaml</code>.</p>
-<h3 id="ww1-flying-circus-detection"><a id="pragma-line-255"></a>WW1 (Flying Circus) Detection</h3>
-<p id="pragma-line-257">If the tracker detects Flying Circus campaigns, you can - or better should - mark them as <strong>WW1 (ignore)</strong> in this screen so they are excluded from tracking.</p>
-<h3 id="step-3-ready-to-track"><a id="pragma-line-259"></a>Step 3: Ready to Track</h3>
-<p id="pragma-line-261">After setup, the tracker:</p>
-<ol id="pragma-line-263">
-<li id="pragma-line-263">Decodes your current campaign save file</li>
-<li id="pragma-line-264">Generates initial events (existing promotions/awards)</li>
-<li id="pragma-line-265">Starts monitoring for changes</li>
+<h3 id="ww1-flying-circus-detection"><a id="pragma-line-258"></a>WW1 (Flying Circus) Detection</h3>
+<p id="pragma-line-260">If the tracker detects Flying Circus campaigns, you can - or better should - mark them as <strong>WW1 (ignore)</strong> in this screen so they are excluded from tracking.</p>
+<h3 id="step-3-ready-to-track"><a id="pragma-line-262"></a>Step 3: Ready to Track</h3>
+<p id="pragma-line-264">After setup, the tracker:</p>
+<ol id="pragma-line-266">
+<li id="pragma-line-266">Decodes your current campaign save file</li>
+<li id="pragma-line-267">Generates initial events (existing promotions/awards)</li>
+<li id="pragma-line-268">Starts monitoring for changes</li>
 </ol>
-<hr id="pragma-line-267">
-<h2 id="settings-manager"><a id="pragma-line-269"></a>⚙️ Settings Manager <a id="settings-manager"></a></h2>
-<p id="pragma-line-271">The <strong>Settings Manager</strong> (<code>IL2_Settings_Manager.exe</code>) provides a user-friendly GUI to configure all tracker settings without manually editing configuration files.</p>
-<h3 id="opening-the-settings-manager"><a id="pragma-line-273"></a>Opening the Settings Manager</h3>
-<ol id="pragma-line-275">
-<li id="pragma-line-275">Locate <code>IL2_Settings_Manager.exe</code> in your tracker installation folder</li>
-<li id="pragma-line-276">Double-click to open the Settings Manager</li>
-<li id="pragma-line-277">Make your changes and click "Apply" or "OK"</li>
+<hr id="pragma-line-270">
+<h2 id="settings-manager"><a id="pragma-line-272"></a>⚙️ Settings Manager <a id="settings-manager"></a></h2>
+<p id="pragma-line-274">The <strong>Settings Manager</strong> (<code>IL2_Settings_Manager.exe</code>) provides a user-friendly GUI to configure all tracker settings without manually editing configuration files.</p>
+<h3 id="opening-the-settings-manager"><a id="pragma-line-276"></a>Opening the Settings Manager</h3>
+<ol id="pragma-line-278">
+<li id="pragma-line-278">Locate <code>IL2_Settings_Manager.exe</code> in your tracker installation folder</li>
+<li id="pragma-line-279">Double-click to open the Settings Manager</li>
+<li id="pragma-line-280">Make your changes and click "Apply" or "OK"</li>
 </ol>
-<h3 id="available-settings"><a id="pragma-line-279"></a>Available Settings</h3>
-<h4 id="general-tab"><a id="pragma-line-281"></a>General Tab</h4>
-<table id="pragma-line-283">
+<h3 id="available-settings"><a id="pragma-line-282"></a>Available Settings</h3>
+<h4 id="general-tab"><a id="pragma-line-284"></a>General Tab</h4>
+<table id="pragma-line-286">
 <thead>
-<tr id="pragma-line-283">
-<th id="pragma-line-283">Setting</th>
-<th id="pragma-line-283">Description</th>
+<tr id="pragma-line-286">
+<th id="pragma-line-286">Setting</th>
+<th id="pragma-line-286">Description</th>
 </tr>
 </thead>
 <tbody>
-<tr id="pragma-line-285">
-<td id="pragma-line-285"><strong>Language</strong></td>
-<td id="pragma-line-285">Select display language (English, German, French, Spanish, Polish, Russian, Chinese)</td>
+<tr id="pragma-line-288">
+<td id="pragma-line-288"><strong>Language</strong></td>
+<td id="pragma-line-288">Select display language (English, German, French, Spanish, Polish, Russian, Chinese)</td>
 </tr>
-<tr id="pragma-line-286">
-<td id="pragma-line-286"><strong>Enable Popups</strong></td>
-<td id="pragma-line-286">Toggle promotion/award popup notifications on/off</td>
+<tr id="pragma-line-289">
+<td id="pragma-line-289"><strong>Enable Popups</strong></td>
+<td id="pragma-line-289">Toggle promotion/award popup notifications on/off</td>
 </tr>
-<tr id="pragma-line-287">
-<td id="pragma-line-287"><strong>Rank Scaling Enabled</strong></td>
-<td id="pragma-line-287">Enable/disable rank scaling based on campaign length</td>
+<tr id="pragma-line-290">
+<td id="pragma-line-290"><strong>Rank Scaling Enabled</strong></td>
+<td id="pragma-line-290">Enable/disable rank scaling based on campaign length</td>
 </tr>
 </tbody>
 </table>
-<h4 id="rank-scaling-tab"><a id="pragma-line-289"></a>Rank Scaling Tab</h4>
-<p id="pragma-line-291">Configure how rank requirements scale based on campaign length:</p>
-<table id="pragma-line-293">
+<h4 id="rank-scaling-tab"><a id="pragma-line-292"></a>Rank Scaling Tab</h4>
+<p id="pragma-line-294">Configure how rank requirements scale based on campaign length:</p>
+<table id="pragma-line-296">
 <thead>
-<tr id="pragma-line-293">
-<th id="pragma-line-293">Bracket</th>
-<th id="pragma-line-293">Default Factor</th>
-<th id="pragma-line-293">Purpose</th>
+<tr id="pragma-line-296">
+<th id="pragma-line-296">Bracket</th>
+<th id="pragma-line-296">Default Factor</th>
+<th id="pragma-line-296">Purpose</th>
 </tr>
 </thead>
 <tbody>
-<tr id="pragma-line-295">
-<td id="pragma-line-295">1-10 missions</td>
-<td id="pragma-line-295">1.00x</td>
-<td id="pragma-line-295">Short campaigns (stock campaigns)</td>
-</tr>
-<tr id="pragma-line-296">
-<td id="pragma-line-296">11-20 missions</td>
-<td id="pragma-line-296">1.15x</td>
-<td id="pragma-line-296">Medium-short campaigns</td>
-</tr>
-<tr id="pragma-line-297">
-<td id="pragma-line-297">21-30 missions</td>
-<td id="pragma-line-297">1.30x</td>
-<td id="pragma-line-297">Medium campaigns</td>
-</tr>
 <tr id="pragma-line-298">
-<td id="pragma-line-298">31-40 missions</td>
-<td id="pragma-line-298">1.50x</td>
-<td id="pragma-line-298">Medium-long campaigns</td>
+<td id="pragma-line-298">1-10 missions</td>
+<td id="pragma-line-298">1.00x</td>
+<td id="pragma-line-298">Short campaigns (stock campaigns)</td>
 </tr>
 <tr id="pragma-line-299">
-<td id="pragma-line-299">41-50 missions</td>
-<td id="pragma-line-299">1.75x</td>
-<td id="pragma-line-299">Long campaigns</td>
+<td id="pragma-line-299">11-20 missions</td>
+<td id="pragma-line-299">1.15x</td>
+<td id="pragma-line-299">Medium-short campaigns</td>
 </tr>
 <tr id="pragma-line-300">
-<td id="pragma-line-300">51-70 missions</td>
-<td id="pragma-line-300">2.00x</td>
-<td id="pragma-line-300">Very long campaigns</td>
+<td id="pragma-line-300">21-30 missions</td>
+<td id="pragma-line-300">1.30x</td>
+<td id="pragma-line-300">Medium campaigns</td>
 </tr>
 <tr id="pragma-line-301">
-<td id="pragma-line-301">71+ missions</td>
-<td id="pragma-line-301">5.50x</td>
-<td id="pragma-line-301">Epic campaigns</td>
+<td id="pragma-line-301">31-40 missions</td>
+<td id="pragma-line-301">1.50x</td>
+<td id="pragma-line-301">Medium-long campaigns</td>
+</tr>
+<tr id="pragma-line-302">
+<td id="pragma-line-302">41-50 missions</td>
+<td id="pragma-line-302">1.75x</td>
+<td id="pragma-line-302">Long campaigns</td>
+</tr>
+<tr id="pragma-line-303">
+<td id="pragma-line-303">51-70 missions</td>
+<td id="pragma-line-303">2.00x</td>
+<td id="pragma-line-303">Very long campaigns</td>
+</tr>
+<tr id="pragma-line-304">
+<td id="pragma-line-304">71+ missions</td>
+<td id="pragma-line-304">5.50x</td>
+<td id="pragma-line-304">Epic campaigns</td>
 </tr>
 </tbody>
 </table>
-<p id="pragma-line-303">You can add, edit, or remove scaling brackets as needed.</p>
-<h4 id="rank-values-tab"><a id="pragma-line-305"></a>Rank Values Tab</h4>
-<p id="pragma-line-307">Configure promotion score thresholds for each nation:</p>
-<ul id="pragma-line-309">
-<li id="pragma-line-309">View and edit the score required for each rank</li>
-<li id="pragma-line-310">Supports all four nations (Germany, Soviet Union, USA, Britain)</li>
+<p id="pragma-line-306">You can add, edit, or remove scaling brackets as needed.</p>
+<h4 id="rank-values-tab"><a id="pragma-line-308"></a>Rank Values Tab</h4>
+<p id="pragma-line-310">Configure promotion score thresholds for each nation:</p>
+<ul id="pragma-line-312">
+<li id="pragma-line-312">View and edit the score required for each rank</li>
+<li id="pragma-line-313">Supports all four nations (Germany, Soviet Union, USA, Britain)</li>
 </ul>
-<h4 id="campaigns-tab"><a id="pragma-line-312"></a>Campaigns Tab</h4>
-<p id="pragma-line-314">Configure per-campaign settings:</p>
-<table id="pragma-line-316">
+<h4 id="campaigns-tab"><a id="pragma-line-315"></a>Campaigns Tab</h4>
+<p id="pragma-line-317">Configure per-campaign settings:</p>
+<table id="pragma-line-319">
 <thead>
-<tr id="pragma-line-316">
-<th id="pragma-line-316">Setting</th>
-<th id="pragma-line-316">Description</th>
-<th id="pragma-line-316">Range/Options</th>
-</tr>
-</thead>
-<tbody>
-<tr id="pragma-line-318">
-<td id="pragma-line-318"><strong>Starting Rank Offset</strong></td>
-<td id="pragma-line-318">Start campaigns at higher ranks</td>
-<td id="pragma-line-318">0-7</td>
-</tr>
 <tr id="pragma-line-319">
-<td id="pragma-line-319"><strong>Detail Page Language</strong></td>
-<td id="pragma-line-319">Override language for Service Record detail page</td>
-<td id="pragma-line-319">Default, English, German, Russian</td>
-</tr>
-</tbody>
-</table>
-<blockquote id="pragma-line-321">
-<p id="pragma-line-321"><strong>Tip:</strong> Use higher offsets (up to 7) for campaigns where the player is already a squadron leader at mission start. This is particularly useful for British campaigns due to their many lower ranks.</p>
-</blockquote>
-<h5 id="per-campaign-language-override"><a id="pragma-line-323"></a>Per-Campaign Language Override</h5>
-<p id="pragma-line-325">The <strong>Detail Page Language</strong> setting allows you to lock a specific campaign's Service Record detail page to a particular language (English, German, or Russian), independent of the global language setting.</p>
-<ul id="pragma-line-327">
-<li id="pragma-line-327"><strong>Default</strong>: Follows the global language setting dynamically</li>
-<li id="pragma-line-328"><strong>English/German/Russian</strong>: Locks the detail page to that specific language</li>
-</ul>
-<p id="pragma-line-330">This is useful when you want to view a German campaign's debriefings in German while keeping the rest of the application in your preferred language. When you change this setting and save, the localized debriefings are automatically regenerated for the affected campaigns.</p>
-<h3 id="auto-regeneration"><a id="pragma-line-332"></a>Auto-Regeneration</h3>
-<p id="pragma-line-334">When you change certain settings, the tracker automatically regenerates all affected data:</p>
-<table id="pragma-line-336">
-<thead>
-<tr id="pragma-line-336">
-<th id="pragma-line-336">Changed Setting</th>
-<th id="pragma-line-336">Auto-Regeneration</th>
+<th id="pragma-line-319">Setting</th>
+<th id="pragma-line-319">Description</th>
+<th id="pragma-line-319">Range/Options</th>
 </tr>
 </thead>
 <tbody>
-<tr id="pragma-line-338">
-<td id="pragma-line-338">Language</td>
-<td id="pragma-line-338">✅ All debriefings and PDF reports regenerated in new language</td>
+<tr id="pragma-line-321">
+<td id="pragma-line-321"><strong>Starting Rank Offset</strong></td>
+<td id="pragma-line-321">Start campaigns at higher ranks</td>
+<td id="pragma-line-321">0-7</td>
 </tr>
-<tr id="pragma-line-339">
-<td id="pragma-line-339">Rank Scaling</td>
-<td id="pragma-line-339">✅ All events recalculated based on new scaling factors</td>
-</tr>
-<tr id="pragma-line-340">
-<td id="pragma-line-340">Rank Values</td>
-<td id="pragma-line-340">✅ All promotions recalculated based on new thresholds</td>
-</tr>
-<tr id="pragma-line-341">
-<td id="pragma-line-341">Starting Rank Offset</td>
-<td id="pragma-line-341">Manual regeneration (restart tracker)</td>
+<tr id="pragma-line-322">
+<td id="pragma-line-322"><strong>Detail Page Language</strong></td>
+<td id="pragma-line-322">Override language for Service Record detail page</td>
+<td id="pragma-line-322">Default, English, German, Russian</td>
 </tr>
 </tbody>
 </table>
-<hr id="pragma-line-343">
-<h2 id="ww1-detection-exclusion"><a id="pragma-line-345"></a>🪖 WW1 Detection &amp; Exclusion <a id="ww1-detection--exclusion"></a></h2>
-<p id="pragma-line-347">Flying Circus (WW1) campaigns are detected and excluded by default because the tracker only includes WWII ranks, awards, and debriefing logic.</p>
-<p id="pragma-line-349"><strong>Detection signals include:</strong></p>
-<ul id="pragma-line-351">
-<li id="pragma-line-351">Mission dates in the 1914–1918 range</li>
-<li id="pragma-line-352">WW1 aircraft keywords in campaign data</li>
-<li id="pragma-line-353">“Flying Circus”/WW1 keywords in campaign descriptions</li>
+<blockquote id="pragma-line-324">
+<p id="pragma-line-324"><strong>Tip:</strong> Use higher offsets (up to 7) for campaigns where the player is already a squadron leader at mission start. This is particularly useful for British campaigns due to their many lower ranks.</p>
+</blockquote>
+<h5 id="per-campaign-language-override"><a id="pragma-line-326"></a>Per-Campaign Language Override</h5>
+<p id="pragma-line-328">The <strong>Detail Page Language</strong> setting allows you to lock a specific campaign's Service Record detail page to a particular language (English, German, or Russian), independent of the global language setting.</p>
+<ul id="pragma-line-330">
+<li id="pragma-line-330"><strong>Default</strong>: Follows the global language setting dynamically</li>
+<li id="pragma-line-331"><strong>English/German/Russian</strong>: Locks the detail page to that specific language</li>
 </ul>
-<p id="pragma-line-355"><strong>How exclusion works:</strong></p>
-<ul id="pragma-line-357">
-<li id="pragma-line-357">Excluded campaigns are skipped during decoding and event generation.</li>
-<li id="pragma-line-358">The exclusion reason is stored in <code>campaign_mission_dates.json</code> so the tracker consistently ignores them.</li>
-<li id="pragma-line-359">You can review or change exclusions by re-running setup (delete <code>campaign_mission_dates.json</code> and the respective entry in the <code>stock_campaigns.yaml</code>) and using the <strong>WW1 (ignore)</strong> checkbox in the country validation GUI.</li>
+<p id="pragma-line-333">This is useful when you want to view a German campaign's debriefings in German while keeping the rest of the application in your preferred language. When you change this setting and save, the localized debriefings are automatically regenerated for the affected campaigns.</p>
+<h3 id="auto-regeneration"><a id="pragma-line-335"></a>Auto-Regeneration</h3>
+<p id="pragma-line-337">When you change certain settings, the tracker automatically regenerates all affected data:</p>
+<table id="pragma-line-339">
+<thead>
+<tr id="pragma-line-339">
+<th id="pragma-line-339">Changed Setting</th>
+<th id="pragma-line-339">Auto-Regeneration</th>
+</tr>
+</thead>
+<tbody>
+<tr id="pragma-line-341">
+<td id="pragma-line-341">Language</td>
+<td id="pragma-line-341">✅ All debriefings and PDF reports regenerated in new language</td>
+</tr>
+<tr id="pragma-line-342">
+<td id="pragma-line-342">Rank Scaling</td>
+<td id="pragma-line-342">✅ All events recalculated based on new scaling factors</td>
+</tr>
+<tr id="pragma-line-343">
+<td id="pragma-line-343">Rank Values</td>
+<td id="pragma-line-343">✅ All promotions recalculated based on new thresholds</td>
+</tr>
+<tr id="pragma-line-344">
+<td id="pragma-line-344">Starting Rank Offset</td>
+<td id="pragma-line-344">Manual regeneration (restart tracker)</td>
+</tr>
+</tbody>
+</table>
+<hr id="pragma-line-346">
+<h2 id="ww1-detection-exclusion"><a id="pragma-line-348"></a>🪖 WW1 Detection &amp; Exclusion <a id="ww1-detection--exclusion"></a></h2>
+<p id="pragma-line-350">Flying Circus (WW1) campaigns are detected and excluded by default because the tracker only includes WWII ranks, awards, and debriefing logic.</p>
+<p id="pragma-line-352"><strong>Detection signals include:</strong></p>
+<ul id="pragma-line-354">
+<li id="pragma-line-354">Mission dates in the 1914–1918 range</li>
+<li id="pragma-line-355">WW1 aircraft keywords in campaign data</li>
+<li id="pragma-line-356">“Flying Circus”/WW1 keywords in campaign descriptions</li>
 </ul>
-<hr id="pragma-line-361">
-<h2 id="how-it-works"><a id="pragma-line-363"></a>⚙️ How It Works <a id="how-it-works"></a></h2>
-<h3 id="monitoring-loop"><a id="pragma-line-365"></a>Monitoring Loop</h3>
-<pre class=" language-text"><code id="pragma-line-367" class=" language-text">┌─────────────────────────────────────────────────────────┐
+<p id="pragma-line-358"><strong>How exclusion works:</strong></p>
+<ul id="pragma-line-360">
+<li id="pragma-line-360">Excluded campaigns are skipped during decoding and event generation.</li>
+<li id="pragma-line-361">The exclusion reason is stored in <code>campaign_mission_dates.json</code> so the tracker consistently ignores them.</li>
+<li id="pragma-line-362">You can review or change exclusions by re-running setup (delete <code>campaign_mission_dates.json</code> and the respective entry in the <code>stock_campaigns.yaml</code>) and using the <strong>WW1 (ignore)</strong> checkbox in the country validation GUI.</li>
+</ul>
+<hr id="pragma-line-364">
+<h2 id="how-it-works"><a id="pragma-line-366"></a>⚙️ How It Works <a id="how-it-works"></a></h2>
+<h3 id="monitoring-loop"><a id="pragma-line-368"></a>Monitoring Loop</h3>
+<pre class="  language-text"><code id="pragma-line-370" class="  language-text">┌─────────────────────────────────────────────────────────┐
 │                    TRACKER RUNNING                      │
 ├─────────────────────────────────────────────────────────┤
 │                                                         │
@@ -1568,177 +1578,177 @@ code[class*=language-],pre[class*=language-]{color:#ccc;background:0 0;font-fami
 │                                                         │
 └─────────────────────────────────────────────────────────┘
 </code></pre>
-<h3 id="real-time-popups"><a id="pragma-line-393"></a>Real-time Popups</h3>
-<p id="pragma-line-395">When you earn a promotion or award, a popup notification appears on screen:</p>
-<ul id="pragma-line-397">
-<li id="pragma-line-397">🎖️ Shows the rank insignia or medal image</li>
-<li id="pragma-line-398">📅 Displays the date earned</li>
-<li id="pragma-line-399">⏱️ Auto-dismisses after 5 seconds</li>
+<h3 id="real-time-popups"><a id="pragma-line-396"></a>Real-time Popups</h3>
+<p id="pragma-line-398">When you earn a promotion or award, a popup notification appears on screen:</p>
+<ul id="pragma-line-400">
+<li id="pragma-line-400">🎖️ Shows the rank insignia or medal image</li>
+<li id="pragma-line-401">📅 Displays the date earned</li>
+<li id="pragma-line-402">⏱️ Auto-dismisses after 5 seconds</li>
 </ul>
-<blockquote id="pragma-line-401">
-<p id="pragma-line-401"><strong>Note:</strong> Popups only appear while IL-2 is running to avoid interruptions during other activities. If you don't like popups, go to <code>campaign_progress_config.yaml</code> in your tracker installation directory
+<blockquote id="pragma-line-404">
+<p id="pragma-line-404"><strong>Note:</strong> Popups only appear while IL-2 is running to avoid interruptions during other activities. If you don't like popups, go to <code>campaign_progress_config.yaml</code> in your tracker installation directory
 and set <code>enable_popups: false</code></p>
 </blockquote>
-<hr id="pragma-line-404">
-<h2 id="promotions-awards-system"><a id="pragma-line-406"></a>🎖️ Promotions &amp; Awards System <a id="promotions--awards-system"></a></h2>
-<h3 id="how-promotions-work"><a id="pragma-line-408"></a>How Promotions Work</h3>
-<p id="pragma-line-410">Promotions are based on <strong>accumulated score</strong> across all completed missions (the score value comes from the campaignsstates.txt and is calculated by IL-2 GB internal rules):</p>
-<pre class=" language-text"><code id="pragma-line-412" class=" language-text">Overall Score per Campaign = ∑ Mission Scores
+<hr id="pragma-line-407">
+<h2 id="promotions-awards-system"><a id="pragma-line-409"></a>🎖️ Promotions &amp; Awards System <a id="promotions--awards-system"></a></h2>
+<h3 id="how-promotions-work"><a id="pragma-line-411"></a>How Promotions Work</h3>
+<p id="pragma-line-413">Promotions are based on <strong>accumulated score</strong> across all completed missions (the score value comes from the campaignsstates.txt and is calculated by IL-2 GB internal rules):</p>
+<pre class="  language-text"><code id="pragma-line-415" class="  language-text">Overall Score per Campaign = ∑ Mission Scores
 Promotion Score = Base Score × Rank Scaling Factor
 </code></pre>
-<p id="pragma-line-417"><strong>Rank Scaling Factor</strong> adjusts requirements based on campaign length (can be editited in <code>campaign_progress_config.yaml</code>):</p>
-<p id="pragma-line-419">"1-10":    1.00   # Short campaigns (stock campaigns)<br>
+<p id="pragma-line-420"><strong>Rank Scaling Factor</strong> adjusts requirements based on campaign length (can be editited in <code>campaign_progress_config.yaml</code>):</p>
+<p id="pragma-line-422">"1-10":    1.00   # Short campaigns (stock campaigns)<br>
 "11-20":   1.15   # Medium-short campaigns<br>
 "21-30":   1.30   # Medium campaigns<br>
 "31-40":   1.50   # Medium-long campaigns<br>
 "41-50":   1.75   # Long campaigns<br>
 "51-70":   2.00   # Very long campaigns<br>
 "71+":     5.50   # Epic campaigns (70+ missions)</p>
-<p id="pragma-line-427">This prevents rapid promotions in long campaigns while ensuring fair progression in short ones.</p>
-<p id="pragma-line-429">ℹ️ <strong>Example:</strong> In a 24-mission campaign, the scaling factor is 1.3, so a rank requiring 1000 points would need  1300 actual points (1000 x 1.30) to achieve.<br>
+<p id="pragma-line-430">This prevents rapid promotions in long campaigns while ensuring fair progression in short ones.</p>
+<p id="pragma-line-432">ℹ️ <strong>Example:</strong> In a 24-mission campaign, the scaling factor is 1.3, so a rank requiring 1000 points would need  1300 actual points (1000 x 1.30) to achieve.<br>
 When your accumulated score meets or exceeds the promotion threshold of 1300 points, you are promoted to the next rank.</p>
-<p id="pragma-line-432">🚨 <strong>IMPORTANT</strong>: If you modify the <code>campaign_progress_config.yaml</code>, be careful to keep indentation correct (YAML format). Improper indentation can lead to parsing errors.</p>
-<h3 id="how-awards-work"><a id="pragma-line-434"></a>How Awards Work</h3>
-<p id="pragma-line-436">Awards are granted based on various criteria defined in <code>campaign_progress_config.yaml</code> and are derived from the career mode in IL-2 BoS.
+<p id="pragma-line-435">🚨 <strong>IMPORTANT</strong>: If you modify the <code>campaign_progress_config.yaml</code>, be careful to keep indentation correct (YAML format). Improper indentation can lead to parsing errors.</p>
+<h3 id="how-awards-work"><a id="pragma-line-437"></a>How Awards Work</h3>
+<p id="pragma-line-439">Awards are granted based on various criteria defined in <code>campaign_progress_config.yaml</code> and are derived from the career mode in IL-2 BoS.
 All conditions for awards are <code>OR</code> conditions:</p>
-<table id="pragma-line-439">
+<table id="pragma-line-442">
 <thead>
-<tr id="pragma-line-439">
-<th id="pragma-line-439">Criteria Type</th>
-<th id="pragma-line-439">Example</th>
+<tr id="pragma-line-442">
+<th id="pragma-line-442">Criteria Type</th>
+<th id="pragma-line-442">Example</th>
 </tr>
 </thead>
 <tbody>
-<tr id="pragma-line-441">
-<td id="pragma-line-441"><strong>Cumulative Kills</strong></td>
-<td id="pragma-line-441">8 air combat score → Iron Cross 1st Class</td>
-</tr>
-<tr id="pragma-line-442">
-<td id="pragma-line-442"><strong>Single Mission</strong></td>
-<td id="pragma-line-442">7 kills in one sortie → Medal of Honor</td>
-</tr>
-<tr id="pragma-line-443">
-<td id="pragma-line-443"><strong>Missions Completed</strong></td>
-<td id="pragma-line-443">15 missions → Order of the Red Star</td>
-</tr>
 <tr id="pragma-line-444">
-<td id="pragma-line-444"><strong>Wounded in Action</strong></td>
-<td id="pragma-line-444">Pilot damage &gt; 20% → Wound Badge</td>
+<td id="pragma-line-444"><strong>Cumulative Kills</strong></td>
+<td id="pragma-line-444">8 air combat score → Iron Cross 1st Class</td>
 </tr>
 <tr id="pragma-line-445">
-<td id="pragma-line-445"><strong>Random + Threshold</strong></td>
-<td id="pragma-line-445">High kills + luck factor → Rare decorations</td>
+<td id="pragma-line-445"><strong>Single Mission</strong></td>
+<td id="pragma-line-445">7 kills in one sortie → Medal of Honor</td>
+</tr>
+<tr id="pragma-line-446">
+<td id="pragma-line-446"><strong>Missions Completed</strong></td>
+<td id="pragma-line-446">15 missions → Order of the Red Star</td>
+</tr>
+<tr id="pragma-line-447">
+<td id="pragma-line-447"><strong>Wounded in Action</strong></td>
+<td id="pragma-line-447">Pilot damage &gt; 20% → Wound Badge</td>
+</tr>
+<tr id="pragma-line-448">
+<td id="pragma-line-448"><strong>Random + Threshold</strong></td>
+<td id="pragma-line-448">High kills + luck factor → Rare decorations</td>
 </tr>
 </tbody>
 </table>
-<p id="pragma-line-447">Some awards have <strong>prerequisites</strong> (e.g., must have Iron Cross 2nd Class before 1st Class) and <strong>mutual exclusivity</strong> (e.g., cannot earn both wound stripe variants on same mission).</p>
-<h3 id="starting-rank-offset"><a id="pragma-line-449"></a>Starting Rank Offset</h3>
-<p id="pragma-line-451">Campaigns can start with higher ranks (if you want to). This is useful for campaigns where your pilot is already an experienced officer at mission start. The offset can be configured:</p>
-<p id="pragma-line-453"><strong>Option 1: Via Settings Manager (Recommended)</strong></p>
-<ol id="pragma-line-454">
-<li id="pragma-line-454">Open <code>IL2_Settings_Manager.exe</code></li>
-<li id="pragma-line-455">Go to the "Campaigns" tab</li>
-<li id="pragma-line-456">Double-click on a campaign to edit its offset</li>
-<li id="pragma-line-457">Select a value from 0-7</li>
+<p id="pragma-line-450">Some awards have <strong>prerequisites</strong> (e.g., must have Iron Cross 2nd Class before 1st Class) and <strong>mutual exclusivity</strong> (e.g., cannot earn both wound stripe variants on same mission).</p>
+<h3 id="starting-rank-offset"><a id="pragma-line-452"></a>Starting Rank Offset</h3>
+<p id="pragma-line-454">Campaigns can start with higher ranks (if you want to). This is useful for campaigns where your pilot is already an experienced officer at mission start. The offset can be configured:</p>
+<p id="pragma-line-456"><strong>Option 1: Via Settings Manager (Recommended)</strong></p>
+<ol id="pragma-line-457">
+<li id="pragma-line-457">Open <code>IL2_Settings_Manager.exe</code></li>
+<li id="pragma-line-458">Go to the "Campaigns" tab</li>
+<li id="pragma-line-459">Double-click on a campaign to edit its offset</li>
+<li id="pragma-line-460">Select a value from 0-7</li>
 </ol>
-<p id="pragma-line-459"><strong>Option 2: Manual editing in <code>campaign_mission_dates.json</code>:</strong></p>
-<pre class=" language-json"><code id="pragma-line-461" class=" language-json"><span class="token property">"kerch"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+<p id="pragma-line-462"><strong>Option 2: Manual editing in <code>campaign_mission_dates.json</code>:</strong></p>
+<pre class="  language-json"><code id="pragma-line-464" class="  language-json"><span class="token property">"kerch"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
   <span class="token property">"country"</span><span class="token operator">:</span> <span class="token string">"Germany"</span><span class="token punctuation">,</span>
   <span class="token property">"starting_rank_offset"</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span> --&gt; change this number (<span class="token number">0</span>-<span class="token number">7</span><span class="token punctuation">,</span> default = <span class="token number">0</span><span class="token punctuation">)</span>
   <span class="token property">"missions"</span><span class="token operator">:</span> <span class="token punctuation">{</span> ...  <span class="token punctuation">}</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<blockquote id="pragma-line-469">
-<p id="pragma-line-469"><strong>Note:</strong> Higher offset values (up to 7) are particularly useful for British campaigns, which have many lower ranks, or for campaigns where the player starts as a squadron leader.</p>
+<blockquote id="pragma-line-472">
+<p id="pragma-line-472"><strong>Note:</strong> Higher offset values (up to 7) are particularly useful for British campaigns, which have many lower ranks, or for campaigns where the player starts as a squadron leader.</p>
 </blockquote>
-<p id="pragma-line-471">ℹ️ <strong>Note:</strong> You may customize the promotion and award criteria to suit your preferences. However, it is strongly recommended to create a backup copy of the original <code>campaign_progress_config.yaml</code> file before making any changes.</p>
-<hr id="pragma-line-473">
-<h2 id="mission-debriefings"><a id="pragma-line-475"></a>📊 Mission Debriefings <a id="mission-debriefings"></a></h2>
-<h3 id="data-source"><a id="pragma-line-477"></a>Data Source</h3>
-<p id="pragma-line-479">Debriefing data is extracted from IL-2's <strong>mission log files</strong> (<code>.mlg</code> files):</p>
-<pre class=" language-text"><code id="pragma-line-481" class=" language-text">Location: [IL-2 Directory]\data\FlightLogs\[mission].mlg
+<p id="pragma-line-474">ℹ️ <strong>Note:</strong> You may customize the promotion and award criteria to suit your preferences. However, it is strongly recommended to create a backup copy of the original <code>campaign_progress_config.yaml</code> file before making any changes.</p>
+<hr id="pragma-line-476">
+<h2 id="mission-debriefings"><a id="pragma-line-478"></a>📊 Mission Debriefings <a id="mission-debriefings"></a></h2>
+<h3 id="data-source"><a id="pragma-line-480"></a>Data Source</h3>
+<p id="pragma-line-482">Debriefing data is extracted from IL-2's <strong>mission log files</strong> (<code>.mlg</code> files):</p>
+<pre class="  language-text"><code id="pragma-line-484" class="  language-text">Location: [IL-2 Directory]\data\FlightLogs\[mission].mlg
 </code></pre>
-<p id="pragma-line-485">These binary files contain detailed records of everything that happened during the mission.
+<p id="pragma-line-488">These binary files contain detailed records of everything that happened during the mission.
 These binary files are "translated" by <code>mlg2txt.exe</code> into a *.txt file and is then further processed.</p>
-<h3 id="whats-tracked"><a id="pragma-line-488"></a>What's Tracked</h3>
-<table id="pragma-line-490">
+<h3 id="whats-tracked"><a id="pragma-line-491"></a>What's Tracked</h3>
+<table id="pragma-line-493">
 <thead>
-<tr id="pragma-line-490">
-<th id="pragma-line-490">Category</th>
-<th id="pragma-line-490">Details</th>
+<tr id="pragma-line-493">
+<th id="pragma-line-493">Category</th>
+<th id="pragma-line-493">Details</th>
 </tr>
 </thead>
 <tbody>
-<tr id="pragma-line-492">
-<td id="pragma-line-492"><strong>Flight Time</strong></td>
-<td id="pragma-line-492">Takeoff to landing duration</td>
-</tr>
-<tr id="pragma-line-493">
-<td id="pragma-line-493"><strong>Kills</strong></td>
-<td id="pragma-line-493">Air, ground, and naval targets with timestamps</td>
-</tr>
-<tr id="pragma-line-494">
-<td id="pragma-line-494"><strong>Damage Taken</strong></td>
-<td id="pragma-line-494">Hits received, from whom, damage percentage</td>
-</tr>
 <tr id="pragma-line-495">
-<td id="pragma-line-495"><strong>Pilot Status</strong></td>
-<td id="pragma-line-495">"Damage" %</td>
+<td id="pragma-line-495"><strong>Flight Time</strong></td>
+<td id="pragma-line-495">Takeoff to landing duration</td>
 </tr>
 <tr id="pragma-line-496">
-<td id="pragma-line-496"><strong>Status</strong></td>
-<td id="pragma-line-496">Landed, Landed (wounded), Hard Landing, Hard Landing (wounded), Bailout, Bailout (wounded), KIA/MIA</td>
+<td id="pragma-line-496"><strong>Kills</strong></td>
+<td id="pragma-line-496">Air, ground, and naval targets with timestamps</td>
+</tr>
+<tr id="pragma-line-497">
+<td id="pragma-line-497"><strong>Damage Taken</strong></td>
+<td id="pragma-line-497">Hits received, from whom, damage percentage</td>
+</tr>
+<tr id="pragma-line-498">
+<td id="pragma-line-498"><strong>Pilot Status</strong></td>
+<td id="pragma-line-498">"Damage" %</td>
+</tr>
+<tr id="pragma-line-499">
+<td id="pragma-line-499"><strong>Status</strong></td>
+<td id="pragma-line-499">Landed, Landed (wounded), Hard Landing, Hard Landing (wounded), Bailout, Bailout (wounded), KIA/MIA</td>
 </tr>
 </tbody>
 </table>
-<h3 id="debriefing-output"><a id="pragma-line-498"></a>Debriefing Output</h3>
-<p id="pragma-line-500">Each mission generates detailed output in two formats:</p>
-<ol id="pragma-line-502">
-<li id="pragma-line-502"><strong>In-Game (Flight Log)</strong> - Chronological list of events written to all campaign <code>info.locale=*.txt</code> files (each in its respective language)</li>
-<li id="pragma-line-503"><strong>PDF Report</strong> - Detailed kill breakdown by category matching the in-game results screen (in your selected language)</li>
+<h3 id="debriefing-output"><a id="pragma-line-501"></a>Debriefing Output</h3>
+<p id="pragma-line-503">Each mission generates detailed output in two formats:</p>
+<ol id="pragma-line-505">
+<li id="pragma-line-505"><strong>In-Game (Flight Log)</strong> - Chronological list of events written to all campaign <code>info.locale=*.txt</code> files (each in its respective language)</li>
+<li id="pragma-line-506"><strong>PDF Report</strong> - Detailed kill breakdown by category matching the in-game results screen (in your selected language)</li>
 </ol>
-<blockquote id="pragma-line-505">
-<p id="pragma-line-505"><strong>Note:</strong> The tracker writes localized content to each language file that exists in your campaign folder. For example, if your campaign has both <code>info.locale=eng.txt</code> and <code>info.locale=ger.txt</code>, the English file will contain English debriefings and the German file will contain German debriefings.</p>
+<blockquote id="pragma-line-508">
+<p id="pragma-line-508"><strong>Note:</strong> The tracker writes localized content to each language file that exists in your campaign folder. For example, if your campaign has both <code>info.locale=eng.txt</code> and <code>info.locale=ger.txt</code>, the English file will contain English debriefings and the German file will contain German debriefings.</p>
 </blockquote>
-<hr id="pragma-line-507">
-<h2 id="mission-cleanup"><a id="pragma-line-509"></a>🧹 Mission Cleanup <a id="mission-cleanup"></a></h2>
-<h3 id="what-is-takeoffstatus"><a id="pragma-line-511"></a>What is takeoffStatus?</h3>
-<p id="pragma-line-513">IL-2 tracks mission completion with a <code>takeoffStatus</code> flag:</p>
-<table id="pragma-line-515">
+<hr id="pragma-line-510">
+<h2 id="mission-cleanup"><a id="pragma-line-512"></a>🧹 Mission Cleanup <a id="mission-cleanup"></a></h2>
+<h3 id="what-is-takeoffstatus"><a id="pragma-line-514"></a>What is takeoffStatus?</h3>
+<p id="pragma-line-516">IL-2 tracks mission completion with a <code>takeoffStatus</code> flag:</p>
+<table id="pragma-line-518">
 <thead>
-<tr id="pragma-line-515">
-<th id="pragma-line-515">Value</th>
-<th id="pragma-line-515">Meaning</th>
+<tr id="pragma-line-518">
+<th id="pragma-line-518">Value</th>
+<th id="pragma-line-518">Meaning</th>
 </tr>
 </thead>
 <tbody>
-<tr id="pragma-line-517">
-<td id="pragma-line-517"><code>takeoffStatus=1</code></td>
-<td id="pragma-line-517">Mission started but not completed properly</td>
+<tr id="pragma-line-520">
+<td id="pragma-line-520"><code>takeoffStatus=1</code></td>
+<td id="pragma-line-520">Mission started but not completed properly</td>
 </tr>
-<tr id="pragma-line-518">
-<td id="pragma-line-518"><code>takeoffStatus=2</code></td>
-<td id="pragma-line-518">Mission completed successfully</td>
+<tr id="pragma-line-521">
+<td id="pragma-line-521"><code>takeoffStatus=2</code></td>
+<td id="pragma-line-521">Mission completed successfully</td>
 </tr>
 </tbody>
 </table>
-<h3 id="when-cleanup-gui-appears"><a id="pragma-line-520"></a>When Cleanup GUI Appears</h3>
-<p id="pragma-line-522">The Mission Cleanup GUI appears at tracker startup when missions with <code>takeoffStatus=1</code> are detected.</p>
-<p id="pragma-line-524"><strong>Common causes for <code>takeoffStatus=1</code>:</strong></p>
-<ul id="pragma-line-526">
-<li id="pragma-line-526">❌ Mission objective not completed</li>
-<li id="pragma-line-527">🪂 Pilot bailed out</li>
-<li id="pragma-line-528">💀 Pilot killed in action (KIA)</li>
-<li id="pragma-line-529">❓ Pilot missing in action (MIA)</li>
-<li id="pragma-line-530">💥 IL-2 crashed during mission</li>
-<li id="pragma-line-531">🚫 Force quit (Alt+F4, Task Manager)</li>
-<li id="pragma-line-532">🔌 Power outage / system crash</li>
+<h3 id="when-cleanup-gui-appears"><a id="pragma-line-523"></a>When Cleanup GUI Appears</h3>
+<p id="pragma-line-525">The Mission Cleanup GUI appears at tracker startup when missions with <code>takeoffStatus=1</code> are detected.</p>
+<p id="pragma-line-527"><strong>Common causes for <code>takeoffStatus=1</code>:</strong></p>
+<ul id="pragma-line-529">
+<li id="pragma-line-529">❌ Mission objective not completed</li>
+<li id="pragma-line-530">🪂 Pilot bailed out</li>
+<li id="pragma-line-531">💀 Pilot killed in action (KIA)</li>
+<li id="pragma-line-532">❓ Pilot missing in action (MIA)</li>
+<li id="pragma-line-533">💥 IL-2 crashed during mission</li>
+<li id="pragma-line-534">🚫 Force quit (Alt+F4, Task Manager)</li>
+<li id="pragma-line-535">🔌 Power outage / system crash</li>
 </ul>
-<blockquote id="pragma-line-534">
-<p id="pragma-line-534"><strong>Note:</strong> Not all <code>takeoffStatus=1</code> missions are "failed" in the traditional sense.  Bailing out or being KIA may be intentional gameplay.  The cleanup tool gives you the <strong>choice</strong> whether to remove these missions.</p>
+<blockquote id="pragma-line-537">
+<p id="pragma-line-537"><strong>Note:</strong> Not all <code>takeoffStatus=1</code> missions are "failed" in the traditional sense.  Bailing out or being KIA may be intentional gameplay.  The cleanup tool gives you the <strong>choice</strong> whether to remove these missions.</p>
 </blockquote>
-<h3 id="cleanup-gui"><a id="pragma-line-536"></a>Cleanup GUI</h3>
-<pre class=" language-text"><code id="pragma-line-538" class=" language-text">┌─────────────────────────────────────────────────────────┐
+<h3 id="cleanup-gui"><a id="pragma-line-539"></a>Cleanup GUI</h3>
+<pre class="  language-text"><code id="pragma-line-541" class="  language-text">┌─────────────────────────────────────────────────────────┐
 │        ⚠️ Incomplete Missions Detected                  │
 ├─────────────────────────────────────────────────────────┤
 │                                                          │
@@ -1753,29 +1763,29 @@ These binary files are "translated" by <code>mlg2txt.exe</code> into a *.txt fil
 │                                                          │
 └─────────────────────────────────────────────────────────┘
 </code></pre>
-<h3 id="what-happens-when-you-remove-a-mission"><a id="pragma-line-555"></a>What Happens When You Remove a Mission</h3>
-<ol id="pragma-line-557">
-<li id="pragma-line-557"><strong>Backup created</strong> - Current state saved before any changes</li>
-<li id="pragma-line-558"><strong>Mission removed</strong> - Entry deleted from <code>campaignsstates.txt</code></li>
-<li id="pragma-line-559"><strong>Popup state cleared</strong> - Associated events removed from <code>campaign_popups_seen.json</code></li>
-<li id="pragma-line-560"><strong>Ready to replay</strong> - You can fly the mission again</li>
+<h3 id="what-happens-when-you-remove-a-mission"><a id="pragma-line-558"></a>What Happens When You Remove a Mission</h3>
+<ol id="pragma-line-560">
+<li id="pragma-line-560"><strong>Backup created</strong> - Current state saved before any changes</li>
+<li id="pragma-line-561"><strong>Mission removed</strong> - Entry deleted from <code>campaignsstates.txt</code></li>
+<li id="pragma-line-562"><strong>Popup state cleared</strong> - Associated events removed from <code>campaign_popups_seen.json</code></li>
+<li id="pragma-line-563"><strong>Ready to replay</strong> - You can fly the mission again</li>
 </ol>
-<h3 id="what-happens-when-you-keep-a-mission"><a id="pragma-line-562"></a>What Happens When You Keep a Mission</h3>
-<p id="pragma-line-564">If you click "Keep All" or don't select a mission:</p>
-<ul id="pragma-line-566">
-<li id="pragma-line-566">No backup is created</li>
-<li id="pragma-line-567">No changes are made</li>
-<li id="pragma-line-568">The mission remains in your save file</li>
-<li id="pragma-line-569">Cleanup GUI will appear again next time (for remaining incomplete missions)</li>
+<h3 id="what-happens-when-you-keep-a-mission"><a id="pragma-line-565"></a>What Happens When You Keep a Mission</h3>
+<p id="pragma-line-567">If you click "Keep All" or don't select a mission:</p>
+<ul id="pragma-line-569">
+<li id="pragma-line-569">No backup is created</li>
+<li id="pragma-line-570">No changes are made</li>
+<li id="pragma-line-571">The mission remains in your save file</li>
+<li id="pragma-line-572">Cleanup GUI will appear again next time (for remaining incomplete missions)</li>
 </ul>
-<hr id="pragma-line-571">
-<h2 id="backup-restore-system"><a id="pragma-line-573"></a>💾 Backup &amp; Restore System <a id="backup--restore-system"></a></h2>
-<h3 id="when-backups-are-created"><a id="pragma-line-575"></a>When Backups Are Created</h3>
-<p id="pragma-line-577">Backups are <strong>only</strong> created when you remove incomplete missions via the Mission Cleanup tool.  They are <strong>not</strong> created automatically after every mission.</p>
-<p id="pragma-line-579">This ensures you can restore your campaign to the state <strong>before</strong> you removed any missions.</p>
-<h3 id="restore-gui"><a id="pragma-line-581"></a>Restore GUI</h3>
-<p id="pragma-line-583">When the tracker starts and backups are available, a restore GUI may appear:</p>
-<pre class=" language-text"><code id="pragma-line-585" class=" language-text">┌─────────────────────────────────────────────────────────┐
+<hr id="pragma-line-574">
+<h2 id="backup-restore-system"><a id="pragma-line-576"></a>💾 Backup &amp; Restore System <a id="backup--restore-system"></a></h2>
+<h3 id="when-backups-are-created"><a id="pragma-line-578"></a>When Backups Are Created</h3>
+<p id="pragma-line-580">Backups are <strong>only</strong> created when you remove incomplete missions via the Mission Cleanup tool.  They are <strong>not</strong> created automatically after every mission.</p>
+<p id="pragma-line-582">This ensures you can restore your campaign to the state <strong>before</strong> you removed any missions.</p>
+<h3 id="restore-gui"><a id="pragma-line-584"></a>Restore GUI</h3>
+<p id="pragma-line-586">When the tracker starts and backups are available, a restore GUI may appear:</p>
+<pre class="  language-text"><code id="pragma-line-588" class="  language-text">┌─────────────────────────────────────────────────────────┐
 │           🔄 Restore Campaign Backup                    │
 ├─────────────────────────────────────────────────────────┤
 │                                                         │
@@ -1793,33 +1803,33 @@ These binary files are "translated" by <code>mlg2txt.exe</code> into a *.txt fil
 │                                                         │
 └─────────────────────────────────────────────────────────┘
 </code></pre>
-<p id="pragma-line-605"><strong>When the GUI appears:</strong></p>
-<ul id="pragma-line-607">
-<li id="pragma-line-607">Multiple backups exist, OR</li>
-<li id="pragma-line-608">One backup exists that is <strong>not</strong> the current state</li>
+<p id="pragma-line-608"><strong>When the GUI appears:</strong></p>
+<ul id="pragma-line-610">
+<li id="pragma-line-610">Multiple backups exist, OR</li>
+<li id="pragma-line-611">One backup exists that is <strong>not</strong> the current state</li>
 </ul>
-<p id="pragma-line-610"><strong>When the GUI does NOT appear:</strong></p>
-<ul id="pragma-line-612">
-<li id="pragma-line-612">No backups exist</li>
-<li id="pragma-line-613">Only one backup exists and it's already the active state</li>
+<p id="pragma-line-613"><strong>When the GUI does NOT appear:</strong></p>
+<ul id="pragma-line-615">
+<li id="pragma-line-615">No backups exist</li>
+<li id="pragma-line-616">Only one backup exists and it's already the active state</li>
 </ul>
-<h3 id="restore-process"><a id="pragma-line-615"></a>Restore Process</h3>
-<ol id="pragma-line-617">
-<li id="pragma-line-617">Select a backup from the list</li>
-<li id="pragma-line-618">Click "Restore Selected Backup"</li>
-<li id="pragma-line-619">Confirm the action</li>
-<li id="pragma-line-620">Tracker automatically:
-<ul id="pragma-line-621">
-<li id="pragma-line-621">Creates a copy of the backup file (original backup preserved)</li>
-<li id="pragma-line-622">Deletes current <code>campaignsstates.txt</code></li>
-<li id="pragma-line-623">Renames backup copy to <code>campaignsstates.txt</code></li>
-<li id="pragma-line-624">Regenerates all events</li>
-<li id="pragma-line-625">Restores matching popup state (prevents duplicate popups)</li>
+<h3 id="restore-process"><a id="pragma-line-618"></a>Restore Process</h3>
+<ol id="pragma-line-620">
+<li id="pragma-line-620">Select a backup from the list</li>
+<li id="pragma-line-621">Click "Restore Selected Backup"</li>
+<li id="pragma-line-622">Confirm the action</li>
+<li id="pragma-line-623">Tracker automatically:
+<ul id="pragma-line-624">
+<li id="pragma-line-624">Creates a copy of the backup file (original backup preserved)</li>
+<li id="pragma-line-625">Deletes current <code>campaignsstates.txt</code></li>
+<li id="pragma-line-626">Renames backup copy to <code>campaignsstates.txt</code></li>
+<li id="pragma-line-627">Regenerates all events</li>
+<li id="pragma-line-628">Restores matching popup state (prevents duplicate popups)</li>
 </ul>
 </li>
 </ol>
-<h3 id="use-case-example"><a id="pragma-line-627"></a>Use Case Example</h3>
-<pre class=" language-text"><code id="pragma-line-629" class=" language-text">1. You fly Mission 05 in "kerch" campaign
+<h3 id="use-case-example"><a id="pragma-line-630"></a>Use Case Example</h3>
+<pre class="  language-text"><code id="pragma-line-632" class="  language-text">1. You fly Mission 05 in "kerch" campaign
 2. IL-2 crashes mid-mission → takeoffStatus=1
 3. Next tracker start: Cleanup GUI appears
 4. You select Mission 05 and click "Remove"
@@ -1832,184 +1842,296 @@ Later, if needed:
 9. Select the backup from before removal
 10. Campaign restored to state WITH Mission 05 (incomplete)
 </code></pre>
-<hr id="pragma-line-644">
-<h2 id="campaign-service-record"><a id="pragma-line-646"></a>📋 Campaign Service Record <a id="camapign-service-record"></a></h2>
-<p id="pragma-line-648">The <strong>Campaign Service Record</strong> is a web-based application that provides an elegant, read-only view of your pilot’s career across all ongoing and completed campaigns. It presents your service history in a clean, professional format—ideal for reviewing achievements or sharing your combat record.</p>
-<p id="pragma-line-650">⚠️ <strong>IMPORTANT</strong>: The Campaign Service Record is not a standalone system. It operates exclusively in conjunction with the tracker and its associated files, which supply the required campaign data.</p>
-<h3 id="features-1"><a id="pragma-line-652"></a>Features</h3>
-<ul id="pragma-line-654">
-<li id="pragma-line-654"><strong>Campaign Overview</strong>: Browse all campaigns you've flown, showing missions completed, promotions earned, and awards received</li>
-<li id="pragma-line-655"><strong>Detailed Service Record</strong>: Click any campaign to view:
-<ul id="pragma-line-656">
-<li id="pragma-line-656">Complete mission history with debriefings</li>
-<li id="pragma-line-657">Chronological timeline of promotions and awards</li>
-<li id="pragma-line-658">Career statistics (air kills, ground kills, mission success rates)</li>
-<li id="pragma-line-659">Aircraft usage and performance breakdown</li>
+<hr id="pragma-line-647">
+<h2 id="campaign-service-record"><a id="pragma-line-649"></a>📋 Campaign Service Record <a id="camapign-service-record"></a></h2>
+<p id="pragma-line-651">The <strong>Campaign Service Record</strong> is a web-based application that provides an elegant, read-only view of your pilot’s career across all ongoing and completed campaigns. It presents your service history in a clean, professional format—ideal for reviewing achievements or sharing your combat record.</p>
+<p id="pragma-line-653">⚠️ <strong>IMPORTANT</strong>: The Campaign Service Record is not a standalone system. It operates exclusively in conjunction with the tracker and its associated files, which supply the required campaign data.</p>
+<h3 id="features-1"><a id="pragma-line-655"></a>Features</h3>
+<ul id="pragma-line-657">
+<li id="pragma-line-657"><strong>Campaign Overview</strong>: Browse all campaigns you've flown, showing missions completed, promotions earned, and awards received</li>
+<li id="pragma-line-658"><strong>Detailed Service Record</strong>: Click any campaign to view:
+<ul id="pragma-line-659">
+<li id="pragma-line-659">Complete mission history with debriefings</li>
+<li id="pragma-line-660">Chronological timeline of promotions and awards</li>
+<li id="pragma-line-661">Career statistics (air kills, ground kills, mission success rates)</li>
+<li id="pragma-line-662">Aircraft usage and performance breakdown</li>
 </ul>
 </li>
-<li id="pragma-line-660"><strong>Pilot Profile</strong>: Display and customize pilot name, photo, and personal information per campaign</li>
-<li id="pragma-line-661"><strong>Responsive Design</strong>: Clean, modern interface that works on any screen size</li>
-<li id="pragma-line-662"><strong>Auto-Generated</strong>: Automatically reads data from your Campaign Tracker files - no manual input required</li>
+<li id="pragma-line-663"><strong>Pilot Profile</strong>: Display and customize pilot name, photo, and personal information per campaign</li>
+<li id="pragma-line-664"><strong>Responsive Design</strong>: Clean, modern interface that works on any screen size</li>
+<li id="pragma-line-665"><strong>Auto-Generated</strong>: Automatically reads data from your Campaign Tracker files - no manual input required</li>
 </ul>
-<h3 id="how-to-use"><a id="pragma-line-664"></a>How to Use</h3>
-<ol id="pragma-line-666">
-<li id="pragma-line-666">Locate <code>Campaign_Service_Record.exe</code> in your Campaign Tracker installation directory (see Installation section above)</li>
-<li id="pragma-line-667">Double-click <code>Campaign_Service_Record.exe</code> to start the application</li>
-<li id="pragma-line-668">Your default web browser will open automatically and display your service record</li>
-<li id="pragma-line-669">Browse your campaigns and click on any campaign to view detailed statistics</li>
-<li id="pragma-line-670">The server will shut down automatically after 60 seconds of inactivity</li>
+<h3 id="how-to-use"><a id="pragma-line-667"></a>How to Use</h3>
+<ol id="pragma-line-669">
+<li id="pragma-line-669">Locate <code>Campaign_Service_Record.exe</code> in your Campaign Tracker installation directory (see Installation section above)</li>
+<li id="pragma-line-670">Double-click <code>Campaign_Service_Record.exe</code> to start the application</li>
+<li id="pragma-line-671">Your default web browser will open automatically and display your service record</li>
+<li id="pragma-line-672">Browse your campaigns and click on any campaign to view detailed statistics</li>
+<li id="pragma-line-673">The server will shut down automatically after 60 seconds of inactivity</li>
 </ol>
-<p id="pragma-line-672"><strong>Note</strong>: The Campaign Service Record requires data from the Campaign Tracker. You must run the Campaign Tracker at least once and complete at least one mission before campaigns will appear in the Service Record.</p>
-<h3 id="interface-overview"><a id="pragma-line-674"></a>Interface Overview</h3>
-<h4 id="landing-page"><a id="pragma-line-676"></a>Landing Page</h4>
-<ul id="pragma-line-678">
-<li id="pragma-line-678"><strong>Left Panel</strong>: Pilot information (photo, name, service overview)</li>
-<li id="pragma-line-679"><strong>Right Panel</strong>: List of all campaigns with completed missions
-<ul id="pragma-line-680">
-<li id="pragma-line-680">Shows mission count, promotions earned, and awards received per campaign</li>
-<li id="pragma-line-681">Click any campaign to view detailed service record</li>
+<p id="pragma-line-675"><strong>Note</strong>: The Campaign Service Record requires data from the Campaign Tracker. You must run the Campaign Tracker at least once and complete at least one mission before campaigns will appear in the Service Record.</p>
+<h3 id="interface-overview"><a id="pragma-line-677"></a>Interface Overview</h3>
+<h4 id="landing-page"><a id="pragma-line-679"></a>Landing Page</h4>
+<ul id="pragma-line-681">
+<li id="pragma-line-681"><strong>Left Panel</strong>: Pilot information (photo, name, service overview)</li>
+<li id="pragma-line-682"><strong>Right Panel</strong>: List of all campaigns with completed missions
+<ul id="pragma-line-683">
+<li id="pragma-line-683">Shows mission count, promotions earned, and awards received per campaign</li>
+<li id="pragma-line-684">Click any campaign to view detailed service record</li>
 </ul>
 </li>
 </ul>
-<h4 id="campaign-detail-page"><a id="pragma-line-683"></a>Campaign Detail Page</h4>
-<ul id="pragma-line-685">
-<li id="pragma-line-685"><strong>Left Column</strong>: Pilot information (Customizable photo &amp; personal data), Chronological timeline of promotions and awards</li>
-<li id="pragma-line-686"><strong>Middle Column</strong>: Career statistics including:
-<ul id="pragma-line-687">
-<li id="pragma-line-687">Total air and ground kills</li>
-<li id="pragma-line-688">Mission outcomes</li>
-<li id="pragma-line-689">Aircraft usage breakdown</li>
-<li id="pragma-line-690">and more</li>
+<h4 id="campaign-detail-page"><a id="pragma-line-686"></a>Campaign Detail Page</h4>
+<ul id="pragma-line-688">
+<li id="pragma-line-688"><strong>Left Column</strong>: Pilot information (Customizable photo &amp; personal data), Chronological timeline of promotions and awards</li>
+<li id="pragma-line-689"><strong>Middle Column</strong>: Career statistics including:
+<ul id="pragma-line-690">
+<li id="pragma-line-690">Total air and ground kills</li>
+<li id="pragma-line-691">Mission outcomes</li>
+<li id="pragma-line-692">Aircraft usage breakdown</li>
+<li id="pragma-line-693">and more</li>
 </ul>
 </li>
-<li id="pragma-line-691"><strong>Right Column</strong>: Mission debriefings with detailed combat results</li>
-<li id="pragma-line-692"><strong>Back Button</strong>: Return to campaign overview</li>
+<li id="pragma-line-694"><strong>Right Column</strong>: Mission debriefings with detailed combat results</li>
+<li id="pragma-line-695"><strong>Back Button</strong>: Return to campaign overview</li>
 </ul>
-<p id="pragma-line-694"><strong>Per-Campaign Language</strong>: The detail page can display in a different language than the global setting. This is configured in the Settings Manager under the Campaigns tab. When a campaign has a specific language override, the detail page (including debriefings) will display in that language, while the landing page remains in your global language.</p>
-<h3 id="customizing-pilot-information"><a id="pragma-line-696"></a>Customizing Pilot Information</h3>
-<p id="pragma-line-698">Click on the pilot photo or name fields to customize:</p>
-<ul id="pragma-line-700">
-<li id="pragma-line-700"><strong>Pilot Photo</strong>: Click to upload a new photo (supports common image formats)</li>
-<li id="pragma-line-701"><strong>Personal Information</strong>: Edit name, first name, birthday, birthplace and birth country</li>
-<li id="pragma-line-702">All changes are saved automatically and persist across sessions</li>
+<p id="pragma-line-697"><strong>Per-Campaign Language</strong>: The detail page can display in a different language than the global setting. This is configured in the Settings Manager under the Campaigns tab. When a campaign has a specific language override, the detail page (including debriefings) will display in that language, while the landing page remains in your global language.</p>
+<h3 id="customizing-pilot-information"><a id="pragma-line-699"></a>Customizing Pilot Information</h3>
+<p id="pragma-line-701">Click on the pilot photo or name fields to customize:</p>
+<ul id="pragma-line-703">
+<li id="pragma-line-703"><strong>Pilot Photo</strong>: Click to upload a new photo (supports common image formats)</li>
+<li id="pragma-line-704"><strong>Personal Information</strong>: Edit name, first name, birthday, birthplace and birth country</li>
+<li id="pragma-line-705">All changes are saved automatically and persist across sessions</li>
 </ul>
-<h3 id="troubleshooting"><a id="pragma-line-704"></a>Troubleshooting</h3>
-<h4 id="problem-loading-campaigns.appears-forever"><a id="pragma-line-706"></a>Problem: "Loading campaigns..." appears forever</h4>
-<p id="pragma-line-708"><strong>Cause</strong>: No campaign data available or JSON files are empty<br>
+<h3 id="troubleshooting"><a id="pragma-line-707"></a>Troubleshooting</h3>
+<h4 id="problem-loading-campaigns.appears-forever"><a id="pragma-line-709"></a>Problem: "Loading campaigns..." appears forever</h4>
+<p id="pragma-line-711"><strong>Cause</strong>: No campaign data available or JSON files are empty<br>
 <strong>Solution</strong>:</p>
-<ul id="pragma-line-711">
-<li id="pragma-line-711">Ensure you have run the Campaign Tracker at least once</li>
-<li id="pragma-line-712">Complete at least one mission in any campaign</li>
-<li id="pragma-line-713">Check that your Campaign Tracker installation contains these files:
 <ul id="pragma-line-714">
-<li id="pragma-line-714"><code>campaign_completion_state.json</code></li>
-<li id="pragma-line-715"><code>campaign_events.json</code></li>
-<li id="pragma-line-716"><code>campaigns_decoded.json</code></li>
-<li id="pragma-line-717"><code>campaign_mission_dates.json</code></li>
+<li id="pragma-line-714">Ensure you have run the Campaign Tracker at least once</li>
+<li id="pragma-line-715">Complete at least one mission in any campaign</li>
+<li id="pragma-line-716">Check that your Campaign Tracker installation contains these files:
+<ul id="pragma-line-717">
+<li id="pragma-line-717"><code>campaign_completion_state.json</code></li>
+<li id="pragma-line-718"><code>campaign_events.json</code></li>
+<li id="pragma-line-719"><code>campaigns_decoded.json</code></li>
+<li id="pragma-line-720"><code>campaign_mission_dates.json</code></li>
 </ul>
 </li>
 </ul>
-<h4 id="problem-campaign-service-record-wont-start"><a id="pragma-line-719"></a>Problem: Campaign Service Record won't start</h4>
-<p id="pragma-line-721"><strong>Cause</strong>: Port 5000 is already in use by another application<br>
+<h4 id="problem-campaign-service-record-wont-start"><a id="pragma-line-722"></a>Problem: Campaign Service Record won't start</h4>
+<p id="pragma-line-724"><strong>Cause</strong>: Port 5000 is already in use by another application<br>
 <strong>Solution</strong>:</p>
-<ul id="pragma-line-724">
-<li id="pragma-line-724">Close any other web servers or applications using port 5000</li>
-<li id="pragma-line-725">If the issue persists, restart your computer to free up the port</li>
+<ul id="pragma-line-727">
+<li id="pragma-line-727">Close any other web servers or applications using port 5000</li>
+<li id="pragma-line-728">If the issue persists, restart your computer to free up the port</li>
 </ul>
-<h4 id="problem-browser-shows-cannot-connect-or-page-not-found"><a id="pragma-line-727"></a>Problem: Browser shows "Cannot connect" or "Page not found"</h4>
-<p id="pragma-line-729"><strong>Cause</strong>: The application server failed to start<br>
+<h4 id="problem-browser-shows-cannot-connect-or-page-not-found"><a id="pragma-line-730"></a>Problem: Browser shows "Cannot connect" or "Page not found"</h4>
+<p id="pragma-line-732"><strong>Cause</strong>: The application server failed to start<br>
 <strong>Solution</strong>:</p>
-<ul id="pragma-line-732">
-<li id="pragma-line-732">Check that both <code>Campaign_Service_Record.exe</code> and the <code>_internal</code> folder are present in the installation directory</li>
-<li id="pragma-line-733">Ensure your antivirus is not blocking the application</li>
-<li id="pragma-line-734">Try running <code>Campaign_Service_Record.exe</code> as administrator</li>
+<ul id="pragma-line-735">
+<li id="pragma-line-735">Check that both <code>Campaign_Service_Record.exe</code> and the <code>_internal</code> folder are present in the installation directory</li>
+<li id="pragma-line-736">Ensure your antivirus is not blocking the application</li>
+<li id="pragma-line-737">Try running <code>Campaign_Service_Record.exe</code> as administrator</li>
 </ul>
-<h4 id="problem-clicking-a-campaign-shows-failed-to-load-campaign-details"><a id="pragma-line-736"></a>Problem: Clicking a campaign shows "Failed to load campaign details"</h4>
-<p id="pragma-line-738"><strong>Cause</strong>: Missing or corrupted campaign data<br>
+<h4 id="problem-clicking-a-campaign-shows-failed-to-load-campaign-details"><a id="pragma-line-739"></a>Problem: Clicking a campaign shows "Failed to load campaign details"</h4>
+<p id="pragma-line-741"><strong>Cause</strong>: Missing or corrupted campaign data<br>
 <strong>Solution</strong>:</p>
-<ul id="pragma-line-741">
-<li id="pragma-line-741">Run the Campaign Tracker again to regenerate JSON files</li>
-<li id="pragma-line-742">Ensure the campaign has at least one completed mission</li>
-<li id="pragma-line-743">Check that campaign names in JSON files are consistent</li>
+<ul id="pragma-line-744">
+<li id="pragma-line-744">Run the Campaign Tracker again to regenerate JSON files</li>
+<li id="pragma-line-745">Ensure the campaign has at least one completed mission</li>
+<li id="pragma-line-746">Check that campaign names in JSON files are consistent</li>
 </ul>
-<h4 id="problem-pilot-photo-wont-upload"><a id="pragma-line-745"></a>Problem: Pilot photo won't upload</h4>
-<p id="pragma-line-747"><strong>Cause</strong>: File format not supported or file is too large<br>
+<h4 id="problem-pilot-photo-wont-upload"><a id="pragma-line-748"></a>Problem: Pilot photo won't upload</h4>
+<p id="pragma-line-750"><strong>Cause</strong>: File format not supported or file is too large<br>
 <strong>Solution</strong>:</p>
-<ul id="pragma-line-750">
-<li id="pragma-line-750">Use common image formats (JPG, PNG, BMP)</li>
-<li id="pragma-line-751">Ensure image file is smaller than 5MB</li>
-<li id="pragma-line-752">Try converting the image to PNG format</li>
+<ul id="pragma-line-753">
+<li id="pragma-line-753">Use common image formats (JPG, PNG, BMP)</li>
+<li id="pragma-line-754">Ensure image file is smaller than 5MB</li>
+<li id="pragma-line-755">Try converting the image to PNG format</li>
 </ul>
-<h4 id="problem-application-closes-immediately-after-starting"><a id="pragma-line-754"></a>Problem: Application closes immediately after starting</h4>
-<p id="pragma-line-756"><strong>Cause</strong>: The 60-second idle timeout may be too short, or browser didn't open<br>
+<h4 id="problem-application-closes-immediately-after-starting"><a id="pragma-line-757"></a>Problem: Application closes immediately after starting</h4>
+<p id="pragma-line-759"><strong>Cause</strong>: The 60-second idle timeout may be too short, or browser didn't open<br>
 <strong>Solution</strong>:</p>
-<ul id="pragma-line-759">
-<li id="pragma-line-759">Double-click <code>Campaign_Service_Record.exe</code> again</li>
-<li id="pragma-line-760">Manually open your browser and navigate to <code>http://127.0.0.1:5000</code></li>
-<li id="pragma-line-761">Keep the browser tab active to prevent automatic shutdown</li>
+<ul id="pragma-line-762">
+<li id="pragma-line-762">Double-click <code>Campaign_Service_Record.exe</code> again</li>
+<li id="pragma-line-763">Manually open your browser and navigate to <code>http://127.0.0.1:5000</code></li>
+<li id="pragma-line-764">Keep the browser tab active to prevent automatic shutdown</li>
 </ul>
-<h4 id="problem-german-awards-and-pictures-dont-show-the-swastika"><a id="pragma-line-763"></a>Problem: German awards and pictures don't show the swastika</h4>
-<p id="pragma-line-765"><strong>Cause:</strong><br>
+<h4 id="problem-german-awards-and-pictures-dont-show-the-swastika"><a id="pragma-line-766"></a>Problem: German awards and pictures don't show the swastika</h4>
+<p id="pragma-line-768"><strong>Cause:</strong><br>
 The Campaign Tracker does not support, endorse, or promote National Socialist ideology or symbols in any form.<br>
 To comply with legal regulations in multiple countries and to respect community standards, swastikas and other related symbols have been removed from the default images shipped with this software.<br></p>
-<p id="pragma-line-769"><strong>Solution:</strong><br>
+<p id="pragma-line-772"><strong>Solution:</strong><br>
 Users who require historically accurate imagery may replace the images locally:</p>
-<ul id="pragma-line-772">
-<li id="pragma-line-772"><p id="pragma-line-772">Replace award images in<br>
+<ul id="pragma-line-775">
+<li id="pragma-line-775"><p id="pragma-line-775">Replace award images in<br>
 <code>&lt;path to IL-2 BoS&gt;\data\swf\CampaignRanksAwards\Germany</code></p>
 </li>
-<li id="pragma-line-775"><p id="pragma-line-775">Replace the German background and flag images in<br>
+<li id="pragma-line-778"><p id="pragma-line-778">Replace the German background and flag images in<br>
 <code>&lt;tracker installation folder&gt;\_internal\static\images\background_Germany.png</code><br>
 <code>&lt;tracker installation folder&gt;\_internal\static\images\german_flag.png</code></p>
 </li>
 </ul>
-<p id="pragma-line-779">⚠️ The original filenames and filetypes <strong>must be preserved</strong> after replacing the image content.</p>
-<h3 id="technical-information"><a id="pragma-line-781"></a>Technical Information</h3>
-<ul id="pragma-line-783">
-<li id="pragma-line-783"><strong>Server Address</strong>: <code>http://127.0.0.1:5000</code> (local machine only)</li>
-<li id="pragma-line-784"><strong>Auto-Shutdown</strong>: Server automatically stops after 60 seconds of inactivity</li>
-<li id="pragma-line-785"><strong>Data Location</strong>: Reads JSON files from the same directory as the executable</li>
-<li id="pragma-line-786"><strong>Browser Compatibility</strong>: Works with all modern browsers (Chrome, Firefox, Edge)</li>
-<li id="pragma-line-787"><strong>Network</strong>: Does not require internet connection; runs entirely on your local machine</li>
+<p id="pragma-line-782">⚠️ The original filenames and filetypes <strong>must be preserved</strong> after replacing the image content.</p>
+<h3 id="technical-information"><a id="pragma-line-784"></a>Technical Information</h3>
+<ul id="pragma-line-786">
+<li id="pragma-line-786"><strong>Server Address</strong>: <code>http://127.0.0.1:5000</code> (local machine only)</li>
+<li id="pragma-line-787"><strong>Auto-Shutdown</strong>: Server automatically stops after 60 seconds of inactivity</li>
+<li id="pragma-line-788"><strong>Data Location</strong>: Reads JSON files from the same directory as the executable</li>
+<li id="pragma-line-789"><strong>Browser Compatibility</strong>: Works with all modern browsers (Chrome, Firefox, Edge)</li>
+<li id="pragma-line-790"><strong>Network</strong>: Does not require internet connection; runs entirely on your local machine</li>
 </ul>
-<hr id="pragma-line-789">
-<h2 id="file-reference"><a id="pragma-line-791"></a>📁 File Reference <a id="file-reference"></a></h2>
-<h3 id="configuration-files"><a id="pragma-line-793"></a>Configuration Files</h3>
-<table id="pragma-line-795">
+<hr id="pragma-line-792">
+<h2 id="career-service-record"><a id="pragma-line-794"></a>🪖 Career Service Record <a id="career-service-record"></a></h2>
+<p id="pragma-line-796">The <strong>Career Service Record</strong> is a separate web-based application for IL-2's built-in <strong>Career Mode</strong> (not Campaign Mode). It reads your career data directly from the game's own <code>cp.db</code> SQLite database—no separate tracker or data files required. It presents your pilot's full service history across all theatres, including promotions, awards, missions, and more.</p>
+<p id="pragma-line-798">⚠️ <strong>IMPORTANT</strong>: The Career Service Record requires IL-2 Sturmovik: Great Battles to be installed and at least one Career to have been started in-game. It reads the game's data files directly and does not depend on the Campaign Tracker files.</p>
+<h3 id="features-2"><a id="pragma-line-800"></a>Features</h3>
+<ul id="pragma-line-802">
+<li id="pragma-line-802"><strong>Theatre Chain Progression</strong>: Displays the full chain of theatres your pilot has served in (e.g., Battle of Moscow → Battle of Stalingrad → Battle of Kursk), in correct chronological order</li>
+<li id="pragma-line-803"><strong>Career Events Timeline</strong>: A chronological list of all career events pulled from the game database:
+<ul id="pragma-line-804">
+<li id="pragma-line-804"><strong>Promotions</strong> — each rank advancement with date and rank image</li>
+<li id="pragma-line-805"><strong>Awards &amp; Decorations</strong> — medals earned with images and narratives</li>
+<li id="pragma-line-806"><strong>Commander Appointments</strong> — when your pilot was appointed squadron commander or deputy commander</li>
+<li id="pragma-line-807"><strong>Squadron Transfers</strong> — transfers between squadrons showing the source and destination unit</li>
+<li id="pragma-line-808"><strong>Recovery / Medical Leave</strong> — periods of injury recovery with start date, end date, and duration in days</li>
+</ul>
+</li>
+<li id="pragma-line-809"><strong>Pilot Role Display</strong>: If your pilot currently holds a command position, the role is shown next to the squadron name:
+<ul id="pragma-line-810">
+<li id="pragma-line-810">Commander (German: <em>Staffelkapitän</em>)</li>
+<li id="pragma-line-811">Deputy Commander (German: <em>Stellv. Staffelkapitän</em>)</li>
+</ul>
+</li>
+<li id="pragma-line-812"><strong>Career Statistics</strong>: Cumulative combat results read directly from the game pilot table:
+<ul id="pragma-line-813">
+<li id="pragma-line-813">PCP Score (Pilot Combat Points)</li>
+<li id="pragma-line-814">Air kills, ground kills, vehicle kills</li>
+<li id="pragma-line-815">Missions flown and mission outcomes</li>
+</ul>
+</li>
+<li id="pragma-line-816"><strong>Mission Debriefings</strong>: Parses linked <code>missionReport</code> files and displays detailed debriefings per sortie. Debriefings are cached and built in the background on first load.</li>
+<li id="pragma-line-817"><strong>Pilot Profile</strong>: Customisable pilot photo, birth date, place of birth, and country of birth per career—persisted across sessions</li>
+<li id="pragma-line-818"><strong>German Award Style Selection</strong>: Choose between the default 1957 Bundeswehr-era style and the original wartime style for German award images (configured at installation time)</li>
+<li id="pragma-line-819"><strong>Responsive Design</strong>: Clean, modern interface that works on any screen size</li>
+<li id="pragma-line-820"><strong>Fully Localised</strong>: All UI text, event labels, and rank/award names respect your selected language. Each career can also display in a different language if configured</li>
+</ul>
+<h3 id="how-to-use-1"><a id="pragma-line-822"></a>How to Use</h3>
+<ol id="pragma-line-824">
+<li id="pragma-line-824">Locate <code>Career_Service_Record.exe</code> in your Campaign Tracker installation directory</li>
+<li id="pragma-line-825">Double-click <code>Career_Service_Record.exe</code> to start the application (or launch it from the <strong>Control Center GUI</strong>)</li>
+<li id="pragma-line-826">Your default web browser will open automatically and display your career overview</li>
+<li id="pragma-line-827">Click on any career to view the full service record with timeline, statistics, and debriefings</li>
+<li id="pragma-line-828">The server will shut down automatically after 60 seconds of inactivity</li>
+</ol>
+<p id="pragma-line-830"><strong>Note</strong>: The Career Service Record connects to the IL-2 game directory. If it cannot find the game's <code>cp.db</code>, ensure IL-2 is installed and that you have started at least one Career in-game.</p>
+<h3 id="interface-overview-1"><a id="pragma-line-832"></a>Interface Overview</h3>
+<h4 id="landing-page-1"><a id="pragma-line-834"></a>Landing Page</h4>
+<ul id="pragma-line-836">
+<li id="pragma-line-836"><strong>Left Panel</strong>: Pilot photo and service overview (career count, total missions, kill summary)</li>
+<li id="pragma-line-837"><strong>Right Panel</strong>: List of all careers, each showing:
+<ul id="pragma-line-838">
+<li id="pragma-line-838">Pilot name, country, and rank</li>
+<li id="pragma-line-839">Theatre chain (e.g., "Battle of Moscow → Stalingrad")</li>
+<li id="pragma-line-840">Mission count, promotions earned, awards received</li>
+</ul>
+</li>
+</ul>
+<h4 id="career-detail-page"><a id="pragma-line-842"></a>Career Detail Page</h4>
+<ul id="pragma-line-844">
+<li id="pragma-line-844"><strong>Left Column</strong>: Pilot profile (customisable photo and personal data); chronological event timeline showing promotions, awards, appointments, transfers, and recovery periods</li>
+<li id="pragma-line-845"><strong>Middle Column</strong>: Career statistics — PCP Score, kill breakdown (air, ground, vehicles), mission outcomes, and aircraft usage</li>
+<li id="pragma-line-846"><strong>Right Column</strong>: Mission debriefings with per-sortie kill details, flight time, and outcomes</li>
+<li id="pragma-line-847"><strong>Back Button</strong>: Return to career overview</li>
+</ul>
+<h3 id="customising-pilot-information"><a id="pragma-line-849"></a>Customising Pilot Information</h3>
+<p id="pragma-line-851">Click the pilot photo or any editable field to customise:</p>
+<ul id="pragma-line-853">
+<li id="pragma-line-853"><strong>Pilot Photo</strong>: Click to upload a new photo (JPG, PNG, BMP supported)</li>
+<li id="pragma-line-854"><strong>Birth Date</strong>: Enter in the format <code>DD Month YYYY</code> (e.g., <code>12 March 1918</code>)</li>
+<li id="pragma-line-855"><strong>Place of Birth</strong>: Free-text entry</li>
+<li id="pragma-line-856"><strong>Country of Birth</strong>: Free-text entry</li>
+<li id="pragma-line-857">All changes are saved automatically and persist across sessions</li>
+</ul>
+<h3 id="troubleshooting-1"><a id="pragma-line-859"></a>Troubleshooting</h3>
+<h4 id="problem-loading-careers.appears-forever"><a id="pragma-line-861"></a>Problem: "Loading careers..." appears forever</h4>
+<p id="pragma-line-863"><strong>Cause</strong>: Career database not found or no careers exist
+<strong>Solution</strong>:</p>
+<ul id="pragma-line-866">
+<li id="pragma-line-866">Ensure IL-2 Sturmovik: Great Battles is installed</li>
+<li id="pragma-line-867">Start at least one Career in the game before launching this application</li>
+<li id="pragma-line-868">Confirm the game directory is set correctly (the Career Service Record auto-detects the IL-2 installation path from the Windows registry)</li>
+</ul>
+<h4 id="problem-career-service-record-wont-start"><a id="pragma-line-870"></a>Problem: Career Service Record won't start</h4>
+<p id="pragma-line-872"><strong>Cause</strong>: Port 5001 is already in use by another application
+<strong>Solution</strong>:</p>
+<ul id="pragma-line-875">
+<li id="pragma-line-875">Close any other web servers or applications using port 5001</li>
+<li id="pragma-line-876">If the issue persists, restart your computer to free up the port</li>
+</ul>
+<h4 id="problem-browser-shows-cannot-connect-or-page-not-found-1"><a id="pragma-line-878"></a>Problem: Browser shows "Cannot connect" or "Page not found"</h4>
+<p id="pragma-line-880"><strong>Cause</strong>: The application server failed to start
+<strong>Solution</strong>:</p>
+<ul id="pragma-line-883">
+<li id="pragma-line-883">Check that both <code>Career_Service_Record.exe</code> and the <code>_internal</code> folder are present in the installation directory</li>
+<li id="pragma-line-884">Ensure your antivirus is not blocking the application</li>
+<li id="pragma-line-885">Try running <code>Career_Service_Record.exe</code> as administrator</li>
+<li id="pragma-line-886">Manually open your browser and navigate to <code>http://127.0.0.1:5001</code></li>
+</ul>
+<h4 id="problem-events-or-debriefings-are-missing"><a id="pragma-line-888"></a>Problem: Events or debriefings are missing</h4>
+<p id="pragma-line-890"><strong>Cause</strong>: Mission report files have not been parsed yet (first load)
+<strong>Solution</strong>:</p>
+<ul id="pragma-line-893">
+<li id="pragma-line-893">Wait a moment after opening the career detail page — debriefings are parsed in the background on first load</li>
+<li id="pragma-line-894">Reload the page after a few seconds; a progress indicator will appear while parsing is in progress</li>
+</ul>
+<h3 id="technical-information-1"><a id="pragma-line-896"></a>Technical Information</h3>
+<ul id="pragma-line-898">
+<li id="pragma-line-898"><strong>Server Address</strong>: <code>http://127.0.0.1:5001</code> (local machine only)</li>
+<li id="pragma-line-899"><strong>Auto-Shutdown</strong>: Server automatically stops after 60 seconds of inactivity</li>
+<li id="pragma-line-900"><strong>Data Source</strong>: Reads directly from <code>&lt;IL-2 installation&gt;\data\Career\cp.db</code></li>
+<li id="pragma-line-901"><strong>Browser Compatibility</strong>: Works with all modern browsers (Chrome, Firefox, Edge)</li>
+<li id="pragma-line-902"><strong>Network</strong>: Does not require internet connection; runs entirely on your local machine</li>
+</ul>
+<hr id="pragma-line-904">
+<h2 id="file-reference"><a id="pragma-line-906"></a>📁 File Reference <a id="file-reference"></a></h2>
+<h3 id="configuration-files"><a id="pragma-line-908"></a>Configuration Files</h3>
+<table id="pragma-line-910">
 <thead>
-<tr id="pragma-line-795">
-<th id="pragma-line-795">File</th>
-<th id="pragma-line-795">Purpose</th>
-<th id="pragma-line-795">User Editable</th>
+<tr id="pragma-line-910">
+<th id="pragma-line-910">File</th>
+<th id="pragma-line-910">Purpose</th>
+<th id="pragma-line-910">User Editable</th>
 </tr>
 </thead>
 <tbody>
-<tr id="pragma-line-797">
-<td id="pragma-line-797"><code>campaign_progress_config.yaml</code></td>
-<td id="pragma-line-797">Ranks, awards, criteria, and settings</td>
-<td id="pragma-line-797">✅ Yes (or use Settings Manager)</td>
+<tr id="pragma-line-912">
+<td id="pragma-line-912"><code>campaign_progress_config.yaml</code></td>
+<td id="pragma-line-912">Ranks, awards, criteria, and settings</td>
+<td id="pragma-line-912">✅ Yes (or use Settings Manager)</td>
 </tr>
-<tr id="pragma-line-798">
-<td id="pragma-line-798"><code>campaign_mission_dates.json</code></td>
-<td id="pragma-line-798">Campaign metadata, mission dates, countries</td>
-<td id="pragma-line-798">⚠️ Careful (use Settings Manager for offsets)</td>
+<tr id="pragma-line-913">
+<td id="pragma-line-913"><code>campaign_mission_dates.json</code></td>
+<td id="pragma-line-913">Campaign metadata, mission dates, countries</td>
+<td id="pragma-line-913">⚠️ Careful (use Settings Manager for offsets)</td>
 </tr>
-<tr id="pragma-line-799">
-<td id="pragma-line-799"><code>settings.json</code></td>
-<td id="pragma-line-799">User preferences (language, etc.)</td>
-<td id="pragma-line-799">✅ Via Settings Manager</td>
+<tr id="pragma-line-914">
+<td id="pragma-line-914"><code>settings.json</code></td>
+<td id="pragma-line-914">User preferences (language, etc.)</td>
+<td id="pragma-line-914">✅ Via Settings Manager</td>
 </tr>
-<tr id="pragma-line-800">
-<td id="pragma-line-800"><code>locales/*.json</code></td>
-<td id="pragma-line-800">Language translation files</td>
-<td id="pragma-line-800">⚠️ Advanced users only</td>
+<tr id="pragma-line-915">
+<td id="pragma-line-915"><code>locales/*.json</code></td>
+<td id="pragma-line-915">Language translation files</td>
+<td id="pragma-line-915">⚠️ Advanced users only</td>
 </tr>
 </tbody>
 </table>
-<h3 id="configuration-details"><a id="pragma-line-802"></a>Configuration Details</h3>
-<h4 id="campaign_progress_config.yaml"><a id="pragma-line-804"></a>campaign_progress_config.yaml</h4>
-<p id="pragma-line-806">This is the main configuration file containing:</p>
-<pre class=" language-yaml"><code id="pragma-line-808" class=" language-yaml"><span class="token comment"># Rank definitions per nation</span>
+<h3 id="configuration-details"><a id="pragma-line-917"></a>Configuration Details</h3>
+<h4 id="campaign_progress_config.yaml"><a id="pragma-line-919"></a>campaign_progress_config.yaml</h4>
+<p id="pragma-line-921">This is the main configuration file containing:</p>
+<pre class="  language-yaml"><code id="pragma-line-923" class="  language-yaml"><span class="token comment"># Rank definitions per nation</span>
 <span class="token key atrule">ranks</span><span class="token punctuation">:</span> 
   <span class="token key atrule">Germany</span><span class="token punctuation">:</span>
     <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Unteroffizier
@@ -2043,9 +2165,9 @@ Users who require historically accurate imagery may replace the images locally:<
   <span class="token key atrule">enable_popups</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
 
 </code></pre>
-<h4 id="campaign_mission_dates.json"><a id="pragma-line-844"></a>campaign_mission_dates.json</h4>
-<p id="pragma-line-846">Auto-generated during first run, contains:</p>
-<pre class=" language-json"><code id="pragma-line-848" class=" language-json"><span class="token punctuation">{</span>
+<h4 id="campaign_mission_dates.json"><a id="pragma-line-959"></a>campaign_mission_dates.json</h4>
+<p id="pragma-line-961">Auto-generated during first run, contains:</p>
+<pre class="  language-json"><code id="pragma-line-963" class="  language-json"><span class="token punctuation">{</span>
   <span class="token property">"kerch"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
     <span class="token property">"campaign_name"</span><span class="token operator">:</span> <span class="token string">"kerch"</span><span class="token punctuation">,</span>
     <span class="token property">"country"</span><span class="token operator">:</span> <span class="token string">"Germany"</span><span class="token punctuation">,</span>
@@ -2065,245 +2187,245 @@ Users who require historically accurate imagery may replace the images locally:<
       <span class="token punctuation">}</span><span class="token punctuation">,</span> ...
 <span class="token punctuation">}</span>
 </code></pre>
-<h3 id="data-files-auto-generated"><a id="pragma-line-870"></a>Data Files (Auto-Generated)</h3>
-<table id="pragma-line-872">
+<h3 id="data-files-auto-generated"><a id="pragma-line-985"></a>Data Files (Auto-Generated)</h3>
+<table id="pragma-line-987">
 <thead>
-<tr id="pragma-line-872">
-<th id="pragma-line-872">File</th>
-<th id="pragma-line-872">Purpose</th>
-<th id="pragma-line-872">Location</th>
+<tr id="pragma-line-987">
+<th id="pragma-line-987">File</th>
+<th id="pragma-line-987">Purpose</th>
+<th id="pragma-line-987">Location</th>
 </tr>
 </thead>
 <tbody>
-<tr id="pragma-line-874">
-<td id="pragma-line-874"><code>campaigns_decoded.json</code></td>
-<td id="pragma-line-874">Decoded campaign save data</td>
-<td id="pragma-line-874">Tracker folder</td>
+<tr id="pragma-line-989">
+<td id="pragma-line-989"><code>campaigns_decoded.json</code></td>
+<td id="pragma-line-989">Decoded campaign save data</td>
+<td id="pragma-line-989">Tracker folder</td>
 </tr>
-<tr id="pragma-line-875">
-<td id="pragma-line-875"><code>campaign_popups_seen.json</code></td>
-<td id="pragma-line-875">Tracks shown popups per campaign</td>
-<td id="pragma-line-875">Tracker folder</td>
+<tr id="pragma-line-990">
+<td id="pragma-line-990"><code>campaign_popups_seen.json</code></td>
+<td id="pragma-line-990">Tracks shown popups per campaign</td>
+<td id="pragma-line-990">Tracker folder</td>
 </tr>
-<tr id="pragma-line-876">
-<td id="pragma-line-876"><code>campaign_events.json</code></td>
-<td id="pragma-line-876">Generated events (promotions/awards)</td>
-<td id="pragma-line-876">Tracker folder</td>
+<tr id="pragma-line-991">
+<td id="pragma-line-991"><code>campaign_events.json</code></td>
+<td id="pragma-line-991">Generated events (promotions/awards)</td>
+<td id="pragma-line-991">Tracker folder</td>
 </tr>
-<tr id="pragma-line-877">
-<td id="pragma-line-877"><code>campaign_completion_state.json</code></td>
-<td id="pragma-line-877">Tracks mission completion between runs</td>
-<td id="pragma-line-877">Tracker folder</td>
+<tr id="pragma-line-992">
+<td id="pragma-line-992"><code>campaign_completion_state.json</code></td>
+<td id="pragma-line-992">Tracks mission completion between runs</td>
+<td id="pragma-line-992">Tracker folder</td>
 </tr>
-<tr id="pragma-line-878">
-<td id="pragma-line-878"><code>settings.json</code></td>
-<td id="pragma-line-878">User preferences (language, popups, etc.)</td>
-<td id="pragma-line-878">Tracker folder</td>
+<tr id="pragma-line-993">
+<td id="pragma-line-993"><code>settings.json</code></td>
+<td id="pragma-line-993">User preferences (language, popups, etc.)</td>
+<td id="pragma-line-993">Tracker folder</td>
 </tr>
 </tbody>
 </table>
-<h3 id="backup-files"><a id="pragma-line-880"></a>Backup Files</h3>
-<table id="pragma-line-882">
+<h3 id="backup-files"><a id="pragma-line-995"></a>Backup Files</h3>
+<table id="pragma-line-997">
 <thead>
-<tr id="pragma-line-882">
-<th id="pragma-line-882">File</th>
-<th id="pragma-line-882">Purpose</th>
-<th id="pragma-line-882">Location</th>
+<tr id="pragma-line-997">
+<th id="pragma-line-997">File</th>
+<th id="pragma-line-997">Purpose</th>
+<th id="pragma-line-997">Location</th>
 </tr>
 </thead>
 <tbody>
-<tr id="pragma-line-884">
-<td id="pragma-line-884"><code>campaignsstates_[timestamp].backup</code></td>
-<td id="pragma-line-884">Campaign save backup</td>
-<td id="pragma-line-884">IL-2 usersave folder</td>
+<tr id="pragma-line-999">
+<td id="pragma-line-999"><code>campaignsstates_[timestamp].backup</code></td>
+<td id="pragma-line-999">Campaign save backup</td>
+<td id="pragma-line-999">IL-2 usersave folder</td>
 </tr>
-<tr id="pragma-line-885">
-<td id="pragma-line-885"><code>popups_[timestamp].backup</code></td>
-<td id="pragma-line-885">Popup state backup</td>
-<td id="pragma-line-885">IL-2 usersave folder</td>
+<tr id="pragma-line-1000">
+<td id="pragma-line-1000"><code>popups_[timestamp].backup</code></td>
+<td id="pragma-line-1000">Popup state backup</td>
+<td id="pragma-line-1000">IL-2 usersave folder</td>
 </tr>
-<tr id="pragma-line-886">
-<td id="pragma-line-886"><code>campaignsstates_hash_index.json</code></td>
-<td id="pragma-line-886">Backup index with hashes</td>
-<td id="pragma-line-886">IL-2 usersave folder</td>
+<tr id="pragma-line-1001">
+<td id="pragma-line-1001"><code>campaignsstates_hash_index.json</code></td>
+<td id="pragma-line-1001">Backup index with hashes</td>
+<td id="pragma-line-1001">IL-2 usersave folder</td>
 </tr>
 </tbody>
 </table>
-<h3 id="output-files"><a id="pragma-line-888"></a>Output Files</h3>
-<table id="pragma-line-890">
+<h3 id="output-files"><a id="pragma-line-1003"></a>Output Files</h3>
+<table id="pragma-line-1005">
 <thead>
-<tr id="pragma-line-890">
-<th id="pragma-line-890">File</th>
-<th id="pragma-line-890">Purpose</th>
-<th id="pragma-line-890">Location</th>
+<tr id="pragma-line-1005">
+<th id="pragma-line-1005">File</th>
+<th id="pragma-line-1005">Purpose</th>
+<th id="pragma-line-1005">Location</th>
 </tr>
 </thead>
 <tbody>
-<tr id="pragma-line-892">
-<td id="pragma-line-892"><code>[Campaign]_Report.pdf</code></td>
-<td id="pragma-line-892">Career PDF report</td>
-<td id="pragma-line-892"><code>reports/</code> subfolder</td>
+<tr id="pragma-line-1007">
+<td id="pragma-line-1007"><code>[Campaign]_Report.pdf</code></td>
+<td id="pragma-line-1007">Career PDF report</td>
+<td id="pragma-line-1007"><code>reports/</code> subfolder</td>
 </tr>
 </tbody>
 </table>
-<hr id="pragma-line-894">
-<h2 id="troubleshooting-1"><a id="pragma-line-896"></a>🔧 Troubleshooting <a id="troubleshooting"></a></h2>
-<h3 id="tracker-wont-start"><a id="pragma-line-898"></a>Tracker Won't Start</h3>
-<table id="pragma-line-900">
+<hr id="pragma-line-1009">
+<h2 id="troubleshooting-2"><a id="pragma-line-1011"></a>🔧 Troubleshooting <a id="troubleshooting"></a></h2>
+<h3 id="tracker-wont-start"><a id="pragma-line-1013"></a>Tracker Won't Start</h3>
+<table id="pragma-line-1015">
 <thead>
-<tr id="pragma-line-900">
-<th id="pragma-line-900">Problem</th>
-<th id="pragma-line-900">Solution</th>
+<tr id="pragma-line-1015">
+<th id="pragma-line-1015">Problem</th>
+<th id="pragma-line-1015">Solution</th>
 </tr>
 </thead>
 <tbody>
-<tr id="pragma-line-902">
-<td id="pragma-line-902">Missing <code>campaign_progress_config.yaml</code></td>
-<td id="pragma-line-902">Ensure file is in same folder as EXE</td>
+<tr id="pragma-line-1017">
+<td id="pragma-line-1017">Missing <code>campaign_progress_config.yaml</code></td>
+<td id="pragma-line-1017">Ensure file is in same folder as EXE</td>
 </tr>
-<tr id="pragma-line-903">
-<td id="pragma-line-903">Antivirus blocking</td>
-<td id="pragma-line-903">Add exception for tracker folder</td>
+<tr id="pragma-line-1018">
+<td id="pragma-line-1018">Antivirus blocking</td>
+<td id="pragma-line-1018">Add exception for tracker folder</td>
 </tr>
-<tr id="pragma-line-904">
-<td id="pragma-line-904">Missing Visual C++ Runtime</td>
-<td id="pragma-line-904">Install <a href="https://aka.ms/vs/17/release/vc_redist.x64.exe">VC++ Redistributable</a></td>
+<tr id="pragma-line-1019">
+<td id="pragma-line-1019">Missing Visual C++ Runtime</td>
+<td id="pragma-line-1019">Install <a href="https://aka.ms/vs/17/release/vc_redist.x64.exe">VC++ Redistributable</a></td>
 </tr>
 </tbody>
 </table>
-<h3 id="no-campaigns-detected"><a id="pragma-line-906"></a>No Campaigns Detected</h3>
-<table id="pragma-line-908">
+<h3 id="no-campaigns-detected"><a id="pragma-line-1021"></a>No Campaigns Detected</h3>
+<table id="pragma-line-1023">
 <thead>
-<tr id="pragma-line-908">
-<th id="pragma-line-908">Problem</th>
-<th id="pragma-line-908">Solution</th>
+<tr id="pragma-line-1023">
+<th id="pragma-line-1023">Problem</th>
+<th id="pragma-line-1023">Solution</th>
 </tr>
 </thead>
 <tbody>
-<tr id="pragma-line-910">
-<td id="pragma-line-910">Wrong folder selected</td>
-<td id="pragma-line-910">Re-run setup (delete <code>campaign_mission_dates.json</code>)</td>
+<tr id="pragma-line-1025">
+<td id="pragma-line-1025">Wrong folder selected</td>
+<td id="pragma-line-1025">Re-run setup (delete <code>campaign_mission_dates.json</code>)</td>
 </tr>
-<tr id="pragma-line-911">
-<td id="pragma-line-911">No missions flown yet</td>
-<td id="pragma-line-911">Start a campaign in IL-2, fly at least one mission</td>
+<tr id="pragma-line-1026">
+<td id="pragma-line-1026">No missions flown yet</td>
+<td id="pragma-line-1026">Start a campaign in IL-2, fly at least one mission</td>
 </tr>
-<tr id="pragma-line-912">
-<td id="pragma-line-912">Permission issues</td>
-<td id="pragma-line-912">Run tracker as Administrator</td>
+<tr id="pragma-line-1027">
+<td id="pragma-line-1027">Permission issues</td>
+<td id="pragma-line-1027">Run tracker as Administrator</td>
 </tr>
 </tbody>
 </table>
-<h3 id="popups-not-appearing"><a id="pragma-line-914"></a>Popups Not Appearing</h3>
-<table id="pragma-line-916">
+<h3 id="popups-not-appearing"><a id="pragma-line-1029"></a>Popups Not Appearing</h3>
+<table id="pragma-line-1031">
 <thead>
-<tr id="pragma-line-916">
-<th id="pragma-line-916">Problem</th>
-<th id="pragma-line-916">Solution</th>
+<tr id="pragma-line-1031">
+<th id="pragma-line-1031">Problem</th>
+<th id="pragma-line-1031">Solution</th>
 </tr>
 </thead>
 <tbody>
-<tr id="pragma-line-918">
-<td id="pragma-line-918">IL-2 not running</td>
-<td id="pragma-line-918">Popups only show while IL-2 is active</td>
+<tr id="pragma-line-1033">
+<td id="pragma-line-1033">IL-2 not running</td>
+<td id="pragma-line-1033">Popups only show while IL-2 is active</td>
 </tr>
-<tr id="pragma-line-919">
-<td id="pragma-line-919">Already seen</td>
-<td id="pragma-line-919">Check <code>campaign_popups_seen.json</code></td>
+<tr id="pragma-line-1034">
+<td id="pragma-line-1034">Already seen</td>
+<td id="pragma-line-1034">Check <code>campaign_popups_seen.json</code></td>
 </tr>
-<tr id="pragma-line-920">
-<td id="pragma-line-920">Popups disabled</td>
-<td id="pragma-line-920">Check <code>enable_popups:  true</code> in config</td>
+<tr id="pragma-line-1035">
+<td id="pragma-line-1035">Popups disabled</td>
+<td id="pragma-line-1035">Check <code>enable_popups:  true</code> in config</td>
 </tr>
 </tbody>
 </table>
-<h3 id="pdf-generation-fails"><a id="pragma-line-922"></a>PDF Generation Fails</h3>
-<table id="pragma-line-924">
+<h3 id="pdf-generation-fails"><a id="pragma-line-1037"></a>PDF Generation Fails</h3>
+<table id="pragma-line-1039">
 <thead>
-<tr id="pragma-line-924">
-<th id="pragma-line-924">Problem</th>
-<th id="pragma-line-924">Solution</th>
+<tr id="pragma-line-1039">
+<th id="pragma-line-1039">Problem</th>
+<th id="pragma-line-1039">Solution</th>
 </tr>
 </thead>
 <tbody>
-<tr id="pragma-line-926">
-<td id="pragma-line-926">Missing dependencies</td>
-<td id="pragma-line-926">Ensure all required DLLs are present</td>
+<tr id="pragma-line-1041">
+<td id="pragma-line-1041">Missing dependencies</td>
+<td id="pragma-line-1041">Ensure all required DLLs are present</td>
 </tr>
-<tr id="pragma-line-927">
-<td id="pragma-line-927">PDF locked</td>
-<td id="pragma-line-927">Close the PDF if open in a viewer</td>
+<tr id="pragma-line-1042">
+<td id="pragma-line-1042">PDF locked</td>
+<td id="pragma-line-1042">Close the PDF if open in a viewer</td>
 </tr>
-<tr id="pragma-line-928">
-<td id="pragma-line-928">Path too long</td>
-<td id="pragma-line-928">Move tracker to shorter path</td>
+<tr id="pragma-line-1043">
+<td id="pragma-line-1043">Path too long</td>
+<td id="pragma-line-1043">Move tracker to shorter path</td>
 </tr>
 </tbody>
 </table>
-<h3 id="events-not-appearing-in-game"><a id="pragma-line-930"></a>Events Not Appearing In-Game</h3>
-<table id="pragma-line-932">
+<h3 id="events-not-appearing-in-game"><a id="pragma-line-1045"></a>Events Not Appearing In-Game</h3>
+<table id="pragma-line-1047">
 <thead>
-<tr id="pragma-line-932">
-<th id="pragma-line-932">Problem</th>
-<th id="pragma-line-932">Solution</th>
+<tr id="pragma-line-1047">
+<th id="pragma-line-1047">Problem</th>
+<th id="pragma-line-1047">Solution</th>
 </tr>
 </thead>
 <tbody>
-<tr id="pragma-line-934">
-<td id="pragma-line-934">IL-2 caches description</td>
-<td id="pragma-line-934">Restart IL-2 to see updated campaign description</td>
+<tr id="pragma-line-1049">
+<td id="pragma-line-1049">IL-2 caches description</td>
+<td id="pragma-line-1049">Restart IL-2 to see updated campaign description</td>
 </tr>
-<tr id="pragma-line-935">
-<td id="pragma-line-935">Events written to wrong file</td>
-<td id="pragma-line-935">Check campaign country assignment</td>
+<tr id="pragma-line-1050">
+<td id="pragma-line-1050">Events written to wrong file</td>
+<td id="pragma-line-1050">Check campaign country assignment</td>
 </tr>
 </tbody>
 </table>
-<hr id="pragma-line-937">
-<h2 id="faq"><a id="pragma-line-939"></a>❓ FAQ <a id="faq"></a></h2>
-<h3 id="why-is-my-custom-campaign-not-detected-missions-are-not-detected"><a id="pragma-line-941"></a>Why is my custom campaign not detected / missions are not detected?</h3>
-<p id="pragma-line-943"><strong>A:</strong> The tracker parses mission files to extract dates and metadata. To ensure your custom campaign is properly detected, follow these golden rules:</p>
-<p id="pragma-line-945">⚠️ <em>Important: English Locale Files Required for Reading</em></p>
-<p id="pragma-line-947">The tracker only reads English locale files (<code>.eng</code> briefings and <code>info.locale=eng.txt</code>) to extract mission dates and campaign information. IL-2 stores the user's language preference internally, and we have no way to detect which language you're using in-game. Therefore:</p>
-<ul id="pragma-line-949">
-<li id="pragma-line-949">Every mission must have a corresponding <code>.eng</code> briefing file (e.g., <code>01.eng</code> for <code>01.Mission</code>)</li>
-<li id="pragma-line-950">Your campaign folder must contain an <code>info.locale=eng.txt</code> file for the campaign description</li>
+<hr id="pragma-line-1052">
+<h2 id="faq"><a id="pragma-line-1054"></a>❓ FAQ <a id="faq"></a></h2>
+<h3 id="why-is-my-custom-campaign-not-detected-missions-are-not-detected"><a id="pragma-line-1056"></a>Why is my custom campaign not detected / missions are not detected?</h3>
+<p id="pragma-line-1058"><strong>A:</strong> The tracker parses mission files to extract dates and metadata. To ensure your custom campaign is properly detected, follow these golden rules:</p>
+<p id="pragma-line-1060">⚠️ <em>Important: English Locale Files Required for Reading</em></p>
+<p id="pragma-line-1062">The tracker only reads English locale files (<code>.eng</code> briefings and <code>info.locale=eng.txt</code>) to extract mission dates and campaign information. IL-2 stores the user's language preference internally, and we have no way to detect which language you're using in-game. Therefore:</p>
+<ul id="pragma-line-1064">
+<li id="pragma-line-1064">Every mission must have a corresponding <code>.eng</code> briefing file (e.g., <code>01.eng</code> for <code>01.Mission</code>)</li>
+<li id="pragma-line-1065">Your campaign folder must contain an <code>info.locale=eng.txt</code> file for the campaign description</li>
 </ul>
-<p id="pragma-line-952">Even if you play in another language, these English files must exist for the tracker to work. The tracker will not read <code>.ger</code>, <code>.rus</code>, <code>.fra</code> or other language files for date extraction.</p>
-<p id="pragma-line-954">ℹ️ <em>Multi-Language Output</em></p>
-<p id="pragma-line-956">When writing Events and Debriefings back to your campaign, the tracker automatically updates <strong>all</strong> existing <code>info.locale=*.txt</code> files. Each file is written in its corresponding language:</p>
-<ul id="pragma-line-958">
-<li id="pragma-line-958"><code>info.locale=eng.txt</code> → English content</li>
-<li id="pragma-line-959"><code>info.locale=ger.txt</code> → German content (Deutsch)</li>
-<li id="pragma-line-960"><code>info.locale=fra.txt</code> → French content (Français)</li>
-<li id="pragma-line-961"><code>info.locale=spa.txt</code> → Spanish content (Español)</li>
-<li id="pragma-line-962"><code>info.locale=pol.txt</code> → Polish content (Polski)</li>
-<li id="pragma-line-963"><code>info.locale=rus.txt</code> → Russian content (Русский)</li>
-<li id="pragma-line-964"><code>info.locale=chs.txt</code> → Chinese content (简体中文)</li>
+<p id="pragma-line-1067">Even if you play in another language, these English files must exist for the tracker to work. The tracker will not read <code>.ger</code>, <code>.rus</code>, <code>.fra</code> or other language files for date extraction.</p>
+<p id="pragma-line-1069">ℹ️ <em>Multi-Language Output</em></p>
+<p id="pragma-line-1071">When writing Events and Debriefings back to your campaign, the tracker automatically updates <strong>all</strong> existing <code>info.locale=*.txt</code> files. Each file is written in its corresponding language:</p>
+<ul id="pragma-line-1073">
+<li id="pragma-line-1073"><code>info.locale=eng.txt</code> → English content</li>
+<li id="pragma-line-1074"><code>info.locale=ger.txt</code> → German content (Deutsch)</li>
+<li id="pragma-line-1075"><code>info.locale=fra.txt</code> → French content (Français)</li>
+<li id="pragma-line-1076"><code>info.locale=spa.txt</code> → Spanish content (Español)</li>
+<li id="pragma-line-1077"><code>info.locale=pol.txt</code> → Polish content (Polski)</li>
+<li id="pragma-line-1078"><code>info.locale=rus.txt</code> → Russian content (Русский)</li>
+<li id="pragma-line-1079"><code>info.locale=chs.txt</code> → Chinese content (简体中文)</li>
 </ul>
-<p id="pragma-line-966">See <a href="#supported-languages">Supported Languages</a> for more details.</p>
-<p id="pragma-line-968"><strong>Mission File Naming:</strong></p>
-<ul id="pragma-line-970">
-<li id="pragma-line-970">Use numeric prefixes for mission order: <code>01.Mission</code>, <code>02.Mission</code>, <code>03.Mission</code> or <code>1.Mission</code>, <code>2.Mission</code>, etc.</li>
-<li id="pragma-line-971">Date-based naming also works: <code>1943-07-04.Mission</code>, <code>1943-07-04a.Mission</code></li>
-<li id="pragma-line-972">Supported extensions: <code>.Mission</code>, <code>.mission</code>, <code>.msnbin</code></li>
+<p id="pragma-line-1081">See <a href="#supported-languages">Supported Languages</a> for more details.</p>
+<p id="pragma-line-1083"><strong>Mission File Naming:</strong></p>
+<ul id="pragma-line-1085">
+<li id="pragma-line-1085">Use numeric prefixes for mission order: <code>01.Mission</code>, <code>02.Mission</code>, <code>03.Mission</code> or <code>1.Mission</code>, <code>2.Mission</code>, etc.</li>
+<li id="pragma-line-1086">Date-based naming also works: <code>1943-07-04.Mission</code>, <code>1943-07-04a.Mission</code></li>
+<li id="pragma-line-1087">Supported extensions: <code>.Mission</code>, <code>.mission</code>, <code>.msnbin</code></li>
 </ul>
-<p id="pragma-line-974">Mission Date Detection (in <code>.eng</code> briefing files):
+<p id="pragma-line-1089">Mission Date Detection (in <code>.eng</code> briefing files):
 The tracker looks for date information in this priority order:</p>
-<ol id="pragma-line-977">
-<li id="pragma-line-977"><code>Date:</code> field in briefing (e.g., <code>Date: 4 November, 1943</code>)</li>
-<li id="pragma-line-978"><code>Time:</code> field for mission start time (e.g., <code>Time: 09:45</code>)</li>
-<li id="pragma-line-979">Filename if it contains a date (e.g., <code>1943-07-04.Mission</code>)</li>
+<ol id="pragma-line-1092">
+<li id="pragma-line-1092"><code>Date:</code> field in briefing (e.g., <code>Date: 4 November, 1943</code>)</li>
+<li id="pragma-line-1093"><code>Time:</code> field for mission start time (e.g., <code>Time: 09:45</code>)</li>
+<li id="pragma-line-1094">Filename if it contains a date (e.g., <code>1943-07-04.Mission</code>)</li>
 </ol>
-<p id="pragma-line-981"><strong>Supported Date Formats:</strong></p>
-<ul id="pragma-line-983">
-<li id="pragma-line-983"><code>4 November, 1943</code> or <code>November 4, 1943</code></li>
-<li id="pragma-line-984"><code>4 November 1943</code> (no comma)</li>
-<li id="pragma-line-985"><code>04.11.1943</code> or <code>11.04.1943</code> (DD.MM.YYYY or MM.DD.YYYY)</li>
-<li id="pragma-line-986"><code>1943-07-04</code> (ISO format in filename)</li>
+<p id="pragma-line-1096"><strong>Supported Date Formats:</strong></p>
+<ul id="pragma-line-1098">
+<li id="pragma-line-1098"><code>4 November, 1943</code> or <code>November 4, 1943</code></li>
+<li id="pragma-line-1099"><code>4 November 1943</code> (no comma)</li>
+<li id="pragma-line-1100"><code>04.11.1943</code> or <code>11.04.1943</code> (DD.MM.YYYY or MM.DD.YYYY)</li>
+<li id="pragma-line-1101"><code>1943-07-04</code> (ISO format in filename)</li>
 </ul>
-<p id="pragma-line-988"><strong>Campaign Folder Structure:</strong></p>
-<pre><code id="pragma-line-990">Path to IL-2 BoS\data\Campaigns\YourCampaignName\
+<p id="pragma-line-1103"><strong>Campaign Folder Structure:</strong></p>
+<pre><code id="pragma-line-1105">Path to IL-2 BoS\data\Campaigns\YourCampaignName\
     ├── info.locale=eng.txt    (required for reading - campaign description)
     ├── info.locale=ger.txt    (optional - tracker writes German content here)
     ├── info.locale=fra.txt    (optional - tracker writes French content here)
@@ -2314,74 +2436,74 @@ The tracker looks for date information in this priority order:</p>
     ├── 02.eng                 (required - English briefing with date/time)
     └── ...
 </code></pre>
-<p id="pragma-line-1003"><strong>Country Detection:</strong>
+<p id="pragma-line-1118"><strong>Country Detection:</strong>
 The tracker auto-detects your country/faction from:</p>
-<ol id="pragma-line-1006">
-<li id="pragma-line-1006">Aircraft names in mission files (e.g., bf109 → Germany, spitfire → Britain)</li>
-<li id="pragma-line-1007">Unit names containing country identifiers</li>
-<li id="pragma-line-1008">You can manually set/correct this in the Country Validator GUI on first run, or adjust it later manually in the <code>stock_campaigns.yaml</code></li>
+<ol id="pragma-line-1121">
+<li id="pragma-line-1121">Aircraft names in mission files (e.g., bf109 → Germany, spitfire → Britain)</li>
+<li id="pragma-line-1122">Unit names containing country identifiers</li>
+<li id="pragma-line-1123">You can manually set/correct this in the Country Validator GUI on first run, or adjust it later manually in the <code>stock_campaigns.yaml</code></li>
 </ol>
-<p id="pragma-line-1010"><strong>Common Issues:</strong></p>
-<ul id="pragma-line-1012">
-<li id="pragma-line-1012">Missing <code>.eng</code> briefing file → dates cannot be extracted (mission will still be tracked as "Mission 1", "Mission 2", etc. but without date information)</li>
-<li id="pragma-line-1013">Missing <code>info.locale=eng.txt</code> → campaign description unavailable, tracker cannot read campaign info</li>
-<li id="pragma-line-1014">Non-standard date format in briefing → use one of the supported formats above</li>
-<li id="pragma-line-1015">Special characters in campaign folder name → avoid umlauts or special symbols</li>
-<li id="pragma-line-1016">WW1 campaigns (Flying Circus) → excluded by default (see WW1 Detection &amp; Exclusion section)</li>
+<p id="pragma-line-1125"><strong>Common Issues:</strong></p>
+<ul id="pragma-line-1127">
+<li id="pragma-line-1127">Missing <code>.eng</code> briefing file → dates cannot be extracted (mission will still be tracked as "Mission 1", "Mission 2", etc. but without date information)</li>
+<li id="pragma-line-1128">Missing <code>info.locale=eng.txt</code> → campaign description unavailable, tracker cannot read campaign info</li>
+<li id="pragma-line-1129">Non-standard date format in briefing → use one of the supported formats above</li>
+<li id="pragma-line-1130">Special characters in campaign folder name → avoid umlauts or special symbols</li>
+<li id="pragma-line-1131">WW1 campaigns (Flying Circus) → excluded by default (see WW1 Detection &amp; Exclusion section)</li>
 </ul>
-<h3 id="q-can-i-run-multiple-instances-of-the-tracker"><a id="pragma-line-1018"></a>Q: Can I run multiple instances of the tracker?</h3>
-<p id="pragma-line-1020"><strong>A:</strong> No.  Only one instance should monitor your campaigns at a time.</p>
-<h3 id="q-does-the-tracker-modify-my-il-2-installation"><a id="pragma-line-1022"></a>Q: Does the tracker modify my IL-2 installation?</h3>
-<p id="pragma-line-1024"><strong>A:</strong> The tracker only modifies:</p>
-<ul id="pragma-line-1026">
-<li id="pragma-line-1026">Campaign <code>info.locale=eng.txt</code> files (adds Events section)</li>
-<li id="pragma-line-1027">Creates backup files in the usersave folder</li>
+<h3 id="q-can-i-run-multiple-instances-of-the-tracker"><a id="pragma-line-1133"></a>Q: Can I run multiple instances of the tracker?</h3>
+<p id="pragma-line-1135"><strong>A:</strong> No.  Only one instance should monitor your campaigns at a time.</p>
+<h3 id="q-does-the-tracker-modify-my-il-2-installation"><a id="pragma-line-1137"></a>Q: Does the tracker modify my IL-2 installation?</h3>
+<p id="pragma-line-1139"><strong>A:</strong> The tracker only modifies:</p>
+<ul id="pragma-line-1141">
+<li id="pragma-line-1141">Campaign <code>info.locale=eng.txt</code> files (adds Events section)</li>
+<li id="pragma-line-1142">Creates backup files in the usersave folder</li>
 </ul>
-<p id="pragma-line-1029">It does <strong>not</strong> modify any game executables or core files.</p>
-<h3 id="q-will-this-work-with-mods"><a id="pragma-line-1031"></a>Q:  Will this work with mods?</h3>
-<p id="pragma-line-1033"><strong>A:</strong> Yes, as long as the mod uses standard campaign structure.  Custom campaigns are automatically detected during first-run setup.</p>
-<h3 id="q-can-i-manually-edit-the-configuration"><a id="pragma-line-1035"></a>Q:  Can I manually edit the configuration?</h3>
-<p id="pragma-line-1037"><strong>A:</strong> Yes, but we recommend using the <strong>Settings Manager</strong> (<code>IL2_Settings_Manager.exe</code>) for most changes. It provides a user-friendly interface and automatically handles regeneration when needed.</p>
-<p id="pragma-line-1039">For advanced customization, <code>campaign_progress_config.yaml</code> can be edited manually to:</p>
-<ul id="pragma-line-1041">
-<li id="pragma-line-1041">Adjust promotion score thresholds</li>
-<li id="pragma-line-1042">Modify award criteria</li>
-<li id="pragma-line-1043">Add custom awards</li>
-<li id="pragma-line-1044">Change rank scaling factors</li>
+<p id="pragma-line-1144">It does <strong>not</strong> modify any game executables or core files.</p>
+<h3 id="q-will-this-work-with-mods"><a id="pragma-line-1146"></a>Q:  Will this work with mods?</h3>
+<p id="pragma-line-1148"><strong>A:</strong> Yes, as long as the mod uses standard campaign structure.  Custom campaigns are automatically detected during first-run setup.</p>
+<h3 id="q-can-i-manually-edit-the-configuration"><a id="pragma-line-1150"></a>Q:  Can I manually edit the configuration?</h3>
+<p id="pragma-line-1152"><strong>A:</strong> Yes, but we recommend using the <strong>Settings Manager</strong> (<code>IL2_Settings_Manager.exe</code>) for most changes. It provides a user-friendly interface and automatically handles regeneration when needed.</p>
+<p id="pragma-line-1154">For advanced customization, <code>campaign_progress_config.yaml</code> can be edited manually to:</p>
+<ul id="pragma-line-1156">
+<li id="pragma-line-1156">Adjust promotion score thresholds</li>
+<li id="pragma-line-1157">Modify award criteria</li>
+<li id="pragma-line-1158">Add custom awards</li>
+<li id="pragma-line-1159">Change rank scaling factors</li>
 </ul>
-<blockquote id="pragma-line-1046">
-<p id="pragma-line-1046">⚠️ Always create a backup before manually editing configuration files.</p>
+<blockquote id="pragma-line-1161">
+<p id="pragma-line-1161">⚠️ Always create a backup before manually editing configuration files.</p>
 </blockquote>
-<h3 id="q-how-do-i-reset-everything"><a id="pragma-line-1048"></a>Q: How do I reset everything?</h3>
-<p id="pragma-line-1050"><strong>A:</strong> Delete these files and restart the tracker:</p>
-<ul id="pragma-line-1052">
-<li id="pragma-line-1052"><code>campaign_mission_dates.json</code></li>
-<li id="pragma-line-1053"><code>campaign_popups_seen.json</code></li>
-<li id="pragma-line-1054"><code>campaigns_decoded.json</code></li>
-<li id="pragma-line-1055"><code>campaign_events.json</code></li>
+<h3 id="q-how-do-i-reset-everything"><a id="pragma-line-1163"></a>Q: How do I reset everything?</h3>
+<p id="pragma-line-1165"><strong>A:</strong> Delete these files and restart the tracker:</p>
+<ul id="pragma-line-1167">
+<li id="pragma-line-1167"><code>campaign_mission_dates.json</code></li>
+<li id="pragma-line-1168"><code>campaign_popups_seen.json</code></li>
+<li id="pragma-line-1169"><code>campaigns_decoded.json</code></li>
+<li id="pragma-line-1170"><code>campaign_events.json</code></li>
 </ul>
-<h3 id="q-is-multiplayer-supported"><a id="pragma-line-1057"></a>Q: Is multiplayer supported?</h3>
-<p id="pragma-line-1059"><strong>A:</strong> The tracker is designed for single-player career campaigns.  Multiplayer missions don't generate the same save data structure.</p>
-<h3 id="q-why-do-i-need-to-restart-il-2-to-see-new-events"><a id="pragma-line-1061"></a>Q:  Why do I need to restart IL-2 to see new events?</h3>
-<p id="pragma-line-1063"><strong>A:</strong> IL-2 loads the campaign description (<code>info.locale=eng.txt</code>) when the game starts and caches it in memory. Changes made by the tracker are written to the file but won't appear in-game until you restart IL-2. However, you'll still see <strong>popups immediately</strong> when you earn promotions or awards.</p>
-<h3 id="q-what-happens-if-i-delete-a-backup-file-manually"><a id="pragma-line-1065"></a>Q: What happens if I delete a backup file manually?</h3>
-<p id="pragma-line-1067"><strong>A:</strong> The backup index (<code>campaignsstates_hash_index.json</code>) will still reference it, but the Restore GUI will skip any backups where the actual backup file is missing.</p>
-<h3 id="q-can-i-use-the-tracker-with-flying-circus-wwi"><a id="pragma-line-1069"></a>Q: Can I use the tracker with Flying Circus (WWI)?</h3>
-<p id="pragma-line-1071"><strong>A:</strong> Flying Circus campaigns are detected and excluded by default. The tracker is designed for WWII campaigns and does not include WWI-era ranks or awards. You can control exclusions during the country validation step (WW1 “ignore” checkbox), but WW1 campaigns won’t have historically accurate ranks or awards.</p>
-<h3 id="q-can-i-use-the-tracker-pat-wilsons-campaing-generator-pwcg"><a id="pragma-line-1073"></a>Q: Can I use the tracker Pat Wilson's Campaing Generator (PWCG)?</h3>
-<p id="pragma-line-1075"><strong>A:</strong> No - this tracker does NOT work wit PWCG but also does NOT interfere with it</p>
-<hr id="pragma-line-1077">
-<h2 id="license"><a id="pragma-line-1079"></a>📜 License</h2>
-<p id="pragma-line-1081">This project is provided as-is for personal use with IL-2 Sturmovik Great Battles.</p>
-<hr id="pragma-line-1083">
-<h2 id="acknowledgments"><a id="pragma-line-1085"></a>🙏 Acknowledgments</h2>
-<ul id="pragma-line-1087">
-<li id="pragma-line-1087"><strong>1C Game Studios / 777 Studios</strong> - For creating IL-2 Great Battles</li>
-<li id="pragma-line-1088"><strong>The IL-2 Community</strong> - For inspiration and feedback</li>
-<li id="pragma-line-1089"><strong>Kraut1</strong> - For giving useful input and comprehensive testing</li>
+<h3 id="q-is-multiplayer-supported"><a id="pragma-line-1172"></a>Q: Is multiplayer supported?</h3>
+<p id="pragma-line-1174"><strong>A:</strong> The tracker is designed for single-player career campaigns.  Multiplayer missions don't generate the same save data structure.</p>
+<h3 id="q-why-do-i-need-to-restart-il-2-to-see-new-events"><a id="pragma-line-1176"></a>Q:  Why do I need to restart IL-2 to see new events?</h3>
+<p id="pragma-line-1178"><strong>A:</strong> IL-2 loads the campaign description (<code>info.locale=eng.txt</code>) when the game starts and caches it in memory. Changes made by the tracker are written to the file but won't appear in-game until you restart IL-2. However, you'll still see <strong>popups immediately</strong> when you earn promotions or awards.</p>
+<h3 id="q-what-happens-if-i-delete-a-backup-file-manually"><a id="pragma-line-1180"></a>Q: What happens if I delete a backup file manually?</h3>
+<p id="pragma-line-1182"><strong>A:</strong> The backup index (<code>campaignsstates_hash_index.json</code>) will still reference it, but the Restore GUI will skip any backups where the actual backup file is missing.</p>
+<h3 id="q-can-i-use-the-tracker-with-flying-circus-wwi"><a id="pragma-line-1184"></a>Q: Can I use the tracker with Flying Circus (WWI)?</h3>
+<p id="pragma-line-1186"><strong>A:</strong> Flying Circus campaigns are detected and excluded by default. The tracker is designed for WWII campaigns and does not include WWI-era ranks or awards. You can control exclusions during the country validation step (WW1 “ignore” checkbox), but WW1 campaigns won’t have historically accurate ranks or awards.</p>
+<h3 id="q-can-i-use-the-tracker-pat-wilsons-campaing-generator-pwcg"><a id="pragma-line-1188"></a>Q: Can I use the tracker Pat Wilson's Campaing Generator (PWCG)?</h3>
+<p id="pragma-line-1190"><strong>A:</strong> No - this tracker does NOT work wit PWCG but also does NOT interfere with it</p>
+<hr id="pragma-line-1192">
+<h2 id="license"><a id="pragma-line-1194"></a>📜 License</h2>
+<p id="pragma-line-1196">This project is provided as-is for personal use with IL-2 Sturmovik Great Battles.</p>
+<hr id="pragma-line-1198">
+<h2 id="acknowledgments"><a id="pragma-line-1200"></a>🙏 Acknowledgments</h2>
+<ul id="pragma-line-1202">
+<li id="pragma-line-1202"><strong>1C Game Studios / 777 Studios</strong> - For creating IL-2 Great Battles</li>
+<li id="pragma-line-1203"><strong>The IL-2 Community</strong> - For inspiration and feedback</li>
+<li id="pragma-line-1204"><strong>Kraut1</strong> - For giving useful input and comprehensive testing</li>
 </ul>
-<hr id="pragma-line-1091">
-<h2 id="happy-flying"><a id="pragma-line-1093"></a>Happy flying!  ✈️🎖️</h2>
-</div>   
+<hr id="pragma-line-1206">
+<h2 id="happy-flying"><a id="pragma-line-1208"></a>Happy flying!  ✈️🎖️</h2>
+  
 
 </body></html>
