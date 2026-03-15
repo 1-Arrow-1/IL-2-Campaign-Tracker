@@ -296,6 +296,37 @@ class CareerDatabase:
         )
         return cursor.fetchone()
 
+    def get_injured_sortie_before(
+        self,
+        pilot_ids,
+        before_date_str: str,
+    ) -> Optional[sqlite3.Row]:
+        """
+        Return the most recent status=4 (injured) sortie for any of the given
+        pilot IDs whose date is strictly before before_date_str.
+
+        Used by the recovery-range refinement to find the actual injury start
+        date when Rapid Mode has skipped calendar days and only the final
+        recovery day was recorded as a type-13 event.
+        """
+        if isinstance(pilot_ids, int):
+            pilot_ids = [pilot_ids]
+        if not pilot_ids:
+            return None
+        conn = self._connect()
+        id_ph = ",".join("?" * len(pilot_ids))
+        cursor = conn.execute(
+            f"SELECT pilotId, date FROM sortie"
+            f" WHERE pilotId IN ({id_ph})"
+            f"   AND status = 4"
+            f"   AND isDeleted = 0"
+            f"   AND date < ?"
+            f" ORDER BY date DESC"
+            f" LIMIT 1",
+            (*pilot_ids, before_date_str),
+        )
+        return cursor.fetchone()
+
     def get_mission_by_id(self, mission_id: int) -> Optional[sqlite3.Row]:
         """Return a single mission row by id."""
         conn = self._connect()

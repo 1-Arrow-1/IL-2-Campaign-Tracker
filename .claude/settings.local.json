@@ -9,7 +9,9 @@
       "Bash(find \"/c/Program Files \\(x86\\)/1C Game Studios/IL-2 Sturmovik Battle of Stalingrad\" -maxdepth 3 -type d)",
       "Bash(sed 's/.*\"\"id\"\": \"\"//')",
       "Bash(sed 's/\"\".*//')",
-      "Bash(# Check if data_dir has CampaignRanksAwards with JSON sidecars ls \"\"C:/Users/bleih/Documents/IL2_Campaign_Mod/CampaignRanksAwards/\"\" ls \"\"C:/Users/bleih/Documents/IL2_Campaign_Mod/CampaignRanksAwards/Germany/\"\")"
+      "Bash(# Check if data_dir has CampaignRanksAwards with JSON sidecars ls \"\"C:/Users/bleih/Documents/IL2_Campaign_Mod/CampaignRanksAwards/\"\" ls \"\"C:/Users/bleih/Documents/IL2_Campaign_Mod/CampaignRanksAwards/Germany/\"\")",
+      "WebSearch",
+      "WebFetch(domain:github.com)"
     ]
   }
 }

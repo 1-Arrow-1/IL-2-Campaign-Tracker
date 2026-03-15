@@ -153,6 +153,70 @@ def _make_range(start: date, end: date) -> Dict:
     }
 
 
+def _refine_ranges_with_sortie(ranges: List[Dict], db, pilot_ids) -> List[Dict]:
+    """
+    Refine each recovery range by looking up the preceding status=4 sortie.
+
+    In Rapid Mode the game may skip calendar days so only the final recovery
+    day is written as a type-13 event.  collapse_recovery_ranges() then
+    produces a 1-day range with duration_days=1 even though the real injury
+    lasted several days.
+
+    For each range we search backwards for the most recent injured sortie
+    (status=4) that occurred before the last recovery day.  If found:
+        start_date    = sortie date  (day the pilot was shot down/wounded)
+        end_date      = last type-13 date  (unchanged)
+        duration_days = (end - start).days   # no +1: injury day to last recovery day
+
+    In Realistic Mode the result is identical to the type-13 count because:
+        last_recovery_date - injury_date == count(consecutive type-13 days)
+
+    If no status=4 sortie is found the original range is kept unchanged.
+    """
+    if isinstance(pilot_ids, int):
+        pilot_ids = [pilot_ids]
+
+    refined = []
+    for r in ranges:
+        last_recovery = _parse_iso(r["end_date"])
+        if last_recovery is None:
+            refined.append(r)
+            continue
+
+        # Pass the raw end_date string so the DB comparison works correctly
+        # even when the date column has a time component.
+        sortie_row = db.get_injured_sortie_before(pilot_ids, r["end_date"])
+        if sortie_row is None:
+            logger.debug(
+                "No status=4 sortie found before %s; keeping type-13 count (%d days)",
+                r["end_date"], r["duration_days"],
+            )
+            refined.append(r)
+            continue
+
+        injury_date = _parse_iso(sortie_row["date"])
+        if injury_date is None or injury_date >= last_recovery:
+            logger.debug(
+                "Sortie date %s is not before recovery end %s; skipping refinement",
+                sortie_row["date"], r["end_date"],
+            )
+            refined.append(r)
+            continue
+
+        duration = (last_recovery - injury_date).days
+        logger.debug(
+            "Refined recovery range: injury=%s last_recovery=%s duration=%d days "
+            "(was %d from type-13 count)",
+            _iso(injury_date), r["end_date"], duration, r["duration_days"],
+        )
+        refined.append({
+            "start_date":    _iso(injury_date),
+            "end_date":      r["end_date"],
+            "duration_days": duration,
+        })
+    return refined
+
+
 # ---------------------------------------------------------------------------
 # Main loader
 # ---------------------------------------------------------------------------
@@ -186,7 +250,9 @@ def load_other_incidences(
             career_id, player_id, [_TYPE_RECOVERY]
         )
         date_strings = [str(row["date"]) for row in recovery_rows if row["date"] is not None]
-        for r in collapse_recovery_ranges(date_strings):
+        ranges = collapse_recovery_ranges(date_strings)
+        ranges = _refine_ranges_with_sortie(ranges, db, player_id)
+        for r in ranges:
             entries.append({
                 "type":          "RECOVERY",
                 "start_date":    r["start_date"],
