@@ -183,13 +183,18 @@ def _refine_ranges_with_sortie(ranges: List[Dict], db, pilot_ids) -> List[Dict]:
             refined.append(r)
             continue
 
-        # Pass the raw end_date string so the DB comparison works correctly
-        # even when the date column has a time component.
-        sortie_row = db.get_injured_sortie_before(pilot_ids, r["end_date"])
+        # Convert ISO end_date ("1941-11-30") to the dot-format used in the
+        # sortie table ("1941.11.30 00:00:00") so SQLite string comparison
+        # works correctly.  Sorties carry a time component; appending
+        # " 00:00:00" means the last recovery day itself is excluded while
+        # any same-day sortie with a real timestamp would still be caught
+        # (injury sorties always precede the first recovery day).
+        before_date_db = r["end_date"].replace("-", ".") + " 00:00:00"
+        sortie_row = db.get_injured_sortie_before(pilot_ids, before_date_db)
         if sortie_row is None:
             logger.debug(
                 "No status=4 sortie found before %s; keeping type-13 count (%d days)",
-                r["end_date"], r["duration_days"],
+                before_date_db, r["duration_days"],
             )
             refined.append(r)
             continue
