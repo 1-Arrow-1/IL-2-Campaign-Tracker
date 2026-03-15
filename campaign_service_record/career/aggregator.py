@@ -16,6 +16,7 @@ Differences from CampaignAggregator:
       via CareerDebriefingManager; empty dicts are returned when no reports are linked.
 """
 
+import json
 import logging
 import re
 from datetime import date, datetime
@@ -141,15 +142,24 @@ class CareerAggregator:
 
     def has_debrief_cache(self, root_career_id: int) -> bool:
         """
-        Return True if a populated debrief cache_index.json exists for this career.
+        Return True if a valid, version-matched debrief cache_index.json exists
+        for this career.
 
-        This is a fast file-existence check used by the API to decide whether to
-        skip the slow debriefing parse on the first GET /api/career/<id> request.
+        Checks both file existence and the _version field so that a stale cache
+        (wrong version) is treated the same as no cache — causing the API to set
+        skip_debriefs=True and triggering the background-job / timer path on the
+        frontend instead of a silent synchronous rebuild.
         """
         if self._cache_dir is None:
             return False
         cache_path = self._cache_dir / "career" / str(root_career_id) / "cache_index.json"
-        return cache_path.exists()
+        if not cache_path.exists():
+            return False
+        try:
+            data = json.loads(cache_path.read_text(encoding="utf-8"))
+            return data.get("_version") == CareerDebriefingManager._CACHE_VERSION
+        except (OSError, ValueError):
+            return False
 
     def run_debrief_parse(
         self,
