@@ -204,11 +204,17 @@ Source: "IL2_Settings_Manager.exe"; DestDir: "{app}"; Flags: ignoreversion
 ; --- Cleanup utility for uninstaller ---
 Source: "cleanup_tracker_content.exe"; DestDir: "{app}"; Flags: ignoreversion
 
+; --- squadrons.json: Career Service Record internal lookup table ---
+; Must live next to the EXE so data_dir/CampaignRanksAwards/squadrons.json resolves correctly.
+; It is NOT copied into IL-2 (IL-2 does not use it).
+Source: "CampaignRanksAwards\squadrons.json"; DestDir: "{app}"; Flags: ignoreversion
+
 ; --- Copy CampaignRanksAwards into IL-2 ---
 ; This places content into: <IL-2>\data\swf\CampaignRanksAwards\*
 ; Both Germany variants are always installed so the user can switch later.
 ; The Germany subfolder is handled separately below (WW2 vs 1957 toggle).
-Source: "CampaignRanksAwards\*"; DestDir: "{code:GetIL2Dir}\data\swf\CampaignRanksAwards"; Flags: recursesubdirs createallsubdirs ignoreversion; Excludes: "Germany\*,Germany - WW2\*"
+; squadrons.json is excluded — it is tracker-internal and not needed by IL-2.
+Source: "CampaignRanksAwards\*"; DestDir: "{code:GetIL2Dir}\data\swf\CampaignRanksAwards"; Flags: recursesubdirs createallsubdirs ignoreversion; Excludes: "Germany\*,Germany - WW2\*,squadrons.json,squadrons\*"
 
 ; --- 1957 chosen (default) ---
 ; Active:    Germany (1957) -> Germany

@@ -756,7 +756,7 @@ class CareerAggregator:
         """
         if self._data_dir is None:
             return {}
-        path = self._data_dir / "CampaignRanksAwards" / "squadrons.json"
+        path = self._data_dir / "squadrons.json"
         if not path.exists():
             logger.warning("squadrons.json not found at %s", path)
             return {}
