@@ -2,7 +2,7 @@
 
 Ein umfassendes Tracking-Tool für IL-2 Sturmovik Great Battles Einzelspieler-**WW2-Kampagnen**. Überwacht automatisch deinen Kampagnenfortschritt, berechnet Beförderungen und Auszeichnungen basierend auf historischen Kriterien, erstellt detaillierte Missionsnachbesprechungen und generiert PDF-Berichte über die Karriere deines Piloten.
 
-![Version](https://img.shields.io/badge/version-2.1-blue)
+![Version](https://img.shields.io/badge/version-2.2-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 ![Game](https://img.shields.io/badge/game-IL--2%20Battle%20of%20Stalingrad-orange)
 ![Languages](https://img.shields.io/badge/Sprachen-7-green)
@@ -24,6 +24,7 @@ Ein umfassendes Tracking-Tool für IL-2 Sturmovik Great Battles Einzelspieler-**
 - [Missionsbereinigung](#missionsbereinigung)
 - [Backup- & Wiederherstellungssystem](#backup---wiederherstellungssystem)
 - [Kampagnen-Dienstakte](#kampagnen-dienstakte)
+- [Karriere-Dienstakte](#karriere-dienstakte)
 - [Dateireferenz](#dateireferenz)
 - [Fehlerbehebung](#fehlerbehebung)
 - [FAQ](#faq)
@@ -49,6 +50,8 @@ Ein umfassendes Tracking-Tool für IL-2 Sturmovik Great Battles Einzelspieler-**
 | **WW1-Erkennung & Ausschluss** | Erkennt Flying Circus (WW1) Kampagnen und überspringt sie standardmäßig |
 | **Control Center GUI** | Zentrale Anlaufstelle zum Starten von Tracker, Einstellungsmanager und Dienstakte |
 | **Kampagnenspezifische Sprache** | Sprache der Detailseite für einzelne Kampagnen in der Dienstakte überschreiben |
+| **Karriere-Dienstakte** | Eigene Webanwendung für den IL-2-Karrieremodus: liest direkt aus der `cp.db` des Spiels und zeigt Theaterkettenfortschritt, alle Karriereereignisse und Missionsnachbesprechungen |
+| **Deutsches Auszeichnungsstil** | Wahl zwischen der Bundeswehr-Ära 1957 (Standard) und dem originalen Kriegsstil für deutsche Auszeichnungsbilder |
 
 ---
 
@@ -784,6 +787,118 @@ Benutzer, die historisch korrekte Bilder benötigen, können die Bilder lokal er
 - **Server-Adresse**: `http://127.0.0.1:5000` (nur lokaler Rechner)
 - **Automatisches Beenden**: Server stoppt automatisch nach 60 Sekunden Inaktivität
 - **Datenspeicherort**: Liest JSON-Dateien aus demselben Verzeichnis wie die ausführbare Datei
+- **Browser-Kompatibilität**: Funktioniert mit allen modernen Browsern (Chrome, Firefox, Edge)
+- **Netzwerk**: Erfordert keine Internetverbindung; läuft vollständig auf deinem lokalen Rechner
+
+---
+
+## 🪖 Karriere-Dienstakte <a id="karriere-dienstakte"></a>
+
+Die **Karriere-Dienstakte** ist eine separate webbasierte Anwendung für den **Karrieremodus** von IL-2 (nicht den Kampagnenmodus). Sie liest deine Karrieredaten direkt aus der `cp.db`-SQLite-Datenbank des Spiels — keine separate Tracker-Installation oder Datendateien erforderlich. Sie stellt die vollständige Diensthistorie deines Piloten über alle Theater hinweg dar, einschließlich Beförderungen, Auszeichnungen, Missionen und mehr.
+
+⚠️ **WICHTIG**: Die Karriere-Dienstakte setzt eine installierte Kopie von IL-2 Sturmovik: Great Battles voraus und mindestens eine im Spiel gestartete Karriere. Sie liest die Spieldateien direkt und ist unabhängig von den Campaign Tracker-Dateien.
+
+### Funktionen
+
+- **Theaterkettenverlauf**: Zeigt die vollständige Kette der Theater, in denen dein Pilot gedient hat (z. B. Luftschlacht um Moskau → Stalingrad → Kursker Bogen), in korrekter chronologischer Reihenfolge
+- **Karriereereignis-Zeitleiste**: Eine chronologische Liste aller Karriereereignisse aus der Spieldatenbank:
+  - **Beförderungen** — jede Rangerhöhung mit Datum und Rangbild
+  - **Auszeichnungen & Orden** — verdiente Medaillen mit Bildern und Beschreibungen
+  - **Kommandoernennungen** — wann dein Pilot zum Staffelkapitän oder Stellvertreter ernannt wurde
+  - **Geschwaderwechsel** — Versetzungen zwischen Staffeln mit Angabe von Ursprungs- und Zieleinheit
+  - **Genesung / Lazarettaufenthalt** — Verletzungspausen mit Startdatum, Enddatum und Dauer in Tagen
+- **Pilotenrollenanzeige**: Wenn dein Pilot derzeit eine Führungsposition innehat, wird die Rolle neben dem Staffelnamen angezeigt:
+  - Staffelkapitän
+  - Stellv. Staffelkapitän
+- **Karrierestatistiken**: Kumulative Kampfergebnisse direkt aus der Spiel-Pilotentabelle:
+  - PCP-Wert (Pilot Combat Points)
+  - Luft-, Boden- und Fahrzeugabschüsse
+  - Geflogene Missionen und Missionsergebnisse
+- **Missionsnachbesprechungen**: Parst verknüpfte `missionReport`-Dateien und zeigt detaillierte Nachbesprechungen pro Einsatz. Nachbesprechungen werden beim ersten Laden zwischengespeichert und im Hintergrund erstellt
+- **Pilotenprofil**: Anpassbares Pilotenfoto, Geburtsdatum, Geburtsort und Geburtsland pro Karriere — über Sitzungen hinweg gespeichert
+- **Deutsches Auszeichnungsstil**: Wahl zwischen dem Standard-Bundeswehr-Stil von 1957 und dem originalen Kriegsstil für deutsche Auszeichnungsbilder (bei der Installation konfiguriert)
+- **Responsives Design**: Saubere, moderne Oberfläche, die auf jeder Bildschirmgröße funktioniert
+- **Vollständig lokalisiert**: Alle UI-Texte, Ereignisbeschriftungen sowie Rang- und Auszeichnungsnamen richten sich nach deiner gewählten Sprache. Jede Karriere kann bei Bedarf auch in einer anderen Sprache angezeigt werden
+
+### Verwendung
+
+1. Finde `Career_Service_Record.exe` in deinem Campaign Tracker-Installationsverzeichnis
+2. Doppelklicke auf `Career_Service_Record.exe`, um die Anwendung zu starten (oder starte sie über die **Control Center GUI**)
+3. Dein Standard-Webbrowser öffnet sich automatisch und zeigt deine Karriereübersicht an
+4. Klicke auf eine Karriere, um die vollständige Dienstakte mit Zeitleiste, Statistiken und Nachbesprechungen zu sehen
+5. Der Server wird nach 60 Sekunden Inaktivität automatisch beendet
+
+**Hinweis**: Die Karriere-Dienstakte verbindet sich mit dem IL-2-Spielverzeichnis. Falls sie die `cp.db` des Spiels nicht finden kann, stelle sicher, dass IL-2 installiert ist und du im Spiel mindestens eine Karriere gestartet hast.
+
+### Oberflächen-Übersicht
+
+#### Startseite
+
+- **Linkes Panel**: Pilotenfoto und Dienstübersicht (Karriereanzahl, Gesamtmissionen, Abschusszusammenfassung)
+- **Rechtes Panel**: Liste aller Karrieren, jeweils mit:
+  - Pilotenname, Land und Rang
+  - Theaterkette (z. B. „Luftschlacht um Moskau → Stalingrad")
+  - Missionsanzahl, verdiente Beförderungen, erhaltene Auszeichnungen
+
+#### Karriere-Detailseite
+
+- **Linke Spalte**: Pilotenprofil (anpassbares Foto und persönliche Daten); chronologische Ereigniszeitleiste mit Beförderungen, Auszeichnungen, Ernennungen, Versetzungen und Genesung
+- **Mittlere Spalte**: Karrierestatistiken — PCP-Wert, Abschuss-Aufschlüsselung (Luft, Boden, Fahrzeuge), Missionsergebnisse und Flugzeugnutzung
+- **Rechte Spalte**: Missionsnachbesprechungen mit Abschussdetails, Flugzeit und Ergebnissen pro Einsatz
+- **Zurück-Button**: Zurück zur Karriereübersicht
+
+### Piloteninformationen anpassen
+
+Klicke auf das Pilotenfoto oder ein bearbeitbares Feld zum Anpassen:
+
+- **Pilotenfoto**: Klicke, um ein neues Foto hochzuladen (JPG, PNG, BMP unterstützt)
+- **Geburtsdatum**: Eingabe im Format `TT. Monat JJJJ` (z. B. `12. März 1918`)
+- **Geburtsort**: Freitexteingabe
+- **Geburtsland**: Freitexteingabe
+- Alle Änderungen werden automatisch gespeichert und bleiben über Sitzungen hinweg erhalten
+
+### Fehlerbehebung
+
+#### Problem: „Lade Karrieren..." erscheint ewig
+
+**Ursache**: Karrieredatenbank nicht gefunden oder keine Karrieren vorhanden
+**Lösung**:
+
+- Stelle sicher, dass IL-2 Sturmovik: Great Battles installiert ist
+- Starte mindestens eine Karriere im Spiel, bevor du diese Anwendung öffnest
+- Prüfe, ob das Spielverzeichnis korrekt erkannt wird (die Karriere-Dienstakte erkennt den IL-2-Installationspfad automatisch über die Windows-Registrierung)
+
+#### Problem: Karriere-Dienstakte startet nicht
+
+**Ursache**: Port 5001 wird bereits von einer anderen Anwendung verwendet
+**Lösung**:
+
+- Schließe alle anderen Webserver oder Anwendungen, die Port 5001 verwenden
+- Wenn das Problem weiterhin besteht, starte deinen Computer neu, um den Port freizugeben
+
+#### Problem: Browser zeigt „Verbindung nicht möglich" oder „Seite nicht gefunden"
+
+**Ursache**: Der Anwendungsserver konnte nicht starten
+**Lösung**:
+
+- Prüfe, ob sowohl `Career_Service_Record.exe` als auch der Ordner `_internal` im Installationsverzeichnis vorhanden sind
+- Stelle sicher, dass dein Antivirus die Anwendung nicht blockiert
+- Versuche, `Career_Service_Record.exe` als Administrator auszuführen
+- Öffne manuell deinen Browser und navigiere zu `http://127.0.0.1:5001`
+
+#### Problem: Ereignisse oder Nachbesprechungen fehlen
+
+**Ursache**: Missionsbericht-Dateien wurden noch nicht geparst (erster Ladevorgang)
+**Lösung**:
+
+- Warte einen Moment nach dem Öffnen der Karriere-Detailseite — Nachbesprechungen werden beim ersten Laden im Hintergrund geparst
+- Lade die Seite nach einigen Sekunden neu; während des Parsens wird ein Fortschrittsindikator angezeigt
+
+### Technische Informationen
+
+- **Server-Adresse**: `http://127.0.0.1:5001` (nur lokaler Rechner)
+- **Automatisches Beenden**: Server stoppt automatisch nach 60 Sekunden Inaktivität
+- **Datenquelle**: Liest direkt aus `<IL-2-Installation>\data\Career\cp.db`
 - **Browser-Kompatibilität**: Funktioniert mit allen modernen Browsern (Chrome, Firefox, Edge)
 - **Netzwerk**: Erfordert keine Internetverbindung; läuft vollständig auf deinem lokalen Rechner
 

@@ -2,7 +2,7 @@
 
 A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **WW2 campaigns**.  Automatically monitors your campaign progress, calculates promotions and awards based on historical criteria, generates detailed mission debriefings, and creates PDF reports of your pilot's career.
 
-![Version](https://img.shields.io/badge/version-2.1-blue)
+![Version](https://img.shields.io/badge/version-2.2-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 ![Game](https://img.shields.io/badge/game-IL--2%20Battle%20of%20Stalingrad-orange)
 ![Languages](https://img.shields.io/badge/languages-7-green)
@@ -24,6 +24,7 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **W
 - [Mission Cleanup](#mission-cleanup)
 - [Backup & Restore System](#backup--restore-system)
 - [Campaign Service Record](#camapign-service-record)
+- [Career Service Record](#career-service-record)
 - [File Reference](#file-reference)
 - [Troubleshooting](#troubleshooting)
 - [FAQ](#faq)
@@ -49,6 +50,8 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **W
 | **WW1 Detection & Exclusion** | Detects Flying Circus (WW1) campaigns and skips them by default |
 | **Control Center GUI** | Central hub to launch Tracker, Settings Manager, and Service Record |
 | **Per-Campaign Language** | Override detail page language for individual campaigns in Service Record |
+| **Career Service Record** | Dedicated web viewer for IL-2 Career Mode: reads directly from the game's `cp.db`, shows theatre chain progression, all career events, and mission debriefings |
+| **German Award Style** | Choose between the 1957 Bundeswehr-era (default) and the original wartime style for German award images |
 
 ---
 
@@ -784,6 +787,118 @@ Users who require historically accurate imagery may replace the images locally:
 - **Server Address**: `http://127.0.0.1:5000` (local machine only)
 - **Auto-Shutdown**: Server automatically stops after 60 seconds of inactivity
 - **Data Location**: Reads JSON files from the same directory as the executable
+- **Browser Compatibility**: Works with all modern browsers (Chrome, Firefox, Edge)
+- **Network**: Does not require internet connection; runs entirely on your local machine
+
+---
+
+## 🪖 Career Service Record <a id="career-service-record"></a>
+
+The **Career Service Record** is a separate web-based application for IL-2's built-in **Career Mode** (not Campaign Mode). It reads your career data directly from the game's own `cp.db` SQLite database—no separate tracker or data files required. It presents your pilot's full service history across all theatres, including promotions, awards, missions, and more.
+
+⚠️ **IMPORTANT**: The Career Service Record requires IL-2 Sturmovik: Great Battles to be installed and at least one Career to have been started in-game. It reads the game's data files directly and does not depend on the Campaign Tracker files.
+
+### Features
+
+- **Theatre Chain Progression**: Displays the full chain of theatres your pilot has served in (e.g., Battle of Moscow → Battle of Stalingrad → Battle of Kursk), in correct chronological order
+- **Career Events Timeline**: A chronological list of all career events pulled from the game database:
+  - **Promotions** — each rank advancement with date and rank image
+  - **Awards & Decorations** — medals earned with images and narratives
+  - **Commander Appointments** — when your pilot was appointed squadron commander or deputy commander
+  - **Squadron Transfers** — transfers between squadrons showing the source and destination unit
+  - **Recovery / Medical Leave** — periods of injury recovery with start date, end date, and duration in days
+- **Pilot Role Display**: If your pilot currently holds a command position, the role is shown next to the squadron name:
+  - Commander (German: *Staffelkapitän*)
+  - Deputy Commander (German: *Stellv. Staffelkapitän*)
+- **Career Statistics**: Cumulative combat results read directly from the game pilot table:
+  - PCP Score (Pilot Combat Points)
+  - Air kills, ground kills, vehicle kills
+  - Missions flown and mission outcomes
+- **Mission Debriefings**: Parses linked `missionReport` files and displays detailed debriefings per sortie. Debriefings are cached and built in the background on first load.
+- **Pilot Profile**: Customisable pilot photo, birth date, place of birth, and country of birth per career—persisted across sessions
+- **German Award Style Selection**: Choose between the default 1957 Bundeswehr-era style and the original wartime style for German award images (configured at installation time)
+- **Responsive Design**: Clean, modern interface that works on any screen size
+- **Fully Localised**: All UI text, event labels, and rank/award names respect your selected language. Each career can also display in a different language if configured
+
+### How to Use
+
+1. Locate `Career_Service_Record.exe` in your Campaign Tracker installation directory
+2. Double-click `Career_Service_Record.exe` to start the application (or launch it from the **Control Center GUI**)
+3. Your default web browser will open automatically and display your career overview
+4. Click on any career to view the full service record with timeline, statistics, and debriefings
+5. The server will shut down automatically after 60 seconds of inactivity
+
+**Note**: The Career Service Record connects to the IL-2 game directory. If it cannot find the game's `cp.db`, ensure IL-2 is installed and that you have started at least one Career in-game.
+
+### Interface Overview
+
+#### Landing Page
+
+- **Left Panel**: Pilot photo and service overview (career count, total missions, kill summary)
+- **Right Panel**: List of all careers, each showing:
+  - Pilot name, country, and rank
+  - Theatre chain (e.g., "Battle of Moscow → Stalingrad")
+  - Mission count, promotions earned, awards received
+
+#### Career Detail Page
+
+- **Left Column**: Pilot profile (customisable photo and personal data); chronological event timeline showing promotions, awards, appointments, transfers, and recovery periods
+- **Middle Column**: Career statistics — PCP Score, kill breakdown (air, ground, vehicles), mission outcomes, and aircraft usage
+- **Right Column**: Mission debriefings with per-sortie kill details, flight time, and outcomes
+- **Back Button**: Return to career overview
+
+### Customising Pilot Information
+
+Click the pilot photo or any editable field to customise:
+
+- **Pilot Photo**: Click to upload a new photo (JPG, PNG, BMP supported)
+- **Birth Date**: Enter in the format `DD Month YYYY` (e.g., `12 March 1918`)
+- **Place of Birth**: Free-text entry
+- **Country of Birth**: Free-text entry
+- All changes are saved automatically and persist across sessions
+
+### Troubleshooting
+
+#### Problem: "Loading careers..." appears forever
+
+**Cause**: Career database not found or no careers exist
+**Solution**:
+
+- Ensure IL-2 Sturmovik: Great Battles is installed
+- Start at least one Career in the game before launching this application
+- Confirm the game directory is set correctly (the Career Service Record auto-detects the IL-2 installation path from the Windows registry)
+
+#### Problem: Career Service Record won't start
+
+**Cause**: Port 5001 is already in use by another application
+**Solution**:
+
+- Close any other web servers or applications using port 5001
+- If the issue persists, restart your computer to free up the port
+
+#### Problem: Browser shows "Cannot connect" or "Page not found"
+
+**Cause**: The application server failed to start
+**Solution**:
+
+- Check that both `Career_Service_Record.exe` and the `_internal` folder are present in the installation directory
+- Ensure your antivirus is not blocking the application
+- Try running `Career_Service_Record.exe` as administrator
+- Manually open your browser and navigate to `http://127.0.0.1:5001`
+
+#### Problem: Events or debriefings are missing
+
+**Cause**: Mission report files have not been parsed yet (first load)
+**Solution**:
+
+- Wait a moment after opening the career detail page — debriefings are parsed in the background on first load
+- Reload the page after a few seconds; a progress indicator will appear while parsing is in progress
+
+### Technical Information
+
+- **Server Address**: `http://127.0.0.1:5001` (local machine only)
+- **Auto-Shutdown**: Server automatically stops after 60 seconds of inactivity
+- **Data Source**: Reads directly from `<IL-2 installation>\data\Career\cp.db`
 - **Browser Compatibility**: Works with all modern browsers (Chrome, Firefox, Edge)
 - **Network**: Does not require internet connection; runs entirely on your local machine
 
