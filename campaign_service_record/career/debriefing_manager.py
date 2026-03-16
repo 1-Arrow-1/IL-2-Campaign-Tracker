@@ -566,8 +566,6 @@ def _render_mission_html(data: Dict, mission_num: int, mission_date: str) -> str
     lines.append("<br>")
     lines.append("<b>FLIGHT LOG</b><br>")
 
-    mission_ended_in_bailout = "Bailout" in str(status)
-
     for event in events[:_MAX_EVENTS]:
         time_str = event.get("time", "")
         event_type = event.get("type", event.get("event", ""))
@@ -578,12 +576,12 @@ def _render_mission_html(data: Dict, mission_num: int, mission_date: str) -> str
             alt_str = f" (Alt: {altitude}m)" if altitude else ""
             lines.append(f"{time_str}&nbsp;&nbsp;{target} destroyed{alt_str}<br>")
         elif event_type == "Damage Taken":
-            if mission_ended_in_bailout:
-                continue
+            damage = event.get("damage", "")
+            dmg_str = f" ({damage})" if damage else ""
             if event.get("attacker_unknown") or not target:
-                lines.append(f"{time_str}&nbsp;&nbsp;Damage taken<br>")
+                lines.append(f"{time_str}&nbsp;&nbsp;Damage taken{dmg_str}<br>")
             else:
-                lines.append(f"{time_str}&nbsp;&nbsp;Hit by {target}<br>")
+                lines.append(f"{time_str}&nbsp;&nbsp;Hit by {target}{dmg_str}<br>")
         else:
             lines.append(f"{time_str}&nbsp;&nbsp;{event_type}<br>")
 

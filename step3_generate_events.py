@@ -2307,8 +2307,6 @@ class EventGenerator:
             else:
                 # In-Game mode → show Flight Log instead of Combat Results
                 html_lines.append(f"<b>{t('flightlog.flight_log')}</b><br>")
-                mission_ended_in_bailout = "Bailout" in status
-
                 for event in data.get('events', [])[:25]:  # Max 25 events
                     time = event.get('time', '')
                     event_type = event.get('type', event.get('event', ''))
@@ -2322,19 +2320,18 @@ class EventGenerator:
                             f"{time}  {target} {t('flightlog.event.destroyed')}{details}<br>"
                         )
                     elif event_type == "Damage Taken":
-                        if mission_ended_in_bailout:
-                            continue
                         # Check if attacker is unknown (AID=-1 case)
                         attacker_unknown = event.get('attacker_unknown', False)
+                        dmg_str = f" ({damage})" if damage else ""
                         if attacker_unknown or not target:
                             # Generic "Damage taken" without attacker
                             html_lines.append(
-                                f"{time}  {t('flightlog.event.damage_taken')}<br>"
+                                f"{time}  {t('flightlog.event.damage_taken')}{dmg_str}<br>"
                             )
                         else:
                             # Known attacker: "Hit by <attacker>"
                             html_lines.append(
-                                f"{time}  {t('flightlog.event.hit_by')} {target}<br>"
+                                f"{time}  {t('flightlog.event.hit_by')} {target}{dmg_str}<br>"
                             )
                     elif event_type in ["Takeoff", "Landing", "Crash", "Bailout", "Landing Damage"]:
                         html_lines.append(f"{time}  {self._localize_event_label(event_type)}<br>")
