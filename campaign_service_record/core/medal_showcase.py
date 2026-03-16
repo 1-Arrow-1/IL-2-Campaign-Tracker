@@ -77,11 +77,12 @@ SECTION_HEADERS: dict[str, str] = {
 
 # internal country key  ->  relative folder under CampaignRanksAwards/
 ASSET_FOLDER: dict[str, str] = {
-    'ussr_early': 'USSR/early',
-    'ussr_late':  'USSR/late',
-    'usa':        'US',
-    'germany':    'Germany',
-    'britain':    'Britain',
+    'ussr_early':  'USSR/early',
+    'ussr_late':   'USSR/late',
+    'usa':         'US',
+    'germany':     'Germany',
+    'germany_ext': 'Germany',
+    'britain':     'Britain',
 }
 
 # country key  ->  canvas filename (just the filename, not full path)
@@ -104,20 +105,22 @@ OVERLAY_FILENAME: dict[str, str] = {
 
 # Career-specific canvas filenames (use _career suffix)
 CAREER_CANVAS_FILENAME: dict[str, str] = {
-    'ussr_early': 'USSR_canvas_career.png',
-    'ussr_late':  'USSR_canvas_career.png',
-    'usa':        'usa_canvas_career.png',
-    'germany':    'Germany_canvas_career.png',
-    'britain':    'Britain_canvas_career.png',
+    'ussr_early':  'USSR_canvas_career.png',
+    'ussr_late':   'USSR_canvas_career.png',
+    'usa':         'usa_canvas_career.png',
+    'germany':     'Germany_canvas_career.png',
+    'germany_ext': 'Germany_canvas_career_ext.png',
+    'britain':     'Britain_canvas_career.png',
 }
 
 # Career-specific overlay filenames (USSR has _career suffix; others shared with campaign)
 CAREER_OVERLAY_FILENAME: dict[str, str] = {
-    'ussr_early': 'USSR_overlay_career.png',
-    'ussr_late':  'USSR_overlay_career.png',
-    'usa':        'usa_overlay.png',
-    'germany':    'Germany_overlay.png',
-    'britain':    'Britain_overlay.png',
+    'ussr_early':  'USSR_overlay_career.png',
+    'ussr_late':   'USSR_overlay_career.png',
+    'usa':         'usa_overlay.png',
+    'germany':     'Germany_overlay.png',
+    'germany_ext': 'Germany_overlay_ext.png',
+    'britain':     'Britain_overlay.png',
 }
 
 # Normalise "Soviet Union" / "USSR" from campaign data to internal key
@@ -135,6 +138,30 @@ _CAMPAIGN_COUNTRY_MAP: dict[str, str] = {
     'ussr':                'ussr',
     'russia':              'ussr',
 }
+
+
+# Achievement folder IDs that indicate the extended German medals are installed.
+_GERMAN_EXT_ACHIEVEMENT_IDS = ('201037', '201038')
+
+
+def has_german_ext_medals(game_dir: Path) -> bool:
+    """
+    Return True if either of the extended German medal achievement folders
+    (201037 / 201038) exists under <game_dir>/data/swf/il2/achievements/.
+
+    These folders are created by the IL-2 mod that adds grand_cross and
+    star_grand_cross.  When present, the career showcase should use the
+    wider germany_ext canvas and overlay.
+    """
+    base = game_dir / 'data' / 'swf' / 'il2' / 'achievements'
+    for aid in _GERMAN_EXT_ACHIEVEMENT_IDS:
+        if (base / aid).exists():
+            logger.debug(
+                "[medal_showcase] German ext medals detected (found %s)",
+                base / aid,
+            )
+            return True
+    return False
 
 
 # ---------------------------------------------------------------------------

@@ -537,6 +537,150 @@
       "replacements": []
     }
   },
+  "germany_ext": {
+    "medals": [
+      {
+        "name": "iron_cross_2nd_big1",
+        "x": 141,
+        "y": 134,
+        "w": 363,
+        "h": 503,
+        "replacements": []
+      },
+      {
+        "name": "iron_cross_1st_big1",
+        "x": 504,
+        "y": 306,
+        "w": 363,
+        "h": 365,
+        "replacements": []
+      },
+      {
+        "name": "knights_cross_big1",
+        "x": 838,
+        "y": 134,
+        "w": 459,
+        "h": 503,
+        "replacements": [
+          "knights_cross_oak_leaves_big1",
+          "knights_cross_swords_big1",
+          "knights_cross_diamonds_big1",
+          "knights_cross_gold_diamonds_big1"
+        ]
+      },
+      {
+        "name": "german_cross_gold_big1",
+        "x": 1262,
+        "y": 288,
+        "w": 369,
+        "h": 370,
+        "replacements": []
+      },
+      {
+        "name": "honor_clasp_big1",
+        "x": 1631,
+        "y": 186,
+        "w": 306,
+        "h": 485,
+        "replacements": []
+      },
+      {
+        "name": "pilots_badge_big1",
+        "x": 481,
+        "y": 739,
+        "w": 430,
+        "h": 362,
+        "replacements": []
+      },
+      {
+        "name": "honor_goblet_big1",
+        "x": 919,
+        "y": 671,
+        "w": 280,
+        "h": 497,
+        "replacements": []
+      },
+      {
+        "name": "fighters_bronze_big1",
+        "x": 1199,
+        "y": 869,
+        "w": 496,
+        "h": 250,
+        "replacements": [
+          "fighters_silver_big1",
+          "fighters_gold_big1",
+          "fighters_gold_clasp_big1",
+          "bombers_bronze_big1",
+          "bombers_silver_big1",
+          "bomber_gold_big1",
+          "bombers_gold_clasp_big1",
+          "attack_heavy_fighters_bronze_big1",
+          "attack_heavy_fighters_silver_big1",
+          "attack_heavy_fighters_gold_big1",
+          "attack_heavy_fighters_gold_clasp_big1",
+          "attack_bronze_big1",
+          "attack_silver_big1",
+          "attack_gold_big1",
+          "attack_gold_clasp_big1",
+          "transport_bronze_big1",
+          "transport_silver_big1",
+          "transport_gold_big1",
+          "transport_gold_clasp_big1"
+        ]
+      },
+      {
+        "name": "wound_badge_black_big1",
+        "x": 1290,
+        "y": 585,
+        "w": 314,
+        "h": 353,
+        "replacements": [
+          "wound_badge_silver_big1",
+          "wound_badge_gold_big1"
+        ]
+      },
+      {
+        "name": "eastern_front_medal_big1",
+        "x": 174,
+        "y": 671,
+        "w": 298,
+        "h": 457,
+        "replacements": []
+      },
+      {
+        "name": "kuban_shield_big1",
+        "x": 1640,
+        "y": 780,
+        "w": 288,
+        "h": 339,
+        "replacements": []
+      },
+      {
+        "name": "grand_cross_big1",
+        "x": 1978,
+        "y": 125,
+        "w": 461,
+        "h": 512,
+        "replacements": []
+      },
+      {
+        "name": "star_grand_cross_big1",
+        "x": 1978,
+        "y": 661,
+        "w": 460,
+        "h": 458,
+        "replacements": []
+      }
+    ],
+    "overlay": {
+      "name": "Germany_overlay_ext",
+      "x": 0,
+      "y": 79,
+      "w": 2481,
+      "h": 967,
+      "replacements": []
+    }
+  },
   "britain": {
     "medals": [
       {

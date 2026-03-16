@@ -34,6 +34,7 @@ from campaign_service_record.core.medal_showcase import (
     earned_showcase_names_from_events,
     award_image_to_showcase_name,
     build_showcase_data,
+    has_german_ext_medals,
     ASSET_FOLDER,
     CAREER_CANVAS_FILENAME,
     CAREER_OVERLAY_FILENAME,
@@ -1177,10 +1178,12 @@ def get_career_showcase(root_career_id: int):
 
     events = detail.get('events', [])
 
-    # --- USSR early/late ---
+    # --- USSR early/late / Germany extended ---
     if showcase_base == 'ussr':
         dates = [ev.get('date') for ev in events if ev.get('date')]
         country_key = resolve_ussr_variant(max(dates) if dates else None)
+    elif showcase_base == 'germany' and _career_game_dir and has_german_ext_medals(_career_game_dir):
+        country_key = 'germany_ext'
     else:
         country_key = showcase_base
 

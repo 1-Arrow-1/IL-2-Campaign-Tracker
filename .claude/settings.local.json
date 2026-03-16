@@ -14,7 +14,13 @@
       "WebFetch(domain:github.com)",
       "Bash(SQDIR=\"c:/Users/bleih/source/repos/IL-2-Campaign-Tracker/CampaignRanksAwards/squadrons\")",
       "Read(//c/Users/bleih/source/repos/IL-2-Campaign-Tracker/$SQDIR/**)",
-      "Bash(SQDIR=\"c:/Users/bleih/source/repos/IL-2-Campaign-Tracker/IL2_Campaign_Tracker_v2.2_ML/CampaignRanksAwards/squadrons\" find \"$SQDIR\" -name \"info.locale=*.txt\")"
+      "Bash(SQDIR=\"c:/Users/bleih/source/repos/IL-2-Campaign-Tracker/IL2_Campaign_Tracker_v2.2_ML/CampaignRanksAwards/squadrons\" find \"$SQDIR\" -name \"info.locale=*.txt\")",
+      "Bash(xargs grep:*)",
+      "Bash(find /c/Users/bleih/source/repos/IL-2-Campaign-Tracker/IL2_Campaign_Tracker_v2.2_ML/CampaignRanksAwards/Germany* -name \"*.json\" -type f)",
+      "Bash(cat /c/Users/bleih/source/repos/IL-2-Campaign-Tracker/IL2_Campaign_Tracker_v2.2_ML/CampaignRanksAwards/Germany*/iron_cross_2nd.dds.json)",
+      "Bash(for lang:*)",
+      "Bash(do echo:*)",
+      "Bash(done)"
     ]
   }
 }
