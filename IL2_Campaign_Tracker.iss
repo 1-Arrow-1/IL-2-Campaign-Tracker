@@ -1002,6 +1002,7 @@ begin
   DelTree(AppDir + '\reports', True, True, True);
   DelTree(AppDir + '\_internal', True, True, True);
   DelTree(AppDir + '\locales', True, True, True);
+  DelTree(AppDir + '\career', True, True, True);  { Career Service Record debrief cache }
   
   { Try to remove the app directory if empty (will fail if config files kept) }
   RemoveDir(AppDir);
