@@ -52,8 +52,6 @@ from campaign_service_record.career.mission_linker import MissionReportLinker
 
 logger = logging.getLogger(__name__)
 
-# Maximum events rendered per mission box (matches campaign tracker limit)
-_MAX_EVENTS = 25
 
 
 @dataclass
@@ -566,7 +564,7 @@ def _render_mission_html(data: Dict, mission_num: int, mission_date: str) -> str
     lines.append("<br>")
     lines.append("<b>FLIGHT LOG</b><br>")
 
-    for event in events[:_MAX_EVENTS]:
+    for event in events:
         time_str = event.get("time", "")
         event_type = event.get("type", event.get("event", ""))
         target = event.get("target", "")

@@ -2307,7 +2307,7 @@ class EventGenerator:
             else:
                 # In-Game mode → show Flight Log instead of Combat Results
                 html_lines.append(f"<b>{t('flightlog.flight_log')}</b><br>")
-                for event in data.get('events', [])[:25]:  # Max 25 events
+                for event in data.get('events', []):
                     time = event.get('time', '')
                     event_type = event.get('type', event.get('event', ''))
                     target = event.get('target', '')
