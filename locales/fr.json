@@ -827,7 +827,8 @@
       "edit": "Modifier",
       "ok": "OK",
       "remove_bracket": "Supprimer Plage",
-      "restore_defaults": "Restaurer les Défauts"
+      "restore_defaults": "Restaurer les Défauts",
+      "swap_award_style": "Changer le style des décorations"
     },
     "dialog": {
       "edit_bracket_label": "Plage (ex., '1-10' ou '71+'):",
@@ -867,7 +868,15 @@
       "rank_scaling_enabled": "Échelle de rang activée:",
       "rank_score": "Score",
       "rank_values_helper": "La modification des scores s'applique à tous les pays.",
-      "starting_rank_offset": "Décalage de Rang Initial"
+      "starting_rank_offset": "Décalage de Rang Initial",
+      "german_awards_helper": "Changez le style visuel des décorations allemandes entre le style Bundeswehr de 1957 (par défaut) et le style d'origine de la Seconde Guerre mondiale. Cette opération déplace les fichiers d'images dans votre répertoire d'installation IL-2.",
+      "german_awards_current": "Style actuellement actif :",
+      "german_awards_style_1957": "1957 (ère Bundeswehr)",
+      "german_awards_style_ww2": "2ème GM (original)",
+      "german_awards_style_unknown": "Inconnu",
+      "radio_use_1957": "Utiliser le style 1957",
+      "radio_use_ww2": "Utiliser le style 2ème GM",
+      "german_awards_elevation_note": "Remarque : La modification des fichiers dans le répertoire d'installation IL-2 peut nécessiter des droits d'administrateur. Une invite de contrôle d'accès s'affichera si nécessaire."
     },
     "message": {
       "campaigns_tab_disabled": "Les paramètres de campagne nécessitent campaign_mission_dates.json.\nVeuillez exécuter le Campaign Tracker au moins une fois.",
@@ -885,12 +894,21 @@
       "unsaved_changes": "Vous avez des modifications non enregistrées. Annuler?",
       "career_db_not_found": "Career database not found. Set up the Campaign Tracker first to enable career language settings.",
       "no_careers": "No careers found. Complete at least one mission in IL-2 Career mode.",
-      "warning_title": "Avertissement"
+      "warning_title": "Avertissement",
+      "german_awards_not_available": "Le changement de style des décorations allemandes n'est pas disponible. Veuillez exécuter le Campaign Tracker au moins une fois pour détecter le répertoire d'installation IL-2.",
+      "german_awards_folders_missing": "Aucun dossier alternatif de décorations allemandes trouvé (Germany - WW2 ou Germany - 1957). Le changement de style nécessite les deux dossiers de décorations dans votre installation IL-2.",
+      "german_awards_ambiguous": "Impossible de déterminer le style actuellement actif — les deux dossiers alternatifs contiennent des fichiers, ce qui est inattendu. Veuillez vérifier les dossiers de décorations manuellement :\n{path}",
+      "german_awards_swap_confirm": "Changer les décorations allemandes vers le style {style} ?\n\nCela déplacera les fichiers d'images dans votre installation IL-2.\nDes droits d'administrateur peuvent être requis.",
+      "german_awards_swap_success": "Décorations allemandes changées avec succès vers le style {style}.",
+      "german_awards_swap_failed": "Échec du changement de style :\n{error}",
+      "german_awards_uac_cancelled": "L'élévation des droits d'administrateur a été annulée. Aucune modification n'a été effectuée.",
+      "german_awards_elevation_failed": "Impossible d'obtenir les droits d'administrateur. Essayez d'exécuter le Gestionnaire de paramètres en tant qu'administrateur."
     },
     "tab": {
       "campaigns": "Campagnes",
       "career_languages": "Paramètres de langue de carrière",
       "general": "Général",
+      "german_awards": "Décorations allemandes",
       "rank_scaling": "Échelle de Rang",
       "rank_values": "Valeurs de Rang"
     },

@@ -826,7 +826,8 @@
       "edit": "Edit",
       "ok": "OK",
       "remove_bracket": "Remove Bracket",
-      "restore_defaults": "Restore Defaults"
+      "restore_defaults": "Restore Defaults",
+      "swap_award_style": "Swap Award Style"
     },
     "dialog": {
       "edit_bracket_label": "Bracket (e.g., '1-10' or '71+'):",
@@ -866,7 +867,15 @@
       "rank_scaling_enabled": "Rank scaling enabled:",
       "rank_score": "Score",
       "rank_values_helper": "Editing scores applies to all countries.",
-      "starting_rank_offset": "Starting Rank Offset"
+      "starting_rank_offset": "Starting Rank Offset",
+      "german_awards_helper": "Switch the visual style of German awards between the 1957 Bundeswehr-era default and the original WW2-era style. This swaps the award image files inside your IL-2 installation directory.",
+      "german_awards_current": "Currently active style:",
+      "german_awards_style_1957": "1957 (Bundeswehr-era)",
+      "german_awards_style_ww2": "WW2 (original wartime)",
+      "german_awards_style_unknown": "Unknown",
+      "radio_use_1957": "Use 1957 style",
+      "radio_use_ww2": "Use WW2 style",
+      "german_awards_elevation_note": "Note: Modifying files in the IL-2 installation directory may require administrator rights. You will be prompted for elevation if needed."
     },
     "message": {
       "campaigns_tab_disabled": "Campaign settings require campaign_mission_dates.json.\nPlease run the Campaign Tracker at least once.",
@@ -884,12 +893,21 @@
       "unsaved_changes": "You have unsaved changes. Discard?",
       "career_db_not_found": "Career database not found. Set up the Campaign Tracker first to enable career language settings.",
       "no_careers": "No careers found. Complete at least one mission in IL-2 Career mode.",
-      "warning_title": "Warning"
+      "warning_title": "Warning",
+      "german_awards_not_available": "German award style switching is not available. Please run the Campaign Tracker at least once to detect the IL-2 installation directory.",
+      "german_awards_folders_missing": "No alternate German award folders found (Germany - WW2 or Germany - 1957). Style switching requires both the active and alternate award folders to be present in your IL-2 installation.",
+      "german_awards_ambiguous": "Cannot determine the currently active style — both alternate folders contain files, which is unexpected. Please check the award folders manually:\n{path}",
+      "german_awards_swap_confirm": "Switch German awards to {style} style?\n\nThis will move award image files inside your IL-2 installation directory.\nAdministrator rights may be required.",
+      "german_awards_swap_success": "German awards successfully switched to {style} style.",
+      "german_awards_swap_failed": "Failed to switch award style:\n{error}",
+      "german_awards_uac_cancelled": "Administrator elevation was cancelled. No changes were made.",
+      "german_awards_elevation_failed": "Could not obtain administrator rights. Try running the Settings Manager as administrator."
     },
     "tab": {
       "campaigns": "Campaigns",
       "career_languages": "Career Language Settings",
       "general": "General",
+      "german_awards": "German Awards",
       "rank_scaling": "Rank Scaling",
       "rank_values": "Rank Values"
     },

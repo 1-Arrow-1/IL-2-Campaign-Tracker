@@ -93,8 +93,41 @@ def check_prerequisites() -> tuple[bool, list[str]]:
     return (True, [])
 
 
+def _handle_swap_german_awards(argv: list) -> int:
+    """
+    Headless handler for elevated award-style swap.
+
+    Called when the exe is relaunched with administrator rights by the
+    Settings Manager German Awards tab.  Arguments expected:
+
+        --swap-german-awards <target_style> <awards_dir>
+
+    Returns an exit code (0 = success, 1 = failure).
+    """
+    try:
+        idx = argv.index("--swap-german-awards")
+        target_style = argv[idx + 1]   # 'ww2' or '1957'
+        awards_path  = Path(argv[idx + 2])
+    except (ValueError, IndexError) as exc:
+        print(f"ERROR: malformed --swap-german-awards arguments: {exc}", flush=True)
+        return 1
+
+    from settings_manager.german_awards import perform_swap
+    try:
+        perform_swap(awards_path, target_style)
+        print(f"OK: swapped to {target_style}", flush=True)
+        return 0
+    except Exception as exc:
+        print(f"ERROR: {exc}", flush=True)
+        return 1
+
+
 def main():
     """Main entry point."""
+    # Headless elevated swap – no GUI needed
+    if "--swap-german-awards" in sys.argv:
+        sys.exit(_handle_swap_german_awards(sys.argv))
+
     # Check prerequisites
     can_start, errors = check_prerequisites()
 

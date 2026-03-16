@@ -9,11 +9,13 @@ import queue
 import re
 import sqlite3
 import subprocess
+import sys
 import threading
 import tkinter as tk
 import time
 import logging
 from datetime import datetime
+from pathlib import Path
 from tkinter import ttk, messagebox
 from copy import deepcopy
 from typing import Any, Dict, Optional, Iterable, Tuple, List
@@ -271,6 +273,13 @@ class SettingsManagerApp(tk.Tk):
         self._career_lang_editor_item: Optional[str] = None
         self._career_list_cache: List[Tuple[int, str]] = []
 
+        # German awards tab state
+        self._german_awards_var: Optional[tk.StringVar] = None
+        self._german_awards_status_var: Optional[tk.StringVar] = None
+        self._german_awards_swap_btn: Optional[ttk.Button] = None
+        self._german_awards_radio_1957: Optional[ttk.Radiobutton] = None
+        self._german_awards_radio_ww2: Optional[ttk.Radiobutton] = None
+
         # Load all data
         self._load_all_data()
         
@@ -354,6 +363,9 @@ class SettingsManagerApp(tk.Tk):
 
         # Tab 5: Career Language Settings
         self._create_career_languages_tab()
+
+        # Tab 6: German Awards style switcher
+        self._create_german_awards_tab()
 
         # Button frame
         self._create_button_bar(main_frame)
@@ -891,6 +903,265 @@ class SettingsManagerApp(tk.Tk):
         else:
             overrides[item] = stored_value
         self._populate_career_lang_tree()
+
+    # ------------------------------------------------------------------
+    # Tab 6: German Awards
+    # ------------------------------------------------------------------
+
+    def _get_german_awards_dir(self):
+        """
+        Return the CampaignRanksAwards Path for the current game_dir, or None.
+        """
+        from settings_manager.german_awards import get_awards_dir
+        game_dir = (self.mission_dates_data or {}).get('game_directory')
+        if not game_dir or not os.path.isdir(str(game_dir)):
+            return None
+        return get_awards_dir(Path(game_dir))
+
+    def _create_german_awards_tab(self) -> None:
+        """Create German Awards style-switcher tab."""
+        frame = ttk.Frame(self.notebook, padding=20)
+        self.notebook.add(frame, text=self.tr.t("tab_german_awards"))
+
+        from settings_manager.german_awards import (
+            detect_current_style, has_alternate_folders,
+            STYLE_1957, STYLE_WW2,
+        )
+
+        awards_dir = self._get_german_awards_dir()
+
+        # --- helper text -------------------------------------------------------
+        ttk.Label(
+            frame,
+            text=self.tr.t("lbl_german_awards_helper"),
+            foreground='gray',
+            wraplength=520,
+            justify=tk.LEFT,
+        ).pack(anchor=tk.W, pady=(0, 16))
+
+        # --- unavailable states ------------------------------------------------
+        if awards_dir is None:
+            ttk.Label(
+                frame,
+                text=self.tr.t("msg_german_awards_not_available"),
+                foreground='gray',
+                wraplength=520,
+                justify=tk.LEFT,
+            ).pack(pady=40)
+            return
+
+        if not has_alternate_folders(awards_dir):
+            ttk.Label(
+                frame,
+                text=self.tr.t("msg_german_awards_folders_missing"),
+                foreground='gray',
+                wraplength=520,
+                justify=tk.LEFT,
+            ).pack(pady=40)
+            return
+
+        # --- current style detection -------------------------------------------
+        current = detect_current_style(awards_dir)
+
+        # --- status row --------------------------------------------------------
+        status_row = ttk.Frame(frame)
+        status_row.pack(anchor=tk.W, pady=(0, 16))
+
+        ttk.Label(
+            status_row,
+            text=self.tr.t("lbl_german_awards_current"),
+            font=("TkDefaultFont", 9, "bold"),
+        ).pack(side=tk.LEFT)
+
+        self._german_awards_status_var = tk.StringVar()
+        ttk.Label(
+            status_row,
+            textvariable=self._german_awards_status_var,
+        ).pack(side=tk.LEFT, padx=(6, 0))
+
+        # --- radio buttons -----------------------------------------------------
+        self._german_awards_var = tk.StringVar(
+            value=STYLE_WW2 if current == STYLE_1957 else STYLE_1957
+        )
+
+        radio_frame = ttk.LabelFrame(frame, padding=12)
+        radio_frame.pack(anchor=tk.W, pady=(0, 12))
+
+        self._german_awards_radio_1957 = ttk.Radiobutton(
+            radio_frame,
+            text=self.tr.t("lbl_radio_use_1957"),
+            variable=self._german_awards_var,
+            value=STYLE_1957,
+        )
+        self._german_awards_radio_1957.pack(anchor=tk.W, pady=4)
+
+        self._german_awards_radio_ww2 = ttk.Radiobutton(
+            radio_frame,
+            text=self.tr.t("lbl_radio_use_ww2"),
+            variable=self._german_awards_var,
+            value=STYLE_WW2,
+        )
+        self._german_awards_radio_ww2.pack(anchor=tk.W, pady=4)
+
+        # --- elevation note ----------------------------------------------------
+        ttk.Label(
+            frame,
+            text=self.tr.t("lbl_german_awards_elevation_note"),
+            foreground='gray',
+            wraplength=520,
+            justify=tk.LEFT,
+            font=("TkDefaultFont", 8),
+        ).pack(anchor=tk.W, pady=(0, 12))
+
+        # --- swap button -------------------------------------------------------
+        self._german_awards_swap_btn = ttk.Button(
+            frame,
+            text=self.tr.t("btn_swap_award_style"),
+            command=self._on_swap_german_awards,
+        )
+        self._german_awards_swap_btn.pack(anchor=tk.W)
+
+        # Apply initial state to widgets
+        self._refresh_german_awards_ui(current)
+
+    def _refresh_german_awards_ui(self, current_style: Optional[str]) -> None:
+        """Update status label and radio enabled/disabled states."""
+        from settings_manager.german_awards import STYLE_1957, STYLE_WW2
+
+        if self._german_awards_status_var is None:
+            return
+
+        if current_style == STYLE_1957:
+            label = self.tr.t("lbl_german_awards_style_1957")
+        elif current_style == STYLE_WW2:
+            label = self.tr.t("lbl_german_awards_style_ww2")
+        else:
+            label = self.tr.t("lbl_german_awards_style_unknown")
+
+        self._german_awards_status_var.set(label)
+
+        # Disable the radio for the currently active style; enable the other
+        if self._german_awards_radio_1957 and self._german_awards_radio_ww2:
+            if current_style == STYLE_1957:
+                self._german_awards_radio_1957.config(state='disabled')
+                self._german_awards_radio_ww2.config(state='normal')
+                self._german_awards_var.set(STYLE_WW2)
+            elif current_style == STYLE_WW2:
+                self._german_awards_radio_ww2.config(state='disabled')
+                self._german_awards_radio_1957.config(state='normal')
+                self._german_awards_var.set(STYLE_1957)
+            else:
+                # Ambiguous – disable both and the swap button
+                self._german_awards_radio_1957.config(state='disabled')
+                self._german_awards_radio_ww2.config(state='disabled')
+                if self._german_awards_swap_btn:
+                    self._german_awards_swap_btn.config(state='disabled')
+
+    def _on_swap_german_awards(self) -> None:
+        """Handle the Swap Award Style button."""
+        import ctypes
+        import tempfile
+        from settings_manager.german_awards import (
+            detect_current_style, perform_swap, STYLE_1957, STYLE_WW2,
+        )
+
+        awards_dir = self._get_german_awards_dir()
+        if awards_dir is None:
+            return
+
+        target = self._german_awards_var.get() if self._german_awards_var else None
+        if target not in (STYLE_1957, STYLE_WW2):
+            return
+
+        style_label = (
+            self.tr.t("lbl_german_awards_style_1957")
+            if target == STYLE_1957
+            else self.tr.t("lbl_german_awards_style_ww2")
+        )
+
+        confirmed = messagebox.askyesno(
+            self.tr.t("msg_confirm_title"),
+            self.tr.t("msg_german_awards_swap_confirm", style=style_label),
+            parent=self,
+        )
+        if not confirmed:
+            return
+
+        # --- check elevation ---------------------------------------------------
+        try:
+            already_admin = bool(ctypes.windll.shell32.IsUserAnAdmin())
+        except Exception:
+            already_admin = False
+
+        if already_admin:
+            # Run directly in-process
+            try:
+                perform_swap(awards_dir, target)
+                new_style = detect_current_style(awards_dir)
+                self._refresh_german_awards_ui(new_style)
+                messagebox.showinfo(
+                    self.tr.t("msg_confirm_title"),
+                    self.tr.t("msg_german_awards_swap_success", style=style_label),
+                    parent=self,
+                )
+            except Exception as exc:
+                messagebox.showerror(
+                    self.tr.t("msg_error_title"),
+                    self.tr.t("msg_german_awards_swap_failed", error=str(exc)),
+                    parent=self,
+                )
+            return
+
+        # --- elevation required: relaunch exe with swap argument ---------------
+        try:
+            with tempfile.NamedTemporaryFile(
+                prefix="il2_award_swap_", suffix=".log",
+                delete=False, mode='w',
+            ) as lf:
+                log_path = lf.name
+        except Exception:
+            log_path = str(Path(sys.executable).parent / "_award_swap.log")
+
+        success, exit_code, err = _run_elevated_windows(
+            exe_path=sys.executable,
+            args=["--swap-german-awards", target, str(awards_dir)],
+            working_dir=str(Path(sys.executable).parent),
+            log_path=log_path,
+            timeout_seconds=60,
+        )
+
+        if not success and err == "UAC_CANCELLED":
+            messagebox.showwarning(
+                self.tr.t("msg_warning_title"),
+                self.tr.t("msg_german_awards_uac_cancelled"),
+                parent=self,
+            )
+            return
+
+        if not success or exit_code != 0:
+            # Try to read any error output from the log file
+            detail = ""
+            try:
+                with open(log_path, encoding="utf-8", errors="replace") as lf:
+                    detail = lf.read().strip()
+            except Exception:
+                pass
+            messagebox.showerror(
+                self.tr.t("msg_error_title"),
+                self.tr.t("msg_german_awards_swap_failed",
+                           error=detail or self.tr.t("msg_german_awards_elevation_failed")),
+                parent=self,
+            )
+            return
+
+        # Swap succeeded – refresh the UI to reflect the new state
+        new_style = detect_current_style(awards_dir)
+        self._refresh_german_awards_ui(new_style)
+        messagebox.showinfo(
+            self.tr.t("msg_confirm_title"),
+            self.tr.t("msg_german_awards_swap_success", style=style_label),
+            parent=self,
+        )
 
     def _create_button_bar(self, parent) -> None:
         """Create bottom button bar."""

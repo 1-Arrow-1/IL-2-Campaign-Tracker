@@ -826,7 +826,8 @@
       "edit": "编辑",
       "ok": "确定",
       "remove_bracket": "删除区间",
-      "restore_defaults": "恢复默认"
+      "restore_defaults": "恢复默认",
+      "swap_award_style": "切换勋章样式"
     },
     "dialog": {
       "edit_bracket_label": "区间（例如 '1-10' 或 '71+'）：",
@@ -866,7 +867,15 @@
       "rank_scaling_enabled": "启用军衔缩放：",
       "rank_score": "分数",
       "rank_values_helper": "编辑分数会应用到所有国家。",
-      "starting_rank_offset": "起始军衔偏移"
+      "starting_rank_offset": "起始军衔偏移",
+      "german_awards_helper": "在默认的1957年联邦国防军风格与原始二战风格之间切换德国勋章的视觉样式。此操作将移动您IL-2安装目录中的勋章图片文件。",
+      "german_awards_current": "当前激活样式：",
+      "german_awards_style_1957": "1957年（联邦国防军时代）",
+      "german_awards_style_ww2": "二战（原始风格）",
+      "german_awards_style_unknown": "未知",
+      "radio_use_1957": "使用1957年样式",
+      "radio_use_ww2": "使用二战样式",
+      "german_awards_elevation_note": "注意：修改IL-2安装目录中的文件可能需要管理员权限。如有需要，将提示您进行权限提升。"
     },
     "message": {
       "campaigns_tab_disabled": "战役设置需要 campaign_mission_dates.json。\n请至少运行一次 Campaign Tracker。",
@@ -884,12 +893,21 @@
       "unsaved_changes": "有未保存的更改。是否放弃？",
       "career_db_not_found": "未找到职业数据库。请先设置战役追踪器以启用职业语言设置。",
       "no_careers": "未找到职业。请在IL-2职业模式中至少完成一次任务。",
-      "warning_title": "警告"
+      "warning_title": "警告",
+      "german_awards_not_available": "德国勋章样式切换不可用。请至少运行一次Campaign Tracker以检测IL-2安装目录。",
+      "german_awards_folders_missing": "未找到备用德国勋章文件夹（Germany - WW2 或 Germany - 1957）。样式切换需要IL-2安装中同时存在主动文件夹和备用文件夹。",
+      "german_awards_ambiguous": "无法确定当前激活的样式——两个备用文件夹均包含文件，这是意外情况。请手动检查勋章文件夹：\n{path}",
+      "german_awards_swap_confirm": "将德国勋章切换为{style}样式？\n\n这将移动IL-2安装目录中的图片文件。\n可能需要管理员权限。",
+      "german_awards_swap_success": "德国勋章已成功切换为{style}样式。",
+      "german_awards_swap_failed": "切换勋章样式失败：\n{error}",
+      "german_awards_uac_cancelled": "管理员权限提升已取消。未做任何更改。",
+      "german_awards_elevation_failed": "无法获取管理员权限。请尝试以管理员身份运行设置管理器。"
     },
     "tab": {
       "campaigns": "战役",
       "career_languages": "职业语言设置",
       "general": "通用",
+      "german_awards": "德国勋章",
       "rank_scaling": "军衔缩放",
       "rank_values": "军衔数值"
     },

@@ -826,7 +826,8 @@
       "edit": "Bearbeiten",
       "ok": "OK",
       "remove_bracket": "Bereich entfernen",
-      "restore_defaults": "Standards wiederherstellen"
+      "restore_defaults": "Standards wiederherstellen",
+      "swap_award_style": "Auszeichnungsstil wechseln"
     },
     "dialog": {
       "edit_bracket_label": "Bereich (z.B. '1-10' oder '71+'):",
@@ -866,7 +867,15 @@
       "rank_scaling_enabled": "Rang-Skalierung aktiviert:",
       "rank_score": "Punkte",
       "rank_values_helper": "Bearbeitete Punkte gelten für alle Länder.",
-      "starting_rank_offset": "Start-Rang Offset"
+      "starting_rank_offset": "Start-Rang Offset",
+      "german_awards_helper": "Wechsle den visuellen Stil der deutschen Auszeichnungen zwischen dem Bundeswehr-Standard von 1957 und dem originalen Stil aus dem 2. Weltkrieg. Diese Einstellung verschiebt die Auszeichnungsbilder in deinem IL-2-Installationsverzeichnis.",
+      "german_awards_current": "Aktuell aktiver Stil:",
+      "german_awards_style_1957": "1957 (Bundeswehr-Ära)",
+      "german_awards_style_ww2": "2. Weltkrieg (Original)",
+      "german_awards_style_unknown": "Unbekannt",
+      "radio_use_1957": "1957-Stil verwenden",
+      "radio_use_ww2": "2. Weltkrieg-Stil verwenden",
+      "german_awards_elevation_note": "Hinweis: Das Ändern von Dateien im IL-2-Installationsverzeichnis erfordert möglicherweise Administratorrechte. Bei Bedarf wird eine UAC-Aufforderung angezeigt."
     },
     "message": {
       "campaigns_tab_disabled": "Kampagnen-Einstellungen erfordern campaign_mission_dates.json.\nBitte führe den Campaign Tracker mindestens einmal aus.",
@@ -884,12 +893,21 @@
       "unsaved_changes": "Ungespeicherte Änderungen. Verwerfen?",
       "career_db_not_found": "Karrieredatenbank nicht gefunden. Richten Sie zuerst den Campaign Tracker ein, um Karriere-Spracheinstellungen zu aktivieren.",
       "no_careers": "Keine Karrieren gefunden. Absolvieren Sie mindestens eine Mission im IL-2-Karrieremodus.",
-      "warning_title": "Warnung"
+      "warning_title": "Warnung",
+      "german_awards_not_available": "Der Wechsel des deutschen Auszeichnungsstils ist nicht verfügbar. Bitte führe den Campaign Tracker mindestens einmal aus, um das IL-2-Installationsverzeichnis zu erkennen.",
+      "german_awards_folders_missing": "Keine alternativen deutschen Auszeichnungsordner gefunden (Germany - WW2 oder Germany - 1957). Der Stilwechsel erfordert sowohl den aktiven als auch den alternativen Auszeichnungsordner in deiner IL-2-Installation.",
+      "german_awards_ambiguous": "Der aktuell aktive Stil konnte nicht ermittelt werden — beide Alternativordner enthalten Dateien, was unerwartet ist. Bitte überprüfe die Auszeichnungsordner manuell:\n{path}",
+      "german_awards_swap_confirm": "Deutsche Auszeichnungen auf {style} wechseln?\n\nDies verschiebt Auszeichnungsbilder in deiner IL-2-Installation.\nAdministratorrechte können erforderlich sein.",
+      "german_awards_swap_success": "Deutsche Auszeichnungen erfolgreich auf {style} gewechselt.",
+      "german_awards_swap_failed": "Wechsel des Auszeichnungsstils fehlgeschlagen:\n{error}",
+      "german_awards_uac_cancelled": "Die Administratorrechte-Anfrage wurde abgebrochen. Es wurden keine Änderungen vorgenommen.",
+      "german_awards_elevation_failed": "Administratorrechte konnten nicht erlangt werden. Versuche, den Einstellungsmanager als Administrator auszuführen."
     },
     "tab": {
       "campaigns": "Kampagnen",
       "career_languages": "Karriere-Spracheinstellungen",
       "general": "Allgemein",
+      "german_awards": "Deutsche Auszeichnungen",
       "rank_scaling": "Rang-Skalierung",
       "rank_values": "Rang-Werte"
     },
