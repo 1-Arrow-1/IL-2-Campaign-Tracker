@@ -455,6 +455,23 @@ class MissionDebriefParser:
                         if self.verbose:
                             log_message(logger, f"  Pilot separation detected at {ts} (T:{t})")
 
+            # SECTION B.4: AType:16 is authoritative pilot-bot ground contact after bailout.
+            # Use it to update/override touchdown position when it matches the player's pilot bot.
+            elif "AType:16" in ln:
+                if self.stats.pilot_separation_time:
+                    botid = self._i(ln, r"BOTID:(-?\d+)")
+                    if botid == self.stats.player_pid:
+                        pos_match = re.search(r"POS\((-?[\d.]+),(-?[\d.]+),(-?[\d.]+)\)", ln)
+                        if pos_match:
+                            x = float(pos_match.group(1))
+                            y = float(pos_match.group(2))
+                            z = float(pos_match.group(3))
+                            # Override touchdown position with the authoritative landing coords
+                            self.stats._pilot_touchdown_time = self.stats._pilot_touchdown_time or t
+                            self.stats._pilot_touchdown_pos = (x, y, z)
+                            if self.verbose:
+                                log_message(logger, f"  [AType:16] Pilot bot landing confirmed at T:{t} pos=({x:.0f},{z:.0f})")
+
             # SECTION B.3: AType:7 MUST NOT be used as landing/crash/bailout trigger.
             # It may be recognized as a delimiter/segment boundary, but must not drive status.
             # We only log it for debugging if verbose.
@@ -607,16 +624,16 @@ class MissionDebriefParser:
 
             # SECTION E: Map bailout outcome based on territory and touchdown
             if touchdown_observed:
-                # Pilot touched down (post-bailout AType:6 exists)
-                if territory == "friendly":
+                # Pilot touched down (post-bailout AType:6 or AType:16 exists).
+                # The pilot is confirmed alive on the ground.  Territory ambiguity
+                # (no-man's-land between influence polygons) does NOT make someone MIA.
+                if territory == "enemy":
+                    self.stats.final_state = "MIA (Captured)"
+                else:  # friendly OR unknown — pilot landed, treat as survived
                     if self.stats.wounded:
                         self.stats.final_state = "Bailout (Survived, Wounded)"
                     else:
                         self.stats.final_state = "Bailout (Survived)"
-                elif territory == "enemy":
-                    self.stats.final_state = "MIA (Captured)"
-                else:  # unknown
-                    self.stats.final_state = "MIA (Unknown)"
             else:
                 # Mission ended mid-descent (no post-bailout AType:6)
                 if territory == "friendly":
