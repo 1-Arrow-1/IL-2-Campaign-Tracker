@@ -674,8 +674,8 @@
     ],
     "overlay": {
       "name": "Germany_overlay_ext",
-      "x": 0,
-      "y": 79,
+      "x": 75,
+      "y": 0,
       "w": 2481,
       "h": 967,
       "replacements": []
