@@ -1259,6 +1259,22 @@
 .squadron-table td.sq-col-name {
     text-align: left;
     white-space: nowrap;
+    font-size: 1.0rem;
+}
+
+.squadron-table th.sq-th-sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.squadron-table th.sq-th-sortable:hover {
+    background-color: rgba(203, 185, 153, 0.25);
+}
+
+.sq-sort-indicator {
+    font-size: 0.7rem;
+    margin-left: 0.2rem;
+    opacity: 0.7;
 }
 
 .squadron-table tbody tr:last-child td {

@@ -1011,16 +1011,18 @@ class CareerAggregator:
             if code and self._award_index:
                 asset = self._award_index.get(code, 'normal')
                 if asset:
-                    member["highest_award_code"]      = code
-                    member["highest_award_name_key"]  = f"progression.awards.{asset.name_key}"
-                    member["highest_award_image_url"] = (
+                    member["highest_award_code"]        = code
+                    member["highest_award_precedence"]  = _COMBAT_AWARD_PRECEDENCE.get(code)
+                    member["highest_award_name_key"]    = f"progression.awards.{asset.name_key}"
+                    member["highest_award_image_url"]   = (
                         f"/api/career_assets/CampaignRanksAwards"
                         f"/{asset.subfolder}/{asset.filename}"
                     )
                     continue
-            member["highest_award_code"]      = None
-            member["highest_award_name_key"]  = None
-            member["highest_award_image_url"] = None
+            member["highest_award_code"]        = None
+            member["highest_award_precedence"]  = None
+            member["highest_award_name_key"]    = None
+            member["highest_award_image_url"]   = None
 
         return members, totals
 
