@@ -1078,6 +1078,12 @@ const DetailPage = {
                 if (notesH3Career) notesH3Career.style.display = 'none';
                 // Render database-driven incidences instead of user notes
                 this.renderOtherIncidences(campaign.other_incidences || []);
+                // Render squadron statistics below the 3-column layout
+                this.renderSquadronStats(
+                    campaign.squadron_members || [],
+                    campaign.squadron_totals || {},
+                    campaign.squadron_short_name || ''
+                );
             } else {
                 // Campaign mode: restore row visibility and load from personal_data API
                 const birthPlaceRow = this.elements.personalDisplayBirthPlace?.closest('.personal-data-row');
@@ -1102,6 +1108,9 @@ const DetailPage = {
                     ?.querySelector('h3');
                 if (notesH3Campaign) notesH3Campaign.style.display = '';
                 await this.loadPersonalData(campaign.name);
+                // Hide squadron stats section for campaign mode
+                const sqSection = document.getElementById('squadron-stats-section');
+                if (sqSection) sqSection.style.display = 'none';
             }
 
             await this.loadPilotPhoto(campaign.name);
@@ -2432,5 +2441,272 @@ const DetailPage = {
         const div = document.createElement('div');
         div.textContent = str;
         return div.innerHTML;
+    },
+
+    /**
+     * Render the squadron statistics section (career mode only).
+     * Shows an aggregated totals row and a per-pilot roster table.
+     *
+     * @param {Array}  members       - squadron_members array from API
+     * @param {Object} totals        - squadron_totals dict from API
+     * @param {string} squadronName  - short squadron name for the heading
+     */
+    renderSquadronStats(members, totals, squadronName) {
+        const section = document.getElementById('squadron-stats-section');
+        const content = document.getElementById('squadron-stats-content');
+        if (!section || !content) return;
+
+        content.innerHTML = '';
+
+        if (!members || members.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = '';
+
+        // Update heading with squadron name
+        const heading = section.querySelector('h3');
+        if (heading) {
+            const title = i18n.t('ui.career.squadron_statistics');
+            heading.textContent = squadronName ? `${title} — ${squadronName}` : title;
+        }
+
+        const killCols = [
+            { key: 'kills_air',       icon: 'icon_aircraft.png',   i18nKey: 'web.combat.category.aircraft'  },
+            { key: 'kills_vehicles',  icon: 'icon_vehicles.png',   i18nKey: 'web.combat.category.vehicles'  },
+            { key: 'kills_railroad',  icon: 'icon_railroad.png',   i18nKey: 'web.combat.category.railroad'  },
+            { key: 'kills_armaments', icon: 'icon_armaments.png',  i18nKey: 'web.combat.category.armaments' },
+            { key: 'kills_buildings', icon: 'icon_buildings.png',  i18nKey: 'web.combat.category.buildings' },
+            { key: 'kills_marine',    icon: 'icon_marine.png',     i18nKey: 'web.combat.category.marine'    },
+        ];
+
+        // ---- Totals bar ----
+        const totalsDiv = document.createElement('div');
+        totalsDiv.className = 'squadron-totals';
+        killCols.forEach(col => {
+            const cell = document.createElement('div');
+            cell.className = 'squadron-totals__cell';
+
+            const img = document.createElement('img');
+            img.src = this.getGameAssetUrl(`CampaignRanksAwards/Misc/${col.icon}`);
+            img.alt = i18n.t(col.i18nKey);
+            img.className = 'squadron-totals__icon';
+            cell.appendChild(img);
+
+            const count = document.createElement('div');
+            count.className = 'squadron-totals__count';
+            count.textContent = totals[col.key] ?? 0;
+            cell.appendChild(count);
+
+            const label = document.createElement('div');
+            label.className = 'squadron-totals__label';
+            label.textContent = i18n.t(col.i18nKey);
+            cell.appendChild(label);
+
+            totalsDiv.appendChild(cell);
+        });
+        content.appendChild(totalsDiv);
+
+        // ---- Pilot roster table ----
+        const wrapper = document.createElement('div');
+        wrapper.className = 'squadron-table-wrapper';
+
+        const table = document.createElement('table');
+        table.className = 'squadron-table';
+
+        // Header
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+
+        // Rank
+        const thRank = document.createElement('th');
+        thRank.textContent = i18n.t('ui.career.squadron_col_rank');
+        headerRow.appendChild(thRank);
+
+        // Name
+        const thName = document.createElement('th');
+        thName.className = 'sq-col-name';
+        thName.textContent = i18n.t('ui.career.squadron_col_name');
+        headerRow.appendChild(thName);
+
+        // Highest Combat Award
+        const thAward = document.createElement('th');
+        thAward.textContent = i18n.t('ui.career.squadron_col_highest_award');
+        headerRow.appendChild(thAward);
+
+        // State
+        const thState = document.createElement('th');
+        const stateImg = document.createElement('img');
+        stateImg.src = this.getGameAssetUrl('CampaignRanksAwards/Misc/state.png');
+        stateImg.alt = i18n.t('ui.career.squadron_col_state');
+        stateImg.title = i18n.t('ui.career.squadron_col_state');
+        thState.appendChild(stateImg);
+        headerRow.appendChild(thState);
+
+        // Kill columns
+        killCols.forEach(col => {
+            const th = document.createElement('th');
+            const img = document.createElement('img');
+            img.src = this.getGameAssetUrl(`CampaignRanksAwards/Misc/${col.icon}`);
+            img.alt = i18n.t(col.i18nKey);
+            img.title = i18n.t(col.i18nKey);
+            th.appendChild(img);
+            headerRow.appendChild(th);
+        });
+
+        // Good sorties
+        const thGood = document.createElement('th');
+        const goodImg = document.createElement('img');
+        goodImg.src = this.getGameAssetUrl('CampaignRanksAwards/Misc/goodsorties.png');
+        goodImg.alt = i18n.t('ui.career.squadron_col_good_sorties');
+        goodImg.title = i18n.t('ui.career.squadron_col_good_sorties');
+        thGood.appendChild(goodImg);
+        headerRow.appendChild(thGood);
+
+        // Sorties
+        const thSorties = document.createElement('th');
+        const sortiesImg = document.createElement('img');
+        sortiesImg.src = this.getGameAssetUrl('CampaignRanksAwards/Misc/sorties.png');
+        sortiesImg.alt = i18n.t('ui.career.squadron_col_sorties');
+        sortiesImg.title = i18n.t('ui.career.squadron_col_sorties');
+        thSorties.appendChild(sortiesImg);
+        headerRow.appendChild(thSorties);
+
+        // Flight time
+        const thFt = document.createElement('th');
+        const ftImg = document.createElement('img');
+        ftImg.src = this.getGameAssetUrl('CampaignRanksAwards/Misc/flighttime.png');
+        ftImg.alt = i18n.t('ui.career.squadron_col_flight_time');
+        ftImg.title = i18n.t('ui.career.squadron_col_flight_time');
+        thFt.appendChild(ftImg);
+        headerRow.appendChild(thFt);
+
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        // State icon map
+        const stateIconMap = {
+            1: 'squadroncommander.png',
+            8: 'squadrondeputycommander.png',
+            2: 'kia.png',
+            4: 'wia.png',
+        };
+        const stateTitleMap = {
+            1: i18n.t('ui.career.role.commander'),
+            8: i18n.t('ui.career.role.deputy_commander'),
+            2: i18n.t('ui.career.role.kia'),
+            4: i18n.t('ui.career.role.wia'),
+        };
+
+        // Body
+        const tbody = document.createElement('tbody');
+        members.forEach(member => {
+            const tr = document.createElement('tr');
+            // Highlight the player's own row — careerName matches root_career_id as string;
+            // we can't directly match so we skip row highlighting (requires pilot_id in response)
+
+            // Rank image
+            const tdRank = document.createElement('td');
+            if (member.rank_image_url) {
+                const rankImg = document.createElement('img');
+                rankImg.src = member.rank_image_url;
+                rankImg.alt = member.rank_display || '';
+                rankImg.title = member.rank_display || '';
+                rankImg.className = 'sq-rank-img';
+                rankImg.style.width = '';
+                // Scale to ~26% (35% × 0.75) once loaded
+                rankImg.addEventListener('load', () => {
+                    if (rankImg.naturalWidth) {
+                        rankImg.style.width  = Math.round(rankImg.naturalWidth  * 0.2625) + 'px';
+                        rankImg.style.height = Math.round(rankImg.naturalHeight * 0.2625) + 'px';
+                    }
+                });
+                tdRank.appendChild(rankImg);
+            }
+            tr.appendChild(tdRank);
+
+            // Name
+            const tdName = document.createElement('td');
+            tdName.className = 'sq-col-name';
+            tdName.textContent = member.name || '—';
+            tr.appendChild(tdName);
+
+            // Highest Combat Award
+            const tdAward = document.createElement('td');
+            if (member.highest_award_image_url) {
+                const awardImg = document.createElement('img');
+                awardImg.src = member.highest_award_image_url;
+                const awardName = member.highest_award_name_key
+                    ? i18n.t(member.highest_award_name_key)
+                    : (member.highest_award_code || '');
+                awardImg.alt   = awardName;
+                awardImg.title = awardName;
+                awardImg.className = 'sq-award-img';
+                awardImg.addEventListener('load', () => {
+                    if (awardImg.naturalWidth) {
+                        awardImg.style.width  = Math.round(awardImg.naturalWidth  * 0.5) + 'px';
+                        awardImg.style.height = Math.round(awardImg.naturalHeight * 0.5) + 'px';
+                    }
+                });
+                tdAward.appendChild(awardImg);
+            }
+            tr.appendChild(tdAward);
+
+            // State
+            const tdState = document.createElement('td');
+            const stateIcon = stateIconMap[member.state];
+            if (stateIcon) {
+                const sImg = document.createElement('img');
+                sImg.src = this.getGameAssetUrl(`CampaignRanksAwards/Misc/${stateIcon}`);
+                sImg.alt = '';
+                sImg.title = stateTitleMap[member.state] || String(member.state);
+                sImg.className = 'sq-state-img';
+                tdState.appendChild(sImg);
+            }
+            tr.appendChild(tdState);
+
+            // Kill columns
+            killCols.forEach(col => {
+                const td = document.createElement('td');
+                const val = member[col.key] ?? 0;
+                td.textContent = val;
+                if (val === 0) td.className = 'sq-zero';
+                tr.appendChild(td);
+            });
+
+            // Good sorties
+            const tdGood = document.createElement('td');
+            const gv = member.sorties_good ?? 0;
+            tdGood.textContent = gv;
+            if (gv === 0) tdGood.className = 'sq-zero';
+            tr.appendChild(tdGood);
+
+            // Sorties
+            const tdSorties = document.createElement('td');
+            const sv = member.sorties ?? 0;
+            tdSorties.textContent = sv;
+            if (sv === 0) tdSorties.className = 'sq-zero';
+            tr.appendChild(tdSorties);
+
+            // Flight time (seconds → "Xh Ym")
+            const tdFt = document.createElement('td');
+            const secs = member.flight_time_sec ?? 0;
+            if (secs > 0) {
+                const h = Math.floor(secs / 3600);
+                const m = Math.floor((secs % 3600) / 60);
+                tdFt.textContent = m > 0 ? `${h}h ${m}m` : `${h}h`;
+            } else {
+                tdFt.textContent = '0h';
+                tdFt.className = 'sq-zero';
+            }
+            tr.appendChild(tdFt);
+
+            tbody.appendChild(tr);
+        });
+
+        table.appendChild(tbody);
+        wrapper.appendChild(table);
+        content.appendChild(wrapper);
     }
 };

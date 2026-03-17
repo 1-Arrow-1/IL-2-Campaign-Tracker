@@ -1027,8 +1027,18 @@
       "theatre_chain_label": "Chaîne de théâtres",
       "role": {
         "commander": "Commandant d'escadrille",
-        "deputy_commander": "Commandant d'escadrille adjoint"
-      }
+        "deputy_commander": "Commandant d'escadrille adjoint",
+        "kia": "Tué au combat",
+        "wia": "Blessé au combat"
+      },
+      "squadron_statistics": "Statistiques d'escadrille",
+      "squadron_col_rank": "Grade",
+      "squadron_col_name": "Nom",
+      "squadron_col_state": "État",
+      "squadron_col_good_sorties": "Missions réussies",
+      "squadron_col_sorties": "Missions",
+      "squadron_col_flight_time": "Temps de vol",
+      "squadron_col_highest_award": "Plus haute distinction de combat"
     },
     "progress": {
       "applying_language": "Application de la langue…",

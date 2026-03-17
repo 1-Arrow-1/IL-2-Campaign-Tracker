@@ -178,6 +178,57 @@ class CareerDatabase:
         )
         return cursor.fetchone()
 
+    def get_award_events_for_pilots(self, pilot_ids: List[int]) -> List[sqlite3.Row]:
+        """
+        Return all type-8 (award) events for the given pilot IDs.
+
+        No isDeleted filter — get_events_for_pilots (the timeline query) also
+        omits it, and award events may carry isDeleted != 0 in some db versions.
+
+        Returns only pilotId and tpar2 (award code) columns.
+        """
+        if not pilot_ids:
+            return []
+        conn = self._connect()
+        id_ph = ",".join("?" * len(pilot_ids))
+        cursor = conn.execute(
+            f"SELECT pilotId, tpar2 FROM event"
+            f" WHERE pilotId IN ({id_ph}) AND type = 8",
+            pilot_ids,
+        )
+        return cursor.fetchall()
+
+    def get_all_pilot_ids_for_squadron(self, pilot_squadron_id: int) -> List[int]:
+        """
+        Return ALL pilot.id values ever associated with a given squadronId.
+
+        A pilot who transferred theatres has one pilot row per theatre, all
+        sharing the same squadronId.  Awards may be recorded under any of those
+        rows, so we collect them all for a complete award lookup.
+        """
+        conn = self._connect()
+        cursor = conn.execute(
+            "SELECT id FROM pilot WHERE squadronId = ?",
+            [pilot_squadron_id],
+        )
+        return [row[0] for row in cursor.fetchall()]
+
+    def get_pilot_ids_by_name(self, name: str, last_name: str) -> List[int]:
+        """
+        Return all pilot.id values that share the same (name, lastName).
+
+        Used to collect a pilot's historical IDs across theatres: each time a
+        pilot enters a new theatre a fresh pilot row is created with a new id
+        but the same name.  Awards are recorded under the old row's id, so we
+        need every id in the name group for a complete award lookup.
+        """
+        conn = self._connect()
+        cursor = conn.execute(
+            "SELECT id FROM pilot WHERE name = ? AND lastName = ?",
+            [name, last_name],
+        )
+        return [row[0] for row in cursor.fetchall()]
+
     def get_squadron_by_id(self, squadron_id: int) -> Optional[sqlite3.Row]:
         """
         Return the squadron row for the given id.
@@ -412,6 +463,30 @@ class CareerDatabase:
             [career_id, config_id],
         )
         return cursor.fetchone()
+
+    def get_squadron_members(self, pilot_squadron_id: int) -> List[sqlite3.Row]:
+        """
+        Return pilot rows for all members of a squadron.
+
+        Uses pilot.squadronId directly — the simplest and most reliable key.
+        All pilots (player and AI) in the same squadron share the same
+        pilot.squadronId value; no career-chain traversal is needed.
+
+        Returns rows ordered by pilot.rankId DESC, then air kills DESC.
+        """
+        conn = self._connect()
+        cursor = conn.execute(
+            """
+            SELECT *
+            FROM pilot
+            WHERE squadronId = ?
+            ORDER BY rankId DESC,
+                     (COALESCE(killLightPlane, 0) + COALESCE(killMediumPlane, 0)
+                      + COALESCE(killHeavyPlane, 0) + COALESCE(killStaticPlane, 0)) DESC
+            """,
+            [pilot_squadron_id],
+        )
+        return cursor.fetchall()
 
     def get_missions_for_career(
         self, career_id: int, player_id: int

@@ -337,6 +337,11 @@
 /* Right Column: Debriefings */
 .column-right {
     min-height: 400px;
+    height: fit-content;
+    position: sticky;
+    top: calc(60px + 2rem);
+    max-height: calc(100vh - 60px - 4rem);
+    overflow-y: auto;
 }
 
 /* ============================================================================
@@ -1149,4 +1154,159 @@
     font-family: 'Courier New', Courier, monospace;
     font-size: 1rem;
     color: var(--accent-dark, #5a4022);
+}
+
+/* ============================================================================
+   Squadron Statistics Section
+   ============================================================================ */
+
+.squadron-stats-section {
+    background-color: rgba(248, 242, 224, 0.96);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--border);
+    margin-top: 2rem;
+}
+
+.squadron-stats-section h3 {
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #cbb999;
+    color: var(--ink);
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+/* Totals summary row (6 kill-category icons + counts) */
+.squadron-totals {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #ddd0b8;
+}
+
+.squadron-totals__cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    min-width: 100px;
+}
+
+.squadron-totals__icon {
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+}
+
+.squadron-totals__count {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--ink-strong, #2f1f12);
+}
+
+.squadron-totals__label {
+    font-size: 0.9rem;
+    color: var(--ink-muted, #7a6040);
+    text-align: center;
+    line-height: 1.2;
+}
+
+/* Pilot roster table */
+.squadron-table-wrapper {
+    overflow-x: auto;
+}
+
+.squadron-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    color: var(--ink, #3b2a18);
+}
+
+.squadron-table th {
+    padding: 0.3rem 0.5rem;
+    text-align: center;
+    border-bottom: 2px solid #cbb999;
+    white-space: nowrap;
+    vertical-align: bottom;
+}
+
+.squadron-table th.sq-col-name {
+    text-align: left;
+}
+
+.squadron-table th img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+
+.squadron-table td {
+    padding: 0.3rem 0.5rem;
+    text-align: center;
+    border-bottom: 1px solid #ecdfc8;
+    vertical-align: middle;
+}
+
+.squadron-table td.sq-col-name {
+    text-align: left;
+    white-space: nowrap;
+}
+
+.squadron-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.squadron-table tbody tr:hover td {
+    background-color: rgba(203, 185, 153, 0.18);
+}
+
+/* Rank image cell */
+.sq-rank-img {
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    image-rendering: auto;
+}
+
+/* Highest combat award image */
+.sq-award-img {
+    display: block;
+    margin: 0 auto;
+    height: auto;
+    image-rendering: auto;
+}
+
+/* State icon */
+.sq-state-img {
+    width: 27px;
+    height: 27px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+
+/* Zero-value cells are dimmed */
+.squadron-table td.sq-zero {
+    color: var(--ink-muted, #b0998a);
+}
+
+/* Player's own row highlighted */
+.squadron-table tbody tr.sq-player td {
+    background-color: rgba(180, 155, 90, 0.13);
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .squadron-totals {
+        gap: 1rem;
+    }
 }

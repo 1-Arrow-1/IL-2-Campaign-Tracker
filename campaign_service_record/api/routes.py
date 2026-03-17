@@ -176,6 +176,11 @@ def init_career(
     try:
         db = CareerDatabase(db_path)
 
+        # One-time DB maintenance: reconcile AI pilot kill-plane rollup counters.
+        # Runs before any data is served so the squadron table is always correct.
+        from campaign_service_record.career.db_maintenance import fix_pilot_kill_plane_totals
+        fix_pilot_kill_plane_totals(db_path)
+
         # Resolve reports_dir: prefer explicit arg, fall back to FlightLogs in game_dir,
         # then db.game_dir (derived from cp.db path), then CWD as last resort.
         resolved_reports_dir = reports_dir

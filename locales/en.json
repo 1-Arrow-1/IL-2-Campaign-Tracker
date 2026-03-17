@@ -1030,8 +1030,18 @@
       "no_careers_found": "No career data found.",
       "role": {
         "commander": "Commander",
-        "deputy_commander": "Deputy Commander"
-      }
+        "deputy_commander": "Deputy Commander",
+        "kia": "KIA",
+        "wia": "Wounded in Action"
+      },
+      "squadron_statistics": "Squadron Statistics",
+      "squadron_col_rank": "Rank",
+      "squadron_col_name": "Name",
+      "squadron_col_state": "State",
+      "squadron_col_good_sorties": "Good Sorties",
+      "squadron_col_sorties": "Sorties",
+      "squadron_col_flight_time": "Flight Time",
+      "squadron_col_highest_award": "Highest Combat Award"
     },
     "progress": {
       "applying_language": "Applying language…",

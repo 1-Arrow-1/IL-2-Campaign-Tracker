@@ -1026,8 +1026,18 @@
       "theatre_chain_label": "Łańcuch teatrów",
       "role": {
         "commander": "Dowódca eskadry",
-        "deputy_commander": "Zastępca dowódcy eskadry"
-      }
+        "deputy_commander": "Zastępca dowódcy eskadry",
+        "kia": "Poległy",
+        "wia": "Ranny w akcji"
+      },
+      "squadron_statistics": "Statystyki eskadry",
+      "squadron_col_rank": "Stopień",
+      "squadron_col_name": "Nazwisko",
+      "squadron_col_state": "Stan",
+      "squadron_col_good_sorties": "Udane loty",
+      "squadron_col_sorties": "Loty",
+      "squadron_col_flight_time": "Czas lotu",
+      "squadron_col_highest_award": "Najwyższe odznaczenie bojowe"
     },
     "progress": {
       "applying_language": "Stosowanie języka…",

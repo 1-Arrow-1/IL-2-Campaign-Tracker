@@ -1026,8 +1026,18 @@
       "theatre_chain_label": "战区链",
       "role": {
         "commander": "中队长",
-        "deputy_commander": "副中队长"
-      }
+        "deputy_commander": "副中队长",
+        "kia": "阵亡",
+        "wia": "负伤"
+      },
+      "squadron_statistics": "中队统计",
+      "squadron_col_rank": "军衔",
+      "squadron_col_name": "姓名",
+      "squadron_col_state": "状态",
+      "squadron_col_good_sorties": "成功出击",
+      "squadron_col_sorties": "出击次数",
+      "squadron_col_flight_time": "飞行时间",
+      "squadron_col_highest_award": "最高作战勋章"
     },
     "progress": {
       "applying_language": "正在应用语言…",

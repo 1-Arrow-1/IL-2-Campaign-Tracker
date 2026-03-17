@@ -34,6 +34,7 @@ hiddenimports = [
     'campaign_service_record.utils.pilot_photo',
     'campaign_service_record.utils.i18n',
     'campaign_service_record.utils.image_utils',
+    'campaign_service_record.career.db_maintenance',
     'PIL',
     'PIL.Image',
     'PIL.DdsImagePlugin',

@@ -331,6 +331,12 @@ class CareerAggregator:
                 key=lambda e: e["sort_key"],
             )
 
+        pilot_squadron_id = self._safe_int_from_row(current_pilot_row, "squadronId")
+        squadron_members, squadron_totals = self._build_squadron_members(
+            pilot_squadron_id, career.country,
+            player_all_pilot_ids=career.all_pilot_ids,
+        )
+
         return {
             # 'name' mirrors campaign convention so existing frontend code works
             "name": str(career.root_career_id),
@@ -352,6 +358,8 @@ class CareerAggregator:
             "squadron_short_name": squadron_short_name or "",
             "pilot_role": pilot_role,
             "other_incidences": other_incidences,
+            "squadron_members": squadron_members,
+            "squadron_totals": squadron_totals,
         }
 
     # ------------------------------------------------------------------
@@ -820,6 +828,201 @@ class CareerAggregator:
         name = self._squadron_short_name(config_id, locale)
         logger.debug("Squadron configId=%d -> %r", config_id, name)
         return name
+
+    # Combat award precedence: award_code (str) -> rank (int, lower = higher honour).
+    # Only combat/gallantry awards are listed; all others are ignored when resolving
+    # the highest award for a pilot.
+    _COMBAT_AWARD_PRECEDENCE: Dict[str, int] = {
+        # Germany
+        "201038": 1,  "201037": 2,  "201036": 3,  "201008": 4,  "201007": 5,
+        "201006": 6,  "201005": 7,  "201004": 10, "201035": 12, "201003": 14,
+        "201002": 16, "201001": 18,
+        # Britain
+        "102020": 1,  "102019": 2,  "102012": 4,  "102011": 5,  "102010": 6,
+        "102009": 7,  "102008": 10, "102007": 11, "102006": 12, "102005": 18,
+        "102004": 19, "102003": 20,
+        # USA
+        "103026": 1,  "103025": 3,  "103024": 4,  "103023": 5,  "103022": 6,
+        "103021": 7,  "103020": 9,  "103019": 10, "103018": 11, "103017": 13,
+        "103016": 15, "103015": 16, "103014": 17, "103013": 18, "103012": 19,
+        "103011": 20, "103010": 22, "103009": 23, "103008": 24, "103007": 26,
+        "103006": 27, "103005": 28, "103004": 29, "103003": 30, "103002": 31,
+        # USSR
+        "101021": 1,  "101022": 1,  "101023": 3,  "101024": 3,  "101019": 5,
+        "101020": 5,  "101017": 6,  "101018": 6,  "101015": 7,  "101016": 7,
+        "101013": 9,  "101014": 9,  "101011": 11, "101012": 11, "101009": 13,
+        "101010": 13, "101007": 15, "101008": 15, "101006": 17, "101001": 19,
+        "101002": 19, "101003": 21, "101004": 21, "101005": 23,
+    }
+
+    # Kill-bucket definitions for squadron member rows (subset of _KILL_BUCKETS)
+    _SQ_KILL_BUCKETS = [
+        ("kills_air",       ["killLightPlane", "killMediumPlane", "killHeavyPlane", "killStaticPlane"]),
+        ("kills_vehicles",  ["killTruck", "killCar", "killLightTank", "killMediumTank", "killHeavyTank"]),
+        ("kills_railroad",  ["killTrainLocomotive", "killTrainVagon", "killRailwayStationFacility"]),
+        ("kills_armaments", ["killMachineGun", "killFieldGun", "killHowitzer", "killNavalGun",
+                             "killAirDefence", "killRocketLauncher", "killSearchlight"]),
+        ("kills_buildings", ["killTownBuilding", "killRuralYard", "killFactoryBuilding",
+                             "killAirfieldFacility", "killBridge"]),
+        ("kills_marine",    ["killLightShip", "killLargeCargoShip", "killSubmarine", "killDestroyerShip"]),
+    ]
+
+    def _build_squadron_members(
+        self, squadron_id: int, country: Optional[str],
+        player_all_pilot_ids: Optional[List[int]] = None,
+    ):
+        """
+        Build squadron_members list and squadron_totals dict for the detail response.
+
+        Returns (members: List[Dict], totals: Dict).
+        Empty lists/dicts are returned when squadron_id is 0 or the query fails.
+        """
+        if not squadron_id:
+            return [], {}
+
+        try:
+            rows = self._db.get_squadron_members(squadron_id)
+        except Exception as exc:
+            logger.warning("get_squadron_members(%d) failed: %s", squadron_id, exc)
+            return [], {}
+
+        country_int = _COUNTRY_CODE_MAP.get((country or '').lower(), 0)
+        subfolder = _rank_subfolder(country_int, None)  # date not needed for preview lookup
+
+        totals: Dict = {key: 0 for key, _ in self._SQ_KILL_BUCKETS}
+        members = []
+
+        for row in rows:
+            member: Dict = {}
+
+            # --- Name ---
+            first = (row["name"] or "").strip()
+            last  = (row["lastName"] or "").strip()
+            member["name"] = f"{first} {last}".strip() if first or last else "—"
+            # Keep raw parts for cross-theatre ID lookup (popped in second pass)
+            member["_first_name"] = first
+            member["_last_name"]  = last
+
+            # --- Rank ---
+            rank_id = row["rankId"] if "rankId" in row.keys() else None
+            member["rank_id"] = int(rank_id) if rank_id is not None else -1
+            rank_image_url = None
+            rank_display = ""
+            if rank_id is not None and subfolder:
+                rank_name = self._rank_resolver.resolve(country_int, int(rank_id))
+                if rank_name:
+                    rank_display = rank_name.display
+                    asset = self._rank_index.get(subfolder, rank_name.english, 'normal')
+                    # USSR cross-subfolder fallback
+                    if asset is None and subfolder in ('USSR/early', 'USSR/late'):
+                        alt = 'USSR/late' if subfolder == 'USSR/early' else 'USSR/early'
+                        asset = self._rank_index.get(alt, rank_name.english, 'normal')
+                    if asset:
+                        rank_image_url = (
+                            f"/api/career_assets/CampaignRanksAwards"
+                            f"/{asset.subfolder}/{asset.filename}"
+                        )
+            member["rank_display"] = rank_display
+            member["rank_image_url"] = rank_image_url
+
+            # --- State ---
+            member["state"] = int(row["state"]) if "state" in row.keys() and row["state"] is not None else 0
+
+            # --- Kill buckets ---
+            for key, columns in self._SQ_KILL_BUCKETS:
+                total = sum(self._safe_int_from_row(row, col) for col in columns)
+                member[key] = total
+                totals[key] += total
+
+            # --- Sorties / flight time ---
+            member["sorties"]      = self._safe_int_from_row(row, "sorties")
+            member["sorties_good"] = self._safe_int_from_row(row, "goodSorties")
+            # flightTime is stored in seconds in cp.db
+            member["flight_time_sec"] = self._safe_int_from_row(row, "flightTime")
+
+            # Store pilot id for award lookup (resolved in second pass below)
+            member["_pilot_id"] = self._safe_int_from_row(row, "id")
+
+            members.append(member)
+
+        # --- Highest combat award (batch query, second pass) ---
+        # Each theatre creates a NEW pilot row (new id) for each pilot, while
+        # award events remain under the old row's id.  We resolve all historical
+        # ids for every squadron member via name lookup, then build a map:
+        #   historical_id → canonical_current_id
+        # so every award is credited to the right row regardless of which
+        # theatre it was earned in.
+        #
+        # player_all_pilot_ids is merged as an extra safety net: the player's
+        # name lookup already covers all their theatre rows, but passing the
+        # explicit list costs nothing and guards against unlikely name clashes.
+        player_ids_set = set(player_all_pilot_ids or [])
+        historical_to_canonical: Dict[int, int] = {}
+
+        for member in members:
+            canonical_id = member["_pilot_id"]
+            if not canonical_id:
+                continue
+            fname = member.get("_first_name", "")
+            lname = member.get("_last_name", "")
+            try:
+                hist_ids = self._db.get_pilot_ids_by_name(fname, lname)
+            except Exception as exc:
+                logger.warning("get_pilot_ids_by_name(%s %s) failed: %s", fname, lname, exc)
+                hist_ids = [canonical_id]
+            for hid in hist_ids:
+                historical_to_canonical[hid] = canonical_id
+
+        # Also map every explicit player historical ID to the player's current row
+        # (handles theatres where the player changed country / name would differ)
+        member_ids = {m["_pilot_id"] for m in members if m["_pilot_id"]}
+        player_canonical_id: Optional[int] = next(iter(player_ids_set & member_ids), None)
+        if player_canonical_id:
+            for hid in player_ids_set:
+                historical_to_canonical.setdefault(hid, player_canonical_id)
+
+        try:
+            award_rows = self._db.get_award_events_for_pilots(list(historical_to_canonical))
+        except Exception as exc:
+            logger.warning("get_award_events_for_pilots failed: %s", exc)
+            award_rows = []
+
+        # Build best-award-code per canonical pilot_id
+        best_award: Dict[int, str] = {}
+        for ar in award_rows:
+            raw_pid = int(ar["pilotId"])
+            code    = str(ar["tpar2"]) if ar["tpar2"] else ""
+            if not code:
+                continue
+            rank = self._COMBAT_AWARD_PRECEDENCE.get(code)
+            if rank is None:
+                continue  # not a combat award
+            pid = historical_to_canonical.get(raw_pid, raw_pid)
+            existing = best_award.get(pid)
+            if existing is None or rank < self._COMBAT_AWARD_PRECEDENCE.get(existing, 9999):
+                best_award[pid] = code
+
+        # Resolve image URL for each pilot's best award, then clean up temp fields
+        for member in members:
+            member.pop("_first_name", None)
+            member.pop("_last_name", None)
+            pid  = member.pop("_pilot_id", None)
+            code = best_award.get(pid) if pid else None
+            if code and self._award_index:
+                asset = self._award_index.get(code, 'normal')
+                if asset:
+                    member["highest_award_code"]      = code
+                    member["highest_award_name_key"]  = f"progression.awards.{asset.name_key}"
+                    member["highest_award_image_url"] = (
+                        f"/api/career_assets/CampaignRanksAwards"
+                        f"/{asset.subfolder}/{asset.filename}"
+                    )
+                    continue
+            member["highest_award_code"]      = None
+            member["highest_award_name_key"]  = None
+            member["highest_award_image_url"] = None
+
+        return members, totals
 
     def _load_other_incidences(self, career: "VirtualPilotCareer") -> List[Dict]:
         """

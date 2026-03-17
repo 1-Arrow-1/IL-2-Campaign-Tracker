@@ -1026,8 +1026,18 @@
       "theatre_chain_label": "Cadena de teatros",
       "role": {
         "commander": "Comandante de escuadrilla",
-        "deputy_commander": "Comandante adjunto de escuadrilla"
-      }
+        "deputy_commander": "Comandante adjunto de escuadrilla",
+        "kia": "Caído en combate",
+        "wia": "Herido en acción"
+      },
+      "squadron_statistics": "Estadísticas del escuadrón",
+      "squadron_col_rank": "Rango",
+      "squadron_col_name": "Nombre",
+      "squadron_col_state": "Estado",
+      "squadron_col_good_sorties": "Salidas exitosas",
+      "squadron_col_sorties": "Salidas",
+      "squadron_col_flight_time": "Tiempo de vuelo",
+      "squadron_col_highest_award": "Mayor distinción de combate"
     },
     "progress": {
       "applying_language": "Aplicando idioma…",

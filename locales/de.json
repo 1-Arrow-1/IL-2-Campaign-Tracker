@@ -1026,8 +1026,18 @@
       "theatre_chain_label": "Theaterkette",
       "role": {
         "commander": "Staffelkapitän",
-        "deputy_commander": "Stellv. Staffelkapitän"
-      }
+        "deputy_commander": "Stellv. Staffelkapitän",
+        "kia": "Gefallen",
+        "wia": "Verwundet"
+      },
+      "squadron_statistics": "Staffel-Statistik",
+      "squadron_col_rank": "Rang",
+      "squadron_col_name": "Name",
+      "squadron_col_state": "Status",
+      "squadron_col_good_sorties": "Erfolgreiche Einsätze",
+      "squadron_col_sorties": "Einsätze",
+      "squadron_col_flight_time": "Flugzeit",
+      "squadron_col_highest_award": "Höchste Kampfauszeichnung"
     },
     "progress": {
       "applying_language": "Sprache wird angewendet…",

@@ -20,7 +20,9 @@
       "Bash(cat /c/Users/bleih/source/repos/IL-2-Campaign-Tracker/IL2_Campaign_Tracker_v2.2_ML/CampaignRanksAwards/Germany*/iron_cross_2nd.dds.json)",
       "Bash(for lang:*)",
       "Bash(do echo:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(find /c/Users/bleih/source/repos/IL-2-Campaign-Tracker -name *.html -type f)",
+      "Bash(find c:/Users/bleih/source/repos/IL-2-Campaign-Tracker/campaign_service_record -name *.html)"
     ]
   }
 }
