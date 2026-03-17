@@ -1012,7 +1012,7 @@ class CareerAggregator:
                 asset = self._award_index.get(code, 'normal')
                 if asset:
                     member["highest_award_code"]        = code
-                    member["highest_award_precedence"]  = _COMBAT_AWARD_PRECEDENCE.get(code)
+                    member["highest_award_precedence"]  = self._COMBAT_AWARD_PRECEDENCE.get(code)
                     member["highest_award_name_key"]    = f"progression.awards.{asset.name_key}"
                     member["highest_award_image_url"]   = (
                         f"/api/career_assets/CampaignRanksAwards"
