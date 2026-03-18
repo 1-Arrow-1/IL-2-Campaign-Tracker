@@ -1225,7 +1225,7 @@
 .squadron-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.9rem;
+    font-size: 1.0rem;
     color: var(--ink, #3b2a18);
 }
 
