@@ -2559,6 +2559,7 @@ const DetailPage = {
             1: 'squadroncommander.png',
             8: 'squadrondeputycommander.png',
             2: 'kia.png',
+            3: 'mia.png',
             4: 'wia.png',
             5: 'character_left.png',
         };
@@ -2566,6 +2567,7 @@ const DetailPage = {
             1: i18n.t('ui.career.role.commander'),
             8: i18n.t('ui.career.role.deputy_commander'),
             2: i18n.t('ui.career.role.kia'),
+            3: i18n.t('ui.career.role.mia'),
             4: i18n.t('ui.career.role.wia'),
             5: i18n.t('ui.career.role.transferred'),
         };

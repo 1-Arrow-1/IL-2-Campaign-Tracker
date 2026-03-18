@@ -1032,6 +1032,7 @@
         "commander": "Commander",
         "deputy_commander": "Deputy Commander",
         "kia": "KIA",
+        "mia": "MIA",
         "wia": "Wounded in Action",
         "transferred": "Pilot transferred to another squadron"
       },

@@ -1029,6 +1029,7 @@
         "commander": "Commandant d'escadrille",
         "deputy_commander": "Commandant d'escadrille adjoint",
         "kia": "Tué au combat",
+        "mia": "Porté disparu",
         "wia": "Blessé au combat",
         "transferred": "Pilote muté dans un autre escadron"
       },
