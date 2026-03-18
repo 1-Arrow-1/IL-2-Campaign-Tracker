@@ -313,12 +313,14 @@ class CareerDebriefingManager:
                     current_mtime = Path(report_path_str).stat().st_mtime
                     if abs(current_mtime - cached_mtime) < 1.0:
                         # Guard: check whether the player has re-flown this
-                        # mission since it was cached.  If a newer .mlg exists
-                        # in FlightLogs we must re-link to pick up the latest
-                        # report rather than returning the stale failed result.
+                        # mission since it was cached. A newer report may fall
+                        # outside the original insDate search window, so after
+                        # the cheap window probe we also scan any newer .mlg
+                        # files for an exact header+duration match.
                         cached_mlg_ts = cached.get("mlg_timestamp")
                         if cached_mlg_ts and ins_date is not None:
                             newest_ts = self._linker.get_newest_candidate_timestamp(ins_date)
+                            newer_report = None
                             if newest_ts and newest_ts > cached_mlg_ts:
                                 logger.debug(
                                     "Newer .mlg detected for mission %d "
@@ -326,6 +328,18 @@ class CareerDebriefingManager:
                                     mission_id, newest_ts, cached_mlg_ts,
                                 )
                                 # Fall through to re-link below
+                            else:
+                                newer_report = self._linker.find_newer_career_report(
+                                    mission_row, cached_mlg_ts, self._mlg2txt_path
+                                )
+                                if newer_report is not None:
+                                    logger.debug(
+                                        "Newer matching report detected for mission %d "
+                                        "outside insDate window: %s",
+                                        mission_id, newer_report.name,
+                                    )
+                            if newer_report is not None:
+                                pass  # Fall through to re-link below
                             else:
                                 return _MissionResult(
                                     mission_id=mission_id,

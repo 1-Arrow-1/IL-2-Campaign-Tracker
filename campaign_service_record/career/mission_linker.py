@@ -203,8 +203,58 @@ class MissionReportLinker:
         if not candidates:
             return None
         # candidates is already sorted newest-first by mtime
-        m = re.search(r'\((\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\)', candidates[0].name)
-        return m.group(1) if m else None
+        return self._extract_filename_timestamp(candidates[0])
+
+    def find_newer_career_report(
+        self,
+        mission_row: sqlite3.Row,
+        cached_mlg_timestamp: str,
+        mlg2txt_path: Optional[Path] = None,
+    ) -> Optional[Path]:
+        """
+        Search for a newer matching career report than the cached one.
+
+        This is used only for cache invalidation when the player re-flies an
+        old mission days later. In that case the new missionReport filename can
+        fall outside the original mission.insDate ±1 day search window, so the
+        usual candidate probe does not see it.
+
+        The scan is intentionally restricted to .mlg files whose filename
+        timestamp is lexically greater than ``cached_mlg_timestamp``. Those
+        candidates are then matched using the same header + duration rules as
+        the normal career linker.
+        """
+        try:
+            start_time = self._parse_datetime(mission_row["startTime"])
+            end_time_raw = mission_row["endTime"]
+        except (KeyError, TypeError) as exc:
+            logger.warning("Cannot search for newer career report: missing fields: %s", exc)
+            return None
+
+        if start_time is None or not cached_mlg_timestamp:
+            return None
+
+        newer_candidates: List[Path] = []
+        for mlg_path in sorted(
+            self._reports_dir.rglob("missionReport(*.mlg"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        ):
+            ts = self._extract_filename_timestamp(mlg_path)
+            if ts is None or ts <= cached_mlg_timestamp:
+                continue
+            newer_candidates.append(mlg_path)
+
+        if not newer_candidates:
+            return None
+
+        logger.debug(
+            "Scanning %d newer .mlg file(s) beyond cached timestamp %s for startTime=%s",
+            len(newer_candidates), cached_mlg_timestamp, start_time.isoformat(),
+        )
+        return self._match_from_candidates(
+            newer_candidates, start_time, end_time_raw, mlg2txt_path
+        )
 
     # ------------------------------------------------------------------
     # Shared utility
@@ -282,6 +332,12 @@ class MissionReportLinker:
                     seen.add(p)
                     results.append(p)
         return sorted(results, key=lambda p: p.stat().st_mtime, reverse=True)
+
+    @staticmethod
+    def _extract_filename_timestamp(path: Path) -> Optional[str]:
+        """Extract the missionReport filename timestamp, e.g. 2025-01-01_11-00-00."""
+        m = re.search(r'\((\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\)', path.name)
+        return m.group(1) if m else None
 
     def _ensure_txt(
         self, mlg_path: Path, mlg2txt_path: Optional[Path]
