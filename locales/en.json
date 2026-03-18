@@ -1032,7 +1032,8 @@
         "commander": "Commander",
         "deputy_commander": "Deputy Commander",
         "kia": "KIA",
-        "wia": "Wounded in Action"
+        "wia": "Wounded in Action",
+        "transferred": "Pilot transferred to another squadron"
       },
       "squadron_statistics": "Squadron Statistics",
       "squadron_col_rank": "Rank",

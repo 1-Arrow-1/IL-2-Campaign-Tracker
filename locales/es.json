@@ -1028,7 +1028,8 @@
         "commander": "Comandante de escuadrilla",
         "deputy_commander": "Comandante adjunto de escuadrilla",
         "kia": "Caído en combate",
-        "wia": "Herido en acción"
+        "wia": "Herido en acción",
+        "transferred": "Piloto transferido a otro escuadrón"
       },
       "squadron_statistics": "Estadísticas del escuadrón",
       "squadron_col_rank": "Rango",

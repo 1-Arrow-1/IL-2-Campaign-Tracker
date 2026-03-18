@@ -1029,7 +1029,8 @@
         "commander": "Commandant d'escadrille",
         "deputy_commander": "Commandant d'escadrille adjoint",
         "kia": "Tué au combat",
-        "wia": "Blessé au combat"
+        "wia": "Blessé au combat",
+        "transferred": "Pilote muté dans un autre escadron"
       },
       "squadron_statistics": "Statistiques d'escadrille",
       "squadron_col_rank": "Grade",

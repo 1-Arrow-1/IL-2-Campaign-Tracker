@@ -1028,7 +1028,8 @@
         "commander": "中队长",
         "deputy_commander": "副中队长",
         "kia": "阵亡",
-        "wia": "负伤"
+        "wia": "负伤",
+        "transferred": "飞行员已调往另一中队"
       },
       "squadron_statistics": "中队统计",
       "squadron_col_rank": "军衔",

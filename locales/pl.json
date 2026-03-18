@@ -1028,7 +1028,8 @@
         "commander": "Dowódca eskadry",
         "deputy_commander": "Zastępca dowódcy eskadry",
         "kia": "Poległy",
-        "wia": "Ranny w akcji"
+        "wia": "Ranny w akcji",
+        "transferred": "Pilot przeniesiony do innej eskadry"
       },
       "squadron_statistics": "Statystyki eskadry",
       "squadron_col_rank": "Stopień",
