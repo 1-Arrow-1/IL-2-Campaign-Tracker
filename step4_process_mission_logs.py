@@ -279,7 +279,12 @@ class MissionLogProcessor:
             log_message(logger, f"Warning: Could not import il2_mission_debrief: {e}")
             self.debrief_parser = None
     
-    def get_all_debriefings(self, campaign_name: str, completed_missions: List[str]) -> Dict:
+    def get_all_debriefings(
+        self,
+        campaign_name: str,
+        completed_missions: List[str],
+        expected_plane_kills_by_mission: Optional[Dict[str, int]] = None,
+    ) -> Dict:
         """
         Get debriefing data for all completed missions in a campaign
         
@@ -310,7 +315,17 @@ class MissionLogProcessor:
         for mission_id in completed_missions:
             try:
                 log_message(logger, f"  Looking for debriefing: {campaign_name}/{mission_id}")
-                debriefing = self.get_mission_debriefing(campaign_name, mission_id)
+                expected_plane_kills = 0
+                if expected_plane_kills_by_mission:
+                    try:
+                        expected_plane_kills = int(expected_plane_kills_by_mission.get(mission_id, 0) or 0)
+                    except (TypeError, ValueError):
+                        expected_plane_kills = 0
+                debriefing = self.get_mission_debriefing(
+                    campaign_name,
+                    mission_id,
+                    expected_plane_kills=expected_plane_kills,
+                )
                 if debriefing:
                     debriefings[mission_id] = debriefing
                     log_message(logger, f"    ✓ Debriefing loaded for Mission {mission_id}")
@@ -325,7 +340,12 @@ class MissionLogProcessor:
         
         return debriefings
     
-    def get_mission_debriefing(self, campaign_name: str, mission_id: str) -> Optional[Dict]:
+    def get_mission_debriefing(
+        self,
+        campaign_name: str,
+        mission_id: str,
+        expected_plane_kills: int = 0,
+    ) -> Optional[Dict]:
         """
         Get debriefing data for a single mission
         
@@ -357,7 +377,7 @@ class MissionLogProcessor:
                 return None
             
             # Step 2: Parse .txt to .events.json
-            json_file = self._txt_to_json(txt_file)
+            json_file = self._txt_to_json(txt_file, expected_plane_kills=expected_plane_kills)
             if not json_file or not json_file.exists():
                 if self.verbose:
                     log_message(logger, f"  Failed to parse .txt to .json")
@@ -602,7 +622,7 @@ class MissionLogProcessor:
                 traceback.print_exc()
             return None
     
-    def _txt_to_json(self, txt_file: Path) -> Optional[Path]:
+    def _txt_to_json(self, txt_file: Path, expected_plane_kills: int = 0) -> Optional[Path]:
         """
         Parse .txt to .events.json using il2_mission_debrief
         
@@ -631,6 +651,8 @@ class MissionLogProcessor:
             # Create parser and process
             parser = self.debrief_parser.MissionDebriefParser(str(txt_file))
             stats = parser.parse()
+            if expected_plane_kills > 0:
+                parser.reconcile_plane_kills(expected_plane_kills)
             parser.to_json(str(json_file))
             
             if json_file.exists():

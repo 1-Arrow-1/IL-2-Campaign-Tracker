@@ -12,12 +12,16 @@ Differences from CampaignAggregator:
     - Rank and award names use placeholder strings until translation tables are
       provided (rank_<id> and award_<code>). When translation tables arrive,
       only _map_event() needs updating.
-    - flight_time and aircraft_usage are derived from parsed missionReport files
-      via CareerDebriefingManager; empty dicts are returned when no reports are linked.
+    - flight_time / landing outcomes come from parsed missionReport files via
+      CareerDebriefingManager when available.
+    - aircraft_usage is derived from cp.db mission/sortie rows so the career
+      detail page matches the authoritative database totals.
 """
 
+from collections import Counter
 import json
 import logging
+import re
 from datetime import date, datetime
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -49,6 +53,28 @@ _COUNTRY_CODE_MAP: Dict[str, int] = {
     'britain': 102,
     'usa':     103,
     'ussr':    101,
+}
+
+_OPERATIONAL_AWARD_BRANCH_PATTERNS = (
+    ("fighters", re.compile(r"^(front_flying_clasp_for_fighters_in_|fighters_)")),
+    ("bombers", re.compile(r"^(front_flying_clasp_for_bombers_in_|bombers_|bomber_)")),
+    ("transport", re.compile(r"^(front_flying_clasp_for_transport_in_|transport_)")),
+    ("attack_heavy_fighters", re.compile(r"^(attack_badge_for_destroyers_in_|attack_heavy_fighters_)")),
+    ("attack", re.compile(r"^(ground_attack_badge_in_|attack_)")),
+)
+
+_OPERATIONAL_AWARD_GRADE_PATTERNS = (
+    ("gold_with_pendant", re.compile(r"(gold_with_pendant|gold_clasp)$")),
+    ("gold", re.compile(r"gold$")),
+    ("silver", re.compile(r"silver$")),
+    ("bronze", re.compile(r"bronze$")),
+)
+
+_OPERATIONAL_AWARD_GRADE_RANK = {
+    "bronze": 1,
+    "silver": 2,
+    "gold": 3,
+    "gold_with_pendant": 4,
 }
 
 
@@ -260,6 +286,9 @@ class CareerAggregator:
                 continue
             if ev is not None:
                 mapped_events.append(ev)
+        mapped_events, award_repeat_incidences, showcase_awards = self._normalize_award_events(
+            mapped_events
+        )
 
         # Build combat results from the most current pilot row (all-theatre totals)
         combat_results = self._stats.build_combat_results(current_pilot_row)
@@ -291,21 +320,25 @@ class CareerAggregator:
 
         debriefings_html = ""
         mission_stats_override: Optional[Dict] = None
-        aircraft_usage_override: Optional[Dict] = None
+        air_kills_by_type_override: Optional[Dict] = None
+        debrief_results = None
         if debrief_manager is not None:
             try:
                 debriefings_html = debrief_manager.build_debriefings_html()
                 mission_stats_override = debrief_manager.get_mission_stats()
-                aircraft_usage_override = debrief_manager.get_aircraft_usage()
+                air_kills_by_type_override = debrief_manager.get_air_kills_by_type()
+                debrief_results = debrief_manager._get_results()
             except Exception as exc:
                 logger.warning("CareerDebriefingManager build failed: %s", exc)
 
         first_pilot_row = self._db.get_pilot_by_id(career.pilot_id)
+        aircraft_usage = self._calculate_aircraft_usage_from_db(career, debrief_results)
         summary = self._build_summary(
             career, mapped_events, sorties, combat_results, mission_stats_override,
             first_pilot_row=first_pilot_row,
             last_pilot_row=current_pilot_row,
-            aircraft_usage_override=aircraft_usage_override,
+            aircraft_usage_override=aircraft_usage,
+            air_kills_by_type_override=air_kills_by_type_override,
         )
 
         # Resolve current squadron short name via career chain's current squadronId
@@ -325,16 +358,24 @@ class CareerAggregator:
 
         # Build other incidences (recovery, commander, transfer) and merge bonus duplicates
         other_incidences = self._load_other_incidences(career)
-        if bonus_incidences:
+        if bonus_incidences or award_repeat_incidences:
             other_incidences = sorted(
-                other_incidences + bonus_incidences,
+                other_incidences + bonus_incidences + award_repeat_incidences,
                 key=lambda e: e["sort_key"],
             )
 
-        pilot_squadron_id = self._safe_int_from_row(current_pilot_row, "squadronId")
-        squadron_members, squadron_totals = self._build_squadron_members(
-            pilot_squadron_id, career.country,
-            player_all_pilot_ids=career.all_pilot_ids,
+        squadron_records = self._build_squadron_records(career)
+        current_squadron_record = next(
+            (record for record in squadron_records if record.get("is_current")),
+            None,
+        )
+        squadron_members = (
+            current_squadron_record.get("members", [])
+            if current_squadron_record else []
+        )
+        squadron_totals = (
+            current_squadron_record.get("totals", {})
+            if current_squadron_record else {}
         )
 
         return {
@@ -346,6 +387,7 @@ class CareerAggregator:
             "country": career.country or "unknown",
             "missions_completed": len(sorties),
             "events": mapped_events,
+            "showcase_awards": showcase_awards,
             "debriefings_html": debriefings_html,
             "debriefings_pending": debriefings_pending,
             "effective_locale": get_career_effective_locale(str(career.root_career_id)),
@@ -360,6 +402,7 @@ class CareerAggregator:
             "other_incidences": other_incidences,
             "squadron_members": squadron_members,
             "squadron_totals": squadron_totals,
+            "squadron_records": squadron_records,
         }
 
     # ------------------------------------------------------------------
@@ -547,6 +590,75 @@ class CareerAggregator:
         logger.debug("Skipping unrecognised event type %d", event_type)
         return None
 
+    def _normalize_award_events(self, events: List[Dict]) -> tuple[List[Dict], List[Dict], List[Dict]]:
+        """Normalize repeated operational clasp/badge awards for timeline and showcase use."""
+        normalized_events: List[Dict] = []
+        incidences: List[Dict] = []
+        showcase_awards: List[Dict] = []
+        highest_branch_grade: Dict[str, int] = {}
+        latest_operational_award: Optional[Dict] = None
+
+        for event in events:
+            if event.get("type") != "award":
+                normalized_events.append(event)
+                continue
+
+            classification = self._classify_operational_award(event)
+            if classification is None:
+                normalized_events.append(event)
+                showcase_awards.append(event)
+                continue
+
+            branch = classification["branch"]
+            grade_rank = _OPERATIONAL_AWARD_GRADE_RANK[classification["grade"]]
+            latest_operational_award = event
+
+            if grade_rank <= highest_branch_grade.get(branch, 0):
+                incidences.append({
+                    "type": "AWARD_REPEAT",
+                    "date": event.get("date"),
+                    "name": event.get("name") or event.get("award_code") or "Unknown",
+                    "sort_key": event.get("date") or "9999-99-99",
+                })
+                continue
+
+            highest_branch_grade[branch] = grade_rank
+            normalized_events.append(event)
+            showcase_awards.append(event)
+
+        if latest_operational_award is not None:
+            showcase_awards = [
+                ev for ev in showcase_awards
+                if self._classify_operational_award(ev) is None
+            ]
+            showcase_awards.append(latest_operational_award)
+
+        return normalized_events, incidences, showcase_awards
+
+    def _classify_operational_award(self, event: Dict) -> Optional[Dict[str, str]]:
+        """Return branch/grade for German operational clasp and badge awards, else None."""
+        name_key = str(event.get("name") or "").strip().lower()
+        if not name_key:
+            return None
+
+        branch = None
+        for candidate_branch, pattern in _OPERATIONAL_AWARD_BRANCH_PATTERNS:
+            if pattern.search(name_key):
+                branch = candidate_branch
+                break
+        if branch is None:
+            return None
+
+        grade = None
+        for candidate_grade, pattern in _OPERATIONAL_AWARD_GRADE_PATTERNS:
+            if pattern.search(name_key):
+                grade = candidate_grade
+                break
+        if grade is None:
+            return None
+
+        return {"branch": branch, "grade": grade}
+
     # ------------------------------------------------------------------
     # Private: summary builder
     # ------------------------------------------------------------------
@@ -561,6 +673,7 @@ class CareerAggregator:
         first_pilot_row=None,
         last_pilot_row=None,
         aircraft_usage_override: Optional[Dict] = None,
+        air_kills_by_type_override: Optional[Dict] = None,
     ) -> Dict:
         """
         Build the summary dict matching CampaignAggregator._calculate_summary() shape.
@@ -573,6 +686,8 @@ class CareerAggregator:
             last_pilot_row:  pilot row for the most recent theatre (used for final_rank fallback).
             aircraft_usage_override: If supplied (from CareerDebriefingManager),
                 provides aircraft_usage dict built from linked missionReport files.
+            air_kills_by_type_override: If supplied (from CareerDebriefingManager),
+                provides exact destroyed aircraft types for flying air kills only.
         """
         promotions = [e for e in events if e.get("type") == "promotion"]
         awards = [e for e in events if e.get("type") == "award"]
@@ -650,6 +765,7 @@ class CareerAggregator:
 
         return {
             "combat_results": combat_results,
+            "air_kills_by_type": air_kills_by_type_override if air_kills_by_type_override is not None else {},
             "missions_stats": missions_stats,
             "aircraft_usage": aircraft_usage_override if aircraft_usage_override is not None else {},
             "career_progression": {
@@ -665,6 +781,93 @@ class CareerAggregator:
                 "duration_days": self._calc_duration_days(first_date, last_date),
             },
         }
+
+    def _calculate_aircraft_usage_from_db(
+        self,
+        career: VirtualPilotCareer,
+        debrief_results: Optional[List] = None,
+    ) -> Dict:
+        """
+        Build aircraft usage from cp.db mission/sortie rows.
+
+        Missions and plane kills come from cp.db and therefore include parked
+        aircraft. If debrief results are available, they are used only to pick a
+        readable aircraft display label for each cp.db plane key.
+        """
+        usage: Dict[str, Dict[str, int]] = {}
+        label_votes: Dict[str, Counter] = {}
+        debrief_by_mission: Dict[int, str] = {}
+
+        if debrief_results:
+            for result in debrief_results:
+                aircraft_label = str(getattr(result, "aircraft", "") or "").strip()
+                if aircraft_label:
+                    debrief_by_mission[int(result.mission_id)] = aircraft_label
+
+        for chain_row in career.chain:
+            career_id = int(chain_row["id"])
+            player_id = int(chain_row["playerId"])
+            missions = self._db.get_missions_for_career(career_id, player_id)
+            for mission in missions:
+                mission_id = int(mission["id"])
+                sortie = self._db.get_sortie_for_mission(mission_id, player_id)
+                if sortie is None:
+                    continue
+
+                plane_key = self._normalize_plane_key(mission["plane0"])
+                if plane_key not in usage:
+                    usage[plane_key] = {"missions": 0, "kills": 0}
+
+                usage[plane_key]["missions"] += 1
+                usage[plane_key]["kills"] += (
+                    int(sortie["killLightPlane"] or 0)
+                    + int(sortie["killMediumPlane"] or 0)
+                    + int(sortie["killHeavyPlane"] or 0)
+                    + int(sortie["killStaticPlane"] or 0)
+                )
+
+                hinted_label = debrief_by_mission.get(mission_id)
+                if hinted_label:
+                    label_votes.setdefault(plane_key, Counter())[hinted_label] += 1
+
+        resolved: Dict[str, Dict[str, int]] = {}
+        for plane_key, data in sorted(
+            usage.items(),
+            key=lambda item: (item[1]["missions"], item[1]["kills"]),
+            reverse=True,
+        ):
+            label_counter = label_votes.get(plane_key)
+            if label_counter:
+                label = label_counter.most_common(1)[0][0]
+            else:
+                label = self._format_plane_label(plane_key)
+            resolved[label] = data
+
+        return resolved
+
+    @staticmethod
+    def _normalize_plane_key(raw_plane) -> str:
+        """Reduce cp.db mission.plane0 values to a stable basename key."""
+        raw = str(raw_plane or "").strip().lower().replace("\\", "/")
+        base = raw.split("/")[-1]
+        return base[:-4] if base.endswith(".txt") else base
+
+    @staticmethod
+    def _format_plane_label(plane_key: str) -> str:
+        """Best-effort fallback label when no linked debrief label exists."""
+        if not plane_key:
+            return "Unknown"
+        special = {
+            "bf109f2": "Bf 109 F-2",
+            "bf109f4": "Bf 109 F-4",
+            "bf109g4": "Bf 109 G-4",
+            "bf109g6": "Bf 109 G-6",
+            "bf109g6late": "Bf 109 G-6 Late",
+            "bf109g6as": "Bf 109 G-6AS",
+        }
+        if plane_key in special:
+            return special[plane_key]
+        return plane_key
 
     # ------------------------------------------------------------------
     # Private: date helpers
@@ -870,6 +1073,7 @@ class CareerAggregator:
     def _build_squadron_members(
         self, squadron_id: int, country: Optional[str],
         player_all_pilot_ids: Optional[List[int]] = None,
+        max_award_date: Optional[str] = None,
     ):
         """
         Build squadron_members list and squadron_totals dict for the detail response.
@@ -942,6 +1146,7 @@ class CareerAggregator:
 
             # Store pilot id for award lookup (resolved in second pass below)
             member["_pilot_id"] = self._safe_int_from_row(row, "id")
+            member["_ins_date"] = str(row["insDate"]) if "insDate" in row.keys() and row["insDate"] else ""
 
             members.append(member)
 
@@ -958,6 +1163,7 @@ class CareerAggregator:
         # explicit list costs nothing and guards against unlikely name clashes.
         player_ids_set = set(player_all_pilot_ids or [])
         historical_to_canonical: Dict[int, int] = {}
+        normalized_max_award_date = self._format_date(max_award_date) if max_award_date else None
 
         for member in members:
             canonical_id = member["_pilot_id"]
@@ -965,10 +1171,16 @@ class CareerAggregator:
                 continue
             fname = member.get("_first_name", "")
             lname = member.get("_last_name", "")
+            max_ins_date = member.get("_ins_date", "")
             try:
-                hist_ids = self._db.get_pilot_ids_by_name(fname, lname)
+                hist_ids = self._db.get_pilot_ids_by_name_before_ins_date(
+                    fname, lname, max_ins_date
+                )
             except Exception as exc:
-                logger.warning("get_pilot_ids_by_name(%s %s) failed: %s", fname, lname, exc)
+                logger.warning(
+                    "get_pilot_ids_by_name_before_ins_date(%s %s, %s) failed: %s",
+                    fname, lname, max_ins_date, exc,
+                )
                 hist_ids = [canonical_id]
             for hid in hist_ids:
                 historical_to_canonical[hid] = canonical_id
@@ -990,6 +1202,9 @@ class CareerAggregator:
         # Build best-award-code per canonical pilot_id
         best_award: Dict[int, str] = {}
         for ar in award_rows:
+            award_date = self._format_date(ar["date"]) if "date" in ar.keys() else None
+            if normalized_max_award_date and award_date and award_date >= normalized_max_award_date:
+                continue
             raw_pid = int(ar["pilotId"])
             code    = str(ar["tpar2"]) if ar["tpar2"] else ""
             if not code:
@@ -1006,6 +1221,7 @@ class CareerAggregator:
         for member in members:
             member.pop("_first_name", None)
             member.pop("_last_name", None)
+            member.pop("_ins_date", None)
             pid  = member.pop("_pilot_id", None)
             code = best_award.get(pid) if pid else None
             if code and self._award_index:
@@ -1025,6 +1241,60 @@ class CareerAggregator:
             member["highest_award_image_url"]   = None
 
         return members, totals
+
+    def _build_squadron_records(self, career: "VirtualPilotCareer") -> List[Dict]:
+        """
+        Build selectable squadron-stat snapshots for each theatre segment.
+
+        Each theatre segment has its own player row and squadronId. The detail
+        page can therefore offer a historical end-of-theatre roster selector by
+        building one record per segment.
+        """
+        records: List[Dict] = []
+
+        for idx, segment in enumerate(career.chain):
+            segment_pilot_id = self._safe_int_from_row(segment, "playerId")
+            segment_career_id = self._safe_int_from_row(segment, "id")
+            next_segment = career.chain[idx + 1] if idx + 1 < len(career.chain) else None
+            next_segment_start_date = (
+                str(next_segment["startDate"])
+                if next_segment is not None and "startDate" in next_segment.keys() and next_segment["startDate"]
+                else None
+            )
+            pilot_row = self._db.get_pilot_by_id(segment_pilot_id) if segment_pilot_id else None
+            squadron_id = self._safe_int_from_row(pilot_row, "squadronId")
+            squadron_name = self._resolve_squadron_name(squadron_id) or ""
+            members, totals = self._build_squadron_members(
+                squadron_id,
+                career.country,
+                player_all_pilot_ids=career.all_pilot_ids[: idx + 1],
+                max_award_date=next_segment_start_date,
+            )
+            pilot_state = self._safe_int_from_row(pilot_row, "state")
+            pilot_role = (
+                "commander" if pilot_state == 1
+                else "deputy_commander" if pilot_state == 8
+                else ""
+            )
+
+            records.append({
+                "theatre_index": idx,
+                "theatre_label": (
+                    career.theatre_labels[idx]
+                    if idx < len(career.theatre_labels)
+                    else f"Theatre {idx + 1}"
+                ),
+                "career_id": segment_career_id,
+                "pilot_id": segment_pilot_id,
+                "squadron_id": squadron_id,
+                "squadron_short_name": squadron_name,
+                "pilot_role": pilot_role,
+                "is_current": idx == len(career.chain) - 1,
+                "members": members,
+                "totals": totals,
+            })
+
+        return records
 
     def _load_other_incidences(self, career: "VirtualPilotCareer") -> List[Dict]:
         """
@@ -1057,4 +1327,3 @@ class CareerAggregator:
 
         results.sort(key=lambda e: e["sort_key"])
         return results
-

@@ -185,14 +185,14 @@ class CareerDatabase:
         No isDeleted filter — get_events_for_pilots (the timeline query) also
         omits it, and award events may carry isDeleted != 0 in some db versions.
 
-        Returns only pilotId and tpar2 (award code) columns.
+        Returns pilotId, date, and tpar2 (award code) columns.
         """
         if not pilot_ids:
             return []
         conn = self._connect()
         id_ph = ",".join("?" * len(pilot_ids))
         cursor = conn.execute(
-            f"SELECT pilotId, tpar2 FROM event"
+            f"SELECT pilotId, date, tpar2 FROM event"
             f" WHERE pilotId IN ({id_ph}) AND type = 8",
             pilot_ids,
         )
@@ -226,6 +226,39 @@ class CareerDatabase:
         cursor = conn.execute(
             "SELECT id FROM pilot WHERE name = ? AND lastName = ?",
             [name, last_name],
+        )
+        return [row[0] for row in cursor.fetchall()]
+
+    def get_pilot_ids_by_name_before_ins_date(
+        self,
+        name: str,
+        last_name: str,
+        max_ins_date: str,
+    ) -> List[int]:
+        """
+        Return pilot.id values for the same pilot name up to a snapshot row date.
+
+        IL-2 creates a fresh pilot row when a pilot enters a new theatre. For
+        historical squadron snapshots we must exclude future-theatre rows, or a
+        pilot may incorrectly inherit awards earned later in the career.
+
+        Args:
+            name:         pilot.name
+            last_name:    pilot.lastName
+            max_ins_date: pilot.insDate from the selected historical snapshot row
+
+        Returns:
+            Matching pilot.id values whose insDate is NULL or <= max_ins_date.
+        """
+        if not max_ins_date:
+            return self.get_pilot_ids_by_name(name, last_name)
+        conn = self._connect()
+        cursor = conn.execute(
+            "SELECT id FROM pilot "
+            "WHERE name = ? AND lastName = ? AND isDeleted = 0 "
+            "AND (insDate IS NULL OR insDate <= ?) "
+            "ORDER BY insDate ASC, id ASC",
+            [name, last_name, max_ins_date],
         )
         return [row[0] for row in cursor.fetchall()]
 
@@ -480,6 +513,7 @@ class CareerDatabase:
             SELECT *
             FROM pilot
             WHERE squadronId = ?
+              AND isDeleted = 0
             ORDER BY rankId DESC,
                      (COALESCE(killLightPlane, 0) + COALESCE(killMediumPlane, 0)
                       + COALESCE(killHeavyPlane, 0) + COALESCE(killStaticPlane, 0)) DESC

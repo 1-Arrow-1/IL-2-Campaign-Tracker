@@ -19,6 +19,73 @@ from utils.pathing import get_base_path
 
 logger = get_logger(__name__)
 
+
+def _parse_simple_yaml_config(text):
+    """
+    Parse the limited YAML shape used by object_categories.yaml without
+    depending on PyYAML being fully available in the bundled runtime.
+    """
+    data = {}
+    current_section = None
+    current_key = None
+
+    for raw_line in text.splitlines():
+        line = raw_line.rstrip()
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+
+        indent = len(line) - len(line.lstrip(" "))
+
+        if indent == 0 and stripped.endswith(":"):
+            current_section = stripped[:-1]
+            if current_section == "exclude":
+                data.setdefault(current_section, [])
+            else:
+                data.setdefault(current_section, {})
+            current_key = None
+            continue
+
+        if indent == 2 and stripped.endswith(":") and current_section:
+            current_key = stripped[:-1]
+            section = data[current_section]
+            if isinstance(section, dict):
+                section.setdefault(current_key, [])
+            continue
+
+        if stripped.startswith("- "):
+            value = stripped[2:].strip()
+            if current_section == "categories" and current_key:
+                data[current_section][current_key].append(value)
+            elif current_section == "exclude":
+                data.setdefault("exclude", []).append(value)
+
+    return data
+
+
+def _load_yaml_config(stream):
+    """
+    Load category config. Prefer PyYAML when available, otherwise fall back to
+    the built-in parser for the simple list-based config format used here.
+    """
+    text = stream.read()
+    safe_load = getattr(yaml, "safe_load", None)
+    if callable(safe_load):
+        return safe_load(text)
+
+    load = getattr(yaml, "load", None)
+    if callable(load):
+        loader = (
+            getattr(yaml, "SafeLoader", None)
+            or getattr(yaml, "FullLoader", None)
+            or getattr(yaml, "Loader", None)
+        )
+        if loader is not None:
+            return load(text, Loader=loader)
+        return load(text)
+
+    return _parse_simple_yaml_config(text)
+
 # Maximum gap between the last player-damage hit on a target and an AID:-1
 # AType:3 destruction for the kill to still be credited to the player.
 # 600 s × 50 ticks/s = 30 000 ticks.  Adjust or set to 0 to disable.
@@ -63,7 +130,7 @@ class GameObject:
             
             try:
                 with open(cfg_path, encoding="utf-8") as f:
-                    data = yaml.safe_load(f)
+                    data = _load_yaml_config(f)
                     cls._category_config = data.get("categories", {})
                     cls._exclude_config = [x.lower() for x in data.get("exclude", [])]
             except Exception:
@@ -671,6 +738,12 @@ class MissionDebriefParser:
             If the player dealt ≥ 80 % of all recorded damage on *tid*, credit
             the kill regardless of time gap (handles cases where many zero-damage
             hits dilute the last-damager signal).
+
+        Priority 4 – Dominant player damage vs AI follow-up:
+            If the player's summed positive damage is greater than the summed
+            positive damage of all other human attackers combined, and also
+            greater than each other attacker individually, credit the kill to
+            the player even if friendlies added smaller follow-up hits later.
         """
         # Guard: already credited for this target
         if any(k.id == tid for k in self.stats.kills):
@@ -719,6 +792,33 @@ class MissionDebriefParser:
                 log_message(
                     logger,
                     f"[SOLE ATTACKER] Credited: TID={tid}, player was the only human damager",
+                )
+
+        # --- Priority 4: player's positive damage beats all other attackers ---
+        if not credited:
+            hits = [h for h in self.stats.hits if h["target"] == tid and h["damage"] > 0]
+            player_damage = sum(
+                h["damage"] for h in hits if h["attacker"] in player_ids
+            )
+            other_damage_by_attacker = defaultdict(float)
+            for h in hits:
+                attacker = h["attacker"]
+                if attacker in player_ids or attacker == -1:
+                    continue
+                other_damage_by_attacker[attacker] += h["damage"]
+
+            other_total = sum(other_damage_by_attacker.values())
+            if (
+                player_damage > 0
+                and other_damage_by_attacker
+                and player_damage > other_total
+                and all(player_damage > dmg for dmg in other_damage_by_attacker.values())
+            ):
+                credited = True
+                log_message(
+                    logger,
+                    f"[DOMINANT DAMAGE] Credited: TID={tid}, player_damage={player_damage:.3f}, "
+                    f"other_total={other_total:.3f}, strongest_other={max(other_damage_by_attacker.values()):.3f}",
                 )
 
         if credited:
@@ -998,7 +1098,8 @@ class MissionDebriefParser:
                     "time": k.time_of_kill,
                     "type": "Kill",
                     "target": k.type,
-                    "category": k.category
+                    "category": k.category,
+                    "is_static": bool(getattr(k, 'is_static', False)),
                 }
                 if k.altitude is not None:
                     evt["altitude"] = k.altitude

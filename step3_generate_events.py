@@ -1630,7 +1630,15 @@ class EventGenerator:
         if self.log_processor:
             try:
                 completed_missions_list = list(completed.keys())
-                debriefings = self.log_processor.get_all_debriefings(campaign_name, completed_missions_list)
+                expected_plane_kills = self._build_expected_plane_kills_by_mission(
+                    campaign_name,
+                    completed_missions_list,
+                )
+                debriefings = self.log_processor.get_all_debriefings(
+                    campaign_name,
+                    completed_missions_list,
+                    expected_plane_kills_by_mission=expected_plane_kills,
+                )
                 
                 for mission_id, data in debriefings.items():
                     # Check if wounded (using threshold > 0.2)
@@ -2208,9 +2216,15 @@ class EventGenerator:
         """
         if not self.log_processor:
             return ("", {})
-        
+
+        expected_plane_kills = self._build_expected_plane_kills_by_mission(campaign_name, completed_missions)
+
         # Get debriefing data for all missions
-        debriefings = self.log_processor.get_all_debriefings(campaign_name, completed_missions)
+        debriefings = self.log_processor.get_all_debriefings(
+            campaign_name,
+            completed_missions,
+            expected_plane_kills_by_mission=expected_plane_kills,
+        )
         
         if not debriefings:
             return ("", {})
@@ -2346,6 +2360,75 @@ class EventGenerator:
             html_lines.append("<br>")
         
         return ("\n".join(html_lines), debriefings)
+
+    @staticmethod
+    def _aggregate_air_kills_by_type(debriefings: Dict) -> Dict[str, int]:
+        """
+        Aggregate exact destroyed aircraft types from parsed debrief data.
+
+        Uses the same kill-detection rule as career mode:
+        - event.type == "Kill"
+        - event.category == "Air"
+        - event.is_static is false
+        """
+        counts: Dict[str, int] = {}
+        if not isinstance(debriefings, dict):
+            return counts
+
+        for mission_data in debriefings.values():
+            if not isinstance(mission_data, dict):
+                continue
+            for event in mission_data.get('events', []):
+                if not isinstance(event, dict):
+                    continue
+                if event.get('type') != 'Kill':
+                    continue
+                if event.get('category') != 'Air':
+                    continue
+                if bool(event.get('is_static')):
+                    continue
+                target = str(event.get('target', '') or '').strip()
+                if not target:
+                    continue
+                counts[target] = counts.get(target, 0) + 1
+
+        return dict(sorted(counts.items(), key=lambda item: (-item[1], item[0].lower())))
+
+    def _build_expected_plane_kills_by_mission(
+        self,
+        campaign_name: str,
+        completed_missions: List[str],
+    ) -> Dict[str, int]:
+        """
+        Build authoritative expected plane-kill totals per mission from decoded campaign state.
+
+        These totals mirror the campaign-state source of truth and are used as a
+        reconciliation target for delayed/shared kill attribution in mission-report parsing.
+        """
+        result: Dict[str, int] = {}
+        campaign_data = self.save_data.get(campaign_name, {})
+        if not isinstance(campaign_data, dict):
+            return result
+
+        per_mission_stats = campaign_data.get('characterStatisticsByFileName', {})
+        if not isinstance(per_mission_stats, dict):
+            return result
+
+        for mission_id in completed_missions:
+            stats = per_mission_stats.get(mission_id, {})
+            if not isinstance(stats, dict):
+                continue
+            try:
+                result[mission_id] = (
+                    int(stats.get('killLightPlane', 0) or 0) +
+                    int(stats.get('killMediumPlane', 0) or 0) +
+                    int(stats.get('killHeavyPlane', 0) or 0) +
+                    int(stats.get('killStaticPlane', 0) or 0)
+                )
+            except (TypeError, ValueError):
+                result[mission_id] = 0
+
+        return result
 
     def generate_localized_debriefings(
         self, campaign_name: str, completed_missions: List[str]
@@ -3832,6 +3915,7 @@ class EventGenerator:
                 if self.log_processor and completed_missions:
                     log_message(LOGGER, f"  Generating debriefings for {len(completed_missions)} mission(s)...")
                     debriefings_html, debriefings = self.generate_debriefings_html(campaign_name, completed_missions)
+                air_kills_by_type = self._aggregate_air_kills_by_type(debriefings)
 
                 # Generate localized debriefings for detail page language override (en, de, ru)
                 localized_debriefings = {}
@@ -3849,6 +3933,7 @@ class EventGenerator:
                     'country': country,
                     'events': events,
                     'debriefings_html': debriefings_html,
+                    'air_kills_by_type': air_kills_by_type,
                     'events_html': events_html,
                     'html': combined_html,
                     **localized_debriefings,  # Add debriefings_html_en, _de, _ru

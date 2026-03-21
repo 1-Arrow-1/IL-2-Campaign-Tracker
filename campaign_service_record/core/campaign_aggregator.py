@@ -318,6 +318,7 @@ class CampaignAggregator:
         game_directory = get_game_directory(mission_dates)
         events = self._decorate_events(events, country, game_directory)
         debriefings_html = self._extract_debriefings_html(campaign_events)
+        air_kills_by_type = self._extract_air_kills_by_type(campaign_events)
         
         # Calculate summary statistics
         summary = self._calculate_summary(
@@ -326,7 +327,8 @@ class CampaignAggregator:
             completed_missions,
             campaign_dates,
             events,
-            debriefings_html
+            debriefings_html,
+            air_kills_by_type
         )
         
         # Extract localized debriefings (en/de/ru) if available
@@ -365,6 +367,22 @@ class CampaignAggregator:
             return match.group(1).strip()
 
         return combined_html.strip()
+
+    @staticmethod
+    def _extract_air_kills_by_type(campaign_events: Dict) -> Dict[str, int]:
+        air_kills_by_type = campaign_events.get('air_kills_by_type', {})
+        if not isinstance(air_kills_by_type, dict):
+            return {}
+        normalized: Dict[str, int] = {}
+        for aircraft, count in air_kills_by_type.items():
+            name = str(aircraft or '').strip()
+            if not name:
+                continue
+            try:
+                normalized[name] = int(count or 0)
+            except (TypeError, ValueError):
+                continue
+        return normalized
     
     def _calculate_summary(
         self,
@@ -373,7 +391,8 @@ class CampaignAggregator:
         completed_missions: List[str],
         mission_dates: Dict,
         events: List[Dict],
-        debriefings_html: str
+        debriefings_html: str,
+        air_kills_by_type: Dict[str, int],
     ) -> Dict:
         """
         Calculate campaign summary statistics.
@@ -397,6 +416,7 @@ class CampaignAggregator:
         """
         summary = {
             'combat_results': {},
+            'air_kills_by_type': {},
             'missions_stats': {},
             'aircraft_usage': {},
             'career_progression': {},
@@ -432,6 +452,7 @@ class CampaignAggregator:
             summary['combat_results']['total_score'] = sum(
                 int(stats.get('score', 0)) for stats in stats_by_mission.values()
             )
+        summary['air_kills_by_type'] = air_kills_by_type
         
         # Calculate missions stats
         summary['missions_stats'] = self._calculate_mission_stats(
@@ -462,6 +483,7 @@ class CampaignAggregator:
         )
         
         return summary
+
     
     def _calculate_mission_stats(
         self,

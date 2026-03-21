@@ -1428,6 +1428,7 @@ categories:
   - windmill1_eu_1
   - windmill1_eu_2
 exclude:
+  - CParachute_
   - 21-K turret
   - 21-K turret b
   - 21-K turret f

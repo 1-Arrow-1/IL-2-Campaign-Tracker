@@ -737,6 +737,8 @@ const DetailPage = {
         this.elements.personalDisplayBirthCountry = document.getElementById('personal-display-birth-country');
         this.elements.personalDisplaySquadron = document.getElementById('personal-display-current-squadron');
         this.elements.personalSquadronRow = document.getElementById('personal-squadron-row');
+        this.elements.squadronStatsSelector = document.getElementById('squadron-stats-selector');
+        this.elements.squadronStatsSelectorWrap = document.getElementById('squadron-stats-selector-wrap');
         this.elements.personalStatus = document.getElementById('personal-data-status');
         this.elements.cropperModal = document.getElementById('cropper-modal');
         this.elements.cropperImg = document.getElementById('cropper-img');
@@ -1034,21 +1036,23 @@ const DetailPage = {
             }
 
             if (resolvedSource === 'career') {
-                // Career mode: prefill personal data from the career API response
-                // (no separate personal_data endpoint; data comes from cp.db)
-                this.setPersonalDataDisplay({
+                const basePersonalData = {
                     name: campaign.pilot_last_name || '',
                     first_name: campaign.pilot_first_name || '',
                     birthday: campaign.birth_date || '',
                     birth_country: getLocalizedCountryName(campaign.country) || campaign.country || '',
-                    squadron: (() => {
-                        let sq = campaign.squadron_short_name || '';
-                        if (campaign.pilot_role === 'commander' || campaign.pilot_role === 'deputy_commander') {
-                            const roleLabel = i18n.t(`ui.career.role.${campaign.pilot_role}`);
-                            if (roleLabel) sq = sq ? `${sq} (${roleLabel})` : `(${roleLabel})`;
-                        }
-                        return sq;
-                    })(),
+                };
+                const squadronRecords = Array.isArray(campaign.squadron_records)
+                    ? campaign.squadron_records
+                    : [];
+                const currentSquadronRecord = squadronRecords.find(record => record && record.is_current)
+                    || squadronRecords[squadronRecords.length - 1]
+                    || null;
+                // Career mode: prefill personal data from the career API response
+                // (no separate personal_data endpoint; data comes from cp.db)
+                this.setPersonalDataDisplay({
+                    ...basePersonalData,
+                    squadron: this.formatCareerSquadronDisplay(currentSquadronRecord, campaign),
                 });
                 this.setPersonalDataFields({
                     name: campaign.pilot_last_name || '',
@@ -1080,9 +1084,14 @@ const DetailPage = {
                 this.renderOtherIncidences(campaign.other_incidences || []);
                 // Render squadron statistics below the 3-column layout
                 this.renderSquadronStats(
-                    campaign.squadron_members || [],
-                    campaign.squadron_totals || {},
-                    campaign.squadron_short_name || ''
+                    squadronRecords,
+                    currentSquadronRecord,
+                    selectedRecord => {
+                        this.setPersonalDataDisplay({
+                            ...basePersonalData,
+                            squadron: this.formatCareerSquadronDisplay(selectedRecord, campaign),
+                        });
+                    }
                 );
             } else {
                 // Campaign mode: restore row visibility and load from personal_data API
@@ -1111,6 +1120,13 @@ const DetailPage = {
                 // Hide squadron stats section for campaign mode
                 const sqSection = document.getElementById('squadron-stats-section');
                 if (sqSection) sqSection.style.display = 'none';
+                if (this.elements.squadronStatsSelector) {
+                    this.elements.squadronStatsSelector.innerHTML = '';
+                    this.elements.squadronStatsSelector.onchange = null;
+                }
+                if (this.elements.squadronStatsSelectorWrap) {
+                    this.elements.squadronStatsSelectorWrap.style.display = 'none';
+                }
             }
 
             await this.loadPilotPhoto(campaign.name);
@@ -1660,6 +1676,11 @@ const DetailPage = {
                         inc.date, '\u2013',
                         i18n.tr(`progression.awards.${inc.name}`, { defaultText: inc.name }),
                     ].join(' ');
+                } else if (inc.type === 'AWARD_REPEAT') {
+                    p.textContent = [
+                        inc.date, '\u2013',
+                        i18n.tr(`progression.awards.${inc.name}`, { defaultText: inc.name }),
+                    ].join(' ');
                 }
 
                 inner.appendChild(p);
@@ -1998,28 +2019,40 @@ const DetailPage = {
         if (summary.combat_results) {
             sections.push(this.createSummarySection(
                 i18n.t('web.section.combat_results'),
-                this.renderCombatResults(summary.combat_results)
+                this.renderCombatResults(summary.combat_results),
+                true
+            ));
+        }
+
+        if (summary.air_kills_by_type && Object.keys(summary.air_kills_by_type).length > 0) {
+            sections.push(this.createSummarySection(
+                i18n.t('web.section.air_kills_by_type'),
+                this.renderAirKillsByType(summary.air_kills_by_type),
+                true
             ));
         }
 
         if (summary.missions_stats) {
             sections.push(this.createSummarySection(
                 i18n.t('web.section.missions_flown'),
-                this.renderMissionsStats(summary.missions_stats)
+                this.renderMissionsStats(summary.missions_stats),
+                true
             ));
         }
 
         if (summary.aircraft_usage && Object.keys(summary.aircraft_usage).length > 0) {
             sections.push(this.createSummarySection(
                 i18n.t('web.section.aircraft_flown'),
-                this.renderAircraftUsage(summary.aircraft_usage)
+                this.renderAircraftUsage(summary.aircraft_usage),
+                true
             ));
         }
 
         if (summary.career_progression) {
             sections.push(this.createSummarySection(
                 i18n.t('web.section.career_progression'),
-                this.renderCareerProgression(summary.career_progression)
+                this.renderCareerProgression(summary.career_progression),
+                true
             ));
         }
 
@@ -2029,7 +2062,8 @@ const DetailPage = {
                 : 'web.section.campaign_timeline';
             sections.push(this.createSummarySection(
                 i18n.t(timelineKey),
-                this.renderTimeline(summary.timeline)
+                this.renderTimeline(summary.timeline),
+                this._source === 'career'
             ));
         }
 
@@ -2039,7 +2073,25 @@ const DetailPage = {
     /**
      * Create summary section wrapper
      */
-    createSummarySection(title, content) {
+    createSummarySection(title, content, collapsible = false) {
+        if (collapsible) {
+            const section = document.createElement('details');
+            section.className = 'theatre-section summary-section';
+            section.open = true;
+
+            const header = document.createElement('summary');
+            header.className = 'theatre-header summary-section-header';
+            header.textContent = title;
+            section.appendChild(header);
+
+            const body = document.createElement('div');
+            body.className = 'theatre-missions summary-section-body';
+            body.appendChild(content);
+            section.appendChild(body);
+
+            return section;
+        }
+
         const section = document.createElement('div');
         section.className = 'summary-block';
         
@@ -2233,10 +2285,23 @@ const DetailPage = {
         const container = document.createElement('div');
         
         for (const [aircraft, data] of Object.entries(usage)) {
-            const value = `${data.missions} missions (${data.kills} kills)`;
+            const value = `${data.missions} ${i18n.t('pdf.value.missions')} (${data.kills} ${i18n.t('pdf.value.kills')})`;
             container.appendChild(this.createStat(aircraft, value));
         }
         
+        return container;
+    },
+
+    /**
+     * Render destroyed aircraft types
+     */
+    renderAirKillsByType(killsByType) {
+        const container = document.createElement('div');
+
+        for (const [aircraft, count] of Object.entries(killsByType)) {
+            container.appendChild(this.createStat(aircraft, count ?? 0));
+        }
+
         return container;
     },
     
@@ -2443,33 +2508,65 @@ const DetailPage = {
         return div.innerHTML;
     },
 
+    formatCareerSquadronDisplay(record, campaign) {
+        let squadron = record?.squadron_short_name || campaign?.squadron_short_name || '';
+        const role = record?.pilot_role || campaign?.pilot_role || '';
+        if (role === 'commander' || role === 'deputy_commander') {
+            const roleLabel = i18n.t(`ui.career.role.${role}`);
+            if (roleLabel) {
+                squadron = squadron ? `${squadron} (${roleLabel})` : `(${roleLabel})`;
+            }
+        }
+        return squadron;
+    },
+
     /**
      * Render the squadron statistics section (career mode only).
      * Shows an aggregated totals row and a per-pilot roster table.
      *
-     * @param {Array}  members       - squadron_members array from API
-     * @param {Object} totals        - squadron_totals dict from API
-     * @param {string} squadronName  - short squadron name for the heading
+     * @param {Array} records
+     * @param {Object|null} initialRecord
+     * @param {Function|null} onRecordChange
      */
-    renderSquadronStats(members, totals, squadronName) {
+    renderSquadronStats(records, initialRecord, onRecordChange) {
         const section = document.getElementById('squadron-stats-section');
         const content = document.getElementById('squadron-stats-content');
+        const selector = this.elements.squadronStatsSelector;
+        const selectorWrap = this.elements.squadronStatsSelectorWrap;
         if (!section || !content) return;
 
         content.innerHTML = '';
 
-        if (!members || members.length === 0) {
+        const availableRecords = Array.isArray(records)
+            ? records.filter(record => record && Array.isArray(record.members))
+            : [];
+
+        if (selector) {
+            selector.innerHTML = '';
+            selector.onchange = null;
+        }
+
+        if (availableRecords.length === 0) {
             section.style.display = 'none';
+            if (selectorWrap) selectorWrap.style.display = 'none';
             return;
         }
 
         section.style.display = '';
+        let selectedRecord = availableRecords.find(record =>
+            record.theatre_index === initialRecord?.theatre_index
+        ) || availableRecords.find(record => record.is_current) || availableRecords[availableRecords.length - 1];
 
-        // Update heading with squadron name
-        const heading = section.querySelector('h3');
-        if (heading) {
-            const title = i18n.t('ui.career.squadron_statistics');
-            heading.textContent = squadronName ? `${title} — ${squadronName}` : title;
+        if (selector && selectorWrap) {
+            selectorWrap.style.display = availableRecords.length > 1 ? '' : 'none';
+            selector.setAttribute('aria-label', i18n.t('ui.career.squadron_statistics'));
+            availableRecords.forEach(record => {
+                const option = document.createElement('option');
+                option.value = String(record.theatre_index ?? '');
+                option.textContent = `${record.theatre_label || '—'} - ${record.squadron_short_name || '—'}`;
+                option.selected = record.theatre_index === selectedRecord.theatre_index;
+                selector.appendChild(option);
+            });
         }
 
         const killCols = [
@@ -2480,40 +2577,6 @@ const DetailPage = {
             { key: 'kills_buildings', icon: 'icon_buildings.png',  i18nKey: 'web.combat.category.buildings' },
             { key: 'kills_marine',    icon: 'icon_marine.png',     i18nKey: 'web.combat.category.marine'    },
         ];
-
-        // ---- Totals bar ----
-        const totalsDiv = document.createElement('div');
-        totalsDiv.className = 'squadron-totals';
-        killCols.forEach(col => {
-            const cell = document.createElement('div');
-            cell.className = 'squadron-totals__cell';
-
-            const img = document.createElement('img');
-            img.src = this.getGameAssetUrl(`CampaignRanksAwards/Misc/${col.icon}`);
-            img.alt = i18n.t(col.i18nKey);
-            img.className = 'squadron-totals__icon';
-            cell.appendChild(img);
-
-            const count = document.createElement('div');
-            count.className = 'squadron-totals__count';
-            count.textContent = totals[col.key] ?? 0;
-            cell.appendChild(count);
-
-            const label = document.createElement('div');
-            label.className = 'squadron-totals__label';
-            label.textContent = i18n.t(col.i18nKey);
-            cell.appendChild(label);
-
-            totalsDiv.appendChild(cell);
-        });
-        content.appendChild(totalsDiv);
-
-        // ---- Pilot roster table ----
-        const wrapper = document.createElement('div');
-        wrapper.className = 'squadron-table-wrapper';
-
-        const table = document.createElement('table');
-        table.className = 'squadron-table';
 
         // Sort state
         let sortCol = null;   // null = default (rank → air kills)
@@ -2542,7 +2605,7 @@ const DetailPage = {
         };
 
         const getSortedMembers = () => {
-            const arr = members.slice();
+            const arr = (selectedRecord?.members || []).slice();
             if (!sortCol) return arr.sort(defaultSort);
             return arr.sort((a, b) => {
                 const av = getSortValue(sortCol, a);
@@ -2571,109 +2634,7 @@ const DetailPage = {
             4: i18n.t('ui.career.role.wia'),
             5: i18n.t('ui.career.role.transferred'),
         };
-
-        // Build a th with optional sort support.
-        // colId null = not sortable; 'rank' = resets to default sort.
-        const makeTh = (colId, labelNode, extraClass) => {
-            const th = document.createElement('th');
-            if (extraClass) th.className = extraClass;
-            if (typeof labelNode === 'string') {
-                th.textContent = labelNode;
-            } else {
-                th.appendChild(labelNode);
-            }
-            if (colId !== null) {
-                th.classList.add('sq-th-sortable');
-                th.dataset.sortCol = colId;
-                const indicator = document.createElement('span');
-                indicator.className = 'sq-sort-indicator';
-                th.appendChild(indicator);
-                th.addEventListener('click', () => {
-                    if (colId === 'rank') {
-                        sortCol = null;
-                        sortAsc = false;
-                    } else if (sortCol === colId) {
-                        sortAsc = !sortAsc;
-                    } else {
-                        sortCol = colId;
-                        // name sorts ascending first (A→Z); award sorts "best first" (desc by negated prec)
-                        sortAsc = (colId === 'name');
-                    }
-                    updateSortIndicators();
-                    rebuildTbody();
-                });
-            }
-            return th;
-        };
-
-        const updateSortIndicators = () => {
-            thead.querySelectorAll('.sq-sort-indicator').forEach(span => {
-                const col = span.parentElement.dataset.sortCol;
-                const isActive = (sortCol === col) || (col === 'rank' && sortCol === null);
-                if (isActive) {
-                    span.textContent = sortAsc ? ' ▲' : ' ▼';
-                } else {
-                    span.textContent = '';
-                }
-            });
-        };
-
-        // Header
-        const thead = document.createElement('thead');
-        const headerRow = document.createElement('tr');
-
-        // Rank col — default sort on click
-        headerRow.appendChild(makeTh('rank', i18n.t('ui.career.squadron_col_rank'), null));
-
-        // Name
-        headerRow.appendChild(makeTh('name', i18n.t('ui.career.squadron_col_name'), 'sq-col-name'));
-
-        // Highest Combat Award
-        headerRow.appendChild(makeTh('award', i18n.t('ui.career.squadron_col_highest_award'), null));
-
-        // State
-        const stateImgEl = document.createElement('img');
-        stateImgEl.src = this.getGameAssetUrl('CampaignRanksAwards/Misc/state.png');
-        stateImgEl.alt = i18n.t('ui.career.squadron_col_state');
-        stateImgEl.title = i18n.t('ui.career.squadron_col_state');
-        headerRow.appendChild(makeTh('state', stateImgEl, null));
-
-        // Kill columns
-        killCols.forEach(col => {
-            const img = document.createElement('img');
-            img.src = this.getGameAssetUrl(`CampaignRanksAwards/Misc/${col.icon}`);
-            img.alt = i18n.t(col.i18nKey);
-            img.title = i18n.t(col.i18nKey);
-            headerRow.appendChild(makeTh(col.key, img, null));
-        });
-
-        // Good sorties
-        const goodImg = document.createElement('img');
-        goodImg.src = this.getGameAssetUrl('CampaignRanksAwards/Misc/goodsorties.png');
-        goodImg.alt = i18n.t('ui.career.squadron_col_good_sorties');
-        goodImg.title = i18n.t('ui.career.squadron_col_good_sorties');
-        headerRow.appendChild(makeTh('sorties_good', goodImg, null));
-
-        // Sorties
-        const sortiesImg = document.createElement('img');
-        sortiesImg.src = this.getGameAssetUrl('CampaignRanksAwards/Misc/sorties.png');
-        sortiesImg.alt = i18n.t('ui.career.squadron_col_sorties');
-        sortiesImg.title = i18n.t('ui.career.squadron_col_sorties');
-        headerRow.appendChild(makeTh('sorties', sortiesImg, null));
-
-        // Flight time
-        const ftImg = document.createElement('img');
-        ftImg.src = this.getGameAssetUrl('CampaignRanksAwards/Misc/flighttime.png');
-        ftImg.alt = i18n.t('ui.career.squadron_col_flight_time');
-        ftImg.title = i18n.t('ui.career.squadron_col_flight_time');
-        headerRow.appendChild(makeTh('flight_time', ftImg, null));
-
-        thead.appendChild(headerRow);
-        table.appendChild(thead);
-        updateSortIndicators();
-
-        // Body — extracted into a closure so sort clicks can rebuild without re-reading members
-        const tbody = document.createElement('tbody');
+        let tbody = null;
 
         const buildRow = (member) => {
             const tr = document.createElement('tr');
@@ -2776,13 +2737,154 @@ const DetailPage = {
         };
 
         const rebuildTbody = () => {
+            if (!tbody) return;
             tbody.innerHTML = '';
             getSortedMembers().forEach(m => tbody.appendChild(buildRow(m)));
         };
 
-        rebuildTbody();
-        table.appendChild(tbody);
-        wrapper.appendChild(table);
-        content.appendChild(wrapper);
+        const renderSelectedRecord = () => {
+            content.innerHTML = '';
+
+            if (typeof onRecordChange === 'function') {
+                onRecordChange(selectedRecord);
+            }
+
+            const totals = selectedRecord?.totals || {};
+
+            const totalsDiv = document.createElement('div');
+            totalsDiv.className = 'squadron-totals';
+            killCols.forEach(col => {
+                const cell = document.createElement('div');
+                cell.className = 'squadron-totals__cell';
+
+                const img = document.createElement('img');
+                img.src = this.getGameAssetUrl(`CampaignRanksAwards/Misc/${col.icon}`);
+                img.alt = i18n.t(col.i18nKey);
+                img.className = 'squadron-totals__icon';
+                cell.appendChild(img);
+
+                const count = document.createElement('div');
+                count.className = 'squadron-totals__count';
+                count.textContent = totals[col.key] ?? 0;
+                cell.appendChild(count);
+
+                const label = document.createElement('div');
+                label.className = 'squadron-totals__label';
+                label.textContent = i18n.t(col.i18nKey);
+                cell.appendChild(label);
+
+                totalsDiv.appendChild(cell);
+            });
+            content.appendChild(totalsDiv);
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'squadron-table-wrapper';
+
+            const table = document.createElement('table');
+            table.className = 'squadron-table';
+
+            // Build a th with optional sort support.
+            // colId null = not sortable; 'rank' = resets to default sort.
+            const makeTh = (colId, labelNode, extraClass) => {
+                const th = document.createElement('th');
+                if (extraClass) th.className = extraClass;
+                if (typeof labelNode === 'string') {
+                    th.textContent = labelNode;
+                } else {
+                    th.appendChild(labelNode);
+                }
+                if (colId !== null) {
+                    th.classList.add('sq-th-sortable');
+                    th.dataset.sortCol = colId;
+                    const indicator = document.createElement('span');
+                    indicator.className = 'sq-sort-indicator';
+                    th.appendChild(indicator);
+                    th.addEventListener('click', () => {
+                        if (colId === 'rank') {
+                            sortCol = null;
+                            sortAsc = false;
+                        } else if (sortCol === colId) {
+                            sortAsc = !sortAsc;
+                        } else {
+                            sortCol = colId;
+                            sortAsc = (colId === 'name');
+                        }
+                        updateSortIndicators();
+                        rebuildTbody();
+                    });
+                }
+                return th;
+            };
+
+            const thead = document.createElement('thead');
+            tbody = document.createElement('tbody');
+
+            const updateSortIndicators = () => {
+                thead.querySelectorAll('.sq-sort-indicator').forEach(span => {
+                    const col = span.parentElement.dataset.sortCol;
+                    const isActive = (sortCol === col) || (col === 'rank' && sortCol === null);
+                    span.textContent = isActive ? (sortAsc ? ' ▲' : ' ▼') : '';
+                });
+            };
+
+            const headerRow = document.createElement('tr');
+            headerRow.appendChild(makeTh('rank', i18n.t('ui.career.squadron_col_rank'), null));
+            headerRow.appendChild(makeTh('name', i18n.t('ui.career.squadron_col_name'), 'sq-col-name'));
+            headerRow.appendChild(makeTh('award', i18n.t('ui.career.squadron_col_highest_award'), null));
+
+            const stateImgEl = document.createElement('img');
+            stateImgEl.src = this.getGameAssetUrl('CampaignRanksAwards/Misc/state.png');
+            stateImgEl.alt = i18n.t('ui.career.squadron_col_state');
+            stateImgEl.title = i18n.t('ui.career.squadron_col_state');
+            headerRow.appendChild(makeTh('state', stateImgEl, null));
+
+            killCols.forEach(col => {
+                const img = document.createElement('img');
+                img.src = this.getGameAssetUrl(`CampaignRanksAwards/Misc/${col.icon}`);
+                img.alt = i18n.t(col.i18nKey);
+                img.title = i18n.t(col.i18nKey);
+                headerRow.appendChild(makeTh(col.key, img, null));
+            });
+
+            const goodImg = document.createElement('img');
+            goodImg.src = this.getGameAssetUrl('CampaignRanksAwards/Misc/goodsorties.png');
+            goodImg.alt = i18n.t('ui.career.squadron_col_good_sorties');
+            goodImg.title = i18n.t('ui.career.squadron_col_good_sorties');
+            headerRow.appendChild(makeTh('sorties_good', goodImg, null));
+
+            const sortiesImg = document.createElement('img');
+            sortiesImg.src = this.getGameAssetUrl('CampaignRanksAwards/Misc/sorties.png');
+            sortiesImg.alt = i18n.t('ui.career.squadron_col_sorties');
+            sortiesImg.title = i18n.t('ui.career.squadron_col_sorties');
+            headerRow.appendChild(makeTh('sorties', sortiesImg, null));
+
+            const ftImg = document.createElement('img');
+            ftImg.src = this.getGameAssetUrl('CampaignRanksAwards/Misc/flighttime.png');
+            ftImg.alt = i18n.t('ui.career.squadron_col_flight_time');
+            ftImg.title = i18n.t('ui.career.squadron_col_flight_time');
+            headerRow.appendChild(makeTh('flight_time', ftImg, null));
+
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            updateSortIndicators();
+
+            rebuildTbody();
+            table.appendChild(tbody);
+            wrapper.appendChild(table);
+            content.appendChild(wrapper);
+        };
+
+        if (selector) {
+            selector.value = String(selectedRecord.theatre_index ?? '');
+            selector.onchange = () => {
+                const selectedIndex = Number(selector.value);
+                const nextRecord = availableRecords.find(record => record.theatre_index === selectedIndex);
+                if (!nextRecord) return;
+                selectedRecord = nextRecord;
+                renderSelectedRecord();
+            };
+        }
+
+        renderSelectedRecord();
     }
 };

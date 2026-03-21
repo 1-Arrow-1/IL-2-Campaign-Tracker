@@ -1182,6 +1182,7 @@ def get_career_showcase(root_career_id: int):
         return jsonify({'error': f'Unsupported country for showcase: {country}'}), 404
 
     events = detail.get('events', [])
+    showcase_events = detail.get('showcase_awards', events)
 
     # --- USSR early/late / Germany extended ---
     if showcase_base == 'ussr':
@@ -1196,7 +1197,7 @@ def get_career_showcase(root_career_id: int):
     # modal_image_url points to the 'big' asset (e.g. iron_cross_2nd_big.dds);
     # award_image_to_showcase_name converts the filename to the big1 showcase key.
     earned: set[str] = set()
-    for ev in events:
+    for ev in showcase_events:
         if ev.get('type') != 'award':
             continue
         modal_url = ev.get('modal_image_url') or ''

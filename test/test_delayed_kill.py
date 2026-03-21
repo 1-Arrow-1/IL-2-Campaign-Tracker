@@ -9,7 +9,7 @@ Scenarios covered
 1. Direct kill              – AType:3 AID=player  → credited (existing behaviour)
 2. Delayed kill             – AType:3 AID=-1, player was last damager within window → credited
 3. No damage               – AType:3 AID=-1, no hits on target → NOT credited
-4. Other last damager      – AType:3 AID=-1, non-player was last to hit → NOT credited
+4. Other last damager      – AType:3 AID=-1, non-player was last to hit and out-damaged player → NOT credited
 5. Time window exceeded    – AType:3 AID=-1, player was last damager but too long ago → NOT credited
 6. Proportional fallback   – AType:3 AID=-1, player ≥80 % damage but NOT last damager → credited
 7. No double-count         – two AType:3 events for same TID → credited exactly once
@@ -146,11 +146,11 @@ class TestDelayedKill(unittest.TestCase):
 
     # ------------------------------------------------------------------
     def test_other_last_damager_no_credit(self):
-        """AType:3 AID:-1, a non-player was the last to hit → NOT credited."""
+        """AType:3 AID:-1, a non-player was the last to hit and did more damage → NOT credited."""
         lines = _build_report(
             _TARGET_SPAWN.format(t=100, id=_TARGET_TID),
             # Player hits first
-            _DAMAGE.format(t=1000, dmg=0.3, aid=_PLAYER_AID, tid=_TARGET_TID),
+            _DAMAGE.format(t=1000, dmg=0.1, aid=_PLAYER_AID, tid=_TARGET_TID),
             # Other attacker hits LAST
             _DAMAGE.format(t=1500, dmg=0.2, aid=_OTHER_AID,  tid=_TARGET_TID),
             _KILL.format(t=2000, aid=-1, tid=_TARGET_TID),
@@ -158,7 +158,27 @@ class TestDelayedKill(unittest.TestCase):
         stats = _parse(lines)
         self.assertEqual(
             _air_kills(stats), 0,
-            "Non-player was last damager → kill must not be credited",
+            "Non-player out-damaged player → kill must not be credited",
+        )
+
+    # ------------------------------------------------------------------
+    def test_dominant_player_damage_vs_multiple_ai_credited(self):
+        """Player damage beating all AI attackers combined and individually must credit the kill."""
+        lines = _build_report(
+            _TARGET_SPAWN.format(t=100, id=_TARGET_TID),
+            _DAMAGE.format(t=1000, dmg=0.171, aid=_PLAYER_AID, tid=_TARGET_TID),
+            _DAMAGE.format(t=1100, dmg=0.033, aid=201, tid=_TARGET_TID),
+            _DAMAGE.format(t=1200, dmg=0.074, aid=202, tid=_TARGET_TID),
+            _DAMAGE.format(t=1300, dmg=0.006, aid=203, tid=_TARGET_TID),
+            _DAMAGE.format(t=1400, dmg=0.012, aid=204, tid=_TARGET_TID),
+            _DAMAGE.format(t=1500, dmg=0.004, aid=205, tid=_TARGET_TID),
+            _DAMAGE.format(t=2000, dmg=0.697, aid=-1, tid=_TARGET_TID),
+            _KILL.format(t=2000, aid=-1, tid=_TARGET_TID),
+        )
+        stats = _parse(lines)
+        self.assertEqual(
+            _air_kills(stats), 1,
+            "Player damage dominating all AI follow-up damage should credit the kill",
         )
 
     # ------------------------------------------------------------------

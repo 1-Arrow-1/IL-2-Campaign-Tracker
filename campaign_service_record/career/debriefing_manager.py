@@ -66,7 +66,8 @@ class _MissionResult:
     linked: bool
     final_state: str = ""   # e.g. "Landed", "Crashed", "Bailed out" — empty if not linked
     aircraft: str = ""      # aircraft type flown, e.g. "Bf 109 G-6"
-    kills: int = 0          # air kills scored this mission (category == "Air" only)
+    kills: int = 0          # air kills scored this mission, including parked aircraft
+    air_kills_by_type: Optional[Dict[str, int]] = None  # flying aircraft only; excludes parked/static planes
 
 
 class CareerDebriefingManager:
@@ -204,7 +205,7 @@ class CareerDebriefingManager:
         Dict maps aircraft name → {"missions": N, "kills": K}, sorted by
         missions descending (matching CampaignAggregator._calculate_aircraft_usage()).
         Only linked missions (with parsed report data) contribute.
-        ``kills`` counts air kills only (category == "Air").
+        ``kills`` uses the parser summary total and includes parked aircraft.
         """
         results = self._get_results()
         usage: Dict[str, Dict] = {}
@@ -219,6 +220,23 @@ class CareerDebriefingManager:
         return dict(
             sorted(usage.items(), key=lambda x: (x[1]["missions"], x[1]["kills"]), reverse=True)
         )
+
+    def get_air_kills_by_type(self) -> Dict[str, int]:
+        """
+        Return exact destroyed aircraft types for the player across linked missions.
+
+        Only flying aircraft kills are counted. Parked/static plane kills are
+        explicitly excluded.
+        """
+        totals: Dict[str, int] = {}
+        for result in self._get_results():
+            if not result.linked or not result.air_kills_by_type:
+                continue
+            for aircraft_type, count in result.air_kills_by_type.items():
+                if not aircraft_type:
+                    continue
+                totals[aircraft_type] = totals.get(aircraft_type, 0) + int(count or 0)
+        return dict(sorted(totals.items(), key=lambda item: (-item[1], item[0].lower())))
 
     # ------------------------------------------------------------------
     # Private: processing pipeline
@@ -348,11 +366,12 @@ class CareerDebriefingManager:
                                     mission_date=mission_date,
                                     html=cached["html"],
                                     duration_seconds=cached.get("duration_seconds"),
-                                    linked=True,
-                                    final_state=cached.get("final_state", ""),
-                                    aircraft=cached.get("aircraft", ""),
-                                    kills=cached.get("kills", 0),
-                                ), False
+                                linked=True,
+                                final_state=cached.get("final_state", ""),
+                                aircraft=cached.get("aircraft", ""),
+                                kills=cached.get("kills", 0),
+                                air_kills_by_type=dict(cached.get("air_kills_by_type") or {}),
+                            ), False
                         else:
                             # Old cache entry without mlg_timestamp — accept as
                             # before; it will gain mlg_timestamp on next re-link.
@@ -367,6 +386,7 @@ class CareerDebriefingManager:
                                 final_state=cached.get("final_state", ""),
                                 aircraft=cached.get("aircraft", ""),
                                 kills=cached.get("kills", 0),
+                                air_kills_by_type=dict(cached.get("air_kills_by_type") or {}),
                             ), False
                 except OSError:
                     pass  # File gone — fall through and re-link
@@ -427,11 +447,8 @@ class CareerDebriefingManager:
         duration_seconds = _parse_duration_seconds(summary.get("flight_duration", ""))
         final_state = str(summary.get("final_state", "") or "")
         aircraft = str(player.get("aircraft", "") or "Unknown")
-        kills = sum(
-            1 for e in events
-            if e.get("type", e.get("event", "")) == "Kill"
-            and e.get("category") == "Air"
-        )
+        kills = int(summary.get("air_kills", 0) or 0)
+        air_kills_by_type = _extract_flying_air_kills_by_type(events)
         html = _render_mission_html(data, mission_num, mission_date)
 
         try:
@@ -454,6 +471,7 @@ class CareerDebriefingManager:
             "final_state": final_state,
             "aircraft": aircraft,
             "kills": kills,
+            "air_kills_by_type": air_kills_by_type,
             "linked": True,
         }
 
@@ -468,6 +486,7 @@ class CareerDebriefingManager:
             final_state=final_state,
             aircraft=aircraft,
             kills=kills,
+            air_kills_by_type=air_kills_by_type,
         ), True
 
     # ------------------------------------------------------------------
@@ -475,7 +494,7 @@ class CareerDebriefingManager:
     # ------------------------------------------------------------------
 
     # Increment when the HTML rendering format changes to force cache rebuild.
-    _CACHE_VERSION = 10
+    _CACHE_VERSION = 11
 
     def _load_cache(self) -> Dict:
         if not self._cache_path.exists():
@@ -611,6 +630,23 @@ def _render_stub_html(mission_num: int, mission_date: str) -> str:
         f"<i>No FLIGHT LOG available</i>"
         f"</div>"
     )
+
+
+def _extract_flying_air_kills_by_type(events: List[Dict]) -> Dict[str, int]:
+    """Count exact aircraft kills from parsed events, excluding parked/static aircraft."""
+    counts: Dict[str, int] = {}
+    for event in events:
+        if event.get("type") != "Kill":
+            continue
+        if event.get("category") != "Air":
+            continue
+        if bool(event.get("is_static")):
+            continue
+        target = str(event.get("target", "") or "").strip()
+        if not target:
+            continue
+        counts[target] = counts.get(target, 0) + 1
+    return counts
 
 
 def _format_mission_date(mission_row: sqlite3.Row) -> str:
