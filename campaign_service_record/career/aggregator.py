@@ -830,17 +830,32 @@ class CareerAggregator:
                 if hinted_label:
                     label_votes.setdefault(plane_key, Counter())[hinted_label] += 1
 
-        resolved: Dict[str, Dict[str, int]] = {}
-        for plane_key, data in sorted(
+        preferred_labels: Dict[str, str] = {}
+        sorted_usage = sorted(
             usage.items(),
             key=lambda item: (item[1]["missions"], item[1]["kills"]),
             reverse=True,
-        ):
+        )
+        for plane_key, data in sorted_usage:
             label_counter = label_votes.get(plane_key)
             if label_counter:
-                label = label_counter.most_common(1)[0][0]
+                preferred_labels[plane_key] = label_counter.most_common(1)[0][0]
             else:
+                preferred_labels[plane_key] = self._format_plane_label(plane_key)
+
+        duplicate_labels = {
+            label for label, count in Counter(preferred_labels.values()).items() if count > 1
+        }
+
+        resolved: Dict[str, Dict[str, int]] = {}
+        used_labels = set()
+        for plane_key, data in sorted_usage:
+            label = preferred_labels[plane_key]
+            if label in duplicate_labels:
                 label = self._format_plane_label(plane_key)
+            if label in used_labels:
+                label = f"{label} [{plane_key}]"
+            used_labels.add(label)
             resolved[label] = data
 
         return resolved
