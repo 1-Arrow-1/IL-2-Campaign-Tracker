@@ -13,6 +13,7 @@ Features:
 """
 
 import sys
+import json
 import tkinter as tk
 from tkinter import messagebox
 from pathlib import Path
@@ -122,11 +123,41 @@ def _handle_swap_german_awards(argv: list) -> int:
         return 1
 
 
+def _handle_import_stock_campaigns(argv: list) -> int:
+    """
+    Headless handler for elevated stock-campaign import.
+
+    Arguments expected:
+
+        --import-stock-campaigns <game_dir> <result_json>
+    """
+    try:
+        idx = argv.index("--import-stock-campaigns")
+        game_dir = Path(argv[idx + 1])
+        result_path = Path(argv[idx + 2])
+    except (ValueError, IndexError) as exc:
+        print(f"ERROR: malformed --import-stock-campaigns arguments: {exc}", flush=True)
+        return 1
+
+    from settings_manager.stock_campaign_import import import_stock_campaigns, write_result_json
+
+    try:
+        result = import_stock_campaigns(game_dir)
+        write_result_json(result, result_path)
+        print(json.dumps(result.to_dict()), flush=True)
+        return 0
+    except Exception as exc:
+        print(f"ERROR: {exc}", flush=True)
+        return 1
+
+
 def main():
     """Main entry point."""
     # Headless elevated swap – no GUI needed
     if "--swap-german-awards" in sys.argv:
         sys.exit(_handle_swap_german_awards(sys.argv))
+    if "--import-stock-campaigns" in sys.argv:
+        sys.exit(_handle_import_stock_campaigns(sys.argv))
 
     # Check prerequisites
     can_start, errors = check_prerequisites()

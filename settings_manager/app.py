@@ -16,7 +16,7 @@ import time
 import logging
 from datetime import datetime
 from pathlib import Path
-from tkinter import ttk, messagebox
+from tkinter import filedialog, ttk, messagebox
 from copy import deepcopy
 from typing import Any, Dict, Optional, Iterable, Tuple, List
 
@@ -39,6 +39,12 @@ from settings_manager.config.validators import (
     OffsetValidator,
 )
 from settings_manager.i18n import Translator, LANGUAGE_NAMES
+from settings_manager.stock_campaign_import import (
+    StockCampaignImportResult,
+    get_bundled_resource_path,
+    import_stock_campaigns,
+    validate_game_directory,
+)
 
 if HAS_RUAMEL:
     from ruamel.yaml.comments import CommentedMap
@@ -272,6 +278,12 @@ class SettingsManagerApp(tk.Tk):
         self._career_lang_editor: Optional[ttk.Combobox] = None
         self._career_lang_editor_item: Optional[str] = None
         self._career_list_cache: List[Tuple[int, str]] = []
+        self._button_icons: Dict[str, tk.PhotoImage] = {}
+        self._stock_import_btn: Optional[ttk.Button] = None
+        self._stock_import_status_var = tk.StringVar(value="")
+        self._stock_import_thread: Optional[threading.Thread] = None
+        self._stock_import_queue: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+        self._stock_import_poll_id: Optional[str] = None
 
         # German awards tab state
         self._german_awards_var: Optional[tk.StringVar] = None
@@ -338,6 +350,24 @@ class SettingsManagerApp(tk.Tk):
             'stock_campaigns': deepcopy(self.stock_campaigns_data) if self.stock_campaigns_data else None,
         }
         self._campaign_display_name_map = None
+
+    def _load_button_icon(self, relative_path: str, cache_key: str) -> Optional[tk.PhotoImage]:
+        """Load a small PNG button icon from bundled resources."""
+        if cache_key in self._button_icons:
+            return self._button_icons[cache_key]
+
+        icon_path = get_bundled_resource_path(relative_path)
+        if not icon_path.exists():
+            logger.debug("Button icon not found: %s", icon_path)
+            return None
+
+        try:
+            image = tk.PhotoImage(file=str(icon_path))
+            self._button_icons[cache_key] = image
+            return image
+        except Exception as exc:
+            logger.debug("Could not load button icon %s: %s", icon_path, exc)
+            return None
     
     def _create_widgets(self) -> None:
         """Create all UI widgets."""
@@ -661,7 +691,34 @@ class SettingsManagerApp(tk.Tk):
                 foreground='gray'
             ).pack(pady=50)
             return
-        
+
+        ttk.Label(
+            frame,
+            text=self.tr.t("lbl_import_stock_campaigns_helper"),
+            foreground='gray',
+            wraplength=520,
+            justify=tk.LEFT,
+        ).pack(anchor=tk.W, pady=(0, 10))
+
+        action_row = ttk.Frame(frame)
+        action_row.pack(fill=tk.X, pady=(0, 12))
+
+        import_icon = self._load_button_icon("tools/icons/import.png", "import")
+        self._stock_import_btn = ttk.Button(
+            action_row,
+            text=self.tr.t("btn_import_stock_campaigns"),
+            command=self._on_import_stock_campaigns,
+            image=import_icon,
+            compound=tk.LEFT,
+        )
+        self._stock_import_btn.pack(side=tk.LEFT)
+
+        ttk.Label(
+            action_row,
+            textvariable=self._stock_import_status_var,
+            foreground='gray',
+        ).pack(side=tk.LEFT, padx=(12, 0))
+
         # Treeview
         columns = ('campaign', 'country', 'language', 'offset')
         self.campaigns_tree = ttk.Treeview(
@@ -722,6 +779,192 @@ class SettingsManagerApp(tk.Tk):
             language_display = self.tr.t(lang_key)
 
             self.campaigns_tree.insert('', tk.END, values=(campaign_name, country, language_display, offset))
+
+    def _set_stock_import_running(self, running: bool, status_text: str = "") -> None:
+        """Update stock-campaign import UI state."""
+        self._stock_import_status_var.set(status_text)
+        if self._stock_import_btn is not None:
+            self._stock_import_btn.config(state='disabled' if running else 'normal')
+
+    def _choose_game_directory_for_stock_import(self) -> Optional[Path]:
+        """Prompt for the IL-2 game directory, preferring the configured path."""
+        initial_dir = ""
+        configured = (self.mission_dates_data or {}).get('game_directory')
+        if configured and os.path.isdir(str(configured)):
+            initial_dir = str(configured)
+
+        selected = filedialog.askdirectory(
+            parent=self,
+            title=self.tr.t("msg_stock_campaigns_select_directory"),
+            initialdir=initial_dir or None,
+            mustexist=True,
+        )
+        if not selected:
+            return None
+
+        game_dir = Path(selected)
+        validate_game_directory(game_dir)
+        return game_dir
+
+    def _on_import_stock_campaigns(self) -> None:
+        """Handle the stock-campaign import button."""
+        try:
+            game_dir = self._choose_game_directory_for_stock_import()
+        except Exception as exc:
+            messagebox.showerror(
+                self.tr.t("msg_error_title"),
+                self.tr.t("msg_stock_campaigns_invalid_directory", error=str(exc)),
+                parent=self,
+            )
+            return
+
+        if game_dir is None:
+            return
+
+        confirmed = messagebox.askyesno(
+            self.tr.t("msg_confirm_title"),
+            self.tr.t("msg_stock_campaigns_confirm", path=str(game_dir)),
+            parent=self,
+        )
+        if not confirmed:
+            return
+
+        self._set_stock_import_running(True, self.tr.t("msg_stock_campaigns_import_running"))
+        self._stock_import_thread = threading.Thread(
+            target=self._run_stock_campaign_import_worker,
+            args=(game_dir,),
+            daemon=True,
+        )
+        self._stock_import_thread.start()
+        if self._stock_import_poll_id is None:
+            self._stock_import_poll_id = self.after(200, self._poll_stock_import_queue)
+
+    def _run_stock_campaign_import_worker(self, game_dir: Path) -> None:
+        """Run stock-campaign import off the Tk main thread."""
+        try:
+            result = import_stock_campaigns(game_dir)
+            payload = {"status": "success", "result": result}
+        except Exception as exc:
+            winerror = getattr(exc, "winerror", None)
+            if isinstance(exc, PermissionError) or winerror in (_ERROR_ELEVATION_REQUIRED, 5):
+                payload = self._run_stock_campaign_import_elevated(game_dir)
+            else:
+                payload = {"status": "error", "error": str(exc)}
+        self._stock_import_queue.put(payload)
+
+    def _run_stock_campaign_import_elevated(self, game_dir: Path) -> Dict[str, Any]:
+        """Retry stock-campaign import with elevation."""
+        import tempfile
+
+        try:
+            with tempfile.NamedTemporaryFile(
+                prefix="il2_stock_campaign_import_",
+                suffix=".log",
+                delete=False,
+                mode="w",
+            ) as log_file:
+                log_path = log_file.name
+            with tempfile.NamedTemporaryFile(
+                prefix="il2_stock_campaign_import_",
+                suffix=".json",
+                delete=False,
+                mode="w",
+            ) as result_file:
+                result_path = result_file.name
+        except Exception as exc:
+            return {"status": "error", "error": str(exc)}
+
+        if getattr(sys, "frozen", False):
+            exe_path = sys.executable
+            args = ["--import-stock-campaigns", str(game_dir), result_path]
+            working_dir = str(Path(sys.executable).parent)
+        else:
+            exe_path = sys.executable
+            args = [str(Path(__file__).with_name("main.py")), "--import-stock-campaigns", str(game_dir), result_path]
+            working_dir = str(Path(__file__).resolve().parent.parent)
+
+        success, exit_code, err = _run_elevated_windows(
+            exe_path=exe_path,
+            args=args,
+            working_dir=working_dir,
+            log_path=log_path,
+            timeout_seconds=600,
+        )
+
+        if not success and err == "UAC_CANCELLED":
+            return {"status": "cancelled"}
+        if not success or exit_code != 0:
+            detail = ""
+            try:
+                with open(log_path, encoding="utf-8", errors="replace") as handle:
+                    detail = handle.read().strip()
+            except Exception:
+                pass
+            return {"status": "error", "error": detail or err or self.tr.t("msg_stock_campaigns_import_failed_generic")}
+
+        try:
+            data = load_json(Path(result_path))
+            result = StockCampaignImportResult(**data)
+        except Exception as exc:
+            return {"status": "error", "error": str(exc)}
+        return {"status": "success", "result": result}
+
+    def _poll_stock_import_queue(self) -> None:
+        """Poll background stock-campaign import results."""
+        try:
+            payload = self._stock_import_queue.get_nowait()
+        except queue.Empty:
+            self._stock_import_poll_id = self.after(200, self._poll_stock_import_queue)
+            return
+
+        self._stock_import_poll_id = None
+        self._set_stock_import_running(False, "")
+
+        status = payload.get("status")
+        if status == "success":
+            result = payload["result"]
+            messagebox.showinfo(
+                self.tr.t("msg_confirm_title"),
+                self._format_stock_campaign_import_summary(result),
+                parent=self,
+            )
+        elif status == "cancelled":
+            messagebox.showwarning(
+                self.tr.t("msg_warning_title"),
+                self.tr.t("msg_stock_campaigns_uac_cancelled"),
+                parent=self,
+            )
+        else:
+            messagebox.showerror(
+                self.tr.t("msg_error_title"),
+                self.tr.t(
+                    "msg_stock_campaigns_import_failed",
+                    error=payload.get("error", self.tr.t("msg_stock_campaigns_import_failed_generic")),
+                ),
+                parent=self,
+            )
+
+    def _format_stock_campaign_import_summary(self, result: StockCampaignImportResult) -> str:
+        """Build a concise result message for stock-campaign import."""
+        imported_count = len(result.imported_campaigns)
+        skipped_count = len(result.skipped_campaigns)
+
+        imported_line = self.tr.t(
+            "msg_stock_campaigns_summary_imported",
+            count=imported_count,
+            campaigns=", ".join(result.imported_campaigns) if result.imported_campaigns else self.tr.t("msg_stock_campaigns_summary_none"),
+        )
+        skipped_line = self.tr.t(
+            "msg_stock_campaigns_summary_skipped",
+            count=skipped_count,
+            campaigns=", ".join(result.skipped_campaigns) if result.skipped_campaigns else self.tr.t("msg_stock_campaigns_summary_none"),
+        )
+
+        return self.tr.t(
+            "msg_stock_campaigns_import_success",
+            imported_line=imported_line,
+            skipped_line=skipped_line,
+        )
 
     # === Career Language Settings Tab ===
 

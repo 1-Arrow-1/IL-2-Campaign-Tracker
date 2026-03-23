@@ -180,6 +180,7 @@ Source: "stock_campaigns.yaml"; DestDir: "{app}"; Flags: onlyifdoesntexist unins
 Source: "IL2_CampaignTracker_v2.2_ML.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "IL2_Tracker_Control_GUI.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "mlg2txt.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "unGTP-IL2.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "QUICK_START.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README.html"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README de.html"; DestDir: "{app}"; Flags: ignoreversion

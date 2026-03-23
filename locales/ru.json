@@ -831,7 +831,8 @@
       "ok": "OK",
       "remove_bracket": "Удалить Диапазон",
       "restore_defaults": "Восстановить По Умолчанию",
-      "swap_award_style": "Сменить стиль наград"
+      "swap_award_style": "Сменить стиль наград",
+      "import_stock_campaigns": "Импорт стандартных кампаний IL-2"
     },
     "dialog": {
       "edit_bracket_label": "Диапазон (например, '1-10' или '71+'):",
@@ -879,7 +880,8 @@
       "german_awards_style_unknown": "Неизвестно",
       "radio_use_1957": "Стиль 1957",
       "radio_use_ww2": "Стиль ВМВ",
-      "german_awards_elevation_note": "Примечание: Изменение файлов в каталоге установки IL-2 может потребовать прав администратора. При необходимости будет запрошено повышение привилегий."
+      "german_awards_elevation_note": "Примечание: Изменение файлов в каталоге установки IL-2 может потребовать прав администратора. При необходимости будет запрошено повышение привилегий.",
+      "import_stock_campaigns_helper": "Импортирует встроенные стандартные кампании IL-2 из swf.gtp в папку data\\Campaigns. Уже существующие подпапки кампаний пропускаются; копируются только отсутствующие папки кампаний."
     },
     "message": {
       "campaigns_tab_disabled": "Настройки кампании требуют campaign_mission_dates.json.\nПожалуйста, запустите Campaign Tracker хотя бы один раз.",
@@ -905,7 +907,18 @@
       "german_awards_swap_success": "Немецкие награды успешно переключены на стиль {style}.",
       "german_awards_swap_failed": "Не удалось сменить стиль наград:\n{error}",
       "german_awards_uac_cancelled": "Запрос прав администратора был отменён. Изменения не внесены.",
-      "german_awards_elevation_failed": "Не удалось получить права администратора. Попробуйте запустить Менеджер настроек от имени администратора."
+      "german_awards_elevation_failed": "Не удалось получить права администратора. Попробуйте запустить Менеджер настроек от имени администратора.",
+      "stock_campaigns_confirm": "Импортировать стандартные кампании IL-2 из:\n{path}\n\nСуществующие подпапки кампаний в data\\Campaigns будут пропущены. Могут потребоваться права администратора.",
+      "stock_campaigns_import_failed": "Не удалось импортировать стандартные кампании IL-2:\n{error}",
+      "stock_campaigns_import_failed_generic": "Импорт не был завершён.",
+      "stock_campaigns_import_running": "Импорт стандартных кампаний...",
+      "stock_campaigns_import_success": "Импорт стандартных кампаний IL-2 завершён.\n\n{imported_line}\n{skipped_line}\n\nИмпортированные кампании появятся в трекере после следующего сканирования кампаний.",
+      "stock_campaigns_invalid_directory": "Выбранная папка IL-2 непригодна для импорта стандартных кампаний:\n{error}",
+      "stock_campaigns_select_directory": "Выберите каталог игры IL-2",
+      "stock_campaigns_summary_imported": "Импортировано ({count}): {campaigns}",
+      "stock_campaigns_summary_none": "нет",
+      "stock_campaigns_summary_skipped": "Пропущено существующих ({count}): {campaigns}",
+      "stock_campaigns_uac_cancelled": "Запрос прав администратора был отменён. Ни одна кампания не была импортирована."
     },
     "tab": {
       "campaigns": "Кампании",

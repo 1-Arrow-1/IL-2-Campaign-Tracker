@@ -155,6 +155,11 @@ if not exist "tools\icons\career.png" (
     pause
     exit /b 1
 )
+if not exist "tools\icons\import.png" (
+    echo ERROR: tools\icons\import.png not found!
+    pause
+    exit /b 1
+)
 if not exist "tools\icons\settings.png" (
     echo ERROR: tools\icons\settings.png not found!
     pause
@@ -292,6 +297,11 @@ if not exist "cleanup_tracker_content.py" (
 )
 if not exist "cleanup_tracker_content.spec" (
     echo ERROR: cleanup_tracker_content.spec not found!
+    pause
+    exit /b 1
+)
+if not exist "unGTP-IL2.exe" (
+    echo ERROR: unGTP-IL2.exe not found!
     pause
     exit /b 1
 )
@@ -515,6 +525,16 @@ if exist "dist\IL2_Settings_Manager.exe" (
     copy "dist\IL2_Settings_Manager.exe" "IL2_Campaign_Tracker_v2.2_ML\" >NUL
     if errorlevel 1 (
         echo ERROR: Could not copy IL2_Settings_Manager.exe!
+        pause
+        exit /b 1
+    )
+)
+
+REM Copy stock campaign extractor helper
+if exist "unGTP-IL2.exe" (
+    copy "unGTP-IL2.exe" "IL2_Campaign_Tracker_v2.2_ML\" >NUL
+    if errorlevel 1 (
+        echo ERROR: Could not copy unGTP-IL2.exe!
         pause
         exit /b 1
     )

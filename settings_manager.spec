@@ -21,6 +21,8 @@ a = Analysis(
     datas=[
         # Include locales directory
         ('locales', 'locales'),
+        ('tools\\icons\\import.png', 'tools\\icons'),
+        ('unGTP-IL2.exe', '.'),
     ],
     hiddenimports=[
         'tkinter',

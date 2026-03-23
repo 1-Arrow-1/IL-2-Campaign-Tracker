@@ -831,7 +831,8 @@
       "ok": "确定",
       "remove_bracket": "删除区间",
       "restore_defaults": "恢复默认",
-      "swap_award_style": "切换勋章样式"
+      "swap_award_style": "切换勋章样式",
+      "import_stock_campaigns": "导入 IL-2 标准战役"
     },
     "dialog": {
       "edit_bracket_label": "区间（例如 '1-10' 或 '71+'）：",
@@ -879,7 +880,8 @@
       "german_awards_style_unknown": "未知",
       "radio_use_1957": "使用1957年样式",
       "radio_use_ww2": "使用二战样式",
-      "german_awards_elevation_note": "注意：修改IL-2安装目录中的文件可能需要管理员权限。如有需要，将提示您进行权限提升。"
+      "german_awards_elevation_note": "注意：修改IL-2安装目录中的文件可能需要管理员权限。如有需要，将提示您进行权限提升。",
+      "import_stock_campaigns_helper": "将 swf.gtp 中内置的 IL-2 标准战役导入到你的 data\\Campaigns 文件夹。已存在的战役子文件夹会被跳过；只会复制缺失的战役文件夹。"
     },
     "message": {
       "campaigns_tab_disabled": "战役设置需要 campaign_mission_dates.json。\n请至少运行一次 Campaign Tracker。",
@@ -905,7 +907,18 @@
       "german_awards_swap_success": "德国勋章已成功切换为{style}样式。",
       "german_awards_swap_failed": "切换勋章样式失败：\n{error}",
       "german_awards_uac_cancelled": "管理员权限提升已取消。未做任何更改。",
-      "german_awards_elevation_failed": "无法获取管理员权限。请尝试以管理员身份运行设置管理器。"
+      "german_awards_elevation_failed": "无法获取管理员权限。请尝试以管理员身份运行设置管理器。",
+      "stock_campaigns_confirm": "是否从以下路径导入 IL-2 标准战役？\n{path}\n\ndata\\Campaigns 中已存在的战役子文件夹将被跳过。可能需要管理员权限。",
+      "stock_campaigns_import_failed": "导入 IL-2 标准战役失败：\n{error}",
+      "stock_campaigns_import_failed_generic": "导入未能完成。",
+      "stock_campaigns_import_running": "正在导入标准战役...",
+      "stock_campaigns_import_success": "IL-2 标准战役导入已完成。\n\n{imported_line}\n{skipped_line}\n\n导入的战役将在下次扫描战役后出现在 tracker 中。",
+      "stock_campaigns_invalid_directory": "所选的 IL-2 文件夹不适用于导入标准战役：\n{error}",
+      "stock_campaigns_select_directory": "选择 IL-2 游戏目录",
+      "stock_campaigns_summary_imported": "已导入 ({count})：{campaigns}",
+      "stock_campaigns_summary_none": "无",
+      "stock_campaigns_summary_skipped": "已跳过现有项 ({count})：{campaigns}",
+      "stock_campaigns_uac_cancelled": "已取消管理员权限提升。未导入任何战役。"
     },
     "tab": {
       "campaigns": "战役",

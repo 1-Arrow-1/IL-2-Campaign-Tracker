@@ -831,7 +831,8 @@
       "ok": "OK",
       "remove_bracket": "Bereich entfernen",
       "restore_defaults": "Standards wiederherstellen",
-      "swap_award_style": "Auszeichnungsstil wechseln"
+      "swap_award_style": "Auszeichnungsstil wechseln",
+      "import_stock_campaigns": "Standard-IL-2-Kampagnen importieren"
     },
     "dialog": {
       "edit_bracket_label": "Bereich (z.B. '1-10' oder '71+'):",
@@ -879,7 +880,8 @@
       "german_awards_style_unknown": "Unbekannt",
       "radio_use_1957": "1957-Stil verwenden",
       "radio_use_ww2": "2. Weltkrieg-Stil verwenden",
-      "german_awards_elevation_note": "Hinweis: Das Ändern von Dateien im IL-2-Installationsverzeichnis erfordert möglicherweise Administratorrechte. Bei Bedarf wird eine UAC-Aufforderung angezeigt."
+      "german_awards_elevation_note": "Hinweis: Das Ändern von Dateien im IL-2-Installationsverzeichnis erfordert möglicherweise Administratorrechte. Bei Bedarf wird eine UAC-Aufforderung angezeigt.",
+      "import_stock_campaigns_helper": "Importiert die standardmaessigen IL-2-Kampagnen aus swf.gtp in deinen Ordner data\\Campaigns. Bereits vorhandene Kampagnen-Unterordner werden uebersprungen; nur fehlende Kampagnenordner werden kopiert."
     },
     "message": {
       "campaigns_tab_disabled": "Kampagnen-Einstellungen erfordern campaign_mission_dates.json.\nBitte führe den Campaign Tracker mindestens einmal aus.",
@@ -905,7 +907,18 @@
       "german_awards_swap_success": "Deutsche Auszeichnungen erfolgreich auf {style} gewechselt.",
       "german_awards_swap_failed": "Wechsel des Auszeichnungsstils fehlgeschlagen:\n{error}",
       "german_awards_uac_cancelled": "Die Administratorrechte-Anfrage wurde abgebrochen. Es wurden keine Änderungen vorgenommen.",
-      "german_awards_elevation_failed": "Administratorrechte konnten nicht erlangt werden. Versuche, den Einstellungsmanager als Administrator auszuführen."
+      "german_awards_elevation_failed": "Administratorrechte konnten nicht erlangt werden. Versuche, den Einstellungsmanager als Administrator auszuführen.",
+      "stock_campaigns_confirm": "Standard-IL-2-Kampagnen importieren aus:\n{path}\n\nBereits vorhandene Kampagnen-Unterordner in data\\Campaigns werden uebersprungen. Administratorrechte koennen erforderlich sein.",
+      "stock_campaigns_import_failed": "Import der Standard-IL-2-Kampagnen fehlgeschlagen:\n{error}",
+      "stock_campaigns_import_failed_generic": "Der Import konnte nicht abgeschlossen werden.",
+      "stock_campaigns_import_running": "Standardkampagnen werden importiert...",
+      "stock_campaigns_import_success": "Der Import der Standard-IL-2-Kampagnen wurde abgeschlossen.\n\n{imported_line}\n{skipped_line}\n\nImportierte Kampagnen erscheinen nach dem naechsten Kampagnenscan im Tracker.",
+      "stock_campaigns_invalid_directory": "Der ausgewaehlte IL-2-Ordner ist fuer den Import von Standardkampagnen nicht gueltig:\n{error}",
+      "stock_campaigns_select_directory": "IL-2-Spielverzeichnis auswaehlen",
+      "stock_campaigns_summary_imported": "Importiert ({count}): {campaigns}",
+      "stock_campaigns_summary_none": "keine",
+      "stock_campaigns_summary_skipped": "Bereits vorhanden, uebersprungen ({count}): {campaigns}",
+      "stock_campaigns_uac_cancelled": "Die Administratorrechte-Anfrage wurde abgebrochen. Es wurden keine Kampagnen importiert."
     },
     "tab": {
       "campaigns": "Kampagnen",

@@ -1,0 +1,163 @@
+"""
+Helpers for importing stock IL-2 campaigns from swf.gtp.
+"""
+
+from __future__ import annotations
+
+from dataclasses import asdict, dataclass
+import json
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+from typing import Dict, List, Optional
+
+
+@dataclass
+class StockCampaignImportResult:
+    game_directory: str
+    extractor_path: str
+    archive_path: str
+    extraction_root: str
+    source_campaigns_dir: str
+    destination_campaigns_dir: str
+    imported_campaigns: List[str]
+    skipped_campaigns: List[str]
+    extractor_exit_code: int = 0
+    extractor_stdout: str = ""
+    extractor_stderr: str = ""
+
+    def to_dict(self) -> Dict:
+        return asdict(self)
+
+
+def get_bundled_resource_path(relative_path: str) -> Path:
+    """
+    Resolve a bundled resource in dev and PyInstaller one-file mode.
+    """
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        return Path(sys._MEIPASS) / relative_path
+    return Path(__file__).resolve().parent.parent / relative_path
+
+
+def get_default_extractor_path() -> Path:
+    """
+    Return the bundled unGTP extractor path.
+    """
+    return get_bundled_resource_path("unGTP-IL2.exe")
+
+
+def validate_game_directory(game_dir: Path) -> Path:
+    """
+    Validate the selected IL-2 game directory and return data/swf.gtp.
+    """
+    game_dir = Path(game_dir).expanduser().resolve()
+    archive_path = game_dir / "data" / "swf.gtp"
+    if not game_dir.exists():
+        raise FileNotFoundError(f"Game directory not found: {game_dir}")
+    if not archive_path.is_file():
+        raise FileNotFoundError(f"swf.gtp not found: {archive_path}")
+    return archive_path
+
+
+def find_extracted_campaigns_dir(extraction_root: Path) -> Optional[Path]:
+    """
+    Locate the extracted Campaigns directory created by unGTP.
+    """
+    candidates = [
+        extraction_root / "swf" / "Campaigns",
+        extraction_root / "swf" / "campaigns",
+        extraction_root / "Campaigns",
+        extraction_root / "campaigns",
+    ]
+    for candidate in candidates:
+        if candidate.is_dir():
+            return candidate
+    return None
+
+
+def copy_campaign_subfolders(source_campaigns_dir: Path, destination_campaigns_dir: Path) -> tuple[List[str], List[str]]:
+    """
+    Copy individual campaign subfolders, skipping only existing campaign folders.
+    """
+    source_campaigns_dir = Path(source_campaigns_dir)
+    destination_campaigns_dir = Path(destination_campaigns_dir)
+    destination_campaigns_dir.mkdir(parents=True, exist_ok=True)
+
+    imported: List[str] = []
+    skipped: List[str] = []
+
+    for entry in sorted(source_campaigns_dir.iterdir(), key=lambda path: path.name.lower()):
+        if not entry.is_dir():
+            continue
+        target = destination_campaigns_dir / entry.name
+        if target.exists():
+            skipped.append(entry.name)
+            continue
+        shutil.copytree(entry, target)
+        imported.append(entry.name)
+
+    return imported, skipped
+
+
+def import_stock_campaigns(
+    game_directory: Path,
+    extractor_path: Optional[Path] = None,
+    timeout_seconds: int = 300,
+) -> StockCampaignImportResult:
+    """
+    Extract stock campaigns from swf.gtp and copy missing campaign folders.
+    """
+    game_directory = Path(game_directory).expanduser().resolve()
+    archive_path = validate_game_directory(game_directory)
+    extractor = Path(extractor_path or get_default_extractor_path()).expanduser().resolve()
+    if not extractor.is_file():
+        raise FileNotFoundError(f"unGTP-IL2.exe not found: {extractor}")
+
+    extraction_root = game_directory / "data" / "(null)"
+    extraction_root.mkdir(parents=True, exist_ok=True)
+
+    result = subprocess.run(
+        [str(extractor), str(archive_path), str(extraction_root)],
+        capture_output=True,
+        text=True,
+        timeout=timeout_seconds,
+        check=False,
+    )
+
+    source_campaigns_dir = find_extracted_campaigns_dir(extraction_root)
+    if source_campaigns_dir is None:
+        raise RuntimeError(
+            "Stock campaign extraction did not produce a Campaigns directory."
+        )
+
+    destination_campaigns_dir = game_directory / "data" / "Campaigns"
+    imported, skipped = copy_campaign_subfolders(
+        source_campaigns_dir=source_campaigns_dir,
+        destination_campaigns_dir=destination_campaigns_dir,
+    )
+
+    return StockCampaignImportResult(
+        game_directory=str(game_directory),
+        extractor_path=str(extractor),
+        archive_path=str(archive_path),
+        extraction_root=str(extraction_root),
+        source_campaigns_dir=str(source_campaigns_dir),
+        destination_campaigns_dir=str(destination_campaigns_dir),
+        imported_campaigns=imported,
+        skipped_campaigns=skipped,
+        extractor_exit_code=result.returncode,
+        extractor_stdout=result.stdout or "",
+        extractor_stderr=result.stderr or "",
+    )
+
+
+def write_result_json(result: StockCampaignImportResult, destination: Path) -> None:
+    """
+    Serialize an import result for the elevated helper path.
+    """
+    destination = Path(destination)
+    destination.write_text(
+        json.dumps(result.to_dict(), indent=2),
+        encoding="utf-8",
+    )
