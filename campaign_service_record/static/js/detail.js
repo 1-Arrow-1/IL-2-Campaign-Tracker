@@ -2569,13 +2569,18 @@ const DetailPage = {
             });
         }
 
-        const killCols = [
+        const totalKillCols = [
             { key: 'kills_air',       icon: 'icon_aircraft.png',   i18nKey: 'web.combat.category.aircraft'  },
             { key: 'kills_vehicles',  icon: 'icon_vehicles.png',   i18nKey: 'web.combat.category.vehicles'  },
             { key: 'kills_railroad',  icon: 'icon_railroad.png',   i18nKey: 'web.combat.category.railroad'  },
             { key: 'kills_armaments', icon: 'icon_armaments.png',  i18nKey: 'web.combat.category.armaments' },
             { key: 'kills_buildings', icon: 'icon_buildings.png',  i18nKey: 'web.combat.category.buildings' },
             { key: 'kills_marine',    icon: 'icon_marine.png',     i18nKey: 'web.combat.category.marine'    },
+        ];
+
+        const memberStatCols = [
+            ...totalKillCols,
+            { key: 'kill_assist',     icon: 'kill_assist.png',     i18nKey: 'ui.career.squadron_col_kill_assist' },
         ];
 
         // Sort state
@@ -2698,7 +2703,7 @@ const DetailPage = {
             tr.appendChild(tdState);
 
             // Kill columns
-            killCols.forEach(col => {
+            memberStatCols.forEach(col => {
                 const td = document.createElement('td');
                 const val = member[col.key] ?? 0;
                 td.textContent = val;
@@ -2753,7 +2758,7 @@ const DetailPage = {
 
             const totalsDiv = document.createElement('div');
             totalsDiv.className = 'squadron-totals';
-            killCols.forEach(col => {
+            totalKillCols.forEach(col => {
                 const cell = document.createElement('div');
                 cell.className = 'squadron-totals__cell';
 
@@ -2838,7 +2843,7 @@ const DetailPage = {
             stateImgEl.title = i18n.t('ui.career.squadron_col_state');
             headerRow.appendChild(makeTh('state', stateImgEl, null));
 
-            killCols.forEach(col => {
+            memberStatCols.forEach(col => {
                 const img = document.createElement('img');
                 img.src = this.getGameAssetUrl(`CampaignRanksAwards/Misc/${col.icon}`);
                 img.alt = i18n.t(col.i18nKey);

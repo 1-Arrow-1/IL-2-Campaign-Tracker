@@ -1038,6 +1038,7 @@
       "squadron_col_rank": "Grade",
       "squadron_col_name": "Nom",
       "squadron_col_state": "État",
+      "squadron_col_kill_assist": "Assistances de destruction",
       "squadron_col_good_sorties": "Missions réussies",
       "squadron_col_sorties": "Missions",
       "squadron_col_flight_time": "Temps de vol",

@@ -1037,6 +1037,7 @@
       "squadron_col_rank": "Звание",
       "squadron_col_name": "Имя",
       "squadron_col_state": "Статус",
+      "squadron_col_kill_assist": "Помощь в уничтожении",
       "squadron_col_good_sorties": "Успешные вылеты",
       "squadron_col_sorties": "Вылеты",
       "squadron_col_flight_time": "Налёт",

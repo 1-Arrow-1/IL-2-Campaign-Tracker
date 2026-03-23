@@ -1094,6 +1094,7 @@ class CareerAggregator:
         subfolder = _rank_subfolder(country_int, None)  # date not needed for preview lookup
 
         totals: Dict = {key: 0 for key, _ in self._SQ_KILL_BUCKETS}
+        totals["kill_assist"] = 0
         members = []
 
         for row in rows:
@@ -1137,6 +1138,9 @@ class CareerAggregator:
                 total = sum(self._safe_int_from_row(row, col) for col in columns)
                 member[key] = total
                 totals[key] += total
+
+            member["kill_assist"] = self._safe_int_from_row(row, "killAssist")
+            totals["kill_assist"] += member["kill_assist"]
 
             # --- Sorties / flight time ---
             member["sorties"]      = self._safe_int_from_row(row, "sorties")

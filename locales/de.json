@@ -1037,6 +1037,7 @@
       "squadron_col_rank": "Rang",
       "squadron_col_name": "Name",
       "squadron_col_state": "Status",
+      "squadron_col_kill_assist": "Abschusshilfen",
       "squadron_col_good_sorties": "Erfolgreiche Einsätze",
       "squadron_col_sorties": "Einsätze",
       "squadron_col_flight_time": "Flugzeit",

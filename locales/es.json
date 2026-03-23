@@ -1037,6 +1037,7 @@
       "squadron_col_rank": "Rango",
       "squadron_col_name": "Nombre",
       "squadron_col_state": "Estado",
+      "squadron_col_kill_assist": "Asistencias de derribo",
       "squadron_col_good_sorties": "Salidas exitosas",
       "squadron_col_sorties": "Salidas",
       "squadron_col_flight_time": "Tiempo de vuelo",

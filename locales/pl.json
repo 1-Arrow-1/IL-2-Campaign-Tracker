@@ -1037,6 +1037,7 @@
       "squadron_col_rank": "Stopień",
       "squadron_col_name": "Nazwisko",
       "squadron_col_state": "Stan",
+      "squadron_col_kill_assist": "Asysty do zestrzeleń",
       "squadron_col_good_sorties": "Udane loty",
       "squadron_col_sorties": "Loty",
       "squadron_col_flight_time": "Czas lotu",
