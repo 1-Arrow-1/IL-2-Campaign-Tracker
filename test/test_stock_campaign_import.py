@@ -4,6 +4,7 @@ from pathlib import Path
 
 from settings_manager.stock_campaign_import import (
     copy_campaign_subfolders,
+    snapshot_directory_state,
     summarize_direct_import,
 )
 
@@ -34,6 +35,22 @@ class TestStockCampaignImport(unittest.TestCase):
 
         self.assertEqual(["Alpha"], imported)
         self.assertEqual(["Bravo", "Charlie"], skipped)
+
+    def test_snapshot_directory_state_changes_when_files_change(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            campaigns = root / "Campaigns"
+            campaigns.mkdir()
+
+            initial = snapshot_directory_state(campaigns)
+            self.assertEqual((0, 0, 0), initial)
+
+            mission_file = campaigns / "mission.txt"
+            mission_file.write_text("alpha", encoding="utf-8")
+            after_write = snapshot_directory_state(campaigns)
+
+            self.assertIsNotNone(after_write)
+            self.assertNotEqual(initial, after_write)
 
 
 if __name__ == "__main__":

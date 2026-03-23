@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -129,6 +130,108 @@ def summarize_direct_import(
     return imported, skipped
 
 
+def snapshot_directory_state(directory: Path) -> Optional[Tuple[int, int, int]]:
+    """
+    Return a coarse directory-state snapshot for change detection.
+    """
+    directory = Path(directory)
+    if not directory.is_dir():
+        return None
+
+    file_count = 0
+    total_size = 0
+    newest_mtime_ns = 0
+
+    for path in directory.rglob("*"):
+        try:
+            stat = path.stat()
+        except OSError:
+            continue
+
+        if path.is_file():
+            file_count += 1
+            total_size += stat.st_size
+        newest_mtime_ns = max(newest_mtime_ns, stat.st_mtime_ns)
+
+    return (file_count, total_size, newest_mtime_ns)
+
+
+def run_extractor_with_idle_detection(
+    extractor_path: Path,
+    archive_path: Path,
+    working_dir: Path,
+    extraction_root: Path,
+    destination_campaigns_dir: Path,
+    timeout_seconds: int,
+    idle_seconds: float = 3.0,
+    poll_interval_seconds: float = 0.5,
+) -> subprocess.CompletedProcess[str]:
+    """
+    Run unGTP and stop waiting once extracted output has gone idle.
+    """
+    process = subprocess.Popen(
+        [str(extractor_path), str(archive_path)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        cwd=str(working_dir),
+    )
+
+    start_time = time.monotonic()
+    last_snapshot: Optional[Tuple[int, int, int]] = None
+    stable_since: Optional[float] = None
+
+    while True:
+        return_code = process.poll()
+        if return_code is not None:
+            stdout, stderr = process.communicate()
+            return subprocess.CompletedProcess(
+                args=[str(extractor_path), str(archive_path)],
+                returncode=return_code,
+                stdout=stdout,
+                stderr=stderr,
+            )
+
+        if time.monotonic() - start_time > timeout_seconds:
+            process.terminate()
+            try:
+                stdout, stderr = process.communicate(timeout=10)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                stdout, stderr = process.communicate()
+            raise subprocess.TimeoutExpired(
+                cmd=[str(extractor_path), str(archive_path)],
+                timeout=timeout_seconds,
+                output=stdout,
+                stderr=stderr,
+            )
+
+        source_campaigns_dir = find_extracted_campaigns_dir(extraction_root)
+        if source_campaigns_dir is None and destination_campaigns_dir.is_dir():
+            source_campaigns_dir = destination_campaigns_dir
+
+        snapshot = snapshot_directory_state(source_campaigns_dir) if source_campaigns_dir else None
+        if snapshot is not None and snapshot[0] > 0:
+            if snapshot != last_snapshot:
+                last_snapshot = snapshot
+                stable_since = time.monotonic()
+            elif stable_since is not None and (time.monotonic() - stable_since) >= idle_seconds:
+                process.terminate()
+                try:
+                    stdout, stderr = process.communicate(timeout=10)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    stdout, stderr = process.communicate()
+                return subprocess.CompletedProcess(
+                    args=[str(extractor_path), str(archive_path)],
+                    returncode=process.returncode if process.returncode is not None else 0,
+                    stdout=stdout,
+                    stderr=stderr,
+                )
+
+        time.sleep(poll_interval_seconds)
+
+
 def import_stock_campaigns(
     game_directory: Path,
     extractor_path: Optional[Path] = None,
@@ -165,13 +268,13 @@ def import_stock_campaigns(
         cleanup_extractor_copy = True
 
     try:
-        result = subprocess.run(
-            [str(extractor_to_run), str(archive_path)],
-            capture_output=True,
-            text=True,
-            timeout=timeout_seconds,
-            check=False,
-            cwd=str(data_dir),
+        result = run_extractor_with_idle_detection(
+            extractor_path=extractor_to_run,
+            archive_path=archive_path,
+            working_dir=data_dir,
+            extraction_root=extraction_root,
+            destination_campaigns_dir=destination_campaigns_dir,
+            timeout_seconds=timeout_seconds,
         )
     finally:
         if cleanup_extractor_copy:
