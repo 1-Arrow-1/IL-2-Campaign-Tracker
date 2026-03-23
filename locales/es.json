@@ -881,7 +881,7 @@
       "radio_use_1957": "Usar estilo 1957",
       "radio_use_ww2": "Usar estilo 2ª GM",
       "german_awards_elevation_note": "Nota: Modificar archivos en el directorio de instalación de IL-2 puede requerir derechos de administrador. Se te solicitará elevación si es necesario.",
-      "import_stock_campaigns_helper": "Importa las campanas estandar integradas de IL-2 desde swf.gtp a tu carpeta data\\Campaigns. Las subcarpetas de campana que ya existan se omiten; solo se copian las que faltan."
+      "import_stock_campaigns_helper": "Importa las campanas estandar integradas de IL-2 desde Campaigns.gtp a tu carpeta data\\Campaigns. Las subcarpetas de campana que ya existan se omiten; solo se copian las que faltan."
     },
     "message": {
       "campaigns_tab_disabled": "La configuración de campañas requiere campaign_mission_dates.json.\nPor favor, ejecuta el Campaign Tracker al menos una vez.",

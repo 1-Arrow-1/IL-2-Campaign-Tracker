@@ -1,5 +1,5 @@
 """
-Helpers for importing stock IL-2 campaigns from swf.gtp.
+Helpers for importing stock IL-2 campaigns from Campaigns.gtp.
 """
 
 from __future__ import annotations
@@ -9,6 +9,7 @@ import json
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -49,14 +50,14 @@ def get_default_extractor_path() -> Path:
 
 def validate_game_directory(game_dir: Path) -> Path:
     """
-    Validate the selected IL-2 game directory and return data/swf.gtp.
+    Validate the selected IL-2 game directory and return data/Campaigns.gtp.
     """
     game_dir = Path(game_dir).expanduser().resolve()
-    archive_path = game_dir / "data" / "swf.gtp"
+    archive_path = game_dir / "data" / "Campaigns.gtp"
     if not game_dir.exists():
         raise FileNotFoundError(f"Game directory not found: {game_dir}")
     if not archive_path.is_file():
-        raise FileNotFoundError(f"swf.gtp not found: {archive_path}")
+        raise FileNotFoundError(f"Campaigns.gtp not found: {archive_path}")
     return archive_path
 
 
@@ -134,7 +135,7 @@ def import_stock_campaigns(
     timeout_seconds: int = 300,
 ) -> StockCampaignImportResult:
     """
-    Extract stock campaigns from swf.gtp and copy missing campaign folders.
+    Extract stock campaigns from Campaigns.gtp and copy missing campaign folders.
     """
     game_directory = Path(game_directory).expanduser().resolve()
     archive_path = validate_game_directory(game_directory)
@@ -153,7 +154,13 @@ def import_stock_campaigns(
 
     # unGTP behaves like the manual drag/drop workflow when executed from IL-2\data.
     if extractor.parent != data_dir:
-        extractor_to_run = data_dir / f"__il2ct_{extractor.name}"
+        with tempfile.NamedTemporaryFile(
+            dir=data_dir,
+            prefix="__il2ct_ungtp_",
+            suffix=extractor.suffix,
+            delete=False,
+        ) as temp_extractor:
+            extractor_to_run = Path(temp_extractor.name)
         shutil.copy2(extractor, extractor_to_run)
         cleanup_extractor_copy = True
 

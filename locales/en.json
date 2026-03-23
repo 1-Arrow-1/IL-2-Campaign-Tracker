@@ -861,7 +861,7 @@
       "detail_page_language": "Detail Page Language",
       "enable_popups": "Enable in-game popups:",
       "factor": "Factor",
-      "import_stock_campaigns_helper": "Import bundled standard IL-2 campaigns from swf.gtp into your data\\Campaigns folder. Existing campaign subfolders are skipped; only missing campaign folders are copied.",
+      "import_stock_campaigns_helper": "Import bundled standard IL-2 campaigns from Campaigns.gtp into your data\\Campaigns folder. Existing campaign subfolders are skipped; only missing campaign folders are copied.",
       "language": "Language:",
       "language_default": "Default",
       "language_english": "English",

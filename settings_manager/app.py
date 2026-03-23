@@ -808,6 +808,9 @@ class SettingsManagerApp(tk.Tk):
 
     def _on_import_stock_campaigns(self) -> None:
         """Handle the stock-campaign import button."""
+        if self._stock_import_thread is not None and self._stock_import_thread.is_alive():
+            return
+
         try:
             game_dir = self._choose_game_directory_for_stock_import()
         except Exception as exc:
