@@ -750,8 +750,7 @@
       "small_ship_kill_bonus": "Small Ship Kill Bonus (1000 rubli)",
       "transport_kill_bonus": "Transport Plane Kill Bonus (1500 rubli)",
       "transport_ship_kill_bonus": "Transport Ship Kill Bonus (3000 rubli)",
-      "DSM": "Medal za Wybitną Służbę",
-      "order_lenin": "Order Lenina"
+      "DSM": "Medal za Wybitną Służbę"
     },
     "ranks": {
       "1st_lieutenant": "1st Lieutenant",
@@ -808,7 +807,7 @@
       "staff_sergeant": "Staff Sergeant",
       "technical_sergeant": "Technical Sergeant",
       "lt_general": "Lieutenant General",
-      "efreitor": "Yefreytor",
+      "efreitor": "Efreytor",
       "mladshiy_serzhant": "Mladshiy Serzhant",
       "general_polkovnik": "General-Polkovnik"
     }

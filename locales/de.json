@@ -750,8 +750,7 @@
       "small_ship_kill_bonus": "Kleines-Schiff-Abschuss-Prämie (1.000 Rubel)",
       "transport_kill_bonus": "Transportflugzeug-Abschuss-Prämie (1.500 Rubel)",
       "transport_ship_kill_bonus": "Transportschiff-Abschuss-Prämie (3.000 Rubel)",
-      "DSM": "Auszeichnung für besondere Dienste",
-      "order_lenin": "Lenin-Orden"
+      "DSM": "Auszeichnung für besondere Dienste"
     },
     "ranks": {
       "1st_lieutenant": "1st Lieutenant",
@@ -808,7 +807,7 @@
       "staff_sergeant": "Staff Sergeant (US)",
       "technical_sergeant": "Technical Sergeant (US)",
       "lt_general": "Generalleutnant (US)",
-      "efreitor": "Efreitor",
+      "efreitor": "Efreytor",
       "mladshiy_serzhant": "Mladshiy Serzhant",
       "general_polkovnik": "General-Polkovnik"
     }
