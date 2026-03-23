@@ -10,7 +10,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 
 @dataclass
@@ -76,6 +76,20 @@ def find_extracted_campaigns_dir(extraction_root: Path) -> Optional[Path]:
     return None
 
 
+def list_campaign_subfolders(campaigns_dir: Path) -> List[str]:
+    """
+    Return sorted campaign folder names for a Campaigns directory.
+    """
+    campaigns_dir = Path(campaigns_dir)
+    if not campaigns_dir.is_dir():
+        return []
+    return sorted(
+        entry.name
+        for entry in campaigns_dir.iterdir()
+        if entry.is_dir()
+    )
+
+
 def copy_campaign_subfolders(source_campaigns_dir: Path, destination_campaigns_dir: Path) -> tuple[List[str], List[str]]:
     """
     Copy individual campaign subfolders, skipping only existing campaign folders.
@@ -100,6 +114,20 @@ def copy_campaign_subfolders(source_campaigns_dir: Path, destination_campaigns_d
     return imported, skipped
 
 
+def summarize_direct_import(
+    existing_campaigns: List[str],
+    resulting_campaigns: List[str],
+) -> Tuple[List[str], List[str]]:
+    """
+    Summarize extraction results when unGTP writes directly into data/Campaigns.
+    """
+    existing_set = set(existing_campaigns)
+    resulting_set = set(resulting_campaigns)
+    imported = sorted(resulting_set - existing_set, key=str.lower)
+    skipped = sorted(resulting_set & existing_set, key=str.lower)
+    return imported, skipped
+
+
 def import_stock_campaigns(
     game_directory: Path,
     extractor_path: Optional[Path] = None,
@@ -114,28 +142,56 @@ def import_stock_campaigns(
     if not extractor.is_file():
         raise FileNotFoundError(f"unGTP-IL2.exe not found: {extractor}")
 
-    extraction_root = game_directory / "data" / "(null)"
-    extraction_root.mkdir(parents=True, exist_ok=True)
+    data_dir = game_directory / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    destination_campaigns_dir = data_dir / "Campaigns"
+    existing_campaigns = list_campaign_subfolders(destination_campaigns_dir)
 
-    result = subprocess.run(
-        [str(extractor), str(archive_path), str(extraction_root)],
-        capture_output=True,
-        text=True,
-        timeout=timeout_seconds,
-        check=False,
-    )
+    extraction_root = data_dir / "(null)"
+    extractor_to_run = extractor
+    cleanup_extractor_copy = False
+
+    # unGTP behaves like the manual drag/drop workflow when executed from IL-2\data.
+    if extractor.parent != data_dir:
+        extractor_to_run = data_dir / f"__il2ct_{extractor.name}"
+        shutil.copy2(extractor, extractor_to_run)
+        cleanup_extractor_copy = True
+
+    try:
+        result = subprocess.run(
+            [str(extractor_to_run), str(archive_path)],
+            capture_output=True,
+            text=True,
+            timeout=timeout_seconds,
+            check=False,
+            cwd=str(data_dir),
+        )
+    finally:
+        if cleanup_extractor_copy:
+            try:
+                extractor_to_run.unlink()
+            except OSError:
+                pass
 
     source_campaigns_dir = find_extracted_campaigns_dir(extraction_root)
+    if source_campaigns_dir is None and destination_campaigns_dir.is_dir():
+        source_campaigns_dir = destination_campaigns_dir
+
     if source_campaigns_dir is None:
         raise RuntimeError(
             "Stock campaign extraction did not produce a Campaigns directory."
         )
 
-    destination_campaigns_dir = game_directory / "data" / "Campaigns"
-    imported, skipped = copy_campaign_subfolders(
-        source_campaigns_dir=source_campaigns_dir,
-        destination_campaigns_dir=destination_campaigns_dir,
-    )
+    if source_campaigns_dir.resolve() == destination_campaigns_dir.resolve():
+        imported, skipped = summarize_direct_import(
+            existing_campaigns=existing_campaigns,
+            resulting_campaigns=list_campaign_subfolders(destination_campaigns_dir),
+        )
+    else:
+        imported, skipped = copy_campaign_subfolders(
+            source_campaigns_dir=source_campaigns_dir,
+            destination_campaigns_dir=destination_campaigns_dir,
+        )
 
     return StockCampaignImportResult(
         game_directory=str(game_directory),
