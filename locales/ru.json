@@ -190,6 +190,17 @@
     "events": "События",
     "flight_log": "ЖУРНАЛ ПОЛЁТОВ",
     "mission": "ЗАДАНИЕ",
+    "metrics": {
+      "accuracy": "точн.",
+      "bombs": "Бомбы",
+      "destroyed": "уничтожено",
+      "dropped": "сброшено",
+      "fired": "выпущено",
+      "guns": "Орудия",
+      "hits": "попадания",
+      "mixed_ordnance": "смешанное вооружение",
+      "rockets": "Ракеты"
+    },
     "months": {
       "april": "Апрель",
       "august": "Август",

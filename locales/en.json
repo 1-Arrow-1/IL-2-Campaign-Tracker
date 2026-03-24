@@ -190,6 +190,17 @@
     "events": "Events",
     "flight_log": "FLIGHT LOG",
     "mission": "MISSION",
+    "metrics": {
+      "accuracy": "acc",
+      "bombs": "Bombs",
+      "destroyed": "destroyed",
+      "dropped": "dropped",
+      "fired": "fired",
+      "guns": "Guns",
+      "hits": "hits",
+      "mixed_ordnance": "mixed ordnance",
+      "rockets": "Rockets"
+    },
     "months": {
       "april": "April",
       "august": "August",

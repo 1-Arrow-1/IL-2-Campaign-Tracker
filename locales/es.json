@@ -190,6 +190,17 @@
     "events": "Eventos",
     "flight_log": "REGISTRO DE VUELO",
     "mission": "MISIÓN",
+    "metrics": {
+      "accuracy": "prec.",
+      "bombs": "Bombas",
+      "destroyed": "destruidos",
+      "dropped": "lanzadas",
+      "fired": "disparados",
+      "guns": "Armas",
+      "hits": "impactos",
+      "mixed_ordnance": "armamento mixto",
+      "rockets": "Cohetes"
+    },
     "months": {
       "april": "Abril",
       "august": "Agosto",

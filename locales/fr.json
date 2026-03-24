@@ -190,6 +190,17 @@
     "events": "Événements",
     "flight_log": "JOURNAL DE VOL",
     "mission": "MISSION",
+    "metrics": {
+      "accuracy": "préc.",
+      "bombs": "Bombes",
+      "destroyed": "détruits",
+      "dropped": "larguées",
+      "fired": "tirées",
+      "guns": "Armes",
+      "hits": "impacts",
+      "mixed_ordnance": "armement mixte",
+      "rockets": "Roquettes"
+    },
     "months": {
       "april": "avril",
       "august": "août",

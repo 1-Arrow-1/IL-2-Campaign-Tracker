@@ -190,6 +190,17 @@
     "events": "事件",
     "flight_log": "飞行日志",
     "mission": "任务",
+    "metrics": {
+      "accuracy": "精度",
+      "bombs": "炸弹",
+      "destroyed": "摧毁",
+      "dropped": "投下",
+      "fired": "发射",
+      "guns": "机炮",
+      "hits": "命中",
+      "mixed_ordnance": "混合挂载",
+      "rockets": "火箭"
+    },
     "months": {
       "april": "四月",
       "august": "八月",

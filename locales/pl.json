@@ -190,6 +190,17 @@
     "events": "Wydarzenia",
     "flight_log": "DZIENNIK LOTU",
     "mission": "MISJA",
+    "metrics": {
+      "accuracy": "celn.",
+      "bombs": "Bomby",
+      "destroyed": "zniszczono",
+      "dropped": "zrzucono",
+      "fired": "wystrzelono",
+      "guns": "Uzbrojenie",
+      "hits": "trafienia",
+      "mixed_ordnance": "mieszane uzbrojenie",
+      "rockets": "Rakiety"
+    },
     "months": {
       "april": "Kwiecień",
       "august": "Sierpień",

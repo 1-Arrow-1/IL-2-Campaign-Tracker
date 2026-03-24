@@ -494,7 +494,7 @@ class CareerDebriefingManager:
     # ------------------------------------------------------------------
 
     # Increment when the HTML rendering format changes to force cache rebuild.
-    _CACHE_VERSION = 11
+    _CACHE_VERSION = 12
 
     def _load_cache(self) -> Dict:
         if not self._cache_path.exists():
@@ -561,6 +561,42 @@ def _parse_report(report_path: Path, expected_plane_kills: int = 0) -> Optional[
 _SEPARATOR = "-" * 50
 
 
+def _format_combat_header_metrics(summary: Dict) -> List[str]:
+    metrics = summary.get("combat_metrics", {}) or {}
+    guns = metrics.get("guns", {}) or {}
+    bombs = metrics.get("bombs", {}) or {}
+    rockets = metrics.get("rockets", {}) or {}
+
+    parts: List[str] = []
+
+    gun_hits = int(guns.get("total_hit_events", 0) or 0)
+    gun_acc = guns.get("accuracy_percent")
+    gun_rounds = guns.get("rounds_used")
+    if gun_hits or gun_rounds is not None:
+        if gun_acc is not None:
+            parts.append(f"Guns: {gun_hits} hits ({gun_acc:.1f}% acc)")
+        else:
+            parts.append(f"Guns: {gun_hits} hits (acc n/a)")
+
+    bombs_dropped = bombs.get("dropped")
+    if bombs_dropped and bombs_dropped > 0:
+        parts.append(
+            f"Bombs: {bombs_dropped} dropped, {int(bombs.get('targets_destroyed', 0) or 0)} destroyed"
+        )
+    elif bombs.get("status") == "partial_inference_only":
+        parts.append("Bombs: mixed ordnance")
+
+    rockets_fired = rockets.get("fired")
+    if rockets_fired and rockets_fired > 0:
+        parts.append(
+            f"Rockets: {rockets_fired} fired, {int(rockets.get('targets_destroyed', 0) or 0)} destroyed"
+        )
+    elif rockets.get("status") == "partial_inference_only":
+        parts.append("Rockets: mixed ordnance")
+
+    return parts
+
+
 def _render_mission_html(data: Dict, mission_num: int, mission_date: str) -> str:
     """
     Render a mission-box HTML block from parsed debrief data.
@@ -589,6 +625,7 @@ def _render_mission_html(data: Dict, mission_num: int, mission_date: str) -> str
         f"Duration: {duration}",
         f"Status: {status}",
     ]
+    summary_parts.extend(_format_combat_header_metrics(summary))
     if aircraft_dmg > 0:
         summary_parts.append(f"Aircraft Dmg: {aircraft_dmg}%")
     if pilot_dmg > 0:

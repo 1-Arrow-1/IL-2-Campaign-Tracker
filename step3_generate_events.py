@@ -2268,6 +2268,50 @@ class EventGenerator:
 
         separator = "-" * 50
 
+        def format_combat_header_metrics(summary):
+            metrics = summary.get("combat_metrics", {}) or {}
+            guns = metrics.get("guns", {}) or {}
+            bombs = metrics.get("bombs", {}) or {}
+            rockets = metrics.get("rockets", {}) or {}
+            header_parts = []
+
+            gun_hits = int(guns.get("total_hit_events", 0) or 0)
+            gun_acc = guns.get("accuracy_percent")
+            gun_rounds = guns.get("rounds_used")
+            if gun_hits or gun_rounds is not None:
+                if gun_acc is not None:
+                    header_parts.append(
+                        f"{t('flightlog.metrics.guns')}: {gun_hits} {t('flightlog.metrics.hits')} ({gun_acc:.1f}% {t('flightlog.metrics.accuracy')})"
+                    )
+                else:
+                    header_parts.append(
+                        f"{t('flightlog.metrics.guns')}: {gun_hits} {t('flightlog.metrics.hits')} ({t('flightlog.metrics.accuracy')} n/a)"
+                    )
+
+            bombs_dropped = bombs.get("dropped")
+            if bombs_dropped and bombs_dropped > 0:
+                header_parts.append(
+                    f"{t('flightlog.metrics.bombs')}: {bombs_dropped} {t('flightlog.metrics.dropped')}, "
+                    f"{int(bombs.get('targets_destroyed', 0) or 0)} {t('flightlog.metrics.destroyed')}"
+                )
+            elif bombs.get("status") == "partial_inference_only":
+                header_parts.append(
+                    f"{t('flightlog.metrics.bombs')}: {t('flightlog.metrics.mixed_ordnance')}"
+                )
+
+            rockets_fired = rockets.get("fired")
+            if rockets_fired and rockets_fired > 0:
+                header_parts.append(
+                    f"{t('flightlog.metrics.rockets')}: {rockets_fired} {t('flightlog.metrics.fired')}, "
+                    f"{int(rockets.get('targets_destroyed', 0) or 0)} {t('flightlog.metrics.destroyed')}"
+                )
+            elif rockets.get("status") == "partial_inference_only":
+                header_parts.append(
+                    f"{t('flightlog.metrics.rockets')}: {t('flightlog.metrics.mixed_ordnance')}"
+                )
+
+            return header_parts
+
         for mission_id in sorted_missions:
             data = debriefings[mission_id]
             
@@ -2300,6 +2344,7 @@ class EventGenerator:
                 f"{t('flightlog.duration')}: {duration}",
                 f"{t('flightlog.status_label')}: {self._localize_status(status)}",
             ]
+            summary_parts.extend(format_combat_header_metrics(data['summary']))
             if aircraft_dmg > 0:
                 summary_parts.append(f"{t('flightlog.aircraft_damage')}: {aircraft_dmg}%")
             if pilot_dmg > 0:
