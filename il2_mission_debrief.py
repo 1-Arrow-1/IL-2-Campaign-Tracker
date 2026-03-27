@@ -90,6 +90,7 @@ def _load_yaml_config(stream):
 # AType:3 destruction for the kill to still be credited to the player.
 # 600 s × 50 ticks/s = 30 000 ticks.  Adjust or set to 0 to disable.
 _DELAYED_KILL_MAX_TICKS = 600 * 50  # 30 000 ticks (600 seconds)
+_UNLIMITED_AMMO_SETTS_BIT_FROM_RIGHT = 11
 
 # ==========================================================
 # === GameObject ==========================================
@@ -198,6 +199,7 @@ class MissionStats:
         self.end_sh = None
         self.end_bomb = None
         self.end_rct = None
+        self.setts = None
         self.player_ammo_events = []    # {tick, ammo, target}
         self.player_damage_events = []  # {tick, target, damage}
         self.player_destroy_events = [] # {tick, target}
@@ -259,66 +261,54 @@ class MissionDebriefParser:
             return False
         return obj.category in ("Ground", "Building", "Naval") or getattr(obj, "is_static", False)
 
-    def _calculate_combat_metrics(self):
-        player_ids = {pid for pid in (self.stats.player_plid, self.stats.player_pid) if pid is not None}
+    @staticmethod
+    def _setts_bit_enabled(bitfield, bit_from_right):
+        if not bitfield or bit_from_right <= 0 or len(bitfield) < bit_from_right:
+            return False
+        return bitfield[-bit_from_right] == "1"
 
-        mg_hits = 0
-        cannon_hits = 0
+    def _has_unlimited_ammo(self):
+        return self._setts_bit_enabled(
+            self.stats.setts,
+            _UNLIMITED_AMMO_SETTS_BIT_FROM_RIGHT,
+        )
+
+    def _calculate_combat_metrics(self):
+        unlimited_ammo = self._has_unlimited_ammo()
         explosion_events = []
         gun_ticks = set()
 
         for evt in self.stats.player_ammo_events:
             ammo_type = self._classify_ammo_label(evt.get("ammo"))
             tick = evt.get("tick")
-            if ammo_type == "machine_gun":
-                mg_hits += 1
-                gun_ticks.add(tick)
-            elif ammo_type == "cannon":
-                cannon_hits += 1
+            if ammo_type in ("machine_gun", "cannon"):
                 gun_ticks.add(tick)
             elif ammo_type == "explosion":
                 explosion_events.append(evt)
 
-        direct_hits = mg_hits + cannon_hits
-
         rounds_used = None
         guns_status = "n/a_missing_end_state"
-        if self.stats.start_bul is not None and self.stats.end_bul is not None:
+        if unlimited_ammo:
+            guns_status = "n/a_unlimited_ammo"
+        elif self.stats.start_bul is not None and self.stats.end_bul is not None:
             delta = self.stats.start_bul - self.stats.end_bul
             if delta > 0:
                 rounds_used = delta
                 guns_status = "ok"
             else:
-                guns_status = "n/a_unlimited_or_no_expenditure"
+                guns_status = "n/a_no_expenditure"
         elif self.stats.start_bul is None:
             guns_status = "n/a_no_relevant_weapon"
 
-        accuracy_percent = None
-        if rounds_used:
-            accuracy_percent = round((direct_hits / rounds_used) * 100.0, 1)
-
-        gun_targets_hit = sorted({
-            evt["target"] for evt in self.stats.player_ammo_events
-            if self._classify_ammo_label(evt.get("ammo")) in ("machine_gun", "cannon")
-        })
-        gun_targets_destroyed = sorted({
-            evt["target"] for evt in self.stats.player_destroy_events
-            if evt.get("target") in set(gun_targets_hit)
-        })
-        gun_damage_total = round(sum(
-            evt["damage"] for evt in self.stats.player_damage_events
-            if evt.get("target") in set(gun_targets_hit)
-        ), 3)
-
         def is_gun_adjacent(tick):
             for gun_tick in gun_ticks:
-                if abs(gun_tick - tick) <= 20:
+                if abs(gun_tick - tick) <= 10:
                     return True
             return False
 
         ordnance_ticks = set()
-        ordnance_targets = set()
         ordnance_damage_total = 0.0
+        gun_damage_total = 0.0
 
         for evt in explosion_events:
             tick = evt.get("tick")
@@ -329,20 +319,17 @@ class MissionDebriefParser:
             if target >= 0 and not self._is_ground_like_target(obj):
                 continue
             ordnance_ticks.add(tick)
-            if target >= 0:
-                ordnance_targets.add(target)
 
         for evt in self.stats.player_damage_events:
             tick = evt.get("tick")
             target = evt.get("target")
-            if is_gun_adjacent(tick):
-                continue
             obj = self.stats.objects.get(target)
+            if is_gun_adjacent(tick):
+                gun_damage_total += evt.get("damage", 0.0)
+                continue
             if target >= 0 and not self._is_ground_like_target(obj):
                 continue
             ordnance_ticks.add(tick)
-            if target >= 0:
-                ordnance_targets.add(target)
             ordnance_damage_total += evt.get("damage", 0.0)
 
         sorted_ticks = sorted(ordnance_ticks)
@@ -371,15 +358,18 @@ class MissionDebriefParser:
         bombs_status = "n/a_missing_end_state"
         rockets_status = "n/a_missing_end_state"
 
-        if self.stats.start_bomb is not None and self.stats.end_bomb is not None:
+        if unlimited_ammo:
+            bombs_status = "n/a_unlimited_ammo"
+            rockets_status = "n/a_unlimited_ammo"
+        elif self.stats.start_bomb is not None and self.stats.end_bomb is not None:
             bombs_dropped = self.stats.start_bomb - self.stats.end_bomb
-            bombs_status = "ok" if bombs_dropped > 0 else "n/a_unlimited_or_no_expenditure"
+            bombs_status = "ok" if bombs_dropped > 0 else "n/a_no_expenditure"
         elif self.stats.start_bomb is None:
             bombs_status = "n/a_no_relevant_weapon"
 
-        if self.stats.start_rct is not None and self.stats.end_rct is not None:
+        if not unlimited_ammo and self.stats.start_rct is not None and self.stats.end_rct is not None:
             rockets_fired = self.stats.start_rct - self.stats.end_rct
-            rockets_status = "ok" if rockets_fired > 0 else "n/a_unlimited_or_no_expenditure"
+            rockets_status = "ok" if rockets_fired > 0 else "n/a_no_expenditure"
         elif self.stats.start_rct is None:
             rockets_status = "n/a_no_relevant_weapon"
 
@@ -394,7 +384,6 @@ class MissionDebriefParser:
 
         ordnance_payload = {
             "clusters_detected": len(clusters),
-            "targets_damaged": len(ordnance_targets),
             "targets_destroyed": len(ordnance_destroyed_targets),
             "damage_total": round(ordnance_damage_total, 3),
         }
@@ -403,17 +392,19 @@ class MissionDebriefParser:
             "status": bombs_status,
             "dropped": bombs_dropped,
             "clusters_detected": 0,
-            "targets_damaged": 0,
             "targets_destroyed": 0,
             "damage_total": 0.0,
+            "effectiveness_percent": None,
+            "effectiveness_basis": "damage_total_times_100_per_bomb_dropped",
         }
         rockets_metrics = {
             "status": rockets_status,
             "fired": rockets_fired,
             "clusters_detected": 0,
-            "targets_damaged": 0,
             "targets_destroyed": 0,
             "damage_total": 0.0,
+            "effectiveness_percent": None,
+            "effectiveness_basis": "damage_total_times_100_per_rocket_fired",
         }
 
         if ordnance_assignment == "bombs":
@@ -421,18 +412,27 @@ class MissionDebriefParser:
         elif ordnance_assignment == "rockets":
             rockets_metrics.update(ordnance_payload)
 
+        gun_effectiveness_percent = None
+        if guns_status == "ok" and rounds_used:
+            gun_effectiveness_percent = round((gun_damage_total * 100.0) / rounds_used, 1)
+        if bombs_metrics["status"] == "ok" and bombs_metrics["dropped"]:
+            bombs_metrics["effectiveness_percent"] = round(
+                (bombs_metrics["damage_total"] * 100.0) / bombs_metrics["dropped"], 1
+            )
+        if rockets_metrics["status"] == "ok" and rockets_metrics["fired"]:
+            rockets_metrics["effectiveness_percent"] = round(
+                (rockets_metrics["damage_total"] * 100.0) / rockets_metrics["fired"], 1
+            )
+
         return {
+            "unlimited_ammo": unlimited_ammo,
+            "setts": self.stats.setts,
             "guns": {
                 "status": guns_status,
                 "rounds_used": rounds_used,
-                "machine_gun_hit_events": mg_hits,
-                "cannon_hit_events": cannon_hits,
-                "total_hit_events": direct_hits,
-                "targets_damaged": len(set(gun_targets_hit)),
-                "targets_destroyed": len(set(gun_targets_destroyed)),
-                "damage_total": gun_damage_total,
-                "accuracy_percent": accuracy_percent,
-                "accuracy_basis": "direct_hit_events_per_round_used",
+                "damage_total": round(gun_damage_total, 3),
+                "effectiveness_percent": gun_effectiveness_percent,
+                "effectiveness_basis": "damage_total_times_100_per_round_used",
             },
             "bombs": bombs_metrics,
             "rockets": rockets_metrics,
@@ -511,6 +511,10 @@ class MissionDebriefParser:
 
         # --- register objects ---
         for ln in lines:
+            if "AType:0" in ln and self.stats.setts is None:
+                setts = self._s(ln, r"SETTS:([01]+)")
+                if setts:
+                    self.stats.setts = setts
             if "AType:10" in ln:
                 if "ISPL:1" in ln:
                     # 🧠 Capture both IDs for robustness
@@ -1305,7 +1309,6 @@ class MissionDebriefParser:
         air_kills_flying = sum(1 for k in air_kills_all if not getattr(k, 'is_static', False))
         air_kills_parked = sum(1 for k in air_kills_all if getattr(k, 'is_static', False))
         combat_metrics = self._calculate_combat_metrics()
-
         data = {
             "player": {
                 "id": self.stats.player_id,

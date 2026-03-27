@@ -373,21 +373,14 @@ class CareerDebriefingManager:
                                 air_kills_by_type=dict(cached.get("air_kills_by_type") or {}),
                             ), False
                         else:
-                            # Old cache entry without mlg_timestamp — accept as
-                            # before; it will gain mlg_timestamp on next re-link.
-                            return _MissionResult(
-                                mission_id=mission_id,
-                                career_id=career_id,
-                                theatre_label=theatre_label,
-                                mission_date=mission_date,
-                                html=cached["html"],
-                                duration_seconds=cached.get("duration_seconds"),
-                                linked=True,
-                                final_state=cached.get("final_state", ""),
-                                aircraft=cached.get("aircraft", ""),
-                                kills=cached.get("kills", 0),
-                                air_kills_by_type=dict(cached.get("air_kills_by_type") or {}),
-                            ), False
+                            # Old cache entry without mlg_timestamp cannot be
+                            # checked for re-flown missions. Fall through and
+                            # re-link so the cache gains a stable filename
+                            # timestamp for future invalidation checks.
+                            logger.debug(
+                                "Cache entry for mission %d missing mlg_timestamp; re-linking",
+                                mission_id,
+                            )
                 except OSError:
                     pass  # File gone — fall through and re-link
 
@@ -494,7 +487,7 @@ class CareerDebriefingManager:
     # ------------------------------------------------------------------
 
     # Increment when the HTML rendering format changes to force cache rebuild.
-    _CACHE_VERSION = 12
+    _CACHE_VERSION = 15
 
     def _load_cache(self) -> Dict:
         if not self._cache_path.exists():
@@ -562,39 +555,31 @@ _SEPARATOR = "-" * 50
 
 
 def _format_combat_header_metrics(summary: Dict) -> List[str]:
-    metrics = summary.get("combat_metrics", {}) or {}
-    guns = metrics.get("guns", {}) or {}
-    bombs = metrics.get("bombs", {}) or {}
-    rockets = metrics.get("rockets", {}) or {}
+    metrics = summary.get("combat_metrics") or {}
+    if metrics.get("unlimited_ammo"):
+        return []
 
-    parts: List[str] = []
+    lines: List[str] = []
 
-    gun_hits = int(guns.get("total_hit_events", 0) or 0)
-    gun_acc = guns.get("accuracy_percent")
-    gun_rounds = guns.get("rounds_used")
-    if gun_hits or gun_rounds is not None:
-        if gun_acc is not None:
-            parts.append(f"Guns: {gun_hits} hits ({gun_acc:.1f}% acc)")
-        else:
-            parts.append(f"Guns: {gun_hits} hits (acc n/a)")
+    guns = metrics.get("guns") or {}
+    if guns.get("status") == "ok" and guns.get("rounds_used"):
+        effect = guns.get("effectiveness_percent")
+        if effect is not None:
+            lines.append(f"Guns: {effect:.1f}% dmg/shot")
 
-    bombs_dropped = bombs.get("dropped")
-    if bombs_dropped and bombs_dropped > 0:
-        parts.append(
-            f"Bombs: {bombs_dropped} dropped, {int(bombs.get('targets_destroyed', 0) or 0)} destroyed"
-        )
-    elif bombs.get("status") == "partial_inference_only":
-        parts.append("Bombs: mixed ordnance")
+    bombs = metrics.get("bombs") or {}
+    if bombs.get("status") == "ok" and bombs.get("dropped"):
+        effect = bombs.get("effectiveness_percent")
+        if effect is not None:
+            lines.append(f"Bombs: {effect:.1f}% dmg/bomb")
 
-    rockets_fired = rockets.get("fired")
-    if rockets_fired and rockets_fired > 0:
-        parts.append(
-            f"Rockets: {rockets_fired} fired, {int(rockets.get('targets_destroyed', 0) or 0)} destroyed"
-        )
-    elif rockets.get("status") == "partial_inference_only":
-        parts.append("Rockets: mixed ordnance")
+    rockets = metrics.get("rockets") or {}
+    if rockets.get("status") == "ok" and rockets.get("fired"):
+        effect = rockets.get("effectiveness_percent")
+        if effect is not None:
+            lines.append(f"Rockets: {effect:.1f}% dmg/rocket")
 
-    return parts
+    return lines
 
 
 def _render_mission_html(data: Dict, mission_num: int, mission_date: str) -> str:

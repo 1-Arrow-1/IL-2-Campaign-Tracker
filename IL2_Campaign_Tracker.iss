@@ -41,7 +41,7 @@ english.SelectIL2Folder=Please select an existing IL-2 Great Battles installatio
 english.InvalidIL2Folder=The selected folder does not appear to be a valid IL-2 Great Battles installation.%nPlease select the correct game installation directory.
 english.RemoveConfigTitle=Do you want to REMOVE your configuration files (*.yaml)?%n%nThis includes your custom rank scaling settings and award configurations.%n%nClick YES to remove configuration files.%nClick NO to keep them.
 english.RemoveBackupTitle=Do you want to REMOVE your backup files?%n%nThis includes:%n  - campaignsstates_*.backup%n  - campaign_popups_seen_*.backup%n  - campaignsstates_hash_index.json%n%nThese allow you to restore previous campaign states if you reinstall.%n%nClick YES to remove backup files.%nClick NO to keep them.
-english.RemoveServiceRecordTitle=Do you want to REMOVE your Campaign Service Record data?%n%nThis includes:%n  - Pilot photos%n  - Personal information (name, birthday, birthplace)%n%nLocation: %%LOCALAPPDATA%%\.il2_campaign_service_record%n%nClick YES to remove Service Record data.%nClick NO to keep it.
+english.RemoveServiceRecordTitle=Do you want to REMOVE your Campaign Service Record data?%n%nThis includes:%n  - Pilot photos%n  - Personal information (name, birthday, birthplace)%n  - AI story chapters%n%nLocation: %%LOCALAPPDATA%%\.il2_campaign_service_record%n%nClick YES to remove Service Record data.%nClick NO to keep it.
 english.RemoveFlightLogsTitle=Do you want to REMOVE the generated flight log files (*.txt, *.json)?%n%nThis includes all *.txt and *.json files in:%n  <IL-2 game folder>\data\FlightLogs%n%nThese files were created by the tracker and are regenerated on the next run.%n%nClick YES to remove flight log files.%nClick NO to keep them.
 english.IL2PageTitle=Select IL-2 Great Battles Installation Folder
 english.IL2PageDescription=Choose the folder where IL-2 Great Battles is installed.
@@ -59,7 +59,7 @@ german.SelectIL2Folder=Bitte wählen Sie einen existierenden IL-2 Great Battles 
 german.InvalidIL2Folder=Der ausgewählte Ordner scheint keine gültige IL-2 Great Battles Installation zu sein.%nBitte wählen Sie das korrekte Spielverzeichnis.
 german.RemoveConfigTitle=Möchten Sie Ihre Konfigurationsdateien (*.yaml) ENTFERNEN?%n%nDies umfasst Ihre benutzerdefinierten Rang-Skalierungseinstellungen und Auszeichnungskonfigurationen.%n%nKlicken Sie JA, um die Konfigurationsdateien zu entfernen.%nKlicken Sie NEIN, um sie zu behalten.
 german.RemoveBackupTitle=Möchten Sie Ihre Backup-Dateien ENTFERNEN?%n%nDies umfasst:%n  - campaignsstates_*.backup%n  - campaign_popups_seen_*.backup%n  - campaignsstates_hash_index.json%n%nDiese ermöglichen die Wiederherstellung früherer Kampagnenstände bei einer Neuinstallation.%n%nKlicken Sie JA, um die Backup-Dateien zu entfernen.%nKlicken Sie NEIN, um sie zu behalten.
-german.RemoveServiceRecordTitle=Möchten Sie Ihre Campaign Service Record Daten ENTFERNEN?%n%nDies umfasst:%n  - Pilotenfotos%n  - Persönliche Informationen (Name, Geburtstag, Geburtsort)%n%nSpeicherort: %%LOCALAPPDATA%%\.il2_campaign_service_record%n%nKlicken Sie JA, um die Service Record Daten zu entfernen.%nKlicken Sie NEIN, um sie zu behalten.
+german.RemoveServiceRecordTitle=Möchten Sie Ihre Campaign Service Record Daten ENTFERNEN?%n%nDies umfasst:%n  - Pilotenfotos%n  - Persönliche Informationen (Name, Geburtstag, Geburtsort)%n  - KI-Story-Kapitel%n%nSpeicherort: %%LOCALAPPDATA%%\.il2_campaign_service_record%n%nKlicken Sie JA, um die Service Record Daten zu entfernen.%nKlicken Sie NEIN, um sie zu behalten.
 german.RemoveFlightLogsTitle=Möchten Sie die generierten Flugprotokoll-Dateien ENTFERNEN (*.txt, *.json)?%n%nDies umfasst alle *.txt und *.json Dateien in:%n  <IL-2 Spielordner>\data\FlightLogs%n%nDiese Dateien wurden vom Tracker erstellt und werden beim nächsten Start neu generiert.%n%nKlicken Sie JA, um die Flugprotokoll-Dateien zu entfernen.%nKlicken Sie NEIN, um sie zu behalten.
 german.IL2PageTitle=IL-2 Great Battles Installationsordner auswählen
 german.IL2PageDescription=Wählen Sie den Ordner, in dem IL-2 Great Battles installiert ist.
@@ -77,7 +77,7 @@ french.SelectIL2Folder=Veuillez sélectionner un dossier d'installation IL-2 Gre
 french.InvalidIL2Folder=Le dossier sélectionné ne semble pas être une installation valide d'IL-2 Great Battles.%nVeuillez sélectionner le répertoire d'installation correct.
 french.RemoveConfigTitle=Voulez-vous SUPPRIMER vos fichiers de configuration (*.yaml) ?%n%nCela inclut vos paramètres de progression de rang et configurations de décorations.%n%nCliquez OUI pour supprimer les fichiers de configuration.%nCliquez NON pour les conserver.
 french.RemoveBackupTitle=Voulez-vous SUPPRIMER vos fichiers de sauvegarde ?%n%nCela inclut :%n  - campaignsstates_*.backup%n  - campaign_popups_seen_*.backup%n  - campaignsstates_hash_index.json%n%nCeux-ci permettent de restaurer les états de campagne précédents si vous réinstallez.%n%nCliquez OUI pour supprimer les fichiers de sauvegarde.%nCliquez NON pour les conserver.
-french.RemoveServiceRecordTitle=Voulez-vous SUPPRIMER vos données Campaign Service Record ?%n%nCela inclut :%n  - Photos de pilote%n  - Informations personnelles (nom, date de naissance, lieu de naissance)%n%nEmplacement : %%LOCALAPPDATA%%\.il2_campaign_service_record%n%nCliquez OUI pour supprimer les données Service Record.%nCliquez NON pour les conserver.
+french.RemoveServiceRecordTitle=Voulez-vous SUPPRIMER vos données Campaign Service Record ?%n%nCela inclut :%n  - Photos de pilote%n  - Informations personnelles (nom, date de naissance, lieu de naissance)%n  - Chapitres d'histoires IA%n%nEmplacement : %%LOCALAPPDATA%%\.il2_campaign_service_record%n%nCliquez OUI pour supprimer les données Service Record.%nCliquez NON pour les conserver.
 french.RemoveFlightLogsTitle=Voulez-vous SUPPRIMER les fichiers de journal de vol générés (*.txt, *.json) ?%n%nCela inclut tous les fichiers *.txt et *.json dans :%n  <dossier du jeu IL-2>\data\FlightLogs%n%nCes fichiers ont été créés par le tracker et sont régénérés au prochain démarrage.%n%nCliquez OUI pour supprimer les fichiers de journal de vol.%nCliquez NON pour les conserver.
 french.IL2PageTitle=Sélectionner le dossier d'installation d'IL-2 Great Battles
 french.IL2PageDescription=Choisissez le dossier où IL-2 Great Battles est installé.
@@ -95,7 +95,7 @@ spanish.SelectIL2Folder=Por favor, seleccione una carpeta de instalación existe
 spanish.InvalidIL2Folder=La carpeta seleccionada no parece ser una instalación válida de IL-2 Great Battles.%nPor favor, seleccione el directorio de instalación correcto.
 spanish.RemoveConfigTitle=¿Desea ELIMINAR sus archivos de configuración (*.yaml)?%n%nEsto incluye sus ajustes de escalado de rangos y configuraciones de condecoraciones.%n%nHaga clic en SÍ para eliminar los archivos de configuración.%nHaga clic en NO para conservarlos.
 spanish.RemoveBackupTitle=¿Desea ELIMINAR sus archivos de respaldo?%n%nEsto incluye:%n  - campaignsstates_*.backup%n  - campaign_popups_seen_*.backup%n  - campaignsstates_hash_index.json%n%nEstos permiten restaurar estados de campaña anteriores si reinstala.%n%nHaga clic en SÍ para eliminar los archivos de respaldo.%nHaga clic en NO para conservarlos.
-spanish.RemoveServiceRecordTitle=¿Desea ELIMINAR sus datos de Campaign Service Record?%n%nEsto incluye:%n  - Fotos de piloto%n  - Información personal (nombre, fecha de nacimiento, lugar de nacimiento)%n%nUbicación: %%LOCALAPPDATA%%\.il2_campaign_service_record%n%nHaga clic en SÍ para eliminar los datos de Service Record.%nHaga clic en NO para conservarlos.
+spanish.RemoveServiceRecordTitle=¿Desea ELIMINAR sus datos de Campaign Service Record?%n%nEsto incluye:%n  - Fotos de piloto%n  - Información personal (nombre, fecha de nacimiento, lugar de nacimiento)%n  - Capítulos de historias IA%n%nUbicación: %%LOCALAPPDATA%%\.il2_campaign_service_record%n%nHaga clic en SÍ para eliminar los datos de Service Record.%nHaga clic en NO para conservarlos.
 spanish.RemoveFlightLogsTitle=¿Desea ELIMINAR los archivos de registro de vuelo generados (*.txt, *.json)?%n%nEsto incluye todos los archivos *.txt y *.json en:%n  <carpeta del juego IL-2>\data\FlightLogs%n%nEstos archivos fueron creados por el tracker y se regeneran en el próximo inicio.%n%nHaga clic en SÍ para eliminar los archivos de registro de vuelo.%nHaga clic en NO para conservarlos.
 spanish.IL2PageTitle=Seleccionar carpeta de instalación de IL-2 Great Battles
 spanish.IL2PageDescription=Elija la carpeta donde está instalado IL-2 Great Battles.
@@ -113,7 +113,7 @@ polish.SelectIL2Folder=Proszę wybrać istniejący folder instalacji IL-2 Great 
 polish.InvalidIL2Folder=Wybrany folder nie wydaje się być prawidłową instalacją IL-2 Great Battles.%nProszę wybrać właściwy katalog instalacji gry.
 polish.RemoveConfigTitle=Czy chcesz USUNĄĆ pliki konfiguracyjne (*.yaml)?%n%nObejmuje to niestandardowe ustawienia skalowania rang i konfiguracje odznaczeń.%n%nKliknij TAK, aby usunąć pliki konfiguracyjne.%nKliknij NIE, aby je zachować.
 polish.RemoveBackupTitle=Czy chcesz USUNĄĆ pliki kopii zapasowych?%n%nObejmuje to:%n  - campaignsstates_*.backup%n  - campaign_popups_seen_*.backup%n  - campaignsstates_hash_index.json%n%nPozwalają one przywrócić poprzednie stany kampanii po ponownej instalacji.%n%nKliknij TAK, aby usunąć pliki kopii zapasowych.%nKliknij NIE, aby je zachować.
-polish.RemoveServiceRecordTitle=Czy chcesz USUNĄĆ dane Campaign Service Record?%n%nObejmuje to:%n  - Zdjęcia pilotów%n  - Dane osobowe (imię, data urodzenia, miejsce urodzenia)%n%nLokalizacja: %%LOCALAPPDATA%%\.il2_campaign_service_record%n%nKliknij TAK, aby usunąć dane Service Record.%nKliknij NIE, aby je zachować.
+polish.RemoveServiceRecordTitle=Czy chcesz USUNĄĆ dane Campaign Service Record?%n%nObejmuje to:%n  - Zdjęcia pilotów%n  - Dane osobowe (imię, data urodzenia, miejsce urodzenia)%n  - Rozdziały historii AI%n%nLokalizacja: %%LOCALAPPDATA%%\.il2_campaign_service_record%n%nKliknij TAK, aby usunąć dane Service Record.%nKliknij NIE, aby je zachować.
 polish.RemoveFlightLogsTitle=Czy chcesz USUNĄĆ wygenerowane pliki dziennika lotu (*.txt, *.json)?%n%nObejmuje to wszystkie pliki *.txt i *.json w:%n  <folder gry IL-2>\data\FlightLogs%n%nTe pliki zostały utworzone przez tracker i są regenerowane przy następnym uruchomieniu.%n%nKliknij TAK, aby usunąć pliki dziennika lotu.%nKliknij NIE, aby je zachować.
 polish.IL2PageTitle=Wybierz folder instalacji IL-2 Great Battles
 polish.IL2PageDescription=Wybierz folder, w którym zainstalowano IL-2 Great Battles.
@@ -131,7 +131,7 @@ russian.SelectIL2Folder=Пожалуйста, выберите существу�
 russian.InvalidIL2Folder=Выбранная папка не является корректной установкой IL-2 Great Battles.%nПожалуйста, выберите правильный каталог установки игры.
 russian.RemoveConfigTitle=Хотите УДАЛИТЬ файлы конфигурации (*.yaml)?%n%nЭто включает ваши настройки масштабирования званий и конфигурации наград.%n%nНажмите ДА, чтобы удалить файлы конфигурации.%nНажмите НЕТ, чтобы сохранить их.
 russian.RemoveBackupTitle=Хотите УДАЛИТЬ файлы резервных копий?%n%nЭто включает:%n  - campaignsstates_*.backup%n  - campaign_popups_seen_*.backup%n  - campaignsstates_hash_index.json%n%nОни позволяют восстановить предыдущие состояния кампаний при переустановке.%n%nНажмите ДА, чтобы удалить файлы резервных копий.%nНажмите НЕТ, чтобы сохранить их.
-russian.RemoveServiceRecordTitle=Хотите УДАЛИТЬ данные Campaign Service Record?%n%nЭто включает:%n  - Фотографии пилотов%n  - Личную информацию (имя, дата рождения, место рождения)%n%nРасположение: %%LOCALAPPDATA%%\.il2_campaign_service_record%n%nНажмите ДА, чтобы удалить данные Service Record.%nНажмите НЕТ, чтобы сохранить их.
+russian.RemoveServiceRecordTitle=Хотите УДАЛИТЬ данные Campaign Service Record?%n%nЭто включает:%n  - Фотографии пилотов%n  - Личную информацию (имя, дата рождения, место рождения)%n  - Главы AI-историй%n%nРасположение: %%LOCALAPPDATA%%\.il2_campaign_service_record%n%nНажмите ДА, чтобы удалить данные Service Record.%nНажмите НЕТ, чтобы сохранить их.
 russian.RemoveFlightLogsTitle=Хотите УДАЛИТЬ созданные файлы журнала полётов (*.txt, *.json)?%n%nЭто включает все файлы *.txt и *.json в:%n  <папка игры IL-2>\data\FlightLogs%n%nЭти файлы были созданы трекером и будут созданы заново при следующем запуске.%n%nНажмите ДА, чтобы удалить файлы журнала полётов.%nНажмите НЕТ, чтобы сохранить их.
 russian.IL2PageTitle=Выберите папку установки IL-2 Great Battles
 russian.IL2PageDescription=Выберите папку, где установлен IL-2 Great Battles.
@@ -149,7 +149,7 @@ chinesesimplified.SelectIL2Folder=请选择现有的 IL-2 Great Battles 安装�
 chinesesimplified.InvalidIL2Folder=所选文件夹似乎不是有效的 IL-2 Great Battles 安装。%n请选择正确的游戏安装目录。
 chinesesimplified.RemoveConfigTitle=您要删除配置文件 (*.yaml) 吗？%n%n这包括您的自定义军衔缩放设置和勋章配置。%n%n点击"是"删除配置文件。%n点击"否"保留它们。
 chinesesimplified.RemoveBackupTitle=您要删除备份文件吗？%n%n这包括：%n  - campaignsstates_*.backup%n  - campaign_popups_seen_*.backup%n  - campaignsstates_hash_index.json%n%n这些文件允许您在重新安装时恢复以前的战役状态。%n%n点击"是"删除备份文件。%n点击"否"保留它们。
-chinesesimplified.RemoveServiceRecordTitle=您要删除 Campaign Service Record 数据吗？%n%n这包括：%n  - 飞行员照片%n  - 个人信息（姓名、生日、出生地）%n%n位置：%%LOCALAPPDATA%%\.il2_campaign_service_record%n%n点击"是"删除 Service Record 数据。%n点击"否"保留它们。
+chinesesimplified.RemoveServiceRecordTitle=您要删除 Campaign Service Record 数据吗？%n%n这包括：%n  - 飞行员照片%n  - 个人信息（姓名、生日、出生地）%n  - AI故事章节%n%n位置：%%LOCALAPPDATA%%\.il2_campaign_service_record%n%n点击"是"删除 Service Record 数据。%n点击"否"保留它们。
 chinesesimplified.RemoveFlightLogsTitle=您要删除生成的飞行日志文件 (*.txt, *.json) 吗？%n%n这包括以下目录中的所有 *.txt 和 *.json 文件：%n  <IL-2 游戏目录>\data\FlightLogs%n%n这些文件由追踪器创建，下次运行时将重新生成。%n%n点击"是"删除飞行日志文件。%n点击"否"保留它们。
 chinesesimplified.IL2PageTitle=选择 IL-2 Great Battles 安装文件夹
 chinesesimplified.IL2PageDescription=选择 IL-2 Great Battles 的安装文件夹。
@@ -499,7 +499,8 @@ begin
       Result := 'Möchten Sie Ihre Campaign Service Record Daten ENTFERNEN?'#13#10#13#10 +
                 'Dies umfasst:'#13#10 +
                 '  - Pilotenfotos'#13#10 +
-                '  - Persönliche Informationen (Name, Geburtstag, Geburtsort)'#13#10#13#10 +
+                '  - Persönliche Informationen (Name, Geburtstag, Geburtsort)'#13#10 +
+                '  - KI-Story-Kapitel'#13#10#13#10 +
                 'Speicherort: %LOCALAPPDATA%\.il2_campaign_service_record'#13#10#13#10 +
                 'Klicken Sie JA, um die Service Record Daten zu entfernen.'#13#10 +
                 'Klicken Sie NEIN, um sie zu behalten.'
@@ -531,7 +532,8 @@ begin
       Result := 'Voulez-vous SUPPRIMER vos données Campaign Service Record ?'#13#10#13#10 +
                 'Cela inclut :'#13#10 +
                 '  - Photos de pilote'#13#10 +
-                '  - Informations personnelles (nom, date de naissance, lieu de naissance)'#13#10#13#10 +
+                '  - Informations personnelles (nom, date de naissance, lieu de naissance)'#13#10 +
+                '  - Chapitres d''histoires IA'#13#10#13#10 +
                 'Emplacement : %LOCALAPPDATA%\.il2_campaign_service_record'#13#10#13#10 +
                 'Cliquez OUI pour supprimer les données Service Record.'#13#10 +
                 'Cliquez NON pour les conserver.'
@@ -563,7 +565,8 @@ begin
       Result := '¿Desea ELIMINAR sus datos de Campaign Service Record?'#13#10#13#10 +
                 'Esto incluye:'#13#10 +
                 '  - Fotos de piloto'#13#10 +
-                '  - Información personal (nombre, fecha de nacimiento, lugar de nacimiento)'#13#10#13#10 +
+                '  - Información personal (nombre, fecha de nacimiento, lugar de nacimiento)'#13#10 +
+                '  - Capítulos de historias IA'#13#10#13#10 +
                 'Ubicación: %LOCALAPPDATA%\.il2_campaign_service_record'#13#10#13#10 +
                 'Haga clic en SÍ para eliminar los datos de Service Record.'#13#10 +
                 'Haga clic en NO para conservarlos.'
@@ -595,7 +598,8 @@ begin
       Result := 'Czy chcesz USUNĄĆ dane Campaign Service Record?'#13#10#13#10 +
                 'Obejmuje to:'#13#10 +
                 '  - Zdjęcia pilotów'#13#10 +
-                '  - Dane osobowe (imię, data urodzenia, miejsce urodzenia)'#13#10#13#10 +
+                '  - Dane osobowe (imię, data urodzenia, miejsce urodzenia)'#13#10 +
+                '  - Rozdziały historii AI'#13#10#13#10 +
                 'Lokalizacja: %LOCALAPPDATA%\.il2_campaign_service_record'#13#10#13#10 +
                 'Kliknij TAK, aby usunąć dane Service Record.'#13#10 +
                 'Kliknij NIE, aby je zachować.'
@@ -627,7 +631,8 @@ begin
       Result := 'Хотите УДАЛИТЬ данные Campaign Service Record?'#13#10#13#10 +
                 'Это включает:'#13#10 +
                 '  - Фотографии пилотов'#13#10 +
-                '  - Личную информацию (имя, дата рождения, место рождения)'#13#10#13#10 +
+                '  - Личную информацию (имя, дата рождения, место рождения)'#13#10 +
+                '  - Главы AI-историй'#13#10#13#10 +
                 'Расположение: %LOCALAPPDATA%\.il2_campaign_service_record'#13#10#13#10 +
                 'Нажмите ДА, чтобы удалить данные Service Record.'#13#10 +
                 'Нажмите НЕТ, чтобы сохранить их.'
@@ -659,7 +664,8 @@ begin
       Result := '您要删除 Campaign Service Record 数据吗？'#13#10#13#10 +
                 '这包括：'#13#10 +
                 '  - 飞行员照片'#13#10 +
-                '  - 个人信息（姓名、生日、出生地）'#13#10#13#10 +
+                '  - 个人信息（姓名、生日、出生地）'#13#10 +
+                '  - AI故事章节'#13#10#13#10 +
                 '位置：%LOCALAPPDATA%\.il2_campaign_service_record'#13#10#13#10 +
                 '点击"是"删除 Service Record 数据。'#13#10 +
                 '点击"否"保留它们。'
@@ -691,7 +697,8 @@ begin
       Result := 'Do you want to REMOVE your Campaign Service Record data?'#13#10#13#10 +
                 'This includes:'#13#10 +
                 '  - Pilot photos'#13#10 +
-                '  - Personal information (name, birthday, birthplace)'#13#10#13#10 +
+                '  - Personal information (name, birthday, birthplace)'#13#10 +
+                '  - AI story chapters'#13#10#13#10 +
                 'Location: %LOCALAPPDATA%\.il2_campaign_service_record'#13#10#13#10 +
                 'Click YES to remove Service Record data.'#13#10 +
                 'Click NO to keep it.'
@@ -788,6 +795,7 @@ end;
 //       %LOCALAPPDATA%\.il2_campaign_service_record\
 //         - pilot_photos\
 //         - campaign_personal_data.json
+//         - story_data\careers\ (AI story chapters)
 //  ----------------------------
 
 procedure DeleteUserSaveCampaignFiles(const IL2Root: string);
@@ -850,7 +858,8 @@ begin
   begin
     { Delete entire directory including:
       - pilot_photos/
-      - campaign_personal_data.json }
+      - campaign_personal_data.json
+      - story_data/careers/ }
     DelTree(ServiceRecordDir, True, True, True);
   end;
 end;

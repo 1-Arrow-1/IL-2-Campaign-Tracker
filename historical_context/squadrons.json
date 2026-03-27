@@ -1,0 +1,56 @@
+{
+  "9th_iap_vvs_vmf": {
+    "display_name": "9th IAP VVS VMF",
+    "country": "ussr",
+    "periods": [
+      {
+        "start": "1941-08-01",
+        "end": "1941-09-15",
+        "theatre": "Black Sea region",
+        "location": "naval airfields and coastal approaches",
+        "summary": "The regiment was committed to defensive fighter operations during a period of heavy pressure on Soviet naval aviation.",
+        "facts": [
+          "Escort and interception duties were frequent.",
+          "Operational tempo was high.",
+          "Losses and pilot fatigue were persistent concerns."
+        ],
+        "tone_hints": [
+          "strained",
+          "defiant",
+          "improvised defense"
+        ],
+        "forbidden_claims": [
+          "Do not claim named commanders unless explicitly provided.",
+          "Do not claim exact base names unless explicitly provided."
+        ]
+      }
+    ]
+  },
+  "jg52_i_gruppe": {
+    "display_name": "I./JG 52",
+    "country": "germany",
+    "periods": [
+      {
+        "start": "1941-10-01",
+        "end": "1941-12-31",
+        "theatre": "central sector of the Eastern Front",
+        "location": "forward Luftwaffe fighter fields supporting the autumn advance",
+        "summary": "The Gruppe was engaged in intensive fighter operations during the autumn campaign in the Soviet Union, flying escort and interception sorties under demanding conditions.",
+        "facts": [
+          "Sortie tempo remained high during the advance toward Moscow.",
+          "Weather and field conditions became increasingly difficult as autumn deepened.",
+          "Fighter units were expected to provide both free-hunt opportunities and close escort support."
+        ],
+        "tone_hints": [
+          "cold confidence",
+          "operational strain",
+          "unceasing momentum"
+        ],
+        "forbidden_claims": [
+          "Do not name specific commanders or aces unless the source data provides them.",
+          "Do not claim exact airfield names unless explicitly supplied."
+        ]
+      }
+    ]
+  }
+}

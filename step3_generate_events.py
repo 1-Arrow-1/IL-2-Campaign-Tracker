@@ -2269,48 +2269,30 @@ class EventGenerator:
         separator = "-" * 50
 
         def format_combat_header_metrics(summary):
-            metrics = summary.get("combat_metrics", {}) or {}
-            guns = metrics.get("guns", {}) or {}
-            bombs = metrics.get("bombs", {}) or {}
-            rockets = metrics.get("rockets", {}) or {}
-            header_parts = []
+            metrics = summary.get('combat_metrics') or {}
+            if metrics.get('unlimited_ammo'):
+                return []
 
-            gun_hits = int(guns.get("total_hit_events", 0) or 0)
-            gun_acc = guns.get("accuracy_percent")
-            gun_rounds = guns.get("rounds_used")
-            if gun_hits or gun_rounds is not None:
-                if gun_acc is not None:
-                    header_parts.append(
-                        f"{t('flightlog.metrics.guns')}: {gun_hits} {t('flightlog.metrics.hits')} ({gun_acc:.1f}% {t('flightlog.metrics.accuracy')})"
-                    )
-                else:
-                    header_parts.append(
-                        f"{t('flightlog.metrics.guns')}: {gun_hits} {t('flightlog.metrics.hits')} ({t('flightlog.metrics.accuracy')} n/a)"
-                    )
+            lines = []
+            guns = metrics.get('guns') or {}
+            if guns.get('status') == 'ok' and guns.get('rounds_used'):
+                effect = guns.get('effectiveness_percent')
+                if effect is not None:
+                    lines.append(f"Guns: {effect:.1f}% dmg/shot")
 
-            bombs_dropped = bombs.get("dropped")
-            if bombs_dropped and bombs_dropped > 0:
-                header_parts.append(
-                    f"{t('flightlog.metrics.bombs')}: {bombs_dropped} {t('flightlog.metrics.dropped')}, "
-                    f"{int(bombs.get('targets_destroyed', 0) or 0)} {t('flightlog.metrics.destroyed')}"
-                )
-            elif bombs.get("status") == "partial_inference_only":
-                header_parts.append(
-                    f"{t('flightlog.metrics.bombs')}: {t('flightlog.metrics.mixed_ordnance')}"
-                )
+            bombs = metrics.get('bombs') or {}
+            if bombs.get('status') == 'ok' and bombs.get('dropped'):
+                effect = bombs.get('effectiveness_percent')
+                if effect is not None:
+                    lines.append(f"Bombs: {effect:.1f}% dmg/bomb")
 
-            rockets_fired = rockets.get("fired")
-            if rockets_fired and rockets_fired > 0:
-                header_parts.append(
-                    f"{t('flightlog.metrics.rockets')}: {rockets_fired} {t('flightlog.metrics.fired')}, "
-                    f"{int(rockets.get('targets_destroyed', 0) or 0)} {t('flightlog.metrics.destroyed')}"
-                )
-            elif rockets.get("status") == "partial_inference_only":
-                header_parts.append(
-                    f"{t('flightlog.metrics.rockets')}: {t('flightlog.metrics.mixed_ordnance')}"
-                )
+            rockets = metrics.get('rockets') or {}
+            if rockets.get('status') == 'ok' and rockets.get('fired'):
+                effect = rockets.get('effectiveness_percent')
+                if effect is not None:
+                    lines.append(f"Rockets: {effect:.1f}% dmg/rocket")
 
-            return header_parts
+            return lines
 
         for mission_id in sorted_missions:
             data = debriefings[mission_id]

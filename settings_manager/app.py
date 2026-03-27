@@ -284,6 +284,9 @@ class SettingsManagerApp(tk.Tk):
         self._stock_import_thread: Optional[threading.Thread] = None
         self._stock_import_queue: "queue.Queue[Dict[str, Any]]" = queue.Queue()
         self._stock_import_poll_id: Optional[str] = None
+        self._story_test_thread: Optional[threading.Thread] = None
+        self._story_test_queue: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+        self._story_test_poll_id: Optional[str] = None
 
         # German awards tab state
         self._german_awards_var: Optional[tk.StringVar] = None
@@ -465,7 +468,95 @@ class SettingsManagerApp(tk.Tk):
         rank_scaling = self.config_data.get('rank_scaling', {})
         current_scaling = rank_scaling.get('enabled', True) if isinstance(rank_scaling, dict) else True
         self.scaling_var.set('True' if current_scaling else 'False')
-        
+
+        story_settings = self.settings_data.get('stories', {})
+        if not isinstance(story_settings, dict):
+            story_settings = {}
+
+        # AI stories enabled
+        row += 1
+        ttk.Label(frame, text=self.tr.t("lbl_ai_stories_enabled")).grid(
+            row=row, column=0, sticky=tk.W, pady=10
+        )
+
+        self.ai_stories_var = tk.StringVar()
+        self.ai_stories_combo = ttk.Combobox(
+            frame,
+            textvariable=self.ai_stories_var,
+            values=['True', 'False'],
+            state='readonly',
+            width=30
+        )
+        self.ai_stories_combo.grid(row=row, column=1, sticky=tk.W, pady=10, padx=(10, 0))
+        self.ai_stories_var.set('True' if story_settings.get('enabled', False) else 'False')
+
+        # OpenAI API key
+        row += 1
+        ttk.Label(frame, text=self.tr.t("lbl_openai_api_key")).grid(
+            row=row, column=0, sticky=tk.W, pady=10
+        )
+
+        self.openai_api_key_var = tk.StringVar(value=story_settings.get('api_key', ''))
+        self.openai_api_key_entry = ttk.Entry(
+            frame,
+            textvariable=self.openai_api_key_var,
+            show='*',
+            width=33
+        )
+        self.openai_api_key_entry.grid(row=row, column=1, sticky=tk.W, pady=10, padx=(10, 0))
+
+        # Story model
+        row += 1
+        ttk.Label(frame, text=self.tr.t("lbl_story_model")).grid(
+            row=row, column=0, sticky=tk.W, pady=10
+        )
+
+        self.story_model_var = tk.StringVar()
+        self.story_model_combo = ttk.Combobox(
+            frame,
+            textvariable=self.story_model_var,
+            values=['gpt-5-mini', 'gpt-5'],
+            state='readonly',
+            width=30
+        )
+        self.story_model_combo.grid(row=row, column=1, sticky=tk.W, pady=10, padx=(10, 0))
+        self.story_model_var.set(story_settings.get('model', 'gpt-5-mini'))
+
+        # Auto-generate stories
+        row += 1
+        ttk.Label(frame, text=self.tr.t("lbl_story_auto_generate")).grid(
+            row=row, column=0, sticky=tk.W, pady=10
+        )
+
+        self.story_auto_generate_var = tk.StringVar()
+        self.story_auto_generate_combo = ttk.Combobox(
+            frame,
+            textvariable=self.story_auto_generate_var,
+            values=['True', 'False'],
+            state='readonly',
+            width=30
+        )
+        self.story_auto_generate_combo.grid(row=row, column=1, sticky=tk.W, pady=10, padx=(10, 0))
+        self.story_auto_generate_var.set('True' if story_settings.get('auto_generate', False) else 'False')
+
+        # Test connection controls
+        row += 1
+        self.story_test_button = ttk.Button(
+            frame,
+            text=self.tr.t("btn_test_connection"),
+            command=self._on_test_story_connection,
+        )
+        self.story_test_button.grid(row=row, column=1, sticky=tk.W, pady=(10, 0), padx=(10, 0))
+
+        row += 1
+        self.story_status_var = tk.StringVar(value="")
+        self.story_status_label = ttk.Label(
+            frame,
+            textvariable=self.story_status_var,
+            foreground='gray'
+        )
+        self.story_status_label.grid(row=row, column=1, sticky=tk.W, pady=(6, 0), padx=(10, 0))
+
         # Configure grid
         frame.columnconfigure(1, weight=1)
     
@@ -1894,6 +1985,15 @@ class SettingsManagerApp(tk.Tk):
             rank_scaling = self.config_data.get('rank_scaling', {})
             scaling_enabled = rank_scaling.get('enabled', True) if isinstance(rank_scaling, dict) else True
             self.scaling_var.set('True' if scaling_enabled else 'False')
+
+            story_settings = self.settings_data.get('stories', {})
+            if not isinstance(story_settings, dict):
+                story_settings = {}
+            self.ai_stories_var.set('True' if story_settings.get('enabled', False) else 'False')
+            self.openai_api_key_var.set(story_settings.get('api_key', ''))
+            self.story_model_var.set(story_settings.get('model', 'gpt-5-mini'))
+            self.story_auto_generate_var.set('True' if story_settings.get('auto_generate', False) else 'False')
+            self.story_status_var.set("")
     
     def _collect_changes(self) -> None:
         """Collect all UI changes into data structures."""
@@ -1909,6 +2009,101 @@ class SettingsManagerApp(tk.Tk):
         if 'rank_scaling' not in self.config_data:
             self.config_data['rank_scaling'] = {}
         self.config_data['rank_scaling']['enabled'] = self.scaling_var.get() == 'True'
+
+        stories = self.settings_data.get('stories', {})
+        if not isinstance(stories, dict):
+            stories = {}
+        stories['enabled'] = self.ai_stories_var.get() == 'True'
+        stories['api_key'] = self.openai_api_key_var.get().strip()
+        stories['model'] = self.story_model_var.get().strip() or 'gpt-5-mini'
+        stories['auto_generate'] = self.story_auto_generate_var.get() == 'True'
+        self.settings_data['stories'] = stories
+
+    def _set_story_test_running(self, running: bool) -> None:
+        state = tk.DISABLED if running else tk.NORMAL
+        if hasattr(self, 'story_test_button') and self.story_test_button:
+            self.story_test_button.configure(state=state)
+
+    def _classify_story_test_error(self, error: Exception) -> str:
+        name = error.__class__.__name__
+        message = str(error)
+        combined = f"{name}: {message}".lower()
+
+        if "api_key" in combined or "authentication" in combined or "unauthorized" in combined:
+            return self.tr.t("msg_story_test_auth_error")
+        if "insufficient_quota" in combined or "quota" in combined or "billing" in combined:
+            return self.tr.t("msg_story_test_quota_error")
+        if "connection" in combined or "timeout" in combined or "network" in combined:
+            return self.tr.t("msg_story_test_network_error")
+        return self.tr.t("msg_story_test_generic_error", error=message or name)
+
+    def _on_test_story_connection(self) -> None:
+        api_key = self.openai_api_key_var.get().strip()
+        model = self.story_model_var.get().strip() or 'gpt-5-mini'
+
+        if not api_key:
+            messagebox.showwarning(
+                self.tr.t("msg_warning_title"),
+                self.tr.t("msg_story_test_missing_key"),
+            )
+            return
+
+        if self._story_test_thread and self._story_test_thread.is_alive():
+            return
+
+        self.story_status_var.set(self.tr.t("msg_story_test_running"))
+        self._set_story_test_running(True)
+        self._story_test_queue = queue.Queue()
+        if self._story_test_poll_id:
+            self.after_cancel(self._story_test_poll_id)
+            self._story_test_poll_id = None
+
+        def worker() -> None:
+            try:
+                from openai import OpenAI
+
+                client = OpenAI(api_key=api_key)
+                response = client.responses.create(
+                    model=model,
+                    input="Reply with exactly: connection ok",
+                )
+                self._story_test_queue.put({
+                    "ok": True,
+                    "text": (response.output_text or "").strip(),
+                })
+            except Exception as exc:
+                self._story_test_queue.put({
+                    "ok": False,
+                    "error": self._classify_story_test_error(exc),
+                })
+
+        self._story_test_thread = threading.Thread(target=worker, daemon=True)
+        self._story_test_thread.start()
+        self._poll_story_test_queue()
+
+    def _poll_story_test_queue(self) -> None:
+        try:
+            payload = self._story_test_queue.get_nowait()
+        except queue.Empty:
+            self._story_test_poll_id = self.after(150, self._poll_story_test_queue)
+            return
+
+        self._story_test_poll_id = None
+        self._set_story_test_running(False)
+
+        if payload.get("ok"):
+            self.story_status_var.set(self.tr.t("msg_story_test_success"))
+            messagebox.showinfo(
+                self.tr.t("msg_confirm_title"),
+                self.tr.t("msg_story_test_success"),
+            )
+        else:
+            error_text = payload.get("error", self.tr.t("msg_story_test_unknown_error"))
+            self.story_status_var.set(error_text)
+            messagebox.showwarning(
+                self.tr.t("msg_warning_title"),
+                error_text,
+            )
 
     def _bracket_sort_key(self, bracket: str) -> Tuple[int, float]:
         try:

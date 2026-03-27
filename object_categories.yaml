@@ -1833,7 +1833,6 @@ exclude:
   - Plane controller
   - Plane controller AI
   - SKC 35 turret
-  - Searchlight
   - Ship Controller AI
   - TankTurret
   - TorpedoTurret

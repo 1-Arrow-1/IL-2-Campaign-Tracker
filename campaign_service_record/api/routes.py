@@ -12,6 +12,7 @@ Endpoints:
 import base64
 import json
 import logging
+import os
 import re
 import threading
 import time
@@ -46,6 +47,15 @@ from campaign_service_record.utils.pilot_photo import pilot_photo_path, pilot_ph
 from utils.locale_config import resolve_locale
 from utils.supported_locales import DEFAULT_LOCALE, get_supported_locales, normalize_locale
 from campaign_service_record.core.job_store import job_store, CAREER_DEBRIEF_PARSE
+from campaign_service_record.career.debriefing_manager import CareerDebriefingManager
+from llm_story_generator import (
+    build_story_input,
+    generate_and_store_chapter,
+    load_or_create_story_state,
+    load_story_chapters,
+    save_story_state,
+)
+from utils.locale_config import load_settings
 
 
 logger = logging.getLogger(__name__)
@@ -68,6 +78,8 @@ _last_ping = [time.time()]
 
 _PILOT_DESC_DEFAULT = "campaign_pilot"
 _PERSONAL_DATA_FILENAME = "campaign_personal_data.json"
+
+_STORY_EVENT_TYPES = [6, 8]
 
 
 def _sanitize_pilot_name(name: Optional[str]) -> Optional[str]:
@@ -120,6 +132,205 @@ def _sanitize_personal_data_value(value: Optional[str]) -> str:
     if value is None:
         return ''
     return str(value).strip()
+
+
+def _load_story_settings() -> dict:
+    settings = load_settings()
+    stories = settings.get("stories", {})
+    if not isinstance(stories, dict):
+        stories = {}
+    api_key = str(stories.get("api_key") or os.environ.get("OPENAI_API_KEY") or "").strip()
+    model = str(stories.get("model") or "gpt-5-mini").strip() or "gpt-5-mini"
+    return {
+        "enabled": bool(stories.get("enabled", False)),
+        "configured": bool(api_key),
+        "api_key": api_key,
+        "model": model,
+        "auto_generate": bool(stories.get("auto_generate", False)),
+    }
+
+
+def _humanize_story_label(value: Optional[str]) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    return text.replace("_", " ").strip()
+
+
+def _classify_story_error(exc: Exception) -> tuple[str, str]:
+    text = str(exc or "").lower()
+    if any(fragment in text for fragment in ("api key", "authentication", "unauthorized", "401")):
+        return "auth_error", "OpenAI API key is invalid."
+    if any(fragment in text for fragment in ("quota", "billing", "insufficient", "429")):
+        return "quota_error", "OpenAI quota exhausted or billing is unavailable."
+    if any(fragment in text for fragment in ("connection", "timeout", "network", "dns", "connect")):
+        return "network_error", "OpenAI is currently unreachable."
+    return "api_error", "Story generation failed."
+
+
+def _build_story_status_payload(source: str, entry_id: str) -> dict:
+    settings = _load_story_settings()
+    chapters = load_story_chapters(entry_id) if source == "career" else []
+    if source != "career":
+        return {
+            "supported": False,
+            "enabled": settings["enabled"],
+            "configured": settings["configured"],
+            "auto_generate": settings["auto_generate"],
+            "model": settings["model"],
+            "status": "unsupported",
+            "message": "AI stories are currently available for career service records only.",
+            "chapters": chapters,
+        }
+
+    if not settings["enabled"]:
+        status = "disabled"
+        message = "AI stories are disabled in Settings Manager."
+    elif not settings["configured"]:
+        status = "not_configured"
+        message = "AI stories are enabled, but no OpenAI API key is configured."
+    elif chapters:
+        status = "ready"
+        message = ""
+    else:
+        status = "ready"
+        message = "No story chapters have been generated yet."
+
+    return {
+        "supported": True,
+        "enabled": settings["enabled"],
+        "configured": settings["configured"],
+        "auto_generate": settings["auto_generate"],
+        "model": settings["model"],
+        "status": status,
+        "message": message,
+        "chapters": chapters,
+    }
+
+
+def _build_career_story_contexts(root_career_id: int) -> list[dict]:
+    if not _career_provider:
+        raise RuntimeError("Career provider not initialized.")
+
+    aggregator = _career_provider._aggregator
+    resolver = _career_provider._resolver
+    db = _career_provider._db
+
+    career = resolver.get_career(root_career_id)
+    if career is None:
+        raise ValueError(f"Career not found: {root_career_id}")
+    if aggregator._cache_dir is None:
+        raise RuntimeError("Career cache directory is not configured.")
+
+    debrief_manager = CareerDebriefingManager(
+        db=db,
+        career=career,
+        linker=aggregator._linker,
+        cache_dir=aggregator._cache_dir,
+    )
+    results = debrief_manager._get_results()
+    cache = debrief_manager._load_cache()
+
+    segment_by_pilot = {int(pid): idx for idx, pid in enumerate(career.all_pilot_ids)}
+    segment_rows = {int(row["id"]): row for row in career.chain}
+    raw_events = db.get_events_for_pilots(career.all_pilot_ids, types=_STORY_EVENT_TYPES)
+    raw_events.sort(
+        key=lambda row: (
+            segment_by_pilot.get(int(row["pilotId"]), 0),
+            str(row["date"] or ""),
+        )
+    )
+
+    contexts: list[dict] = []
+    linked_mission_index = 0
+    for result in results:
+        if not result.linked:
+            continue
+
+        cache_entry = cache.get(str(result.mission_id), {})
+        report_path_str = str(cache_entry.get("report_path") or "").strip()
+        if not report_path_str:
+            continue
+        report_path = Path(report_path_str)
+        json_path = report_path.with_suffix(".events.json")
+        if not json_path.exists():
+            continue
+        try:
+            mission_json = json.loads(json_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+
+        mission_row = db.get_mission_by_id(result.mission_id)
+        if mission_row is None:
+            continue
+
+        mission_date_iso = aggregator._format_date(mission_row["startTime"])
+        if not mission_date_iso:
+            continue
+
+        linked_mission_index += 1
+        mission_segment_index = next(
+            (idx for idx, row in enumerate(career.chain) if int(row["id"]) == result.career_id),
+            0,
+        )
+        mission_segment = segment_rows.get(result.career_id)
+        squadron_name = ""
+        if mission_segment is not None:
+            try:
+                squadron_name = aggregator._resolve_squadron_name(int(mission_segment["squadronId"])) or ""
+            except Exception:
+                squadron_name = ""
+
+        awards: list[str] = []
+        mission_awards: list[str] = []
+        rank = ""
+        promotion = None
+        for raw_event in raw_events:
+            event_segment_index = segment_by_pilot.get(int(raw_event["pilotId"]), 0)
+            event_date_iso = aggregator._format_date(raw_event["date"])
+            include = (
+                event_segment_index < mission_segment_index
+                or (event_segment_index == mission_segment_index and event_date_iso and event_date_iso <= mission_date_iso)
+            )
+            if not include:
+                continue
+
+            mapped = aggregator._map_event(raw_event, career.country)
+            if not mapped:
+                continue
+            if mapped.get("type") == "promotion":
+                rank = str(mapped.get("rank") or rank)
+                if event_date_iso == mission_date_iso:
+                    promotion = str(mapped.get("rank") or "")
+            elif mapped.get("type") == "award":
+                award_name = _humanize_story_label(mapped.get("name"))
+                if award_name:
+                    awards.append(award_name)
+                    if event_date_iso == mission_date_iso:
+                        mission_awards.append(award_name)
+
+        story_input = build_story_input(
+            mission_json,
+            career_id=root_career_id,
+            mission_id=result.mission_id,
+            mission_date=mission_date_iso,
+            squadron=squadron_name,
+            rank=rank,
+            awards=awards,
+            promotion=promotion,
+            mission_awards=mission_awards,
+            mission_promotion=promotion,
+            missions_completed=linked_mission_index,
+            narrative_memory={},
+        )
+        pilot_name = " ".join(
+            part for part in (career.pilot_first_name, career.pilot_last_name) if part
+        ).strip()
+        if pilot_name:
+            story_input["pilot"]["name"] = pilot_name
+        contexts.append(story_input)
+
+    return contexts
 
 
 def init_api(data_dir: Path, reports_dir: Optional[Path] = None):
@@ -1046,6 +1257,89 @@ def start_career_parse():
     )
     t.start()
     return jsonify({'job_id': job.id})
+
+
+@api_bp.route('/api/stories/<source>/<entry_id>')
+def get_stories(source: str, entry_id: str):
+    """Return story status and cached chapters for a service-record entry."""
+    _last_ping[0] = time.time()
+    return jsonify(_build_story_status_payload(source, entry_id))
+
+
+@api_bp.route('/api/stories/<source>/<entry_id>/generate', methods=['POST'])
+def generate_stories(source: str, entry_id: str):
+    """Generate and cache missing story chapters for a service-record entry."""
+    _last_ping[0] = time.time()
+
+    if source != 'career':
+        return jsonify({'error': 'AI stories are currently available for career service records only.'}), 400
+
+    settings = _load_story_settings()
+    if not settings["enabled"]:
+        return jsonify({'error': 'AI stories are disabled in Settings Manager.'}), 400
+    if not settings["configured"]:
+        return jsonify({'error': 'No OpenAI API key is configured.'}), 400
+
+    try:
+        root_career_id = int(entry_id)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Invalid career id.'}), 400
+
+    try:
+        contexts = _build_career_story_contexts(root_career_id)
+        if not contexts:
+            return jsonify({'error': 'No linked mission reports are available for story generation yet.'}), 400
+
+        payload = request.get_json(silent=True) if request.is_json else {}
+        if not isinstance(payload, dict):
+            payload = {}
+        try:
+            max_chapters = int(payload.get("max_chapters", 1) or 1)
+        except (TypeError, ValueError):
+            max_chapters = 1
+        max_chapters = max(1, min(max_chapters, 10))
+
+        existing_chapters = load_story_chapters(root_career_id)
+        existing_mission_ids = {
+            str(chapter.get("mission_id"))
+            for chapter in existing_chapters
+            if chapter.get("mission_id") is not None
+        }
+        missing_contexts = [
+            context for context in contexts
+            if str(context.get("mission_id")) not in existing_mission_ids
+        ]
+        if not missing_contexts:
+            status_payload = _build_story_status_payload(source, entry_id)
+            status_payload["generated_count"] = 0
+            status_payload["remaining_count"] = 0
+            status_payload["message"] = "Stories are already up to date."
+            return jsonify(status_payload)
+
+        memory = load_or_create_story_state(root_career_id)
+        generated_count = 0
+        for context in missing_contexts:
+            if generated_count >= max_chapters:
+                break
+            context["narrative_memory"] = memory
+            result = generate_and_store_chapter(
+                context,
+                career_id=root_career_id,
+                model=settings["model"],
+                api_key=settings["api_key"],
+            )
+            memory = result.get("memory") or memory
+            save_story_state(root_career_id, memory)
+            generated_count += 1
+
+        status_payload = _build_story_status_payload(source, entry_id)
+        status_payload["generated_count"] = generated_count
+        status_payload["remaining_count"] = max(0, len(missing_contexts) - generated_count)
+        return jsonify(status_payload)
+    except Exception as exc:
+        logger.error("Story generation failed for %s/%s: %s", source, entry_id, exc, exc_info=True)
+        error_code, message = _classify_story_error(exc)
+        return jsonify({'error': message, 'error_code': error_code}), 502
 
 
 _JOB_CLEANUP_INTERVAL = 20   # clean up done jobs every 20th poll call

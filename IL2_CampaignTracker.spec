@@ -27,6 +27,7 @@ datas = [
     (str(base_path / "object_categories.yaml"), "."),
     (str(base_path / "stock_campaigns.yaml"), "."),
     (str(base_path / "locales"), "locales"),
+    (str(base_path / "historical_context"), "historical_context"),
 ]
 
 a = Analysis(
@@ -51,6 +52,7 @@ a = Analysis(
         'popups_min',
         'campaign_reset_checker',
 		'sync_campaign_mission_states',
+        'llm_story_generator',
         'campaign_service_record',
         'campaign_service_record.utils',
         'utils',
@@ -66,6 +68,7 @@ a = Analysis(
 		'utils.sorting',
 		'utils.logging',
         'utils.rank_scaling',
+        'openai',
         'campaign_service_record.utils.i18n',  # NEW: i18n module
         'utils.locale_config',  # NEW: locale config module
 		'regex',

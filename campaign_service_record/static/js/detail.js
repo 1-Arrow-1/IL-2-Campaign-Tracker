@@ -622,6 +622,12 @@ const getLocalizedCountryName = (country) => {
     return key ? i18n.t(`country.${key}`) : country;
 };
 
+const translateOrFallback = (key, fallback, params = {}) => (
+    i18n && typeof i18n.hasKey === 'function' && i18n.hasKey(key)
+        ? i18n.t(key, params)
+        : fallback
+);
+
 const DetailPage = {
     /**
      * DOM elements
@@ -664,7 +670,11 @@ const DetailPage = {
         additionalNotesEditBtn: null,
         additionalNotesSaveBtn: null,
         additionalNotesCancelBtn: null,
-        additionalNotesEmpty: null
+        additionalNotesEmpty: null,
+        storiesSection: null,
+        storiesStatus: null,
+        storiesContent: null,
+        storiesGenerateBtn: null
     },
 
     eventImageScale: 0.35,
@@ -690,6 +700,10 @@ const DetailPage = {
         'united states': 'static/images/background_US.png'
     },
     currentBackground: null,
+    currentStoriesEntryId: null,
+    currentStoriesPayload: null,
+    storiesLoading: false,
+    storyBatchSize: 1,
     
     /**
      * Current campaign data
@@ -704,6 +718,7 @@ const DetailPage = {
         this.ensureDetailColumns();
         this.setupPhotoHandlers();
         this.setupAdditionalNotesHandlers();
+        this.setupStoryHandlers();
         PreviewModal.init();
     },
 
@@ -754,6 +769,10 @@ const DetailPage = {
         this.elements.additionalNotesCancelBtn = document.getElementById('additional-notes-cancel-btn');
         this.elements.additionalNotesEmpty = document.querySelector('.additional-notes-empty');
         this.elements.summaryHeading = document.querySelector('[data-i18n="web.section.campaign_summary"]');
+        this.elements.storiesSection = document.getElementById('stories-section');
+        this.elements.storiesStatus = document.getElementById('stories-status');
+        this.elements.storiesContent = document.getElementById('stories-content');
+        this.elements.storiesGenerateBtn = document.getElementById('stories-generate-btn');
     },
 
     setupPhotoHandlers() {
@@ -794,6 +813,12 @@ const DetailPage = {
         }
         if (this.elements.additionalNotesCancelBtn) {
             this.elements.additionalNotesCancelBtn.addEventListener('click', () => this.cancelAdditionalNotesEdit());
+        }
+    },
+
+    setupStoryHandlers() {
+        if (this.elements.storiesGenerateBtn) {
+            this.elements.storiesGenerateBtn.addEventListener('click', () => this.generateStories());
         }
     },
 
@@ -997,6 +1022,14 @@ const DetailPage = {
             this.elements.eventsList.innerHTML = '<p>Loading events...</p>';
             this.elements.debriefingsContainer.innerHTML = '<p>Loading debriefings...</p>';
             this.elements.summaryContent.innerHTML = '<p>Loading summary...</p>';
+            this.currentStoriesEntryId = entryId;
+            this.currentStoriesPayload = null;
+            this.renderStoriesSection({
+                supported: resolvedSource === 'career',
+                status: 'loading',
+                message: resolvedSource === 'career' ? 'Loading stories...' : '',
+                chapters: []
+            });
 
             // Fetch data from the appropriate provider
             const campaign = resolvedSource === 'career'
@@ -1137,6 +1170,8 @@ const DetailPage = {
             // Medal Showcase button
             this.setupMedalShowcase(campaign.name, campaign.country);
 
+            await this.loadStories(entryId, resolvedSource);
+
             // Career first-run debriefing parse (inline panel indicator, 3-second grace period)
             if (resolvedSource === 'career' && campaign.debriefings_pending) {
                 this._startDebriefParse(entryId);
@@ -1145,6 +1180,178 @@ const DetailPage = {
         } catch (error) {
             console.error('Failed to load campaign details:', error);
             this.showError(error.message);
+        }
+    },
+
+    setStoriesStatus(message, tone = '') {
+        const status = this.elements.storiesStatus;
+        if (!status) {
+            return;
+        }
+        status.textContent = message || '';
+        status.classList.remove('is-error', 'is-success');
+        if (tone === 'error') {
+            status.classList.add('is-error');
+        } else if (tone === 'success') {
+            status.classList.add('is-success');
+        }
+    },
+
+    setStoriesBusy(isBusy) {
+        this.storiesLoading = !!isBusy;
+        if (this.elements.storiesGenerateBtn) {
+            this.elements.storiesGenerateBtn.disabled = !!isBusy;
+        }
+    },
+
+    renderStoriesSection(payload) {
+        const section = this.elements.storiesSection;
+        const content = this.elements.storiesContent;
+        const button = this.elements.storiesGenerateBtn;
+        if (!section || !content) {
+            return;
+        }
+
+        const source = this._source || 'campaign';
+        const supported = !!payload?.supported;
+        const enabled = payload?.enabled === true;
+        const shouldShow = source === 'career' && (enabled || payload?.status === 'loading');
+        section.style.display = shouldShow ? '' : 'none';
+        if (!shouldShow) {
+            return;
+        }
+
+        const chapters = Array.isArray(payload?.chapters) ? payload.chapters : [];
+        const status = payload?.status || 'ready';
+        const message = payload?.message || '';
+        this.currentStoriesPayload = payload || null;
+
+        if (button) {
+            const canGenerate = supported && payload?.enabled && payload?.configured;
+            button.style.display = supported ? '' : 'none';
+            button.disabled = this.storiesLoading || !canGenerate;
+            button.textContent = chapters.length > 0
+                ? translateOrFallback('web.button.generate_missing_stories', 'Generate Missing Stories')
+                : translateOrFallback('web.button.generate_stories', 'Generate Stories');
+        }
+
+        const tone = status === 'auth_error' || status === 'quota_error' || status === 'api_error' || status === 'not_configured' || status === 'disabled'
+            ? 'error'
+            : (status === 'generated' ? 'success' : '');
+        this.setStoriesStatus(message, tone);
+
+        content.innerHTML = '';
+        if (chapters.length === 0) {
+            const empty = document.createElement('p');
+            empty.className = 'empty-message';
+            empty.textContent = status === 'loading'
+                ? message || 'Loading stories...'
+                : translateOrFallback('web.message.no_story_chapters', 'No story chapters available yet.');
+            content.appendChild(empty);
+            return;
+        }
+
+        chapters.forEach((chapter, index) => {
+            const details = document.createElement('details');
+            details.className = 'story-chapter';
+            if (index === chapters.length - 1) {
+                details.open = true;
+            }
+
+            const summary = document.createElement('summary');
+            summary.className = 'story-chapter__summary';
+            const chapterLabel = translateOrFallback('web.label.chapter', 'Chapter');
+            summary.textContent = `${chapterLabel} ${chapter.chapter_index || '—'} | ${chapter.date || '—'} | ${chapter.aircraft || '—'} | ${chapter.result || '—'}`;
+            details.appendChild(summary);
+
+            const bodyWrap = document.createElement('div');
+            bodyWrap.className = 'story-chapter__content';
+
+            if (chapter.title) {
+                const title = document.createElement('div');
+                title.className = 'story-chapter__title';
+                title.textContent = chapter.title;
+                bodyWrap.appendChild(title);
+            }
+
+            const body = document.createElement('div');
+            body.className = 'story-chapter__body';
+            body.textContent = chapter.story_text || '';
+            bodyWrap.appendChild(body);
+
+            details.appendChild(bodyWrap);
+            content.appendChild(details);
+        });
+    },
+
+    async loadStories(entryId, source) {
+        if (source !== 'career') {
+            this.renderStoriesSection({
+                supported: false,
+                status: 'unsupported',
+                message: '',
+                chapters: []
+            });
+            return;
+        }
+
+        try {
+            const payload = await API.getStories(source, entryId);
+            this.renderStoriesSection(payload);
+
+            if (
+                payload?.supported
+                && payload?.enabled
+                && payload?.configured
+                && payload?.auto_generate
+                && (!Array.isArray(payload?.chapters) || payload.chapters.length === 0)
+            ) {
+                await this.generateStories({ silentReadyMessage: true });
+            }
+        } catch (error) {
+            console.error('Failed to load stories:', error);
+            this.renderStoriesSection({
+                supported: true,
+                status: 'api_error',
+                message: error.message || 'Unable to load stories.',
+                chapters: []
+            });
+        }
+    },
+
+    async generateStories(options = {}) {
+        if (this._source !== 'career' || !this.currentStoriesEntryId || this.storiesLoading) {
+            return;
+        }
+
+        this.setStoriesBusy(true);
+        this.setStoriesStatus(
+            translateOrFallback('web.message.generating_stories', 'Generating stories...'),
+            ''
+        );
+
+        try {
+            const payload = await API.generateStories(
+                this._source,
+                this.currentStoriesEntryId,
+                { max_chapters: this.storyBatchSize }
+            );
+            if (payload && payload.generated_count > 0 && !options.silentReadyMessage) {
+                payload.status = 'generated';
+                const remaining = Number(payload.remaining_count || 0);
+                const generatedText = `${payload.generated_count} stor${payload.generated_count === 1 ? 'y chapter was' : 'y chapters were'} generated.`;
+                payload.message = remaining > 0
+                    ? `${generatedText} ${remaining} remaining.`
+                    : generatedText;
+            } else if (payload && !payload.message) {
+                payload.message = translateOrFallback('web.message.story_generation_up_to_date', 'Stories are already up to date.');
+            }
+            this.renderStoriesSection(payload);
+        } catch (error) {
+            console.error('Failed to generate stories:', error);
+            this.setStoriesStatus(error.message || 'Story generation failed.', 'error');
+        } finally {
+            this.setStoriesBusy(false);
         }
     },
     
@@ -1355,7 +1562,14 @@ const DetailPage = {
 
         if (savedData) {
             this.setPersonalDataFields(savedData);
-            this.setPersonalDataDisplay(savedData);
+            const displayData = this._source === 'career'
+                ? {
+                    ...savedData,
+                    birth_country: this.getDisplayedPersonalDataValue(this.elements.personalDisplayBirthCountry),
+                    squadron: this.getDisplayedPersonalDataValue(this.elements.personalDisplaySquadron),
+                }
+                : savedData;
+            this.setPersonalDataDisplay(displayData);
         }
 
         if (photoError || dataError) {
@@ -1431,6 +1645,11 @@ const DetailPage = {
     formatPersonalDataValue(value) {
         const trimmed = typeof value === 'string' ? value.trim() : '';
         return trimmed ? trimmed : '—';
+    },
+
+    getDisplayedPersonalDataValue(element) {
+        const value = element?.textContent?.trim() || '';
+        return value === '—' ? '' : value;
     },
 
     setPersonalDataDisplay(data) {

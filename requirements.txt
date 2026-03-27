@@ -6,6 +6,7 @@ pyyaml>=6.0            # YAML configuration file parsing
 psutil>=5.9.0          # Process monitoring (detecting IL-2 game)
 pdfkit>=1.0.0          # PDF generation wrapper for wkhtmltopdf
 regex>=2024.0.0        # Regex module used for advanced pattern matching
+openai>=1.0.0          # Optional: LLM-backed mission story generation
 
 # Optional but recommended
 pyinstaller>=5.0.0     # For building standalone EXE (development only)

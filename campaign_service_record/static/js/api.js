@@ -99,6 +99,20 @@ const API = {
     async getCareerDetail(rootCareerId) {
         return this.get(`/career/${encodeURIComponent(rootCareerId)}`);
     },
+
+    /**
+     * Get AI story status and cached chapters for an entry.
+     */
+    async getStories(source, entryId) {
+        return this.get(`/stories/${encodeURIComponent(source)}/${encodeURIComponent(entryId)}`);
+    },
+
+    /**
+     * Generate missing AI story chapters for an entry.
+     */
+    async generateStories(source, entryId, data = {}) {
+        return this.post(`/stories/${encodeURIComponent(source)}/${encodeURIComponent(entryId)}/generate`, data);
+    },
     
     /**
      * Check if PDF report exists for campaign

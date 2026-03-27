@@ -30,6 +30,7 @@ a = Analysis(
         'tkinter.messagebox',
         'ruamel.yaml',
         'ruamel.yaml.clib',
+        'openai',
     ],
     hookspath=[],
     hooksconfig={},
