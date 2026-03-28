@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from datetime import date
 from pathlib import Path
@@ -46,6 +47,16 @@ STORY_DATA_DIR = _resolve_story_data_dir()
 
 DEFAULT_MODEL = "gpt-5-mini"
 
+_LANGUAGE_LABELS = {
+    "en": "English",
+    "de": "German",
+    "fr": "French",
+    "es": "Spanish",
+    "pl": "Polish",
+    "ru": "Russian",
+    "zh": "Chinese (Simplified)",
+}
+
 
 def _load_json_file(path: Path, default: Any) -> Any:
     if not path.exists():
@@ -66,6 +77,35 @@ def _save_json_file(path: Path, payload: Any) -> None:
 
 def _normalize_text(value: Any) -> str:
     return str(value or "").strip()
+
+
+def _format_duration_for_story(duration_raw: Any) -> str:
+    """
+    Convert mission duration to hours/minutes only for narrative output.
+
+    Examples:
+      00:34:41 -> 34m
+      01:07:10 -> 1h 7m
+      00:08    -> 8m
+    """
+    text = _normalize_text(duration_raw)
+    if not text:
+        return ""
+    parts = text.split(":")
+    try:
+        if len(parts) >= 2:
+            if len(parts) == 2:
+                hours = 0
+                minutes = int(parts[0])
+            else:
+                hours = int(parts[0])
+                minutes = int(parts[1])
+            if hours > 0:
+                return f"{hours}h {minutes}m"
+            return f"{minutes}m"
+    except ValueError:
+        return text
+    return text
 
 
 def _normalize_squadron_name(name: str) -> str:
@@ -122,6 +162,7 @@ def save_story_chapter(
     mission_context: Dict[str, Any],
     story_text: str,
     title: str = "",
+    language_code: str = "en",
 ) -> Path:
     chapters = load_story_chapters(career_id)
     chapter_index = len(chapters) + 1
@@ -132,6 +173,7 @@ def save_story_chapter(
         "mission_id": _normalize_text(mission_context.get("mission_id")),
         "date": date_str,
         "title": title,
+        "language": _normalize_text(language_code) or "en",
         "story_text": story_text,
         "aircraft": mission_context.get("pilot", {}).get("aircraft", ""),
         "result": mission_context.get("mission", {}).get("result", ""),
@@ -220,6 +262,7 @@ def build_story_input(
     mission_id: str | int,
     mission_date: str,
     squadron: str,
+    pilot_last_name: str = "",
     rank: str = "",
     awards: Optional[Iterable[str]] = None,
     promotion: Optional[str] = None,
@@ -239,7 +282,7 @@ def build_story_input(
         "id": str(mission_id),
         "date": mission_date,
         "result": _normalize_text(summary.get("final_state")),
-        "duration": _normalize_text(summary.get("flight_duration")),
+        "duration": _format_duration_for_story(summary.get("flight_duration")),
         "aircraft_damage": summary.get("aircraft_damage", 0),
         "pilot_damage": summary.get("pilot_damage", 0),
         "air_kills": int(summary.get("air_kills_flying", summary.get("air_kills", 0)) or 0),
@@ -254,6 +297,7 @@ def build_story_input(
         "date": mission_date,
         "pilot": {
             "name": _normalize_text(player.get("name")),
+            "last_name": _normalize_text(pilot_last_name),
             "rank": _normalize_text(rank),
             "squadron": _normalize_text(squadron),
             "aircraft": _normalize_text(player.get("aircraft")),
@@ -282,16 +326,53 @@ def _get_client(api_key: Optional[str] = None) -> Any:
     return OpenAI(api_key=resolved_api_key, timeout=90.0)
 
 
+def _extract_json_object(text: str) -> Optional[Dict[str, Any]]:
+    """
+    Best-effort extraction of a JSON object from model output.
+    """
+    raw = _normalize_text(text)
+    if not raw:
+        return None
+
+    # Strip simple fenced-code wrappers if present.
+    raw = re.sub(r"^```(?:json)?\s*", "", raw, flags=re.IGNORECASE)
+    raw = re.sub(r"\s*```$", "", raw)
+
+    try:
+        payload = json.loads(raw)
+        return payload if isinstance(payload, dict) else None
+    except json.JSONDecodeError:
+        pass
+
+    # Fallback: extract first object-like block.
+    start = raw.find("{")
+    end = raw.rfind("}")
+    if start == -1 or end == -1 or end <= start:
+        return None
+    try:
+        payload = json.loads(raw[start:end + 1])
+        return payload if isinstance(payload, dict) else None
+    except json.JSONDecodeError:
+        return None
+
+
 def generate_mission_story(
     story_input: Dict[str, Any],
     *,
     model: str = DEFAULT_MODEL,
     api_key: Optional[str] = None,
-) -> str:
+    output_language: str = "en",
+) -> Dict[str, str]:
     client = _get_client(api_key=api_key)
+    language_label = _LANGUAGE_LABELS.get(_normalize_text(output_language).lower(), "English")
     prompt = (
         "Write the next chapter of a continuous wartime storybook.\n\n"
         "Rules:\n"
+        "- Use third-person past tense only.\n"
+        "- Do not switch narrator perspective.\n"
+        "- If pilot.rank and pilot.last_name are present, first mention must use 'rank + last name' (e.g., 'Leutnant Bleiholder').\n"
+        "- After first mention, use last name only.\n"
+        "- Do not use the pilot's first name unless explicitly required by the input facts.\n"
         "- Keep continuity with the previous narrative memory.\n"
         "- Use only the supplied facts.\n"
         "- Do not invent awards, promotions, injuries, victories, locations, or commanders.\n"
@@ -300,12 +381,31 @@ def generate_mission_story(
         "- If mission_progression.promotion is non-empty, explicitly mention the promotion in the chapter.\n"
         "- If mission_progression.awards contains one or more entries, explicitly mention those award(s) in the chapter.\n"
         "- Do not claim a promotion or award for this mission when mission_progression says none occurred.\n"
-        "- Write 250-500 words.\n\n"
+        "- If mission_progression has no promotion/awards, do not restate old awards unless clearly relevant to this mission.\n"
+        "- If mission duration is mentioned, use only hours and minutes (no seconds).\n"
+        f"- Write the entire chapter in {language_label}.\n"
+        "- Write exactly 3 paragraphs.\n"
+        "- Target 180-280 words.\n"
+        "- Create a short chapter title (4-8 words).\n"
+        "- Return valid JSON only with keys: title, story_text.\n\n"
         "Input JSON:\n"
         f"{json.dumps(story_input, ensure_ascii=False, indent=2)}"
     )
     response = client.responses.create(model=model, input=prompt)
-    return response.output_text.strip()
+    payload = _extract_json_object(response.output_text)
+    if payload:
+        title = _normalize_text(payload.get("title"))
+        story_text = _normalize_text(payload.get("story_text"))
+        if story_text:
+            return {
+                "title": title,
+                "story_text": story_text,
+            }
+    # Fallback: store raw text and empty title.
+    return {
+        "title": "",
+        "story_text": _normalize_text(response.output_text),
+    }
 
 
 def update_narrative_memory(
@@ -322,6 +422,7 @@ def update_narrative_memory(
         "- Keep it compact and factual.\n"
         "- Preserve continuity.\n"
         "- Do not invent facts.\n"
+        "- Return all string values in English.\n"
         "- Return valid JSON only.\n\n"
         "Return keys:\n"
         "- current_rank\n"
@@ -336,7 +437,7 @@ def update_narrative_memory(
         f"{story_text}"
     )
     response = client.responses.create(model=model, input=prompt)
-    payload = json.loads(response.output_text)
+    payload = _extract_json_object(response.output_text)
     if not isinstance(payload, dict):
         raise ValueError("Narrative memory response was not a JSON object")
     return payload
@@ -348,8 +449,16 @@ def generate_and_store_chapter(
     career_id: str | int,
     model: str = DEFAULT_MODEL,
     api_key: Optional[str] = None,
+    output_language: str = "en",
 ) -> Dict[str, Any]:
-    story_text = generate_mission_story(story_input, model=model, api_key=api_key)
+    story_payload = generate_mission_story(
+        story_input,
+        model=model,
+        api_key=api_key,
+        output_language=output_language,
+    )
+    story_title = _normalize_text(story_payload.get("title"))
+    story_text = _normalize_text(story_payload.get("story_text"))
     memory = update_narrative_memory(
         story_input,
         story_text,
@@ -357,8 +466,15 @@ def generate_and_store_chapter(
         api_key=api_key,
     )
     save_story_state(career_id, memory)
-    chapter_path = save_story_chapter(career_id, story_input, story_text)
+    chapter_path = save_story_chapter(
+        career_id,
+        story_input,
+        story_text,
+        title=story_title,
+        language_code=output_language,
+    )
     return {
+        "story_title": story_title,
         "story_text": story_text,
         "memory": memory,
         "chapter_path": str(chapter_path),

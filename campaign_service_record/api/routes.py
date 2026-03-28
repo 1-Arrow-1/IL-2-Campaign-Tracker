@@ -56,6 +56,7 @@ from llm_story_generator import (
     save_story_state,
 )
 from utils.locale_config import load_settings
+from utils.supported_locales import normalize_locale
 
 
 logger = logging.getLogger(__name__)
@@ -141,11 +142,13 @@ def _load_story_settings() -> dict:
         stories = {}
     api_key = str(stories.get("api_key") or os.environ.get("OPENAI_API_KEY") or "").strip()
     model = str(stories.get("model") or "gpt-5-mini").strip() or "gpt-5-mini"
+    locale = normalize_locale(str(settings.get("locale") or "en"))
     return {
         "enabled": bool(stories.get("enabled", False)),
         "configured": bool(api_key),
         "api_key": api_key,
         "model": model,
+        "story_language": locale,
         "auto_generate": bool(stories.get("auto_generate", False)),
     }
 
@@ -202,6 +205,7 @@ def _build_story_status_payload(source: str, entry_id: str) -> dict:
         "configured": settings["configured"],
         "auto_generate": settings["auto_generate"],
         "model": settings["model"],
+        "story_language": settings["story_language"],
         "status": status,
         "message": message,
         "chapters": chapters,
@@ -315,6 +319,7 @@ def _build_career_story_contexts(root_career_id: int) -> list[dict]:
             mission_id=result.mission_id,
             mission_date=mission_date_iso,
             squadron=squadron_name,
+            pilot_last_name=career.pilot_last_name or "",
             rank=rank,
             awards=awards,
             promotion=promotion,
@@ -1327,6 +1332,7 @@ def generate_stories(source: str, entry_id: str):
                 career_id=root_career_id,
                 model=settings["model"],
                 api_key=settings["api_key"],
+                output_language=settings["story_language"],
             )
             memory = result.get("memory") or memory
             save_story_state(root_career_id, memory)
