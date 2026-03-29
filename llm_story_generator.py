@@ -735,6 +735,43 @@ def _looks_like_report_style_story(text: str) -> bool:
     return False
 
 
+def _looks_truncated_story_text(text: str) -> bool:
+    value = _normalize_text(text)
+    if not value:
+        return True
+    if len(value.split()) < 40:
+        return True
+    tail = value[-1]
+    if tail in ".!?\"')":
+        return False
+    # Common clipped endings: unfinished word/sentence at hard cutoff.
+    return True
+
+
+def _create_story_response(
+    client: Any,
+    *,
+    provider: str,
+    model: str,
+    prompt: str,
+    max_output_tokens: int,
+) -> Any:
+    provider_key = _normalize_text(provider).lower()
+    kwargs: Dict[str, Any] = {
+        "model": model,
+        "input": prompt,
+        "max_output_tokens": max_output_tokens,
+    }
+    if provider_key == "openrouter":
+        # OpenRouter often expects max_tokens via provider-native payload.
+        kwargs["extra_body"] = {"max_tokens": max_output_tokens}
+    try:
+        return client.responses.create(**kwargs)
+    except TypeError:
+        # Fallback for providers that reject one of these params.
+        return client.responses.create(model=model, input=prompt)
+
+
 def generate_mission_story(
     story_input: Dict[str, Any],
     *,
@@ -744,7 +781,6 @@ def generate_mission_story(
     base_url: Optional[str] = None,
     output_language: str = "en",
 ) -> Dict[str, str]:
-    _ = provider  # reserved for provider-specific behavior/extensions
     client = _get_client(api_key=api_key, base_url=base_url)
     language_label = _LANGUAGE_LABELS.get(_normalize_text(output_language).lower(), "English")
     chapter_scope = story_input.get("chapter_scope", {}) if isinstance(story_input, dict) else {}
@@ -811,21 +847,20 @@ def generate_mission_story(
         "Input JSON:\n"
         f"{json.dumps(story_input, ensure_ascii=False, indent=2)}"
     )
-    try:
-        response = client.responses.create(
-            model=model,
-            input=prompt,
-            max_output_tokens=max_output_tokens,
-        )
-    except TypeError:
-        response = client.responses.create(model=model, input=prompt)
+    response = _create_story_response(
+        client,
+        provider=provider,
+        model=model,
+        prompt=prompt,
+        max_output_tokens=max_output_tokens,
+    )
 
     raw_text = _extract_response_text(response)
     payload = _extract_json_object(raw_text)
     if payload:
         title = _normalize_text(payload.get("title"))
         story_text = _normalize_text(payload.get("story_text"))
-        if story_text and not _looks_like_report_style_story(story_text):
+        if story_text and not _looks_like_report_style_story(story_text) and not _looks_truncated_story_text(story_text):
             story_text = _enforce_squadron_event_presence(story_input, story_text, output_language)
             return {
                 "title": title,
@@ -833,7 +868,7 @@ def generate_mission_story(
             }
 
     fallback_text = _normalize_text(raw_text)
-    if _looks_like_invalid_story_text(fallback_text) or _looks_like_report_style_story(fallback_text):
+    if _looks_like_invalid_story_text(fallback_text) or _looks_like_report_style_story(fallback_text) or _looks_truncated_story_text(fallback_text):
         # One retry with plain-text fallback prompt (no JSON contract),
         # then wrap into the expected payload shape.
         retry_prompt = (
@@ -844,9 +879,15 @@ def generate_mission_story(
             "Input JSON:\n"
             f"{json.dumps(story_input, ensure_ascii=False, indent=2)}"
         )
-        retry_response = client.responses.create(model=model, input=retry_prompt)
+        retry_response = _create_story_response(
+            client,
+            provider=provider,
+            model=model,
+            prompt=retry_prompt,
+            max_output_tokens=max_output_tokens,
+        )
         fallback_text = _normalize_text(_extract_response_text(retry_response))
-        if _looks_like_invalid_story_text(fallback_text) or _looks_like_report_style_story(fallback_text):
+        if _looks_like_invalid_story_text(fallback_text) or _looks_like_report_style_story(fallback_text) or _looks_truncated_story_text(fallback_text):
             raise ValueError("Story model returned empty content.")
     return {
         "title": "",
@@ -890,6 +931,94 @@ def update_narrative_memory(
     if not isinstance(payload, dict):
         raise ValueError("Narrative memory response was not a JSON object")
     return payload
+
+
+def _append_unique_limited(values: list[str], item: str, *, limit: int) -> list[str]:
+    text = _normalize_text(item)
+    if not text:
+        return values
+    deduped = [v for v in values if _normalize_text(v)]
+    if text in deduped:
+        deduped = [v for v in deduped if v != text]
+    deduped.append(text)
+    if len(deduped) > limit:
+        deduped = deduped[-limit:]
+    return deduped
+
+
+def update_narrative_memory_local(
+    story_input: Dict[str, Any],
+    previous_memory: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    previous = previous_memory if isinstance(previous_memory, dict) else {}
+    memory: Dict[str, Any] = {
+        "current_rank": _normalize_text(previous.get("current_rank")),
+        "current_squadron": _normalize_text(previous.get("current_squadron")),
+        "arc_summary": _normalize_text(previous.get("arc_summary")),
+        "key_milestones": list(previous.get("key_milestones") or []),
+        "recurring_themes": list(previous.get("recurring_themes") or []),
+        "recent_events": list(previous.get("recent_events") or []),
+    }
+
+    pilot = story_input.get("pilot", {}) if isinstance(story_input, dict) else {}
+    mission = story_input.get("mission", {}) if isinstance(story_input, dict) else {}
+    campaign_context = story_input.get("campaign_context", {}) if isinstance(story_input, dict) else {}
+    mission_progression = story_input.get("mission_progression", {}) if isinstance(story_input, dict) else {}
+
+    rank = _normalize_text(mission_progression.get("promotion")) or _normalize_text(pilot.get("rank"))
+    if rank:
+        memory["current_rank"] = rank
+
+    squadron = _normalize_text(pilot.get("squadron")) or _normalize_text(campaign_context.get("campaign_name"))
+    if squadron:
+        memory["current_squadron"] = squadron
+
+    mission_date = _normalize_text(story_input.get("date"))
+    result = _normalize_text(mission.get("result")) or "Unknown"
+    air_kills = int(mission.get("air_kills", 0) or 0)
+    ground_kills = int(mission.get("ground_kills", 0) or 0)
+    naval_kills = int(mission.get("naval_kills", 0) or 0)
+    event_line = f"{mission_date}: {result}; air {air_kills}, ground {ground_kills}, naval {naval_kills}"
+    memory["recent_events"] = _append_unique_limited(memory["recent_events"], event_line, limit=10)
+
+    promotion = _normalize_text(mission_progression.get("promotion"))
+    if promotion:
+        milestone = f"{mission_date}: promoted to {promotion}"
+        memory["key_milestones"] = _append_unique_limited(memory["key_milestones"], milestone, limit=20)
+        memory["recurring_themes"] = _append_unique_limited(memory["recurring_themes"], "career advancement", limit=8)
+
+    awards = mission_progression.get("awards", [])
+    if isinstance(awards, list):
+        for award in awards:
+            award_name = _normalize_text(award)
+            if not award_name:
+                continue
+            milestone = f"{mission_date}: received {award_name}"
+            memory["key_milestones"] = _append_unique_limited(memory["key_milestones"], milestone, limit=20)
+        if awards:
+            memory["recurring_themes"] = _append_unique_limited(memory["recurring_themes"], "recognized service", limit=8)
+
+    result_theme_map = {
+        "landed": "mission survival",
+        "bailout": "survival under pressure",
+        "kia": "high attrition",
+        "mia": "combat uncertainty",
+        "wia": "combat injuries",
+    }
+    lower_result = result.lower()
+    for marker, theme in result_theme_map.items():
+        if marker in lower_result:
+            memory["recurring_themes"] = _append_unique_limited(memory["recurring_themes"], theme, limit=8)
+            break
+
+    arc_bits: list[str] = []
+    if memory.get("current_rank"):
+        arc_bits.append(f"Rank: {memory['current_rank']}")
+    if memory.get("current_squadron"):
+        arc_bits.append(f"Unit: {memory['current_squadron']}")
+    arc_bits.append(f"Latest mission ({mission_date}): {result}")
+    memory["arc_summary"] = "; ".join(bit for bit in arc_bits if bit)[:280]
+    return memory
 
 
 def generate_and_store_chapter(
@@ -963,23 +1092,18 @@ def generate_and_store_chapter_for(
     story_title = _normalize_text(story_payload.get("title"))
     story_text = _normalize_text(story_payload.get("story_text"))
     fallback_memory = story_input.get("narrative_memory", {}) if isinstance(story_input, dict) else {}
-    normalized_source = _normalize_text(source).lower()
-    if normalized_source == "campaign":
-        # Keep campaign generation fast: skip a second LLM call for memory updates.
+    try:
+        memory = update_narrative_memory(
+            story_input,
+            story_text,
+            model=model,
+            api_key=api_key,
+            provider=provider,
+            base_url=base_url,
+        )
+    except Exception as exc:
+        LOGGER.warning("Narrative memory update failed; keeping previous memory: %s", exc)
         memory = fallback_memory if isinstance(fallback_memory, dict) else {}
-    else:
-        try:
-            memory = update_narrative_memory(
-                story_input,
-                story_text,
-                model=model,
-                api_key=api_key,
-                provider=provider,
-                base_url=base_url,
-            )
-        except Exception as exc:
-            LOGGER.warning("Narrative memory update failed; keeping previous memory: %s", exc)
-            memory = fallback_memory if isinstance(fallback_memory, dict) else {}
     save_story_state_for(source, entry_id, memory)
     chapter_path = save_story_chapter_for(
         source,

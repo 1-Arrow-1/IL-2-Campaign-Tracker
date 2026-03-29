@@ -325,6 +325,22 @@ def _build_story_status_payload(source: str, entry_id: str) -> dict:
     chapters = load_story_chapters_for(source, entry_id) if source in {"career", "campaign"} else []
     if chapters:
         chapters = [chapter for chapter in chapters if _is_valid_story_text(chapter.get("story_text"))]
+        def _chapter_sort_key(chapter: dict) -> tuple:
+            date_value = _parse_story_date(_normalize_story_text(chapter.get("date")))
+            if not date_value:
+                mission_id = _normalize_story_text(chapter.get("mission_id"))
+                if mission_id.startswith("day:"):
+                    date_value = _parse_story_date(_normalize_story_text(mission_id.split(":", 1)[1]))
+            mission_id = _normalize_story_text(chapter.get("mission_id"))
+            try:
+                chapter_idx = int(chapter.get("chapter_index") or 0)
+            except (TypeError, ValueError):
+                chapter_idx = 0
+            return (date_value or "9999-12-31", mission_id, chapter_idx)
+
+        chapters = sorted(chapters, key=_chapter_sort_key)
+        for idx, chapter in enumerate(chapters, start=1):
+            chapter["chapter_index"] = idx
     if source not in {"career", "campaign"}:
         return {
             "supported": False,
@@ -641,8 +657,6 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
         [_normalize_story_text(mid) for mid in completed_missions if _normalize_story_text(mid)],
         key=smart_mission_sort_key,
     )
-    if not completed_missions:
-        return []
 
     mission_dates = _data_loader.get_mission_dates_for_campaign(campaign_name)
     mission_dates_map = mission_dates.get("missions", {}) if isinstance(mission_dates, dict) else {}
@@ -660,6 +674,41 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
         for item in mission_boxes
         if _normalize_story_text(item.get("mission_id"))
     }
+    mission_box_order = [
+        _normalize_story_text(item.get("mission_id"))
+        for item in mission_boxes
+        if _normalize_story_text(item.get("mission_id"))
+    ]
+
+    # Primary ordering source for campaign stories should be the visible debrief order.
+    # This avoids skips when completion_state is sparse/out-of-sync.
+    ordered_mission_ids: list[str] = []
+    seen_mission_ids: set[str] = set()
+    for mid in mission_box_order + completed_missions:
+        key = _normalize_story_text(mid)
+        if not key:
+            continue
+        lower = key.lower()
+        if lower in seen_mission_ids:
+            continue
+        seen_mission_ids.add(lower)
+        ordered_mission_ids.append(key)
+    if not ordered_mission_ids:
+        return []
+
+    # Normalize mission processing order to chronological sequence.
+    # This guarantees "Generate Missing Stories" advances by earliest date first.
+    ordered_mission_ids = sorted(
+        ordered_mission_ids,
+        key=lambda mid: (
+            _normalize_story_text(
+                (mission_dates_map.get(mid, {}) if isinstance(mission_dates_map, dict) else {}).get("normalized_date")
+            )
+            or _normalize_story_text((mission_box_by_id.get(mid.lower(), {}) or {}).get("parsed_date"))
+            or "9999-12-31",
+            smart_mission_sort_key(mid),
+        ),
+    )
 
     cumulative_awards: list[str] = []
     current_rank = ""
@@ -676,7 +725,7 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
                 cumulative_awards.append(award)
 
     contexts: list[dict] = []
-    for index, mission_id in enumerate(completed_missions, start=1):
+    for index, mission_id in enumerate(ordered_mission_ids, start=1):
         mid = _normalize_story_text(mission_id)
         mission_meta = mission_dates_map.get(mid, {}) if isinstance(mission_dates_map, dict) else {}
         mission_box = mission_box_by_id.get(mid.lower(), {})
@@ -2151,6 +2200,62 @@ def get_stories(source: str, entry_id: str):
     """Return story status and cached chapters for a service-record entry."""
     _last_ping[0] = time.time()
     return jsonify(_build_story_status_payload(str(source or "").lower(), entry_id))
+
+
+@api_bp.route('/api/stories/<source>/<entry_id>/context_preview')
+def get_story_context_preview(source: str, entry_id: str):
+    """Return ordered story-generation contexts without calling the LLM."""
+    _last_ping[0] = time.time()
+    source = str(source or "").strip().lower()
+
+    if source not in {'career', 'campaign'}:
+        return jsonify({'error': 'AI stories are not supported for this data source.'}), 400
+
+    try:
+        if source == "career":
+            try:
+                root_career_id = int(entry_id)
+            except (TypeError, ValueError):
+                return jsonify({'error': 'Invalid career id.'}), 400
+            contexts = _build_career_story_contexts(root_career_id)
+        else:
+            settings = _load_story_settings()
+            contexts = _build_campaign_story_contexts(entry_id, settings["story_language"])
+
+        preview_rows: list[dict] = []
+        for index, context in enumerate(contexts, start=1):
+            mission = context.get("mission", {}) if isinstance(context, dict) else {}
+            pilot = context.get("pilot", {}) if isinstance(context, dict) else {}
+            chapter_scope = context.get("chapter_scope", {}) if isinstance(context, dict) else {}
+            scope = (
+                _normalize_story_text(chapter_scope.get("scope")).lower()
+                if isinstance(chapter_scope, dict)
+                else ""
+            ) or "mission"
+            preview_rows.append({
+                "index": index,
+                "mission_id": _normalize_story_text(context.get("mission_id")),
+                "date": _normalize_story_text(context.get("date")),
+                "scope": scope,
+                "missions_in_chapter": int(chapter_scope.get("missions_in_chapter", 1) or 1)
+                if isinstance(chapter_scope, dict)
+                else 1,
+                "mission_ids": list(chapter_scope.get("mission_ids", []))
+                if isinstance(chapter_scope, dict) and isinstance(chapter_scope.get("mission_ids"), list)
+                else [],
+                "aircraft": _normalize_story_text(pilot.get("aircraft")),
+                "result": _normalize_story_text(mission.get("result")),
+            })
+
+        return jsonify({
+            "source": source,
+            "entry_id": entry_id,
+            "count": len(preview_rows),
+            "contexts": preview_rows,
+        })
+    except Exception as exc:
+        logger.error("Story context preview failed for %s/%s: %s", source, entry_id, exc, exc_info=True)
+        return jsonify({'error': f'Story context preview failed: {_normalize_story_text(exc)}'}), 500
 
 
 @api_bp.route('/api/stories/<source>/<entry_id>/generate', methods=['POST'])
