@@ -380,6 +380,23 @@ class CareerDatabase:
         )
         return cursor.fetchone()
 
+    def get_sorties_for_mission_pilots(self, mission_id: int, pilot_ids: List[int]) -> List[sqlite3.Row]:
+        """
+        Return sortie rows for one mission filtered to a list of pilot IDs.
+
+        This is used for squadron-context extraction (WIA/MIA/KIA) on the
+        mission date. Returns an empty list when no pilot IDs are supplied.
+        """
+        if not pilot_ids:
+            return []
+        conn = self._connect()
+        id_ph = ",".join("?" * len(pilot_ids))
+        cursor = conn.execute(
+            f"SELECT * FROM sortie WHERE missionId = ? AND pilotId IN ({id_ph}) AND isDeleted = 0",
+            [mission_id, *pilot_ids],
+        )
+        return cursor.fetchall()
+
     def get_injured_sortie_before(
         self,
         pilot_ids,

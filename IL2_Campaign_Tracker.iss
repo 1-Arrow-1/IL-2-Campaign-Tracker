@@ -795,7 +795,7 @@ end;
 //       %LOCALAPPDATA%\.il2_campaign_service_record\
 //         - pilot_photos\
 //         - campaign_personal_data.json
-//         - story_data\careers\ (AI story chapters)
+//         - story_data\careers\ and story_data\campaigns\ (AI story chapters)
 //  ----------------------------
 
 procedure DeleteUserSaveCampaignFiles(const IL2Root: string);
@@ -859,7 +859,8 @@ begin
     { Delete entire directory including:
       - pilot_photos/
       - campaign_personal_data.json
-      - story_data/careers/ }
+      - story_data/careers/
+      - story_data/campaigns/ }
     DelTree(ServiceRecordDir, True, True, True);
   end;
 end;

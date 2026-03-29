@@ -5,6 +5,7 @@ The main application window with tabbed interface.
 """
 
 import os
+import json
 import queue
 import re
 import sqlite3
@@ -14,6 +15,8 @@ import threading
 import tkinter as tk
 import time
 import logging
+import urllib.request
+import urllib.error
 from datetime import datetime
 from pathlib import Path
 from tkinter import filedialog, ttk, messagebox
@@ -221,6 +224,77 @@ class SettingsManagerApp(tk.Tk):
     """Main Settings Manager Application."""
 
     COUNTRY_OPTIONS = ["Germany", "Soviet Union", "Britain", "USA"]
+    STORY_PROVIDER_OPTIONS = ["openai", "openrouter", "anthropic", "google", "microsoft", "custom"]
+    STORY_PROVIDER_DEFAULT_BASE_URLS = {
+        "openai": "https://api.openai.com/v1",
+        "openrouter": "https://openrouter.ai/api/v1",
+        "anthropic": "https://api.anthropic.com/v1",
+        "google": "https://generativelanguage.googleapis.com/v1beta/openai",
+        "microsoft": "https://YOUR-RESOURCE-NAME.openai.azure.com/openai/v1",
+        "custom": "",
+    }
+    STORY_PROVIDER_MODEL_HINTS = {
+        "openai": "Example: gpt-5-mini or gpt-5",
+        "openrouter": "Example: x-ai/grok-4.1-fast or google/gemini-2.0-flash-001",
+        "anthropic": "Example: claude-sonnet-4-5",
+        "google": "Example: gemini-2.0-flash-001",
+        "microsoft": "Use your Azure deployment model/deployment name.",
+        "custom": "Enter the exact model ID required by your custom endpoint.",
+    }
+    STORY_PROVIDER_MODELS = {
+        "openai": [
+            "gpt-5-mini",
+            "gpt-5",
+            "gpt-5.4",
+            "gpt-5.4-mini",
+            "gpt-5.2",
+        ],
+        "openrouter": [
+            "openai/gpt-5-mini",
+            "openai/gpt-5",
+            "x-ai/grok-4.1-fast",
+            "x-ai/grok-4.20-beta",
+            "google/gemini-2.0-flash-001",
+            "anthropic/claude-sonnet-4.5",
+            "anthropic/claude-3.5-sonnet",
+            "meta-llama/llama-3.1-70b-instruct",
+            "mistralai/mistral-large",
+        ],
+        "anthropic": [
+            "claude-sonnet-4.6",
+            "claude-sonnet-4.5",
+            "claude-3.7-sonnet",
+            "claude-3.5-sonnet",
+            "claude-3.5-haiku",
+        ],
+        "google": [
+            "gemini-2.0-flash-001",
+            "gemini-2.0-flash-lite-001",
+            "gemini-1.5-pro",
+            "gemini-1.5-flash",
+        ],
+        "microsoft": [
+            "gpt-5-mini",
+            "gpt-5",
+            "gpt-4o",
+            "gpt-4.1",
+            "YOUR_AZURE_DEPLOYMENT_NAME",
+        ],
+        "custom": [],
+    }
+    STORY_PROVIDER_RECOMMENDED_MODELS = {
+        "openai": ["gpt-5-mini", "gpt-5", "gpt-4.1"],
+        "openrouter": [
+            "x-ai/grok-4.1-fast",
+            "google/gemini-2.0-flash-001",
+            "openai/gpt-5-mini",
+            "anthropic/claude-sonnet-4.5",
+        ],
+        "anthropic": ["claude-sonnet-4.5", "claude-3.5-sonnet", "claude-3.5-haiku"],
+        "google": ["gemini-2.0-flash-001", "gemini-2.0-flash-lite-001", "gemini-1.5-pro"],
+        "microsoft": ["gpt-5-mini", "gpt-5", "gpt-4.1"],
+        "custom": [],
+    }
 
     # Detail page language options: stored value -> i18n key
     # None means "Default" (follow global language)
@@ -250,8 +324,8 @@ class SettingsManagerApp(tk.Tk):
         
         # Configure window
         self.title(self.tr.t("app_title"))
-        self.geometry("750x550")
-        self.minsize(650, 450)
+        self.geometry("780x760")
+        self.minsize(700, 620)
         
         # Data storage
         self.settings_data: Dict[str, Any] = {}
@@ -287,6 +361,14 @@ class SettingsManagerApp(tk.Tk):
         self._story_test_thread: Optional[threading.Thread] = None
         self._story_test_queue: "queue.Queue[Dict[str, Any]]" = queue.Queue()
         self._story_test_poll_id: Optional[str] = None
+        self._story_models_refresh_thread: Optional[threading.Thread] = None
+        self._story_models_refresh_queue: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+        self._story_models_refresh_poll_id: Optional[str] = None
+        self._story_provider_models_runtime: Dict[str, List[str]] = {
+            key: list(values) for key, values in self.STORY_PROVIDER_MODELS.items()
+        }
+        self._story_provider_api_keys: Dict[str, str] = {}
+        self._story_last_provider: str = "openai"
 
         # German awards tab state
         self._german_awards_var: Optional[tk.StringVar] = None
@@ -490,20 +572,66 @@ class SettingsManagerApp(tk.Tk):
         self.ai_stories_combo.grid(row=row, column=1, sticky=tk.W, pady=10, padx=(10, 0))
         self.ai_stories_var.set('True' if story_settings.get('enabled', False) else 'False')
 
-        # OpenAI API key
+        # Story provider
         row += 1
-        ttk.Label(frame, text=self.tr.t("lbl_openai_api_key")).grid(
+        ttk.Label(frame, text=self.tr.t("lbl_story_provider")).grid(
             row=row, column=0, sticky=tk.W, pady=10
         )
+        provider_value = str(story_settings.get('provider', 'openai') or 'openai').strip().lower()
+        if provider_value not in self.STORY_PROVIDER_OPTIONS:
+            provider_value = 'openai'
+        provider_api_keys = story_settings.get('api_keys', {})
+        api_keys_map: Dict[str, str] = {}
+        if isinstance(provider_api_keys, dict):
+            for key, value in provider_api_keys.items():
+                normalized_key = str(key or '').strip().lower()
+                if normalized_key in self.STORY_PROVIDER_OPTIONS:
+                    api_keys_map[normalized_key] = str(value or '').strip()
+        legacy_key = str(story_settings.get('api_key', '') or '').strip()
+        if legacy_key and not api_keys_map.get(provider_value):
+            api_keys_map[provider_value] = legacy_key
+        self._story_provider_api_keys = api_keys_map
+        self._story_last_provider = provider_value
+        self.story_provider_var = tk.StringVar(value=provider_value)
+        self.story_provider_combo = ttk.Combobox(
+            frame,
+            textvariable=self.story_provider_var,
+            values=self.STORY_PROVIDER_OPTIONS,
+            state='readonly',
+            width=30
+        )
+        self.story_provider_combo.grid(row=row, column=1, sticky=tk.W, pady=10, padx=(10, 0))
+        self.story_provider_combo.bind("<<ComboboxSelected>>", self._on_story_provider_changed)
 
-        self.openai_api_key_var = tk.StringVar(value=story_settings.get('api_key', ''))
+        # Story API key
+        row += 1
+        ttk.Label(frame, text=self.tr.t("lbl_story_api_key")).grid(
+            row=row, column=0, sticky=tk.W, pady=10
+        )
+        self.story_api_key_var = tk.StringVar(value=self._story_provider_api_keys.get(provider_value, ''))
         self.openai_api_key_entry = ttk.Entry(
             frame,
-            textvariable=self.openai_api_key_var,
+            textvariable=self.story_api_key_var,
             show='*',
             width=33
         )
         self.openai_api_key_entry.grid(row=row, column=1, sticky=tk.W, pady=10, padx=(10, 0))
+
+        # Story base URL
+        row += 1
+        ttk.Label(frame, text=self.tr.t("lbl_story_base_url")).grid(
+            row=row, column=0, sticky=tk.W, pady=10
+        )
+        base_url_value = str(story_settings.get('base_url', '') or '').strip()
+        if not base_url_value:
+            base_url_value = self.STORY_PROVIDER_DEFAULT_BASE_URLS.get(provider_value, '')
+        self.story_base_url_var = tk.StringVar(value=base_url_value)
+        self.story_base_url_entry = ttk.Entry(
+            frame,
+            textvariable=self.story_base_url_var,
+            width=33
+        )
+        self.story_base_url_entry.grid(row=row, column=1, sticky=tk.W, pady=10, padx=(10, 0))
 
         # Story model
         row += 1
@@ -515,12 +643,24 @@ class SettingsManagerApp(tk.Tk):
         self.story_model_combo = ttk.Combobox(
             frame,
             textvariable=self.story_model_var,
-            values=['gpt-5-mini', 'gpt-5'],
-            state='readonly',
+            values=[],
+            state='normal',
             width=30
         )
         self.story_model_combo.grid(row=row, column=1, sticky=tk.W, pady=10, padx=(10, 0))
         self.story_model_var.set(story_settings.get('model', 'gpt-5-mini'))
+        self._update_story_model_options(keep_current=True)
+        row += 1
+        self.story_model_hint_var = tk.StringVar(value="")
+        self.story_model_hint_label = ttk.Label(
+            frame,
+            textvariable=self.story_model_hint_var,
+            foreground='gray',
+            wraplength=380,
+            justify=tk.LEFT,
+        )
+        self.story_model_hint_label.grid(row=row, column=1, sticky=tk.W, pady=(2, 0), padx=(10, 0))
+        self._update_story_model_hint()
 
         # Auto-generate stories
         row += 1
@@ -547,6 +687,12 @@ class SettingsManagerApp(tk.Tk):
             command=self._on_test_story_connection,
         )
         self.story_test_button.grid(row=row, column=1, sticky=tk.W, pady=(10, 0), padx=(10, 0))
+        self.story_refresh_models_button = ttk.Button(
+            frame,
+            text=self.tr.t("btn_refresh_models"),
+            command=self._on_refresh_story_models,
+        )
+        self.story_refresh_models_button.grid(row=row, column=1, sticky=tk.W, pady=(10, 0), padx=(140, 0))
 
         row += 1
         self.story_status_var = tk.StringVar(value="")
@@ -1990,9 +2136,30 @@ class SettingsManagerApp(tk.Tk):
             if not isinstance(story_settings, dict):
                 story_settings = {}
             self.ai_stories_var.set('True' if story_settings.get('enabled', False) else 'False')
-            self.openai_api_key_var.set(story_settings.get('api_key', ''))
+            provider_value = str(story_settings.get('provider', 'openai') or 'openai').strip().lower()
+            if provider_value not in self.STORY_PROVIDER_OPTIONS:
+                provider_value = 'openai'
+            provider_api_keys = story_settings.get('api_keys', {})
+            api_keys_map: Dict[str, str] = {}
+            if isinstance(provider_api_keys, dict):
+                for key, value in provider_api_keys.items():
+                    normalized_key = str(key or '').strip().lower()
+                    if normalized_key in self.STORY_PROVIDER_OPTIONS:
+                        api_keys_map[normalized_key] = str(value or '').strip()
+            legacy_key = str(story_settings.get('api_key', '') or '').strip()
+            if legacy_key and not api_keys_map.get(provider_value):
+                api_keys_map[provider_value] = legacy_key
+            self._story_provider_api_keys = api_keys_map
+            self._story_last_provider = provider_value
+            self.story_provider_var.set(provider_value)
+            self.story_api_key_var.set(self._story_provider_api_keys.get(provider_value, ''))
+            self.story_base_url_var.set(
+                str(story_settings.get('base_url') or self._story_default_base_url(provider_value))
+            )
             self.story_model_var.set(story_settings.get('model', 'gpt-5-mini'))
+            self._update_story_model_options(keep_current=True)
             self.story_auto_generate_var.set('True' if story_settings.get('auto_generate', False) else 'False')
+            self._update_story_model_hint()
             self.story_status_var.set("")
     
     def _collect_changes(self) -> None:
@@ -2013,8 +2180,23 @@ class SettingsManagerApp(tk.Tk):
         stories = self.settings_data.get('stories', {})
         if not isinstance(stories, dict):
             stories = {}
+        provider_value = self.story_provider_var.get().strip().lower() or 'openai'
+        if provider_value not in self.STORY_PROVIDER_OPTIONS:
+            provider_value = 'openai'
+        if hasattr(self, 'story_api_key_var'):
+            current_key = self.story_api_key_var.get().strip()
+            if current_key:
+                self._story_provider_api_keys[provider_value] = current_key
+            elif provider_value in self._story_provider_api_keys:
+                self._story_provider_api_keys[provider_value] = ""
         stories['enabled'] = self.ai_stories_var.get() == 'True'
-        stories['api_key'] = self.openai_api_key_var.get().strip()
+        stories['provider'] = provider_value
+        stories['api_key'] = self._story_provider_api_keys.get(provider_value, '')
+        stories['api_keys'] = {
+            key: value for key, value in self._story_provider_api_keys.items()
+            if key in self.STORY_PROVIDER_OPTIONS and str(value or '').strip()
+        }
+        stories['base_url'] = self.story_base_url_var.get().strip() or self._story_default_base_url(provider_value)
         stories['model'] = self.story_model_var.get().strip() or 'gpt-5-mini'
         stories['auto_generate'] = self.story_auto_generate_var.get() == 'True'
         self.settings_data['stories'] = stories
@@ -2023,6 +2205,330 @@ class SettingsManagerApp(tk.Tk):
         state = tk.DISABLED if running else tk.NORMAL
         if hasattr(self, 'story_test_button') and self.story_test_button:
             self.story_test_button.configure(state=state)
+        if hasattr(self, 'story_refresh_models_button') and self.story_refresh_models_button:
+            self.story_refresh_models_button.configure(state=state)
+
+    def _story_default_base_url(self, provider: str) -> str:
+        key = str(provider or "").strip().lower()
+        return self.STORY_PROVIDER_DEFAULT_BASE_URLS.get(key, "")
+
+    def _on_story_provider_changed(self, _event=None) -> None:
+        provider = self.story_provider_var.get().strip().lower()
+        if provider not in self.STORY_PROVIDER_OPTIONS:
+            provider = 'openai'
+            self.story_provider_var.set(provider)
+
+        previous_provider = self._story_last_provider if self._story_last_provider in self.STORY_PROVIDER_OPTIONS else None
+        if previous_provider and hasattr(self, 'story_api_key_var'):
+            self._story_provider_api_keys[previous_provider] = self.story_api_key_var.get().strip()
+        if hasattr(self, 'story_api_key_var'):
+            self.story_api_key_var.set(self._story_provider_api_keys.get(provider, ''))
+        self._story_last_provider = provider
+
+        current = self.story_base_url_var.get().strip()
+        default_current = self._story_default_base_url(provider)
+        if not current or current in self.STORY_PROVIDER_DEFAULT_BASE_URLS.values():
+            self.story_base_url_var.set(default_current)
+        self._update_story_model_options(keep_current=True)
+        self._update_story_model_hint()
+
+    def _update_story_model_hint(self) -> None:
+        provider = self.story_provider_var.get().strip().lower() if hasattr(self, 'story_provider_var') else 'openai'
+        hint = self.STORY_PROVIDER_MODEL_HINTS.get(provider, "")
+        if hasattr(self, 'story_model_hint_var'):
+            self.story_model_hint_var.set(hint)
+
+    def _update_story_model_options(self, keep_current: bool = True) -> None:
+        if not hasattr(self, 'story_model_combo') or not self.story_model_combo:
+            return
+        provider = self.story_provider_var.get().strip().lower() if hasattr(self, 'story_provider_var') else 'openai'
+        provider_models = list(self._story_provider_models_runtime.get(provider, self.STORY_PROVIDER_MODELS.get(provider, [])))
+        current = self.story_model_var.get().strip() if hasattr(self, 'story_model_var') else ""
+        if keep_current and current and current not in provider_models:
+            provider_models.append(current)
+        ordered_models = self._order_story_models_for_ui(provider, provider_models)
+        self.story_model_combo.configure(values=ordered_models)
+
+    def _order_story_models_for_ui(self, provider: str, models: List[str]) -> List[str]:
+        provider_key = str(provider or "").strip().lower()
+        recommended = [
+            str(m).strip() for m in self.STORY_PROVIDER_RECOMMENDED_MODELS.get(provider_key, [])
+            if str(m).strip()
+        ]
+        all_models = [str(m).strip() for m in models if str(m).strip()]
+        unique_all = sorted(set(all_models), key=lambda x: x.lower())
+
+        ordered: List[str] = []
+        seen: set[str] = set()
+        for model_id in recommended:
+            if model_id in unique_all and model_id not in seen:
+                ordered.append(model_id)
+                seen.add(model_id)
+        for model_id in unique_all:
+            if model_id not in seen:
+                ordered.append(model_id)
+                seen.add(model_id)
+        return ordered
+
+    @staticmethod
+    def _validate_story_model_text(model: str, provider: str) -> Optional[str]:
+        model_value = str(model or "").strip()
+        provider_value = str(provider or "").strip().lower()
+        if not model_value:
+            return "Model is required."
+        if " " in model_value:
+            return "Model must not contain spaces."
+        if len(model_value) > 140:
+            return "Model value is too long."
+        if provider_value == "openrouter":
+            if "/" not in model_value:
+                return "OpenRouter model should use vendor/model format (for example: x-ai/grok-4.1-fast)."
+        return None
+
+    def _validate_story_settings_for_save(self) -> list[str]:
+        errors: list[str] = []
+        if not isinstance(self.settings_data, dict):
+            return errors
+
+        stories = self.settings_data.get("stories", {})
+        if not isinstance(stories, dict):
+            errors.append("stories must be an object.")
+            return errors
+
+        enabled = bool(stories.get("enabled", False))
+        provider = str(stories.get("provider") or "openai").strip().lower() or "openai"
+        model = str(stories.get("model") or "").strip()
+        api_key = str(stories.get("api_key") or "").strip()
+        base_url = str(stories.get("base_url") or "").strip()
+
+        if provider not in self.STORY_PROVIDER_OPTIONS:
+            errors.append(f"Invalid story provider: {provider}.")
+
+        model_error = self._validate_story_model_text(model, provider)
+        if model_error:
+            errors.append(model_error)
+
+        if enabled:
+            if not api_key:
+                errors.append("Story API key is required when AI stories are enabled.")
+            if not base_url:
+                errors.append("Story API Base URL is required when AI stories are enabled.")
+            elif not (base_url.startswith("http://") or base_url.startswith("https://")):
+                errors.append("Story API Base URL must start with http:// or https://.")
+
+            if provider == "microsoft" and "YOUR-RESOURCE-NAME" in base_url:
+                errors.append("Microsoft provider requires a real Azure base URL (replace YOUR-RESOURCE-NAME).")
+
+        return errors
+
+    def _fetch_provider_models(self, provider: str, api_key: str, base_url: str) -> List[str]:
+        provider_value = provider.strip().lower()
+        if provider_value not in {"openai", "openrouter", "anthropic", "google", "microsoft"}:
+            raise ValueError("Model refresh is not supported for this provider.")
+
+        def _http_json_get(url: str, headers: Dict[str, str]) -> Any:
+            req = urllib.request.Request(url, headers=headers, method="GET")
+            try:
+                with urllib.request.urlopen(req, timeout=20) as resp:
+                    raw = resp.read().decode("utf-8", errors="replace")
+            except urllib.error.HTTPError as exc:
+                detail = exc.read().decode("utf-8", errors="replace")
+                raise RuntimeError(f"HTTP {exc.code}: {detail[:240]}") from exc
+            except urllib.error.URLError as exc:
+                raise RuntimeError(f"Network error: {exc}") from exc
+
+            try:
+                return json.loads(raw)
+            except json.JSONDecodeError as exc:
+                raise RuntimeError("Provider returned invalid JSON.") from exc
+
+        def _extract_model_ids(payload: Any) -> List[str]:
+            if isinstance(payload, dict):
+                items = payload.get("data")
+                if not isinstance(items, list):
+                    items = payload.get("models")
+                if not isinstance(items, list):
+                    items = payload.get("value")
+            else:
+                items = payload
+
+            if not isinstance(items, list):
+                return []
+
+            models: List[str] = []
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                model_id = str(item.get("id") or "").strip()
+                if not model_id:
+                    model_id = str(item.get("name") or "").strip()
+                if model_id.startswith("models/"):
+                    model_id = model_id.split("/", 1)[1].strip()
+                if model_id:
+                    models.append(model_id)
+            return sorted(set(models), key=lambda x: x.lower())
+
+        base = base_url.rstrip("/")
+
+        if provider_value in {"openai", "openrouter"}:
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Accept": "application/json",
+            }
+            if provider_value == "openrouter":
+                headers["HTTP-Referer"] = "https://il2-campaign-tracker.local"
+                headers["X-Title"] = "IL-2 Campaign Tracker"
+            payload = _http_json_get(f"{base}/models", headers=headers)
+            models = _extract_model_ids(payload)
+            if not models:
+                raise RuntimeError("Provider /models response has no model list.")
+            return models
+
+        if provider_value == "anthropic":
+            headers = {
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+                "Accept": "application/json",
+            }
+            payload = _http_json_get(f"{base}/models", headers=headers)
+            models = _extract_model_ids(payload)
+            if not models:
+                raise RuntimeError("Anthropic /models response has no model list.")
+            return models
+
+        if provider_value == "google":
+            # Try OpenAI-compatible endpoint first, then Gemini native fallback.
+            headers_openai = {
+                "Authorization": f"Bearer {api_key}",
+                "Accept": "application/json",
+            }
+            try:
+                payload = _http_json_get(f"{base}/models", headers=headers_openai)
+                models = _extract_model_ids(payload)
+                if models:
+                    return models
+            except Exception:
+                pass
+
+            native_base = base
+            if native_base.endswith("/openai"):
+                native_base = native_base[:-len("/openai")]
+            payload = _http_json_get(f"{native_base}/models?key={api_key}", headers={"Accept": "application/json"})
+            models = _extract_model_ids(payload)
+            if not models:
+                raise RuntimeError("Google models endpoint returned no model list.")
+            return models
+
+        # microsoft / azure openai
+        # Azure supports api-key authentication. Try /models and /openai/models variants.
+        headers_azure = {
+            "api-key": api_key,
+            "Accept": "application/json",
+        }
+        base_no_v1 = base[:-3] if base.endswith("/v1") else base
+        candidate_urls = [
+            f"{base}/models",
+            f"{base_no_v1}/models",
+            f"{base_no_v1}/openai/models?api-version=2024-10-01-preview",
+        ]
+        last_error: Optional[Exception] = None
+        for url in candidate_urls:
+            try:
+                payload = _http_json_get(url, headers=headers_azure)
+                models = _extract_model_ids(payload)
+                if models:
+                    return models
+            except Exception as exc:
+                last_error = exc
+                continue
+        if last_error:
+            raise RuntimeError(str(last_error)) from last_error
+        raise RuntimeError("Azure model refresh failed.")
+
+    def _on_refresh_story_models(self) -> None:
+        provider = self.story_provider_var.get().strip().lower() or "openai"
+        api_key = self.story_api_key_var.get().strip()
+        base_url = self.story_base_url_var.get().strip() or self._story_default_base_url(provider)
+
+        if provider == "custom":
+            messagebox.showwarning(
+                self.tr.t("msg_warning_title"),
+                self.tr.t("msg_story_refresh_provider_not_supported"),
+            )
+            return
+        if not api_key:
+            messagebox.showwarning(
+                self.tr.t("msg_warning_title"),
+                self.tr.t("msg_story_test_missing_key"),
+            )
+            return
+        if not base_url:
+            messagebox.showwarning(
+                self.tr.t("msg_warning_title"),
+                "API Base URL is required.",
+            )
+            return
+        if self._story_models_refresh_thread and self._story_models_refresh_thread.is_alive():
+            return
+
+        self.story_status_var.set(self.tr.t("msg_story_refresh_running", provider=provider))
+        self._set_story_test_running(True)
+        self._story_models_refresh_queue = queue.Queue()
+        if self._story_models_refresh_poll_id:
+            self.after_cancel(self._story_models_refresh_poll_id)
+            self._story_models_refresh_poll_id = None
+
+        def worker() -> None:
+            try:
+                models = self._fetch_provider_models(provider, api_key, base_url)
+                self._story_models_refresh_queue.put({
+                    "ok": True,
+                    "provider": provider,
+                    "models": models,
+                })
+            except Exception as exc:
+                self._story_models_refresh_queue.put({
+                    "ok": False,
+                    "provider": provider,
+                    "error": str(exc),
+                })
+
+        self._story_models_refresh_thread = threading.Thread(target=worker, daemon=True)
+        self._story_models_refresh_thread.start()
+        self._poll_story_models_refresh_queue()
+
+    def _poll_story_models_refresh_queue(self) -> None:
+        try:
+            payload = self._story_models_refresh_queue.get_nowait()
+        except queue.Empty:
+            self._story_models_refresh_poll_id = self.after(150, self._poll_story_models_refresh_queue)
+            return
+
+        self._story_models_refresh_poll_id = None
+        self._set_story_test_running(False)
+
+        provider = str(payload.get("provider") or self.story_provider_var.get() or "provider")
+        if payload.get("ok"):
+            models = payload.get("models") or []
+            existing = self._story_provider_models_runtime.get(provider, [])
+            merged = self._order_story_models_for_ui(
+                provider,
+                list(existing) + [str(m).strip() for m in models if str(m).strip()],
+            )
+            self._story_provider_models_runtime[provider] = merged
+            self._update_story_model_options(keep_current=True)
+            self.story_status_var.set(self.tr.t("msg_story_refresh_success", provider=provider, count=len(merged)))
+            messagebox.showinfo(
+                self.tr.t("msg_confirm_title"),
+                self.tr.t("msg_story_refresh_success", provider=provider, count=len(merged)),
+            )
+        else:
+            error_text = str(payload.get("error") or self.tr.t("msg_story_test_unknown_error"))
+            self.story_status_var.set(error_text)
+            messagebox.showwarning(
+                self.tr.t("msg_warning_title"),
+                self.tr.t("msg_story_refresh_failed", error=error_text),
+            )
 
     def _classify_story_test_error(self, error: Exception) -> str:
         name = error.__class__.__name__
@@ -2038,7 +2544,9 @@ class SettingsManagerApp(tk.Tk):
         return self.tr.t("msg_story_test_generic_error", error=message or name)
 
     def _on_test_story_connection(self) -> None:
-        api_key = self.openai_api_key_var.get().strip()
+        provider = self.story_provider_var.get().strip().lower() or 'openai'
+        api_key = self.story_api_key_var.get().strip()
+        base_url = self.story_base_url_var.get().strip() or self._story_default_base_url(provider)
         model = self.story_model_var.get().strip() or 'gpt-5-mini'
 
         if not api_key:
@@ -2047,11 +2555,24 @@ class SettingsManagerApp(tk.Tk):
                 self.tr.t("msg_story_test_missing_key"),
             )
             return
+        if not base_url:
+            messagebox.showwarning(
+                self.tr.t("msg_warning_title"),
+                "API Base URL is required for the selected provider.",
+            )
+            return
+        model_error = self._validate_story_model_text(model, provider)
+        if model_error:
+            messagebox.showwarning(
+                self.tr.t("msg_warning_title"),
+                model_error,
+            )
+            return
 
         if self._story_test_thread and self._story_test_thread.is_alive():
             return
 
-        self.story_status_var.set(self.tr.t("msg_story_test_running"))
+        self.story_status_var.set(self.tr.t("msg_story_test_running", provider=provider))
         self._set_story_test_running(True)
         self._story_test_queue = queue.Queue()
         if self._story_test_poll_id:
@@ -2062,18 +2583,20 @@ class SettingsManagerApp(tk.Tk):
             try:
                 from openai import OpenAI
 
-                client = OpenAI(api_key=api_key)
+                client = OpenAI(api_key=api_key, base_url=base_url)
                 response = client.responses.create(
                     model=model,
                     input="Reply with exactly: connection ok",
                 )
                 self._story_test_queue.put({
                     "ok": True,
+                    "provider": provider,
                     "text": (response.output_text or "").strip(),
                 })
             except Exception as exc:
                 self._story_test_queue.put({
                     "ok": False,
+                    "provider": provider,
                     "error": self._classify_story_test_error(exc),
                 })
 
@@ -2090,12 +2613,13 @@ class SettingsManagerApp(tk.Tk):
 
         self._story_test_poll_id = None
         self._set_story_test_running(False)
+        provider = str(payload.get("provider") or self.story_provider_var.get() or "provider")
 
         if payload.get("ok"):
-            self.story_status_var.set(self.tr.t("msg_story_test_success"))
+            self.story_status_var.set(self.tr.t("msg_story_test_success", provider=provider))
             messagebox.showinfo(
                 self.tr.t("msg_confirm_title"),
-                self.tr.t("msg_story_test_success"),
+                self.tr.t("msg_story_test_success", provider=provider),
             )
         else:
             error_text = payload.get("error", self.tr.t("msg_story_test_unknown_error"))
@@ -2455,7 +2979,10 @@ class SettingsManagerApp(tk.Tk):
                         errors.append(
                             self.tr.t("err_offset_range", min=min_off, max=max_off) + f" ({campaign})"
                         )
-        
+
+        # Validate AI story provider/model/url settings
+        errors.extend(self._validate_story_settings_for_save())
+
         return errors
     
     def _save_all(self) -> bool:

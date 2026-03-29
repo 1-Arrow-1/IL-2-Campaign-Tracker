@@ -1,0 +1,1252 @@
+{
+  "countries": {
+    "germany": {
+      "ranks": [
+        {
+          "aliases": [
+            "Gefreiter"
+          ],
+          "fact": "Gefreiter marked an experienced enlisted airman grade above basic private level in Luftwaffe service."
+        },
+        {
+          "aliases": [
+            "Unteroffizier"
+          ],
+          "fact": "Unteroffizier was a junior NCO rank, typically trusted with discipline and small-team supervision."
+        },
+        {
+          "aliases": [
+            "Feldwebel"
+          ],
+          "fact": "Feldwebel was a senior NCO backbone rank that often carried practical leadership duties on operations."
+        },
+        {
+          "aliases": [
+            "Oberfeldwebel"
+          ],
+          "fact": "Oberfeldwebel was a high NCO grade associated with veteran status and broader responsibility in the Staffel."
+        },
+        {
+          "aliases": [
+            "Fhj. Oberfeldwebel"
+          ],
+          "fact": "Fhj. Oberfeldwebel represented an advanced NCO wartime progression with responsibilities close to officer-level trust."
+        },
+        {
+          "aliases": [
+            "Leutnant"
+          ],
+          "fact": "Leutnant was the entry commissioned rank, usually leading a flight element in combat operations."
+        },
+        {
+          "aliases": [
+            "Oberleutnant"
+          ],
+          "fact": "Oberleutnant was a senior lieutenant grade commonly handling expanded tactical leadership duties."
+        },
+        {
+          "aliases": [
+            "Hauptmann"
+          ],
+          "fact": "Hauptmann was a captain-level rank often associated with formal Staffel command authority."
+        },
+        {
+          "aliases": [
+            "Major"
+          ],
+          "fact": "Major was a field-grade rank tied to wider operational planning and command responsibility."
+        },
+        {
+          "aliases": [
+            "Oberstleutnant"
+          ],
+          "fact": "Oberstleutnant was a senior field-grade rank frequently linked to large-unit leadership roles."
+        },
+        {
+          "aliases": [
+            "Oberst"
+          ],
+          "fact": "Oberst was a full colonel rank with high command responsibility over major formations."
+        },
+        {
+          "aliases": [
+            "Generalmajor"
+          ],
+          "fact": "Generalmajor was the entry general-officer rank with theater-level command influence."
+        },
+        {
+          "aliases": [
+            "Generalleutnant"
+          ],
+          "fact": "Generalleutnant was a senior general rank responsible for major operational command decisions."
+        },
+        {
+          "aliases": [
+            "General der Jagdflieger"
+          ],
+          "fact": "General der Jagdflieger denoted top-level command of the fighter arm and strategic air-war direction."
+        }
+      ],
+      "awards": [
+        {
+          "aliases": [
+            "Iron Cross 2nd Class"
+          ],
+          "fact": "Iron Cross 2nd Class was a foundational wartime combat decoration for bravery and meritorious service under fire."
+        },
+        {
+          "aliases": [
+            "Iron Cross 1st Class"
+          ],
+          "fact": "Iron Cross 1st Class typically reflected sustained frontline merit beyond the level required for the 2nd Class award."
+        },
+        {
+          "aliases": [
+            "Honor Goblet"
+          ],
+          "fact": "Honor Goblet highlighted notable individual flying achievement and combat merit."
+        },
+        {
+          "aliases": [
+            "German Cross in Gold"
+          ],
+          "fact": "German Cross in Gold recognized repeated acts of bravery or military achievement above standard Iron Cross thresholds."
+        },
+        {
+          "aliases": [
+            "Knight's Cross of the Iron Cross"
+          ],
+          "fact": "Knight's Cross of the Iron Cross was among Germany's highest wartime decorations for exceptional combat leadership or valor."
+        },
+        {
+          "aliases": [
+            "Knight's Cross of the Iron Cross with Oak Leaves"
+          ],
+          "fact": "Knight's Cross of the Iron Cross with Oak Leaves denoted an elevated Knight's Cross grade for repeated outstanding combat achievement."
+        },
+        {
+          "aliases": [
+            "Knight's Cross of the Iron Cross with Oak Leaves and Swords"
+          ],
+          "fact": "Knight's Cross of the Iron Cross with Oak Leaves and Swords marked a very high Knight's Cross grade recognizing sustained exceptional combat leadership and bravery."
+        },
+        {
+          "aliases": [
+            "Knight's Cross of the Iron Cross with Oak Leaves, Swords and Diamonds"
+          ],
+          "fact": "Knight's Cross of the Iron Cross with Oak Leaves, Swords and Diamonds represented one of the rarest top tiers of the Knight's Cross series for extraordinary combat distinction."
+        },
+        {
+          "aliases": [
+            "Front Flying Clasp for Fighters in Bronze"
+          ],
+          "fact": "Front Flying Clasp for Fighters in Bronze recognized established frontline flying activity in combat operations."
+        },
+        {
+          "aliases": [
+            "Front Flying Clasp for Fighters in Silver"
+          ],
+          "fact": "Front Flying Clasp for Fighters in Silver marked a mid-to-high progression level in sustained operational flying service."
+        },
+        {
+          "aliases": [
+            "Front Flying Clasp for Fighters in Gold"
+          ],
+          "fact": "Front Flying Clasp for Fighters in Gold recognized extensive operational sortie service at an advanced qualification level."
+        },
+        {
+          "aliases": [
+            "Front Flying Clasp for Fighters in Gold with Pendant"
+          ],
+          "fact": "Front Flying Clasp for Fighters in Gold with Pendant indicated very high sortie experience and prolonged operational flying performance."
+        },
+        {
+          "aliases": [
+            "Front Flying Clasp for Bombers in Bronze"
+          ],
+          "fact": "Front Flying Clasp for Bombers in Bronze recognized established frontline flying activity in combat operations."
+        },
+        {
+          "aliases": [
+            "Front Flying Clasp for Bombers in Silver"
+          ],
+          "fact": "Front Flying Clasp for Bombers in Silver marked a mid-to-high progression level in sustained operational flying service."
+        },
+        {
+          "aliases": [
+            "Front Flying Clasp for Bombers in Gold"
+          ],
+          "fact": "Front Flying Clasp for Bombers in Gold recognized extensive operational sortie service at an advanced qualification level."
+        },
+        {
+          "aliases": [
+            "Front Flying Clasp for Bombers in Gold with Pendant"
+          ],
+          "fact": "Front Flying Clasp for Bombers in Gold with Pendant indicated very high sortie experience and prolonged operational flying performance."
+        },
+        {
+          "aliases": [
+            "Front Flying Clasp for Transport Planes in Bronze"
+          ],
+          "fact": "Front Flying Clasp for Transport Planes in Bronze recognized established frontline flying activity in combat operations."
+        },
+        {
+          "aliases": [
+            "Front Flying Clasp for Transport Planes in Silver"
+          ],
+          "fact": "Front Flying Clasp for Transport Planes in Silver marked a mid-to-high progression level in sustained operational flying service."
+        },
+        {
+          "aliases": [
+            "Front Flying Clasp for Transport Planes in Gold"
+          ],
+          "fact": "Front Flying Clasp for Transport Planes in Gold recognized extensive operational sortie service at an advanced qualification level."
+        },
+        {
+          "aliases": [
+            "Front Flying Clasp for Transport Planes in Gold with Pendant"
+          ],
+          "fact": "Front Flying Clasp for Transport Planes in Gold with Pendant indicated very high sortie experience and prolonged operational flying performance."
+        },
+        {
+          "aliases": [
+            "Front Flying Clasp for Attack Planes and Heavy Fighters in Bronze"
+          ],
+          "fact": "Front Flying Clasp for Attack Planes and Heavy Fighters in Bronze recognized established frontline flying activity in combat operations."
+        },
+        {
+          "aliases": [
+            "Front Flying Clasp for Attack Planes and Heavy Fighters in Silver"
+          ],
+          "fact": "Front Flying Clasp for Attack Planes and Heavy Fighters in Silver marked a mid-to-high progression level in sustained operational flying service."
+        },
+        {
+          "aliases": [
+            "Front Flying Clasp for Attack Planes and Heavy Fighters in Gold"
+          ],
+          "fact": "Front Flying Clasp for Attack Planes and Heavy Fighters in Gold recognized extensive operational sortie service at an advanced qualification level."
+        },
+        {
+          "aliases": [
+            "Front Flying Clasp for Attack Planes and Heavy Fighters in Gold with Pendant"
+          ],
+          "fact": "Front Flying Clasp for Attack Planes and Heavy Fighters in Gold with Pendant indicated very high sortie experience and prolonged operational flying performance."
+        },
+        {
+          "aliases": [
+            "Wound Badge in Black"
+          ],
+          "fact": "Wound Badge in Black signified qualified wartime flying status and recognized operational aircrew standing."
+        },
+        {
+          "aliases": [
+            "Wound Badge in Silver"
+          ],
+          "fact": "Wound Badge in Silver signified qualified wartime flying status and recognized operational aircrew standing."
+        },
+        {
+          "aliases": [
+            "Wound Badge in Gold"
+          ],
+          "fact": "Wound Badge in Gold signified qualified wartime flying status and recognized operational aircrew standing."
+        },
+        {
+          "aliases": [
+            "Pilot's Badge"
+          ],
+          "fact": "Pilot's Badge signified qualified wartime flying status and recognized operational aircrew standing."
+        },
+        {
+          "aliases": [
+            "Eastern Front Medal"
+          ],
+          "fact": "Eastern Front Medal was a wartime decoration recognizing distinguished service, bravery, or combat achievement."
+        },
+        {
+          "aliases": [
+            "Kuban Shield"
+          ],
+          "fact": "Kuban Shield was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Front Flying Clasp for Attack Planes in Bronze"
+          ],
+          "fact": "Front Flying Clasp for Attack Planes in Bronze recognized established frontline flying activity in combat operations."
+        },
+        {
+          "aliases": [
+            "Front Flying Clasp for Attack Planes in Silver"
+          ],
+          "fact": "Front Flying Clasp for Attack Planes in Silver marked a mid-to-high progression level in sustained operational flying service."
+        },
+        {
+          "aliases": [
+            "Front Flying Clasp for Attack Planes in Gold"
+          ],
+          "fact": "Front Flying Clasp for Attack Planes in Gold recognized extensive operational sortie service at an advanced qualification level."
+        },
+        {
+          "aliases": [
+            "Front Flying Clasp for Attack Planes in Gold with Pendant"
+          ],
+          "fact": "Front Flying Clasp for Attack Planes in Gold with Pendant indicated very high sortie experience and prolonged operational flying performance."
+        },
+        {
+          "aliases": [
+            "Luftwaffe Honor Roll Clasp"
+          ],
+          "fact": "Luftwaffe Honor Roll Clasp was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Knight's Cross of the Iron Cross with Golden Oak Leaves, Swords and Diamonds"
+          ],
+          "fact": "Knight's Cross of the Iron Cross with Golden Oak Leaves, Swords and Diamonds represented one of the rarest top tiers of the Knight's Cross series for extraordinary combat distinction."
+        },
+        {
+          "aliases": [
+            "Grand Cross of the Iron Cross"
+          ],
+          "fact": "Grand Cross of the Iron Cross represented a supreme strategic-level distinction in the German wartime honors hierarchy."
+        },
+        {
+          "aliases": [
+            "Star of the Grand Cross of the Iron Cross"
+          ],
+          "fact": "Star of the Grand Cross of the Iron Cross was conceived as an ultra-rare supreme distinction above the Grand Cross tier."
+        }
+      ]
+    },
+    "ussr": {
+      "ranks": [
+        {
+          "aliases": [
+            "Efreitor"
+          ],
+          "fact": "Efreitor denoted a senior enlisted grade above private level in VVS frontline units."
+        },
+        {
+          "aliases": [
+            "Junior Sergeant"
+          ],
+          "fact": "Junior Sergeant was the first NCO step, often supervising a small crew or section."
+        },
+        {
+          "aliases": [
+            "Sergeant"
+          ],
+          "fact": "Sergeant was a core NCO rank responsible for discipline and day-to-day unit execution."
+        },
+        {
+          "aliases": [
+            "Senior Sergeant"
+          ],
+          "fact": "Senior Sergeant signaled an experienced NCO with broader practical leadership authority."
+        },
+        {
+          "aliases": [
+            "Junior Lieutenant"
+          ],
+          "fact": "Junior Lieutenant was the entry officer grade and a common first command rank in combat aviation."
+        },
+        {
+          "aliases": [
+            "Lieutenant"
+          ],
+          "fact": "Lieutenant carried full junior-officer tactical responsibilities in operational sorties."
+        },
+        {
+          "aliases": [
+            "Senior Lieutenant"
+          ],
+          "fact": "Senior Lieutenant reflected growing command trust and more complex leadership assignments."
+        },
+        {
+          "aliases": [
+            "Captain"
+          ],
+          "fact": "Captain was a key command rank often tied to flight or squadron leadership roles."
+        },
+        {
+          "aliases": [
+            "Major"
+          ],
+          "fact": "Major was a field-grade rank associated with wider operational planning and control."
+        },
+        {
+          "aliases": [
+            "Sub-Colonel"
+          ],
+          "fact": "Sub-Colonel represented the lieutenant-colonel tier with major formation leadership duties."
+        },
+        {
+          "aliases": [
+            "Colonel"
+          ],
+          "fact": "Colonel was a senior command rank responsible for regiment-level direction and oversight."
+        },
+        {
+          "aliases": [
+            "Major General"
+          ],
+          "fact": "Major General was the first general rank with high-level command responsibilities."
+        },
+        {
+          "aliases": [
+            "Lieutenant General"
+          ],
+          "fact": "Lieutenant General held major theater command authority over large formations."
+        },
+        {
+          "aliases": [
+            "Colonel General"
+          ],
+          "fact": "Colonel General was a top senior rank tied to broad strategic command responsibility."
+        }
+      ],
+      "awards": [
+        {
+          "aliases": [
+            "Medal for Courage (early)"
+          ],
+          "fact": "Medal for Courage (early) honored personal bravery directly demonstrated in combat conditions."
+        },
+        {
+          "aliases": [
+            "Medal for Courage (late)"
+          ],
+          "fact": "Medal for Courage (late) honored personal bravery directly demonstrated in combat conditions."
+        },
+        {
+          "aliases": [
+            "Medal 'For Battle Merit' (early)"
+          ],
+          "fact": "Medal 'For Battle Merit' (early) recognized significant combat contribution and disciplined wartime service."
+        },
+        {
+          "aliases": [
+            "Medal 'For Battle Merit' (late)"
+          ],
+          "fact": "Medal 'For Battle Merit' (late) recognized significant combat contribution and disciplined wartime service."
+        },
+        {
+          "aliases": [
+            "Distinguished Service Medal"
+          ],
+          "fact": "Distinguished Service Medal recognized distinguished and reliable wartime service performance."
+        },
+        {
+          "aliases": [
+            "Order of the Red Star"
+          ],
+          "fact": "Order of the Red Star was a major Soviet military decoration for bravery and distinguished service."
+        },
+        {
+          "aliases": [
+            "Order of the Patriotic War 2nd Class (early)"
+          ],
+          "fact": "Order of the Patriotic War 2nd Class (early) recognized notable personal courage and combat service."
+        },
+        {
+          "aliases": [
+            "Order of the Patriotic War 2nd Class (late)"
+          ],
+          "fact": "Order of the Patriotic War 2nd Class (late) recognized notable personal courage and combat service."
+        },
+        {
+          "aliases": [
+            "Order of the Patriotic War 1st Class (early)"
+          ],
+          "fact": "Order of the Patriotic War 1st Class (early) was a high wartime decoration for exceptional bravery and combat merit."
+        },
+        {
+          "aliases": [
+            "Order of the Patriotic War 1st Class (late)"
+          ],
+          "fact": "Order of the Patriotic War 1st Class (late) was a high wartime decoration for exceptional bravery and combat merit."
+        },
+        {
+          "aliases": [
+            "Order of Alexander Nevsky (early)"
+          ],
+          "fact": "Order of Alexander Nevsky (early) honored officers for bold and skillful battlefield leadership."
+        },
+        {
+          "aliases": [
+            "Order of Alexander Nevsky (late)"
+          ],
+          "fact": "Order of Alexander Nevsky (late) honored officers for bold and skillful battlefield leadership."
+        },
+        {
+          "aliases": [
+            "Order of Suvorov 3rd Class (early)"
+          ],
+          "fact": "Order of Suvorov 3rd Class (early) recognized capable frontline command and tactical leadership under battle conditions."
+        },
+        {
+          "aliases": [
+            "Order of Suvorov 3rd Class (late)"
+          ],
+          "fact": "Order of Suvorov 3rd Class (late) recognized capable frontline command and tactical leadership under battle conditions."
+        },
+        {
+          "aliases": [
+            "Hero of the Soviet Union (early)"
+          ],
+          "fact": "Hero of the Soviet Union (early) was the Soviet Union's highest title for extraordinary heroism in wartime service."
+        },
+        {
+          "aliases": [
+            "Hero of the Soviet Union (late)"
+          ],
+          "fact": "Hero of the Soviet Union (late) was the Soviet Union's highest title for extraordinary heroism in wartime service."
+        },
+        {
+          "aliases": [
+            "Order of Lenin (early)"
+          ],
+          "fact": "Order of Lenin (early) was a wartime decoration recognizing distinguished service, bravery, or combat achievement."
+        },
+        {
+          "aliases": [
+            "Order of Lenin (late)"
+          ],
+          "fact": "Order of Lenin (late) was a wartime decoration recognizing distinguished service, bravery, or combat achievement."
+        },
+        {
+          "aliases": [
+            "Aircraft Kill Bonus (1000 rubles)"
+          ],
+          "fact": "Aircraft Kill Bonus (1000 rubles) was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Fighter Kill Bonus (1000 rubles)"
+          ],
+          "fact": "Fighter Kill Bonus (1000 rubles) was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Transport Plane Kill Bonus (1500 rubles)"
+          ],
+          "fact": "Transport Plane Kill Bonus (1500 rubles) was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Bomber Kill Bonus (2000 rubles)"
+          ],
+          "fact": "Bomber Kill Bonus (2000 rubles) was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Bomber Kill Bonus (1500 rubles)"
+          ],
+          "fact": "Bomber Kill Bonus (1500 rubles) was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Small Ship Kill Bonus (1000 rubles)"
+          ],
+          "fact": "Small Ship Kill Bonus (1000 rubles) was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Transport Ship Kill Bonus (3000 rubles)"
+          ],
+          "fact": "Transport Ship Kill Bonus (3000 rubles) was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Destroyer or Submarine Kill Bonus (10000 rubles)"
+          ],
+          "fact": "Destroyer or Submarine Kill Bonus (10000 rubles) was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "5 Combat Sorties Bonus (1500 rubles)"
+          ],
+          "fact": "5 Combat Sorties Bonus (1500 rubles) was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "15 Combat Sorties Bonus (2000 rubles)"
+          ],
+          "fact": "15 Combat Sorties Bonus (2000 rubles) was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "25 Combat Sorties Bonus (3000 rubles)"
+          ],
+          "fact": "25 Combat Sorties Bonus (3000 rubles) was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "40 Combat Sorties Bonus (5000 rubles)"
+          ],
+          "fact": "40 Combat Sorties Bonus (5000 rubles) was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Red Wound Stripe"
+          ],
+          "fact": "Red Wound Stripe was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Yellow Wound Stripe"
+          ],
+          "fact": "Yellow Wound Stripe was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Aviation Badge"
+          ],
+          "fact": "Aviation Badge signified qualified wartime flying status and recognized operational aircrew standing."
+        },
+        {
+          "aliases": [
+            "Aviation Emblem"
+          ],
+          "fact": "Aviation Emblem was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Medal 'For the Defense of Moscow'"
+          ],
+          "fact": "Medal 'For the Defense of Moscow' was a wartime decoration recognizing distinguished service, bravery, or combat achievement."
+        },
+        {
+          "aliases": [
+            "Medal 'For the Defense of Stalingrad'"
+          ],
+          "fact": "Medal 'For the Defense of Stalingrad' was a wartime decoration recognizing distinguished service, bravery, or combat achievement."
+        },
+        {
+          "aliases": [
+            "Medal 'For the Defense of the Caucasus'"
+          ],
+          "fact": "Medal 'For the Defense of the Caucasus' was a wartime decoration recognizing distinguished service, bravery, or combat achievement."
+        },
+        {
+          "aliases": [
+            "Officer of the Order of the Legion of Honor"
+          ],
+          "fact": "Officer of the Order of the Legion of Honor was a wartime decoration recognizing distinguished service, bravery, or combat achievement."
+        },
+        {
+          "aliases": [
+            "Knight of the Order of the Legion of Honour"
+          ],
+          "fact": "Knight of the Order of the Legion of Honour was a wartime decoration recognizing distinguished service, bravery, or combat achievement."
+        },
+        {
+          "aliases": [
+            "Croix de Guerre"
+          ],
+          "fact": "Croix de Guerre was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Croix de Guerre with Bronze Palm"
+          ],
+          "fact": "Croix de Guerre with Bronze Palm was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Croix de Guerre with Two Bronze Palms"
+          ],
+          "fact": "Croix de Guerre with Two Bronze Palms was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Croix de Guerre with Three Bronze Palms"
+          ],
+          "fact": "Croix de Guerre with Three Bronze Palms was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Croix de Guerre with Four Bronze Palms"
+          ],
+          "fact": "Croix de Guerre with Four Bronze Palms was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Croix de Guerre with Silver Palm"
+          ],
+          "fact": "Croix de Guerre with Silver Palm was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Croix de Guerre with Silver Palm and Bronze Palm"
+          ],
+          "fact": "Croix de Guerre with Silver Palm and Bronze Palm was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Croix de Guerre with Silver Palm and Two Bronze Palms"
+          ],
+          "fact": "Croix de Guerre with Silver Palm and Two Bronze Palms was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Croix de Guerre with Silver Palm and Three Bronze Palms"
+          ],
+          "fact": "Croix de Guerre with Silver Palm and Three Bronze Palms was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Croix de Guerre with Silver Palm and Four Bronze Palms"
+          ],
+          "fact": "Croix de Guerre with Silver Palm and Four Bronze Palms was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Croix de Guerre with Two Silver Palms"
+          ],
+          "fact": "Croix de Guerre with Two Silver Palms was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Croix de Guerre with Two Silver Palms and Bronze Palm"
+          ],
+          "fact": "Croix de Guerre with Two Silver Palms and Bronze Palm was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Croix de Guerre with Two Silver Palms and Two Bronze Palms"
+          ],
+          "fact": "Croix de Guerre with Two Silver Palms and Two Bronze Palms was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Croix de Guerre with Two Silver Palms and Three Bronze Palms"
+          ],
+          "fact": "Croix de Guerre with Two Silver Palms and Three Bronze Palms was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Croix de Guerre with Two Silver Palms and Four Bronze Palms"
+          ],
+          "fact": "Croix de Guerre with Two Silver Palms and Four Bronze Palms was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Croix de Guerre with Three Silver Palms"
+          ],
+          "fact": "Croix de Guerre with Three Silver Palms was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "1914–1918 Inter-Allied Victory Medal"
+          ],
+          "fact": "1914–1918 Inter-Allied Victory Medal was a wartime decoration recognizing distinguished service, bravery, or combat achievement."
+        }
+      ]
+    },
+    "uk": {
+      "ranks": [
+        {
+          "aliases": [
+            "Corporal"
+          ],
+          "fact": "Corporal was an early RAF NCO rank with local supervision and discipline duties."
+        },
+        {
+          "aliases": [
+            "Sergeant"
+          ],
+          "fact": "Sergeant was a core RAF NCO grade central to technical and operational reliability."
+        },
+        {
+          "aliases": [
+            "Flight Sergeant"
+          ],
+          "fact": "Flight Sergeant was a senior NCO rank typically entrusted with experienced supervisory duties."
+        },
+        {
+          "aliases": [
+            "Warrant Officer"
+          ],
+          "fact": "Warrant Officer was a top non-commissioned rank reflecting high professional authority."
+        },
+        {
+          "aliases": [
+            "Pilot Officer"
+          ],
+          "fact": "Pilot Officer was the entry commissioned RAF rank for newly appointed officers."
+        },
+        {
+          "aliases": [
+            "Flying Officer"
+          ],
+          "fact": "Flying Officer was an early commissioned rank associated with independent operational responsibility."
+        },
+        {
+          "aliases": [
+            "Flight Lieutenant"
+          ],
+          "fact": "Flight Lieutenant was a seasoned officer rank frequently linked to flight leadership."
+        },
+        {
+          "aliases": [
+            "Squadron Leader"
+          ],
+          "fact": "Squadron Leader was a command rank commonly associated with leading a squadron."
+        },
+        {
+          "aliases": [
+            "Wing Commander"
+          ],
+          "fact": "Wing Commander was a senior RAF rank often responsible for multi-flight operational control."
+        },
+        {
+          "aliases": [
+            "Group Captain"
+          ],
+          "fact": "Group Captain was a high command rank equivalent to colonel-level leadership scope."
+        },
+        {
+          "aliases": [
+            "Air Commodore"
+          ],
+          "fact": "Air Commodore marked the first air-officer tier with broad command authority."
+        },
+        {
+          "aliases": [
+            "Air Vice Marshal"
+          ],
+          "fact": "Air Vice Marshal was a two-star air-officer rank with major formation-level command roles."
+        },
+        {
+          "aliases": [
+            "Air Marshal"
+          ],
+          "fact": "Air Marshal denoted senior high-command responsibility across major operational sectors."
+        },
+        {
+          "aliases": [
+            "Air Chief Marshal"
+          ],
+          "fact": "Air Chief Marshal was among the highest RAF command ranks with strategic-level authority."
+        }
+      ],
+      "awards": [
+        {
+          "aliases": [
+            "RAF Pilot's Badge"
+          ],
+          "fact": "RAF Pilot's Badge signified qualified wartime flying status and recognized operational aircrew standing."
+        },
+        {
+          "aliases": [
+            "Mentioned in Despatches"
+          ],
+          "fact": "Mentioned in Despatches was an official recognition of gallant or meritorious service reported by commanders in wartime dispatches."
+        },
+        {
+          "aliases": [
+            "Distinguished Flying Medal"
+          ],
+          "fact": "Distinguished Flying Medal recognized exceptional bravery and skill in operational flying service."
+        },
+        {
+          "aliases": [
+            "Bar to the Distinguished Flying Medal"
+          ],
+          "fact": "Bar to the Distinguished Flying Medal signified a repeat award of Distinguished Flying Medal for further distinguished wartime service."
+        },
+        {
+          "aliases": [
+            "Second Bar to the Distinguished Flying Medal"
+          ],
+          "fact": "Second Bar to the Distinguished Flying Medal indicated a third award of Distinguished Flying Medal, reflecting repeated distinguished service."
+        },
+        {
+          "aliases": [
+            "Distinguished Flying Cross"
+          ],
+          "fact": "Distinguished Flying Cross honored officers for courage and devotion to duty while flying on active operations."
+        },
+        {
+          "aliases": [
+            "Bar to the Distinguished Flying Cross"
+          ],
+          "fact": "Bar to the Distinguished Flying Cross signified a repeat award of Distinguished Flying Cross for further distinguished wartime service."
+        },
+        {
+          "aliases": [
+            "Second Bar to the Distinguished Flying Cross"
+          ],
+          "fact": "Second Bar to the Distinguished Flying Cross indicated a third award of Distinguished Flying Cross, reflecting repeated distinguished service."
+        },
+        {
+          "aliases": [
+            "Distinguished Service Order"
+          ],
+          "fact": "Distinguished Service Order recognized meritorious or distinguished leadership and service in wartime operations."
+        },
+        {
+          "aliases": [
+            "Bar to the Distinguished Service Order"
+          ],
+          "fact": "Bar to the Distinguished Service Order signified a repeat award of Distinguished Service Order for further distinguished wartime service."
+        },
+        {
+          "aliases": [
+            "Second Bar to the Distinguished Service Order"
+          ],
+          "fact": "Second Bar to the Distinguished Service Order indicated a third award of Distinguished Service Order, reflecting repeated distinguished service."
+        },
+        {
+          "aliases": [
+            "Third Bar to the Distinguished Service Order"
+          ],
+          "fact": "Third Bar to the Distinguished Service Order indicated a fourth award of Distinguished Service Order, marking exceptionally sustained distinction."
+        },
+        {
+          "aliases": [
+            "Air Force Cross"
+          ],
+          "fact": "Air Force Cross honored notable flying achievement and devotion to duty in RAF service."
+        },
+        {
+          "aliases": [
+            "Bar to the Air Force Cross"
+          ],
+          "fact": "Bar to the Air Force Cross signified a repeat award of Air Force Cross for further distinguished wartime service."
+        },
+        {
+          "aliases": [
+            "Second Bar to the Air Force Cross"
+          ],
+          "fact": "Second Bar to the Air Force Cross indicated a third award of Air Force Cross, reflecting repeated distinguished service."
+        },
+        {
+          "aliases": [
+            "Air Force Medal"
+          ],
+          "fact": "Air Force Medal was a wartime decoration recognizing distinguished service, bravery, or combat achievement."
+        },
+        {
+          "aliases": [
+            "Bar to the Air Force Medal"
+          ],
+          "fact": "Bar to the Air Force Medal signified a repeat award of Air Force Medal for further distinguished wartime service."
+        },
+        {
+          "aliases": [
+            "Second Bar to the Air Force Medal"
+          ],
+          "fact": "Second Bar to the Air Force Medal indicated a third award of Air Force Medal, reflecting repeated distinguished service."
+        },
+        {
+          "aliases": [
+            "Victoria Cross"
+          ],
+          "fact": "Victoria Cross was a wartime decoration recognizing distinguished service, bravery, or combat achievement."
+        },
+        {
+          "aliases": [
+            "Bar to the Victoria Cross"
+          ],
+          "fact": "Bar to the Victoria Cross signified a repeat award of Victoria Cross for further distinguished wartime service."
+        },
+        {
+          "aliases": [
+            "France and Germany Star"
+          ],
+          "fact": "France and Germany Star was a wartime decoration recognizing distinguished service, bravery, or combat achievement."
+        },
+        {
+          "aliases": [
+            "Wound Stripe"
+          ],
+          "fact": "Wound Stripe was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Second Wound Stripe"
+          ],
+          "fact": "Second Wound Stripe was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Third Wound Stripe"
+          ],
+          "fact": "Third Wound Stripe was an official wartime honor recognizing notable military service."
+        }
+      ]
+    },
+    "usa": {
+      "ranks": [
+        {
+          "aliases": [
+            "Staff Sergeant"
+          ],
+          "fact": "Staff Sergeant was an experienced enlisted leader supporting discipline and technical execution."
+        },
+        {
+          "aliases": [
+            "Technical Sergeant"
+          ],
+          "fact": "Technical Sergeant combined NCO authority with advanced technical and supervisory responsibilities."
+        },
+        {
+          "aliases": [
+            "First Sergeant"
+          ],
+          "fact": "First Sergeant was a senior enlisted leadership post focused on unit discipline and readiness."
+        },
+        {
+          "aliases": [
+            "Flight Officer"
+          ],
+          "fact": "Flight Officer was a wartime officer grade used for aircrew with commissioned-equivalent authority."
+        },
+        {
+          "aliases": [
+            "Chief Warrant Officer"
+          ],
+          "fact": "Chief Warrant Officer denoted a senior specialist-leader rank with strong technical authority."
+        },
+        {
+          "aliases": [
+            "2nd Lieutenant"
+          ],
+          "fact": "2nd Lieutenant was the entry commissioned officer rank in USAAF command structure."
+        },
+        {
+          "aliases": [
+            "1st Lieutenant"
+          ],
+          "fact": "1st Lieutenant reflected increased command trust beyond the initial officer grade."
+        },
+        {
+          "aliases": [
+            "Captain"
+          ],
+          "fact": "Captain was a central officer rank often associated with flight-level command duties."
+        },
+        {
+          "aliases": [
+            "Major"
+          ],
+          "fact": "Major was a field-grade rank tied to larger operational planning and leadership."
+        },
+        {
+          "aliases": [
+            "Lt. Colonel"
+          ],
+          "fact": "Lt. Colonel represented senior field-grade leadership with broad unit-level authority."
+        },
+        {
+          "aliases": [
+            "Colonel"
+          ],
+          "fact": "Colonel was a high command rank with major formation responsibility."
+        },
+        {
+          "aliases": [
+            "Brigadier General"
+          ],
+          "fact": "Brigadier General marked entry into general-officer command authority."
+        },
+        {
+          "aliases": [
+            "Major General"
+          ],
+          "fact": "Major General held two-star command responsibilities over large air formations."
+        },
+        {
+          "aliases": [
+            "Lt. General"
+          ],
+          "fact": "Lt. General denoted top-tier operational command authority in wartime air operations."
+        }
+      ],
+      "awards": [
+        {
+          "aliases": [
+            "Pilot's Badge"
+          ],
+          "fact": "Pilot's Badge signified qualified wartime flying status and recognized operational aircrew standing."
+        },
+        {
+          "aliases": [
+            "Air Medal"
+          ],
+          "fact": "Air Medal recognized meritorious achievement while participating in aerial flight."
+        },
+        {
+          "aliases": [
+            "Air Medal (First Oak Leaf Cluster)"
+          ],
+          "fact": "Air Medal (First Oak Leaf Cluster) denoted a repeat Air Medal award for additional meritorious aerial performance."
+        },
+        {
+          "aliases": [
+            "Air Medal (Second Oak Leaf Cluster)"
+          ],
+          "fact": "Air Medal (Second Oak Leaf Cluster) denoted a repeat Air Medal award for additional meritorious aerial performance."
+        },
+        {
+          "aliases": [
+            "Air Medal (Third Oak Leaf Cluster)"
+          ],
+          "fact": "Air Medal (Third Oak Leaf Cluster) denoted a repeat Air Medal award for additional meritorious aerial performance."
+        },
+        {
+          "aliases": [
+            "Air Medal (Fourth Oak Leaf Cluster)"
+          ],
+          "fact": "Air Medal (Fourth Oak Leaf Cluster) denoted a repeat Air Medal award for additional meritorious aerial performance."
+        },
+        {
+          "aliases": [
+            "Air Medal (First Silver Oak Leaf Cluster)"
+          ],
+          "fact": "Air Medal (First Silver Oak Leaf Cluster) indicated a high-count repeat level of the Air Medal for sustained aerial achievement."
+        },
+        {
+          "aliases": [
+            "Bronze Star Medal"
+          ],
+          "fact": "Bronze Star Medal recognized heroic or meritorious achievement in wartime operations."
+        },
+        {
+          "aliases": [
+            "Bronze Star Medal (First Oak Leaf Cluster)"
+          ],
+          "fact": "Bronze Star Medal (First Oak Leaf Cluster) denotes a repeat Bronze Star award for additional meritorious or heroic wartime service."
+        },
+        {
+          "aliases": [
+            "Bronze Star Medal (Second Oak Leaf Cluster)"
+          ],
+          "fact": "Bronze Star Medal (Second Oak Leaf Cluster) denotes a repeat Bronze Star award for additional meritorious or heroic wartime service."
+        },
+        {
+          "aliases": [
+            "Distinguished Flying Cross"
+          ],
+          "fact": "Distinguished Flying Cross honored heroism or extraordinary achievement while participating in aerial flight."
+        },
+        {
+          "aliases": [
+            "Distinguished Flying Cross (First Oak Leaf Cluster)"
+          ],
+          "fact": "Distinguished Flying Cross (First Oak Leaf Cluster) denotes a repeat Distinguished Flying Cross award for additional extraordinary aerial achievement."
+        },
+        {
+          "aliases": [
+            "Distinguished Flying Cross (Second Oak Leaf Cluster)"
+          ],
+          "fact": "Distinguished Flying Cross (Second Oak Leaf Cluster) denotes a repeat Distinguished Flying Cross award for additional extraordinary aerial achievement."
+        },
+        {
+          "aliases": [
+            "Distinguished Flying Cross (Third Oak Leaf Cluster)"
+          ],
+          "fact": "Distinguished Flying Cross (Third Oak Leaf Cluster) denotes a repeat Distinguished Flying Cross award for additional extraordinary aerial achievement."
+        },
+        {
+          "aliases": [
+            "Distinguished Flying Cross (Fourth Oak Leaf Cluster)"
+          ],
+          "fact": "Distinguished Flying Cross (Fourth Oak Leaf Cluster) denotes a repeat Distinguished Flying Cross award for additional extraordinary aerial achievement."
+        },
+        {
+          "aliases": [
+            "Distinguished Flying Cross (First Silver Oak Leaf Cluster)"
+          ],
+          "fact": "Distinguished Flying Cross (First Silver Oak Leaf Cluster) denotes a repeat Distinguished Flying Cross award for additional extraordinary aerial achievement."
+        },
+        {
+          "aliases": [
+            "Legion of Merit"
+          ],
+          "fact": "Legion of Merit was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Silver Star"
+          ],
+          "fact": "Silver Star was one of the highest U.S. combat decorations for gallantry in action."
+        },
+        {
+          "aliases": [
+            "Silver Star (First Oak Leaf Cluster)"
+          ],
+          "fact": "Silver Star (First Oak Leaf Cluster) denotes a repeat Silver Star award for additional acts of gallantry in action."
+        },
+        {
+          "aliases": [
+            "Silver Star (Second Oak Leaf Cluster)"
+          ],
+          "fact": "Silver Star (Second Oak Leaf Cluster) denotes a repeat Silver Star award for additional acts of gallantry in action."
+        },
+        {
+          "aliases": [
+            "Distinguished Service Cross"
+          ],
+          "fact": "Distinguished Service Cross was a wartime decoration recognizing distinguished service, bravery, or combat achievement."
+        },
+        {
+          "aliases": [
+            "Distinguished Service Cross (First Oak Leaf Cluster)"
+          ],
+          "fact": "Distinguished Service Cross (First Oak Leaf Cluster) indicated a repeat award level for further distinguished wartime service."
+        },
+        {
+          "aliases": [
+            "Distinguished Service Cross (Second Oak Leaf Cluster)"
+          ],
+          "fact": "Distinguished Service Cross (Second Oak Leaf Cluster) indicated a repeat award level for further distinguished wartime service."
+        },
+        {
+          "aliases": [
+            "Distinguished Service Cross (Third Oak Leaf Cluster)"
+          ],
+          "fact": "Distinguished Service Cross (Third Oak Leaf Cluster) indicated a repeat award level for further distinguished wartime service."
+        },
+        {
+          "aliases": [
+            "Distinguished Service Cross (Fourth Oak Leaf Cluster)"
+          ],
+          "fact": "Distinguished Service Cross (Fourth Oak Leaf Cluster) indicated a repeat award level for further distinguished wartime service."
+        },
+        {
+          "aliases": [
+            "Medal of Honor"
+          ],
+          "fact": "Medal of Honor was a wartime decoration recognizing distinguished service, bravery, or combat achievement."
+        },
+        {
+          "aliases": [
+            "European-African-Middle Eastern Campaign Medal"
+          ],
+          "fact": "European-African-Middle Eastern Campaign Medal was a wartime decoration recognizing distinguished service, bravery, or combat achievement."
+        },
+        {
+          "aliases": [
+            "Purple Heart"
+          ],
+          "fact": "Purple Heart was an official wartime honor recognizing notable military service."
+        },
+        {
+          "aliases": [
+            "Purple Heart (First Oak Leaf Cluster)"
+          ],
+          "fact": "Purple Heart (First Oak Leaf Cluster) indicated a repeat award level for further distinguished wartime service."
+        },
+        {
+          "aliases": [
+            "Purple Heart (Second Oak Leaf Cluster)"
+          ],
+          "fact": "Purple Heart (Second Oak Leaf Cluster) indicated a repeat award level for further distinguished wartime service."
+        }
+      ]
+    }
+  }
+}

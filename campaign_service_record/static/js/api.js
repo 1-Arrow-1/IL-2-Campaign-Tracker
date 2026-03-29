@@ -43,15 +43,30 @@ const API = {
     /**
      * Generic POST request
      */
-    async post(endpoint, data = {}) {
+    async post(endpoint, data = {}, options = {}) {
+        const timeoutMs = Number(options.timeoutMs || 0);
+        const controller = timeoutMs > 0 ? new AbortController() : null;
+        let timeoutId = null;
         try {
-            const response = await fetch(`${this.baseURL}${endpoint}`, {
+            if (controller) {
+                timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+            }
+            const fetchPromise = fetch(`${this.baseURL}${endpoint}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(data),
+                signal: controller ? controller.signal : undefined
             });
+            const response = timeoutMs > 0
+                ? await Promise.race([
+                    fetchPromise,
+                    new Promise((_, reject) => {
+                        setTimeout(() => reject(new Error('Story generation timed out. Please retry, or switch to a faster model/provider.')), timeoutMs + 1000);
+                    })
+                ])
+                : await fetchPromise;
             
             if (!response.ok) {
                 const error = await response.json();
@@ -60,8 +75,15 @@ const API = {
             
             return await response.json();
         } catch (error) {
+            if (error && error.name === 'AbortError') {
+                throw new Error('Story generation timed out. Please retry, or switch to a faster model/provider.');
+            }
             console.error(`API POST ${endpoint} failed:`, error);
             throw error;
+        } finally {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
         }
     },
     
@@ -111,7 +133,11 @@ const API = {
      * Generate missing AI story chapters for an entry.
      */
     async generateStories(source, entryId, data = {}) {
-        return this.post(`/stories/${encodeURIComponent(source)}/${encodeURIComponent(entryId)}/generate`, data);
+        return this.post(
+            `/stories/${encodeURIComponent(source)}/${encodeURIComponent(entryId)}/generate`,
+            data,
+            { timeoutMs: 240000 }
+        );
     },
     
     /**

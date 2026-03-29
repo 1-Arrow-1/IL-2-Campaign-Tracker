@@ -10,16 +10,18 @@ Endpoints:
 """
 
 import base64
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 import json
 import logging
 import os
 import re
+from datetime import datetime
 import threading
 import time
 import traceback
 from io import BytesIO
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from flask import Blueprint, jsonify, request, current_app, send_file, send_from_directory
 
@@ -48,15 +50,17 @@ from utils.locale_config import resolve_locale
 from utils.supported_locales import DEFAULT_LOCALE, get_supported_locales, normalize_locale
 from campaign_service_record.core.job_store import job_store, CAREER_DEBRIEF_PARSE
 from campaign_service_record.career.debriefing_manager import CareerDebriefingManager
+from utils.sorting import smart_mission_sort_key
 from llm_story_generator import (
+    build_campaign_story_input,
     build_story_input,
-    generate_and_store_chapter,
-    load_or_create_story_state,
-    load_story_chapters,
-    save_story_state,
+    generate_and_store_chapter_for,
+    load_or_create_story_state_for,
+    load_story_chapters_for,
+    save_story_state_for,
 )
 from utils.locale_config import load_settings
-from utils.supported_locales import normalize_locale
+from utils.supported_locales import APP_TO_IL2_LOCALE, normalize_locale
 
 
 logger = logging.getLogger(__name__)
@@ -81,6 +85,11 @@ _PILOT_DESC_DEFAULT = "campaign_pilot"
 _PERSONAL_DATA_FILENAME = "campaign_personal_data.json"
 
 _STORY_EVENT_TYPES = [6, 8]
+_STORY_SQUADRON_EVENT_TYPES = [6, 8, 10]
+_STORY_MAX_BACKGROUND_CHARS = 1400
+_STORY_MAX_NOTABLE_EVENTS = 12
+_HONORS_FACTS_PATH = Path(__file__).resolve().parents[2] / "historical_context" / "honors_facts.json"
+_HONORS_FACTS_CACHE: dict[str, Any] | None = None
 
 
 def _sanitize_pilot_name(name: Optional[str]) -> Optional[str]:
@@ -135,21 +144,54 @@ def _sanitize_personal_data_value(value: Optional[str]) -> str:
     return str(value).strip()
 
 
+def _parse_bool(value: object, default: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return default
+    if isinstance(value, (int, float)):
+        return value != 0
+    text = str(value).strip().lower()
+    if not text:
+        return default
+    if text in {"1", "true", "yes", "on"}:
+        return True
+    if text in {"0", "false", "no", "off"}:
+        return False
+    return default
+
+
 def _load_story_settings() -> dict:
     settings = load_settings()
     stories = settings.get("stories", {})
     if not isinstance(stories, dict):
         stories = {}
-    api_key = str(stories.get("api_key") or os.environ.get("OPENAI_API_KEY") or "").strip()
+    provider = str(stories.get("provider") or "openai").strip().lower() or "openai"
+    provider_defaults = {
+        "openai": "https://api.openai.com/v1",
+        "openrouter": "https://openrouter.ai/api/v1",
+        "anthropic": "https://api.anthropic.com/v1",
+        "google": "https://generativelanguage.googleapis.com/v1beta/openai",
+        "microsoft": "https://YOUR-RESOURCE-NAME.openai.azure.com/openai/v1",
+        "custom": "",
+    }
+    base_url = str(stories.get("base_url") or provider_defaults.get(provider, "")).strip()
+    provider_keys = stories.get("api_keys", {})
+    selected_provider_key = ""
+    if isinstance(provider_keys, dict):
+        selected_provider_key = str(provider_keys.get(provider) or "").strip()
+    api_key = str(selected_provider_key or stories.get("api_key") or os.environ.get("OPENAI_API_KEY") or "").strip()
     model = str(stories.get("model") or "gpt-5-mini").strip() or "gpt-5-mini"
     locale = normalize_locale(str(settings.get("locale") or "en"))
     return {
-        "enabled": bool(stories.get("enabled", False)),
-        "configured": bool(api_key),
+        "enabled": _parse_bool(stories.get("enabled", False), default=False),
+        "configured": bool(api_key and model and (base_url or provider == "openai")),
         "api_key": api_key,
+        "provider": provider,
+        "base_url": base_url,
         "model": model,
         "story_language": locale,
-        "auto_generate": bool(stories.get("auto_generate", False)),
+        "auto_generate": _parse_bool(stories.get("auto_generate", False), default=False),
     }
 
 
@@ -160,29 +202,139 @@ def _humanize_story_label(value: Optional[str]) -> str:
     return text.replace("_", " ").strip()
 
 
+def _normalize_honor_lookup_text(value: object) -> str:
+    text = str(value or "").strip().lower()
+    if not text:
+        return ""
+    text = re.sub(r"[\s\-_]+", " ", text)
+    text = re.sub(r"[^a-z0-9 ]+", "", text)
+    return " ".join(text.split())
+
+
+def _country_to_honors_key(country: object) -> str:
+    value = _normalize_honor_lookup_text(country)
+    mapping = {
+        "germany": "germany",
+        "deutschland": "germany",
+        "soviet union": "ussr",
+        "ussr": "ussr",
+        "soviet": "ussr",
+        "britain": "uk",
+        "great britain": "uk",
+        "united kingdom": "uk",
+        "uk": "uk",
+        "usa": "usa",
+        "united states": "usa",
+        "united states of america": "usa",
+    }
+    return mapping.get(value, value)
+
+
+def _load_honors_facts() -> dict[str, Any]:
+    global _HONORS_FACTS_CACHE
+    if isinstance(_HONORS_FACTS_CACHE, dict):
+        return _HONORS_FACTS_CACHE
+    try:
+        payload = json.loads(_HONORS_FACTS_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        payload = {}
+    _HONORS_FACTS_CACHE = payload if isinstance(payload, dict) else {}
+    return _HONORS_FACTS_CACHE
+
+
+def _lookup_honor_fact(country: object, category: str, name: object) -> str:
+    country_key = _country_to_honors_key(country)
+    name_norm = _normalize_honor_lookup_text(name)
+    if not country_key or not name_norm:
+        return ""
+
+    facts = _load_honors_facts()
+    countries = facts.get("countries", {}) if isinstance(facts, dict) else {}
+    country_block = countries.get(country_key, {}) if isinstance(countries, dict) else {}
+    entries = country_block.get(category, []) if isinstance(country_block, dict) else []
+    if not isinstance(entries, list):
+        return ""
+
+    best_fact = ""
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        aliases = entry.get("aliases", [])
+        if not isinstance(aliases, list):
+            continue
+        fact = _normalize_story_text(entry.get("fact"))
+        if not fact:
+            continue
+        normalized_aliases = [_normalize_honor_lookup_text(alias) for alias in aliases if _normalize_honor_lookup_text(alias)]
+        if not normalized_aliases:
+            continue
+        if name_norm in normalized_aliases:
+            return fact
+        if any(alias in name_norm or name_norm in alias for alias in normalized_aliases):
+            best_fact = best_fact or fact
+    return best_fact
+
+
+def _build_honors_context(
+    country: object,
+    mission_promotion: object,
+    mission_awards: list[str] | tuple[str, ...] | None,
+) -> dict[str, Any]:
+    promotion_name = _normalize_story_text(mission_promotion)
+    promotion_fact = _lookup_honor_fact(country, "ranks", promotion_name) if promotion_name else ""
+    promotion_payload = {"name": promotion_name, "fact": promotion_fact} if promotion_name else {}
+
+    awards_payload: list[dict[str, str]] = []
+    seen_awards: set[str] = set()
+    for award_name_raw in list(mission_awards or []):
+        award_name = _normalize_story_text(award_name_raw)
+        if not award_name:
+            continue
+        key = _normalize_honor_lookup_text(award_name)
+        if key in seen_awards:
+            continue
+        seen_awards.add(key)
+        fact = _lookup_honor_fact(country, "awards", award_name)
+        awards_payload.append({"name": award_name, "fact": fact})
+
+    return {
+        "promotion": promotion_payload,
+        "awards": awards_payload,
+    }
+
+
 def _classify_story_error(exc: Exception) -> tuple[str, str]:
     text = str(exc or "").lower()
     if any(fragment in text for fragment in ("api key", "authentication", "unauthorized", "401")):
-        return "auth_error", "OpenAI API key is invalid."
+        return "auth_error", "API authentication failed. Check provider, model, and API key."
     if any(fragment in text for fragment in ("quota", "billing", "insufficient", "429")):
-        return "quota_error", "OpenAI quota exhausted or billing is unavailable."
+        return "quota_error", "API quota exhausted or billing is unavailable."
     if any(fragment in text for fragment in ("connection", "timeout", "network", "dns", "connect")):
-        return "network_error", "OpenAI is currently unreachable."
+        return "network_error", "Provider API is currently unreachable."
+    detail = _normalize_story_text(exc)
+    if detail:
+        if len(detail) > 220:
+            detail = f"{detail[:220].rstrip()}..."
+        return "api_error", f"Story generation failed: {detail}"
     return "api_error", "Story generation failed."
 
 
 def _build_story_status_payload(source: str, entry_id: str) -> dict:
+    source = str(source or "").strip().lower()
     settings = _load_story_settings()
-    chapters = load_story_chapters(entry_id) if source == "career" else []
-    if source != "career":
+    chapters = load_story_chapters_for(source, entry_id) if source in {"career", "campaign"} else []
+    if chapters:
+        chapters = [chapter for chapter in chapters if _is_valid_story_text(chapter.get("story_text"))]
+    if source not in {"career", "campaign"}:
         return {
             "supported": False,
             "enabled": settings["enabled"],
             "configured": settings["configured"],
             "auto_generate": settings["auto_generate"],
+            "provider": settings["provider"],
             "model": settings["model"],
             "status": "unsupported",
-            "message": "AI stories are currently available for career service records only.",
+            "message": "AI stories are not supported for this data source.",
             "chapters": chapters,
         }
 
@@ -204,12 +356,394 @@ def _build_story_status_payload(source: str, entry_id: str) -> dict:
         "enabled": settings["enabled"],
         "configured": settings["configured"],
         "auto_generate": settings["auto_generate"],
+        "provider": settings["provider"],
         "model": settings["model"],
         "story_language": settings["story_language"],
         "status": status,
         "message": message,
         "chapters": chapters,
     }
+
+
+def _normalize_story_text(value: object) -> str:
+    return str(value or "").strip()
+
+
+def _is_valid_story_text(value: object) -> bool:
+    text = _normalize_story_text(value)
+    if not text:
+        return False
+    lower = text.lower()
+    if lower.startswith("{'format':") or lower.startswith('{"format":'):
+        return False
+    if "verbosity" in lower and "format" in lower and len(text) < 180:
+        return False
+    return True
+
+
+def _clean_story_html(text: str) -> str:
+    if not text:
+        return ""
+    clean = text
+    clean = clean.replace("<br>", "\n").replace("<br/>", "\n").replace("<br />", "\n")
+    clean = re.sub(r"(?is)</li>", "\n", clean)
+    clean = re.sub(r"(?is)<li>", "- ", clean)
+    clean = re.sub(r"(?is)<[^>]+>", "", clean)
+    clean = clean.replace("&nbsp;", " ")
+    clean = re.sub(r"[ \t]+", " ", clean)
+    clean = re.sub(r"\n{3,}", "\n\n", clean)
+    return clean.strip()
+
+
+def _extract_story_info_field(content: str, key: str) -> str:
+    quoted = re.search(rf"&{key}\s*=\s*\"([\s\S]*?)\"", content, flags=re.IGNORECASE)
+    if quoted:
+        return _normalize_story_text(quoted.group(1))
+    unquoted = re.search(rf"&{key}\s*=\s*([^\r\n]+)", content, flags=re.IGNORECASE)
+    if unquoted:
+        return _normalize_story_text(unquoted.group(1))
+    return ""
+
+
+def _find_campaign_folder(campaign_name: str) -> Optional[Path]:
+    mission_dates = _data_loader.get_campaign_mission_dates() if _data_loader else {}
+    game_dir = _normalize_story_text(mission_dates.get("game_directory")) if isinstance(mission_dates, dict) else ""
+    if not game_dir:
+        return None
+    campaigns_root = Path(game_dir) / "data" / "Campaigns"
+    if not campaigns_root.exists():
+        return None
+    direct = campaigns_root / campaign_name
+    if direct.exists():
+        return direct
+    lower = campaign_name.lower()
+    for candidate in campaigns_root.iterdir():
+        if candidate.is_dir() and candidate.name.lower() == lower:
+            return candidate
+    return None
+
+
+def _read_campaign_info_context(campaign_name: str, story_language: str) -> dict:
+    folder = _find_campaign_folder(campaign_name)
+    if not folder:
+        return {"campaign_name": campaign_name, "background_excerpt": ""}
+
+    il2_locale = APP_TO_IL2_LOCALE.get(story_language, "eng")
+    candidates = [
+        folder / f"info.locale={il2_locale}.txt",
+        folder / "info.locale=eng.txt",
+    ]
+
+    content = ""
+    for path in candidates:
+        if path.exists():
+            try:
+                content = path.read_text(encoding="utf-8", errors="ignore")
+                break
+            except OSError:
+                continue
+    if not content:
+        return {"campaign_name": campaign_name, "background_excerpt": ""}
+
+    campaign_display_name = _extract_story_info_field(content, "name") or campaign_name
+    description = _extract_story_info_field(content, "description")
+    if not description:
+        return {"campaign_name": campaign_display_name, "background_excerpt": ""}
+
+    tracker_split = re.split(r"(?is)\bMission Debriefings\b|\bEvents\b", description, maxsplit=1)
+    description = tracker_split[0] if tracker_split else description
+    description = _clean_story_html(description)
+    if len(description) > _STORY_MAX_BACKGROUND_CHARS:
+        description = f"{description[:_STORY_MAX_BACKGROUND_CHARS].rstrip()}..."
+
+    return {
+        "campaign_name": campaign_display_name,
+        "background_excerpt": description,
+    }
+
+
+def _parse_story_date(text: str) -> str:
+    value = _normalize_story_text(text)
+    if not value:
+        return ""
+    for fmt in ("%d %B, %Y", "%d %B %Y", "%B %d, %Y", "%d.%m.%Y", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(value, fmt).strftime("%Y-%m-%d")
+        except ValueError:
+            continue
+    return ""
+
+
+def _parse_hms_to_seconds(value: str) -> int:
+    text = _normalize_story_text(value)
+    if not text:
+        return 0
+    parts = text.split(":")
+    try:
+        if len(parts) == 3:
+            hours = int(parts[0])
+            minutes = int(parts[1])
+            seconds = int(parts[2])
+        elif len(parts) == 2:
+            hours = 0
+            minutes = int(parts[0])
+            seconds = int(parts[1])
+        else:
+            return 0
+    except ValueError:
+        return 0
+    return max(0, hours * 3600 + minutes * 60 + seconds)
+
+
+def _seconds_to_hms(total_seconds: int) -> str:
+    value = max(0, int(total_seconds or 0))
+    hours = value // 3600
+    remainder = value % 3600
+    minutes = remainder // 60
+    seconds = remainder % 60
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+
+def _extract_career_notable_events(mission_json: dict) -> list[str]:
+    events = mission_json.get("events", [])
+    if not isinstance(events, list):
+        return []
+    notable: list[str] = []
+    for event in events:
+        if not isinstance(event, dict):
+            continue
+        ev_type = _normalize_story_text(event.get("type")).lower()
+        target = _normalize_story_text(event.get("target"))
+        if ev_type == "kill" and target:
+            notable.append(f"Destroyed {target}")
+        elif ev_type in {"bailout", "crash", "landing", "takeoff"}:
+            notable.append(ev_type.capitalize())
+        if len(notable) >= _STORY_MAX_NOTABLE_EVENTS:
+            break
+    return notable
+
+
+def _build_fallback_career_mission_json(result) -> dict:
+    duration_seconds = 0
+    try:
+        duration_seconds = int(float(result.duration_seconds or 0))
+    except (TypeError, ValueError):
+        duration_seconds = 0
+
+    kills = 0
+    try:
+        kills = int(result.kills or 0)
+    except (TypeError, ValueError):
+        kills = 0
+
+    return {
+        "player": {
+            "name": "",
+            "aircraft": _normalize_story_text(getattr(result, "aircraft", "")),
+        },
+        "summary": {
+            "final_state": _normalize_story_text(getattr(result, "final_state", "")) or "Unknown",
+            "flight_duration": _seconds_to_hms(duration_seconds),
+            "aircraft_damage": 0,
+            "pilot_damage": 0,
+            "air_kills_flying": kills,
+            "ground_kills": 0,
+            "naval_kills": 0,
+        },
+        "events": [],
+    }
+
+
+def _parse_campaign_mission_boxes(debriefings_html: str) -> list[dict]:
+    if not debriefings_html:
+        return []
+    boxes = re.findall(r"(?is)<div class=\"mission-box\">(.*?)</div>", debriefings_html)
+    parsed: list[dict] = []
+    for box in boxes:
+        header_match = re.search(r"(?is)<b>\s*MISSION\s+(.+?)\s*</b>", box)
+        header_text = _clean_story_html(header_match.group(1)) if header_match else ""
+        mission_id = ""
+        header_date = ""
+        if "|" in header_text:
+            left, right = header_text.split("|", 1)
+            mission_id = _normalize_story_text(left)
+            header_date = _normalize_story_text(right)
+        else:
+            mission_id = _normalize_story_text(header_text)
+
+        aircraft_line_match = re.search(r"(?is)Aircraft:\s*(.+?)<br>", box)
+        aircraft_line = _clean_story_html(aircraft_line_match.group(0)) if aircraft_line_match else ""
+
+        aircraft = ""
+        duration = ""
+        result = ""
+        aircraft_damage = 0.0
+        pilot_damage = 0.0
+        for segment in [seg.strip() for seg in aircraft_line.split("|")]:
+            lower = segment.lower()
+            if lower.startswith("aircraft:"):
+                aircraft = _normalize_story_text(segment.split(":", 1)[1])
+            elif lower.startswith("duration:"):
+                duration = _normalize_story_text(segment.split(":", 1)[1])
+            elif lower.startswith("status:"):
+                result = _normalize_story_text(segment.split(":", 1)[1])
+            elif lower.startswith("aircraft dmg:"):
+                value = _normalize_story_text(segment.split(":", 1)[1]).replace("%", "")
+                try:
+                    aircraft_damage = float(value)
+                except ValueError:
+                    pass
+            elif lower.startswith("pilot dmg:"):
+                value = _normalize_story_text(segment.split(":", 1)[1]).replace("%", "")
+                try:
+                    pilot_damage = float(value)
+                except ValueError:
+                    pass
+
+        events_block_match = re.search(r"(?is)<b>\s*FLIGHT LOG\s*</b><br>(.*)$", box)
+        events_text = _clean_story_html(events_block_match.group(1)) if events_block_match else ""
+        notable_events: list[str] = []
+        for raw_line in events_text.splitlines():
+            line = _normalize_story_text(re.sub(r"^\d{2}:\d{2}:\d{2}\s+", "", raw_line))
+            if not line:
+                continue
+            lower = line.lower()
+            if any(token in lower for token in ("destroyed", "hit by", "takeoff", "landing", "crash", "bailout", "wounded", "injured")):
+                notable_events.append(line)
+            if len(notable_events) >= _STORY_MAX_NOTABLE_EVENTS:
+                break
+
+        parsed.append({
+            "mission_id": mission_id,
+            "header_date": header_date,
+            "parsed_date": _parse_story_date(header_date),
+            "aircraft": aircraft,
+            "duration": duration,
+            "result": result,
+            "aircraft_damage": aircraft_damage,
+            "pilot_damage": pilot_damage,
+            "notable_events": notable_events,
+        })
+    return parsed
+
+
+def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> list[dict]:
+    if not _data_loader or not _aggregator:
+        raise RuntimeError("Campaign data providers are not initialized.")
+
+    detail = _aggregator.get_campaign_detail(campaign_name)
+    if not detail:
+        raise ValueError(f"Campaign not found: {campaign_name}")
+
+    completion_state = _data_loader.get_campaign_completion_state()
+    completed_missions = list(completion_state.get(campaign_name, []) or [])
+    completed_missions = sorted(
+        [_normalize_story_text(mid) for mid in completed_missions if _normalize_story_text(mid)],
+        key=smart_mission_sort_key,
+    )
+    if not completed_missions:
+        return []
+
+    mission_dates = _data_loader.get_mission_dates_for_campaign(campaign_name)
+    mission_dates_map = mission_dates.get("missions", {}) if isinstance(mission_dates, dict) else {}
+    mission_aircraft_map = _data_loader.get_mission_aircraft_map(campaign_name)
+    decoded = _data_loader.get_campaigns_decoded().get(campaign_name, {})
+    stats_by_mission = decoded.get("characterStatisticsByFileName", {}) if isinstance(decoded, dict) else {}
+    events_data = _data_loader.get_campaign_events()
+    campaign_events = events_data.get(campaign_name, {}) if isinstance(events_data, dict) else {}
+    progression_events = campaign_events.get("events", []) if isinstance(campaign_events, dict) else []
+
+    info_context = _read_campaign_info_context(campaign_name, story_language)
+    mission_boxes = _parse_campaign_mission_boxes(_normalize_story_text(detail.get("debriefings_html")))
+    mission_box_by_id = {
+        _normalize_story_text(item.get("mission_id")).lower(): item
+        for item in mission_boxes
+        if _normalize_story_text(item.get("mission_id"))
+    }
+
+    cumulative_awards: list[str] = []
+    current_rank = ""
+    for event in progression_events:
+        mission_ref = _normalize_story_text(event.get("mission"))
+        if mission_ref.lower() != "initial":
+            continue
+        event_type = _normalize_story_text(event.get("type")).lower()
+        if event_type == "promotion":
+            current_rank = _normalize_story_text(event.get("rank"))
+        elif event_type == "award":
+            award = _humanize_story_label(event.get("name"))
+            if award:
+                cumulative_awards.append(award)
+
+    contexts: list[dict] = []
+    for index, mission_id in enumerate(completed_missions, start=1):
+        mid = _normalize_story_text(mission_id)
+        mission_meta = mission_dates_map.get(mid, {}) if isinstance(mission_dates_map, dict) else {}
+        mission_box = mission_box_by_id.get(mid.lower(), {})
+        mission_stats = stats_by_mission.get(mid, {}) if isinstance(stats_by_mission, dict) else {}
+        aircraft_entry = mission_aircraft_map.get(mid, {}) if isinstance(mission_aircraft_map, dict) else {}
+
+        mission_awards: list[str] = []
+        mission_promotion = ""
+        for event in progression_events:
+            if _normalize_story_text(event.get("mission")).lower() != mid.lower():
+                continue
+            event_type = _normalize_story_text(event.get("type")).lower()
+            if event_type == "promotion":
+                mission_promotion = _normalize_story_text(event.get("rank"))
+            elif event_type == "award":
+                award = _humanize_story_label(event.get("name"))
+                if award:
+                    mission_awards.append(award)
+
+        if mission_promotion:
+            current_rank = mission_promotion
+        for award in mission_awards:
+            cumulative_awards.append(award)
+
+        mission_date = _normalize_story_text(mission_meta.get("normalized_date"))
+        if not mission_date:
+            mission_date = _normalize_story_text(mission_box.get("parsed_date"))
+
+        summary = {
+            "result": _normalize_story_text(mission_box.get("result")) or "Unknown",
+            "duration": _normalize_story_text(mission_box.get("duration")),
+            "aircraft_damage": mission_box.get("aircraft_damage", 0),
+            "pilot_damage": mission_box.get("pilot_damage", 0),
+            "air_kills": int(mission_stats.get("killLightPlane", 0) or 0) + int(mission_stats.get("killMediumPlane", 0) or 0) + int(mission_stats.get("killHeavyPlane", 0) or 0),
+            "ground_kills": int(mission_stats.get("killAAAGun", 0) or 0) + int(mission_stats.get("killMachinegun", 0) or 0) + int(mission_stats.get("killCannon", 0) or 0) + int(mission_stats.get("killRadar", 0) or 0) + int(mission_stats.get("killTransportVehicle", 0) or 0) + int(mission_stats.get("killLightArmoredVehicle", 0) or 0) + int(mission_stats.get("killMediumArmoredVehicle", 0) or 0) + int(mission_stats.get("killHeavyArmoredVehicle", 0) or 0) + int(mission_stats.get("killBridge", 0) or 0) + int(mission_stats.get("killFacility", 0) or 0) + int(mission_stats.get("killRailroadStation", 0) or 0) + int(mission_stats.get("killRailroadCarriage", 0) or 0) + int(mission_stats.get("killLocomotive", 0) or 0) + int(mission_stats.get("killRocketLauncher", 0) or 0) + int(mission_stats.get("killSearchlight", 0) or 0) + int(mission_stats.get("killResidentalBuilding", 0) or 0) + int(mission_stats.get("killStaticPlane", 0) or 0),
+            "naval_kills": int(mission_stats.get("killLightShip", 0) or 0) + int(mission_stats.get("killDestroyerShip", 0) or 0) + int(mission_stats.get("killLargeCargoShip", 0) or 0) + int(mission_stats.get("killSubmarine", 0) or 0),
+        }
+
+        aircraft = _normalize_story_text(mission_box.get("aircraft"))
+        if not aircraft:
+            aircraft = _normalize_story_text(aircraft_entry.get("aircraft"))
+
+        story_input = build_campaign_story_input(
+            campaign_id=campaign_name,
+            mission_id=mid,
+            mission_date=mission_date,
+            mission_summary=summary,
+            mission_events=mission_box.get("notable_events", []),
+            rank=current_rank,
+            aircraft=aircraft,
+            campaign_display_name=_normalize_story_text(info_context.get("campaign_name")),
+            campaign_background=_normalize_story_text(info_context.get("background_excerpt")),
+            country=_normalize_story_text(detail.get("country")),
+            awards=list(cumulative_awards),
+            promotion=current_rank,
+            mission_awards=mission_awards,
+            mission_promotion=mission_promotion,
+            honors_context=_build_honors_context(
+                _normalize_story_text(detail.get("country")),
+                mission_promotion,
+                mission_awards,
+            ),
+            missions_completed=index,
+        )
+        contexts.append(story_input)
+
+    return contexts
 
 
 def _build_career_story_contexts(root_career_id: int) -> list[dict]:
@@ -245,34 +779,48 @@ def _build_career_story_contexts(root_career_id: int) -> list[dict]:
         )
     )
 
-    contexts: list[dict] = []
-    linked_mission_index = 0
-    for result in results:
-        if not result.linked:
-            continue
+    def _merge_unique_list(target: list, values: list) -> None:
+        seen = set()
+        for item in target:
+            key = json.dumps(item, sort_keys=True, ensure_ascii=False) if isinstance(item, dict) else str(item)
+            seen.add(key)
+        for item in values:
+            key = json.dumps(item, sort_keys=True, ensure_ascii=False) if isinstance(item, dict) else str(item)
+            if key in seen:
+                continue
+            target.append(item)
+            seen.add(key)
 
+    mission_rows: list[dict] = []
+
+    def _resolve_career_mission_date(result_obj, mission_row_obj) -> str:
+        if mission_row_obj is not None:
+            resolved = _normalize_story_text(aggregator._format_date(mission_row_obj["startTime"]))
+            if resolved:
+                return resolved
+        parsed_from_label = _parse_story_date(_normalize_story_text(getattr(result_obj, "mission_date", "")))
+        if parsed_from_label:
+            return parsed_from_label
+        return f"mission-{int(getattr(result_obj, 'mission_id', 0) or 0):08d}"
+
+    for result in results:
+        mission_json = None
         cache_entry = cache.get(str(result.mission_id), {})
         report_path_str = str(cache_entry.get("report_path") or "").strip()
-        if not report_path_str:
-            continue
-        report_path = Path(report_path_str)
-        json_path = report_path.with_suffix(".events.json")
-        if not json_path.exists():
-            continue
-        try:
-            mission_json = json.loads(json_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
+        if report_path_str:
+            report_path = Path(report_path_str)
+            json_path = report_path.with_suffix(".events.json")
+            if json_path.exists():
+                try:
+                    mission_json = json.loads(json_path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    mission_json = None
+        if mission_json is None:
+            mission_json = _build_fallback_career_mission_json(result)
 
         mission_row = db.get_mission_by_id(result.mission_id)
-        if mission_row is None:
-            continue
+        mission_date_iso = _resolve_career_mission_date(result, mission_row)
 
-        mission_date_iso = aggregator._format_date(mission_row["startTime"])
-        if not mission_date_iso:
-            continue
-
-        linked_mission_index += 1
         mission_segment_index = next(
             (idx for idx, row in enumerate(career.chain) if int(row["id"]) == result.career_id),
             0,
@@ -285,57 +833,391 @@ def _build_career_story_contexts(root_career_id: int) -> list[dict]:
             except Exception:
                 squadron_name = ""
 
-        awards: list[str] = []
-        mission_awards: list[str] = []
-        rank = ""
-        promotion = None
-        for raw_event in raw_events:
-            event_segment_index = segment_by_pilot.get(int(raw_event["pilotId"]), 0)
-            event_date_iso = aggregator._format_date(raw_event["date"])
-            include = (
-                event_segment_index < mission_segment_index
-                or (event_segment_index == mission_segment_index and event_date_iso and event_date_iso <= mission_date_iso)
+        mission_rows.append({
+            "mission_id": int(result.mission_id),
+            "mission_date": mission_date_iso,
+            "segment_index": mission_segment_index,
+            "segment": mission_segment,
+            "squadron_name": squadron_name,
+            "mission_json": mission_json,
+            "sort_key": (
+                mission_date_iso,
+                mission_segment_index,
+                int(result.mission_id),
+            ),
+        })
+
+    if not mission_rows:
+        return []
+
+    mission_rows.sort(key=lambda row: row["sort_key"])
+
+    by_day: dict[str, list[dict]] = {}
+    for row in mission_rows:
+        by_day.setdefault(row["mission_date"], []).append(row)
+
+    day_keys = sorted(by_day.keys())
+    contexts: list[dict] = []
+    for day_index, day_key in enumerate(day_keys, start=1):
+        day_rows = by_day.get(day_key, [])
+        if not day_rows:
+            continue
+
+        try:
+            max_segment_index = max(int(row["segment_index"]) for row in day_rows)
+            latest_row = max(day_rows, key=lambda row: (int(row["segment_index"]), int(row["mission_id"])))
+            squadron_name = _normalize_story_text(latest_row["squadron_name"])
+
+            awards: list[str] = []
+            mission_awards: list[str] = []
+            promotions_today: list[str] = []
+            rank = ""
+            for raw_event in raw_events:
+                try:
+                    event_segment_index = segment_by_pilot.get(int(raw_event["pilotId"]), 0)
+                except (TypeError, ValueError):
+                    continue
+                event_date_iso = aggregator._format_date(raw_event["date"])
+                include = (
+                    event_segment_index < max_segment_index
+                    or (event_segment_index == max_segment_index and event_date_iso and event_date_iso <= day_key)
+                )
+                if not include:
+                    continue
+
+                mapped = aggregator._map_event(raw_event, career.country)
+                if not mapped:
+                    continue
+                if mapped.get("type") == "promotion":
+                    mapped_rank = _normalize_story_text(mapped.get("rank"))
+                    if mapped_rank:
+                        rank = mapped_rank
+                        if event_date_iso == day_key:
+                            promotions_today.append(mapped_rank)
+                elif mapped.get("type") == "award":
+                    award_name = _humanize_story_label(mapped.get("name"))
+                    if award_name:
+                        awards.append(award_name)
+                        if event_date_iso == day_key:
+                            mission_awards.append(award_name)
+
+            promotion_today = ", ".join(
+                dict.fromkeys([_normalize_story_text(value) for value in promotions_today if _normalize_story_text(value)])
             )
-            if not include:
-                continue
+            mission_awards = list(dict.fromkeys([name for name in mission_awards if name]))
+            awards = list(dict.fromkeys([name for name in awards if name]))
 
-            mapped = aggregator._map_event(raw_event, career.country)
-            if not mapped:
-                continue
-            if mapped.get("type") == "promotion":
-                rank = str(mapped.get("rank") or rank)
-                if event_date_iso == mission_date_iso:
-                    promotion = str(mapped.get("rank") or "")
-            elif mapped.get("type") == "award":
-                award_name = _humanize_story_label(mapped.get("name"))
-                if award_name:
-                    awards.append(award_name)
-                    if event_date_iso == mission_date_iso:
-                        mission_awards.append(award_name)
+            total_duration_seconds = 0
+            total_air_kills = 0
+            total_ground_kills = 0
+            total_naval_kills = 0
+            max_aircraft_damage = 0.0
+            max_pilot_damage = 0.0
+            mission_results: list[str] = []
+            aircraft_values: list[str] = []
+            day_notables: list[str] = []
+            merged_squadron_context = {
+                "promotions": [],
+                "awards": [],
+                "transfers": [],
+                "kia": [],
+                "mia": [],
+                "wia": [],
+            }
 
-        story_input = build_story_input(
-            mission_json,
-            career_id=root_career_id,
-            mission_id=result.mission_id,
-            mission_date=mission_date_iso,
-            squadron=squadron_name,
-            pilot_last_name=career.pilot_last_name or "",
-            rank=rank,
-            awards=awards,
-            promotion=promotion,
-            mission_awards=mission_awards,
-            mission_promotion=promotion,
-            missions_completed=linked_mission_index,
-            narrative_memory={},
-        )
-        pilot_name = " ".join(
-            part for part in (career.pilot_first_name, career.pilot_last_name) if part
-        ).strip()
-        if pilot_name:
-            story_input["pilot"]["name"] = pilot_name
-        contexts.append(story_input)
+            for row in day_rows:
+                mission_json = row["mission_json"]
+                summary = mission_json.get("summary", {}) if isinstance(mission_json, dict) else {}
+                result_text = _normalize_story_text(summary.get("final_state"))
+                if result_text:
+                    mission_results.append(result_text)
+
+                duration_raw = _normalize_story_text(summary.get("flight_duration"))
+                total_duration_seconds += _parse_hms_to_seconds(duration_raw)
+
+                try:
+                    total_air_kills += int(summary.get("air_kills_flying", summary.get("air_kills", 0)) or 0)
+                except (TypeError, ValueError):
+                    pass
+                try:
+                    total_ground_kills += int(summary.get("ground_kills", 0) or 0)
+                except (TypeError, ValueError):
+                    pass
+                try:
+                    total_naval_kills += int(summary.get("naval_kills", 0) or 0)
+                except (TypeError, ValueError):
+                    pass
+
+                try:
+                    max_aircraft_damage = max(max_aircraft_damage, float(summary.get("aircraft_damage", 0) or 0))
+                except (TypeError, ValueError):
+                    pass
+                try:
+                    max_pilot_damage = max(max_pilot_damage, float(summary.get("pilot_damage", 0) or 0))
+                except (TypeError, ValueError):
+                    pass
+
+                aircraft = _normalize_story_text(mission_json.get("player", {}).get("aircraft"))
+                if aircraft:
+                    aircraft_values.append(aircraft)
+
+                for note in _extract_career_notable_events(mission_json):
+                    day_notables.append(f"M{row['mission_id']}: {note}")
+                    if len(day_notables) >= (_STORY_MAX_NOTABLE_EVENTS * 2):
+                        break
+
+                squadron_context = _build_squadron_context_for_mission(
+                    db,
+                    aggregator,
+                    career,
+                    row["segment"],
+                    int(row["mission_id"]),
+                    day_key,
+                )
+                for key in ("promotions", "awards", "transfers", "kia", "mia", "wia"):
+                    values = squadron_context.get(key, [])
+                    if isinstance(values, list):
+                        _merge_unique_list(merged_squadron_context[key], values)
+
+            # Keep story input compact/stable for API reliability.
+            for key in ("promotions", "awards", "transfers"):
+                merged_squadron_context[key] = merged_squadron_context[key][:8]
+            for key in ("kia", "mia", "wia"):
+                merged_squadron_context[key] = merged_squadron_context[key][:12]
+
+            if not day_notables:
+                day_notables = [f"M{row['mission_id']}" for row in day_rows]
+            day_notables = day_notables[: (_STORY_MAX_NOTABLE_EVENTS * 2)]
+
+            unique_aircraft = list(dict.fromkeys([name for name in aircraft_values if name]))
+            aircraft_label = unique_aircraft[0] if len(unique_aircraft) == 1 else ", ".join(unique_aircraft[:3])
+            if not aircraft_label:
+                aircraft_label = _normalize_story_text(latest_row["mission_json"].get("player", {}).get("aircraft"))
+
+            day_result = _normalize_story_text(day_rows[-1]["mission_json"].get("summary", {}).get("final_state"))
+            if not day_result and mission_results:
+                day_result = mission_results[-1]
+
+            synthetic_json = {
+                "player": {
+                    "name": " ".join(
+                        part for part in (career.pilot_first_name, career.pilot_last_name) if part
+                    ).strip(),
+                    "aircraft": aircraft_label,
+                },
+                "summary": {
+                    "final_state": day_result or "Unknown",
+                    "flight_duration": _seconds_to_hms(total_duration_seconds),
+                    "aircraft_damage": round(max_aircraft_damage, 1),
+                    "pilot_damage": round(max_pilot_damage, 1),
+                    "air_kills_flying": total_air_kills,
+                    "ground_kills": total_ground_kills,
+                    "naval_kills": total_naval_kills,
+                },
+                "events": [],
+            }
+
+            day_story_input = build_story_input(
+                synthetic_json,
+                career_id=root_career_id,
+                mission_id=day_key,
+                mission_date=day_key,
+                squadron=squadron_name,
+                pilot_last_name=career.pilot_last_name or "",
+                rank=rank,
+                awards=awards,
+                promotion=promotion_today,
+                mission_awards=mission_awards,
+                mission_promotion=promotion_today,
+                honors_context=_build_honors_context(career.country, promotion_today, mission_awards),
+                squadron_context=merged_squadron_context,
+                missions_completed=day_index,
+                narrative_memory={},
+            )
+            day_story_input["mission"]["notable_events"] = day_notables
+            day_story_input["mission"]["result"] = day_result or day_story_input["mission"].get("result") or "Unknown"
+            day_story_input["pilot"]["aircraft"] = aircraft_label
+            day_story_input["chapter_scope"] = {
+                "scope": "day",
+                "missions_in_chapter": len(day_rows),
+                "mission_ids": [str(row["mission_id"]) for row in day_rows],
+                "mission_results": mission_results,
+            }
+
+            pilot_name = " ".join(
+                part for part in (career.pilot_first_name, career.pilot_last_name) if part
+            ).strip()
+            if pilot_name:
+                day_story_input["pilot"]["name"] = pilot_name
+            contexts.append(day_story_input)
+        except Exception as exc:
+            logger.warning(
+                "Skipping career story day context for %s (%s): %s",
+                root_career_id,
+                day_key,
+                exc,
+                exc_info=True,
+            )
+            fallback_row = day_rows[0] if day_rows else None
+            if not fallback_row:
+                continue
+            fallback_json = _build_fallback_career_mission_json(
+                type(
+                    "FallbackResult",
+                    (),
+                    {
+                        "duration_seconds": 0,
+                        "kills": 0,
+                        "final_state": "Unknown",
+                        "aircraft": _normalize_story_text(fallback_row.get("mission_json", {}).get("player", {}).get("aircraft", "")),
+                    },
+                )()
+            )
+            fallback_input = build_story_input(
+                fallback_json,
+                career_id=root_career_id,
+                mission_id=day_key,
+                mission_date=day_key,
+                squadron="",
+                pilot_last_name=career.pilot_last_name or "",
+                rank="",
+                awards=[],
+                promotion="",
+                mission_awards=[],
+                mission_promotion="",
+                honors_context={"promotion": {}, "awards": []},
+                squadron_context={
+                    "promotions": [],
+                    "awards": [],
+                    "transfers": [],
+                    "kia": [],
+                    "mia": [],
+                    "wia": [],
+                },
+                missions_completed=day_index,
+                narrative_memory={},
+            )
+            fallback_input["chapter_scope"] = {
+                "scope": "day",
+                "missions_in_chapter": len(day_rows) if day_rows else 1,
+                "mission_ids": [str(row["mission_id"]) for row in day_rows],
+                "mission_results": [],
+            }
+            pilot_name = " ".join(
+                part for part in (career.pilot_first_name, career.pilot_last_name) if part
+            ).strip()
+            if pilot_name:
+                fallback_input["pilot"]["name"] = pilot_name
+            contexts.append(fallback_input)
+            continue
 
     return contexts
+
+
+def _pilot_display_name(row) -> str:
+    first = str(row["name"] or "").strip() if "name" in row.keys() else ""
+    last = str(row["lastName"] or "").strip() if "lastName" in row.keys() else ""
+    if first and last:
+        return f"{first} {last}"
+    return first or last or "Unknown Pilot"
+
+
+def _build_squadron_context_for_mission(
+    db,
+    aggregator,
+    career,
+    mission_segment,
+    mission_id: int,
+    mission_date_iso: str,
+) -> dict:
+    """
+    Build reliable squadron-context facts for one mission.
+
+    Only uses cp.db-derived facts:
+      - member promotions/awards/transfers on mission date
+      - member WIA/MIA/KIA sortie states on this mission
+    """
+    empty = {
+        "promotions": [],
+        "awards": [],
+        "transfers": [],
+        "kia": [],
+        "mia": [],
+        "wia": [],
+    }
+    if mission_segment is None:
+        return empty
+
+    try:
+        segment_career_id = int(mission_segment["id"])
+        segment_player_id = int(mission_segment["playerId"])
+        squadron_id = int(mission_segment["squadronId"])
+    except Exception:
+        return empty
+
+    members = db.get_squadron_members(squadron_id) if squadron_id else []
+    if not members:
+        return empty
+
+    member_by_id = {}
+    member_ids = []
+    for row in members:
+        pid = int(row["id"])
+        if pid == segment_player_id:
+            continue
+        member_ids.append(pid)
+        member_by_id[pid] = _pilot_display_name(row)
+    if not member_ids:
+        return empty
+
+    # Event-driven updates (same mission date only)
+    member_events = db.get_events_for_pilots(member_ids, types=_STORY_SQUADRON_EVENT_TYPES)
+    for ev in member_events:
+        ev_date = aggregator._format_date(ev["date"])
+        if ev_date != mission_date_iso:
+            continue
+        pid = int(ev["pilotId"])
+        who = member_by_id.get(pid, f"Pilot {pid}")
+        mapped = aggregator._map_event(ev, career.country)
+        if not mapped:
+            continue
+        ev_type = mapped.get("type")
+        if ev_type == "promotion":
+            rank_name = str(mapped.get("rank") or "").strip()
+            if rank_name:
+                empty["promotions"].append({"pilot": who, "rank": rank_name})
+        elif ev_type == "award":
+            award_name = _humanize_story_label(mapped.get("name"))
+            if award_name:
+                empty["awards"].append({"pilot": who, "award": award_name})
+        elif ev_type == "transfer":
+            to_cfg = int(ev["squadronId"] or 0) if "squadronId" in ev.keys() else 0
+            to_name = ""
+            if to_cfg:
+                to_name = aggregator._resolve_squadron_name_by_config(segment_career_id, to_cfg) or ""
+            if not to_name and to_cfg:
+                to_name = f"Squadron {to_cfg}"
+            empty["transfers"].append({
+                "pilot": who,
+                "to_squadron": to_name,
+            })
+
+    # Sortie status updates (this exact mission)
+    # Known mapping in this codebase:
+    #   2 = KIA, 3 = MIA, 4 = WIA
+    mission_sorties = db.get_sorties_for_mission_pilots(mission_id, member_ids)
+    for sortie in mission_sorties:
+        pid = int(sortie["pilotId"])
+        who = member_by_id.get(pid, f"Pilot {pid}")
+        status = int(sortie["status"] or 0)
+        if status == 2:
+            empty["kia"].append(who)
+        elif status == 3:
+            empty["mia"].append(who)
+        elif status == 4:
+            empty["wia"].append(who)
+
+    return empty
 
 
 def init_api(data_dir: Path, reports_dir: Optional[Path] = None):
@@ -1268,16 +2150,17 @@ def start_career_parse():
 def get_stories(source: str, entry_id: str):
     """Return story status and cached chapters for a service-record entry."""
     _last_ping[0] = time.time()
-    return jsonify(_build_story_status_payload(source, entry_id))
+    return jsonify(_build_story_status_payload(str(source or "").lower(), entry_id))
 
 
 @api_bp.route('/api/stories/<source>/<entry_id>/generate', methods=['POST'])
 def generate_stories(source: str, entry_id: str):
     """Generate and cache missing story chapters for a service-record entry."""
     _last_ping[0] = time.time()
+    source = str(source or "").strip().lower()
 
-    if source != 'career':
-        return jsonify({'error': 'AI stories are currently available for career service records only.'}), 400
+    if source not in {'career', 'campaign'}:
+        return jsonify({'error': 'AI stories are not supported for this data source.'}), 400
 
     settings = _load_story_settings()
     if not settings["enabled"]:
@@ -1286,14 +2169,21 @@ def generate_stories(source: str, entry_id: str):
         return jsonify({'error': 'No OpenAI API key is configured.'}), 400
 
     try:
-        root_career_id = int(entry_id)
-    except (TypeError, ValueError):
-        return jsonify({'error': 'Invalid career id.'}), 400
+        if source == "career":
+            try:
+                root_career_id = int(entry_id)
+            except (TypeError, ValueError):
+                return jsonify({'error': 'Invalid career id.'}), 400
+            storage_entry_id: str | int = root_career_id
+            contexts = _build_career_story_contexts(root_career_id)
+            if not contexts:
+                return jsonify({'error': 'No career mission context could be built yet. Run/update debrief parsing first and retry.'}), 400
+        else:
+            storage_entry_id = entry_id
+            contexts = _build_campaign_story_contexts(entry_id, settings["story_language"])
 
-    try:
-        contexts = _build_career_story_contexts(root_career_id)
         if not contexts:
-            return jsonify({'error': 'No linked mission reports are available for story generation yet.'}), 400
+            return jsonify({'error': 'No mission data is available for story generation yet.'}), 400
 
         payload = request.get_json(silent=True) if request.is_json else {}
         if not isinstance(payload, dict):
@@ -1304,41 +2194,97 @@ def generate_stories(source: str, entry_id: str):
             max_chapters = 1
         max_chapters = max(1, min(max_chapters, 10))
 
-        existing_chapters = load_story_chapters(root_career_id)
-        existing_mission_ids = {
-            str(chapter.get("mission_id"))
-            for chapter in existing_chapters
-            if chapter.get("mission_id") is not None
-        }
-        missing_contexts = [
-            context for context in contexts
-            if str(context.get("mission_id")) not in existing_mission_ids
-        ]
+        existing_chapters = load_story_chapters_for(source, storage_entry_id)
+        existing_story_keys: set[str] = set()
+        for chapter in existing_chapters:
+            if not _is_valid_story_text(chapter.get("story_text")):
+                continue
+            mission_value = chapter.get("mission_id")
+            if mission_value is not None:
+                mission_key = str(mission_value)
+                existing_story_keys.add(mission_key)
+                if re.fullmatch(r"\d{4}-\d{2}-\d{2}", mission_key):
+                    existing_story_keys.add(f"date:{mission_key}")
+                elif mission_key.startswith("day:"):
+                    day_key = _normalize_story_text(mission_key.split(":", 1)[1])
+                    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", day_key):
+                        existing_story_keys.add(f"date:{day_key}")
+        missing_contexts: list[dict] = []
+        for context in contexts:
+            mission_key = str(context.get("mission_id"))
+            if mission_key in existing_story_keys:
+                continue
+
+            # Only day-scoped chapters (career aggregation) should dedupe by date.
+            chapter_scope = context.get("chapter_scope")
+            is_day_scope = (
+                isinstance(chapter_scope, dict)
+                and _normalize_story_text(chapter_scope.get("scope")).lower() == "day"
+            )
+            if is_day_scope:
+                date_key = _normalize_story_text(context.get("date"))
+                if date_key and f"date:{date_key}" in existing_story_keys:
+                    continue
+
+            missing_contexts.append(context)
         if not missing_contexts:
-            status_payload = _build_story_status_payload(source, entry_id)
+            status_payload = _build_story_status_payload(source, str(storage_entry_id))
             status_payload["generated_count"] = 0
             status_payload["remaining_count"] = 0
             status_payload["message"] = "Stories are already up to date."
             return jsonify(status_payload)
 
-        memory = load_or_create_story_state(root_career_id)
+        memory = load_or_create_story_state_for(source, storage_entry_id)
         generated_count = 0
+        generation_errors: list[str] = []
         for context in missing_contexts:
             if generated_count >= max_chapters:
                 break
             context["narrative_memory"] = memory
-            result = generate_and_store_chapter(
-                context,
-                career_id=root_career_id,
-                model=settings["model"],
-                api_key=settings["api_key"],
-                output_language=settings["story_language"],
-            )
-            memory = result.get("memory") or memory
-            save_story_state(root_career_id, memory)
-            generated_count += 1
+            try:
+                with ThreadPoolExecutor(max_workers=1) as pool:
+                    future = pool.submit(
+                        generate_and_store_chapter_for,
+                        source,
+                        storage_entry_id,
+                        context,
+                        model=settings["model"],
+                        api_key=settings["api_key"],
+                        provider=settings["provider"],
+                        base_url=settings["base_url"],
+                        output_language=settings["story_language"],
+                    )
+                    result = future.result(timeout=120)
+                memory = result.get("memory") or memory
+                save_story_state_for(source, storage_entry_id, memory)
+                generated_count += 1
+            except FuturesTimeoutError:
+                mission_ref = _normalize_story_text(context.get("mission_id")) or _normalize_story_text(context.get("date")) or "unknown"
+                generation_errors.append(f"{mission_ref}: story generation timed out")
+                logger.warning(
+                    "Story generation timed out for %s/%s mission_ref=%s",
+                    source,
+                    storage_entry_id,
+                    mission_ref,
+                )
+                continue
+            except Exception as chapter_exc:
+                mission_ref = _normalize_story_text(context.get("mission_id")) or _normalize_story_text(context.get("date")) or "unknown"
+                generation_errors.append(f"{mission_ref}: {chapter_exc}")
+                logger.warning(
+                    "Story generation failed for %s/%s mission_ref=%s: %s",
+                    source,
+                    storage_entry_id,
+                    mission_ref,
+                    chapter_exc,
+                    exc_info=True,
+                )
+                continue
 
-        status_payload = _build_story_status_payload(source, entry_id)
+        if generated_count == 0 and generation_errors:
+            raise RuntimeError(generation_errors[0])
+
+        status_payload = _build_story_status_payload(source, str(storage_entry_id))
         status_payload["generated_count"] = generated_count
         status_payload["remaining_count"] = max(0, len(missing_contexts) - generated_count)
         return jsonify(status_payload)

@@ -1025,9 +1025,9 @@ const DetailPage = {
             this.currentStoriesEntryId = entryId;
             this.currentStoriesPayload = null;
             this.renderStoriesSection({
-                supported: resolvedSource === 'career',
+                supported: resolvedSource === 'career' || resolvedSource === 'campaign',
                 status: 'loading',
-                message: resolvedSource === 'career' ? 'Loading stories...' : '',
+                message: (resolvedSource === 'career' || resolvedSource === 'campaign') ? 'Loading stories...' : '',
                 chapters: []
             });
 
@@ -1215,7 +1215,8 @@ const DetailPage = {
         const source = this._source || 'campaign';
         const supported = !!payload?.supported;
         const enabled = payload?.enabled === true;
-        const shouldShow = source === 'career' && (enabled || payload?.status === 'loading');
+        const storyCapableSource = source === 'career' || source === 'campaign';
+        const shouldShow = storyCapableSource && (enabled || payload?.status === 'loading');
         section.style.display = shouldShow ? '' : 'none';
         if (!shouldShow) {
             return;
@@ -1285,7 +1286,7 @@ const DetailPage = {
     },
 
     async loadStories(entryId, source) {
-        if (source !== 'career') {
+        if (source !== 'career' && source !== 'campaign') {
             this.renderStoriesSection({
                 supported: false,
                 status: 'unsupported',
@@ -1320,7 +1321,10 @@ const DetailPage = {
     },
 
     async generateStories(options = {}) {
-        if (this._source !== 'career' || !this.currentStoriesEntryId || this.storiesLoading) {
+        if (!this.currentStoriesEntryId || this.storiesLoading) {
+            return;
+        }
+        if (this._source !== 'career' && this._source !== 'campaign') {
             return;
         }
 
