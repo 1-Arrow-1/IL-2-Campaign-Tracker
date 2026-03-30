@@ -748,6 +748,109 @@ def _looks_truncated_story_text(text: str) -> bool:
     return True
 
 
+def _build_deterministic_story_fallback(story_input: Dict[str, Any]) -> Dict[str, str]:
+    mission = story_input.get("mission", {}) if isinstance(story_input, dict) else {}
+    pilot = story_input.get("pilot", {}) if isinstance(story_input, dict) else {}
+    mission_progression = story_input.get("mission_progression", {}) if isinstance(story_input, dict) else {}
+    campaign_context = story_input.get("campaign_context", {}) if isinstance(story_input, dict) else {}
+
+    mission_date = _normalize_text(story_input.get("date")) or _normalize_text(mission.get("date")) or "Unknown date"
+    aircraft = _normalize_text(pilot.get("aircraft")) or "aircraft"
+    result = _normalize_text(mission.get("result")) or "Unknown"
+    duration = _normalize_text(mission.get("duration"))
+    air_kills = int(mission.get("air_kills", 0) or 0)
+    ground_kills = int(mission.get("ground_kills", 0) or 0)
+    naval_kills = int(mission.get("naval_kills", 0) or 0)
+    campaign_name = _normalize_text(campaign_context.get("campaign_name"))
+    promotion = _normalize_text(mission_progression.get("promotion"))
+    awards = mission_progression.get("awards", [])
+    award_text = ", ".join([_normalize_text(a) for a in awards if _normalize_text(a)])
+
+    p1 = (
+        f"On {mission_date}, the pilot flew a mission in a {aircraft}"
+        + (f" during {campaign_name}." if campaign_name else ".")
+    )
+    p2 = (
+        f"The sortie ended with status: {result}."
+        + (f" Flight time was {duration}." if duration else "")
+        + f" Recorded combat results were {air_kills} air kills, {ground_kills} ground kills, and {naval_kills} naval kills."
+    )
+
+    progression_parts: list[str] = []
+    if promotion:
+        progression_parts.append(f"The mission included a promotion to {promotion}.")
+    if award_text:
+        progression_parts.append(f"Awards recorded for this mission: {award_text}.")
+    if not progression_parts:
+        progression_parts.append("No promotion or mission-specific award event was recorded.")
+    p3 = " ".join(progression_parts)
+
+    return {
+        "title": "Mission Chronicle",
+        "story_text": f"{p1}\n\n{p2}\n\n{p3}",
+    }
+
+
+def _attempt_story_repair(
+    client: Any,
+    *,
+    provider: str,
+    model: str,
+    story_input: Dict[str, Any],
+    partial_text: str,
+    max_output_tokens: int,
+    output_language: str,
+) -> str:
+    text = _normalize_text(partial_text)
+    if not text:
+        return ""
+    language_label = _LANGUAGE_LABELS.get(_normalize_text(output_language).lower(), "English")
+    repair_prompt = (
+        "Rewrite the chapter below into a complete, polished wartime narrative.\n"
+        "Use only the supplied mission facts, keep third-person past tense, and write exactly 3 paragraphs.\n"
+        "Do not output JSON or markdown.\n"
+        f"Write in {language_label}.\n\n"
+        "Mission facts JSON:\n"
+        f"{json.dumps(story_input, ensure_ascii=False, indent=2)}\n\n"
+        "Incomplete chapter text:\n"
+        f"{text}"
+    )
+    repaired = _create_story_response(
+        client,
+        provider=provider,
+        model=model,
+        prompt=repair_prompt,
+        max_output_tokens=max_output_tokens,
+    )
+    return _normalize_text(_extract_response_text(repaired))
+
+
+def _backup_models_for_provider(provider: str, primary_model: str) -> list[str]:
+    provider_key = _normalize_text(provider).lower()
+    primary = _normalize_text(primary_model)
+    candidates: list[str] = []
+    if provider_key == "openai":
+        candidates = ["gpt-5-mini", "gpt-4.1"]
+    elif provider_key == "openrouter":
+        candidates = ["openai/gpt-5-mini", "google/gemini-2.0-flash-001", "x-ai/grok-4.1-fast"]
+    elif provider_key == "anthropic":
+        candidates = ["claude-3.5-sonnet", "claude-3.5-haiku"]
+    elif provider_key == "google":
+        candidates = ["gemini-2.0-flash-001", "gemini-2.0-flash-lite-001", "gemini-1.5-pro"]
+    elif provider_key == "microsoft":
+        candidates = ["gpt-5-mini", "gpt-4.1"]
+
+    ordered: list[str] = []
+    seen: set[str] = set()
+    for model in [primary] + candidates:
+        key = _normalize_text(model)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        ordered.append(key)
+    return ordered
+
+
 def _create_story_response(
     client: Any,
     *,
@@ -847,51 +950,74 @@ def generate_mission_story(
         "Input JSON:\n"
         f"{json.dumps(story_input, ensure_ascii=False, indent=2)}"
     )
-    response = _create_story_response(
-        client,
-        provider=provider,
-        model=model,
-        prompt=prompt,
-        max_output_tokens=max_output_tokens,
+    retry_prompt = (
+        "Write one cohesive wartime chapter using only the supplied JSON facts.\n"
+        "Return plain text only, 3-4 paragraphs, no JSON, no markdown.\n"
+        "Do not use mission IDs (e.g., M3006). Do not write in report/logbook style.\n"
+        "Integrate facts into narrative prose and avoid stat-dump phrasing.\n\n"
+        "Input JSON:\n"
+        f"{json.dumps(story_input, ensure_ascii=False, indent=2)}"
     )
 
-    raw_text = _extract_response_text(response)
-    payload = _extract_json_object(raw_text)
-    if payload:
-        title = _normalize_text(payload.get("title"))
-        story_text = _normalize_text(payload.get("story_text"))
-        if story_text and not _looks_like_report_style_story(story_text) and not _looks_truncated_story_text(story_text):
-            story_text = _enforce_squadron_event_presence(story_input, story_text, output_language)
-            return {
-                "title": title,
-                "story_text": story_text,
-            }
-
-    fallback_text = _normalize_text(raw_text)
-    if _looks_like_invalid_story_text(fallback_text) or _looks_like_report_style_story(fallback_text) or _looks_truncated_story_text(fallback_text):
-        # One retry with plain-text fallback prompt (no JSON contract),
-        # then wrap into the expected payload shape.
-        retry_prompt = (
-            "Write one cohesive wartime chapter using only the supplied JSON facts.\n"
-            "Return plain text only, 3-4 paragraphs, no JSON, no markdown.\n"
-            "Do not use mission IDs (e.g., M3006). Do not write in report/logbook style.\n"
-            "Integrate facts into narrative prose and avoid stat-dump phrasing.\n\n"
-            "Input JSON:\n"
-            f"{json.dumps(story_input, ensure_ascii=False, indent=2)}"
-        )
-        retry_response = _create_story_response(
+    for candidate_model in _backup_models_for_provider(provider, model):
+        response = _create_story_response(
             client,
             provider=provider,
-            model=model,
-            prompt=retry_prompt,
+            model=candidate_model,
+            prompt=prompt,
             max_output_tokens=max_output_tokens,
         )
-        fallback_text = _normalize_text(_extract_response_text(retry_response))
+
+        raw_text = _extract_response_text(response)
+        payload = _extract_json_object(raw_text)
+        if payload:
+            title = _normalize_text(payload.get("title"))
+            story_text = _normalize_text(payload.get("story_text"))
+            if story_text and not _looks_like_report_style_story(story_text) and not _looks_truncated_story_text(story_text):
+                story_text = _enforce_squadron_event_presence(story_input, story_text, output_language)
+                return {
+                    "title": title,
+                    "story_text": story_text,
+                }
+
+        fallback_text = _normalize_text(raw_text)
         if _looks_like_invalid_story_text(fallback_text) or _looks_like_report_style_story(fallback_text) or _looks_truncated_story_text(fallback_text):
-            raise ValueError("Story model returned empty content.")
+            retry_response = _create_story_response(
+                client,
+                provider=provider,
+                model=candidate_model,
+                prompt=retry_prompt,
+                max_output_tokens=max_output_tokens,
+            )
+            fallback_text = _normalize_text(_extract_response_text(retry_response))
+            needs_repair = _looks_truncated_story_text(fallback_text) and not _looks_like_invalid_story_text(fallback_text)
+            if needs_repair:
+                repaired_text = _attempt_story_repair(
+                    client,
+                    provider=provider,
+                    model=candidate_model,
+                    story_input=story_input,
+                    partial_text=fallback_text,
+                    max_output_tokens=max_output_tokens,
+                    output_language=output_language,
+                )
+                if repaired_text and not _looks_like_invalid_story_text(repaired_text) and not _looks_like_report_style_story(repaired_text) and not _looks_truncated_story_text(repaired_text):
+                    return {
+                        "title": "",
+                        "story_text": _enforce_squadron_event_presence(story_input, repaired_text, output_language),
+                    }
+            if _looks_like_invalid_story_text(fallback_text) or _looks_like_report_style_story(fallback_text) or _looks_truncated_story_text(fallback_text):
+                continue
+        return {
+            "title": "",
+            "story_text": _enforce_squadron_event_presence(story_input, fallback_text, output_language),
+        }
+
+    # Final safety net after exhausting model fallbacks.
+    fallback_payload = _build_deterministic_story_fallback(story_input)
     return {
-        "title": "",
-        "story_text": _enforce_squadron_event_presence(story_input, fallback_text, output_language),
+        "title": _normalize_text(fallback_payload.get("title")),
+        "story_text": _normalize_text(fallback_payload.get("story_text")),
     }
 
 

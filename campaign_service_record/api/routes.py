@@ -385,6 +385,40 @@ def _normalize_story_text(value: object) -> str:
     return str(value or "").strip()
 
 
+def _canonical_mission_id(value: object) -> str:
+    text = _normalize_story_text(value)
+    if not text:
+        return ""
+    if re.fullmatch(r"\d+", text):
+        try:
+            return str(int(text))
+        except ValueError:
+            return text
+    return text.lower()
+
+
+def _lookup_by_mission_id(mapping: object, mission_id: object) -> dict:
+    if not isinstance(mapping, dict):
+        return {}
+    mid = _normalize_story_text(mission_id)
+    if not mid:
+        return {}
+    if isinstance(mapping.get(mid), dict):
+        return mapping[mid]
+
+    variants = []
+    if re.fullmatch(r"\d+", mid):
+        try:
+            num = int(mid)
+            variants.extend([str(num), f"{num:02d}", f"{num:03d}"])
+        except ValueError:
+            pass
+    for key in variants:
+        if isinstance(mapping.get(key), dict):
+            return mapping[key]
+    return {}
+
+
 def _is_valid_story_text(value: object) -> bool:
     text = _normalize_story_text(value)
     if not text:
@@ -573,7 +607,10 @@ def _build_fallback_career_mission_json(result) -> dict:
 def _parse_campaign_mission_boxes(debriefings_html: str) -> list[dict]:
     if not debriefings_html:
         return []
-    boxes = re.findall(r"(?is)<div class=\"mission-box\">(.*?)</div>", debriefings_html)
+    # Avoid regex-nesting pitfalls: mission-box blocks may contain nested <div>.
+    # Split by opener and consume until next opener.
+    chunks = re.split(r'(?is)<div\s+class="mission-box">', debriefings_html)
+    boxes = [chunk for chunk in chunks[1:] if _normalize_story_text(chunk)]
     parsed: list[dict] = []
     for box in boxes:
         header_match = re.search(r"(?is)<b>\s*MISSION\s+(.+?)\s*</b>", box)
@@ -670,7 +707,7 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
     info_context = _read_campaign_info_context(campaign_name, story_language)
     mission_boxes = _parse_campaign_mission_boxes(_normalize_story_text(detail.get("debriefings_html")))
     mission_box_by_id = {
-        _normalize_story_text(item.get("mission_id")).lower(): item
+        _canonical_mission_id(item.get("mission_id")): item
         for item in mission_boxes
         if _normalize_story_text(item.get("mission_id"))
     }
@@ -684,14 +721,16 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
     # This avoids skips when completion_state is sparse/out-of-sync.
     ordered_mission_ids: list[str] = []
     seen_mission_ids: set[str] = set()
-    for mid in mission_box_order + completed_missions:
+    # Add mission IDs from decoded stats as an extra reliable source.
+    stats_mission_ids = list(stats_by_mission.keys()) if isinstance(stats_by_mission, dict) else []
+    for mid in mission_box_order + completed_missions + stats_mission_ids:
         key = _normalize_story_text(mid)
         if not key:
             continue
-        lower = key.lower()
-        if lower in seen_mission_ids:
+        canonical = _canonical_mission_id(key)
+        if canonical in seen_mission_ids:
             continue
-        seen_mission_ids.add(lower)
+        seen_mission_ids.add(canonical)
         ordered_mission_ids.append(key)
     if not ordered_mission_ids:
         return []
@@ -704,7 +743,7 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
             _normalize_story_text(
                 (mission_dates_map.get(mid, {}) if isinstance(mission_dates_map, dict) else {}).get("normalized_date")
             )
-            or _normalize_story_text((mission_box_by_id.get(mid.lower(), {}) or {}).get("parsed_date"))
+            or _normalize_story_text((mission_box_by_id.get(_canonical_mission_id(mid), {}) or {}).get("parsed_date"))
             or "9999-12-31",
             smart_mission_sort_key(mid),
         ),
@@ -727,10 +766,10 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
     contexts: list[dict] = []
     for index, mission_id in enumerate(ordered_mission_ids, start=1):
         mid = _normalize_story_text(mission_id)
-        mission_meta = mission_dates_map.get(mid, {}) if isinstance(mission_dates_map, dict) else {}
-        mission_box = mission_box_by_id.get(mid.lower(), {})
-        mission_stats = stats_by_mission.get(mid, {}) if isinstance(stats_by_mission, dict) else {}
-        aircraft_entry = mission_aircraft_map.get(mid, {}) if isinstance(mission_aircraft_map, dict) else {}
+        mission_meta = _lookup_by_mission_id(mission_dates_map, mid)
+        mission_box = mission_box_by_id.get(_canonical_mission_id(mid), {})
+        mission_stats = _lookup_by_mission_id(stats_by_mission, mid)
+        aircraft_entry = _lookup_by_mission_id(mission_aircraft_map, mid)
 
         mission_awards: list[str] = []
         mission_promotion = ""
@@ -2301,6 +2340,7 @@ def generate_stories(source: str, entry_id: str):
 
         existing_chapters = load_story_chapters_for(source, storage_entry_id)
         existing_story_keys: set[str] = set()
+        existing_story_canonical_keys: set[str] = set()
         for chapter in existing_chapters:
             if not _is_valid_story_text(chapter.get("story_text")):
                 continue
@@ -2308,6 +2348,9 @@ def generate_stories(source: str, entry_id: str):
             if mission_value is not None:
                 mission_key = str(mission_value)
                 existing_story_keys.add(mission_key)
+                canonical_key = _canonical_mission_id(mission_key)
+                if canonical_key:
+                    existing_story_canonical_keys.add(canonical_key)
                 if re.fullmatch(r"\d{4}-\d{2}-\d{2}", mission_key):
                     existing_story_keys.add(f"date:{mission_key}")
                 elif mission_key.startswith("day:"):
@@ -2317,7 +2360,8 @@ def generate_stories(source: str, entry_id: str):
         missing_contexts: list[dict] = []
         for context in contexts:
             mission_key = str(context.get("mission_id"))
-            if mission_key in existing_story_keys:
+            mission_canonical = _canonical_mission_id(mission_key)
+            if mission_key in existing_story_keys or (mission_canonical and mission_canonical in existing_story_canonical_keys):
                 continue
 
             # Only day-scoped chapters (career aggregation) should dedupe by date.
@@ -2372,7 +2416,8 @@ def generate_stories(source: str, entry_id: str):
                     storage_entry_id,
                     mission_ref,
                 )
-                continue
+                # Preserve strict chronology: never skip a failed mission and jump ahead.
+                break
             except Exception as chapter_exc:
                 mission_ref = _normalize_story_text(context.get("mission_id")) or _normalize_story_text(context.get("date")) or "unknown"
                 generation_errors.append(f"{mission_ref}: {chapter_exc}")
@@ -2384,7 +2429,8 @@ def generate_stories(source: str, entry_id: str):
                     chapter_exc,
                     exc_info=True,
                 )
-                continue
+                # Preserve strict chronology: never skip a failed mission and jump ahead.
+                break
 
         if generated_count == 0 and generation_errors:
             raise RuntimeError(generation_errors[0])
