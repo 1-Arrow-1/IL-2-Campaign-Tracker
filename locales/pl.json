@@ -843,7 +843,8 @@
       "remove_bracket": "Usuń Zakres",
       "restore_defaults": "Przywróć Domyślne",
       "swap_award_style": "Zmień styl odznaczeń",
-      "import_stock_campaigns": "Importuj standardowe kampanie IL-2"
+      "import_stock_campaigns": "Importuj standardowe kampanie IL-2",
+      "refresh_models": "Pobierz dostępne modele"
     },
     "dialog": {
       "edit_bracket_label": "Zakres (np. '1-10' lub '71+'):",
@@ -929,7 +930,11 @@
       "stock_campaigns_summary_imported": "Zaimportowano ({count}): {campaigns}",
       "stock_campaigns_summary_none": "brak",
       "stock_campaigns_summary_skipped": "Pominieto istniejace ({count}): {campaigns}",
-      "stock_campaigns_uac_cancelled": "Anulowano podwyzszenie uprawnien administratora. Nie zaimportowano zadnych kampanii."
+      "stock_campaigns_uac_cancelled": "Anulowano podwyzszenie uprawnien administratora. Nie zaimportowano zadnych kampanii.",
+      "story_refresh_provider_not_supported": "Pobieranie dostępnych modeli nie jest obsługiwane dla niestandardowego dostawcy. Wpisz identyfikator modelu ręcznie.",
+      "story_refresh_running": "Pobieranie dostępnych modeli od {provider}...",
+      "story_refresh_success": "{count} modeli dostępnych od {provider}. Wybierz jeden z listy.",
+      "story_refresh_failed": "Nie udało się pobrać modeli: {error}"
     },
     "tab": {
       "campaigns": "Kampanie",

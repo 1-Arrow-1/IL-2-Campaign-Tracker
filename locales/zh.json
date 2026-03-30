@@ -843,7 +843,8 @@
       "remove_bracket": "删除区间",
       "restore_defaults": "恢复默认",
       "swap_award_style": "切换勋章样式",
-      "import_stock_campaigns": "导入 IL-2 标准战役"
+      "import_stock_campaigns": "导入 IL-2 标准战役",
+      "refresh_models": "获取可用模型"
     },
     "dialog": {
       "edit_bracket_label": "区间（例如 '1-10' 或 '71+'）：",
@@ -929,7 +930,11 @@
       "stock_campaigns_summary_imported": "已导入 ({count})：{campaigns}",
       "stock_campaigns_summary_none": "无",
       "stock_campaigns_summary_skipped": "已跳过现有项 ({count})：{campaigns}",
-      "stock_campaigns_uac_cancelled": "已取消管理员权限提升。未导入任何战役。"
+      "stock_campaigns_uac_cancelled": "已取消管理员权限提升。未导入任何战役。",
+      "story_refresh_provider_not_supported": "自定义提供商不支持获取可用模型。请手动输入模型 ID。",
+      "story_refresh_running": "正在从 {provider} 获取可用模型...",
+      "story_refresh_success": "{provider} 提供 {count} 个可用模型。请从列表中选择一个。",
+      "story_refresh_failed": "无法获取模型：{error}"
     },
     "tab": {
       "campaigns": "战役",

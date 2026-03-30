@@ -843,7 +843,8 @@
       "remove_bracket": "Bereich entfernen",
       "restore_defaults": "Standards wiederherstellen",
       "swap_award_style": "Auszeichnungsstil wechseln",
-      "import_stock_campaigns": "Standard-IL-2-Kampagnen importieren"
+      "import_stock_campaigns": "Standard-IL-2-Kampagnen importieren",
+      "refresh_models": "Verfügbare Modelle abrufen"
     },
     "dialog": {
       "edit_bracket_label": "Bereich (z.B. '1-10' oder '71+'):",
@@ -929,7 +930,11 @@
       "stock_campaigns_summary_imported": "Importiert ({count}): {campaigns}",
       "stock_campaigns_summary_none": "keine",
       "stock_campaigns_summary_skipped": "Bereits vorhanden, uebersprungen ({count}): {campaigns}",
-      "stock_campaigns_uac_cancelled": "Die Administratorrechte-Anfrage wurde abgebrochen. Es wurden keine Kampagnen importiert."
+      "stock_campaigns_uac_cancelled": "Die Administratorrechte-Anfrage wurde abgebrochen. Es wurden keine Kampagnen importiert.",
+      "story_refresh_provider_not_supported": "Das Abrufen verfügbarer Modelle wird für den benutzerdefinierten Anbieter nicht unterstützt. Gib die Modell-ID manuell ein.",
+      "story_refresh_running": "Verfügbare Modelle von {provider} werden abgerufen...",
+      "story_refresh_success": "{count} Modelle von {provider} verfügbar. Wähle eines aus der Liste.",
+      "story_refresh_failed": "Modelle konnten nicht abgerufen werden: {error}"
     },
     "tab": {
       "campaigns": "Kampagnen",

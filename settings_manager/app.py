@@ -242,44 +242,11 @@ class SettingsManagerApp(tk.Tk):
         "custom": "Enter the exact model ID required by your custom endpoint.",
     }
     STORY_PROVIDER_MODELS = {
-        "openai": [
-            "gpt-5-mini",
-            "gpt-5",
-            "gpt-5.4",
-            "gpt-5.4-mini",
-            "gpt-5.2",
-        ],
-        "openrouter": [
-            "openai/gpt-5-mini",
-            "openai/gpt-5",
-            "x-ai/grok-4.1-fast",
-            "x-ai/grok-4.20-beta",
-            "google/gemini-2.0-flash-001",
-            "anthropic/claude-sonnet-4.5",
-            "anthropic/claude-3.5-sonnet",
-            "meta-llama/llama-3.1-70b-instruct",
-            "mistralai/mistral-large",
-        ],
-        "anthropic": [
-            "claude-sonnet-4.6",
-            "claude-sonnet-4.5",
-            "claude-3.7-sonnet",
-            "claude-3.5-sonnet",
-            "claude-3.5-haiku",
-        ],
-        "google": [
-            "gemini-2.0-flash-001",
-            "gemini-2.0-flash-lite-001",
-            "gemini-1.5-pro",
-            "gemini-1.5-flash",
-        ],
-        "microsoft": [
-            "gpt-5-mini",
-            "gpt-5",
-            "gpt-4o",
-            "gpt-4.1",
-            "YOUR_AZURE_DEPLOYMENT_NAME",
-        ],
+        "openai": [],
+        "openrouter": [],
+        "anthropic": [],
+        "google": [],
+        "microsoft": [],
         "custom": [],
     }
     STORY_PROVIDER_RECOMMENDED_MODELS = {

@@ -843,7 +843,8 @@
       "remove_bracket": "Eliminar Rango",
       "restore_defaults": "Restaurar Predeterminados",
       "swap_award_style": "Cambiar estilo de condecoraciones",
-      "import_stock_campaigns": "Importar campanas estandar de IL-2"
+      "import_stock_campaigns": "Importar campanas estandar de IL-2",
+      "refresh_models": "Obtener modelos disponibles"
     },
     "dialog": {
       "edit_bracket_label": "Rango (ej., '1-10' o '71+'):",
@@ -929,7 +930,11 @@
       "stock_campaigns_summary_imported": "Importadas ({count}): {campaigns}",
       "stock_campaigns_summary_none": "ninguna",
       "stock_campaigns_summary_skipped": "Omitidas por existir ya ({count}): {campaigns}",
-      "stock_campaigns_uac_cancelled": "La elevacion de administrador fue cancelada. No se importo ninguna campana."
+      "stock_campaigns_uac_cancelled": "La elevacion de administrador fue cancelada. No se importo ninguna campana.",
+      "story_refresh_provider_not_supported": "La obtención de modelos disponibles no es compatible con el proveedor personalizado. Introduce el ID del modelo manualmente.",
+      "story_refresh_running": "Obteniendo modelos disponibles de {provider}...",
+      "story_refresh_success": "{count} modelos disponibles de {provider}. Selecciona uno de la lista.",
+      "story_refresh_failed": "No se pudieron obtener los modelos: {error}"
     },
     "tab": {
       "campaigns": "Campañas",

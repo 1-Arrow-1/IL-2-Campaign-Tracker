@@ -844,7 +844,8 @@
       "remove_bracket": "Supprimer Plage",
       "restore_defaults": "Restaurer les Défauts",
       "swap_award_style": "Changer le style des décorations",
-      "import_stock_campaigns": "Importer les campagnes IL-2 standard"
+      "import_stock_campaigns": "Importer les campagnes IL-2 standard",
+      "refresh_models": "Obtenir les modèles disponibles"
     },
     "dialog": {
       "edit_bracket_label": "Plage (ex., '1-10' ou '71+'):",
@@ -930,7 +931,11 @@
       "stock_campaigns_summary_imported": "Importees ({count}) : {campaigns}",
       "stock_campaigns_summary_none": "aucune",
       "stock_campaigns_summary_skipped": "Ignorees car deja presentes ({count}) : {campaigns}",
-      "stock_campaigns_uac_cancelled": "L'elevation des droits administrateur a ete annulee. Aucune campagne n'a ete importee."
+      "stock_campaigns_uac_cancelled": "L'elevation des droits administrateur a ete annulee. Aucune campagne n'a ete importee.",
+      "story_refresh_provider_not_supported": "L'obtention des modèles disponibles n'est pas prise en charge pour le fournisseur personnalisé. Saisissez l'ID du modèle manuellement.",
+      "story_refresh_running": "Récupération des modèles disponibles depuis {provider}...",
+      "story_refresh_success": "{count} modèles disponibles depuis {provider}. Sélectionnez-en un dans la liste.",
+      "story_refresh_failed": "Impossible de récupérer les modèles : {error}"
     },
     "tab": {
       "campaigns": "Campagnes",

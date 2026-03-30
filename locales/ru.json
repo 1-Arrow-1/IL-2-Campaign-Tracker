@@ -843,7 +843,8 @@
       "remove_bracket": "Удалить Диапазон",
       "restore_defaults": "Восстановить По Умолчанию",
       "swap_award_style": "Сменить стиль наград",
-      "import_stock_campaigns": "Импорт стандартных кампаний IL-2"
+      "import_stock_campaigns": "Импорт стандартных кампаний IL-2",
+      "refresh_models": "Получить доступные модели"
     },
     "dialog": {
       "edit_bracket_label": "Диапазон (например, '1-10' или '71+'):",
@@ -929,7 +930,11 @@
       "stock_campaigns_summary_imported": "Импортировано ({count}): {campaigns}",
       "stock_campaigns_summary_none": "нет",
       "stock_campaigns_summary_skipped": "Пропущено существующих ({count}): {campaigns}",
-      "stock_campaigns_uac_cancelled": "Запрос прав администратора был отменён. Ни одна кампания не была импортирована."
+      "stock_campaigns_uac_cancelled": "Запрос прав администратора был отменён. Ни одна кампания не была импортирована.",
+      "story_refresh_provider_not_supported": "Получение доступных моделей не поддерживается для пользовательского провайдера. Введите идентификатор модели вручную.",
+      "story_refresh_running": "Получение доступных моделей от {provider}...",
+      "story_refresh_success": "{count} моделей доступно от {provider}. Выберите одну из списка.",
+      "story_refresh_failed": "Не удалось получить модели: {error}"
     },
     "tab": {
       "campaigns": "Кампании",

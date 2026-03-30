@@ -735,6 +735,35 @@ def _looks_like_report_style_story(text: str) -> bool:
     return False
 
 
+def _looks_like_meta_reasoning_text(text: str) -> bool:
+    value = _normalize_text(text)
+    if not value:
+        return False
+    lower = value.lower()
+
+    # Typical planning / chain-of-thought leakage markers.
+    meta_markers = [
+        "i need to",
+        "it seems safest",
+        "i'll make sure",
+        "defining chapter content",
+        "determining context usage",
+        "using historical context rules",
+        "clarifying json requirements",
+        "the rules say",
+        "json that includes a title",
+        "third-person past tense",
+    ]
+    if any(marker in lower for marker in meta_markers):
+        return True
+
+    # Markdown heading-heavy planning text is not valid chapter prose.
+    if value.count("**") >= 4 and ("\n" in value):
+        return True
+
+    return False
+
+
 def _looks_truncated_story_text(text: str) -> bool:
     value = _normalize_text(text)
     if not value:
@@ -742,7 +771,7 @@ def _looks_truncated_story_text(text: str) -> bool:
     if len(value.split()) < 40:
         return True
     tail = value[-1]
-    if tail in ".!?\"')":
+    if tail in ".!?\"')\u2019\u201d\u2026\u2014\u2013":
         return False
     # Common clipped endings: unfinished word/sentence at hard cutoff.
     return True
@@ -830,15 +859,15 @@ def _backup_models_for_provider(provider: str, primary_model: str) -> list[str]:
     primary = _normalize_text(primary_model)
     candidates: list[str] = []
     if provider_key == "openai":
-        candidates = ["gpt-5-mini", "gpt-4.1"]
+        candidates = ["gpt-4o-mini", "gpt-4o"]
     elif provider_key == "openrouter":
-        candidates = ["openai/gpt-5-mini", "google/gemini-2.0-flash-001", "x-ai/grok-4.1-fast"]
+        candidates = ["openai/gpt-4o-mini", "openai/gpt-4o", "google/gemini-flash-1.5"]
     elif provider_key == "anthropic":
-        candidates = ["claude-3.5-sonnet", "claude-3.5-haiku"]
+        candidates = ["claude-3-5-haiku-20241022", "claude-3-5-sonnet-20241022"]
     elif provider_key == "google":
-        candidates = ["gemini-2.0-flash-001", "gemini-2.0-flash-lite-001", "gemini-1.5-pro"]
+        candidates = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
     elif provider_key == "microsoft":
-        candidates = ["gpt-5-mini", "gpt-4.1"]
+        candidates = ["gpt-4o-mini", "gpt-4o"]
 
     ordered: list[str] = []
     seen: set[str] = set()
@@ -973,7 +1002,12 @@ def generate_mission_story(
         if payload:
             title = _normalize_text(payload.get("title"))
             story_text = _normalize_text(payload.get("story_text"))
-            if story_text and not _looks_like_report_style_story(story_text) and not _looks_truncated_story_text(story_text):
+            if (
+                story_text
+                and not _looks_like_report_style_story(story_text)
+                and not _looks_truncated_story_text(story_text)
+                and not _looks_like_meta_reasoning_text(story_text)
+            ):
                 story_text = _enforce_squadron_event_presence(story_input, story_text, output_language)
                 return {
                     "title": title,
@@ -981,7 +1015,12 @@ def generate_mission_story(
                 }
 
         fallback_text = _normalize_text(raw_text)
-        if _looks_like_invalid_story_text(fallback_text) or _looks_like_report_style_story(fallback_text) or _looks_truncated_story_text(fallback_text):
+        if (
+            _looks_like_invalid_story_text(fallback_text)
+            or _looks_like_report_style_story(fallback_text)
+            or _looks_truncated_story_text(fallback_text)
+            or _looks_like_meta_reasoning_text(fallback_text)
+        ):
             retry_response = _create_story_response(
                 client,
                 provider=provider,
@@ -1006,7 +1045,12 @@ def generate_mission_story(
                         "title": "",
                         "story_text": _enforce_squadron_event_presence(story_input, repaired_text, output_language),
                     }
-            if _looks_like_invalid_story_text(fallback_text) or _looks_like_report_style_story(fallback_text) or _looks_truncated_story_text(fallback_text):
+            if (
+                _looks_like_invalid_story_text(fallback_text)
+                or _looks_like_report_style_story(fallback_text)
+                or _looks_truncated_story_text(fallback_text)
+                or _looks_like_meta_reasoning_text(fallback_text)
+            ):
                 continue
         return {
             "title": "",
@@ -1168,18 +1212,7 @@ def generate_and_store_chapter(
     story_title = _normalize_text(story_payload.get("title"))
     story_text = _normalize_text(story_payload.get("story_text"))
     fallback_memory = story_input.get("narrative_memory", {}) if isinstance(story_input, dict) else {}
-    try:
-        memory = update_narrative_memory(
-            story_input,
-            story_text,
-            model=model,
-            api_key=api_key,
-            provider=provider,
-            base_url=base_url,
-        )
-    except Exception as exc:
-        LOGGER.warning("Narrative memory update failed; keeping previous memory: %s", exc)
-        memory = fallback_memory if isinstance(fallback_memory, dict) else {}
+    memory = update_narrative_memory_local(story_input, fallback_memory if isinstance(fallback_memory, dict) else None)
     save_story_state(career_id, memory)
     chapter_path = save_story_chapter(
         career_id,
@@ -1218,18 +1251,7 @@ def generate_and_store_chapter_for(
     story_title = _normalize_text(story_payload.get("title"))
     story_text = _normalize_text(story_payload.get("story_text"))
     fallback_memory = story_input.get("narrative_memory", {}) if isinstance(story_input, dict) else {}
-    try:
-        memory = update_narrative_memory(
-            story_input,
-            story_text,
-            model=model,
-            api_key=api_key,
-            provider=provider,
-            base_url=base_url,
-        )
-    except Exception as exc:
-        LOGGER.warning("Narrative memory update failed; keeping previous memory: %s", exc)
-        memory = fallback_memory if isinstance(fallback_memory, dict) else {}
+    memory = update_narrative_memory_local(story_input, fallback_memory if isinstance(fallback_memory, dict) else None)
     save_story_state_for(source, entry_id, memory)
     chapter_path = save_story_chapter_for(
         source,

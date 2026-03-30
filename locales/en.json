@@ -845,7 +845,7 @@
       "restore_defaults": "Restore Defaults",
       "swap_award_style": "Swap Award Style",
       "test_connection": "Test Connection",
-      "refresh_models": "Refresh Models"
+      "refresh_models": "Get Available Models"
     },
     "dialog": {
       "edit_bracket_label": "Bracket (e.g., '1-10' or '71+'):",
@@ -929,10 +929,10 @@
       "story_test_running": "Testing {provider} connection...",
       "story_test_success": "{provider} connection test succeeded.",
       "story_test_unknown_error": "Connection test failed.",
-      "story_refresh_provider_not_supported": "Model refresh is not available for Custom provider.",
-      "story_refresh_running": "Refreshing {provider} models...",
-      "story_refresh_success": "{provider} model list refreshed ({count} models).",
-      "story_refresh_failed": "Model refresh failed: {error}",
+      "story_refresh_provider_not_supported": "Getting available models is not supported for the Custom provider. Enter the model ID manually.",
+      "story_refresh_running": "Fetching available models from {provider}...",
+      "story_refresh_success": "{count} models available from {provider}. Select one from the list.",
+      "story_refresh_failed": "Could not retrieve models: {error}",
       "stock_campaigns_select_directory": "Select IL-2 Game Directory",
       "stock_campaigns_summary_imported": "Imported ({count}): {campaigns}",
       "stock_campaigns_summary_none": "none",
