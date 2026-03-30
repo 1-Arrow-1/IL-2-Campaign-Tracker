@@ -1113,6 +1113,7 @@
       "collapse": "Réduire",
       "download_pdf": "Télécharger le rapport PDF",
       "edit_notes": "Modifier",
+      "delete_story_chapter": "Supprimer le chapitre",
       "expand": "Développer",
       "save": "Enregistrer",
       "view_details": "Voir les détails"
@@ -1185,6 +1186,9 @@
       "no_entries": "(Aucune entrée)",
       "no_events": "Aucun événement enregistré",
       "no_photo_selected": "Aucune nouvelle photo sélectionnée.",
+      "no_story_chapters": "Aucun chapitre disponible pour l'instant.",
+      "confirm_delete_story_chapter": "Supprimer ce chapitre ? Il pourra être régénéré ensuite.",
+      "delete_story_chapter_failed": "Impossible de supprimer le chapitre.",
       "no_summary": "Aucun résumé disponible",
       "pdf_generating": "Génération du PDF...",
       "pdf_ready": "PDF prêt au téléchargement",

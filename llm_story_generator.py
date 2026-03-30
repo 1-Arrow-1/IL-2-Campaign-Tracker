@@ -291,6 +291,82 @@ def load_story_chapters_for(source: str, entry_id: str | int) -> list[Dict[str, 
     return chapters
 
 
+def delete_story_chapter_for(source: str, entry_id: str | int, mission_id: str) -> Optional[str]:
+    """Delete a chapter by mission_id and renumber the remaining ones.
+
+    Returns the deleted chapter's date string (for memory cleanup), or None if not found.
+    """
+    chapters_dir = _story_entry_dir(source, entry_id) / "chapters"
+    if not chapters_dir.exists():
+        return None
+
+    target_mission_id = _normalize_text(mission_id)
+    target_path: Optional[Path] = None
+    deleted_date: str = ""
+
+    for path in sorted(chapters_dir.glob("*.json")):
+        payload = _load_json_file(path, None)
+        if isinstance(payload, dict) and _normalize_text(payload.get("mission_id")) == target_mission_id:
+            target_path = path
+            deleted_date = _normalize_text(payload.get("date"))
+            break
+
+    if target_path is None:
+        return None
+
+    target_path.unlink()
+
+    # Renumber remaining chapters sequentially so gaps don't appear in the UI.
+    for new_index, path in enumerate(sorted(chapters_dir.glob("*.json")), start=1):
+        payload = _load_json_file(path, None)
+        if not isinstance(payload, dict):
+            continue
+        payload["chapter_index"] = new_index
+        date_part = _normalize_text(payload.get("date")) or "unknown-date"
+        new_name = f"{new_index:04d}_{date_part}.json"
+        new_path = chapters_dir / new_name
+        _save_json_file(new_path, payload)
+        if new_path != path:
+            path.unlink()
+
+    return deleted_date
+
+
+def strip_memory_entries_for_date(source: str, entry_id: str | int, mission_date: str) -> None:
+    """Remove recent_events and key_milestones entries tied to *mission_date* and recompute arc_summary."""
+    date_prefix = _normalize_text(mission_date)
+    if not date_prefix:
+        return
+
+    memory = load_or_create_story_state_for(source, entry_id)
+
+    recent_events = memory.get("recent_events", [])
+    if isinstance(recent_events, list):
+        memory["recent_events"] = [
+            e for e in recent_events
+            if not _normalize_text(e).startswith(date_prefix + ":")
+        ]
+
+    key_milestones = memory.get("key_milestones", [])
+    if isinstance(key_milestones, list):
+        memory["key_milestones"] = [
+            m for m in key_milestones
+            if not _normalize_text(m).startswith(date_prefix + ":")
+        ]
+
+    arc_bits: list[str] = []
+    if memory.get("current_rank"):
+        arc_bits.append(f"Rank: {memory['current_rank']}")
+    if memory.get("current_squadron"):
+        arc_bits.append(f"Unit: {memory['current_squadron']}")
+    remaining_recent = memory.get("recent_events", [])
+    if remaining_recent:
+        arc_bits.append(f"Latest mission: {remaining_recent[-1]}")
+    memory["arc_summary"] = "; ".join(bit for bit in arc_bits if bit)[:280]
+
+    save_story_state_for(source, entry_id, memory)
+
+
 def save_story_chapter_for(
     source: str,
     entry_id: str | int,
@@ -504,6 +580,7 @@ def build_campaign_story_input(
     mission_summary: Dict[str, Any],
     mission_events: Optional[Iterable[str]] = None,
     rank: str = "",
+    pilot_last_name: str = "",
     aircraft: str = "",
     campaign_display_name: str = "",
     campaign_background: str = "",
@@ -530,7 +607,7 @@ def build_campaign_story_input(
         "date": mission_date,
         "pilot": {
             "name": "",
-            "last_name": "",
+            "last_name": _normalize_text(pilot_last_name),
             "rank": _normalize_text(rank),
             "squadron": "",
             "aircraft": _normalize_text(aircraft),
@@ -951,8 +1028,9 @@ def generate_mission_story(
         "- Do not invent awards, promotions, injuries, victories, locations, or commanders.\n"
         "- Keep the story historically grounded and atmospheric.\n"
         "- If historical_context.summary or historical_context.facts are present, integrate them naturally.\n"
-        "- If mission_progression.promotion is non-empty, explicitly mention the promotion in the chapter.\n"
-        "- If mission_progression.awards contains one or more entries, explicitly mention those award(s) in the chapter.\n"
+        "- pilot.rank is the rank held DURING the mission. Use it throughout the narrative.\n"
+        "- If mission_progression.promotion is non-empty, it is a rank awarded AFTER the pilot landed/returned. Mention it only as a post-mission event (e.g., 'upon return he was promoted to...'). Never use the promoted rank to describe the pilot during the sortie.\n"
+        "- If mission_progression.awards contains one or more entries, mention those award(s) as received after the mission.\n"
         "- If honors_context.promotion.fact is present, include one short historical note tied to that promotion.\n"
         "- If honors_context.awards has facts, include at least one short factual note tied to the award(s) received.\n"
         "- Do not claim a promotion or award for this mission when mission_progression says none occurred.\n"

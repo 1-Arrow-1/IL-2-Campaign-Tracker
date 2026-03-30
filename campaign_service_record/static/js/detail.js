@@ -1262,7 +1262,26 @@ const DetailPage = {
             const summary = document.createElement('summary');
             summary.className = 'story-chapter__summary';
             const chapterLabel = translateOrFallback('web.label.chapter', 'Chapter');
-            summary.textContent = `${chapterLabel} ${chapter.chapter_index || '—'} | ${chapter.date || '—'} | ${chapter.aircraft || '—'} | ${chapter.result || '—'}`;
+
+            const summaryText = document.createElement('span');
+            summaryText.textContent = `${chapterLabel} ${chapter.chapter_index || '—'} | ${chapter.date || '—'} | ${chapter.aircraft || '—'} | ${chapter.result || '—'}`;
+            summary.appendChild(summaryText);
+
+            if (chapter.mission_id) {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'story-chapter__delete-btn';
+                deleteBtn.title = translateOrFallback('web.button.delete_story_chapter', 'Delete chapter');
+                deleteBtn.textContent = '✕';
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const confirmMsg = translateOrFallback('web.message.confirm_delete_story_chapter', 'Delete this story chapter? It can be regenerated afterwards.');
+                    if (!confirm(confirmMsg)) return;
+                    this._deleteStoryChapter(chapter.mission_id);
+                });
+                summary.appendChild(deleteBtn);
+            }
+
             details.appendChild(summary);
 
             const bodyWrap = document.createElement('div');
@@ -1359,6 +1378,20 @@ const DetailPage = {
         }
     },
     
+    async _deleteStoryChapter(missionId) {
+        if (!this.currentStoriesEntryId || !this._source) return;
+        this.setStoriesBusy(true);
+        try {
+            const payload = await API.deleteStoryChapter(this._source, this.currentStoriesEntryId, missionId);
+            this.renderStoriesSection(payload);
+        } catch (error) {
+            console.error('Failed to delete story chapter:', error);
+            this.setStoriesStatus(error.message || translateOrFallback('web.message.delete_story_chapter_failed', 'Failed to delete chapter.'), 'error');
+        } finally {
+            this.setStoriesBusy(false);
+        }
+    },
+
     /**
      * Render campaign header
      */

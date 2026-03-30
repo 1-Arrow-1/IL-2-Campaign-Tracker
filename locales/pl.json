@@ -1112,6 +1112,7 @@
       "collapse": "Zwiń",
       "download_pdf": "Pobierz raport PDF",
       "edit_notes": "Edytuj",
+      "delete_story_chapter": "Usuń rozdział",
       "expand": "Rozwiń",
       "save": "Zapisz",
       "view_details": "Zobacz szczegóły"
@@ -1184,6 +1185,9 @@
       "no_entries": "(Brak wpisów)",
       "no_events": "Brak zarejestrowanych wydarzeń",
       "no_photo_selected": "Nie wybrano nowego zdjęcia.",
+      "no_story_chapters": "Brak dostępnych rozdziałów historii.",
+      "confirm_delete_story_chapter": "Usunąć ten rozdział historii? Będzie można go ponownie wygenerować.",
+      "delete_story_chapter_failed": "Nie udało się usunąć rozdziału.",
       "no_summary": "Brak podsumowania",
       "pdf_generating": "Generowanie PDF...",
       "pdf_ready": "PDF gotowy do pobrania",

@@ -1112,6 +1112,7 @@
       "collapse": "收起",
       "download_pdf": "下载 PDF 报告",
       "edit_notes": "编辑",
+      "delete_story_chapter": "删除章节",
       "expand": "展开",
       "save": "保存",
       "view_details": "查看详情"
@@ -1184,6 +1185,9 @@
       "no_entries": "(无记录)",
       "no_events": "未记录事件",
       "no_photo_selected": "未选择新照片。",
+      "no_story_chapters": "暂无故事章节。",
+      "confirm_delete_story_chapter": "删除此故事章节？之后可以重新生成。",
+      "delete_story_chapter_failed": "删除章节失败。",
       "no_summary": "暂无总结",
       "pdf_generating": "正在生成 PDF...",
       "pdf_ready": "PDF 已准备好下载",

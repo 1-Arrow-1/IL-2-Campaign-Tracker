@@ -88,6 +88,27 @@ const API = {
     },
     
     /**
+     * Generic DELETE request with JSON body
+     */
+    async delete(endpoint, data = {}) {
+        try {
+            const response = await fetch(`${this.baseURL}${endpoint}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || `HTTP ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error(`API DELETE ${endpoint} failed:`, error);
+            throw error;
+        }
+    },
+
+    /**
      * Get active modes (campaign / career)
      */
     async getMode() {
@@ -127,6 +148,16 @@ const API = {
      */
     async getStories(source, entryId) {
         return this.get(`/stories/${encodeURIComponent(source)}/${encodeURIComponent(entryId)}`);
+    },
+
+    /**
+     * Delete a single story chapter by mission_id.
+     */
+    async deleteStoryChapter(source, entryId, missionId) {
+        return this.delete(
+            `/stories/${encodeURIComponent(source)}/${encodeURIComponent(entryId)}/chapter`,
+            { mission_id: missionId }
+        );
     },
 
     /**

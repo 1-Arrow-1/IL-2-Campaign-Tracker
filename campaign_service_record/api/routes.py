@@ -54,10 +54,12 @@ from utils.sorting import smart_mission_sort_key
 from llm_story_generator import (
     build_campaign_story_input,
     build_story_input,
+    delete_story_chapter_for,
     generate_and_store_chapter_for,
     load_or_create_story_state_for,
     load_story_chapters_for,
     save_story_state_for,
+    strip_memory_entries_for_date,
 )
 from utils.locale_config import load_settings
 from utils.supported_locales import APP_TO_IL2_LOCALE, normalize_locale
@@ -684,6 +686,10 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
     if not _data_loader or not _aggregator:
         raise RuntimeError("Campaign data providers are not initialized.")
 
+    personal_data = _load_personal_data()
+    campaign_personal = personal_data.get(campaign_name, {}) if isinstance(personal_data, dict) else {}
+    pilot_last_name = _sanitize_personal_data_value(campaign_personal.get("name"))
+
     detail = _aggregator.get_campaign_detail(campaign_name)
     if not detail:
         raise ValueError(f"Campaign not found: {campaign_name}")
@@ -784,6 +790,7 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
                 if award:
                     mission_awards.append(award)
 
+        rank_during_mission = current_rank
         if mission_promotion:
             current_rank = mission_promotion
         for award in mission_awards:
@@ -813,7 +820,8 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
             mission_date=mission_date,
             mission_summary=summary,
             mission_events=mission_box.get("notable_events", []),
-            rank=current_rank,
+            rank=rank_during_mission,
+            pilot_last_name=pilot_last_name,
             aircraft=aircraft,
             campaign_display_name=_normalize_story_text(info_context.get("campaign_name")),
             campaign_background=_normalize_story_text(info_context.get("background_excerpt")),
@@ -946,6 +954,20 @@ def _build_career_story_contexts(root_career_id: int) -> list[dict]:
 
     day_keys = sorted(by_day.keys())
     contexts: list[dict] = []
+
+    # Resolve pilot's starting rank from the DB (before any promotion events)
+    _CAREER_COUNTRY_INT = {"germany": 201, "britain": 102, "usa": 103, "ussr": 101}
+    initial_career_rank = ""
+    try:
+        initial_pilot_row = db.get_pilot_by_id(career.pilot_id)
+        if initial_pilot_row is not None:
+            rank_id_int = int(initial_pilot_row["rankId"] or -1)
+            country_int = _CAREER_COUNTRY_INT.get((career.country or "").lower(), 0)
+            rank_name = aggregator._rank_resolver.resolve(country_int, rank_id_int)
+            initial_career_rank = _normalize_story_text(rank_name.display if rank_name else "") or ""
+    except Exception:
+        initial_career_rank = ""
+
     for day_index, day_key in enumerate(day_keys, start=1):
         day_rows = by_day.get(day_key, [])
         if not day_rows:
@@ -959,7 +981,8 @@ def _build_career_story_contexts(root_career_id: int) -> list[dict]:
             awards: list[str] = []
             mission_awards: list[str] = []
             promotions_today: list[str] = []
-            rank = ""
+            rank = initial_career_rank
+            rank_before_today = initial_career_rank
             for raw_event in raw_events:
                 try:
                     event_segment_index = segment_by_pilot.get(int(raw_event["pilotId"]), 0)
@@ -979,6 +1002,8 @@ def _build_career_story_contexts(root_career_id: int) -> list[dict]:
                 if mapped.get("type") == "promotion":
                     mapped_rank = _normalize_story_text(mapped.get("rank"))
                     if mapped_rank:
+                        if event_date_iso and event_date_iso < day_key:
+                            rank_before_today = mapped_rank
                         rank = mapped_rank
                         if event_date_iso == day_key:
                             promotions_today.append(mapped_rank)
@@ -1112,7 +1137,7 @@ def _build_career_story_contexts(root_career_id: int) -> list[dict]:
                 mission_date=day_key,
                 squadron=squadron_name,
                 pilot_last_name=career.pilot_last_name or "",
-                rank=rank,
+                rank=rank_before_today or rank,
                 awards=awards,
                 promotion=promotion_today,
                 mission_awards=mission_awards,
@@ -2239,6 +2264,38 @@ def get_stories(source: str, entry_id: str):
     """Return story status and cached chapters for a service-record entry."""
     _last_ping[0] = time.time()
     return jsonify(_build_story_status_payload(str(source or "").lower(), entry_id))
+
+
+@api_bp.route('/api/stories/<source>/<entry_id>/chapter', methods=['DELETE'])
+def delete_story_chapter(source: str, entry_id: str):
+    """Delete a single story chapter by mission_id and clean up its memory entries."""
+    _last_ping[0] = time.time()
+    source = str(source or "").strip().lower()
+
+    if source not in {'career', 'campaign'}:
+        return jsonify({'error': 'AI stories are not supported for this data source.'}), 400
+
+    payload = request.get_json(silent=True) if request.is_json else {}
+    if not isinstance(payload, dict):
+        return jsonify({'error': 'Invalid payload.'}), 400
+
+    mission_id = _normalize_story_text(payload.get('mission_id'))
+    if not mission_id:
+        return jsonify({'error': 'mission_id is required.'}), 400
+
+    storage_entry_id = entry_id
+    if source == 'career':
+        try:
+            int(entry_id)
+        except (TypeError, ValueError):
+            return jsonify({'error': 'Invalid career id.'}), 400
+
+    deleted_date = delete_story_chapter_for(source, storage_entry_id, mission_id)
+    if deleted_date is None:
+        return jsonify({'error': f'Chapter for mission {mission_id} not found.'}), 404
+
+    strip_memory_entries_for_date(source, storage_entry_id, deleted_date)
+    return jsonify(_build_story_status_payload(source, entry_id))
 
 
 @api_bp.route('/api/stories/<source>/<entry_id>/context_preview')

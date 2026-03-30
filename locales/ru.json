@@ -1112,6 +1112,7 @@
       "collapse": "Свернуть",
       "download_pdf": "Скачать PDF-отчёт",
       "edit_notes": "Редактировать",
+      "delete_story_chapter": "Удалить главу",
       "expand": "Развернуть",
       "save": "Сохранить",
       "view_details": "Просмотреть детали"
@@ -1184,6 +1185,9 @@
       "no_entries": "(Нет записей)",
       "no_events": "События не зафиксированы",
       "no_photo_selected": "Новое фото не выбрано.",
+      "no_story_chapters": "Главы истории пока недоступны.",
+      "confirm_delete_story_chapter": "Удалить эту главу? Её можно будет сгенерировать заново.",
+      "delete_story_chapter_failed": "Не удалось удалить главу.",
       "no_summary": "Сводка недоступна",
       "pdf_generating": "Создание PDF...",
       "pdf_ready": "PDF готов к скачиванию",
