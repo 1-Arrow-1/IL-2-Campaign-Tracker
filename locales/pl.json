@@ -1113,6 +1113,7 @@
       "download_pdf": "Pobierz raport PDF",
       "edit_notes": "Edytuj",
       "delete_story_chapter": "Usuń rozdział",
+      "generate_pdf_report": "Generuj raport PDF",
       "expand": "Rozwiń",
       "save": "Zapisz",
       "view_details": "Zobacz szczegóły"
@@ -1189,7 +1190,9 @@
       "confirm_delete_story_chapter": "Usunąć ten rozdział historii? Będzie można go ponownie wygenerować.",
       "delete_story_chapter_failed": "Nie udało się usunąć rozdziału.",
       "no_summary": "Brak podsumowania",
-      "pdf_generating": "Generowanie PDF...",
+      "pdf_generated": "Raport PDF zapisany:",
+      "pdf_failed": "Nie udało się wygenerować PDF:",
+      "pdf_generating": "Generowanie raportu PDF…",
       "pdf_ready": "PDF gotowy do pobrania",
       "personal_data": "Dane osobowe",
       "update_pilot_photo_data": "Zaktualizuj zdjęcie i dane osobowe pilota"

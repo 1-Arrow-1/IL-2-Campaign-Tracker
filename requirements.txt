@@ -4,7 +4,8 @@
 pillow>=9.0.0          # Image processing (DDS to PNG conversion)
 pyyaml>=6.0            # YAML configuration file parsing
 psutil>=5.9.0          # Process monitoring (detecting IL-2 game)
-pdfkit>=1.0.0          # PDF generation wrapper for wkhtmltopdf
+pdfkit>=1.0.0          # PDF generation wrapper for wkhtmltopdf (campaign reports)
+reportlab>=4.0.0       # Career PDF report generation (pure Python, PyInstaller-compatible)
 regex>=2024.0.0        # Regex module used for advanced pattern matching
 openai>=1.0.0          # Optional: LLM-backed mission story generation
 

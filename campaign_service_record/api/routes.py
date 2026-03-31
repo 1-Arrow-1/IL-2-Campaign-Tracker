@@ -929,6 +929,16 @@ def _build_career_story_contexts(root_career_id: int) -> list[dict]:
             except Exception:
                 squadron_name = ""
 
+        sortie_stats: dict = {}
+        if mission_segment is not None:
+            try:
+                _pilot_id_for_sortie = int(mission_segment["playerId"])
+                _sortie_row = db.get_sortie_for_mission(int(result.mission_id), _pilot_id_for_sortie)
+                if _sortie_row:
+                    sortie_stats = dict(_sortie_row)
+            except Exception:
+                pass
+
         mission_rows.append({
             "mission_id": int(result.mission_id),
             "mission_date": mission_date_iso,
@@ -936,6 +946,7 @@ def _build_career_story_contexts(root_career_id: int) -> list[dict]:
             "segment": mission_segment,
             "squadron_name": squadron_name,
             "mission_json": mission_json,
+            "sortie_stats": sortie_stats,
             "sort_key": (
                 mission_date_iso,
                 mission_segment_index,
@@ -955,16 +966,27 @@ def _build_career_story_contexts(root_career_id: int) -> list[dict]:
     day_keys = sorted(by_day.keys())
     contexts: list[dict] = []
 
-    # Resolve pilot's starting rank from the DB (before any promotion events)
+    # Reconstruct pilot's initial rank from promotion event history.
+    # pilot.rankId in the DB reflects the CURRENT rank (updated in-place on each promotion),
+    # so we cannot read it for the starting rank. Instead:
+    #   - If there is at least one promotion event: the pilot's first rank is one step below
+    #     the rank they were first promoted TO (IL-2 careers never skip ranks).
+    #   - If there are no promotion events: pilot.rankId IS the starting rank (never promoted).
     _CAREER_COUNTRY_INT = {"germany": 201, "britain": 102, "usa": 103, "ussr": 101}
     initial_career_rank = ""
     try:
-        initial_pilot_row = db.get_pilot_by_id(career.pilot_id)
-        if initial_pilot_row is not None:
-            rank_id_int = int(initial_pilot_row["rankId"] or -1)
-            country_int = _CAREER_COUNTRY_INT.get((career.country or "").lower(), 0)
-            rank_name = aggregator._rank_resolver.resolve(country_int, rank_id_int)
-            initial_career_rank = _normalize_story_text(rank_name.display if rank_name else "") or ""
+        country_int = _CAREER_COUNTRY_INT.get((career.country or "").lower(), 0)
+        first_promo_event = next(
+            (e for e in raw_events if int(e["type"] or -1) == 6),
+            None,
+        )
+        if first_promo_event is not None:
+            initial_rank_id = max(0, int(first_promo_event["rankId"] or 0) - 1)
+        else:
+            initial_pilot_row = db.get_pilot_by_id(career.pilot_id)
+            initial_rank_id = int((initial_pilot_row["rankId"] if initial_pilot_row else None) or 0)
+        rank_name = aggregator._rank_resolver.resolve(country_int, initial_rank_id)
+        initial_career_rank = _normalize_story_text(rank_name.display if rank_name else "") or ""
     except Exception:
         initial_career_rank = ""
 
@@ -1155,6 +1177,19 @@ def _build_career_story_contexts(root_career_id: int) -> list[dict]:
                 "missions_in_chapter": len(day_rows),
                 "mission_ids": [str(row["mission_id"]) for row in day_rows],
                 "mission_results": mission_results,
+                # Per-mission JSON payloads — used by the PDF generator, ignored by LLM prompt builder.
+                "mission_jsons": [
+                    {
+                        "mission_id": str(row["mission_id"]),
+                        "aircraft": _normalize_story_text(
+                            (row["mission_json"] or {}).get("player", {}).get("aircraft")
+                            if isinstance(row["mission_json"], dict) else ""
+                        ),
+                        "json": row["mission_json"] if isinstance(row["mission_json"], dict) else {},
+                        "sortie_stats": row.get("sortie_stats") or {},
+                    }
+                    for row in day_rows
+                ],
             }
 
             pilot_name = " ".join(
@@ -2567,6 +2602,111 @@ def get_career_detail(root_career_id: int):
             "Error getting career detail for id=%d: %s", root_career_id, exc, exc_info=True
         )
         return jsonify({'error': 'Failed to load career details', 'detail': str(exc)}), 500
+
+
+# ============================================================================
+# Career PDF Report Endpoint
+# ============================================================================
+
+@api_bp.route('/api/career/<int:root_career_id>/pdf', methods=['POST'])
+def generate_career_pdf_report(root_career_id: int):
+    """
+    Generate a PDF career service record report on demand.
+
+    Assembles career detail, per-day story contexts, and any existing story
+    chapters into a formatted PDF, then saves it under:
+        <data_dir>/career/<career_id>/pdf_reports/career_<id>_YYYYMMDD_HHmmss.pdf
+
+    Returns:
+        JSON: { "filename": str, "path": str (relative), "abs_path": str }
+    """
+    _last_ping[0] = time.time()
+
+    if not _career_provider:
+        return jsonify({'error': 'Career mode not available'}), 503
+
+    try:
+        from career_pdf_report import generate_career_pdf
+    except ImportError:
+        return jsonify({
+            'error': 'reportlab is not installed. '
+                     'Run: pip install reportlab'
+        }), 500
+
+    try:
+        aggregator = _career_provider._aggregator
+
+        # Career detail (always with debriefs so the summary is complete)
+        detail = aggregator.get_career_detail(root_career_id, skip_debriefs=False)
+        if detail is None:
+            return jsonify({'error': 'Career not found', 'id': root_career_id}), 404
+
+        # Per-day story contexts (combat stats, events, etc.)
+        day_contexts = _build_career_story_contexts(root_career_id)
+
+        # Existing story chapters
+        chapters = load_story_chapters_for("career", str(root_career_id))
+
+        # Output directory: <cwd>/career/<id>/pdf_reports/
+        base_data_dir = Path.cwd()
+        out_dir = base_data_dir / "career" / str(root_career_id) / "pdf_reports"
+
+        out_path = generate_career_pdf(
+            career_id=root_career_id,
+            career_detail=detail,
+            day_contexts=day_contexts,
+            story_chapters=chapters,
+            output_dir=out_dir,
+            data_dir=_career_data_dir,
+            game_dir=_career_game_dir,
+        )
+
+        try:
+            rel = out_path.relative_to(base_data_dir)
+            rel_str = str(rel).replace("\\", "/")
+        except ValueError:
+            rel_str = out_path.name
+
+        return jsonify({
+            'filename': out_path.name,
+            'path':     rel_str,
+            'abs_path': str(out_path),
+        })
+
+    except Exception as exc:
+        logger.error(
+            "Error generating career PDF for id=%d: %s", root_career_id, exc, exc_info=True
+        )
+        return jsonify({'error': 'PDF generation failed', 'detail': str(exc)}), 500
+
+
+@api_bp.route('/api/career/<int:root_career_id>/pdf/<path:filename>', methods=['GET'])
+def download_career_pdf(root_career_id: int, filename: str):
+    """Serve a previously generated career PDF file for download."""
+    _last_ping[0] = time.time()
+    try:
+        base_data_dir = Path.cwd()
+        pdf_dir = (base_data_dir / "career" / str(root_career_id) / "pdf_reports").resolve()
+        pdf_dir.mkdir(parents=True, exist_ok=True)
+        # Security: strip directory components; only the bare filename is accepted.
+        # Then verify the resolved path stays inside pdf_dir (path-traversal guard).
+        safe_name = Path(filename).name
+        pdf_path = pdf_dir / safe_name
+        try:
+            pdf_path.resolve().relative_to(pdf_dir)
+        except ValueError:
+            return jsonify({'error': 'Invalid filename'}), 400
+        if not pdf_path.exists():
+            return jsonify({'error': 'PDF not found'}), 404
+        return send_file(
+            pdf_path,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=safe_name,
+        )
+    except Exception as exc:
+        logger.error("Error serving career PDF: %s", exc, exc_info=True)
+        return jsonify({'error': 'Failed to serve PDF'}), 500
 
 
 # ============================================================================

@@ -172,6 +172,20 @@ const API = {
     },
     
     /**
+     * Generate a career PDF report (POST, triggers server-side PDF creation)
+     */
+    async generateCareerPdf(careerId) {
+        return this.post(`/career/${encodeURIComponent(careerId)}/pdf`);
+    },
+
+    /**
+     * Download URL for a generated career PDF
+     */
+    careerPdfDownloadUrl(careerId, filename) {
+        return `${this.baseURL}/career/${encodeURIComponent(careerId)}/pdf/${encodeURIComponent(filename)}`;
+    },
+
+    /**
      * Check if PDF report exists for campaign
      */
     async checkPDF(campaignName) {

@@ -1113,6 +1113,7 @@
       "download_pdf": "Descargar informe PDF",
       "edit_notes": "Editar",
       "delete_story_chapter": "Eliminar capítulo",
+      "generate_pdf_report": "Generar informe PDF",
       "expand": "Expandir",
       "save": "Guardar",
       "view_details": "Ver detalles"
@@ -1189,7 +1190,9 @@
       "confirm_delete_story_chapter": "¿Eliminar este capítulo? Podrá regenerarse después.",
       "delete_story_chapter_failed": "No se pudo eliminar el capítulo.",
       "no_summary": "No hay resumen disponible",
-      "pdf_generating": "Generando PDF...",
+      "pdf_generated": "Informe PDF guardado:",
+      "pdf_failed": "Error al generar el PDF:",
+      "pdf_generating": "Generando informe PDF…",
       "pdf_ready": "PDF listo para descargar",
       "personal_data": "Datos personales",
       "update_pilot_photo_data": "Actualizar foto del piloto y datos personales"

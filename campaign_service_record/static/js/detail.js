@@ -674,7 +674,8 @@ const DetailPage = {
         storiesSection: null,
         storiesStatus: null,
         storiesContent: null,
-        storiesGenerateBtn: null
+        storiesGenerateBtn: null,
+        careerPdfBtn: null
     },
 
     eventImageScale: 0.35,
@@ -773,6 +774,7 @@ const DetailPage = {
         this.elements.storiesStatus = document.getElementById('stories-status');
         this.elements.storiesContent = document.getElementById('stories-content');
         this.elements.storiesGenerateBtn = document.getElementById('stories-generate-btn');
+        this.elements.careerPdfBtn = document.getElementById('career-pdf-btn');
     },
 
     setupPhotoHandlers() {
@@ -819,6 +821,9 @@ const DetailPage = {
     setupStoryHandlers() {
         if (this.elements.storiesGenerateBtn) {
             this.elements.storiesGenerateBtn.addEventListener('click', () => this.generateStories());
+        }
+        if (this.elements.careerPdfBtn) {
+            this.elements.careerPdfBtn.addEventListener('click', () => this._generateCareerPdf());
         }
     },
 
@@ -1236,6 +1241,12 @@ const DetailPage = {
                 : translateOrFallback('web.button.generate_stories', 'Generate Stories');
         }
 
+        // PDF button: only for career entries
+        if (this.elements.careerPdfBtn) {
+            this.elements.careerPdfBtn.style.display = source === 'career' ? '' : 'none';
+            this.elements.careerPdfBtn.disabled = this._pdfGenerating || false;
+        }
+
         const tone = status === 'auth_error' || status === 'quota_error' || status === 'api_error' || status === 'not_configured' || status === 'disabled'
             ? 'error'
             : (status === 'generated' ? 'success' : '');
@@ -1389,6 +1400,62 @@ const DetailPage = {
             this.setStoriesStatus(error.message || translateOrFallback('web.message.delete_story_chapter_failed', 'Failed to delete chapter.'), 'error');
         } finally {
             this.setStoriesBusy(false);
+        }
+    },
+
+    /**
+     * Generate a career PDF report.
+     * POSTs to the server, then opens the returned file for download.
+     */
+    async _generateCareerPdf() {
+        if (!this.currentStoriesEntryId || this._source !== 'career') return;
+        if (this._pdfGenerating) return;
+
+        this._pdfGenerating = true;
+        if (this.elements.careerPdfBtn) {
+            this.elements.careerPdfBtn.disabled = true;
+            this.elements.careerPdfBtn.textContent =
+                translateOrFallback('web.message.pdf_generating', 'Generating PDF…');
+        }
+        this.setStoriesStatus(
+            translateOrFallback('web.message.pdf_generating', 'Generating PDF report…'),
+            ''
+        );
+
+        try {
+            const result = await API.generateCareerPdf(this.currentStoriesEntryId);
+            const downloadUrl = API.careerPdfDownloadUrl(
+                this.currentStoriesEntryId,
+                result.filename
+            );
+
+            // Trigger download in a new tab / native download
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = result.filename;
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            const successMsg = translateOrFallback('web.message.pdf_generated', 'PDF report saved.')
+                + ' ' + (result.abs_path || result.filename);
+            this.setStoriesStatus(successMsg, 'success');
+        } catch (error) {
+            console.error('Career PDF generation failed:', error);
+            this.setStoriesStatus(
+                translateOrFallback('web.message.pdf_failed', 'PDF generation failed: ')
+                    + (error.message || ''),
+                'error'
+            );
+        } finally {
+            this._pdfGenerating = false;
+            if (this.elements.careerPdfBtn) {
+                this.elements.careerPdfBtn.disabled = false;
+                this.elements.careerPdfBtn.setAttribute('data-i18n', 'web.button.generate_pdf_report');
+                this.elements.careerPdfBtn.textContent =
+                    translateOrFallback('web.button.generate_pdf_report', 'Generate PDF Report');
+            }
         }
     },
 

@@ -1113,6 +1113,7 @@
       "download_pdf": "Скачать PDF-отчёт",
       "edit_notes": "Редактировать",
       "delete_story_chapter": "Удалить главу",
+      "generate_pdf_report": "Создать PDF-отчёт",
       "expand": "Развернуть",
       "save": "Сохранить",
       "view_details": "Просмотреть детали"
@@ -1189,7 +1190,9 @@
       "confirm_delete_story_chapter": "Удалить эту главу? Её можно будет сгенерировать заново.",
       "delete_story_chapter_failed": "Не удалось удалить главу.",
       "no_summary": "Сводка недоступна",
-      "pdf_generating": "Создание PDF...",
+      "pdf_generated": "PDF-отчёт сохранён:",
+      "pdf_failed": "Ошибка создания PDF:",
+      "pdf_generating": "Создание PDF-отчёта…",
       "pdf_ready": "PDF готов к скачиванию",
       "personal_data": "Личные данные",
       "update_pilot_photo_data": "Обновить фото и личные данные пилота"

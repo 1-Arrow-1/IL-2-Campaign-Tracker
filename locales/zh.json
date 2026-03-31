@@ -1113,6 +1113,7 @@
       "download_pdf": "下载 PDF 报告",
       "edit_notes": "编辑",
       "delete_story_chapter": "删除章节",
+      "generate_pdf_report": "生成 PDF 报告",
       "expand": "展开",
       "save": "保存",
       "view_details": "查看详情"
@@ -1189,7 +1190,9 @@
       "confirm_delete_story_chapter": "删除此故事章节？之后可以重新生成。",
       "delete_story_chapter_failed": "删除章节失败。",
       "no_summary": "暂无总结",
-      "pdf_generating": "正在生成 PDF...",
+      "pdf_generated": "PDF 报告已保存：",
+      "pdf_failed": "PDF 生成失败：",
+      "pdf_generating": "正在生成 PDF 报告…",
       "pdf_ready": "PDF 已准备好下载",
       "personal_data": "个人信息",
       "update_pilot_photo_data": "更新飞行员照片与个人数据"

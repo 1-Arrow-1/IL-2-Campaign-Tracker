@@ -1112,6 +1112,7 @@
       "collapse": "Einklappen",
       "download_pdf": "PDF-Bericht herunterladen",
       "delete_story_chapter": "Kapitel löschen",
+      "generate_pdf_report": "PDF-Bericht erstellen",
       "edit_notes": "Bearbeiten",
       "expand": "Aufklappen",
       "save": "Speichern",
@@ -1189,7 +1190,9 @@
       "confirm_delete_story_chapter": "Dieses Story-Kapitel löschen? Es kann anschließend neu generiert werden.",
       "delete_story_chapter_failed": "Kapitel konnte nicht gelöscht werden.",
       "no_summary": "Keine Zusammenfassung verfügbar",
-      "pdf_generating": "PDF wird erstellt...",
+      "pdf_generated": "PDF-Bericht gespeichert:",
+      "pdf_failed": "PDF-Erstellung fehlgeschlagen:",
+      "pdf_generating": "PDF-Bericht wird erstellt…",
       "pdf_ready": "PDF bereit zum Download",
       "personal_data": "Personendaten",
       "update_pilot_photo_data": "Pilotenfoto & Personendaten aktualisieren"

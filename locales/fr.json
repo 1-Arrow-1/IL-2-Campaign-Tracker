@@ -1114,6 +1114,7 @@
       "download_pdf": "Télécharger le rapport PDF",
       "edit_notes": "Modifier",
       "delete_story_chapter": "Supprimer le chapitre",
+      "generate_pdf_report": "Générer un rapport PDF",
       "expand": "Développer",
       "save": "Enregistrer",
       "view_details": "Voir les détails"
@@ -1190,7 +1191,9 @@
       "confirm_delete_story_chapter": "Supprimer ce chapitre ? Il pourra être régénéré ensuite.",
       "delete_story_chapter_failed": "Impossible de supprimer le chapitre.",
       "no_summary": "Aucun résumé disponible",
-      "pdf_generating": "Génération du PDF...",
+      "pdf_generated": "Rapport PDF enregistré :",
+      "pdf_failed": "Échec de la génération du PDF :",
+      "pdf_generating": "Génération du rapport PDF…",
       "pdf_ready": "PDF prêt au téléchargement",
       "personal_data": "Données personnelles",
       "update_pilot_photo_data": "Mettre à jour la photo & les données personnelles du pilote"
