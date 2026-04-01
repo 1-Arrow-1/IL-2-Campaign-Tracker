@@ -388,7 +388,9 @@ def _build_story(
     PAGE_W, PAGE_H = A4
     MARGIN  = 20 * mm
     CW      = PAGE_W - 2 * MARGIN      # usable content width
-    IMG_SZ  = 54 * mm                  # award/rank image (+50% → 54 mm)
+    IMG_SZ  = 54 * mm                  # fallback size for award/rank images
+    IMG_SCALE = 0.75                   # render awards/ranks at 75% of source size
+    MIN_TEXT_W = 30 * mm               # keep some width for the text column
 
     base = getSampleStyleSheet()
 
@@ -525,11 +527,80 @@ def _build_story(
             spaceAfter=6, spaceBefore=2,
         )
 
+    def _rank_big_url(url: Optional[str]) -> Optional[str]:
+        if not url:
+            return None
+        prefix = "/api/career_assets/CampaignRanksAwards/"
+        if not url.startswith(prefix):
+            return url
+        rel = url[len(prefix):]
+        parent, name = rel.rsplit("/", 1) if "/" in rel else ("", rel)
+        stem, ext = Path(name).stem, Path(name).suffix
+        # Preserve existing big/big1 if already present
+        if stem.endswith(("_big", "_big1")):
+            filename = stem + (ext if ext else ".png")
+        else:
+            filename = f"{stem}_big.png"
+        return f"{prefix}{parent + '/' if parent else ''}{filename}"
+
+    def _award_big1_url(url: Optional[str]) -> Optional[str]:
+        if not url:
+            return None
+        prefix = "/api/career_assets/CampaignRanksAwards/"
+        if not url.startswith(prefix):
+            return url
+        rel = url[len(prefix):]
+        parent, name = rel.rsplit("/", 1) if "/" in rel else ("", rel)
+        stem, ext = Path(name).stem, Path(name).suffix
+        if stem.endswith("_big1"):
+            filename = stem + (ext if ext else ".png")
+        else:
+            if stem.endswith("_big"):
+                stem = stem[:-4]
+            filename = f"{stem}_big1.png"
+        return f"{prefix}{parent + '/' if parent else ''}{filename}"
+
+    def _event_image_bytes(ev: dict) -> Optional[bytes]:
+        """Select the preferred image bytes for an award/promotion event."""
+        ev_type = ev.get("type", "")
+        url_candidates: list[str] = []
+        if ev_type == "promotion":
+            url_candidates.extend([
+                ev.get("modal_image_url"),
+                _rank_big_url(ev.get("image_url")),
+                ev.get("image_url"),
+            ])
+        elif ev_type == "award":
+            url_candidates.extend([
+                _award_big1_url(ev.get("image_url")),
+                _award_big1_url(ev.get("modal_image_url")),
+                ev.get("modal_image_url"),
+                ev.get("image_url"),
+            ])
+        else:
+            url_candidates.extend([ev.get("image_url"), ev.get("modal_image_url")])
+
+        for url in url_candidates:
+            img_bytes = _load_image_bytes(url or "", data_dir, game_dir)
+            if img_bytes:
+                return img_bytes
+        return None
+
     def img_flowable(img_bytes: Optional[bytes]) -> Optional[Image]:
         if not img_bytes:
             return None
         try:
-            return Image(io.BytesIO(img_bytes), width=IMG_SZ, height=IMG_SZ)
+            img = Image(io.BytesIO(img_bytes))
+            scaled_w = img.imageWidth * IMG_SCALE
+            scaled_h = img.imageHeight * IMG_SCALE
+            max_w = CW - 4 * mm - MIN_TEXT_W
+            if scaled_w > max_w:
+                scale = max_w / scaled_w
+                scaled_w *= scale
+                scaled_h *= scale
+            img.drawWidth = scaled_w
+            img.drawHeight = scaled_h
+            return img
         except Exception:
             return None
 
@@ -875,8 +946,7 @@ def _build_story(
         rows: list[tuple[Optional[bytes], str]] = []
         for ev in evs:
             ev_type   = ev.get("type") or ""
-            img_url   = ev.get("image_url") or ev.get("modal_image_url") or ""
-            img_bytes = _load_image_bytes(img_url, data_dir, game_dir)
+            img_bytes = _event_image_bytes(ev)
             if ev_type == "promotion":
                 lbl = "Promoted to " + _safe(ev.get("rank") or ev.get("rank_code") or "")
             elif ev_type == "award":
@@ -902,9 +972,20 @@ def _build_story(
         for img_bytes, lbl in rows:
             img_fl = img_flowable(img_bytes)
             if img_fl:
+                img_w = getattr(img_fl, "drawWidth", IMG_SZ)
+                text_w = CW - img_w - 4 * mm
+                if text_w < MIN_TEXT_W:
+                    # Clamp image width so the text column keeps minimum width
+                    excess = MIN_TEXT_W - text_w
+                    img_w = max(0, img_w - excess)
+                    if img_w > 0 and img_fl.drawWidth > 0:
+                        scale = img_w / img_fl.drawWidth
+                        img_fl.drawWidth = img_w
+                        img_fl.drawHeight *= scale
+                    text_w = MIN_TEXT_W
                 rt = Table(
                     [[img_fl, Paragraph(lbl, sty["award_txt"])]],
-                    colWidths=[IMG_SZ + 4 * mm, CW - IMG_SZ - 4 * mm],
+                    colWidths=[img_w + 4 * mm, text_w],
                 )
                 rt.setStyle(TableStyle([
                     ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
