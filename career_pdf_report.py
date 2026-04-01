@@ -96,6 +96,55 @@ def _extract_kills(mission_json: dict) -> list[tuple[str, str, int]]:
 # ---------------------------------------------------------------------------
 # Image resolution
 # ---------------------------------------------------------------------------
+def _apply_photo_filter(img_bytes: bytes) -> bytes:
+    """Apply the same CSS filter used on the detail page to the pilot photo:
+    grayscale(100%) sepia(28%) saturate(110%) contrast(105%) brightness(102%).
+
+    Implemented with Pillow only (no numpy dependency).
+    Returns filtered PNG bytes, or the original bytes on any error.
+    """
+    try:
+        from PIL import Image as PILImage, ImageEnhance, ImageOps
+
+        img = PILImage.open(io.BytesIO(img_bytes)).convert("RGB")
+
+        # 1. grayscale(100%) — full desaturate → 'L' image
+        grey = ImageOps.grayscale(img)   # single-channel L
+
+        # 2. sepia(28%) applied to the greyscale channel.
+        # For a grey value L, the full CSS sepia matrix (all channels equal = L) gives:
+        #   R_sepia = L * (0.393 + 0.769 + 0.189) = L * 1.351
+        #   G_sepia = L * (0.349 + 0.686 + 0.168) = L * 1.203
+        #   B_sepia = L * (0.272 + 0.534 + 0.131) = L * 0.937
+        # At 28% blend: channel = (1 - 0.28) * L + 0.28 * L * factor
+        #   R factor = 0.72 + 0.28 * 1.351 = 1.098
+        #   G factor = 0.72 + 0.28 * 1.203 = 1.057
+        #   B factor = 0.72 + 0.28 * 0.937 = 0.982
+        lut_r = bytes(min(255, int(i * 1.098)) for i in range(256))
+        lut_g = bytes(min(255, int(i * 1.057)) for i in range(256))
+        lut_b = bytes(min(255, int(i * 0.982)) for i in range(256))
+        r = grey.point(lut_r)
+        g = grey.point(lut_g)
+        b = grey.point(lut_b)
+        img = PILImage.merge("RGB", [r, g, b])
+
+        # 3. saturate(110%)
+        img = ImageEnhance.Color(img).enhance(1.10)
+
+        # 4. contrast(105%)
+        img = ImageEnhance.Contrast(img).enhance(1.05)
+
+        # 5. brightness(102%)
+        img = ImageEnhance.Brightness(img).enhance(1.02)
+
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        return buf.getvalue()
+
+    except Exception:
+        return img_bytes   # silently fall back to original
+
+
 def _composite_showcase_image(
     showcase_data: dict,
     data_dir: Optional[Path],
@@ -170,7 +219,12 @@ def _composite_showcase_image(
                 padded.paste(medal_img, (ox, oy), medal_img)
                 cropped = padded
 
-            canvas.paste(cropped, (mx, my), cropped)
+            # Use alpha_composite (Porter-Duff "over") to avoid white halos
+            # that result from paste() compositing semi-transparent edge pixels
+            # against white instead of the actual canvas background.
+            layer = PILImage.new("RGBA", canvas.size, (0, 0, 0, 0))
+            layer.paste(cropped, (mx, my))
+            canvas = PILImage.alpha_composite(canvas, layer)
 
         # 3. Overlay on top
         ovl = showcase_data.get("overlay") or {}
@@ -184,7 +238,9 @@ def _composite_showcase_image(
                     ovl_img = ovl_img.resize((ovl_w, ovl_h), PILImage.LANCZOS)
                 ovl_x = int(ovl.get("x") or 0)
                 ovl_y = int(ovl.get("y") or 0)
-                canvas.paste(ovl_img, (ovl_x, ovl_y), ovl_img)
+                ovl_layer = PILImage.new("RGBA", canvas.size, (0, 0, 0, 0))
+                ovl_layer.paste(ovl_img, (ovl_x, ovl_y))
+                canvas = PILImage.alpha_composite(canvas, ovl_layer)
 
         # 4. Serialise to PNG bytes
         buf = io.BytesIO()
@@ -315,6 +371,7 @@ def _build_story(
     story_chapters: list[dict],
     data_dir: Optional[Path],
     game_dir: Optional[Path],
+    pilot_photo_bytes: Optional[bytes] = None,
 ) -> list:
     """Return the list of reportlab Flowables that make up the PDF."""
 
@@ -719,25 +776,6 @@ def _build_story(
     progression = summary.get("career_progression") or {}
     final_rank  = _safe(progression.get("final_rank") or "")
 
-    # Cover image (career_pdf_cover.png)
-    _cover_img_bytes: Optional[bytes] = None
-    for _cover_root in ([game_dir / "data" / "swf"] if game_dir else []) + ([data_dir] if data_dir else []):
-        _cover_path = _cover_root / "CampaignRanksAwards" / "Misc" / "career_pdf_cover.png"
-        try:
-            if _cover_path.exists():
-                _cover_img_bytes = _cover_path.read_bytes()
-                break
-        except Exception:
-            pass
-    if _cover_img_bytes:
-        try:
-            _cover_fl = Image(io.BytesIO(_cover_img_bytes), width=CW, height=CW * 0.35)
-            _cover_fl.hAlign = "CENTER"
-            flowables.append(_cover_fl)
-            flowables.append(Spacer(1, 6 * mm))
-        except Exception:
-            pass
-
     flowables.append(Spacer(1, 4 * mm))
     flowables.append(Paragraph(pilot_name, sty["title"]))
     flowables.append(Spacer(1, 3 * mm))
@@ -764,8 +802,49 @@ def _build_story(
     if theatres and theatres != "-":
         header_lines.append(f"Theatres: {theatres}")
 
-    for line in header_lines:
-        flowables.append(Paragraph(line, sty["subtitle"]))
+    # Build cover subtitle block — two-column when pilot photo is available
+    _PHOTO_MAX = 40 * mm   # max dimension (width or height) for pilot photo on cover
+    _filtered_photo = _apply_photo_filter(pilot_photo_bytes) if pilot_photo_bytes else None
+    _photo_fl: Optional[Image] = None
+    if _filtered_photo:
+        try:
+            from PIL import Image as _PIL_ph
+            with _PIL_ph.open(io.BytesIO(_filtered_photo)) as _ph:
+                _ph_w, _ph_h = _ph.size
+            # Scale so the longest side = _PHOTO_MAX, preserving aspect ratio
+            if _ph_w >= _ph_h:
+                _draw_w = _PHOTO_MAX
+                _draw_h = _PHOTO_MAX * _ph_h / _ph_w
+            else:
+                _draw_h = _PHOTO_MAX
+                _draw_w = _PHOTO_MAX * _ph_w / _ph_h
+            _photo_fl = Image(io.BytesIO(_filtered_photo), width=_draw_w, height=_draw_h)
+        except Exception:
+            pass
+    # Column width matches the actual rendered photo width (not always _PHOTO_MAX).
+    _PHOTO_COL = _draw_w if _photo_fl else _PHOTO_MAX
+
+    if _photo_fl:
+        # Left column: subtitle text lines  |  Right column: framed photo
+        _txt_col  = CW - _PHOTO_COL - 6 * mm
+        _left_cell = [Paragraph(ln, sty["subtitle"]) for ln in header_lines] or [Paragraph("", sty["subtitle"])]
+        _cover_tbl = Table(
+            [[_left_cell, _photo_fl]],
+            colWidths=[_txt_col, _PHOTO_COL],
+        )
+        _cover_tbl.setStyle(TableStyle([
+            ("VALIGN",        (0, 0), (-1, -1), "TOP"),
+            ("LEFTPADDING",   (0, 0), (-1, -1), 0),
+            ("RIGHTPADDING",  (0, 0), (-1, -1), 0),
+            ("TOPPADDING",    (0, 0), (-1, -1), 0),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+            # Thin gold border around the photo cell
+            ("BOX",           (1, 0), (1, 0), 1.0, colors.HexColor(_C_ACCENT)),
+        ]))
+        flowables.append(_cover_tbl)
+    else:
+        for line in header_lines:
+            flowables.append(Paragraph(line, sty["subtitle"]))
 
     flowables.append(Spacer(1, 8 * mm))
 
@@ -1130,6 +1209,7 @@ def generate_career_pdf(
     data_dir: Optional[Path] = None,
     game_dir: Optional[Path] = None,
     showcase_data: Optional[dict] = None,
+    pilot_photo_bytes: Optional[bytes] = None,
 ) -> Path:
     """Generate and save a career PDF report.
 
@@ -1242,6 +1322,7 @@ def generate_career_pdf(
         story_chapters=story_chapters,
         data_dir=data_dir,
         game_dir=game_dir,
+        pilot_photo_bytes=pilot_photo_bytes,
     )
 
     # --- Append showcase page ---

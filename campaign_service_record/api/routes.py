@@ -842,6 +842,60 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
     return contexts
 
 
+def _normalize_career_sortie_stats(row: dict) -> dict:
+    """Translate cp.db sortie column names to KILL_MAPPING canonical names.
+
+    cp.db uses different column names than the campaign characterStatisticsByFileName
+    JSON that KILL_MAPPING was originally designed for.  This function sums the
+    correct cp.db columns into each canonical key so that _combat_results_flowables()
+    and aggregate_kills_from_missions() produce correct results for careers.
+    """
+    def _g(*keys: str) -> int:
+        return sum(int(row.get(k) or 0) for k in keys)
+
+    return {
+        # ── Aircraft (column names match campaign format) ────────────────────
+        'killLightPlane':          _g('killLightPlane'),
+        'killMediumPlane':         _g('killMediumPlane'),
+        'killHeavyPlane':          _g('killHeavyPlane'),
+        'killStaticPlane':         _g('killStaticPlane'),
+        'killMediumAerostat':      _g('killMediumAerostat'),   # balloons; 0 if absent
+
+        # ── Vehicles ────────────────────────────────────────────────────────
+        # Use only atomic columns; killLightTransport/killMediumTransport/killHeavyTransport
+        # are accumulated rollups that would double-count killTruck/killCar.
+        'killTransportVehicle':    _g('killTruck', 'killCar'),
+        'killLightArmoredVehicle': _g('killLightTank'),
+        'killMediumArmoredVehicle':_g('killMediumTank'),
+        'killHeavyArmoredVehicle': _g('killHeavyTank'),
+
+        # ── Railroad ────────────────────────────────────────────────────────
+        'killLocomotive':          _g('killTrainLocomotive'),
+        'killRailroadCarriage':    _g('killTrainVagon'),
+        'killRailroadStation':     _g('killRailwayStationFacility'),
+
+        # ── Armaments ───────────────────────────────────────────────────────
+        'killMachinegun':          _g('killMachineGun'),        # capital G in cp.db
+        'killCannon':              _g('killFieldGun', 'killHowitzer', 'killNavalGun'),
+        # killAirDefence is the accumulated column that already includes all flak/AA types.
+        'killAAAGun':              _g('killAirDefence'),
+        'killRocketLauncher':      _g('killRocketLauncher'),
+        'killSearchlight':         _g('killSearchlight'),
+        'killRadar':               _g('killRadar'),             # 0 if absent
+
+        # ── Buildings ───────────────────────────────────────────────────────
+        'killResidentalBuilding':  _g('killTownBuilding', 'killRuralYard'),
+        'killFacility':            _g('killAirfieldFacility', 'killFactoryBuilding'),
+        'killBridge':              _g('killBridge'),
+
+        # ── Marine (column names match campaign format) ──────────────────────
+        'killLightShip':           _g('killLightShip'),
+        'killLargeCargoShip':      _g('killLargeCargoShip'),
+        'killSubmarine':           _g('killSubmarine'),
+        'killDestroyerShip':       _g('killDestroyerShip'),
+    }
+
+
 def _build_career_story_contexts(root_career_id: int) -> list[dict]:
     if not _career_provider:
         raise RuntimeError("Career provider not initialized.")
@@ -935,7 +989,7 @@ def _build_career_story_contexts(root_career_id: int) -> list[dict]:
                 _pilot_id_for_sortie = int(mission_segment["playerId"])
                 _sortie_row = db.get_sortie_for_mission(int(result.mission_id), _pilot_id_for_sortie)
                 if _sortie_row:
-                    sortie_stats = dict(_sortie_row)
+                    sortie_stats = _normalize_career_sortie_stats(dict(_sortie_row))
             except Exception:
                 pass
 
@@ -2722,6 +2776,18 @@ def generate_career_pdf_report(root_career_id: int):
                 "PDF generation: could not build showcase data (skipped): %s", _sc_exc
             )
 
+        # --- Pilot photo (best-effort) ---
+        _pilot_photo_bytes: Optional[bytes] = None
+        try:
+            _photo_dir = current_app.config.get('PILOT_PHOTO_DIR')
+            if _photo_dir:
+                _photo_desc = f"campaign:{root_career_id}"
+                _photo_path = pilot_photo_path(Path(_photo_dir), _photo_desc)
+                if _photo_path.exists():
+                    _pilot_photo_bytes = _photo_path.read_bytes()
+        except Exception as _ph_exc:
+            logger.warning("PDF generation: could not read pilot photo (skipped): %s", _ph_exc)
+
         out_path = generate_career_pdf(
             career_id=root_career_id,
             career_detail=detail,
@@ -2731,6 +2797,7 @@ def generate_career_pdf_report(root_career_id: int):
             data_dir=_career_data_dir,
             game_dir=_career_game_dir,
             showcase_data=_showcase_data,
+            pilot_photo_bytes=_pilot_photo_bytes,
         )
 
         try:

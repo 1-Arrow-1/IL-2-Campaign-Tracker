@@ -611,12 +611,13 @@ class SettingsManagerApp(tk.Tk):
             frame,
             textvariable=self.story_model_var,
             values=[],
-            state='normal',
+            state='disabled',
             width=30
         )
         self.story_model_combo.grid(row=row, column=1, sticky=tk.W, pady=10, padx=(10, 0))
-        self.story_model_var.set(story_settings.get('model', 'gpt-5-mini'))
-        self._update_story_model_options(keep_current=True)
+        # Model field starts disabled — user must click "Refresh Models" to populate it.
+        # Preserve the saved model value in the var so it can be restored after refresh.
+        self._story_saved_model = str(story_settings.get('model') or '').strip()
         row += 1
         self.story_model_hint_var = tk.StringVar(value="")
         self.story_model_hint_label = ttk.Label(
@@ -2123,8 +2124,9 @@ class SettingsManagerApp(tk.Tk):
             self.story_base_url_var.set(
                 str(story_settings.get('base_url') or self._story_default_base_url(provider_value))
             )
-            self.story_model_var.set(story_settings.get('model', 'gpt-5-mini'))
-            self._update_story_model_options(keep_current=True)
+            self._story_saved_model = str(story_settings.get('model') or '').strip()
+            self.story_model_var.set('')
+            self.story_model_combo.configure(values=[], state='disabled')
             self.story_auto_generate_var.set('True' if story_settings.get('auto_generate', False) else 'False')
             self._update_story_model_hint()
             self.story_status_var.set("")
@@ -2164,7 +2166,7 @@ class SettingsManagerApp(tk.Tk):
             if key in self.STORY_PROVIDER_OPTIONS and str(value or '').strip()
         }
         stories['base_url'] = self.story_base_url_var.get().strip() or self._story_default_base_url(provider_value)
-        stories['model'] = self.story_model_var.get().strip() or 'gpt-5-mini'
+        stories['model'] = self.story_model_var.get().strip() or getattr(self, '_story_saved_model', '') or 'gpt-4o-mini'
         stories['auto_generate'] = self.story_auto_generate_var.get() == 'True'
         self.settings_data['stories'] = stories
 
@@ -2196,7 +2198,12 @@ class SettingsManagerApp(tk.Tk):
         default_current = self._story_default_base_url(provider)
         if not current or current in self.STORY_PROVIDER_DEFAULT_BASE_URLS.values():
             self.story_base_url_var.set(default_current)
-        self._update_story_model_options(keep_current=True)
+
+        # Clear and disable the model combo — user must refresh for the new provider.
+        if hasattr(self, 'story_model_var'):
+            self.story_model_var.set('')
+        if hasattr(self, 'story_model_combo'):
+            self.story_model_combo.configure(values=[], state='disabled')
         self._update_story_model_hint()
 
     def _update_story_model_hint(self) -> None:
@@ -2483,7 +2490,21 @@ class SettingsManagerApp(tk.Tk):
                 list(existing) + [str(m).strip() for m in models if str(m).strip()],
             )
             self._story_provider_models_runtime[provider] = merged
-            self._update_story_model_options(keep_current=True)
+            self._update_story_model_options(keep_current=False)
+            # Enable the combo now that models are available.
+            if hasattr(self, 'story_model_combo'):
+                self.story_model_combo.configure(state='readonly')
+            # Restore saved model if it is in the list, otherwise pick the first available.
+            if hasattr(self, 'story_model_var') and hasattr(self, 'story_model_combo'):
+                saved = getattr(self, '_story_saved_model', '')
+                current = self.story_model_var.get().strip()
+                available = list(self.story_model_combo.cget('values'))
+                if current in available:
+                    pass  # already set correctly
+                elif saved and saved in available:
+                    self.story_model_var.set(saved)
+                elif available:
+                    self.story_model_var.set(available[0])
             self.story_status_var.set(self.tr.t("msg_story_refresh_success", provider=provider, count=len(merged)))
             messagebox.showinfo(
                 self.tr.t("msg_confirm_title"),
@@ -2514,7 +2535,7 @@ class SettingsManagerApp(tk.Tk):
         provider = self.story_provider_var.get().strip().lower() or 'openai'
         api_key = self.story_api_key_var.get().strip()
         base_url = self.story_base_url_var.get().strip() or self._story_default_base_url(provider)
-        model = self.story_model_var.get().strip() or 'gpt-5-mini'
+        model = self.story_model_var.get().strip() or getattr(self, '_story_saved_model', '') or 'gpt-4o-mini'
 
         if not api_key:
             messagebox.showwarning(
