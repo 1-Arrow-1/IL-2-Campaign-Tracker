@@ -23,6 +23,8 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
 
+import openai
+
 try:
     from openai import OpenAI
 except ImportError:  # pragma: no cover - handled by runtime caller
@@ -1127,7 +1129,7 @@ def _backup_models_for_provider(provider: str, primary_model: str) -> list[str]:
     if provider_key == "openai":
         candidates = ["gpt-4o-mini", "gpt-4o"]
     elif provider_key == "openrouter":
-        candidates = ["openai/gpt-4o-mini", "openai/gpt-4o", "google/gemini-flash-1.5"]
+        candidates = ["openai/gpt-4o-mini", "openai/gpt-4o", "google/gemini-2.0-flash-001"]
     elif provider_key == "anthropic":
         candidates = ["claude-3-5-haiku-20241022", "claude-3-5-sonnet-20241022"]
     elif provider_key == "google":
@@ -1258,13 +1260,19 @@ def generate_mission_story(
     )
 
     for candidate_model in _backup_models_for_provider(provider, model):
-        response = _create_story_response(
-            client,
-            provider=provider,
-            model=candidate_model,
-            prompt=prompt,
-            max_output_tokens=max_output_tokens,
-        )
+        try:
+            response = _create_story_response(
+                client,
+                provider=provider,
+                model=candidate_model,
+                prompt=prompt,
+                max_output_tokens=max_output_tokens,
+            )
+        except openai.NotFoundError:
+            LOGGER.warning("Model not found, trying next backup: %s", candidate_model)
+            continue
+        except openai.RateLimitError:
+            raise
 
         raw_text = _extract_response_text(response)
         payload = _extract_json_object(raw_text)

@@ -526,26 +526,6 @@ def _parse_story_date(text: str) -> str:
     return ""
 
 
-def _parse_hms_to_seconds(value: str) -> int:
-    text = _normalize_story_text(value)
-    if not text:
-        return 0
-    parts = text.split(":")
-    try:
-        if len(parts) == 3:
-            hours = int(parts[0])
-            minutes = int(parts[1])
-            seconds = int(parts[2])
-        elif len(parts) == 2:
-            hours = 0
-            minutes = int(parts[0])
-            seconds = int(parts[1])
-        else:
-            return 0
-    except ValueError:
-        return 0
-    return max(0, hours * 3600 + minutes * 60 + seconds)
-
 
 def _seconds_to_hms(total_seconds: int) -> str:
     value = max(0, int(total_seconds or 0))
@@ -581,7 +561,14 @@ def _extract_career_notable_events(mission_json: dict) -> list[str]:
             notable.append(f"Destroyed {target}{suffix}")
         elif ev_type == "damage taken":
             damage = _normalize_story_text(event.get("damage"))
-            notable.append(f"Aircraft took damage: {damage}" if damage else "Aircraft took damage")
+            attacker = _normalize_story_text(event.get("target"))
+            unknown = event.get("attacker_unknown")
+            if attacker:
+                notable.append(f"Aircraft took damage from {attacker}: {damage}" if damage else f"Aircraft took damage from {attacker}")
+            elif unknown:
+                notable.append(f"Aircraft took damage (attacker unknown): {damage}" if damage else "Aircraft took damage (attacker unknown)")
+            else:
+                notable.append(f"Aircraft took damage: {damage}" if damage else "Aircraft took damage")
         elif ev_type in {"bailout", "crash", "landing", "takeoff"}:
             notable.append(ev_type.capitalize())
         if len(notable) >= _STORY_MAX_NOTABLE_EVENTS:
@@ -943,18 +930,6 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
         )
     )
 
-    def _merge_unique_list(target: list, values: list) -> None:
-        seen = set()
-        for item in target:
-            key = json.dumps(item, sort_keys=True, ensure_ascii=False) if isinstance(item, dict) else str(item)
-            seen.add(key)
-        for item in values:
-            key = json.dumps(item, sort_keys=True, ensure_ascii=False) if isinstance(item, dict) else str(item)
-            if key in seen:
-                continue
-            target.append(item)
-            seen.add(key)
-
     mission_rows: list[dict] = []
 
     def _resolve_career_mission_date(result_obj, mission_row_obj) -> str:
@@ -1027,12 +1002,12 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
 
     mission_rows.sort(key=lambda row: row["sort_key"])
 
-    by_day: dict[str, list[dict]] = {}
-    for row in mission_rows:
-        by_day.setdefault(row["mission_date"], []).append(row)
-
-    day_keys = sorted(by_day.keys())
     contexts: list[dict] = []
+
+    # Track awards and promotions that have already been attributed to a mission chapter,
+    # so the same award/promotion is not repeated in multiple same-day mission chapters.
+    _attributed_awards: set[str] = set()
+    _attributed_promotions: set[str] = set()
 
     # Reconstruct pilot's initial rank from promotion event history.
     # pilot.rankId in the DB reflects the CURRENT rank (updated in-place on each promotion),
@@ -1058,21 +1033,19 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
     except Exception:
         initial_career_rank = ""
 
-    for day_index, day_key in enumerate(day_keys, start=1):
-        day_rows = by_day.get(day_key, [])
-        if not day_rows:
-            continue
+    for mission_index, row in enumerate(mission_rows, start=1):
+        mission_date = row["mission_date"]
+        mission_id = int(row["mission_id"])
+        segment_index = int(row["segment_index"])
+        squadron_name = _normalize_story_text(row["squadron_name"])
+        mission_json = row["mission_json"]
 
         try:
-            max_segment_index = max(int(row["segment_index"]) for row in day_rows)
-            latest_row = max(day_rows, key=lambda row: (int(row["segment_index"]), int(row["mission_id"])))
-            squadron_name = _normalize_story_text(latest_row["squadron_name"])
-
             awards: list[str] = []
             mission_awards: list[str] = []
-            promotions_today: list[str] = []
+            promotions_this_mission: list[str] = []
             rank = initial_career_rank
-            rank_before_today = initial_career_rank
+            rank_before_mission = initial_career_rank
             for raw_event in raw_events:
                 try:
                     event_segment_index = segment_by_pilot.get(int(raw_event["pilotId"]), 0)
@@ -1080,8 +1053,8 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                     continue
                 event_date_iso = aggregator._format_date(raw_event["date"])
                 include = (
-                    event_segment_index < max_segment_index
-                    or (event_segment_index == max_segment_index and event_date_iso and event_date_iso <= day_key)
+                    event_segment_index < segment_index
+                    or (event_segment_index == segment_index and event_date_iso and event_date_iso <= mission_date)
                 )
                 if not include:
                     continue
@@ -1092,182 +1065,90 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 if mapped.get("type") == "promotion":
                     mapped_rank = _normalize_story_text(mapped.get("rank"))
                     if mapped_rank:
-                        if event_date_iso and event_date_iso < day_key:
-                            rank_before_today = mapped_rank
+                        if event_date_iso and event_date_iso < mission_date:
+                            rank_before_mission = mapped_rank
                         rank = mapped_rank
-                        if event_date_iso == day_key:
-                            promotions_today.append(mapped_rank)
+                        if event_date_iso == mission_date and event_segment_index == segment_index:
+                            promotions_this_mission.append(mapped_rank)
                 elif mapped.get("type") == "award":
                     award_name = _humanize_story_label(mapped.get("name"))
                     if award_name:
                         awards.append(award_name)
-                        if event_date_iso == day_key:
+                        if event_date_iso == mission_date and event_segment_index == segment_index:
                             mission_awards.append(award_name)
 
-            promotion_today = ", ".join(
-                dict.fromkeys([_normalize_story_text(value) for value in promotions_today if _normalize_story_text(value)])
-            )
+            # Deduplicate within this mission, then remove any already attributed to a prior chapter.
+            promotions_deduped = list(dict.fromkeys(
+                [_normalize_story_text(v) for v in promotions_this_mission if _normalize_story_text(v)]
+            ))
+            new_promotions = [p for p in promotions_deduped if p not in _attributed_promotions]
+            _attributed_promotions.update(new_promotions)
+            promotion_this_mission = ", ".join(new_promotions)
+
             mission_awards = list(dict.fromkeys([name for name in mission_awards if name]))
+            mission_awards = [a for a in mission_awards if a not in _attributed_awards]
+            _attributed_awards.update(mission_awards)
+
             awards = list(dict.fromkeys([name for name in awards if name]))
 
-            total_duration_seconds = 0
-            total_air_kills = 0
-            total_ground_kills = 0
-            total_naval_kills = 0
-            max_aircraft_damage = 0.0
-            max_pilot_damage = 0.0
-            mission_results: list[str] = []
-            aircraft_values: list[str] = []
-            day_notables: list[str] = []
-            merged_squadron_context = {
-                "promotions": [],
-                "awards": [],
-                "transfers": [],
-                "kia": [],
-                "mia": [],
-                "wia": [],
-            }
+            summary = mission_json.get("summary", {}) if isinstance(mission_json, dict) else {}
+            aircraft_label = _normalize_story_text(
+                (mission_json.get("player", {}) if isinstance(mission_json, dict) else {}).get("aircraft")
+            ) or ""
+            mission_result = _normalize_story_text(summary.get("final_state")) or "Unknown"
 
-            for row in day_rows:
-                mission_json = row["mission_json"]
-                summary = mission_json.get("summary", {}) if isinstance(mission_json, dict) else {}
-                result_text = _normalize_story_text(summary.get("final_state"))
-                if result_text:
-                    mission_results.append(result_text)
+            notables = _extract_career_notable_events(mission_json)
+            notables = notables[:_STORY_MAX_NOTABLE_EVENTS]
 
-                duration_raw = _normalize_story_text(summary.get("flight_duration"))
-                total_duration_seconds += _parse_hms_to_seconds(duration_raw)
-
-                try:
-                    total_air_kills += int(summary.get("air_kills_flying", summary.get("air_kills", 0)) or 0)
-                except (TypeError, ValueError):
-                    pass
-                try:
-                    total_ground_kills += int(summary.get("ground_kills", 0) or 0)
-                except (TypeError, ValueError):
-                    pass
-                try:
-                    total_naval_kills += int(summary.get("naval_kills", 0) or 0)
-                except (TypeError, ValueError):
-                    pass
-
-                try:
-                    max_aircraft_damage = max(max_aircraft_damage, float(summary.get("aircraft_damage", 0) or 0))
-                except (TypeError, ValueError):
-                    pass
-                try:
-                    max_pilot_damage = max(max_pilot_damage, float(summary.get("pilot_damage", 0) or 0))
-                except (TypeError, ValueError):
-                    pass
-
-                aircraft = _normalize_story_text(mission_json.get("player", {}).get("aircraft"))
-                if aircraft:
-                    aircraft_values.append(aircraft)
-
-                for note in _extract_career_notable_events(mission_json):
-                    day_notables.append(f"M{row['mission_id']}: {note}")
-                    if len(day_notables) >= (_STORY_MAX_NOTABLE_EVENTS * 2):
-                        break
-
-                squadron_context = _build_squadron_context_for_mission(
-                    db,
-                    aggregator,
-                    career,
-                    row["segment"],
-                    int(row["mission_id"]),
-                    day_key,
-                )
-                for key in ("promotions", "awards", "transfers", "kia", "mia", "wia"):
-                    values = squadron_context.get(key, [])
-                    if isinstance(values, list):
-                        _merge_unique_list(merged_squadron_context[key], values)
-
-            # Keep story input compact/stable for API reliability.
+            squadron_context = _build_squadron_context_for_mission(
+                db,
+                aggregator,
+                career,
+                row["segment"],
+                mission_id,
+                mission_date,
+            )
             for key in ("promotions", "awards", "transfers"):
-                merged_squadron_context[key] = merged_squadron_context[key][:8]
+                squadron_context[key] = squadron_context.get(key, [])[:8]
             for key in ("kia", "mia", "wia"):
-                merged_squadron_context[key] = merged_squadron_context[key][:12]
+                squadron_context[key] = squadron_context.get(key, [])[:12]
 
-            if not day_notables:
-                day_notables = [f"M{row['mission_id']}" for row in day_rows]
-            day_notables = day_notables[: (_STORY_MAX_NOTABLE_EVENTS * 2)]
-
-            unique_aircraft = list(dict.fromkeys([name for name in aircraft_values if name]))
-            aircraft_label = unique_aircraft[0] if len(unique_aircraft) == 1 else ", ".join(unique_aircraft[:3])
-            if not aircraft_label:
-                aircraft_label = _normalize_story_text(latest_row["mission_json"].get("player", {}).get("aircraft"))
-
-            day_result = _normalize_story_text(day_rows[-1]["mission_json"].get("summary", {}).get("final_state"))
-            if not day_result and mission_results:
-                day_result = mission_results[-1]
-
-            # Use the first mission's start time for time-of-day atmospheric context.
-            _day_start_time: Optional[str] = None
-            for _row in day_rows:
-                _st = (_row.get("mission_json") or {}).get("summary", {}).get("mission_start_time")
-                if _st:
-                    _day_start_time = _st
-                    break
-
-            synthetic_json = {
-                "player": {
-                    "name": " ".join(
-                        part for part in (career.pilot_first_name, career.pilot_last_name) if part
-                    ).strip(),
-                    "aircraft": aircraft_label,
-                },
-                "summary": {
-                    "final_state": day_result or "Unknown",
-                    "flight_duration": _seconds_to_hms(total_duration_seconds),
-                    "aircraft_damage": round(max_aircraft_damage, 1),
-                    "pilot_damage": round(max_pilot_damage, 1),
-                    "air_kills_flying": total_air_kills,
-                    "ground_kills": total_ground_kills,
-                    "naval_kills": total_naval_kills,
-                    "mission_start_time": _day_start_time,
-                },
-                "events": [],
-            }
-
-            day_story_input = build_story_input(
-                synthetic_json,
+            mission_story_input = build_story_input(
+                mission_json,
                 career_id=root_career_id,
-                mission_id=day_key,
-                mission_date=day_key,
+                mission_id=mission_id,
+                mission_date=mission_date,
                 squadron=squadron_name,
                 country=career.country or "",
                 llm_config=llm_config,
                 pilot_last_name=career.pilot_last_name or "",
-                rank=rank_before_today or rank,
+                rank=rank_before_mission or rank,
                 awards=awards,
-                promotion=promotion_today,
+                promotion=promotion_this_mission,
                 mission_awards=mission_awards,
-                mission_promotion=promotion_today,
-                honors_context=_build_honors_context(career.country, promotion_today, mission_awards),
-                squadron_context=merged_squadron_context,
-                missions_completed=day_index,
+                mission_promotion=promotion_this_mission,
+                honors_context=_build_honors_context(career.country, promotion_this_mission, mission_awards),
+                squadron_context=squadron_context,
+                missions_completed=mission_index,
                 narrative_memory={},
             )
-            day_story_input["mission"]["notable_events"] = day_notables
-            day_story_input["mission"]["result"] = day_result or day_story_input["mission"].get("result") or "Unknown"
-            day_story_input["pilot"]["aircraft"] = aircraft_label
-            day_story_input["chapter_scope"] = {
-                "scope": "day",
-                "missions_in_chapter": len(day_rows),
-                "mission_ids": [str(row["mission_id"]) for row in day_rows],
-                "mission_results": mission_results,
-                # Per-mission JSON payloads — used by the PDF generator, ignored by LLM prompt builder.
+            mission_story_input["mission"]["notable_events"] = notables
+            mission_story_input["mission"]["result"] = mission_result
+            if aircraft_label:
+                mission_story_input["pilot"]["aircraft"] = aircraft_label
+            mission_story_input["chapter_scope"] = {
+                "scope": "mission",
+                "missions_in_chapter": 1,
+                "mission_ids": [str(mission_id)],
+                "mission_results": [mission_result],
+                # Per-mission JSON payload — used by the PDF generator, ignored by LLM prompt builder.
                 "mission_jsons": [
                     {
-                        "mission_id": str(row["mission_id"]),
-                        "aircraft": _normalize_story_text(
-                            (row["mission_json"] or {}).get("player", {}).get("aircraft")
-                            if isinstance(row["mission_json"], dict) else ""
-                        ),
-                        "json": row["mission_json"] if isinstance(row["mission_json"], dict) else {},
+                        "mission_id": str(mission_id),
+                        "aircraft": aircraft_label,
+                        "json": mission_json if isinstance(mission_json, dict) else {},
                         "sortie_stats": row.get("sortie_stats") or {},
                     }
-                    for row in day_rows
                 ],
             }
 
@@ -1275,19 +1156,16 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 part for part in (career.pilot_first_name, career.pilot_last_name) if part
             ).strip()
             if pilot_name:
-                day_story_input["pilot"]["name"] = pilot_name
-            contexts.append(day_story_input)
+                mission_story_input["pilot"]["name"] = pilot_name
+            contexts.append(mission_story_input)
         except Exception as exc:
             logger.warning(
-                "Skipping career story day context for %s (%s): %s",
+                "Skipping career story mission context for %s (mission %s): %s",
                 root_career_id,
-                day_key,
+                mission_id,
                 exc,
                 exc_info=True,
             )
-            fallback_row = day_rows[0] if day_rows else None
-            if not fallback_row:
-                continue
             fallback_json = _build_fallback_career_mission_json(
                 type(
                     "FallbackResult",
@@ -1296,15 +1174,18 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                         "duration_seconds": 0,
                         "kills": 0,
                         "final_state": "Unknown",
-                        "aircraft": _normalize_story_text(fallback_row.get("mission_json", {}).get("player", {}).get("aircraft", "")),
+                        "aircraft": _normalize_story_text(
+                            (mission_json or {}).get("player", {}).get("aircraft", "")
+                            if isinstance(mission_json, dict) else ""
+                        ),
                     },
                 )()
             )
             fallback_input = build_story_input(
                 fallback_json,
                 career_id=root_career_id,
-                mission_id=day_key,
-                mission_date=day_key,
+                mission_id=mission_id,
+                mission_date=mission_date,
                 squadron="",
                 pilot_last_name=career.pilot_last_name or "",
                 rank="",
@@ -1321,13 +1202,13 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                     "mia": [],
                     "wia": [],
                 },
-                missions_completed=day_index,
+                missions_completed=mission_index,
                 narrative_memory={},
             )
             fallback_input["chapter_scope"] = {
-                "scope": "day",
-                "missions_in_chapter": len(day_rows) if day_rows else 1,
-                "mission_ids": [str(row["mission_id"]) for row in day_rows],
+                "scope": "mission",
+                "missions_in_chapter": 1,
+                "mission_ids": [str(mission_id)],
                 "mission_results": [],
             }
             pilot_name = " ".join(
