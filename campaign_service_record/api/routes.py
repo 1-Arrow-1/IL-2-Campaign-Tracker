@@ -910,7 +910,7 @@ def _normalize_career_sortie_stats(row: dict) -> dict:
     }
 
 
-def _build_career_story_contexts(root_career_id: int) -> list[dict]:
+def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict] = None) -> list[dict]:
     if not _career_provider:
         raise RuntimeError("Career provider not initialized.")
 
@@ -1235,6 +1235,8 @@ def _build_career_story_contexts(root_career_id: int) -> list[dict]:
                 mission_id=day_key,
                 mission_date=day_key,
                 squadron=squadron_name,
+                country=career.country or "",
+                llm_config=llm_config,
                 pilot_last_name=career.pilot_last_name or "",
                 rank=rank_before_today or rank,
                 awards=awards,
@@ -2488,7 +2490,15 @@ def generate_stories(source: str, entry_id: str):
             except (TypeError, ValueError):
                 return jsonify({'error': 'Invalid career id.'}), 400
             storage_entry_id: str | int = root_career_id
-            contexts = _build_career_story_contexts(root_career_id)
+            contexts = _build_career_story_contexts(
+                root_career_id,
+                llm_config={
+                    "api_key": settings["api_key"],
+                    "provider": settings["provider"],
+                    "base_url": settings["base_url"],
+                    "model": settings["model"],
+                },
+            )
             if not contexts:
                 return jsonify({'error': 'No career mission context could be built yet. Run/update debrief parsing first and retry.'}), 400
         else:

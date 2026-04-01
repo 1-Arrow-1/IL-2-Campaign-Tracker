@@ -18,6 +18,7 @@ import logging
 import os
 import re
 import sys
+import threading
 from datetime import date
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
@@ -46,6 +47,8 @@ def _resolve_story_data_dir() -> Path:
 
 STORY_DATA_DIR = _resolve_story_data_dir()
 LOGGER = logging.getLogger(__name__)
+
+_SQUADRON_FILE_LOCK = threading.Lock()
 
 DEFAULT_MODEL = "gpt-5-mini"
 DEFAULT_API_TIMEOUT_SECONDS = 45.0
@@ -432,19 +435,142 @@ def resolve_squadron_key(squadron_name: str) -> str:
     return normalized.replace(" ", "_")
 
 
+def auto_enrich_squadron(
+    squadron_name: str,
+    squadron_key: str,
+    mission_date: str,
+    country: str = "",
+    *,
+    llm_config: Optional[Dict[str, Any]] = None,
+) -> Optional[Dict[str, Any]]:
+    """
+    Call the LLM to generate a historical context entry for an unknown squadron
+    and persist it to squadrons.json for future use.
+
+    llm_config is a dict with keys: api_key, provider, base_url, model.
+    When absent, falls back to the OPENAI_API_KEY environment variable and
+    default model/provider values.
+
+    Returns the newly generated squadron block dict, or None if generation fails
+    (no API key, network error, bad JSON response, etc.).
+    """
+    cfg = llm_config or {}
+    api_key = _normalize_text(cfg.get("api_key")) or os.environ.get("OPENAI_API_KEY") or ""
+    provider = _normalize_text(cfg.get("provider")) or "openai"
+    base_url = _normalize_text(cfg.get("base_url")) or None
+    model = _normalize_text(cfg.get("model")) or DEFAULT_MODEL
+
+    if not api_key:
+        LOGGER.debug("auto_enrich_squadron: skipping — no API key available")
+        return None
+
+    if OpenAI is None:
+        LOGGER.debug("auto_enrich_squadron: skipping — openai package not installed")
+        return None
+
+    country_hint = f" The squadron's country is '{country}'." if country else ""
+    prompt = (
+        f"You are a World War II aviation historian.\n\n"
+        f"Provide historical context for the squadron '{squadron_name}' around {mission_date}.{country_hint}\n\n"
+        "Return ONLY a valid JSON object with this exact schema (no extra keys, no commentary):\n"
+        "{\n"
+        '  "display_name": "<short human-readable name>",\n'
+        '  "country": "<lowercase country, e.g. germany, ussr, uk, usa>",\n'
+        '  "periods": [\n'
+        "    {\n"
+        '      "start": "<YYYY-MM-DD or empty string if unknown>",\n'
+        '      "end": "<YYYY-MM-DD or empty string if unknown>",\n'
+        '      "theatre": "<operational theatre, e.g. Eastern Front>",\n'
+        '      "location": "<specific area or airfield region>",\n'
+        '      "summary": "<2-3 sentence factual summary of what the unit was doing in this period>",\n'
+        '      "facts": ["<specific verifiable fact>", "..."],\n'
+        '      "tone_hints": ["<atmospheric descriptor>", "..."],\n'
+        '      "forbidden_claims": [\n'
+        '        "Do not name specific commanders unless you are certain.",\n'
+        '        "Do not claim exact base names unless you are certain.",\n'
+        '        "Do not invent kill tallies or specific pilot names."\n'
+        "      ]\n"
+        "    }\n"
+        "  ]\n"
+        "}\n\n"
+        "If you have no reliable historical information about this squadron, return an entry with "
+        "empty strings for theatre/location/summary and empty arrays for facts and tone_hints, "
+        "but still populate display_name and country.\n"
+        "Return JSON only — no prose, no markdown fences."
+    )
+
+    try:
+        client = _get_client(api_key=api_key, base_url=base_url)
+        response = _create_story_response(
+            client,
+            provider=provider,
+            model=model,
+            prompt=prompt,
+            max_output_tokens=800,
+        )
+        raw_text = _extract_response_text(response)
+        payload = _extract_json_object(raw_text)
+    except Exception as exc:
+        LOGGER.warning("auto_enrich_squadron: LLM call failed for '%s': %s", squadron_name, exc)
+        return None
+
+    if not isinstance(payload, dict):
+        LOGGER.warning("auto_enrich_squadron: LLM returned non-dict for '%s'", squadron_name)
+        return None
+
+    if "display_name" not in payload or "periods" not in payload:
+        LOGGER.warning(
+            "auto_enrich_squadron: LLM response missing required keys for '%s': %s",
+            squadron_name,
+            list(payload.keys()),
+        )
+        return None
+
+    # Persist to squadrons.json under the resolved key.
+    with _SQUADRON_FILE_LOCK:
+        data = _load_json_file(SQUADRON_CONTEXT_FILE, {})
+        if squadron_key not in data:  # Don't overwrite a race-written entry.
+            data[squadron_key] = payload
+            try:
+                _save_json_file(SQUADRON_CONTEXT_FILE, data)
+                LOGGER.info(
+                    "auto_enrich_squadron: saved new entry '%s' -> '%s'",
+                    squadron_name,
+                    squadron_key,
+                )
+            except Exception as exc:
+                LOGGER.warning("auto_enrich_squadron: failed to write squadrons.json: %s", exc)
+
+    return payload
+
+
 def resolve_historical_context(
     squadron_name: str,
     mission_date: str,
+    *,
+    country: str = "",
+    llm_config: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Resolve squadron/date historical context from local JSON files.
 
-    Returns a normalized dict even when no exact match exists so the caller can
+    When the squadron is completely unknown, attempts to auto-enrich by calling
+    the LLM and persisting the result to squadrons.json for future use.
+
+    Returns a normalized dict even when no match exists so the caller can
     safely pass it to prompt generation.
     """
     squadron_key = resolve_squadron_key(squadron_name)
     data = _load_json_file(SQUADRON_CONTEXT_FILE, {})
     squadron_block = data.get(squadron_key, {})
+
+    if not squadron_block:
+        enriched = auto_enrich_squadron(
+            squadron_name, squadron_key, mission_date, country=country, llm_config=llm_config
+        )
+        if enriched:
+            squadron_block = enriched
+
     periods = squadron_block.get("periods", [])
 
     match = None
@@ -462,7 +588,7 @@ def resolve_historical_context(
         return {
             "squadron_key": squadron_key,
             "display_name": squadron_block.get("display_name", squadron_name),
-            "country": squadron_block.get("country", ""),
+            "country": squadron_block.get("country", country),
             "theatre": "",
             "location": "",
             "summary": "",
@@ -474,7 +600,7 @@ def resolve_historical_context(
     return {
         "squadron_key": squadron_key,
         "display_name": squadron_block.get("display_name", squadron_name),
-        "country": squadron_block.get("country", ""),
+        "country": squadron_block.get("country", country),
         "theatre": _normalize_text(match.get("theatre")),
         "location": _normalize_text(match.get("location")),
         "summary": _normalize_text(match.get("summary")),
@@ -556,6 +682,7 @@ def build_story_input(
     mission_id: str | int,
     mission_date: str,
     squadron: str,
+    country: str = "",
     pilot_last_name: str = "",
     rank: str = "",
     awards: Optional[Iterable[str]] = None,
@@ -566,13 +693,14 @@ def build_story_input(
     squadron_context: Optional[Dict[str, Any]] = None,
     missions_completed: Optional[int] = None,
     narrative_memory: Optional[Dict[str, Any]] = None,
+    llm_config: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Build the structured input payload sent to the LLM for one mission chapter.
     """
     player = mission_json.get("player", {})
     summary = mission_json.get("summary", {})
-    historical_context = resolve_historical_context(squadron, mission_date)
+    historical_context = resolve_historical_context(squadron, mission_date, country=country, llm_config=llm_config)
 
     _start_time = _normalize_text(summary.get("mission_start_time"))
     mission = {
