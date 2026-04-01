@@ -96,6 +96,106 @@ def _extract_kills(mission_json: dict) -> list[tuple[str, str, int]]:
 # ---------------------------------------------------------------------------
 # Image resolution
 # ---------------------------------------------------------------------------
+def _composite_showcase_image(
+    showcase_data: dict,
+    data_dir: Optional[Path],
+    game_dir: Optional[Path],
+) -> Optional[bytes]:
+    """Composite the medal showcase into a single RGBA PNG using Pillow.
+
+    Layers (bottom to top): canvas → medals → overlay.
+    Medal positioning mirrors the JS logic:
+      - If img_w/img_h are known, the PNG is treated as a padded canvas
+        and we crop from (img_x, img_y) with slot size (w, h).
+      - Otherwise the image is scaled to fit the slot (contain).
+
+    Returns PNG bytes, or None when Pillow is unavailable or canvas fails.
+    """
+    try:
+        from PIL import Image as PILImage
+    except ImportError:
+        logger.warning("career_pdf: Pillow not installed — showcase page skipped")
+        return None
+
+    try:
+        # 1. Canvas background
+        canvas_bytes = _load_image_bytes(
+            showcase_data.get("canvas_url") or "", data_dir, game_dir
+        )
+        if not canvas_bytes:
+            logger.warning("career_pdf: showcase canvas not found")
+            return None
+
+        canvas = PILImage.open(io.BytesIO(canvas_bytes)).convert("RGBA")
+        cw, ch = canvas.size
+
+        # 2. Paste each earned medal
+        for medal in (showcase_data.get("medals") or []):
+            mx = int(medal.get("x", 0))
+            my = int(medal.get("y", 0))
+            mw = int(medal.get("w", 0))
+            mh = int(medal.get("h", 0))
+            img_w = int(medal.get("img_w") or 0)
+            img_h = int(medal.get("img_h") or 0)
+            img_x = int(medal.get("img_x") or 0)
+            img_y = int(medal.get("img_y") or 0)
+
+            if mw <= 0 or mh <= 0:
+                continue
+
+            medal_bytes = _load_image_bytes(
+                medal.get("image_url") or "", data_dir, game_dir
+            )
+            if not medal_bytes:
+                continue
+
+            medal_img = PILImage.open(io.BytesIO(medal_bytes)).convert("RGBA")
+
+            if img_w and img_h:
+                # Crop content region: starts at (img_x, img_y) in the padded PNG,
+                # size = slot (mw x mh), clamped to actual image bounds.
+                cx0 = min(img_x, medal_img.width)
+                cy0 = min(img_y, medal_img.height)
+                cx1 = min(img_x + mw, medal_img.width)
+                cy1 = min(img_y + mh, medal_img.height)
+                cropped = medal_img.crop((cx0, cy0, cx1, cy1))
+                if cropped.size != (mw, mh):
+                    cropped = cropped.resize((mw, mh), PILImage.LANCZOS)
+            else:
+                # Fallback: fit within slot, centered
+                medal_img.thumbnail((mw, mh), PILImage.LANCZOS)
+                padded = PILImage.new("RGBA", (mw, mh), (0, 0, 0, 0))
+                ox = (mw - medal_img.width) // 2
+                oy = (mh - medal_img.height) // 2
+                padded.paste(medal_img, (ox, oy), medal_img)
+                cropped = padded
+
+            canvas.paste(cropped, (mx, my), cropped)
+
+        # 3. Overlay on top
+        ovl = showcase_data.get("overlay") or {}
+        if ovl:
+            ovl_bytes = _load_image_bytes(ovl.get("url") or "", data_dir, game_dir)
+            ovl_w = int(ovl.get("w") or 0)
+            ovl_h = int(ovl.get("h") or 0)
+            if ovl_bytes and ovl_w and ovl_h:
+                ovl_img = PILImage.open(io.BytesIO(ovl_bytes)).convert("RGBA")
+                if ovl_img.size != (ovl_w, ovl_h):
+                    ovl_img = ovl_img.resize((ovl_w, ovl_h), PILImage.LANCZOS)
+                ovl_x = int(ovl.get("x") or 0)
+                ovl_y = int(ovl.get("y") or 0)
+                canvas.paste(ovl_img, (ovl_x, ovl_y), ovl_img)
+
+        # 4. Serialise to PNG bytes
+        buf = io.BytesIO()
+        canvas.save(buf, format="PNG")
+        return buf.getvalue()
+
+    except Exception as exc:
+        logger.warning("career_pdf: showcase compositing failed: %s", exc, exc_info=True)
+        return None
+
+
 def _load_image_bytes(
     image_url: Optional[str],
     data_dir: Optional[Path],
@@ -284,6 +384,14 @@ def _build_story(
                         alignment=TA_LEFT,   textColor=colors.HexColor(_C_DARK)),
         "cr_sub_v":  S("R_CrSubV",    fontSize=7,  fontName="Helvetica-Bold",
                         alignment=TA_RIGHT,  textColor=colors.HexColor(_C_DARK)),
+        # Flight log
+        "fl_hdr":    S("R_FlHdr",     fontSize=8,  fontName="Helvetica-Bold",
+                        spaceBefore=5, spaceAfter=2,
+                        textColor=colors.HexColor(_C_DARK)),
+        "fl_time":   S("R_FlTime",    fontSize=8,  fontName="Courier",
+                        textColor=colors.HexColor(_C_MID)),
+        "fl_desc":   S("R_FlDesc",    fontSize=8,  fontName="Helvetica",
+                        textColor=colors.HexColor(_C_DARK)),
     }
 
     # -----------------------------------------------------------------------
@@ -447,11 +555,9 @@ def _build_story(
             ("BOTTOMPADDING",  (0, 0), (-1, -1), 2),
             ("LEFTPADDING",    (0, 0), (-1, -1), 2),
             ("RIGHTPADDING",   (0, 0), (-1, -1), 2),
-            ("BACKGROUND",     (0, 0), (-1, -1), colors.HexColor(_C_ROW_ALT)),
-            ("GRID",           (0, 0), (-1, -1), 0.3, colors.HexColor(_C_HR)),
-            # Thicker bottom border separating header from subcats
-            ("LINEBELOW",      (0, 1), (-1, 1), 1.0, colors.HexColor(_C_MID)),
-            # Category name is smaller — achieved via the cr_cat style on the name part
+            # No background, no grid — clean white
+            # Thick horizontal line below the count/name row
+            ("LINEBELOW",      (0, 1), (-1, 1), 1.5, colors.HexColor(_C_DARK)),
         ]))
 
         # --- Subcategory table: 12 cols (name | value) × 6 categories ---
@@ -484,15 +590,13 @@ def _build_story(
             ("BOTTOMPADDING",  (0, 0), (-1, -1), 2),
             ("LEFTPADDING",    (0, 0), (-1, -1), 3),
             ("RIGHTPADDING",   (0, 0), (-1, -1), 3),
-            ("ROWBACKGROUNDS", (0, 0), (-1, -1),
-             [colors.white, colors.HexColor(_C_ROW_ALT)]),
-            ("GRID",           (0, 0), (-1, -1), 0.3, colors.HexColor(_C_HR)),
+            # No grid, no row backgrounds — clean white
         ])
-        # Thicker vertical separator between each category pair of columns
+        # Thin vertical separator between each category group (after the value col of each group)
         for ci in range(1, n):
             col_idx = ci * 2
-            sub_ts.add("LINEAFTER",  (col_idx - 1, 0), (col_idx - 1, -1),
-                       0.8, colors.HexColor(_C_MID))
+            sub_ts.add("LINEAFTER", (col_idx - 1, 0), (col_idx - 1, -1),
+                       0.5, colors.HexColor(_C_HR))
         sub_tbl.setStyle(sub_ts)
 
         return [hdr_tbl, sub_tbl]
@@ -524,6 +628,58 @@ def _build_story(
         t = Table([header, data_row], colWidths=col_w)
         t.setStyle(_tbl_style(header_rows=1))
         return t
+
+    # -----------------------------------------------------------------------
+    # Flight log block — timestamped event list for a single mission
+    # -----------------------------------------------------------------------
+    _FL_DISPLAY = {"Takeoff", "Landing", "Kill", "Bailout", "Pilot Touchdown", "Damage Taken"}
+    _FL_TIME_W  = 16 * mm
+
+    def _flight_log_flowables(mis_json: dict) -> list:
+        """Return [header, table] for the flight log, or [] if no events."""
+        events = mis_json.get("events") or [] if isinstance(mis_json, dict) else []
+        rows: list[tuple[str, str]] = []
+        for ev in events:
+            if not isinstance(ev, dict):
+                continue
+            ev_type = ev.get("type") or ""
+            if ev_type not in _FL_DISPLAY:
+                continue
+            time_str = _safe(ev.get("time") or "")
+            if ev_type == "Kill":
+                target = _safe(ev.get("target") or "Unknown")
+                alt    = ev.get("altitude")
+                desc   = f"{target} destroyed"
+                if alt is not None:
+                    desc += f" (Alt: {alt}m)"
+            elif ev_type == "Damage Taken":
+                dmg  = _safe(ev.get("damage") or "")
+                desc = f"Damage taken: {dmg}" if dmg else "Damage Taken"
+            elif ev_type == "Pilot Touchdown":
+                desc = "Pilot Touchdown"
+            else:
+                desc = ev_type   # "Takeoff", "Landing", "Bailout"
+            rows.append((time_str, desc))
+
+        if not rows:
+            return []
+
+        tbl_data = [
+            [Paragraph(t, sty["fl_time"]), Paragraph(d, sty["fl_desc"])]
+            for t, d in rows
+        ]
+        tbl = Table(tbl_data, colWidths=[_FL_TIME_W, CW - _FL_TIME_W])
+        tbl.setStyle(TableStyle([
+            ("FONTSIZE",       (0, 0), (-1, -1), 8),
+            ("VALIGN",         (0, 0), (-1, -1), "TOP"),
+            ("TOPPADDING",     (0, 0), (-1, -1), 1),
+            ("BOTTOMPADDING",  (0, 0), (-1, -1), 1),
+            ("LEFTPADDING",    (0, 0), (-1, -1), 0),
+            ("RIGHTPADDING",   (0, 0), (-1, -1), 2),
+            ("ROWBACKGROUNDS", (0, 0), (-1, -1),
+             [colors.white, colors.HexColor(_C_ROW_ALT)]),
+        ]))
+        return [Paragraph("FLIGHT LOG", sty["fl_hdr"]), tbl]
 
     # -----------------------------------------------------------------------
     # Index: story chapters by day
@@ -563,8 +719,30 @@ def _build_story(
     progression = summary.get("career_progression") or {}
     final_rank  = _safe(progression.get("final_rank") or "")
 
+    # Cover image (career_pdf_cover.png)
+    _cover_img_bytes: Optional[bytes] = None
+    for _cover_root in ([game_dir / "data" / "swf"] if game_dir else []) + ([data_dir] if data_dir else []):
+        _cover_path = _cover_root / "CampaignRanksAwards" / "Misc" / "career_pdf_cover.png"
+        try:
+            if _cover_path.exists():
+                _cover_img_bytes = _cover_path.read_bytes()
+                break
+        except Exception:
+            pass
+    if _cover_img_bytes:
+        try:
+            _cover_fl = Image(io.BytesIO(_cover_img_bytes), width=CW, height=CW * 0.35)
+            _cover_fl.hAlign = "CENTER"
+            flowables.append(_cover_fl)
+            flowables.append(Spacer(1, 6 * mm))
+        except Exception:
+            pass
+
+    flowables.append(Spacer(1, 4 * mm))
     flowables.append(Paragraph(pilot_name, sty["title"]))
+    flowables.append(Spacer(1, 3 * mm))
     flowables.append(accent_bar())
+    flowables.append(Spacer(1, 3 * mm))
 
     header_lines = []
     if final_rank:
@@ -592,28 +770,124 @@ def _build_story(
     flowables.append(Spacer(1, 8 * mm))
 
     # -----------------------------------------------------------------------
-    # Per-day chapters
+    # Per-day chapters — merged timeline: sortie days + event-only days
     # -----------------------------------------------------------------------
-    for ctx_idx, ctx in enumerate(day_contexts or []):
-        day_date   = ctx.get("date") or ctx.get("mission_id") or ""
+    # Build a lookup so the loop can find the full context for any sortie day.
+    ctx_by_date: dict[str, dict] = {}
+    for _ctx_item in (day_contexts or []):
+        _d = _ctx_item.get("date") or _ctx_item.get("mission_id") or ""
+        if _d:
+            ctx_by_date[_d] = _ctx_item
+
+    # Collect promotion/award events that fall on days with NO sortie.
+    # These are completely invisible if we only iterate day_contexts.
+    event_only: dict[str, list[dict]] = {}
+    for _ev in all_events:
+        _ev_type = _ev.get("type", "")
+        _ev_date = _ev.get("date", "")
+        if _ev_type in ("promotion", "award") and _ev_date and _ev_date not in ctx_by_date:
+            event_only.setdefault(_ev_date, []).append(_ev)
+
+    # Merged sorted timeline (sortie days + event-only days)
+    all_chapter_dates = sorted(set(list(ctx_by_date.keys()) + list(event_only.keys())))
+
+    # Helper: render the awards/promotions block shared by both chapter types
+    def _render_award_block(evs: list[dict], fallback_mprog: dict) -> list:
+        rows: list[tuple[Optional[bytes], str]] = []
+        for ev in evs:
+            ev_type   = ev.get("type") or ""
+            img_url   = ev.get("image_url") or ev.get("modal_image_url") or ""
+            img_bytes = _load_image_bytes(img_url, data_dir, game_dir)
+            if ev_type == "promotion":
+                lbl = "Promoted to " + _safe(ev.get("rank") or ev.get("rank_code") or "")
+            elif ev_type == "award":
+                nk = str(ev.get("name") or ev.get("award_code") or "")
+                lbl = _safe(_award_display_name(nk) or nk or "Award")
+            else:
+                lbl = _safe(ev_type.replace("_", " ").title())
+            rows.append((img_bytes, lbl))
+
+        if not rows and fallback_mprog:
+            for aw in (fallback_mprog.get("awards") or []):
+                aw_s = str(aw)
+                rows.append((None, _safe(_award_display_name(aw_s) or aw_s)))
+            day_promo = _safe(fallback_mprog.get("promotion") or "")
+            if day_promo:
+                rows.append((None, "Promoted to " + day_promo))
+
+        if not rows:
+            return []
+
+        hdr_para = Paragraph("Awards & Promotions", sty["sec_hdr"])
+        item_flowables: list = []
+        for img_bytes, lbl in rows:
+            img_fl = img_flowable(img_bytes)
+            if img_fl:
+                rt = Table(
+                    [[img_fl, Paragraph(lbl, sty["award_txt"])]],
+                    colWidths=[IMG_SZ + 4 * mm, CW - IMG_SZ - 4 * mm],
+                )
+                rt.setStyle(TableStyle([
+                    ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
+                    ("LEFTPADDING",   (0, 0), (-1, -1), 2),
+                    ("RIGHTPADDING",  (0, 0), (-1, -1), 2),
+                    ("TOPPADDING",    (0, 0), (-1, -1), 4),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                ]))
+                item_flowables.append(rt)
+            else:
+                item_flowables.append(Paragraph("• " + lbl, sty["body"]))
+
+        # Keep header + first item together so the header never orphans at page bottom
+        out: list = [Spacer(1, 3 * mm)]
+        if item_flowables:
+            out.append(_keep([hdr_para, item_flowables[0]]))
+            for extra in item_flowables[1:]:
+                out.append(_keep([extra]))
+        else:
+            out.append(hdr_para)
+        return out
+
+    chapter_num = 0  # counts sortie chapters only (for fallback chap_idx)
+
+    for date_key in all_chapter_dates:
+
+        # ---- EVENT-ONLY DAY (promotion/award, no sortie) ----
+        if date_key not in ctx_by_date:
+            ev_evs = event_only.get(date_key, [])
+            section: list = []
+            section.append(Paragraph(
+                _safe(f"Promotion / Award  |  {date_key}"), sty["ch_hdr"]))
+            section.append(accent_bar())
+            section.extend(_render_award_block(ev_evs, {}))
+
+            if section:
+                flowables.append(_keep(section[:3]))
+                flowables.extend(section[3:])
+            flowables.append(Spacer(1, 6 * mm))
+            flowables.append(hr())
+            continue
+
+        # ---- SORTIE DAY (full chapter) ----
+        chapter_num += 1
+        ctx        = ctx_by_date[date_key]
+        day_date   = date_key
         pilot      = ctx.get("pilot") or {}
         mission    = ctx.get("mission") or {}
         mprog      = ctx.get("mission_progression") or {}
         cprog      = ctx.get("career_progress") or {}
         ch_scope   = ctx.get("chapter_scope") or {}
 
-        rank       = _safe(pilot.get("rank") or "")
         aircraft   = _safe(pilot.get("aircraft") or "")
-        sqn        = _safe(pilot.get("squadron") or "")
         result     = _safe(mission.get("result") or "")
-        chap_idx   = cprog.get("missions_completed") or (ctx_idx + 1)
+        chap_idx   = cprog.get("missions_completed") or chapter_num
 
-        day_events      = _events_for_date(all_events, day_date)
-        day_incidences  = _incidences_for_date(all_incidences, day_date)
-        story_ch        = chapters_by_date.get(day_date)
-        mission_jsons   = ch_scope.get("mission_jsons") or []
+        day_events     = _events_for_date(all_events, day_date)
+        day_incidences = _incidences_for_date(all_incidences, day_date)
+        story_ch       = chapters_by_date.get(day_date)
+        mission_jsons  = ch_scope.get("mission_jsons") or []
 
-        section: list = []
+        section = []
 
         # --- Chapter header ---
         ch_label = f"Chapter {chap_idx}  |  {day_date}"
@@ -626,8 +900,7 @@ def _build_story(
 
         # --- Per-mission tables ---
         for mis_idx, mis_data in enumerate(mission_jsons):
-            mis_json    = mis_data.get("json") or {}
-            mis_id      = _safe(mis_data.get("mission_id") or f"{mis_idx + 1}")
+            mis_json     = mis_data.get("json") or {}
             mis_aircraft = _safe(mis_data.get("aircraft") or aircraft or "")
 
             mis_label = f"Sortie {mis_idx + 1}"
@@ -635,9 +908,8 @@ def _build_story(
                 mis_label += f"  —  {mis_aircraft}"
             section.append(Paragraph(mis_label, sty["mis_hdr"]))
 
-            mis_sortie_stats = mis_data.get("sortie_stats") or {}
-            combat_fls = _combat_results_flowables(mis_sortie_stats, mis_json)
-            stats_tbl = _stats_table(mis_json, mis_aircraft)
+            combat_fls = _combat_results_flowables(mis_data.get("sortie_stats") or {}, mis_json)
+            stats_tbl  = _stats_table(mis_json, mis_aircraft)
 
             if combat_fls:
                 section.append(_keep(combat_fls))
@@ -646,12 +918,17 @@ def _build_story(
                 section.append(Paragraph("No kills recorded.", sty["no_kills"]))
 
             section.append(_keep([stats_tbl]))
-            section.append(Spacer(1, 3 * mm))
+            section.append(Spacer(1, 2 * mm))
 
-        # If no mission_jsons fall back (should not happen), emit a thin note
+            fl_fls = _flight_log_flowables(mis_json)
+            if fl_fls:
+                section.append(_keep(fl_fls[:2]))   # keep header + first table row together
+                section.append(Spacer(1, 3 * mm))
+            else:
+                section.append(Spacer(1, 1 * mm))
+
         if not mission_jsons:
-            section.append(Paragraph(
-                "Mission data not available.", sty["no_kills"]))
+            section.append(Paragraph("Mission data not available.", sty["no_kills"]))
 
         # --- Other incidences ---
         if day_incidences:
@@ -662,56 +939,7 @@ def _build_story(
                     "• " + _safe(_format_incidence(oi)), sty["body"]))
 
         # --- Awards & Promotions ---
-        # Use the display names from career_detail events (not image filenames).
-        # Images doubled in size (IMG_SZ = 36 mm).
-        award_event_rows: list[tuple[Optional[bytes], str]] = []
-
-        for ev in day_events:
-            ev_type  = ev.get("type") or ""
-            img_url  = ev.get("image_url") or ev.get("modal_image_url") or ""
-            img_bytes = _load_image_bytes(img_url, data_dir, game_dir)
-            if ev_type == "promotion":
-                # ev["rank"] is the display name ("Oberfeldwebel"), ev["rank_code"] is English key
-                label = "Promoted to " + _safe(ev.get("rank") or ev.get("rank_code") or "")
-            elif ev_type == "award":
-                # ev["name"] is the name_key (e.g. "fighters_bronze") — resolve via locale
-                name_key = str(ev.get("name") or ev.get("award_code") or "")
-                label = _safe(_award_display_name(name_key) or name_key or "Award")
-            else:
-                label = _safe(ev_type.replace("_", " ").title())
-            award_event_rows.append((img_bytes, label))
-
-        # Fall back to mission_progression text when no event records exist
-        if not award_event_rows:
-            day_awards    = mprog.get("awards") or []
-            day_promotion = _safe(mprog.get("promotion") or "")
-            for aw in day_awards:
-                aw_str = str(aw)
-                award_event_rows.append((None, _safe(_award_display_name(aw_str) or aw_str)))
-            if day_promotion:
-                award_event_rows.append((None, "Promoted to " + day_promotion))
-
-        if award_event_rows:
-            section.append(Spacer(1, 3 * mm))
-            section.append(Paragraph("Awards & Promotions", sty["sec_hdr"]))
-            for img_bytes, label in award_event_rows:
-                img_fl = img_flowable(img_bytes)
-                if img_fl:
-                    row_data = [[img_fl, Paragraph(label, sty["award_txt"])]]
-                    row_tbl  = Table(
-                        row_data,
-                        colWidths=[IMG_SZ + 4 * mm, CW - IMG_SZ - 4 * mm],
-                    )
-                    row_tbl.setStyle(TableStyle([
-                        ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
-                        ("LEFTPADDING",   (0, 0), (-1, -1), 2),
-                        ("RIGHTPADDING",  (0, 0), (-1, -1), 2),
-                        ("TOPPADDING",    (0, 0), (-1, -1), 4),
-                        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-                    ]))
-                    section.append(_keep([row_tbl]))
-                else:
-                    section.append(Paragraph("• " + label, sty["body"]))
+        section.extend(_render_award_block(day_events, mprog))
 
         # --- AI Story ---
         if story_ch:
@@ -723,8 +951,7 @@ def _build_story(
             if story_title:
                 section.append(Paragraph(story_title, sty["story_ttl"]))
             if story_text:
-                paras = [p.strip() for p in story_text.split("\n\n") if p.strip()]
-                for p in paras:
+                for p in [p.strip() for p in story_text.split("\n\n") if p.strip()]:
                     section.append(Paragraph(p.replace("\n", " "), sty["body"]))
 
         # Keep chapter header + first table together; rest flows freely
@@ -739,11 +966,12 @@ def _build_story(
     # -----------------------------------------------------------------------
     # Career Summary (final pages)
     # -----------------------------------------------------------------------
-    summary_section: list = []
-    summary_section.append(Paragraph("Career Summary", sty["smry_hdr"]))
-    summary_section.append(accent_bar())
-    summary_section.append(Spacer(1, 4 * mm))
-    flowables.append(_keep(summary_section))
+    # "Career Summary" heading — built up front so we can keep it with first content
+    _smry_hdr_flowables: list = [
+        Paragraph("Career Summary", sty["smry_hdr"]),
+        accent_bar(),
+        Spacer(1, 4 * mm),
+    ]
 
     # --- Combat results (screenshot-style, aggregated from all sortie stats) ---
     # Aggregate kill columns from every sortie across the whole career.
@@ -764,7 +992,8 @@ def _build_story(
     cr_fls = _combat_results_flowables(summary_sortie_stats, {})
 
     if cr_fls or pcp is not None:
-        group: list = [cr_header_para]
+        # Keep "Career Summary" heading together with the combat results block
+        group: list = _smry_hdr_flowables + [cr_header_para]
         if pcp is not None:
             try:
                 group.append(Paragraph(f"PCP Score: <b>{float(pcp):.1f}</b>", sty["body"]))
@@ -773,6 +1002,9 @@ def _build_story(
         group.extend(cr_fls)
         flowables.append(_keep(group))
         flowables.append(Spacer(1, 4 * mm))
+    else:
+        # No combat results — emit heading on its own, keep with next section
+        flowables.append(_keep(_smry_hdr_flowables))
 
     # --- Air kills by aircraft type ---
     kills_by_type = summary.get("air_kills_by_type") or {}
@@ -897,6 +1129,7 @@ def generate_career_pdf(
     output_dir: Path,
     data_dir: Optional[Path] = None,
     game_dir: Optional[Path] = None,
+    showcase_data: Optional[dict] = None,
 ) -> Path:
     """Generate and save a career PDF report.
 
@@ -909,6 +1142,9 @@ def generate_career_pdf(
         output_dir:     Directory in which to save the PDF.
         data_dir:       Tracker data directory (for image resolution).
         game_dir:       IL-2 game directory (fallback for images).
+        showcase_data:  Optional dict from build_showcase_data(); when provided,
+                        a medal showcase page is appended as the final page in the
+                        orientation that best fits the canvas aspect ratio.
 
     Returns:
         Path to the generated PDF file.
@@ -917,37 +1153,86 @@ def generate_career_pdf(
         ImportError: if reportlab is not installed.
         OSError: if the output directory cannot be created or written.
     """
-    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.colors import HexColor
+    from reportlab.lib.pagesizes import A4, landscape as rl_landscape
     from reportlab.lib.units import mm as _mm
-    from reportlab.platypus import SimpleDocTemplate
+    from reportlab.platypus import Image, NextPageTemplate, PageBreak
+    from reportlab.platypus.doctemplate import BaseDocTemplate, PageTemplate
+    from reportlab.platypus.frames import Frame
 
     output_dir.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename  = f"career_{career_id}_{timestamp}.pdf"
     out_path  = output_dir / filename
 
-    MARGIN = 20
+    MARGIN_MM = 20
+    FOOTER_H  = 12  # mm from bottom
 
-    def _footer(canvas, doc):
+    pilot_name = _safe(career_detail.get("display_name") or "")
+
+    def _draw_footer(canvas, doc):
+        """Shared footer: centred at 12 mm from the bottom of whatever page is current."""
         canvas.saveState()
         canvas.setFont("Helvetica", 7)
-        from reportlab.lib.colors import HexColor
         canvas.setFillColor(HexColor(_C_MID))
-        pilot_name = _safe(career_detail.get("display_name") or "")
+        pw = canvas._pagesize[0]
         canvas.drawCentredString(
-            A4[0] / 2, 12 * _mm,
+            pw / 2, FOOTER_H * _mm,
             f"{pilot_name}  \u2014  IL-2 Career Service Record  \u2014  Page {canvas.getPageNumber()}",
         )
         canvas.restoreState()
 
-    doc = SimpleDocTemplate(
+    A4_W, A4_H = A4  # portrait: ~595 × 842 pt
+
+    def _portrait_frame(pw: float, ph: float) -> Frame:
+        m = MARGIN_MM * _mm
+        return Frame(
+            m, (FOOTER_H + 4) * _mm,
+            pw - 2 * m,
+            ph - m - (FOOTER_H + 4) * _mm,
+        )
+
+    # --- Portrait template (all regular pages) ---
+    p_frame    = _portrait_frame(A4_W, A4_H)
+    p_template = PageTemplate("portrait", frames=[p_frame], onPage=_draw_footer)
+
+    # --- Composite showcase image (if showcase_data provided) ---
+    showcase_png_bytes: Optional[bytes] = None
+    showcase_use_landscape = False
+    if showcase_data:
+        showcase_png_bytes = _composite_showcase_image(showcase_data, data_dir, game_dir)
+        if showcase_png_bytes:
+            try:
+                _img_tmp = io.BytesIO(showcase_png_bytes)
+                from PIL import Image as PILImage
+                with PILImage.open(_img_tmp) as _pi:
+                    _iw, _ih = _pi.size
+                showcase_use_landscape = (_iw > _ih)
+            except Exception:
+                showcase_use_landscape = True  # most career canvases are wider
+
+    # --- Showcase page template (portrait or landscape) ---
+    if showcase_use_landscape:
+        SC_W, SC_H = rl_landscape(A4)   # ~842 × 595 pt
+    else:
+        SC_W, SC_H = A4_W, A4_H
+    sc_frame    = _portrait_frame(SC_W, SC_H)
+    sc_template = PageTemplate(
+        "showcase",
+        frames=[sc_frame],
+        pagesize=(SC_W, SC_H),
+        onPage=_draw_footer,
+    )
+
+    doc = BaseDocTemplate(
         str(out_path),
+        pageTemplates=[p_template, sc_template],
         pagesize=A4,
-        leftMargin=MARGIN * _mm,
-        rightMargin=MARGIN * _mm,
-        topMargin=MARGIN * _mm,
-        bottomMargin=18 * _mm,
-        title=f"Career Service Record \u2013 {_safe(career_detail.get('display_name', ''))}",
+        leftMargin=MARGIN_MM * _mm,
+        rightMargin=MARGIN_MM * _mm,
+        topMargin=MARGIN_MM * _mm,
+        bottomMargin=(FOOTER_H + 4) * _mm,
+        title=f"Career Service Record \u2013 {pilot_name}",
         author="IL-2 Career Service Record",
     )
 
@@ -959,6 +1244,28 @@ def generate_career_pdf(
         game_dir=game_dir,
     )
 
-    doc.build(flowables, onFirstPage=_footer, onLaterPages=_footer)
+    # --- Append showcase page ---
+    if showcase_png_bytes:
+        # Usable area on the showcase page
+        m = MARGIN_MM * _mm
+        usable_w = SC_W - 2 * m
+        usable_h = SC_H - m - (FOOTER_H + 4) * _mm
+
+        try:
+            showcase_img = Image(
+                io.BytesIO(showcase_png_bytes),
+                width=usable_w,
+                height=usable_h,
+                kind="proportional",   # scale uniformly to fit
+            )
+            showcase_img.hAlign = "CENTER"
+
+            flowables.append(NextPageTemplate("showcase"))
+            flowables.append(PageBreak())
+            flowables.append(showcase_img)
+        except Exception as exc:
+            logger.warning("career_pdf: failed to add showcase image: %s", exc)
+
+    doc.build(flowables)
     logger.info("Career PDF saved: %s", out_path)
     return out_path

@@ -2651,6 +2651,77 @@ def generate_career_pdf_report(root_career_id: int):
         base_data_dir = Path.cwd()
         out_dir = base_data_dir / "career" / str(root_career_id) / "pdf_reports"
 
+        # --- Medal showcase data (best-effort; PDF is generated even if this fails) ---
+        _showcase_data: Optional[dict] = None
+        try:
+            from campaign_service_record.core.medal_showcase import (
+                CAREER_CANVAS_FILENAME,
+                CAREER_OVERLAY_FILENAME,
+                build_showcase_data,
+                has_german_ext_medals,
+                load_career_coordinates,
+                resolve_showcase_country,
+                resolve_ussr_variant,
+            )
+            from pathlib import Path as _Path
+
+            _career_json: Optional[_Path] = None
+            if _career_data_dir:
+                for _cand in (
+                    _career_data_dir / 'IL-2_Tracker_career_award_coordinates.json',
+                    _career_data_dir.parent / 'IL-2_Tracker_career_award_coordinates.json',
+                ):
+                    if _cand.exists():
+                        _career_json = _cand
+                        break
+
+            if _career_json:
+                _assets_dir = (
+                    _career_game_dir / 'data' / 'swf' / 'CampaignRanksAwards'
+                    if _career_game_dir else
+                    _career_data_dir / 'CampaignRanksAwards'
+                )
+                _country_raw  = detail.get('country', '')
+                _showcase_base = resolve_showcase_country(_country_raw)
+                if _showcase_base:
+                    _events = detail.get('events', [])
+                    _showcase_events = detail.get('showcase_awards', _events)
+
+                    if _showcase_base == 'ussr':
+                        _dates = [ev.get('date') for ev in _events if ev.get('date')]
+                        _country_key = resolve_ussr_variant(max(_dates) if _dates else None)
+                    elif _showcase_base == 'germany' and _career_game_dir and has_german_ext_medals(_career_game_dir):
+                        _country_key = 'germany_ext'
+                    else:
+                        _country_key = _showcase_base
+
+                    _earned: set = set()
+                    for _ev in _showcase_events:
+                        if _ev.get('type') != 'award':
+                            continue
+                        _modal = _ev.get('modal_image_url') or ''
+                        if _modal:
+                            from campaign_service_record.core.medal_showcase import award_image_to_showcase_name
+                            _sn = award_image_to_showcase_name(_Path(_modal).name)
+                            if _sn:
+                                _earned.add(_sn)
+
+                    _coords = load_career_coordinates(_career_json)
+                    _showcase_data = build_showcase_data(
+                        country_key=_country_key,
+                        earned_showcase_names=_earned,
+                        coordinates=_coords,
+                        assets_dir=_assets_dir,
+                        tracker_asset_url_prefix='/api/career_assets',
+                        canvas_filenames=CAREER_CANVAS_FILENAME,
+                        overlay_filenames=CAREER_OVERLAY_FILENAME,
+                        asset_context='career_detail_showcase',
+                    )
+        except Exception as _sc_exc:
+            logger.warning(
+                "PDF generation: could not build showcase data (skipped): %s", _sc_exc
+            )
+
         out_path = generate_career_pdf(
             career_id=root_career_id,
             career_detail=detail,
@@ -2659,6 +2730,7 @@ def generate_career_pdf_report(root_career_id: int):
             output_dir=out_dir,
             data_dir=_career_data_dir,
             game_dir=_career_game_dir,
+            showcase_data=_showcase_data,
         )
 
         try:

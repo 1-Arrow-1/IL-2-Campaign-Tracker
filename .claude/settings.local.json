@@ -22,7 +22,8 @@
       "Bash(do echo:*)",
       "Bash(done)",
       "Bash(find /c/Users/bleih/source/repos/IL-2-Campaign-Tracker -name *.html -type f)",
-      "Bash(find c:/Users/bleih/source/repos/IL-2-Campaign-Tracker/campaign_service_record -name *.html)"
+      "Bash(find c:/Users/bleih/source/repos/IL-2-Campaign-Tracker/campaign_service_record -name *.html)",
+      "Bash(python -c \":*)"
     ]
   }
 }
