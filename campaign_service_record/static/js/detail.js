@@ -1074,11 +1074,19 @@ const DetailPage = {
             }
 
             if (resolvedSource === 'career') {
+                const dbBirthCountry = getLocalizedCountryName(campaign.country) || campaign.country || '';
+                let savedBirthCountry = '';
+                try {
+                    const savedPersonal = await API.getCareerPersonalData(campaign.name);
+                    savedBirthCountry = (savedPersonal && savedPersonal.birth_country) || '';
+                } catch (_e) {
+                    // fall back to db-derived value
+                }
                 const basePersonalData = {
                     name: campaign.pilot_last_name || '',
                     first_name: campaign.pilot_first_name || '',
                     birthday: campaign.birth_date || '',
-                    birth_country: getLocalizedCountryName(campaign.country) || campaign.country || '',
+                    birth_country: savedBirthCountry || dbBirthCountry,
                 };
                 const squadronRecords = Array.isArray(campaign.squadron_records)
                     ? campaign.squadron_records
@@ -1086,17 +1094,12 @@ const DetailPage = {
                 const currentSquadronRecord = squadronRecords.find(record => record && record.is_current)
                     || squadronRecords[squadronRecords.length - 1]
                     || null;
-                // Career mode: prefill personal data from the career API response
-                // (no separate personal_data endpoint; data comes from cp.db)
+                // Career mode: prefill personal data from saved store (fallback to cp.db)
                 this.setPersonalDataDisplay({
                     ...basePersonalData,
                     squadron: this.formatCareerSquadronDisplay(currentSquadronRecord, campaign),
                 });
-                this.setPersonalDataFields({
-                    name: campaign.pilot_last_name || '',
-                    first_name: campaign.pilot_first_name || '',
-                    birthday: campaign.birth_date || '',
-                });
+                this.setPersonalDataFields(basePersonalData);
                 // Show squadron row, hide birth-place row
                 const birthPlaceRow = this.elements.personalDisplayBirthPlace?.closest('.personal-data-row');
                 if (birthPlaceRow) birthPlaceRow.style.display = 'none';
@@ -1658,7 +1661,11 @@ const DetailPage = {
         }
 
         try {
-            savedData = await API.saveCampaignPersonalData(this.currentCampaign.name, payload);
+            if (this._source === 'career') {
+                savedData = await API.saveCareerPersonalData(this.currentCampaign.name, payload);
+            } else {
+                savedData = await API.saveCampaignPersonalData(this.currentCampaign.name, payload);
+            }
         } catch (error) {
             dataError = error;
             console.error('Failed to save personal data:', error);
@@ -1669,7 +1676,6 @@ const DetailPage = {
             const displayData = this._source === 'career'
                 ? {
                     ...savedData,
-                    birth_country: this.getDisplayedPersonalDataValue(this.elements.personalDisplayBirthCountry),
                     squadron: this.getDisplayedPersonalDataValue(this.elements.personalDisplaySquadron),
                 }
                 : savedData;

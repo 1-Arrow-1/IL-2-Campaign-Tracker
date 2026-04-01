@@ -1831,6 +1831,41 @@ def save_campaign_personal_data(campaign_name: str):
 
 
 # ============================================================================
+# Career Personal Data Endpoints
+# ============================================================================
+
+@api_bp.route('/api/career/<int:root_career_id>/personal_data')
+def get_career_personal_data(root_career_id: int):
+    """Get stored personal data for a career."""
+    data = _load_personal_data()
+    return jsonify(data.get(str(root_career_id), {}))
+
+
+@api_bp.route('/api/career/<int:root_career_id>/personal_data', methods=['POST'])
+def save_career_personal_data(root_career_id: int):
+    """Save personal data for a career."""
+    if not request.is_json:
+        return jsonify({'error': 'Invalid payload'}), 400
+    payload = request.get_json(silent=True) or {}
+    if not isinstance(payload, dict):
+        return jsonify({'error': 'Invalid payload'}), 400
+
+    cleaned = {
+        'name': _sanitize_personal_data_value(payload.get('name')),
+        'first_name': _sanitize_personal_data_value(payload.get('first_name')),
+        'birthday': _sanitize_personal_data_value(payload.get('birthday')),
+        'birth_country': _sanitize_personal_data_value(payload.get('birth_country')),
+        'additional_notes': _sanitize_personal_data_value(payload.get('additional_notes'))
+    }
+
+    data = _load_personal_data()
+    data[str(root_career_id)] = cleaned
+    if not _save_personal_data(data):
+        return jsonify({'error': 'Failed to save personal data'}), 500
+    return jsonify(cleaned)
+
+
+# ============================================================================
 # Campaign List Endpoint
 # ============================================================================
 

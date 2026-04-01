@@ -144,6 +144,20 @@ const API = {
     },
 
     /**
+     * Get stored personal data for a career
+     */
+    async getCareerPersonalData(rootCareerId) {
+        return this.get(`/career/${encodeURIComponent(rootCareerId)}/personal_data`);
+    },
+
+    /**
+     * Save personal data for a career
+     */
+    async saveCareerPersonalData(rootCareerId, data) {
+        return this.post(`/career/${encodeURIComponent(rootCareerId)}/personal_data`, data);
+    },
+
+    /**
      * Get AI story status and cached chapters for an entry.
      */
     async getStories(source, entryId) {
