@@ -567,7 +567,21 @@ def _extract_career_notable_events(mission_json: dict) -> list[str]:
         ev_type = _normalize_story_text(event.get("type")).lower()
         target = _normalize_story_text(event.get("target"))
         if ev_type == "kill" and target:
-            notable.append(f"Destroyed {target}")
+            category = _normalize_story_text(event.get("category", "")).lower()
+            altitude = event.get("altitude")
+            detail_parts = []
+            if category:
+                detail_parts.append(category)
+            if altitude is not None:
+                try:
+                    detail_parts.append(f"{int(altitude)}m")
+                except (TypeError, ValueError):
+                    pass
+            suffix = f" ({', '.join(detail_parts)})" if detail_parts else ""
+            notable.append(f"Destroyed {target}{suffix}")
+        elif ev_type == "damage taken":
+            damage = _normalize_story_text(event.get("damage"))
+            notable.append(f"Aircraft took damage: {damage}" if damage else "Aircraft took damage")
         elif ev_type in {"bailout", "crash", "landing", "takeoff"}:
             notable.append(ev_type.capitalize())
         if len(notable) >= _STORY_MAX_NOTABLE_EVENTS:
@@ -1187,6 +1201,14 @@ def _build_career_story_contexts(root_career_id: int) -> list[dict]:
             if not day_result and mission_results:
                 day_result = mission_results[-1]
 
+            # Use the first mission's start time for time-of-day atmospheric context.
+            _day_start_time: Optional[str] = None
+            for _row in day_rows:
+                _st = (_row.get("mission_json") or {}).get("summary", {}).get("mission_start_time")
+                if _st:
+                    _day_start_time = _st
+                    break
+
             synthetic_json = {
                 "player": {
                     "name": " ".join(
@@ -1202,6 +1224,7 @@ def _build_career_story_contexts(root_career_id: int) -> list[dict]:
                     "air_kills_flying": total_air_kills,
                     "ground_kills": total_ground_kills,
                     "naval_kills": total_naval_kills,
+                    "mission_start_time": _day_start_time,
                 },
                 "events": [],
             }

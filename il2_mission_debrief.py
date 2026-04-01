@@ -200,6 +200,7 @@ class MissionStats:
         self.end_bomb = None
         self.end_rct = None
         self.setts = None
+        self.mission_start_time: Optional[str] = None  # GTime from AType:0 as "HH:MM"
         self.player_ammo_events = []    # {tick, ammo, target}
         self.player_damage_events = []  # {tick, target, damage}
         self.player_destroy_events = [] # {tick, target}
@@ -515,6 +516,13 @@ class MissionDebriefParser:
                 setts = self._s(ln, r"SETTS:([01]+)")
                 if setts:
                     self.stats.setts = setts
+                gtime = self._s(ln, r"GTime:(\d+:\d+:\d+)")
+                if gtime:
+                    try:
+                        h, m = int(gtime.split(":")[0]), int(gtime.split(":")[1])
+                        self.stats.mission_start_time = f"{h:02d}:{m:02d}"
+                    except (ValueError, IndexError):
+                        pass
             if "AType:10" in ln:
                 if "ISPL:1" in ln:
                     # 🧠 Capture both IDs for robustness
@@ -1329,6 +1337,7 @@ class MissionDebriefParser:
                 "landed": self.stats.landed,
                 "crashed": self.stats.crashed,
                 "final_state": self.stats.final_state,
+                "mission_start_time": self.stats.mission_start_time,
                 "combat_metrics": combat_metrics,
             }
         }

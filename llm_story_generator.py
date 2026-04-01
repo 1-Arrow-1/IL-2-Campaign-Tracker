@@ -484,13 +484,66 @@ def resolve_historical_context(
     }
 
 
+def _derive_time_of_day(start_time: Optional[str]) -> str:
+    """Map 'HH:MM' game clock time to a time-of-day label for atmospheric context."""
+    if not start_time:
+        return ""
+    try:
+        parts = start_time.split(":")
+        minutes = int(parts[0]) * 60 + int(parts[1])
+    except (ValueError, IndexError, AttributeError):
+        return ""
+    if 300 <= minutes < 510:    # 05:00–08:30
+        return "dawn"
+    if 510 <= minutes < 660:    # 08:30–11:00
+        return "morning"
+    if 660 <= minutes < 840:    # 11:00–14:00
+        return "midday"
+    if 840 <= minutes < 1020:   # 14:00–17:00
+        return "afternoon"
+    if 1020 <= minutes < 1170:  # 17:00–19:30
+        return "dusk"
+    return "night"
+
+
+def _derive_season(date_str: Optional[str]) -> str:
+    """Map 'YYYY-MM-DD' to a meteorological season label."""
+    if not date_str:
+        return ""
+    try:
+        month = int(date_str.split("-")[1])
+    except (ValueError, IndexError, AttributeError):
+        return ""
+    if month in (3, 4, 5):
+        return "spring"
+    if month in (6, 7, 8):
+        return "summer"
+    if month in (9, 10, 11):
+        return "autumn"
+    return "winter"
+
+
 def _extract_notable_events(mission_json: Dict[str, Any]) -> list[str]:
     notable: list[str] = []
     for event in mission_json.get("events", []):
         event_type = _normalize_text(event.get("type"))
         target = _normalize_text(event.get("target"))
         if event_type == "Kill" and target:
-            notable.append(f"Destroyed {target}")
+            category = _normalize_text(event.get("category", "")).lower()
+            altitude = event.get("altitude")
+            detail_parts = []
+            if category:
+                detail_parts.append(category)
+            if altitude is not None:
+                try:
+                    detail_parts.append(f"{int(altitude)}m")
+                except (TypeError, ValueError):
+                    pass
+            suffix = f" ({', '.join(detail_parts)})" if detail_parts else ""
+            notable.append(f"Destroyed {target}{suffix}")
+        elif event_type == "Damage Taken":
+            damage = _normalize_text(event.get("damage"))
+            notable.append(f"Aircraft took damage: {damage}" if damage else "Aircraft took damage")
         elif event_type in {"Bailout", "Crash", "Landing", "Takeoff"}:
             notable.append(event_type)
     return notable[:12]
@@ -521,9 +574,13 @@ def build_story_input(
     summary = mission_json.get("summary", {})
     historical_context = resolve_historical_context(squadron, mission_date)
 
+    _start_time = _normalize_text(summary.get("mission_start_time"))
     mission = {
         "id": str(mission_id),
         "date": mission_date,
+        "time_of_day": _derive_time_of_day(_start_time),
+        "start_time": _start_time or None,
+        "season": _derive_season(mission_date),
         "result": _normalize_text(summary.get("final_state")),
         "duration": _format_duration_for_story(summary.get("flight_duration")),
         "aircraft_damage": summary.get("aircraft_damage", 0),
@@ -579,6 +636,7 @@ def build_campaign_story_input(
     mission_date: str,
     mission_summary: Dict[str, Any],
     mission_events: Optional[Iterable[str]] = None,
+    mission_start_time: Optional[str] = None,
     rank: str = "",
     pilot_last_name: str = "",
     aircraft: str = "",
@@ -615,6 +673,9 @@ def build_campaign_story_input(
         "mission": {
             "id": str(mission_id),
             "date": mission_date,
+            "time_of_day": _derive_time_of_day(mission_start_time),
+            "start_time": mission_start_time or None,
+            "season": _derive_season(mission_date),
             "result": result,
             "duration": duration,
             "aircraft_damage": aircraft_damage,
@@ -1027,6 +1088,8 @@ def generate_mission_story(
         "- Use only the supplied facts.\n"
         "- Do not invent awards, promotions, injuries, victories, locations, or commanders.\n"
         "- Keep the story historically grounded and atmospheric.\n"
+        "- If mission.time_of_day is present, use it to set the scene (e.g., 'at dawn', 'under a midday sun'). Do not invent a time if the field is absent or empty.\n"
+        "- If mission.season is present, weave it into the atmosphere naturally (e.g., autumn mud, winter frost, summer heat). Do not invent a season if the field is absent or empty.\n"
         "- If historical_context.summary or historical_context.facts are present, integrate them naturally.\n"
         "- pilot.rank is the rank held DURING the mission. Use it throughout the narrative.\n"
         "- If mission_progression.promotion is non-empty, it is a rank awarded AFTER the pilot landed/returned. Mention it only as a post-mission event (e.g., 'upon return he was promoted to...'). Never use the promoted rank to describe the pilot during the sortie.\n"
