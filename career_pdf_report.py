@@ -389,7 +389,7 @@ def _build_story(
     MARGIN  = 20 * mm
     CW      = PAGE_W - 2 * MARGIN      # usable content width
     IMG_SZ  = 54 * mm                  # fallback size for award/rank images
-    IMG_SCALE = 0.75                   # render awards/ranks at 75% of source size
+    IMG_SCALE = 0.35                   # render awards/ranks at 50% of source size
     MIN_TEXT_W = 30 * mm               # keep some width for the text column
 
     base = getSampleStyleSheet()
@@ -551,13 +551,14 @@ def _build_story(
             return url
         rel = url[len(prefix):]
         parent, name = rel.rsplit("/", 1) if "/" in rel else ("", rel)
-        stem, ext = Path(name).stem, Path(name).suffix
+        stem = Path(name).stem
+        ext_out = ".dds"
+        # Normalize to *_big.dds
         if stem.endswith("_big1"):
-            filename = stem + (ext if ext else ".png")
-        else:
-            if stem.endswith("_big"):
-                stem = stem[:-4]
-            filename = f"{stem}_big1.png"
+            stem = stem[:-5]  # strip _big1
+        if stem.endswith("_big"):
+            stem = stem[:-4]
+        filename = f"{stem}_big{ext_out}"
         return f"{prefix}{parent + '/' if parent else ''}{filename}"
 
     def _event_image_bytes(ev: dict) -> Optional[bytes]:
