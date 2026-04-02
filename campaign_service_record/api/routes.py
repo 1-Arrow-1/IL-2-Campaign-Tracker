@@ -1033,6 +1033,8 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
     except Exception:
         initial_career_rank = ""
 
+    _accumulated_air_kills: int = 0
+
     for mission_index, row in enumerate(mission_rows, start=1):
         mission_date = row["mission_date"]
         mission_id = int(row["mission_id"])
@@ -1097,6 +1099,12 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             ) or ""
             mission_result = _normalize_story_text(summary.get("final_state")) or "Unknown"
 
+            # Accumulate career air kills (excludes ground/naval).
+            _mission_air_kills = int(
+                summary.get("air_kills_flying", summary.get("air_kills", 0)) or 0
+            )
+            _accumulated_air_kills += _mission_air_kills
+
             notables = _extract_career_notable_events(mission_json)
             notables = notables[:_STORY_MAX_NOTABLE_EVENTS]
 
@@ -1132,6 +1140,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 missions_completed=mission_index,
                 narrative_memory={},
             )
+            mission_story_input["career_progress"]["career_air_kills"] = _accumulated_air_kills
             mission_story_input["mission"]["notable_events"] = notables
             mission_story_input["mission"]["result"] = mission_result
             if aircraft_label:

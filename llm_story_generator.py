@@ -1238,6 +1238,7 @@ def generate_mission_story(
         "- Avoid bureaucratic phrases like 'the record shows' or 'on record'.\n"
         "- If no promotions/awards/squadron events occurred, omit those topics naturally; do not explicitly list 'none'.\n"
         "- Do not write debrief-style sentences that dump multiple metrics in one line.\n"
+        "- When referring to the pilot's total or accumulated kill count, use career_progress.career_air_kills (air kills only). Do not include ground or naval kills in personal victory tallies.\n"
         "- If campaign_context.background_excerpt is present, use it as atmosphere only.\n"
         "- Do not quote long chunks from campaign_context.background_excerpt verbatim.\n"
         "- If chapter_scope.scope is 'day', narrate one cohesive day arc across all listed missions in chapter_scope.mission_ids.\n"
