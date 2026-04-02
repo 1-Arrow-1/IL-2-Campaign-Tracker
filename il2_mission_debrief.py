@@ -200,6 +200,8 @@ class MissionStats:
         self.end_bomb = None
         self.end_rct = None
         self.setts = None
+        self.player_spawn_x: Optional[float] = None   # game-world X (East) at takeoff
+        self.player_spawn_z: Optional[float] = None   # game-world Z (North) at takeoff
         self.mission_start_time: Optional[str] = None  # GTime from AType:0 as "HH:MM"
         self.player_ammo_events = []    # {tick, ammo, target}
         self.player_damage_events = []  # {tick, target, damage}
@@ -544,6 +546,14 @@ class MissionDebriefParser:
                     self.stats.start_rct = self._i(ln, r"RCT:(-?\d+)")
                     # Store player's country for territory classification
                     self.stats.player_country = self._s(ln, r"COUNTRY:(\d+)")
+                    # Capture spawn position (x=East, z=North in game-world metres)
+                    spawn_m = re.search(r"\((-?[\d.]+),(-?[\d.]+),(-?[\d.]+)\)", ln)
+                    if spawn_m and self.stats.player_spawn_x is None:
+                        try:
+                            self.stats.player_spawn_x = float(spawn_m.group(1))
+                            self.stats.player_spawn_z = float(spawn_m.group(3))
+                        except ValueError:
+                            pass
                     # Debug output (optional)
                     log_message(logger, f"[DEBUG] Player detected: {self.stats.player_name} (PLID={plid}, PID={pid}, COUNTRY={self.stats.player_country})")
                 gid = self._i(ln, r"AID:(\d+)")
@@ -1321,7 +1331,9 @@ class MissionDebriefParser:
             "player": {
                 "id": self.stats.player_id,
                 "name": self.stats.player_name,
-                "aircraft": self.stats.player_aircraft
+                "aircraft": self.stats.player_aircraft,
+                "spawn_x": self.stats.player_spawn_x,
+                "spawn_z": self.stats.player_spawn_z,
             },
             "summary": {
                 "air_kills": len(air_kills_all),

@@ -50,6 +50,13 @@ from utils.locale_config import resolve_locale
 from utils.supported_locales import DEFAULT_LOCALE, get_supported_locales, normalize_locale
 from campaign_service_record.core.job_store import job_store, CAREER_DEBRIEF_PARSE
 from campaign_service_record.career.debriefing_manager import CareerDebriefingManager
+from campaign_service_record.weather_lookup import (
+    game_coords_to_latlon,
+    lookup_historical_weather,
+    lookup_historical_weather_by_coords,
+    resolve_campaign_coordinates,
+    resolve_mission_coordinates,
+)
 from utils.sorting import smart_mission_sort_key
 from llm_story_generator import (
     build_campaign_story_input,
@@ -771,7 +778,13 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
             if award:
                 cumulative_awards.append(award)
 
+    # Resolve campaign map coordinates once — reads LANDSCAPE_* from .msnbin header.
+    _game_dir = get_game_directory(_data_loader.get_campaign_mission_dates()) if _data_loader else ""
+    _campaign_coords = resolve_campaign_coordinates(_game_dir, campaign_name)
+
     contexts: list[dict] = []
+    _accumulated_air_kills_campaign: int = 0
+
     for index, mission_id in enumerate(ordered_mission_ids, start=1):
         mid = _normalize_story_text(mission_id)
         mission_meta = _lookup_by_mission_id(mission_dates_map, mid)
@@ -816,6 +829,8 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
         if not aircraft:
             aircraft = _normalize_story_text(aircraft_entry.get("aircraft"))
 
+        _accumulated_air_kills_campaign += summary.get("air_kills", 0)
+
         story_input = build_campaign_story_input(
             campaign_id=campaign_name,
             mission_id=mid,
@@ -839,6 +854,20 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
             ),
             missions_completed=index,
         )
+        story_input.setdefault("career_progress", {})["aerial_victories"] = _accumulated_air_kills_campaign
+        if mission_date:
+            # Per-mission msnbin read: correct for campaigns that span multiple maps.
+            _mission_coords = resolve_mission_coordinates(_game_dir, campaign_name, mid)
+            if _mission_coords:
+                _lat, _lon, _place, _landscape = _mission_coords
+            elif _campaign_coords:
+                _lat, _lon, _place = _campaign_coords
+            else:
+                _lat = _lon = _place = None  # type: ignore[assignment]
+            if _lat is not None:
+                _weather = lookup_historical_weather_by_coords(_lat, _lon, _place, mission_date)
+                if _weather:
+                    story_input.setdefault("mission", {})["weather"] = _weather
         contexts.append(story_input)
 
     return contexts
@@ -1169,6 +1198,24 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             if pilot_name:
                 mission_story_input["pilot"]["name"] = pilot_name
             _narrative_memory = update_narrative_memory_local(mission_story_input, _narrative_memory)
+            # Weather: try airfield-level precision from spawn position + map origin.
+            # Fall back to theatre-level lookup from infoId / squadron name.
+            if mission_date:
+                _spawn_x = (mission_json.get("player", {}) if isinstance(mission_json, dict) else {}).get("spawn_x")
+                _spawn_z = (mission_json.get("player", {}) if isinstance(mission_json, dict) else {}).get("spawn_z")
+                _theatre_id = (row.get("segment") or {}).get("infoId") or ""
+                _weather = None
+                if _spawn_x is not None and _spawn_z is not None and _theatre_id:
+                    _latlon = game_coords_to_latlon(float(_spawn_x), float(_spawn_z), _theatre_id)
+                    if _latlon:
+                        _lat_c, _lon_c = _latlon
+                        _weather = lookup_historical_weather_by_coords(
+                            _lat_c, _lon_c, f"{squadron_name} airfield", mission_date
+                        )
+                if _weather is None:
+                    _weather = lookup_historical_weather(_theatre_id or squadron_name, mission_date)
+                if _weather:
+                    mission_story_input.setdefault("mission", {})["weather"] = _weather
             contexts.append(mission_story_input)
         except Exception as exc:
             logger.warning(

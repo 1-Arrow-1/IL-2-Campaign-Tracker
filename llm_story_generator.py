@@ -1263,6 +1263,7 @@ def generate_mission_story(
         "- Keep the story historically grounded and atmospheric.\n"
         "- If mission.time_of_day is present, use it to set the scene (e.g., 'at dawn', 'under a midday sun'). Do not invent a time if the field is absent or empty.\n"
         "- If mission.season is present, weave it into the atmosphere naturally (e.g., autumn mud, winter frost, summer heat). Do not invent a season if the field is absent or empty.\n"
+        "- If mission.weather is present, it contains real historical meteorological data for the mission location and date. Use it for environmental accuracy — temperature, precipitation, cloud cover, wind. Do not describe weather as colder, snowier, or more dramatic than the data supports. For example, if the temperature is above zero and conditions are 'partly cloudy', do not write frozen ground or blizzards.\n"
         "- If historical_context.summary or historical_context.facts are present, integrate them naturally.\n"
         "- pilot.rank is the rank held DURING the mission. Use it throughout the narrative.\n"
         "- If mission_progression.promotion is non-empty, it is a rank awarded AFTER the pilot landed/returned. Mention it only as a post-mission event (e.g., 'upon return he was promoted to...'). Never use the promoted rank to describe the pilot during the sortie.\n"
