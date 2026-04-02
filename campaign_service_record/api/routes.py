@@ -60,6 +60,7 @@ from llm_story_generator import (
     load_story_chapters_for,
     save_story_state_for,
     strip_memory_entries_for_date,
+    update_narrative_memory_local,
 )
 from utils.locale_config import load_settings
 from utils.supported_locales import APP_TO_IL2_LOCALE, normalize_locale
@@ -554,7 +555,7 @@ def _extract_career_notable_events(mission_json: dict) -> list[str]:
                 detail_parts.append(category)
             if altitude is not None:
                 try:
-                    detail_parts.append(f"{int(altitude)}m")
+                    detail_parts.append(f"{int(altitude)}m altitude")
                 except (TypeError, ValueError):
                     pass
             suffix = f" ({', '.join(detail_parts)})" if detail_parts else ""
@@ -1034,6 +1035,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
         initial_career_rank = ""
 
     _accumulated_air_kills: int = 0
+    _narrative_memory: dict = {}
 
     for mission_index, row in enumerate(mission_rows, start=1):
         mission_date = row["mission_date"]
@@ -1138,9 +1140,9 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 honors_context=_build_honors_context(career.country, promotion_this_mission, mission_awards),
                 squadron_context=squadron_context,
                 missions_completed=mission_index,
-                narrative_memory={},
+                narrative_memory=_narrative_memory,
             )
-            mission_story_input["career_progress"]["career_air_kills"] = _accumulated_air_kills
+            mission_story_input["career_progress"]["aerial_victories"] = _accumulated_air_kills
             mission_story_input["mission"]["notable_events"] = notables
             mission_story_input["mission"]["result"] = mission_result
             if aircraft_label:
@@ -1166,6 +1168,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             ).strip()
             if pilot_name:
                 mission_story_input["pilot"]["name"] = pilot_name
+            _narrative_memory = update_narrative_memory_local(mission_story_input, _narrative_memory)
             contexts.append(mission_story_input)
         except Exception as exc:
             logger.warning(

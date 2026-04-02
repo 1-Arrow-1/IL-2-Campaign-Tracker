@@ -381,13 +381,15 @@ def save_story_chapter_for(
     title: str = "",
     language_code: str = "en",
 ) -> Path:
-    chapters = load_story_chapters_for(source, entry_id)
-    chapter_index = len(chapters) + 1
+    chapters_dir = _story_entry_dir(source, entry_id) / "chapters"
+    chapters_dir.mkdir(parents=True, exist_ok=True)
+
     date_str = _normalize_text(mission_context.get("date")) or "unknown-date"
-    filename = f"{chapter_index:04d}_{date_str}.json"
-    payload = {
-        "chapter_index": chapter_index,
-        "mission_id": _normalize_text(mission_context.get("mission_id")),
+    mission_id_str = _normalize_text(mission_context.get("mission_id")) or ""
+
+    new_payload: Dict[str, Any] = {
+        "chapter_index": 0,  # assigned during renumber pass
+        "mission_id": mission_id_str,
         "date": date_str,
         "title": title,
         "language": _normalize_text(language_code) or "en",
@@ -395,9 +397,43 @@ def save_story_chapter_for(
         "aircraft": mission_context.get("pilot", {}).get("aircraft", ""),
         "result": mission_context.get("mission", {}).get("result", ""),
     }
-    path = _story_entry_dir(source, entry_id) / "chapters" / filename
-    _save_json_file(path, payload)
-    return path
+
+    # Load all existing chapters and include the new one (no file yet, marked with None).
+    all_chapters: list[tuple[Optional[Path], Dict[str, Any]]] = []
+    for p in sorted(chapters_dir.glob("*.json")):
+        data = _load_json_file(p, None)
+        if isinstance(data, dict):
+            all_chapters.append((p, data))
+    all_chapters.append((None, new_payload))
+
+    # Sort chronologically by (date, numeric mission_id).
+    def _chapter_sort_key(item: tuple) -> tuple:
+        _, data = item
+        d = _normalize_text(data.get("date")) or ""
+        try:
+            mid = int(data.get("mission_id") or 0)
+        except (TypeError, ValueError):
+            mid = 0
+        return (d, mid)
+
+    all_chapters.sort(key=_chapter_sort_key)
+
+    # Delete all existing files first to avoid naming collisions during renumber.
+    for old_path, _ in all_chapters:
+        if old_path is not None and old_path.exists():
+            old_path.unlink()
+
+    # Write all chapters with sequential names; track the new chapter's final path.
+    saved_path = chapters_dir / f"0001_{date_str}.json"
+    for new_index, (old_path, data) in enumerate(all_chapters, start=1):
+        data["chapter_index"] = new_index
+        date_part = _normalize_text(data.get("date")) or "unknown-date"
+        new_path = chapters_dir / f"{new_index:04d}_{date_part}.json"
+        _save_json_file(new_path, data)
+        if old_path is None and _normalize_text(data.get("mission_id")) == mission_id_str:
+            saved_path = new_path
+
+    return saved_path
 
 
 def load_or_create_story_state(career_id: str | int) -> Dict[str, Any]:
@@ -979,28 +1015,32 @@ def _looks_like_invalid_story_text(text: str) -> bool:
     return False
 
 
-def _looks_like_report_style_story(text: str) -> bool:
+_REPORT_STYLE_MARKERS = [
+    r"\bm\d{3,5}\b",              # mission ids like M3006
+    r"\bair_kills\b",
+    r"\bground_kills\b",
+    r"\bnaval_kills\b",
+    r"\baircraft_damage\b",
+    r"\bpilot_damage\b",
+    r"\bthe day comprised\b",
+    r"\bthe record(?:ed)?\b",
+]
+
+
+def _report_style_reason(text: str) -> str:
+    """Return the first matching report-style marker, or empty string if none."""
     value = _normalize_text(text)
     if not value:
-        return True
+        return "empty"
     lower = value.lower()
-    report_markers = [
-        r"\bm\d{3,5}\b",              # mission ids like M3006
-        r"\bair_kills\b",
-        r"\bground_kills\b",
-        r"\bnaval_kills\b",
-        r"\baircraft_damage\b",
-        r"\bpilot_damage\b",
-        r"\bthe day comprised\b",
-        r"\bthe record(?:ed)?\b",
-    ]
-    for pattern in report_markers:
+    for pattern in _REPORT_STYLE_MARKERS:
         if re.search(pattern, lower):
-            return True
-    # Heuristic: explicit metric dump with many numeric separators.
-    if lower.count(",") >= 10 and any(token in lower for token in ("meters", "alt", "duration")):
-        return True
-    return False
+            return pattern
+    return ""
+
+
+def _looks_like_report_style_story(text: str) -> bool:
+    return bool(_report_style_reason(text))
 
 
 def _looks_like_meta_reasoning_text(text: str) -> bool:
@@ -1215,6 +1255,9 @@ def generate_mission_story(
         "- After first mention, use last name only.\n"
         "- Do not use the pilot's first name unless explicitly required by the input facts.\n"
         "- Keep continuity with the previous narrative memory.\n"
+        "- If narrative_memory.recent_events is non-empty, this is not the first chapter. Do not re-introduce the squadron, its strategic role, or the operational context (e.g. Army Group North, drive toward Leningrad) — treat these as already established.\n"
+        "- Vary the opening: do not start with the pilot climbing into the cockpit or taking off. Begin in medias res, with a scene, an observation, or a moment from the day.\n"
+        "- If narrative_memory.used_titles is non-empty, do not reuse any of those titles. Also avoid the same structural pattern (e.g. if several titles use 'X Over Y', use a different form).\n"
         "- Use only the supplied facts.\n"
         "- Do not invent awards, promotions, injuries, victories, locations, or commanders.\n"
         "- Keep the story historically grounded and atmospheric.\n"
@@ -1223,22 +1266,23 @@ def generate_mission_story(
         "- If historical_context.summary or historical_context.facts are present, integrate them naturally.\n"
         "- pilot.rank is the rank held DURING the mission. Use it throughout the narrative.\n"
         "- If mission_progression.promotion is non-empty, it is a rank awarded AFTER the pilot landed/returned. Mention it only as a post-mission event (e.g., 'upon return he was promoted to...'). Never use the promoted rank to describe the pilot during the sortie.\n"
-        "- If mission_progression.awards contains one or more entries, mention those award(s) as received after the mission.\n"
+        "- career_progress.awards is the pilot's full career decoration list — do NOT present these as awarded in this chapter.\n"
+        "- Only mission_progression.awards lists decorations actually received after this specific mission. Mention only those as newly awarded.\n"
         "- If honors_context.promotion.fact is present, include one short historical note tied to that promotion.\n"
         "- If honors_context.awards has facts, include at least one short factual note tied to the award(s) received.\n"
         "- Do not claim a promotion or award for this mission when mission_progression says none occurred.\n"
-        "- If mission_progression has no promotion/awards, do not restate old awards unless clearly relevant to this mission.\n"
+        "- If mission_progression has no promotion/awards, do not restate old awards unless a new award is also being mentioned — in that case, briefly acknowledging the pilot's prior decorations alongside the new one is natural.\n"
         "- Treat squadron_context as factual.\n"
         "- Mention at least one squadron_context item when any are present.\n"
         "- Do not invent squadron-member outcomes not present in squadron_context.\n"
         "- Never output internal mission IDs (e.g., M3010, M3011) in the final text.\n"
         "- Mention sortie count naturally (e.g., 'two sorties that day') without technical labels.\n"
         "- Show progression across the day: setup, action, aftermath.\n"
-        "- Keep tone restrained and military-historical, not cinematic fantasy.\n"
+        "- Keep tone military-historical. Some drama and atmosphere are welcome, but stay grounded in the facts supplied.\n"
         "- Avoid bureaucratic phrases like 'the record shows' or 'on record'.\n"
         "- If no promotions/awards/squadron events occurred, omit those topics naturally; do not explicitly list 'none'.\n"
         "- Do not write debrief-style sentences that dump multiple metrics in one line.\n"
-        "- When referring to the pilot's total or accumulated kill count, use career_progress.career_air_kills (air kills only). Do not include ground or naval kills in personal victory tallies.\n"
+        "- When referring to the pilot's confirmed aerial victory total, use career_progress.aerial_victories. Ground and naval kills are not part of this count.\n"
         "- If campaign_context.background_excerpt is present, use it as atmosphere only.\n"
         "- Do not quote long chunks from campaign_context.background_excerpt verbatim.\n"
         "- If chapter_scope.scope is 'day', narrate one cohesive day arc across all listed missions in chapter_scope.mission_ids.\n"
@@ -1287,10 +1331,30 @@ def generate_mission_story(
                 and not _looks_like_meta_reasoning_text(story_text)
             ):
                 story_text = _enforce_squadron_event_presence(story_input, story_text, output_language)
+                LOGGER.info(
+                    "Story generated: provider=%s model=%s mission_id=%s",
+                    provider, candidate_model, story_input.get("mission_id", "?"),
+                )
                 return {
                     "title": title,
                     "story_text": story_text,
                 }
+            _rs_reason = _report_style_reason(story_text or "")
+            _reason = (
+                "empty story_text" if not story_text
+                else f"report-style({_rs_reason})" if _rs_reason
+                else "truncated" if _looks_truncated_story_text(story_text)
+                else "meta-reasoning"
+            )
+            LOGGER.warning(
+                "Story quality check failed for model=%s (json path): reason=%s; text_preview=%.120r",
+                candidate_model, _reason, story_text or "",
+            )
+        else:
+            LOGGER.warning(
+                "Story JSON extraction failed for model=%s; raw_preview=%.120r",
+                candidate_model, raw_text or "",
+            )
 
         fallback_text = _normalize_text(raw_text)
         if (
@@ -1299,6 +1363,10 @@ def generate_mission_story(
             or _looks_truncated_story_text(fallback_text)
             or _looks_like_meta_reasoning_text(fallback_text)
         ):
+            LOGGER.warning(
+                "Story fallback text also failed quality check for model=%s; attempting retry prompt",
+                candidate_model,
+            )
             retry_response = _create_story_response(
                 client,
                 provider=provider,
@@ -1319,6 +1387,10 @@ def generate_mission_story(
                     output_language=output_language,
                 )
                 if repaired_text and not _looks_like_invalid_story_text(repaired_text) and not _looks_like_report_style_story(repaired_text) and not _looks_truncated_story_text(repaired_text):
+                    LOGGER.info(
+                        "Story generated (repaired): provider=%s model=%s mission_id=%s",
+                        provider, candidate_model, story_input.get("mission_id", "?"),
+                    )
                     return {
                         "title": "",
                         "story_text": _enforce_squadron_event_presence(story_input, repaired_text, output_language),
@@ -1329,13 +1401,24 @@ def generate_mission_story(
                 or _looks_truncated_story_text(fallback_text)
                 or _looks_like_meta_reasoning_text(fallback_text)
             ):
+                LOGGER.warning(
+                    "Retry prompt also rejected for model=%s; trying next candidate",
+                    candidate_model,
+                )
                 continue
+        LOGGER.info(
+            "Story generated (raw text path): provider=%s model=%s mission_id=%s",
+            provider, candidate_model, story_input.get("mission_id", "?"),
+        )
         return {
             "title": "",
             "story_text": _enforce_squadron_event_presence(story_input, fallback_text, output_language),
         }
 
     # Final safety net after exhausting model fallbacks.
+    LOGGER.warning(
+        "All model candidates exhausted for mission story generation; using deterministic fallback"
+    )
     fallback_payload = _build_deterministic_story_fallback(story_input)
     return {
         "title": _normalize_text(fallback_payload.get("title")),
@@ -1406,6 +1489,7 @@ def update_narrative_memory_local(
         "key_milestones": list(previous.get("key_milestones") or []),
         "recurring_themes": list(previous.get("recurring_themes") or []),
         "recent_events": list(previous.get("recent_events") or []),
+        "used_titles": list(previous.get("used_titles") or []),
     }
 
     pilot = story_input.get("pilot", {}) if isinstance(story_input, dict) else {}
@@ -1530,6 +1614,10 @@ def generate_and_store_chapter_for(
     story_text = _normalize_text(story_payload.get("story_text"))
     fallback_memory = story_input.get("narrative_memory", {}) if isinstance(story_input, dict) else {}
     memory = update_narrative_memory_local(story_input, fallback_memory if isinstance(fallback_memory, dict) else None)
+    if story_title:
+        memory["used_titles"] = _append_unique_limited(memory.get("used_titles") or [], story_title, limit=30)
+    chapters_dir = _story_entry_dir(source, entry_id) / "chapters"
+    memory["chapters_written"] = len(list(chapters_dir.glob("*.json"))) if chapters_dir.exists() else 0
     save_story_state_for(source, entry_id, memory)
     chapter_path = save_story_chapter_for(
         source,
