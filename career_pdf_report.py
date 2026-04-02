@@ -508,6 +508,29 @@ def _group_story_chapters_by_date(story_chapters: list[dict]) -> dict[str, list[
     return grouped
 
 
+def _group_story_chapters_by_mission(story_chapters: list[dict]) -> dict[str, list[dict]]:
+    grouped: dict[str, list[dict]] = {}
+    for chapter in (story_chapters or []):
+        if not isinstance(chapter, dict):
+            continue
+        mission_id = _safe(chapter.get("mission_id")).strip()
+        date_key = _safe(chapter.get("date")).strip()
+        if not mission_id or mission_id == date_key or mission_id.startswith("day:"):
+            continue
+        grouped.setdefault(mission_id, []).append(chapter)
+
+    for chapters in grouped.values():
+        chapters.sort(
+            key=lambda chapter: (
+                int(chapter.get("chapter_index") or 0),
+                _safe(chapter.get("date")).strip(),
+                _safe(chapter.get("title")).strip(),
+            )
+        )
+
+    return grouped
+
+
 # ---------------------------------------------------------------------------
 # PDF flowable builder
 # ---------------------------------------------------------------------------
@@ -962,6 +985,7 @@ def _build_story(
     # Index: story chapters by day
     # -----------------------------------------------------------------------
     chapters_by_date = _group_story_chapters_by_date(story_chapters)
+    chapters_by_mission = _group_story_chapters_by_mission(story_chapters)
 
     all_events     = career_detail.get("events") or []
     all_incidences = career_detail.get("other_incidences") or []
@@ -1153,6 +1177,34 @@ def _build_story(
             out.append(hdr_para)
         return out
 
+    def _story_ref(chapter: dict) -> tuple[str, str, int]:
+        return (
+            _safe(chapter.get("date")).strip(),
+            _safe(chapter.get("mission_id")).strip(),
+            int(chapter.get("chapter_index") or 0),
+        )
+
+    def _append_story_block(section: list, story_items: list[dict], *, first_block: bool) -> bool:
+        appended = False
+        for story_ch in story_items:
+            story_title = _safe(story_ch.get("title") or "")
+            story_text  = _safe(story_ch.get("story_text") or "")
+            if not (story_title or story_text):
+                continue
+            if not appended and first_block:
+                section.append(Spacer(1, 4 * mm))
+                section.append(hr())
+            else:
+                section.append(Spacer(1, 2 * mm))
+            if story_title:
+                section.append(Paragraph(story_title, sty["story_ttl"]))
+            if story_text:
+                for p in [p.strip() for p in story_text.split("\n\n") if p.strip()]:
+                    section.append(Paragraph(p.replace("\n", " "), sty["body"]))
+            appended = True
+            first_block = False
+        return appended
+
     chapter_num = 0  # counts sortie chapters only (for fallback chap_idx)
 
     for date_key in all_chapter_dates:
@@ -1185,12 +1237,13 @@ def _build_story(
 
         aircraft   = _safe(pilot.get("aircraft") or "")
         result     = _safe(mission.get("result") or "")
-        chap_idx   = cprog.get("missions_completed") or chapter_num
+        chap_idx   = chapter_num
 
         day_events     = _events_for_date(all_events, day_date)
         day_incidences = _incidences_for_date(all_incidences, day_date)
         day_story_chapters = chapters_by_date.get(day_date, [])
         mission_jsons  = ch_scope.get("mission_jsons") or []
+        rendered_story_refs: set[tuple[str, str, int]] = set()
 
         section = []
 
@@ -1206,6 +1259,7 @@ def _build_story(
         # --- Per-mission tables ---
         for mis_idx, mis_data in enumerate(mission_jsons):
             mis_json     = mis_data.get("json") or {}
+            mis_id       = _safe(mis_data.get("mission_id") or "")
             mis_aircraft = _safe(mis_data.get("aircraft") or aircraft or "")
 
             mis_label = f"Sortie {mis_idx + 1}"
@@ -1232,6 +1286,12 @@ def _build_story(
             else:
                 section.append(Spacer(1, 1 * mm))
 
+            mission_story_chapters = chapters_by_mission.get(mis_id, [])
+            if mission_story_chapters:
+                appended_story = _append_story_block(section, mission_story_chapters, first_block=True)
+                if appended_story:
+                    rendered_story_refs.update(_story_ref(ch) for ch in mission_story_chapters)
+
         if not mission_jsons:
             section.append(Paragraph("Mission data not available.", sty["no_kills"]))
 
@@ -1247,23 +1307,11 @@ def _build_story(
         section.extend(_render_award_block(day_events, mprog))
 
         # --- AI Story ---
-        story_rendered = False
-        for story_ch in day_story_chapters:
-            story_title = _safe(story_ch.get("title") or "")
-            story_text  = _safe(story_ch.get("story_text") or "")
-            if not (story_title or story_text):
-                continue
-            if not story_rendered:
-                section.append(Spacer(1, 4 * mm))
-                section.append(hr())
-                story_rendered = True
-            else:
-                section.append(Spacer(1, 2 * mm))
-            if story_title:
-                section.append(Paragraph(story_title, sty["story_ttl"]))
-            if story_text:
-                for p in [p.strip() for p in story_text.split("\n\n") if p.strip()]:
-                    section.append(Paragraph(p.replace("\n", " "), sty["body"]))
+        remaining_day_stories = [
+            story_ch for story_ch in day_story_chapters
+            if _story_ref(story_ch) not in rendered_story_refs
+        ]
+        _append_story_block(section, remaining_day_stories, first_block=True)
 
         # Keep chapter header + first table together; rest flows freely
         if section:
