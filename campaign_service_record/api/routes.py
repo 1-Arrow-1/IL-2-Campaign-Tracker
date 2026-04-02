@@ -359,6 +359,93 @@ def _build_honors_context(
     }
 
 
+def _filter_story_honors_for_sortie(
+    *,
+    is_last_sortie_of_day: bool,
+    mission_awards: list[str] | tuple[str, ...] | None,
+    mission_promotion: object,
+    squadron_context: Optional[dict[str, Any]] = None,
+) -> tuple[list[str], str, dict[str, Any]]:
+    """Only surface same-day honors after the day's final sortie."""
+    filtered_squadron = dict(squadron_context or {})
+    if not is_last_sortie_of_day:
+        filtered_squadron["promotions"] = []
+        filtered_squadron["awards"] = []
+        return [], "", filtered_squadron
+
+    awards = [
+        _normalize_story_text(name)
+        for name in list(mission_awards or [])
+        if _normalize_story_text(name)
+    ]
+    return awards, _normalize_story_text(mission_promotion), filtered_squadron
+
+
+def _story_other_incidences_for_date(other_incidences: list[dict], mission_date: str) -> list[str]:
+    """Return only story-relevant career incidences for a specific mission date."""
+    items: list[str] = []
+    date_key = _normalize_story_text(mission_date)
+    if not date_key:
+        return items
+
+    for incidence in list(other_incidences or []):
+        if not isinstance(incidence, dict):
+            continue
+        if _normalize_story_text(incidence.get("sort_key")) != date_key:
+            continue
+
+        inc_type = _normalize_story_text(incidence.get("type"))
+        if inc_type == "RECOVERY":
+            start = _normalize_story_text(incidence.get("start_date"))
+            end = _normalize_story_text(incidence.get("end_date"))
+            days = incidence.get("duration_days")
+            if start and end and days is not None:
+                items.append(f"Recovery from injury: {start} to {end} ({days} days)")
+            elif start and end:
+                items.append(f"Recovery from injury: {start} to {end}")
+        elif inc_type == "COMMAND":
+            squadron = _normalize_story_text(incidence.get("squadron")) or _normalize_story_text(incidence.get("new_squadron"))
+            if squadron:
+                items.append(f"Appointment as squadron commander of {squadron}")
+            else:
+                items.append("Appointment as squadron commander")
+        elif inc_type == "SQUADRON_CHANGE":
+            old_sq = _normalize_story_text(incidence.get("old_squadron"))
+            new_sq = _normalize_story_text(incidence.get("new_squadron"))
+            if old_sq and new_sq:
+                items.append(f"Transfer from {old_sq} to {new_sq}")
+            elif new_sq:
+                items.append(f"Transfer to {new_sq}")
+
+        if len(items) >= _STORY_MAX_NOTABLE_EVENTS:
+            break
+
+    return items
+
+
+def _dedupe_story_honors(
+    mission_awards: list[str] | tuple[str, ...] | None,
+    mission_promotion: object,
+    *,
+    attributed_awards: set[str],
+    attributed_promotions: set[str],
+) -> tuple[list[str], str]:
+    awards = [
+        _normalize_story_text(name)
+        for name in list(mission_awards or [])
+        if _normalize_story_text(name) and _normalize_story_text(name) not in attributed_awards
+    ]
+    attributed_awards.update(awards)
+
+    promotions = [
+        part.strip()
+        for part in _normalize_story_text(mission_promotion).split(",")
+        if part.strip() and part.strip() not in attributed_promotions
+    ]
+    attributed_promotions.update(promotions)
+    return awards, ", ".join(promotions)
+
+
 def _classify_story_error(exc: Exception) -> tuple[str, str]:
     text = str(exc or "").lower()
     if any(fragment in text for fragment in ("api key", "authentication", "unauthorized", "401")):
@@ -1112,6 +1199,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
 
     _accumulated_air_kills: int = 0
     _narrative_memory: dict = {}
+    other_incidences = aggregator._load_other_incidences(career)
 
     for mission_index, row in enumerate(mission_rows, start=1):
         mission_date = row["mission_date"]
@@ -1119,6 +1207,8 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
         segment_index = int(row["segment_index"])
         squadron_name = _normalize_story_text(row["squadron_name"])
         mission_json = row["mission_json"]
+        next_row = mission_rows[mission_index] if mission_index < len(mission_rows) else None
+        is_last_sortie_of_day = not next_row or _normalize_story_text(next_row.get("mission_date")) != mission_date
 
         try:
             awards: list[str] = []
@@ -1157,17 +1247,10 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                         if event_date_iso == mission_date and event_segment_index == segment_index:
                             mission_awards.append(award_name)
 
-            # Deduplicate within this mission, then remove any already attributed to a prior chapter.
             promotions_deduped = list(dict.fromkeys(
                 [_normalize_story_text(v) for v in promotions_this_mission if _normalize_story_text(v)]
             ))
-            new_promotions = [p for p in promotions_deduped if p not in _attributed_promotions]
-            _attributed_promotions.update(new_promotions)
-            promotion_this_mission = ", ".join(new_promotions)
-
             mission_awards = list(dict.fromkeys([name for name in mission_awards if name]))
-            mission_awards = [a for a in mission_awards if a not in _attributed_awards]
-            _attributed_awards.update(mission_awards)
 
             awards = list(dict.fromkeys([name for name in awards if name]))
 
@@ -1184,6 +1267,11 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             _accumulated_air_kills += _mission_air_kills
 
             notables = _extract_career_notable_events(mission_json)
+            story_incidences = _story_other_incidences_for_date(other_incidences, mission_date)
+            if story_incidences:
+                for line in story_incidences:
+                    if line not in notables:
+                        notables.append(line)
             notables = notables[:_STORY_MAX_NOTABLE_EVENTS]
 
             squadron_context = _build_squadron_context_for_mission(
@@ -1200,6 +1288,19 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             for key in ("kia", "mia", "wia"):
                 squadron_context[key] = squadron_context.get(key, [])[:12]
 
+            mission_awards_for_story, promotion_for_story, squadron_context = _filter_story_honors_for_sortie(
+                is_last_sortie_of_day=is_last_sortie_of_day,
+                mission_awards=mission_awards,
+                mission_promotion=", ".join(promotions_deduped),
+                squadron_context=squadron_context,
+            )
+            mission_awards_for_story, promotion_for_story = _dedupe_story_honors(
+                mission_awards_for_story,
+                promotion_for_story,
+                attributed_awards=_attributed_awards,
+                attributed_promotions=_attributed_promotions,
+            )
+
             mission_story_input = build_story_input(
                 mission_json,
                 career_id=root_career_id,
@@ -1210,17 +1311,18 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 llm_config=llm_config,
                 pilot_last_name=career.pilot_last_name or "",
                 rank=rank_before_mission or rank,
-                awards=awards if mission_awards else [],
-                promotion=promotion_this_mission,
-                mission_awards=mission_awards,
-                mission_promotion=promotion_this_mission,
-                honors_context=_build_honors_context(career.country, promotion_this_mission, mission_awards),
+                awards=awards if mission_awards_for_story else [],
+                promotion=promotion_for_story,
+                mission_awards=mission_awards_for_story,
+                mission_promotion=promotion_for_story,
+                honors_context=_build_honors_context(career.country, promotion_for_story, mission_awards_for_story),
                 squadron_context=squadron_context,
                 missions_completed=mission_index,
                 narrative_memory=_narrative_memory,
             )
             mission_story_input["career_progress"]["aerial_victories"] = _accumulated_air_kills
             mission_story_input["mission"]["notable_events"] = notables
+            mission_story_input["mission"]["other_incidences"] = story_incidences
             mission_story_input["mission"]["result"] = mission_result
             if aircraft_label:
                 mission_story_input["pilot"]["aircraft"] = aircraft_label
