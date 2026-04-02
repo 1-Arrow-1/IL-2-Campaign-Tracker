@@ -1224,11 +1224,37 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
     _narrative_memory: dict = {}
     other_incidences = aggregator._load_other_incidences(career)
 
+    # Build a list of (transfer_date, old_squadron, new_squadron) sorted ascending.
+    # Used to correct pre-transfer missions that are stored under the destination
+    # career segment but were actually flown under the old squadron.
+    _transfers: list[tuple[str, str, str]] = sorted(
+        (
+            (inc["date"], inc["old_squadron"], inc["new_squadron"])
+            for inc in other_incidences
+            if inc.get("type") == "SQUADRON_CHANGE"
+            and inc.get("date") and inc.get("old_squadron") and inc.get("new_squadron")
+        ),
+        key=lambda t: t[0],
+    )
+
+    def _resolve_historical_squadron(mission_date_iso: str, segment_squadron: str) -> str:
+        """Return the squadron the pilot was actually in on mission_date_iso.
+
+        Walks transfers in order: if a transfer TO segment_squadron happened AFTER
+        mission_date_iso, the pilot was still in the old squadron at mission time.
+        """
+        for transfer_date, old_sq, new_sq in _transfers:
+            if new_sq == segment_squadron and mission_date_iso < transfer_date:
+                return old_sq
+        return segment_squadron
+
     for mission_index, row in enumerate(mission_rows, start=1):
         mission_date = row["mission_date"]
         mission_id = int(row["mission_id"])
         segment_index = int(row["segment_index"])
-        squadron_name = _normalize_story_text(row["squadron_name"])
+        squadron_name = _resolve_historical_squadron(
+            mission_date, _normalize_story_text(row["squadron_name"])
+        )
         mission_json = row["mission_json"]
         next_row = mission_rows[mission_index] if mission_index < len(mission_rows) else None
         is_last_sortie_of_day = not next_row or _normalize_story_text(next_row.get("mission_date")) != mission_date
