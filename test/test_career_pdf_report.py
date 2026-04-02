@@ -179,3 +179,25 @@ def test_build_story_numbers_days_sequentially_and_attaches_stories_per_sortie()
     story2_idx = texts.index("Story Two")
 
     assert chapter_idx < sortie1_idx < story1_idx < sortie2_idx < story2_idx
+
+    sortie_keep_groups = []
+
+    def _collect_keep_groups(items):
+        for item in items:
+            content = getattr(item, "_content", None)
+            if content:
+                text_items = [entry.getPlainText() for entry in content if hasattr(entry, "getPlainText")]
+                if text_items:
+                    sortie_keep_groups.append(text_items)
+                _collect_keep_groups(content)
+
+    _collect_keep_groups(flowables)
+
+    assert any(
+        group and group[0].startswith("Sortie 1") and "No kills recorded." in group
+        for group in sortie_keep_groups
+    )
+    assert any(
+        group and group[0].startswith("Sortie 2") and "No kills recorded." in group
+        for group in sortie_keep_groups
+    )

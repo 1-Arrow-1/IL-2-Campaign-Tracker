@@ -1265,18 +1265,18 @@ def _build_story(
             mis_label = f"Sortie {mis_idx + 1}"
             if mis_aircraft:
                 mis_label += f"  —  {mis_aircraft}"
-            section.append(Paragraph(mis_label, sty["mis_hdr"]))
+            sortie_intro: list = [Paragraph(mis_label, sty["mis_hdr"])]
 
             combat_fls = _combat_results_flowables(mis_data.get("sortie_stats") or {}, mis_json)
             stats_tbl  = _stats_table(mis_json, mis_aircraft)
 
             if combat_fls:
-                section.append(_keep(combat_fls))
-                section.append(Spacer(1, 2 * mm))
+                sortie_intro.extend(combat_fls)
             else:
-                section.append(Paragraph("No kills recorded.", sty["no_kills"]))
+                sortie_intro.append(Paragraph("No kills recorded.", sty["no_kills"]))
 
-            section.append(_keep([stats_tbl]))
+            sortie_intro.append(stats_tbl)
+            section.append(_keep(sortie_intro))
             section.append(Spacer(1, 2 * mm))
 
             fl_fls = _flight_log_flowables(mis_json)
