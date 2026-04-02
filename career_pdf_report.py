@@ -362,6 +362,152 @@ def _format_incidence(oi: dict) -> str:
     return str(oi_type).replace("_", " ").title()
 
 
+def _sort_mission_token(value: Any) -> tuple[int, str]:
+    text = _safe(value).strip()
+    if not text:
+        return (1, "")
+    try:
+        return (0, f"{int(text):012d}")
+    except (TypeError, ValueError):
+        return (1, text)
+
+
+def _normalize_day_contexts_for_pdf(day_contexts: list[dict]) -> list[dict]:
+    """Merge mission-scoped contexts into the day-scoped layout used by the PDF."""
+    sortable_contexts = [
+        ctx for ctx in (day_contexts or [])
+        if isinstance(ctx, dict) and _safe(ctx.get("date") or ctx.get("mission_id")).strip()
+    ]
+    sortable_contexts.sort(
+        key=lambda ctx: (
+            _safe(ctx.get("date") or "").strip(),
+            _sort_mission_token(ctx.get("mission_id")),
+        )
+    )
+
+    grouped: dict[str, list[dict]] = {}
+    ordered_dates: list[str] = []
+    for ctx in sortable_contexts:
+        date_key = _safe(ctx.get("date") or ctx.get("mission_id")).strip()
+        if date_key not in grouped:
+            grouped[date_key] = []
+            ordered_dates.append(date_key)
+        grouped[date_key].append(ctx)
+
+    normalized: list[dict] = []
+    for date_key in ordered_dates:
+        group = grouped.get(date_key) or []
+        if not group:
+            continue
+
+        first = group[0]
+        last = group[-1]
+
+        mission_jsons: list[dict] = []
+        mission_ids: list[str] = []
+        aircraft_values: list[str] = []
+        result_values: list[str] = []
+        award_values: list[str] = []
+        promotion_values: list[str] = []
+
+        for ctx in group:
+            chapter_scope = ctx.get("chapter_scope") or {}
+            scope_jsons = chapter_scope.get("mission_jsons") or []
+            if isinstance(scope_jsons, list):
+                mission_jsons.extend(scope_jsons)
+
+            scope_ids = chapter_scope.get("mission_ids") or []
+            if isinstance(scope_ids, list):
+                mission_ids.extend(_safe(mid).strip() for mid in scope_ids if _safe(mid).strip())
+
+            ctx_mission_id = _safe(ctx.get("mission_id")).strip()
+            if ctx_mission_id:
+                mission_ids.append(ctx_mission_id)
+
+            aircraft = _safe((ctx.get("pilot") or {}).get("aircraft")).strip()
+            if aircraft:
+                aircraft_values.append(aircraft)
+
+            result = _safe((ctx.get("mission") or {}).get("result")).strip()
+            if result:
+                result_values.append(result)
+
+            mission_progression = ctx.get("mission_progression") or {}
+            awards = mission_progression.get("awards") or []
+            if isinstance(awards, list):
+                for award in awards:
+                    award_text = _safe(award).strip()
+                    if award_text and award_text not in award_values:
+                        award_values.append(award_text)
+
+            promotion = _safe(mission_progression.get("promotion")).strip()
+            if promotion and promotion not in promotion_values:
+                promotion_values.append(promotion)
+
+        pilot_payload = dict(first.get("pilot") or {})
+        mission_payload = dict(last.get("mission") or first.get("mission") or {})
+        career_progress = dict(last.get("career_progress") or first.get("career_progress") or {})
+        mission_progress = dict(first.get("mission_progression") or {})
+        chapter_scope = dict(first.get("chapter_scope") or {})
+
+        unique_aircraft = list(dict.fromkeys(aircraft_values))
+        if len(unique_aircraft) == 1:
+            pilot_payload["aircraft"] = unique_aircraft[0]
+        elif len(unique_aircraft) > 1:
+            pilot_payload["aircraft"] = ""
+
+        unique_results = list(dict.fromkeys(result_values))
+        if len(unique_results) == 1:
+            mission_payload["result"] = unique_results[0]
+        elif len(unique_results) > 1:
+            mission_payload["result"] = "Multiple Sorties"
+
+        chapter_scope["scope"] = "day"
+        chapter_scope["mission_jsons"] = mission_jsons
+        chapter_scope["mission_ids"] = list(dict.fromkeys(mission_ids))
+        chapter_scope["missions_in_chapter"] = len(mission_jsons) or max(
+            int(chapter_scope.get("missions_in_chapter", 1) or 1),
+            len(group),
+        )
+
+        mission_progress["awards"] = award_values
+        mission_progress["promotion"] = ", ".join(promotion_values)
+
+        normalized_ctx = dict(first)
+        normalized_ctx["date"] = date_key
+        normalized_ctx["mission_id"] = _safe(last.get("mission_id") or first.get("mission_id")).strip()
+        normalized_ctx["pilot"] = pilot_payload
+        normalized_ctx["mission"] = mission_payload
+        normalized_ctx["career_progress"] = career_progress
+        normalized_ctx["mission_progression"] = mission_progress
+        normalized_ctx["chapter_scope"] = chapter_scope
+        normalized.append(normalized_ctx)
+
+    return normalized
+
+
+def _group_story_chapters_by_date(story_chapters: list[dict]) -> dict[str, list[dict]]:
+    grouped: dict[str, list[dict]] = {}
+    for chapter in (story_chapters or []):
+        if not isinstance(chapter, dict):
+            continue
+        date_key = _safe(chapter.get("date") or "").strip()
+        if not date_key:
+            continue
+        grouped.setdefault(date_key, []).append(chapter)
+
+    for chapters in grouped.values():
+        chapters.sort(
+            key=lambda chapter: (
+                int(chapter.get("chapter_index") or 0),
+                _sort_mission_token(chapter.get("mission_id")),
+                _safe(chapter.get("title")).strip(),
+            )
+        )
+
+    return grouped
+
+
 # ---------------------------------------------------------------------------
 # PDF flowable builder
 # ---------------------------------------------------------------------------
@@ -452,6 +598,8 @@ def _build_story(
         "fl_desc":   S("R_FlDesc",    fontSize=8,  fontName="Helvetica",
                         textColor=colors.HexColor(_C_DARK)),
     }
+
+    day_contexts = _normalize_day_contexts_for_pdf(day_contexts)
 
     # -----------------------------------------------------------------------
     # Style builders
@@ -813,11 +961,7 @@ def _build_story(
     # -----------------------------------------------------------------------
     # Index: story chapters by day
     # -----------------------------------------------------------------------
-    chapters_by_date: dict[str, dict] = {}
-    for ch in (story_chapters or []):
-        key = ch.get("mission_id") or ch.get("date") or ""
-        if key:
-            chapters_by_date[key] = ch
+    chapters_by_date = _group_story_chapters_by_date(story_chapters)
 
     all_events     = career_detail.get("events") or []
     all_incidences = career_detail.get("other_incidences") or []
@@ -1045,7 +1189,7 @@ def _build_story(
 
         day_events     = _events_for_date(all_events, day_date)
         day_incidences = _incidences_for_date(all_incidences, day_date)
-        story_ch       = chapters_by_date.get(day_date)
+        day_story_chapters = chapters_by_date.get(day_date, [])
         mission_jsons  = ch_scope.get("mission_jsons") or []
 
         section = []
@@ -1103,12 +1247,18 @@ def _build_story(
         section.extend(_render_award_block(day_events, mprog))
 
         # --- AI Story ---
-        if story_ch:
+        story_rendered = False
+        for story_ch in day_story_chapters:
             story_title = _safe(story_ch.get("title") or "")
             story_text  = _safe(story_ch.get("story_text") or "")
-            if story_title or story_text:
+            if not (story_title or story_text):
+                continue
+            if not story_rendered:
                 section.append(Spacer(1, 4 * mm))
                 section.append(hr())
+                story_rendered = True
+            else:
+                section.append(Spacer(1, 2 * mm))
             if story_title:
                 section.append(Paragraph(story_title, sty["story_ttl"]))
             if story_text:
