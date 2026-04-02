@@ -893,7 +893,7 @@
       "radio_use_1957": "Usar estilo 1957",
       "radio_use_ww2": "Usar estilo 2ª GM",
       "german_awards_elevation_note": "Nota: Modificar archivos en el directorio de instalación de IL-2 puede requerir derechos de administrador. Se te solicitará elevación si es necesario.",
-      "import_stock_campaigns_helper": "Importa las campanas estandar integradas de IL-2 desde Campaigns.gtp a tu carpeta data\\Campaigns. Las subcarpetas de campana que ya existan se omiten; solo se copian las que faltan."
+      "import_stock_campaigns_helper": "Importa las campanas estandar de IL-2 desde Campaigns.gtp y Missions.gtp a tu carpeta data\\Campaigns. Las nuevas carpetas de campana se copian completas. Para las carpetas existentes, solo se anaden los archivos de mision que faltan — no se sobreescribe ningun archivo existente."
     },
     "message": {
       "campaigns_tab_disabled": "La configuración de campañas requiere campaign_mission_dates.json.\nPor favor, ejecuta el Campaign Tracker al menos una vez.",
@@ -920,16 +920,17 @@
       "german_awards_swap_failed": "Error al cambiar el estilo de condecoraciones:\n{error}",
       "german_awards_uac_cancelled": "La elevación de administrador fue cancelada. No se realizaron cambios.",
       "german_awards_elevation_failed": "No se pudieron obtener derechos de administrador. Intenta ejecutar el Gestor de configuración como administrador.",
-      "stock_campaigns_confirm": "Importar las campanas estandar de IL-2 desde:\n{path}\n\nLas subcarpetas de campana existentes en data\\Campaigns se omitiran. Puede que se requieran permisos de administrador.",
+      "stock_campaigns_confirm": "Importar las campanas estandar de IL-2 desde:\n{path}\n\nSe procesaran Campaigns.gtp y Missions.gtp (si esta presente). Las nuevas carpetas de campana se copian completas; las campanas existentes solo reciben nuevos archivos de mision — ningun archivo existente se sobreescribe. Puede que se requieran permisos de administrador.",
       "stock_campaigns_import_failed": "No se pudieron importar las campanas estandar de IL-2:\n{error}",
       "stock_campaigns_import_failed_generic": "La importacion no se completo.",
       "stock_campaigns_import_running": "Importando campanas estandar...",
-      "stock_campaigns_import_success": "La importacion de campanas estandar de IL-2 se ha completado.\n\n{imported_line}\n{skipped_line}\n\nLas campanas importadas apareceran en el tracker despues del proximo escaneo de campanas.",
+      "stock_campaigns_import_success": "La importacion de campanas estandar de IL-2 se ha completado.\n\n{imported_line}\n{updated_line}\n{skipped_line}\n\nLas campanas importadas y actualizadas apareceran en el tracker despues del proximo escaneo de campanas.",
       "stock_campaigns_invalid_directory": "La carpeta de IL-2 seleccionada no es valida para importar campanas estandar:\n{error}",
       "stock_campaigns_select_directory": "Seleccionar directorio del juego IL-2",
       "stock_campaigns_summary_imported": "Importadas ({count}): {campaigns}",
       "stock_campaigns_summary_none": "ninguna",
       "stock_campaigns_summary_skipped": "Omitidas por existir ya ({count}): {campaigns}",
+      "stock_campaigns_summary_updated": "Actualizadas con nuevas misiones ({count}): {campaigns}",
       "stock_campaigns_uac_cancelled": "La elevacion de administrador fue cancelada. No se importo ninguna campana.",
       "story_refresh_provider_not_supported": "La obtención de modelos disponibles no es compatible con el proveedor personalizado. Introduce el ID del modelo manualmente.",
       "story_refresh_running": "Obteniendo modelos disponibles de {provider}...",

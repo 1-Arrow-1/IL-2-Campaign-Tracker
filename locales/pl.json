@@ -893,7 +893,7 @@
       "radio_use_1957": "Użyj stylu z 1957",
       "radio_use_ww2": "Użyj stylu II WŚ",
       "german_awards_elevation_note": "Uwaga: Modyfikowanie plików w katalogu instalacyjnym IL-2 może wymagać uprawnień administratora. W razie potrzeby zostaniesz poproszony o podwyższenie uprawnień.",
-      "import_stock_campaigns_helper": "Importuje wbudowane standardowe kampanie IL-2 z pliku Campaigns.gtp do folderu data\\Campaigns. Istniejace podfoldery kampanii sa pomijane; kopiowane sa tylko brakujace foldery kampanii."
+      "import_stock_campaigns_helper": "Importuje standardowe kampanie IL-2 z plikow Campaigns.gtp i Missions.gtp do folderu data\\Campaigns. Nowe foldery kampanii sa kopiowane w calosci. Dla istniejacych folderow kopiowane sa tylko brakujace pliki misji — zadne istniejace pliki nie sa nadpisywane."
     },
     "message": {
       "campaigns_tab_disabled": "Ustawienia kampanii wymagają campaign_mission_dates.json.\nProszę uruchomić Campaign Tracker przynajmniej raz.",
@@ -920,16 +920,17 @@
       "german_awards_swap_failed": "Nie udało się zmienić stylu odznaczeń:\n{error}",
       "german_awards_uac_cancelled": "Podwyższenie uprawnień zostało anulowane. Nie wprowadzono żadnych zmian.",
       "german_awards_elevation_failed": "Nie udało się uzyskać uprawnień administratora. Spróbuj uruchomić Menedżer ustawień jako administrator.",
-      "stock_campaigns_confirm": "Zaimportowac standardowe kampanie IL-2 z:\n{path}\n\nIstniejace podfoldery kampanii w data\\Campaigns zostana pominiete. Moga byc wymagane uprawnienia administratora.",
+      "stock_campaigns_confirm": "Zaimportowac standardowe kampanie IL-2 z:\n{path}\n\nPrzetworzone zostana Campaigns.gtp i Missions.gtp (jesli dostepne). Nowe foldery kampanii sa kopiowane w calosci; istniejace kampanie otrzymuja tylko nowe pliki misji — zadne istniejace pliki nie sa nadpisywane. Moga byc wymagane uprawnienia administratora.",
       "stock_campaigns_import_failed": "Nie udalo sie zaimportowac standardowych kampanii IL-2:\n{error}",
       "stock_campaigns_import_failed_generic": "Import nie zostal ukonczony.",
       "stock_campaigns_import_running": "Importowanie standardowych kampanii...",
-      "stock_campaigns_import_success": "Import standardowych kampanii IL-2 zostal zakonczony.\n\n{imported_line}\n{skipped_line}\n\nZaimportowane kampanie pojawia sie w trackerze po nastepnym skanowaniu kampanii.",
+      "stock_campaigns_import_success": "Import standardowych kampanii IL-2 zostal zakonczony.\n\n{imported_line}\n{updated_line}\n{skipped_line}\n\nZaimportowane i zaktualizowane kampanie pojawia sie w trackerze po nastepnym skanowaniu kampanii.",
       "stock_campaigns_invalid_directory": "Wybrany folder IL-2 nie jest prawidlowy do importu standardowych kampanii:\n{error}",
       "stock_campaigns_select_directory": "Wybierz katalog gry IL-2",
       "stock_campaigns_summary_imported": "Zaimportowano ({count}): {campaigns}",
       "stock_campaigns_summary_none": "brak",
       "stock_campaigns_summary_skipped": "Pominieto istniejace ({count}): {campaigns}",
+      "stock_campaigns_summary_updated": "Zaktualizowano o nowe misje ({count}): {campaigns}",
       "stock_campaigns_uac_cancelled": "Anulowano podwyzszenie uprawnien administratora. Nie zaimportowano zadnych kampanii.",
       "story_refresh_provider_not_supported": "Pobieranie dostępnych modeli nie jest obsługiwane dla niestandardowego dostawcy. Wpisz identyfikator modelu ręcznie.",
       "story_refresh_running": "Pobieranie dostępnych modeli od {provider}...",

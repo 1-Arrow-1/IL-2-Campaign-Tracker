@@ -1155,12 +1155,18 @@ class SettingsManagerApp(tk.Tk):
     def _format_stock_campaign_import_summary(self, result: StockCampaignImportResult) -> str:
         """Build a concise result message for stock-campaign import."""
         imported_count = len(result.imported_campaigns)
+        updated_count = len(result.updated_campaigns)
         skipped_count = len(result.skipped_campaigns)
 
         imported_line = self.tr.t(
             "msg_stock_campaigns_summary_imported",
             count=imported_count,
             campaigns=", ".join(result.imported_campaigns) if result.imported_campaigns else self.tr.t("msg_stock_campaigns_summary_none"),
+        )
+        updated_line = self.tr.t(
+            "msg_stock_campaigns_summary_updated",
+            count=updated_count,
+            campaigns=", ".join(result.updated_campaigns) if result.updated_campaigns else self.tr.t("msg_stock_campaigns_summary_none"),
         )
         skipped_line = self.tr.t(
             "msg_stock_campaigns_summary_skipped",
@@ -1171,6 +1177,7 @@ class SettingsManagerApp(tk.Tk):
         return self.tr.t(
             "msg_stock_campaigns_import_success",
             imported_line=imported_line,
+            updated_line=updated_line,
             skipped_line=skipped_line,
         )
 

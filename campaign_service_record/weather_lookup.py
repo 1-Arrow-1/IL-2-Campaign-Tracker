@@ -82,6 +82,7 @@ _IL2_LOCATIONS: Dict[str, Tuple[float, float, str]] = {
     "boo44":         (46.48,  30.73, "Odessa 1944"),
     "bon":           (49.18,  -0.37, "Normandy"),
     "bobp":          (51.22,   6.78, "Rhineland / Bodenplatte"),
+    "bop":           (51.02,  36.74, "Prokhorovka (Kursk)"),
 }
 
 # ---------------------------------------------------------------------------
@@ -111,6 +112,17 @@ _MAP_ORIGINS: Dict[str, Tuple[float, float]] = {
     "rheinland":     (49.700, 2.000),    # ESTIMATED  (map covers NL/Belgium/W Germany)
     "westernfront":  (49.700, 2.000),    # ESTIMATED  (same as Rheinland — Bodenplatte map)
     "arras":         (48.900, 0.500),    # ESTIMATED  (WWI Western Front)
+    # IL-2 career infoId aliases (lowercase) — same origins as their landscape equivalents.
+    # Allows game_coords_to_latlon() to work when called with infoId instead of landscape token.
+    "bom":           (54.100, 34.800),   # Battle of Moscow
+    "bos":           (46.800, 41.100),   # Battle of Stalingrad
+    "bok":           (44.495, 33.009),   # Battle of Kuban
+    "bol41":         (57.450, 27.300),   # Battle of Leningrad 1941
+    "boo41":         (47.528, 24.490),   # Defence of Odessa
+    "boo44":         (47.528, 24.490),   # Liberation of Odessa
+    "bon":           (48.956, -3.867),   # Battle of Normandy
+    "bobp":          (49.700, 2.000),    # Battle of Bodenplatte / Rheinland
+    "bop":           (49.900, 34.150),   # Battle of Prokhorovka
 }
 
 
@@ -169,6 +181,49 @@ _WMO_CODES: Dict[int, str] = {
 # In-process caches
 _weather_cache: Dict[str, Optional[dict]] = {}          # "{lat:.4f},{lon:.4f}|{date}" → result
 _campaign_coords_cache: Dict[str, Optional[Tuple[float, float, str]]] = {}  # campaign_name → coords
+
+# ---------------------------------------------------------------------------
+# Campaign .eng briefing weather
+# ---------------------------------------------------------------------------
+
+_ENG_WEATHER_RE = re.compile(r'Weather:\s*([^<\n\r]+)', re.IGNORECASE)
+
+
+def read_eng_weather(game_dir: str, campaign_name: str, mission_id: str) -> Optional[dict]:
+    """
+    Extract the weather description from a campaign mission's .eng briefing file.
+
+    The .eng file is UTF-16 encoded.  The weather line is embedded in the
+    mission briefing text, separated by HTML <br> tags, e.g.:
+        "Weather: moderately overcast, 2,500 m cloud base<br>"
+        "Weather: 13°C, Clouds: Scattered clouds at 800m."
+
+    Returns a dict with 'conditions' and 'summary' set to the raw briefing
+    text, or None when the file is absent or contains no Weather line.
+    """
+    if not game_dir:
+        return None
+    eng_path = Path(game_dir) / "data" / "Campaigns" / campaign_name / f"{mission_id}.eng"
+    if not eng_path.exists():
+        return None
+
+    for enc in ("utf-16", "utf-8", "latin-1"):
+        try:
+            text = eng_path.read_text(encoding=enc)
+            m = _ENG_WEATHER_RE.search(text)
+            if m:
+                weather_str = m.group(1).strip()
+                if weather_str:
+                    LOGGER.debug("Eng weather %s/%s: %r", campaign_name, mission_id, weather_str)
+                    return {
+                        "conditions": weather_str,
+                        "summary": weather_str,
+                        "source": "mission_briefing",
+                    }
+            break
+        except (UnicodeDecodeError, OSError):
+            continue
+    return None
 
 
 # ---------------------------------------------------------------------------

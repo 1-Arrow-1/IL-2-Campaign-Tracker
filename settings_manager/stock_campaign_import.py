@@ -1,10 +1,10 @@
 """
-Helpers for importing stock IL-2 campaigns from Campaigns.gtp.
+Helpers for importing stock IL-2 campaigns from Campaigns.gtp and Missions.gtp.
 """
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 import json
 import shutil
 import subprocess
@@ -25,6 +25,7 @@ class StockCampaignImportResult:
     destination_campaigns_dir: str
     imported_campaigns: List[str]
     skipped_campaigns: List[str]
+    updated_campaigns: List[str] = field(default_factory=list)
     extractor_exit_code: int = 0
     extractor_stdout: str = ""
     extractor_stderr: str = ""
@@ -92,42 +93,70 @@ def list_campaign_subfolders(campaigns_dir: Path) -> List[str]:
     )
 
 
-def copy_campaign_subfolders(source_campaigns_dir: Path, destination_campaigns_dir: Path) -> tuple[List[str], List[str]]:
+def copy_campaign_subfolders(
+    source_campaigns_dir: Path,
+    destination_campaigns_dir: Path,
+) -> tuple[List[str], List[str], List[str]]:
     """
-    Copy individual campaign subfolders, skipping only existing campaign folders.
+    Merge campaign subfolders from source into destination at the mission-file level.
+
+    - New campaign folders (not present in destination): copied in full → imported.
+    - Existing campaign folders: only files absent in the destination are copied.
+      If any files were added → updated.  If nothing was new → skipped.
+
+    Returns:
+        (imported, updated, skipped)
     """
     source_campaigns_dir = Path(source_campaigns_dir)
     destination_campaigns_dir = Path(destination_campaigns_dir)
     destination_campaigns_dir.mkdir(parents=True, exist_ok=True)
 
     imported: List[str] = []
+    updated: List[str] = []
     skipped: List[str] = []
 
     for entry in sorted(source_campaigns_dir.iterdir(), key=lambda path: path.name.lower()):
         if not entry.is_dir():
             continue
         target = destination_campaigns_dir / entry.name
-        if target.exists():
-            skipped.append(entry.name)
-            continue
-        shutil.copytree(entry, target)
-        imported.append(entry.name)
+        if not target.exists():
+            shutil.copytree(entry, target)
+            imported.append(entry.name)
+        else:
+            # File-level merge: copy only files not already present in destination.
+            files_added = 0
+            for src_file in entry.rglob("*"):
+                if not src_file.is_file():
+                    continue
+                relative = src_file.relative_to(entry)
+                dst_file = target / relative
+                if not dst_file.exists():
+                    dst_file.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(src_file, dst_file)
+                    files_added += 1
+            if files_added > 0:
+                updated.append(entry.name)
+            else:
+                skipped.append(entry.name)
 
-    return imported, skipped
+    return imported, updated, skipped
 
 
 def summarize_direct_import(
     existing_campaigns: List[str],
     resulting_campaigns: List[str],
-) -> Tuple[List[str], List[str]]:
+) -> Tuple[List[str], List[str], List[str]]:
     """
     Summarize extraction results when unGTP writes directly into data/Campaigns.
+
+    Returns (imported, updated, skipped).  'updated' is always empty here because
+    we cannot determine file-level changes after the fact in the direct-write path.
     """
     existing_set = set(existing_campaigns)
     resulting_set = set(resulting_campaigns)
     imported = sorted(resulting_set - existing_set, key=str.lower)
     skipped = sorted(resulting_set & existing_set, key=str.lower)
-    return imported, skipped
+    return imported, [], skipped
 
 
 def snapshot_directory_state(directory: Path) -> Optional[Tuple[int, int, int]]:
@@ -232,13 +261,64 @@ def run_extractor_with_idle_detection(
         time.sleep(poll_interval_seconds)
 
 
+def _prepare_extractor(extractor: Path, data_dir: Path) -> Tuple[Path, bool]:
+    """
+    If extractor is not already in data_dir, copy it there temporarily.
+    Returns (path_to_use, needs_cleanup).
+    """
+    if extractor.parent == data_dir:
+        return extractor, False
+    with tempfile.NamedTemporaryFile(
+        dir=data_dir,
+        prefix="__il2ct_ungtp_",
+        suffix=extractor.suffix,
+        delete=False,
+    ) as tmp:
+        extractor_to_run = Path(tmp.name)
+    shutil.copy2(extractor, extractor_to_run)
+    return extractor_to_run, True
+
+
+def _merge_campaign_lists(
+    primary: Tuple[List[str], List[str], List[str]],
+    secondary: Tuple[List[str], List[str], List[str]],
+) -> Tuple[List[str], List[str], List[str]]:
+    """
+    Combine (imported, updated, skipped) tuples from two merge passes.
+
+    Priority: imported > updated > skipped.
+    A campaign already in 'imported' stays there regardless of the second pass.
+    A campaign moved from 'skipped' to 'updated'/'imported' in the second pass
+    is promoted accordingly.
+    """
+    p_imported, p_updated, p_skipped = (set(x) for x in primary)
+    s_imported, s_updated, _ = secondary
+
+    final_imported = p_imported | s_imported
+    # Campaigns newly imported by second pass are no longer skipped/updated
+    final_updated = (p_updated | s_updated) - final_imported
+    final_skipped = p_skipped - final_imported - final_updated
+
+    return (
+        sorted(final_imported, key=str.lower),
+        sorted(final_updated, key=str.lower),
+        sorted(final_skipped, key=str.lower),
+    )
+
+
 def import_stock_campaigns(
     game_directory: Path,
     extractor_path: Optional[Path] = None,
     timeout_seconds: int = 300,
 ) -> StockCampaignImportResult:
     """
-    Extract stock campaigns from Campaigns.gtp and copy missing campaign folders.
+    Extract stock campaigns from Campaigns.gtp (and Missions.gtp if present)
+    and merge missing campaign folders and mission files into data/Campaigns.
+
+    Rules:
+    - New campaign folders are copied in full.
+    - For existing campaign folders, only files not already present are added.
+    - No existing mission file is ever overwritten.
     """
     game_directory = Path(game_directory).expanduser().resolve()
     archive_path = validate_game_directory(game_directory)
@@ -250,25 +330,14 @@ def import_stock_campaigns(
     data_dir.mkdir(parents=True, exist_ok=True)
     destination_campaigns_dir = data_dir / "Campaigns"
     existing_campaigns = list_campaign_subfolders(destination_campaigns_dir)
-
     extraction_root = data_dir / "(null)"
-    extractor_to_run = extractor
-    cleanup_extractor_copy = False
 
-    # unGTP behaves like the manual drag/drop workflow when executed from IL-2\data.
-    if extractor.parent != data_dir:
-        with tempfile.NamedTemporaryFile(
-            dir=data_dir,
-            prefix="__il2ct_ungtp_",
-            suffix=extractor.suffix,
-            delete=False,
-        ) as temp_extractor:
-            extractor_to_run = Path(temp_extractor.name)
-        shutil.copy2(extractor, extractor_to_run)
-        cleanup_extractor_copy = True
-
+    # ------------------------------------------------------------------ #
+    # Pass 1: extract Campaigns.gtp                                        #
+    # ------------------------------------------------------------------ #
+    extractor_to_run, cleanup = _prepare_extractor(extractor, data_dir)
     try:
-        result = run_extractor_with_idle_detection(
+        last_result = run_extractor_with_idle_detection(
             extractor_path=extractor_to_run,
             archive_path=archive_path,
             working_dir=data_dir,
@@ -277,7 +346,7 @@ def import_stock_campaigns(
             timeout_seconds=timeout_seconds,
         )
     finally:
-        if cleanup_extractor_copy:
+        if cleanup:
             try:
                 extractor_to_run.unlink()
             except OSError:
@@ -292,29 +361,70 @@ def import_stock_campaigns(
             "Stock campaign extraction did not produce a Campaigns directory."
         )
 
+    first_source = source_campaigns_dir
+
     if source_campaigns_dir.resolve() == destination_campaigns_dir.resolve():
-        imported, skipped = summarize_direct_import(
+        pass1 = summarize_direct_import(
             existing_campaigns=existing_campaigns,
             resulting_campaigns=list_campaign_subfolders(destination_campaigns_dir),
         )
     else:
-        imported, skipped = copy_campaign_subfolders(
-            source_campaigns_dir=source_campaigns_dir,
-            destination_campaigns_dir=destination_campaigns_dir,
-        )
+        pass1 = copy_campaign_subfolders(source_campaigns_dir, destination_campaigns_dir)
+
+    # ------------------------------------------------------------------ #
+    # Pass 2: extract Missions.gtp (optional, best-effort)                #
+    # ------------------------------------------------------------------ #
+    missions_archive = game_directory / "data" / "Missions.gtp"
+    combined = pass1
+
+    if missions_archive.is_file():
+        # Remove the (null) extraction tree so the idle detector starts fresh
+        # and won't mistake the Campaigns.gtp output for Missions.gtp output.
+        shutil.rmtree(extraction_root, ignore_errors=True)
+
+        extractor_to_run, cleanup = _prepare_extractor(extractor, data_dir)
+        try:
+            last_result = run_extractor_with_idle_detection(
+                extractor_path=extractor_to_run,
+                archive_path=missions_archive,
+                working_dir=data_dir,
+                extraction_root=extraction_root,
+                destination_campaigns_dir=destination_campaigns_dir,
+                timeout_seconds=timeout_seconds,
+            )
+
+            missions_source = find_extracted_campaigns_dir(extraction_root)
+            if (
+                missions_source is not None
+                and missions_source.resolve() != destination_campaigns_dir.resolve()
+            ):
+                pass2 = copy_campaign_subfolders(missions_source, destination_campaigns_dir)
+                combined = _merge_campaign_lists(pass1, pass2)
+
+        except Exception:
+            pass  # Missions.gtp extraction is best-effort; keep pass1 results
+        finally:
+            if cleanup:
+                try:
+                    extractor_to_run.unlink()
+                except OSError:
+                    pass
+
+    imported, updated, skipped = combined
 
     return StockCampaignImportResult(
         game_directory=str(game_directory),
         extractor_path=str(extractor),
         archive_path=str(archive_path),
         extraction_root=str(extraction_root),
-        source_campaigns_dir=str(source_campaigns_dir),
+        source_campaigns_dir=str(first_source),
         destination_campaigns_dir=str(destination_campaigns_dir),
         imported_campaigns=imported,
+        updated_campaigns=updated,
         skipped_campaigns=skipped,
-        extractor_exit_code=result.returncode,
-        extractor_stdout=result.stdout or "",
-        extractor_stderr=result.stderr or "",
+        extractor_exit_code=last_result.returncode,
+        extractor_stdout=last_result.stdout or "",
+        extractor_stderr=last_result.stderr or "",
     )
 
 

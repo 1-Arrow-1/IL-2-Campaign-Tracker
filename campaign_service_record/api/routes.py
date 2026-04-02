@@ -54,8 +54,7 @@ from campaign_service_record.weather_lookup import (
     game_coords_to_latlon,
     lookup_historical_weather,
     lookup_historical_weather_by_coords,
-    resolve_campaign_coordinates,
-    resolve_mission_coordinates,
+    read_eng_weather,
 )
 from utils.sorting import smart_mission_sort_key
 from llm_story_generator import (
@@ -778,9 +777,7 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
             if award:
                 cumulative_awards.append(award)
 
-    # Resolve campaign map coordinates once — reads LANDSCAPE_* from .msnbin header.
     _game_dir = get_game_directory(_data_loader.get_campaign_mission_dates()) if _data_loader else ""
-    _campaign_coords = resolve_campaign_coordinates(_game_dir, campaign_name)
 
     contexts: list[dict] = []
     _accumulated_air_kills_campaign: int = 0
@@ -855,19 +852,9 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
             missions_completed=index,
         )
         story_input.setdefault("career_progress", {})["aerial_victories"] = _accumulated_air_kills_campaign
-        if mission_date:
-            # Per-mission msnbin read: correct for campaigns that span multiple maps.
-            _mission_coords = resolve_mission_coordinates(_game_dir, campaign_name, mid)
-            if _mission_coords:
-                _lat, _lon, _place, _landscape = _mission_coords
-            elif _campaign_coords:
-                _lat, _lon, _place = _campaign_coords
-            else:
-                _lat = _lon = _place = None  # type: ignore[assignment]
-            if _lat is not None:
-                _weather = lookup_historical_weather_by_coords(_lat, _lon, _place, mission_date)
-                if _weather:
-                    story_input.setdefault("mission", {})["weather"] = _weather
+        _weather = read_eng_weather(_game_dir, campaign_name, mid)
+        if _weather:
+            story_input.setdefault("mission", {})["weather"] = _weather
         contexts.append(story_input)
 
     return contexts
@@ -1016,7 +1003,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             "mission_id": int(result.mission_id),
             "mission_date": mission_date_iso,
             "segment_index": mission_segment_index,
-            "segment": mission_segment,
+            "segment": dict(mission_segment) if mission_segment is not None else {},
             "squadron_name": squadron_name,
             "mission_json": mission_json,
             "sortie_stats": sortie_stats,
