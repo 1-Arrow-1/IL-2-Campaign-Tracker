@@ -1017,6 +1017,16 @@ def _extract_json_object(text: str) -> Optional[Dict[str, Any]]:
 
 
 def _extract_response_text(response: Any) -> str:
+    # chat.completions response shape (OpenAI, Anthropic, OpenRouter, Google compat)
+    choices = getattr(response, "choices", None)
+    if isinstance(choices, (list, tuple)) and choices:
+        content = getattr(getattr(choices[0], "message", None), "content", None)
+        if isinstance(content, str):
+            text = _normalize_text(content)
+            if text:
+                return text
+
+    # responses.create shape (OpenAI Responses API — legacy fallback)
     text = _normalize_text(getattr(response, "output_text", ""))
     if text:
         return text
@@ -1272,20 +1282,20 @@ def _create_story_response(
     prompt: str,
     max_output_tokens: int,
 ) -> Any:
-    provider_key = _normalize_text(provider).lower()
+    _ = provider  # reserved for provider-specific extensions
     kwargs: Dict[str, Any] = {
         "model": model,
-        "input": prompt,
-        "max_output_tokens": max_output_tokens,
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": max_output_tokens,
     }
-    if provider_key == "openrouter":
-        # OpenRouter often expects max_tokens via provider-native payload.
-        kwargs["extra_body"] = {"max_tokens": max_output_tokens}
     try:
-        return client.responses.create(**kwargs)
+        return client.chat.completions.create(**kwargs)
     except TypeError:
-        # Fallback for providers that reject one of these params.
-        return client.responses.create(model=model, input=prompt)
+        # Fallback for providers that reject max_tokens.
+        return client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+        )
 
 
 def generate_mission_story(
@@ -1516,7 +1526,6 @@ def update_narrative_memory(
     provider: str = "openai",
     base_url: Optional[str] = None,
 ) -> Dict[str, Any]:
-    _ = provider  # reserved for provider-specific behavior/extensions
     client = _get_client(api_key=api_key, base_url=base_url)
     prompt = (
         "Update the pilot's narrative memory after this mission.\n\n"
@@ -1538,7 +1547,13 @@ def update_narrative_memory(
         "Generated story:\n"
         f"{story_text}"
     )
-    response = client.responses.create(model=model, input=prompt)
+    response = _create_story_response(
+        client,
+        provider=provider,
+        model=model,
+        prompt=prompt,
+        max_output_tokens=800,
+    )
     payload = _extract_json_object(_extract_response_text(response))
     if not isinstance(payload, dict):
         raise ValueError("Narrative memory response was not a JSON object")

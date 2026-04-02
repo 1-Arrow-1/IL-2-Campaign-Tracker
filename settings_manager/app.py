@@ -2579,14 +2579,18 @@ class SettingsManagerApp(tk.Tk):
                 from openai import OpenAI
 
                 client = OpenAI(api_key=api_key, base_url=base_url)
-                response = client.responses.create(
+                response = client.chat.completions.create(
                     model=model,
-                    input="Reply with exactly: connection ok",
+                    messages=[{"role": "user", "content": "Reply with exactly: connection ok"}],
+                    max_tokens=16,
                 )
+                reply = ""
+                if response.choices:
+                    reply = (getattr(response.choices[0].message, "content", "") or "").strip()
                 self._story_test_queue.put({
                     "ok": True,
                     "provider": provider,
-                    "text": (response.output_text or "").strip(),
+                    "text": reply,
                 })
             except Exception as exc:
                 self._story_test_queue.put({
