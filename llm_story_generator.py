@@ -66,10 +66,86 @@ _LANGUAGE_LABELS = {
 }
 
 
-def _iter_squadron_event_items(squadron_context: Any) -> list[str]:
+# Localized phrase fragments for the squadron-event fallback lines.
+# These are only used when the AI did not cover squadron events in the story.
+_SQUADRON_EVENT_PHRASES: Dict[str, Dict[str, str]] = {
+    "en": {
+        "received":         "{pilot} received {award}",
+        "promoted_to":      "{pilot} promoted to {rank}",
+        "transferred_to":   "{pilot} transferred to {to_squadron}",
+        "transferred":      "{pilot} was transferred",
+        "kia":              "{pilot} was KIA",
+        "mia":              "{pilot} was MIA",
+        "wounded":          "{pilot} was wounded",
+    },
+    "de": {
+        "received":         "{pilot} erhielt {award}",
+        "promoted_to":      "{pilot} befördert zu {rank}",
+        "transferred_to":   "{pilot} versetzt zu {to_squadron}",
+        "transferred":      "{pilot} wurde versetzt",
+        "kia":              "{pilot} gefallen (KIA)",
+        "mia":              "{pilot} vermisst (MIA)",
+        "wounded":          "{pilot} verwundet",
+    },
+    "fr": {
+        "received":         "{pilot} a reçu {award}",
+        "promoted_to":      "{pilot} promu au rang de {rank}",
+        "transferred_to":   "{pilot} muté à {to_squadron}",
+        "transferred":      "{pilot} a été muté",
+        "kia":              "{pilot} tombé au combat",
+        "mia":              "{pilot} porté disparu",
+        "wounded":          "{pilot} blessé",
+    },
+    "es": {
+        "received":         "{pilot} recibió {award}",
+        "promoted_to":      "{pilot} ascendido a {rank}",
+        "transferred_to":   "{pilot} trasladado a {to_squadron}",
+        "transferred":      "{pilot} fue trasladado",
+        "kia":              "{pilot} caído en combate (KIA)",
+        "mia":              "{pilot} desaparecido (MIA)",
+        "wounded":          "{pilot} herido",
+    },
+    "pl": {
+        "received":         "{pilot} otrzymał {award}",
+        "promoted_to":      "{pilot} awansowany do stopnia {rank}",
+        "transferred_to":   "{pilot} przeniesiony do {to_squadron}",
+        "transferred":      "{pilot} został przeniesiony",
+        "kia":              "{pilot} poległ (KIA)",
+        "mia":              "{pilot} zaginął (MIA)",
+        "wounded":          "{pilot} ranny",
+    },
+    "ru": {
+        "received":         "{pilot} получил {award}",
+        "promoted_to":      "{pilot} повышен до {rank}",
+        "transferred_to":   "{pilot} переведён в {to_squadron}",
+        "transferred":      "{pilot} был переведён",
+        "kia":              "{pilot} погиб (КИА)",
+        "mia":              "{pilot} пропал без вести (МИА)",
+        "wounded":          "{pilot} ранен",
+    },
+    "zh": {
+        "received":         "{pilot}获得{award}",
+        "promoted_to":      "{pilot}晋升为{rank}",
+        "transferred_to":   "{pilot}调往{to_squadron}",
+        "transferred":      "{pilot}已调动",
+        "kia":              "{pilot}阵亡（KIA）",
+        "mia":              "{pilot}失踪（MIA）",
+        "wounded":          "{pilot}受伤",
+    },
+}
+
+
+def _squadron_phrase(lang: str, key: str, **kwargs: str) -> str:
+    phrases = _SQUADRON_EVENT_PHRASES.get(lang) or _SQUADRON_EVENT_PHRASES["en"]
+    template = phrases.get(key) or _SQUADRON_EVENT_PHRASES["en"][key]
+    return template.format(**kwargs)
+
+
+def _iter_squadron_event_items(squadron_context: Any, output_language: str = "en") -> list[str]:
     if not isinstance(squadron_context, dict):
         return []
 
+    lang = _normalize_text(output_language).lower()[:2] or "en"
     lines: list[str] = []
 
     promotions = squadron_context.get("promotions", [])
@@ -80,7 +156,7 @@ def _iter_squadron_event_items(squadron_context: Any) -> list[str]:
             pilot = _normalize_text(item.get("pilot"))
             rank = _normalize_text(item.get("rank"))
             if pilot and rank:
-                lines.append(f"{pilot} promoted to {rank}")
+                lines.append(_squadron_phrase(lang, "promoted_to", pilot=pilot, rank=rank))
 
     awards = squadron_context.get("awards", [])
     if isinstance(awards, list):
@@ -90,7 +166,7 @@ def _iter_squadron_event_items(squadron_context: Any) -> list[str]:
             pilot = _normalize_text(item.get("pilot"))
             award = _normalize_text(item.get("award"))
             if pilot and award:
-                lines.append(f"{pilot} received {award}")
+                lines.append(_squadron_phrase(lang, "received", pilot=pilot, award=award))
 
     transfers = squadron_context.get("transfers", [])
     if isinstance(transfers, list):
@@ -100,24 +176,24 @@ def _iter_squadron_event_items(squadron_context: Any) -> list[str]:
             pilot = _normalize_text(item.get("pilot"))
             to_squadron = _normalize_text(item.get("to_squadron"))
             if pilot and to_squadron:
-                lines.append(f"{pilot} transferred to {to_squadron}")
+                lines.append(_squadron_phrase(lang, "transferred_to", pilot=pilot, to_squadron=to_squadron))
             elif pilot:
-                lines.append(f"{pilot} was transferred")
+                lines.append(_squadron_phrase(lang, "transferred", pilot=pilot))
 
     kia = squadron_context.get("kia", [])
     if isinstance(kia, list):
         for pilot in [(_normalize_text(v)) for v in kia[:6] if _normalize_text(v)]:
-            lines.append(f"{pilot} was KIA")
+            lines.append(_squadron_phrase(lang, "kia", pilot=pilot))
 
     mia = squadron_context.get("mia", [])
     if isinstance(mia, list):
         for pilot in [(_normalize_text(v)) for v in mia[:6] if _normalize_text(v)]:
-            lines.append(f"{pilot} was MIA")
+            lines.append(_squadron_phrase(lang, "mia", pilot=pilot))
 
     wia = squadron_context.get("wia", [])
     if isinstance(wia, list):
         for pilot in [(_normalize_text(v)) for v in wia[:6] if _normalize_text(v)]:
-            lines.append(f"{pilot} was wounded")
+            lines.append(_squadron_phrase(lang, "wounded", pilot=pilot))
 
     return lines
 
@@ -158,7 +234,7 @@ def _story_mentions_squadron_events(story_text: str, squadron_context: Any) -> b
 
 def _enforce_squadron_event_presence(story_input: Dict[str, Any], story_text: str, output_language: str) -> str:
     squadron_context = story_input.get("squadron_context") if isinstance(story_input, dict) else None
-    event_lines = _iter_squadron_event_items(squadron_context)
+    event_lines = _iter_squadron_event_items(squadron_context, output_language)
     if not event_lines:
         return story_text
     if _story_mentions_squadron_events(story_text, squadron_context):

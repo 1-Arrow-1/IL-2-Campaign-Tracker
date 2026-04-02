@@ -47,7 +47,7 @@ from campaign_service_record.utils.path_utils import get_game_directory
 from campaign_service_record.utils.image_utils import convert_dds_to_png_bytes, find_existing_image_path
 from campaign_service_record.utils.pilot_photo import pilot_photo_path, pilot_photo_filename, pilot_name_path
 from utils.locale_config import resolve_locale
-from utils.supported_locales import DEFAULT_LOCALE, get_supported_locales, normalize_locale
+from utils.supported_locales import DEFAULT_LOCALE, get_locales_dir, get_supported_locales, normalize_locale
 from campaign_service_record.core.job_store import job_store, CAREER_DEBRIEF_PARSE
 from campaign_service_record.career.debriefing_manager import CareerDebriefingManager
 from campaign_service_record.weather_lookup import (
@@ -92,6 +92,53 @@ _last_ping = [time.time()]
 
 _PILOT_DESC_DEFAULT = "campaign_pilot"
 _PERSONAL_DATA_FILENAME = "campaign_personal_data.json"
+
+# ---------------------------------------------------------------------------
+# Locale data helpers (for server-side award name resolution)
+# ---------------------------------------------------------------------------
+_locale_data_cache: dict = {}
+
+
+def _load_locale_data(language: str) -> dict:
+    lang = normalize_locale(language) or "en"
+    if lang in _locale_data_cache:
+        return _locale_data_cache[lang]
+    locales_dir = get_locales_dir()
+    path = locales_dir / f"{lang}.json"
+    if not path.exists():
+        path = locales_dir / "en.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        data = {}
+    _locale_data_cache[lang] = data
+    return data
+
+
+def _get_locale_value(language: str, dot_key: str) -> Optional[str]:
+    """Look up a dot-notation key in the locale data, return None if missing."""
+    data = _load_locale_data(language)
+    for part in dot_key.split("."):
+        if not isinstance(data, dict):
+            return None
+        data = data.get(part)
+    return data if isinstance(data, str) else None
+
+
+def _resolve_award_display_name(name_key: str, language: str) -> str:
+    """
+    Resolve an award name_key (e.g. 'fighters_bronze') to its localized full
+    name using progression.awards.<name_key> in the locale files.
+
+    Falls back to English, then to a humanized form of the key.
+    """
+    if not name_key:
+        return ""
+    key = f"progression.awards.{name_key}"
+    display = _get_locale_value(language, key) or _get_locale_value("en", key)
+    if display:
+        return display
+    return name_key.replace("_", " ").strip()
 
 _STORY_EVENT_TYPES = [6, 8]
 _STORY_SQUADRON_EVENT_TYPES = [6, 8, 10]
@@ -914,7 +961,7 @@ def _normalize_career_sortie_stats(row: dict) -> dict:
     }
 
 
-def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict] = None) -> list[dict]:
+def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict] = None, story_language: str = "en") -> list[dict]:
     if not _career_provider:
         raise RuntimeError("Career provider not initialized.")
 
@@ -1133,6 +1180,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 row["segment"],
                 mission_id,
                 mission_date,
+                story_language=story_language,
             )
             for key in ("promotions", "awards", "transfers"):
                 squadron_context[key] = squadron_context.get(key, [])[:8]
@@ -1283,6 +1331,7 @@ def _build_squadron_context_for_mission(
     mission_segment,
     mission_id: int,
     mission_date_iso: str,
+    story_language: str = "en",
 ) -> dict:
     """
     Build reliable squadron-context facts for one mission.
@@ -1341,7 +1390,9 @@ def _build_squadron_context_for_mission(
             if rank_name:
                 empty["promotions"].append({"pilot": who, "rank": rank_name})
         elif ev_type == "award":
-            award_name = _humanize_story_label(mapped.get("name"))
+            award_name = _resolve_award_display_name(
+                str(mapped.get("name") or ""), story_language
+            )
             if award_name:
                 empty["awards"].append({"pilot": who, "award": award_name})
         elif ev_type == "transfer":
@@ -2460,6 +2511,7 @@ def generate_stories(source: str, entry_id: str):
                     "base_url": settings["base_url"],
                     "model": settings["model"],
                 },
+                story_language=settings["story_language"],
             )
             if not contexts:
                 return jsonify({'error': 'No career mission context could be built yet. Run/update debrief parsing first and retry.'}), 400
