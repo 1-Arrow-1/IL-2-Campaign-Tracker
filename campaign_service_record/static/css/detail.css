@@ -309,6 +309,32 @@
     font-weight: 600;
     line-height: 1.5;
     outline: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.story-chapter__summary-text {
+    flex: 1;
+}
+
+.story-chapter__delete-btn {
+    flex-shrink: 0;
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #9b7a52;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0 0.2rem;
+    opacity: 0.6;
+    transition: opacity 0.15s, color 0.15s;
+}
+
+.story-chapter__delete-btn:hover {
+    opacity: 1;
+    color: #c0392b;
 }
 
 .story-chapter__content {

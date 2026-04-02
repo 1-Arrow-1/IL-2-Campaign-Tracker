@@ -1278,6 +1278,7 @@ const DetailPage = {
             const chapterLabel = translateOrFallback('web.label.chapter', 'Chapter');
 
             const summaryText = document.createElement('span');
+            summaryText.className = 'story-chapter__summary-text';
             summaryText.textContent = `${chapterLabel} ${chapter.chapter_index || '—'} | ${chapter.date || '—'} | ${chapter.aircraft || '—'} | ${chapter.result || '—'}`;
             summary.appendChild(summaryText);
 

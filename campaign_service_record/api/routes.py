@@ -93,6 +93,16 @@ _last_ping = [time.time()]
 _PILOT_DESC_DEFAULT = "campaign_pilot"
 _PERSONAL_DATA_FILENAME = "campaign_personal_data.json"
 
+# Award keys that represent training-completion badges earned before first deployment.
+# These are separated from mission_awards on the first chapter and passed as
+# pre_service_awards so the AI treats them as background rather than newly bestowed.
+_PRE_SERVICE_BADGE_KEYS: frozenset[str] = frozenset({
+    "pilots_badge",       # Germany, USA, USSR (career + campaign)
+    "raf_pilots_badge",   # Britain (career + campaign)
+    "aviation_badge",     # USSR Aviation Badge (campaign only — step3 generates this key)
+    "aviation_emblem",    # USSR Aviation Emblem post-1943 (campaign only)
+})
+
 # ---------------------------------------------------------------------------
 # Locale data helpers (for server-side award name resolution)
 # ---------------------------------------------------------------------------
@@ -937,6 +947,7 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
         aircraft_entry = _lookup_by_mission_id(mission_aircraft_map, mid)
 
         mission_awards: list[str] = []
+        pre_service_awards: list[str] = []
         mission_promotion = ""
         for event in progression_events:
             if _normalize_story_text(event.get("mission")).lower() != mid.lower():
@@ -945,9 +956,19 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
             if event_type == "promotion":
                 mission_promotion = _normalize_story_text(event.get("rank"))
             elif event_type == "award":
-                award = _humanize_story_label(event.get("name"))
+                # award_key is "progression.awards.<name_key>" — use suffix as raw key.
+                # Fall back to normalising the display name if award_key is absent.
+                _award_key_field = _normalize_story_text(event.get("award_key"))
+                if _award_key_field and "." in _award_key_field:
+                    raw_key = _award_key_field.rsplit(".", 1)[-1]
+                else:
+                    raw_key = _normalize_story_text(event.get("name")).lower().replace(" ", "_").replace("'", "")
+                award = _resolve_award_display_name(str(event.get("name") or ""), story_language)
                 if award:
-                    mission_awards.append(award)
+                    if index == 1 and raw_key in _PRE_SERVICE_BADGE_KEYS:
+                        pre_service_awards.append(award)
+                    else:
+                        mission_awards.append(award)
 
         rank_during_mission = current_rank
         if mission_promotion:
@@ -999,6 +1020,8 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
             missions_completed=index,
         )
         story_input.setdefault("career_progress", {})["aerial_victories"] = _accumulated_air_kills_campaign
+        if pre_service_awards:
+            story_input["pre_service_awards"] = pre_service_awards
         _weather = read_eng_weather(_game_dir, campaign_name, mid)
         if _weather:
             story_input.setdefault("mission", {})["weather"] = _weather
@@ -1213,6 +1236,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
         try:
             awards: list[str] = []
             mission_awards: list[str] = []
+            pre_service_awards: list[str] = []
             promotions_this_mission: list[str] = []
             rank = initial_career_rank
             rank_before_mission = initial_career_rank
@@ -1241,11 +1265,15 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                         if event_date_iso == mission_date and event_segment_index == segment_index:
                             promotions_this_mission.append(mapped_rank)
                 elif mapped.get("type") == "award":
+                    _raw_award_key = _normalize_story_text(str(mapped.get("name") or "")).lower().replace(" ", "_")
                     award_name = _resolve_award_display_name(str(mapped.get("name") or ""), story_language)
                     if award_name:
                         awards.append(award_name)
                         if event_date_iso == mission_date and event_segment_index == segment_index:
-                            mission_awards.append(award_name)
+                            if _raw_award_key in _PRE_SERVICE_BADGE_KEYS:
+                                pre_service_awards.append(award_name)
+                            else:
+                                mission_awards.append(award_name)
 
             promotions_deduped = list(dict.fromkeys(
                 [_normalize_story_text(v) for v in promotions_this_mission if _normalize_story_text(v)]
@@ -1321,6 +1349,8 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 narrative_memory=_narrative_memory,
             )
             mission_story_input["career_progress"]["aerial_victories"] = _accumulated_air_kills
+            if pre_service_awards:
+                mission_story_input["pre_service_awards"] = pre_service_awards
             mission_story_input["mission"]["notable_events"] = notables
             mission_story_input["mission"]["other_incidences"] = story_incidences
             mission_story_input["mission"]["result"] = mission_result

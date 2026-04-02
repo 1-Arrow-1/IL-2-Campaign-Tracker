@@ -1343,9 +1343,10 @@ def generate_mission_story(
         "- Keep continuity with the previous narrative memory.\n"
         "- If narrative_memory.recent_events is non-empty, this is not the first chapter. Do not re-introduce the squadron, its strategic role, or the operational context (e.g. Army Group North, drive toward Leningrad) — treat these as already established.\n"
         "- Vary the opening: do not start with the pilot climbing into the cockpit or taking off. Begin in medias res, with a scene, an observation, or a moment from the day.\n"
-        "- If narrative_memory.used_titles is non-empty, do not reuse any of those titles. Also avoid the same structural pattern (e.g. if several titles use 'X Over Y', use a different form).\n"
+        "- If narrative_memory.used_titles is non-empty, do not reuse any of those titles. Also avoid the same structural pattern (e.g. if several titles use 'X Over Y', use a different form). If more than two titles already contain weather words (overcast, clouds, drizzle, rain, snow, autumn, winter), choose a title that does not rely on weather imagery.\n"
         "- Use only the supplied facts.\n"
         "- Do not invent awards, promotions, injuries, victories, locations, or commanders.\n"
+        "- If narrative_memory.total_aerial_victories is present and greater than zero, use it as the pilot's confirmed kill count at the START of this mission. The count after this mission is narrative_memory.total_aerial_victories plus mission.air_kills. Never invent or estimate the tally — use only these numbers.\n"
         "- Keep the story historically grounded and atmospheric.\n"
         "- If mission.time_of_day is present, use it to set the scene (e.g., 'at dawn', 'under a midday sun'). Do not invent a time if the field is absent or empty.\n"
         "- If mission.season is present, weave it into the atmosphere naturally (e.g., autumn mud, winter frost, summer heat). Do not invent a season if the field is absent or empty.\n"
@@ -1359,6 +1360,7 @@ def generate_mission_story(
         "- If honors_context.promotion.fact is present, include one short historical note tied to that promotion.\n"
         "- If honors_context.awards has facts, include at least one short factual note tied to the award(s) received.\n"
         "- Do not claim a promotion or award for this mission when mission_progression says none occurred.\n"
+        "- If pre_service_awards is present, those are training-era decorations the pilot earned before his first operational deployment — they were pinned on during training, not after this mission. You may mention them briefly as established background (e.g. 'already wearing his pilot's badge') but never as newly awarded in this chapter.\n"
         "- Treat squadron_context as factual.\n"
         "- Mention at least one squadron_context item when any are present.\n"
         "- Do not invent squadron-member outcomes not present in squadron_context.\n"
@@ -1586,12 +1588,22 @@ def update_narrative_memory_local(
         "recurring_themes": list(previous.get("recurring_themes") or []),
         "recent_events": list(previous.get("recent_events") or []),
         "used_titles": list(previous.get("used_titles") or []),
+        "total_aerial_victories": int(previous.get("total_aerial_victories") or 0),
     }
 
     pilot = story_input.get("pilot", {}) if isinstance(story_input, dict) else {}
     mission = story_input.get("mission", {}) if isinstance(story_input, dict) else {}
     campaign_context = story_input.get("campaign_context", {}) if isinstance(story_input, dict) else {}
     mission_progression = story_input.get("mission_progression", {}) if isinstance(story_input, dict) else {}
+    career_progress = story_input.get("career_progress", {}) if isinstance(story_input, dict) else {}
+
+    # Authoritative cumulative aerial kill count — overwrite from story_input every time.
+    aerial_victories = career_progress.get("aerial_victories")
+    if aerial_victories is not None:
+        try:
+            memory["total_aerial_victories"] = int(aerial_victories)
+        except (TypeError, ValueError):
+            pass
 
     rank = _normalize_text(mission_progression.get("promotion")) or _normalize_text(pilot.get("rank"))
     if rank:
@@ -1711,7 +1723,7 @@ def generate_and_store_chapter_for(
     fallback_memory = story_input.get("narrative_memory", {}) if isinstance(story_input, dict) else {}
     memory = update_narrative_memory_local(story_input, fallback_memory if isinstance(fallback_memory, dict) else None)
     if story_title:
-        memory["used_titles"] = _append_unique_limited(memory.get("used_titles") or [], story_title, limit=30)
+        memory["used_titles"] = _append_unique_limited(memory.get("used_titles") or [], story_title, limit=20)
     chapters_dir = _story_entry_dir(source, entry_id) / "chapters"
     memory["chapters_written"] = len(list(chapters_dir.glob("*.json"))) if chapters_dir.exists() else 0
     save_story_state_for(source, entry_id, memory)
