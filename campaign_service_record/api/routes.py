@@ -602,15 +602,28 @@ def _extract_career_notable_events(mission_json: dict) -> list[str]:
         target = _normalize_story_text(event.get("target"))
         if ev_type == "kill" and target:
             category = _normalize_story_text(event.get("category", "")).lower()
+            is_delayed = bool(event.get("delayed"))
             altitude = event.get("altitude")
             detail_parts = []
             if category:
                 detail_parts.append(category)
-            if altitude is not None:
+            # For Air kills: suppress altitude when explicitly flagged as delayed,
+            # or when altitude is suspiciously low (crash-site, not engagement altitude).
+            # Ground/Naval kills at low altitude are expected (strafing) — no filter.
+            if altitude is not None and category == "air":
+                try:
+                    alt_int = int(altitude)
+                    if not is_delayed and alt_int >= 100:
+                        detail_parts.append(f"{alt_int}m altitude")
+                except (TypeError, ValueError):
+                    pass
+            elif altitude is not None and category != "air":
                 try:
                     detail_parts.append(f"{int(altitude)}m altitude")
                 except (TypeError, ValueError):
                     pass
+            if is_delayed:
+                detail_parts.append("delayed kill")
             suffix = f" ({', '.join(detail_parts)})" if detail_parts else ""
             notable.append(f"Destroyed {target}{suffix}")
         elif ev_type == "damage taken":

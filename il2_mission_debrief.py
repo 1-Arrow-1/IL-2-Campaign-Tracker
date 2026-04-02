@@ -115,7 +115,8 @@ class GameObject:
         self.category = self.classify_type(type_)  # Use original type_ for categorization
         self.state = "Alive"
         self.time_of_kill = None
-        self.altitude = None  # Altitude when destroyed
+        self.altitude = None          # Altitude when destroyed
+        self.is_delayed_kill = False  # True when kill was attributed via _resolve_indirect_kill
 
     @classmethod
     def _load_config(cls):
@@ -1087,6 +1088,8 @@ class MissionDebriefParser:
             obj = self.stats.objects.get(tid)
             if obj and pos_match:
                 obj.altitude = int(float(pos_match.group(2)))
+            if obj:
+                obj.is_delayed_kill = True
             self.stats.add_kill(tid, ts)
 
     def reconcile_plane_kills(self, expected_total: int) -> None:
@@ -1360,6 +1363,7 @@ class MissionDebriefParser:
         # Add kill events (filter out BotPilot/BotGunner)
         for k in kills:
             if k.time_of_kill:
+                is_delayed = bool(getattr(k, 'is_delayed_kill', False))
                 evt = {
                     "time": k.time_of_kill,
                     "type": "Kill",
@@ -1367,7 +1371,15 @@ class MissionDebriefParser:
                     "category": k.category,
                     "is_static": bool(getattr(k, 'is_static', False)),
                 }
-                if k.altitude is not None:
+                if is_delayed:
+                    evt["delayed"] = True
+                # Suppress crash-site altitude for delayed Air kills — the
+                # plane went down somewhere else after the engagement and the
+                # altitude (often ≤ a few metres) would mislead story generation.
+                include_altitude = k.altitude is not None and not (
+                    is_delayed and k.category == "Air"
+                )
+                if include_altitude:
                     evt["altitude"] = k.altitude
                 events.append(evt)
         
