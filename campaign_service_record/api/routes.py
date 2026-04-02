@@ -1151,7 +1151,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                         if event_date_iso == mission_date and event_segment_index == segment_index:
                             promotions_this_mission.append(mapped_rank)
                 elif mapped.get("type") == "award":
-                    award_name = _humanize_story_label(mapped.get("name"))
+                    award_name = _resolve_award_display_name(str(mapped.get("name") or ""), story_language)
                     if award_name:
                         awards.append(award_name)
                         if event_date_iso == mission_date and event_segment_index == segment_index:
@@ -1210,7 +1210,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 llm_config=llm_config,
                 pilot_last_name=career.pilot_last_name or "",
                 rank=rank_before_mission or rank,
-                awards=awards,
+                awards=awards if mission_awards else [],
                 promotion=promotion_this_mission,
                 mission_awards=mission_awards,
                 mission_promotion=promotion_this_mission,
