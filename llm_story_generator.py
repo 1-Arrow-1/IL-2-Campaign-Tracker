@@ -360,6 +360,113 @@ def save_story_state_for(source: str, entry_id: str | int, memory: Dict[str, Any
     _save_json_file(_story_entry_dir(source, entry_id) / "memory.json", memory)
 
 
+def _coerce_int(value: Any) -> Optional[int]:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _chapter_sort_key_for_source(
+    source: str,
+    payload: Dict[str, Any],
+    fallback_index: int,
+) -> tuple:
+    normalized_source = _normalize_text(source).lower()
+    if normalized_source == "career":
+        mission_order = _coerce_int(payload.get("career_mission_order"))
+        if mission_order is not None and mission_order > 0:
+            segment_index = _coerce_int(payload.get("career_segment_index"))
+            if segment_index is None:
+                segment_index = 0
+            mission_id_text = _normalize_text(payload.get("mission_id"))
+            mission_id_int = _coerce_int(mission_id_text)
+            if mission_id_int is None:
+                mission_id_int = 0
+            return (0, mission_order, segment_index, mission_id_int, mission_id_text)
+
+        chapter_idx = _coerce_int(payload.get("chapter_index"))
+        if chapter_idx is None or chapter_idx <= 0:
+            chapter_idx = fallback_index
+        mission_id_text = _normalize_text(payload.get("mission_id"))
+        return (1, chapter_idx, fallback_index, mission_id_text)
+
+    # Campaigns keep chronological date ordering.
+    date_key = _normalize_text(payload.get("date")) or ""
+    mission_id_int = _coerce_int(payload.get("mission_id"))
+    if mission_id_int is None:
+        mission_id_int = 0
+    return (date_key, mission_id_int, fallback_index)
+
+
+def reindex_career_story_chapters_for(
+    entry_id: str | int,
+    mission_order_map: Dict[str, int],
+    mission_segment_map: Optional[Dict[str, int]] = None,
+) -> int:
+    """
+    Reindex existing career story chapters using canonical mission order.
+
+    This is used to repair legacy date-sorted chapter files when theatre date
+    ranges overlap.
+    """
+    chapters_dir = _story_entry_dir("career", entry_id) / "chapters"
+    if not chapters_dir.exists():
+        return 0
+
+    normalized_order: Dict[str, int] = {}
+    for mission_key, order in (mission_order_map or {}).items():
+        key = _normalize_text(mission_key)
+        try:
+            order_int = int(order)
+        except (TypeError, ValueError):
+            continue
+        if key and order_int > 0:
+            normalized_order[key] = order_int
+    if not normalized_order:
+        return 0
+
+    normalized_segments: Dict[str, int] = {}
+    for mission_key, segment in (mission_segment_map or {}).items():
+        key = _normalize_text(mission_key)
+        try:
+            seg_int = int(segment)
+        except (TypeError, ValueError):
+            continue
+        if key:
+            normalized_segments[key] = seg_int
+
+    records: list[tuple[Path, Dict[str, Any], int]] = []
+    for fallback_index, path in enumerate(sorted(chapters_dir.glob("*.json")), start=1):
+        payload = _load_json_file(path, None)
+        if not isinstance(payload, dict):
+            continue
+        mission_key = _normalize_text(payload.get("mission_id"))
+        if mission_key in normalized_order:
+            payload["career_mission_order"] = normalized_order[mission_key]
+            payload["career_segment_index"] = normalized_segments.get(
+                mission_key,
+                _coerce_int(payload.get("career_segment_index")) or 0,
+            )
+        records.append((path, payload, fallback_index))
+    if not records:
+        return 0
+
+    records.sort(key=lambda item: _chapter_sort_key_for_source("career", item[1], item[2]))
+
+    for old_path, _, _ in records:
+        if old_path.exists():
+            old_path.unlink()
+
+    for new_index, (_, payload, _) in enumerate(records, start=1):
+        payload["chapter_index"] = new_index
+        date_part = _normalize_text(payload.get("date")) or "unknown-date"
+        new_path = chapters_dir / f"{new_index:04d}_{date_part}.json"
+        _save_json_file(new_path, payload)
+
+    return len(records)
+
+
 def load_story_chapters_for(source: str, entry_id: str | int) -> list[Dict[str, Any]]:
     chapters_dir = _story_entry_dir(source, entry_id) / "chapters"
     if not chapters_dir.exists():
@@ -457,6 +564,7 @@ def save_story_chapter_for(
     title: str = "",
     language_code: str = "en",
 ) -> Path:
+    normalized_source = _normalize_text(source).lower()
     chapters_dir = _story_entry_dir(source, entry_id) / "chapters"
     chapters_dir.mkdir(parents=True, exist_ok=True)
 
@@ -473,35 +581,32 @@ def save_story_chapter_for(
         "aircraft": mission_context.get("pilot", {}).get("aircraft", ""),
         "result": mission_context.get("mission", {}).get("result", ""),
     }
+    if normalized_source == "career":
+        mission_order = _coerce_int(mission_context.get("career_mission_order"))
+        if mission_order is not None and mission_order > 0:
+            new_payload["career_mission_order"] = mission_order
+        segment_index = _coerce_int(mission_context.get("career_segment_index"))
+        if segment_index is not None:
+            new_payload["career_segment_index"] = segment_index
 
     # Load all existing chapters and include the new one (no file yet, marked with None).
-    all_chapters: list[tuple[Optional[Path], Dict[str, Any]]] = []
-    for p in sorted(chapters_dir.glob("*.json")):
+    all_chapters: list[tuple[Optional[Path], Dict[str, Any], int]] = []
+    for fallback_index, p in enumerate(sorted(chapters_dir.glob("*.json")), start=1):
         data = _load_json_file(p, None)
         if isinstance(data, dict):
-            all_chapters.append((p, data))
-    all_chapters.append((None, new_payload))
+            all_chapters.append((p, data, fallback_index))
+    all_chapters.append((None, new_payload, len(all_chapters) + 1))
 
-    # Sort chronologically by (date, numeric mission_id).
-    def _chapter_sort_key(item: tuple) -> tuple:
-        _, data = item
-        d = _normalize_text(data.get("date")) or ""
-        try:
-            mid = int(data.get("mission_id") or 0)
-        except (TypeError, ValueError):
-            mid = 0
-        return (d, mid)
-
-    all_chapters.sort(key=_chapter_sort_key)
+    all_chapters.sort(key=lambda item: _chapter_sort_key_for_source(source, item[1], item[2]))
 
     # Delete all existing files first to avoid naming collisions during renumber.
-    for old_path, _ in all_chapters:
+    for old_path, _, _ in all_chapters:
         if old_path is not None and old_path.exists():
             old_path.unlink()
 
     # Write all chapters with sequential names; track the new chapter's final path.
     saved_path = chapters_dir / f"0001_{date_str}.json"
-    for new_index, (old_path, data) in enumerate(all_chapters, start=1):
+    for new_index, (old_path, data, _) in enumerate(all_chapters, start=1):
         data["chapter_index"] = new_index
         date_part = _normalize_text(data.get("date")) or "unknown-date"
         new_path = chapters_dir / f"{new_index:04d}_{date_part}.json"

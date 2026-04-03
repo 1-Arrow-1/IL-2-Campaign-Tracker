@@ -4,6 +4,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from campaign_service_record.api.routes import (
+    _career_story_sort_key,
     _dedupe_story_honors,
     _filter_story_honors_for_sortie,
     _story_other_incidences_for_mission,
@@ -154,3 +155,10 @@ def test_build_story_input_preserves_explicit_mission_theatre_and_location():
 
     assert story_input["mission"]["theatre"] == "Battle of Leningrad 1941"
     assert story_input["mission"]["location"] == "Leningrad Front"
+
+
+def test_career_story_sort_key_prioritizes_segment_before_date():
+    leningrad_later_date = _career_story_sort_key(0, "1941-11-06", 3085)
+    moscow_earlier_date = _career_story_sort_key(1, "1941-11-05", 3135)
+
+    assert leningrad_later_date < moscow_earlier_date

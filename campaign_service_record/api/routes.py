@@ -65,6 +65,7 @@ from llm_story_generator import (
     generate_and_store_chapter_for,
     load_or_create_story_state_for,
     load_story_chapters_for,
+    reindex_career_story_chapters_for,
     save_story_state_for,
     strip_memory_entries_for_date,
     update_narrative_memory_local,
@@ -488,6 +489,20 @@ def _story_theatre_context_for_segment(segment: dict | None) -> tuple[str, str]:
     )
 
 
+def _career_story_sort_key(segment_index: object, mission_date: object, mission_id: object) -> tuple[int, str, int]:
+    """Stable career story ordering: theatre-chain segment first, then date, then mission id."""
+    try:
+        seg = int(segment_index)
+    except (TypeError, ValueError):
+        seg = 0
+    date_key = _normalize_story_text(mission_date)
+    try:
+        mid = int(mission_id)
+    except (TypeError, ValueError):
+        mid = 0
+    return (seg, date_key, mid)
+
+
 def _classify_story_error(exc: Exception) -> tuple[str, str]:
     text = str(exc or "").lower()
     if any(fragment in text for fragment in ("api key", "authentication", "unauthorized", "401")):
@@ -511,6 +526,23 @@ def _build_story_status_payload(source: str, entry_id: str) -> dict:
     if chapters:
         chapters = [chapter for chapter in chapters if _is_valid_story_text(chapter.get("story_text"))]
         def _chapter_sort_key(chapter: dict) -> tuple:
+            if source == "career":
+                try:
+                    mission_order = int(chapter.get("career_mission_order") or 0)
+                except (TypeError, ValueError):
+                    mission_order = 0
+                if mission_order > 0:
+                    try:
+                        segment_index = int(chapter.get("career_segment_index") or 0)
+                    except (TypeError, ValueError):
+                        segment_index = 0
+                    return (0, mission_order, segment_index, _normalize_story_text(chapter.get("mission_id")))
+                try:
+                    chapter_idx = int(chapter.get("chapter_index") or 0)
+                except (TypeError, ValueError):
+                    chapter_idx = 0
+                return (1, chapter_idx, _normalize_story_text(chapter.get("mission_id")))
+
             date_value = _parse_story_date(_normalize_story_text(chapter.get("date")))
             if not date_value:
                 mission_id = _normalize_story_text(chapter.get("mission_id"))
@@ -1209,9 +1241,9 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             "squadron_name": squadron_name,
             "mission_json": mission_json,
             "sortie_stats": sortie_stats,
-            "sort_key": (
-                mission_date_iso,
+            "sort_key": _career_story_sort_key(
                 mission_segment_index,
+                mission_date_iso,
                 int(result.mission_id),
             ),
         })
@@ -1424,6 +1456,8 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             mission_story_input["mission"]["notable_events"] = notables
             mission_story_input["mission"]["other_incidences"] = story_incidences
             mission_story_input["mission"]["result"] = mission_result
+            mission_story_input["career_segment_index"] = segment_index
+            mission_story_input["career_mission_order"] = mission_index
             if aircraft_label:
                 mission_story_input["pilot"]["aircraft"] = aircraft_label
             mission_story_input["chapter_scope"] = {
@@ -1516,6 +1550,8 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 missions_completed=mission_index,
                 narrative_memory={},
             )
+            fallback_input["career_segment_index"] = segment_index
+            fallback_input["career_mission_order"] = mission_index
             fallback_input["chapter_scope"] = {
                 "scope": "mission",
                 "missions_in_chapter": 1,
@@ -2738,6 +2774,25 @@ def generate_stories(source: str, entry_id: str):
 
         if not contexts:
             return jsonify({'error': 'No mission data is available for story generation yet.'}), 400
+
+        if source == "career":
+            mission_order_map: dict[str, int] = {}
+            mission_segment_map: dict[str, int] = {}
+            for order_idx, context in enumerate(contexts, start=1):
+                mission_key = _normalize_story_text(context.get("mission_id"))
+                if not mission_key:
+                    continue
+                mission_order_map[mission_key] = order_idx
+                try:
+                    mission_segment_map[mission_key] = int(context.get("career_segment_index") or 0)
+                except (TypeError, ValueError):
+                    mission_segment_map[mission_key] = 0
+            if mission_order_map:
+                reindex_career_story_chapters_for(
+                    storage_entry_id,
+                    mission_order_map,
+                    mission_segment_map,
+                )
 
         payload = request.get_json(silent=True) if request.is_json else {}
         if not isinstance(payload, dict):
