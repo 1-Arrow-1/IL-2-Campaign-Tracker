@@ -221,7 +221,7 @@ def _refine_ranges_with_sortie(ranges: List[Dict], db, pilot_ids) -> List[Dict]:
             "start_date":    _iso(injury_date),
             "end_date":      r["end_date"],
             "duration_days": duration,
-            "source_mission_id": int(sortie_row["missionId"]) if sortie_row["missionId"] is not None else None,
+            "source_mission_id": int(sortie_row["missionId"]) if sortie_row["missionId"] is not None and int(sortie_row["missionId"]) > 0 else None,
         })
     return refined
 
@@ -294,11 +294,12 @@ def load_other_incidences(
             if config_id:
                 display = resolve_squadron_fn(career_id, config_id)
                 squadron = display if display else f"Squadron {config_id}"
+            _mid = _safe_int(row, "missionId")
             entries.append({
                 "type":      "COMMAND",
                 "date":      iso,
                 "squadron":  squadron,
-                "source_mission_id": _safe_int(row, "missionId") or None,
+                "source_mission_id": _mid if _mid > 0 else None,
                 "sort_key":  iso,
             })
     except Exception as exc:
@@ -352,12 +353,13 @@ def load_other_incidences(
                 old_squadron = "?"
 
             iso = _iso(d)
+            _mid = _safe_int(row, "missionId")
             entries.append({
                 "type":         "SQUADRON_CHANGE",
                 "date":         iso,
                 "old_squadron": old_squadron,
                 "new_squadron": new_squadron,
-                "source_mission_id": _safe_int(row, "missionId") or None,
+                "source_mission_id": _mid if _mid > 0 else None,
                 "sort_key":     iso,
             })
     except Exception as exc:

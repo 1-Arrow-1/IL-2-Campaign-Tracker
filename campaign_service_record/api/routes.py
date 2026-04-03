@@ -1354,12 +1354,15 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             _accumulated_air_kills += _mission_air_kills
 
             notables = _extract_career_notable_events(mission_json)
-            story_incidences = _story_other_incidences_for_mission(
-                other_incidences,
-                mission_date,
-                mission_id,
-            )
-            if story_incidences:
+            # Only attach other_incidences (transfers, commands, recovery) to the
+            # last sortie of the day — same rule as awards/promotions.
+            story_incidences: list[str] = []
+            if is_last_sortie_of_day:
+                story_incidences = _story_other_incidences_for_mission(
+                    other_incidences,
+                    mission_date,
+                    mission_id,
+                )
                 for line in story_incidences:
                     if line not in notables:
                         notables.append(line)
@@ -2788,13 +2791,43 @@ def generate_stories(source: str, entry_id: str):
             status_payload["message"] = "Stories are already up to date."
             return jsonify(status_payload)
 
-        memory = load_or_create_story_state_for(source, storage_entry_id)
+        # Each context already carries the correct narrative_memory computed by
+        # _build_career_story_contexts (replayed from scratch across all missions).
+        # We do NOT overwrite it from disk — the disk copy may reflect a future state
+        # if chapters were deleted from the middle of the sequence.
+        # After each generation, carry the freshly updated memory forward into the
+        # next context so the batch stays coherent within a single request.
+        #
+        # Seed used_titles from existing chapters so the AI avoids repeating them.
+        # The context-building loop uses update_narrative_memory_local which never
+        # accumulates titles (titles are only appended at generation time), so the
+        # pre-built narrative_memory always has an empty used_titles list.
+        if missing_contexts:
+            existing_titles = [
+                _normalize_story_text(ch.get("title"))
+                for ch in existing_chapters
+                if _is_valid_story_text(ch.get("story_text")) and ch.get("title")
+            ]
+            existing_titles = [t for t in existing_titles if t]
+            if existing_titles:
+                first_ctx = missing_contexts[0]
+                nm = dict(first_ctx.get("narrative_memory") or {})
+                current_titles = list(nm.get("used_titles") or [])
+                merged = existing_titles[:]
+                for t in current_titles:
+                    if t not in merged:
+                        merged.append(t)
+                nm["used_titles"] = merged[-20:]
+                first_ctx["narrative_memory"] = nm
         generated_count = 0
         generation_errors: list[str] = []
+        running_memory: dict = {}
         for context in missing_contexts:
             if generated_count >= max_chapters:
                 break
-            context["narrative_memory"] = memory
+            # If we just generated the previous chapter, feed its fresh memory forward.
+            if running_memory:
+                context["narrative_memory"] = running_memory
             try:
                 with ThreadPoolExecutor(max_workers=1) as pool:
                     future = pool.submit(
@@ -2809,8 +2842,8 @@ def generate_stories(source: str, entry_id: str):
                         output_language=settings["story_language"],
                     )
                     result = future.result(timeout=120)
-                memory = result.get("memory") or memory
-                save_story_state_for(source, storage_entry_id, memory)
+                running_memory = result.get("memory") or running_memory
+                save_story_state_for(source, storage_entry_id, running_memory)
                 generated_count += 1
             except FuturesTimeoutError:
                 mission_ref = _normalize_story_text(context.get("mission_id")) or _normalize_story_text(context.get("date")) or "unknown"
