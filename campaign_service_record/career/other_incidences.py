@@ -19,6 +19,7 @@ RECOVERY:
         "start_date":    "YYYY-MM-DD",
         "end_date":      "YYYY-MM-DD",
         "duration_days": int,        # inclusive
+        "source_mission_id": int | None,
         "sort_key":      "YYYY-MM-DD",  # = start_date
     }
 
@@ -26,6 +27,7 @@ COMMAND:
     {
         "type":     "COMMAND",
         "date":     "YYYY-MM-DD",
+        "source_mission_id": int | None,
         "sort_key": "YYYY-MM-DD",
     }
 
@@ -35,6 +37,7 @@ SQUADRON_CHANGE:
         "date":          "YYYY-MM-DD",
         "old_squadron":  str,   # resolved display name of previous squadron
         "new_squadron":  str,   # resolved display name of new squadron (event.squadronId)
+        "source_mission_id": int | None,
         "sort_key":      "YYYY-MM-DD",
     }
 """
@@ -218,6 +221,7 @@ def _refine_ranges_with_sortie(ranges: List[Dict], db, pilot_ids) -> List[Dict]:
             "start_date":    _iso(injury_date),
             "end_date":      r["end_date"],
             "duration_days": duration,
+            "source_mission_id": int(sortie_row["missionId"]) if sortie_row["missionId"] is not None else None,
         })
     return refined
 
@@ -263,6 +267,7 @@ def load_other_incidences(
                 "start_date":    r["start_date"],
                 "end_date":      r["end_date"],
                 "duration_days": r["duration_days"],
+                "source_mission_id": r.get("source_mission_id"),
                 "sort_key":      r["start_date"],
             })
     except Exception as exc:
@@ -293,6 +298,7 @@ def load_other_incidences(
                 "type":      "COMMAND",
                 "date":      iso,
                 "squadron":  squadron,
+                "source_mission_id": _safe_int(row, "missionId") or None,
                 "sort_key":  iso,
             })
     except Exception as exc:
@@ -351,6 +357,7 @@ def load_other_incidences(
                 "date":         iso,
                 "old_squadron": old_squadron,
                 "new_squadron": new_squadron,
+                "source_mission_id": _safe_int(row, "missionId") or None,
                 "sort_key":     iso,
             })
     except Exception as exc:

@@ -796,6 +796,8 @@ def build_story_input(
     mission_id: str | int,
     mission_date: str,
     squadron: str,
+    mission_theatre: str = "",
+    mission_location: str = "",
     country: str = "",
     pilot_last_name: str = "",
     rank: str = "",
@@ -820,6 +822,8 @@ def build_story_input(
     mission = {
         "id": str(mission_id),
         "date": mission_date,
+        "theatre": _normalize_text(mission_theatre),
+        "location": _normalize_text(mission_location),
         "time_of_day": _derive_time_of_day(_start_time),
         "start_time": _start_time or None,
         "season": _derive_season(mission_date),
@@ -1351,6 +1355,8 @@ def generate_mission_story(
         "- If mission.time_of_day is present, use it to set the scene (e.g., 'at dawn', 'under a midday sun'). Do not invent a time if the field is absent or empty.\n"
         "- If mission.season is present, weave it into the atmosphere naturally (e.g., autumn mud, winter frost, summer heat). Do not invent a season if the field is absent or empty.\n"
         "- If mission.weather is present, it contains real historical meteorological data for the mission location and date. Use it for environmental accuracy — temperature, precipitation, cloud cover, wind. Do not describe weather as colder, snowier, or more dramatic than the data supports. For example, if the temperature is above zero and conditions are 'partly cloudy', do not write frozen ground or blizzards.\n"
+        "- If mission.theatre or mission.location is present, treat those fields as the authoritative operational setting for this mission.\n"
+        "- Do not infer or substitute a different theatre/location from squadron history when mission.theatre or mission.location is provided.\n"
         "- If historical_context.summary or historical_context.facts are present, integrate them naturally.\n"
         "- pilot.rank is the rank held DURING the mission. Use it throughout the narrative.\n"
         "- If mission_progression.promotion is non-empty, it is a rank awarded AFTER the pilot landed/returned. Mention it only as a post-mission event (e.g., 'upon return he was promoted to...'). Never use the promoted rank to describe the pilot during the sortie.\n"

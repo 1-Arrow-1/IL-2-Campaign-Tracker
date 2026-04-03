@@ -29,6 +29,7 @@ from campaign_service_record.core.data_loader import DataLoader
 from campaign_service_record.core.campaign_aggregator import CampaignAggregator
 from campaign_service_record.core.locale_resolver import resolve_detail_page_locale
 from campaign_service_record.providers.career_provider import CareerDataProvider
+from campaign_service_record.career.chain_resolver import THEATRE_LABELS
 from campaign_service_record.core.medal_showcase import (
     load_coordinates,
     load_career_coordinates,
@@ -156,6 +157,16 @@ _STORY_MAX_BACKGROUND_CHARS = 1400
 _STORY_MAX_NOTABLE_EVENTS = 12
 _HONORS_FACTS_PATH = Path(__file__).resolve().parents[2] / "historical_context" / "honors_facts.json"
 _HONORS_FACTS_CACHE: dict[str, Any] | None = None
+_THEATRE_LOCATION_LABELS: dict[str, str] = {
+    "BoL41": "Leningrad Front",
+    "BoO41": "Odessa Front",
+    "BOM": "Moscow Front",
+    "BOS": "Stalingrad Front",
+    "BOK": "Kuban / Kerch",
+    "BoO44": "Odessa Front",
+    "BON": "Normandy",
+    "BOBP": "Rhineland",
+}
 
 
 def _sanitize_pilot_name(name: Optional[str]) -> Optional[str]:
@@ -391,21 +402,32 @@ def _filter_story_honors_for_sortie(
     return awards, _normalize_story_text(mission_promotion), filtered_squadron
 
 
-def _story_other_incidences_for_date(other_incidences: list[dict], mission_date: str) -> list[str]:
-    """Return only story-relevant career incidences for a specific mission date."""
+def _story_other_incidences_for_mission(
+    other_incidences: list[dict],
+    mission_date: str,
+    mission_id: str | int,
+) -> list[str]:
+    """Return story-relevant career incidences for one specific mission context."""
     items: list[str] = []
     date_key = _normalize_story_text(mission_date)
+    mission_key = _normalize_story_text(mission_id)
     if not date_key:
         return items
 
     for incidence in list(other_incidences or []):
         if not isinstance(incidence, dict):
             continue
-        if _normalize_story_text(incidence.get("sort_key")) != date_key:
-            continue
+        source_mission_id = _normalize_story_text(incidence.get("source_mission_id"))
+        matches_mission = source_mission_id == mission_key if source_mission_id else False
+        matches_date = _normalize_story_text(incidence.get("sort_key")) == date_key
 
         inc_type = _normalize_story_text(incidence.get("type"))
         if inc_type == "RECOVERY":
+            if source_mission_id:
+                if not matches_mission:
+                    continue
+            elif not matches_date:
+                continue
             start = _normalize_story_text(incidence.get("start_date"))
             end = _normalize_story_text(incidence.get("end_date"))
             days = incidence.get("duration_days")
@@ -413,13 +435,13 @@ def _story_other_incidences_for_date(other_incidences: list[dict], mission_date:
                 items.append(f"Recovery from injury: {start} to {end} ({days} days)")
             elif start and end:
                 items.append(f"Recovery from injury: {start} to {end}")
-        elif inc_type == "COMMAND":
+        elif inc_type == "COMMAND" and (matches_mission or (not source_mission_id and matches_date)):
             squadron = _normalize_story_text(incidence.get("squadron")) or _normalize_story_text(incidence.get("new_squadron"))
             if squadron:
                 items.append(f"Appointment as squadron commander of {squadron}")
             else:
                 items.append("Appointment as squadron commander")
-        elif inc_type == "SQUADRON_CHANGE":
+        elif inc_type == "SQUADRON_CHANGE" and (matches_mission or (not source_mission_id and matches_date)):
             old_sq = _normalize_story_text(incidence.get("old_squadron"))
             new_sq = _normalize_story_text(incidence.get("new_squadron"))
             if old_sq and new_sq:
@@ -454,6 +476,16 @@ def _dedupe_story_honors(
     ]
     attributed_promotions.update(promotions)
     return awards, ", ".join(promotions)
+
+
+def _story_theatre_context_for_segment(segment: dict | None) -> tuple[str, str]:
+    info_id = _normalize_story_text((segment or {}).get("infoId"))
+    if not info_id:
+        return "", ""
+    return (
+        _normalize_story_text(THEATRE_LABELS.get(info_id, "")),
+        _normalize_story_text(_THEATRE_LOCATION_LABELS.get(info_id, "")),
+    )
 
 
 def _classify_story_error(exc: Exception) -> tuple[str, str]:
@@ -1255,6 +1287,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
         squadron_name = _resolve_historical_squadron(
             mission_date, _normalize_story_text(row["squadron_name"])
         )
+        mission_theatre, mission_location = _story_theatre_context_for_segment(row.get("segment") or {})
         mission_json = row["mission_json"]
         next_row = mission_rows[mission_index] if mission_index < len(mission_rows) else None
         is_last_sortie_of_day = not next_row or _normalize_story_text(next_row.get("mission_date")) != mission_date
@@ -1321,7 +1354,11 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             _accumulated_air_kills += _mission_air_kills
 
             notables = _extract_career_notable_events(mission_json)
-            story_incidences = _story_other_incidences_for_date(other_incidences, mission_date)
+            story_incidences = _story_other_incidences_for_mission(
+                other_incidences,
+                mission_date,
+                mission_id,
+            )
             if story_incidences:
                 for line in story_incidences:
                     if line not in notables:
@@ -1361,6 +1398,8 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 mission_id=mission_id,
                 mission_date=mission_date,
                 squadron=squadron_name,
+                mission_theatre=mission_theatre,
+                mission_location=mission_location,
                 country=career.country or "",
                 llm_config=llm_config,
                 pilot_last_name=career.pilot_last_name or "",
@@ -1452,6 +1491,8 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 mission_id=mission_id,
                 mission_date=mission_date,
                 squadron="",
+                mission_theatre=mission_theatre,
+                mission_location=mission_location,
                 pilot_last_name=career.pilot_last_name or "",
                 rank="",
                 awards=[],

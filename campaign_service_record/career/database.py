@@ -417,7 +417,7 @@ class CareerDatabase:
         conn = self._connect()
         id_ph = ",".join("?" * len(pilot_ids))
         cursor = conn.execute(
-            f"SELECT pilotId, date FROM sortie"
+            f"SELECT missionId, pilotId, date FROM sortie"
             f" WHERE pilotId IN ({id_ph})"
             f"   AND status = 4"
             f"   AND isDeleted = 0"
