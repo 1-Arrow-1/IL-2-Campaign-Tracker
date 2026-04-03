@@ -1272,11 +1272,13 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
     def _resolve_historical_squadron(mission_date_iso: str, segment_squadron: str) -> str:
         """Return the squadron the pilot was actually in on mission_date_iso.
 
-        Walks transfers in order: if a transfer TO segment_squadron happened AFTER
-        mission_date_iso, the pilot was still in the old squadron at mission time.
+        Walks transfers in order: if a transfer TO segment_squadron happened ON OR
+        AFTER mission_date_iso, the pilot was still in the old squadron at mission
+        time.  The transfer is announced via other_incidences on the last sortie of
+        the transfer date itself, so missions that day still use the old squadron.
         """
         for transfer_date, old_sq, new_sq in _transfers:
-            if new_sq == segment_squadron and mission_date_iso < transfer_date:
+            if new_sq == segment_squadron and mission_date_iso <= transfer_date:
                 return old_sq
         return segment_squadron
 
@@ -1321,14 +1323,14 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                         if event_date_iso and event_date_iso < mission_date:
                             rank_before_mission = mapped_rank
                         rank = mapped_rank
-                        if event_date_iso == mission_date and event_segment_index == segment_index:
+                        if event_date_iso == mission_date and event_segment_index <= segment_index:
                             promotions_this_mission.append(mapped_rank)
                 elif mapped.get("type") == "award":
                     _raw_award_key = _normalize_story_text(str(mapped.get("name") or "")).lower().replace(" ", "_")
                     award_name = _resolve_award_display_name(str(mapped.get("name") or ""), story_language)
                     if award_name:
                         awards.append(award_name)
-                        if event_date_iso == mission_date and event_segment_index == segment_index:
+                        if event_date_iso == mission_date and event_segment_index <= segment_index:
                             if _raw_award_key in _PRE_SERVICE_BADGE_KEYS:
                                 pre_service_awards.append(award_name)
                             else:

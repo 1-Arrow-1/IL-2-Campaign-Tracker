@@ -1222,9 +1222,13 @@ class CareerAggregator:
         best_award: Dict[int, str] = {}
         for ar in award_rows:
             award_date = self._format_date(ar["date"]) if "date" in ar.keys() else None
-            if normalized_max_award_date and award_date and award_date >= normalized_max_award_date:
-                continue
             raw_pid = int(ar["pilotId"])
+            is_player_pilot = raw_pid in player_ids_set
+            # Apply max_award_date cutoff only to wingmen — the player's own awards
+            # are stored under their original segment's pilotId even after a transfer,
+            # so a date-based cutoff would incorrectly hide them.
+            if normalized_max_award_date and award_date and award_date >= normalized_max_award_date and not is_player_pilot:
+                continue
             code    = str(ar["tpar2"]) if ar["tpar2"] else ""
             if not code:
                 continue
