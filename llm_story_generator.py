@@ -1392,19 +1392,26 @@ def _create_story_response(
     max_output_tokens: int,
 ) -> Any:
     _ = provider  # reserved for provider-specific extensions
-    kwargs: Dict[str, Any] = {
-        "model": model,
-        "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": max_output_tokens,
-    }
+    messages = [{"role": "user", "content": prompt}]
     try:
-        return client.chat.completions.create(**kwargs)
-    except TypeError:
-        # Fallback for providers that reject max_tokens.
         return client.chat.completions.create(
             model=model,
-            messages=[{"role": "user", "content": prompt}],
+            messages=messages,
+            max_tokens=max_output_tokens,
         )
+    except TypeError:
+        # Some provider SDKs reject unknown kwargs entirely.
+        return client.chat.completions.create(model=model, messages=messages)
+    except openai.BadRequestError as exc:
+        # Newer OpenAI models (o3, o4-mini, etc.) require max_completion_tokens
+        # instead of max_tokens and return a 400 if max_tokens is passed.
+        if "max_tokens" in str(exc) and "max_completion_tokens" in str(exc):
+            return client.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_completion_tokens=max_output_tokens,
+            )
+        raise
 
 
 def generate_mission_story(

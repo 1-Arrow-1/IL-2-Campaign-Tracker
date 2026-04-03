@@ -2579,11 +2579,22 @@ class SettingsManagerApp(tk.Tk):
                 from openai import OpenAI
 
                 client = OpenAI(api_key=api_key, base_url=base_url)
-                response = client.chat.completions.create(
-                    model=model,
-                    messages=[{"role": "user", "content": "Reply with exactly: connection ok"}],
-                    max_tokens=16,
-                )
+                _test_messages = [{"role": "user", "content": "Reply with exactly: connection ok"}]
+                try:
+                    response = client.chat.completions.create(
+                        model=model,
+                        messages=_test_messages,
+                        max_tokens=16,
+                    )
+                except Exception as _e:
+                    if "max_tokens" in str(_e) and "max_completion_tokens" in str(_e):
+                        response = client.chat.completions.create(
+                            model=model,
+                            messages=_test_messages,
+                            max_completion_tokens=16,
+                        )
+                    else:
+                        raise
                 reply = ""
                 if response.choices:
                     reply = (getattr(response.choices[0].message, "content", "") or "").strip()
