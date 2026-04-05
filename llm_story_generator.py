@@ -1052,6 +1052,8 @@ def build_campaign_story_input(
     mission_summary: Dict[str, Any],
     mission_events: Optional[Iterable[str]] = None,
     mission_start_time: Optional[str] = None,
+    mission_type: Optional[str] = None,
+    mission_objective: Optional[str] = None,
     rank: str = "",
     pilot_last_name: str = "",
     aircraft: str = "",
@@ -1074,7 +1076,7 @@ def build_campaign_story_input(
     aircraft_damage = mission_summary.get("aircraft_damage", 0)
     pilot_damage = mission_summary.get("pilot_damage", 0)
 
-    return {
+    payload = {
         "career_id": str(campaign_id),
         "mission_id": str(mission_id),
         "date": mission_date,
@@ -1140,6 +1142,15 @@ def build_campaign_story_input(
         },
         "narrative_memory": narrative_memory or {},
     }
+    mission_block = payload.get("mission", {})
+    if isinstance(mission_block, dict):
+        resolved_mission_type = _normalize_text(mission_type)
+        resolved_mission_objective = _normalize_text(mission_objective)
+        if resolved_mission_type:
+            mission_block["mission_type"] = resolved_mission_type
+        if resolved_mission_objective:
+            mission_block["mission_objective"] = resolved_mission_objective
+    return payload
 
 
 def _get_client(

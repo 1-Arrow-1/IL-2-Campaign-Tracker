@@ -55,6 +55,7 @@ from campaign_service_record.weather_lookup import (
     game_coords_to_latlon,
     lookup_historical_weather,
     lookup_historical_weather_by_coords,
+    read_eng_story_context,
     read_eng_weather,
 )
 from utils.sorting import smart_mission_sort_key
@@ -1009,6 +1010,13 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
         mission_box = mission_box_by_id.get(_canonical_mission_id(mid), {})
         mission_stats = _lookup_by_mission_id(stats_by_mission, mid)
         aircraft_entry = _lookup_by_mission_id(mission_aircraft_map, mid)
+        mission_file_name = _normalize_story_text(mission_meta.get("mission_file"))
+        briefing_context = read_eng_story_context(
+            _game_dir,
+            campaign_name,
+            mid,
+            mission_file=mission_file_name,
+        )
 
         mission_awards: list[str] = []
         pre_service_awards: list[str] = []
@@ -1066,6 +1074,9 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
             mission_date=mission_date,
             mission_summary=summary,
             mission_events=mission_box.get("notable_events", []),
+            mission_start_time=_normalize_story_text(briefing_context.get("mission_start_time")),
+            mission_type=_normalize_story_text(briefing_context.get("mission_type")),
+            mission_objective=_normalize_story_text(briefing_context.get("mission_objective")),
             rank=rank_during_mission,
             pilot_last_name=pilot_last_name,
             aircraft=aircraft,
@@ -1086,7 +1097,7 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
         story_input.setdefault("career_progress", {})["aerial_victories"] = _accumulated_air_kills_campaign
         if pre_service_awards:
             story_input["pre_service_awards"] = pre_service_awards
-        _weather = read_eng_weather(_game_dir, campaign_name, mid)
+        _weather = read_eng_weather(_game_dir, campaign_name, mid, mission_file=mission_file_name)
         if _weather:
             story_input.setdefault("mission", {})["weather"] = _weather
         contexts.append(story_input)

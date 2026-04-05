@@ -13,6 +13,7 @@ import json
 import logging
 import math
 import re
+from html import unescape
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 import urllib.error
@@ -181,15 +182,138 @@ _WMO_CODES: Dict[int, str] = {
 # In-process caches
 _weather_cache: Dict[str, Optional[dict]] = {}          # "{lat:.4f},{lon:.4f}|{date}" → result
 _campaign_coords_cache: Dict[str, Optional[Tuple[float, float, str]]] = {}  # campaign_name → coords
+_eng_briefing_cache: Dict[str, Optional[str]] = {}
 
 # ---------------------------------------------------------------------------
 # Campaign .eng briefing weather
 # ---------------------------------------------------------------------------
 
-_ENG_WEATHER_RE = re.compile(r'Weather:\s*([^<\n\r]+)', re.IGNORECASE)
+_ENG_WEATHER_RE = re.compile(
+    r'Weather:\s*(?:</?[^>]+>\s*)*([^<\n\r]+)',
+    re.IGNORECASE,
+)
+_ENG_MISSION_TYPE_RE = re.compile(
+    r'Mission\s*type:\s*(?:</?[^>]+>\s*)*([^<\n\r]+)',
+    re.IGNORECASE,
+)
+_ENG_ORDERS_RE = re.compile(r'Orders:\s*(.+?)(?:<br><br>|$)', re.IGNORECASE | re.DOTALL)
+_ENG_FLIGHT_MISSION_RE = re.compile(r'Flight\s+Mission:\s*(.+?)(?:<br><br>|$)', re.IGNORECASE | re.DOTALL)
+_ENG_MISSION_RE = re.compile(r'Mission:\s*(.+?)(?:<br><br>|$)', re.IGNORECASE | re.DOTALL)
+_ENG_TIME_RE = re.compile(
+    r'\bTime:\s*(?:</?[^>]+>\s*)*([0-2]?\d:[0-5]\d(?::[0-5]\d)?)\b',
+    re.IGNORECASE,
+)
+_HTML_TAG_RE = re.compile(r"<[^>]+>")
 
 
-def read_eng_weather(game_dir: str, campaign_name: str, mission_id: str) -> Optional[dict]:
+def _normalize_briefing_value(value: str) -> str:
+    text = unescape(str(value or ""))
+    text = _HTML_TAG_RE.sub(" ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+def _resolve_eng_path(
+    game_dir: str,
+    campaign_name: str,
+    mission_id: str,
+    mission_file: str = "",
+) -> Optional[Path]:
+    if not game_dir:
+        return None
+
+    campaign_dir = Path(game_dir) / "data" / "Campaigns" / campaign_name
+    if not campaign_dir.exists():
+        return None
+
+    candidates: list[Path] = []
+    mission_file_name = str(mission_file or "").strip()
+    if mission_file_name:
+        candidates.append(campaign_dir / f"{Path(mission_file_name).stem}.eng")
+    candidates.append(campaign_dir / f"{mission_id}.eng")
+
+    for path in candidates:
+        if path.exists():
+            return path
+    return None
+
+
+def _read_eng_briefing_text(
+    game_dir: str,
+    campaign_name: str,
+    mission_id: str,
+    mission_file: str = "",
+) -> Optional[str]:
+    eng_path = _resolve_eng_path(game_dir, campaign_name, mission_id, mission_file=mission_file)
+    if eng_path is None:
+        return None
+
+    cache_key = str(eng_path).lower()
+    if cache_key in _eng_briefing_cache:
+        return _eng_briefing_cache[cache_key]
+
+    text: Optional[str] = None
+    for enc in ("utf-16", "utf-8", "latin-1"):
+        try:
+            text = eng_path.read_text(encoding=enc)
+            break
+        except (UnicodeDecodeError, OSError):
+            continue
+    _eng_briefing_cache[cache_key] = text
+    return text
+
+
+def read_eng_story_context(
+    game_dir: str,
+    campaign_name: str,
+    mission_id: str,
+    mission_file: str = "",
+) -> dict:
+    """
+    Extract lightweight story context from a mission .eng briefing.
+
+    Returns any available subset of:
+      - mission_type
+      - mission_objective
+      - mission_start_time
+    """
+    text = _read_eng_briefing_text(game_dir, campaign_name, mission_id, mission_file=mission_file)
+    if not text:
+        return {}
+
+    result: dict = {}
+
+    mission_type_match = _ENG_MISSION_TYPE_RE.search(text)
+    if mission_type_match:
+        mission_type = _normalize_briefing_value(mission_type_match.group(1))
+        if mission_type:
+            result["mission_type"] = mission_type
+
+    objective_match = (
+        _ENG_ORDERS_RE.search(text)
+        or _ENG_FLIGHT_MISSION_RE.search(text)
+        or _ENG_MISSION_RE.search(text)
+    )
+    if objective_match:
+        mission_objective = _normalize_briefing_value(objective_match.group(1))
+        if mission_objective:
+            result["mission_objective"] = mission_objective
+
+    time_match = _ENG_TIME_RE.search(text)
+    if time_match:
+        mission_start_time = _normalize_briefing_value(time_match.group(1))
+        if mission_start_time:
+            result["mission_start_time"] = mission_start_time
+
+    return result
+
+
+def read_eng_weather(
+    game_dir: str,
+    campaign_name: str,
+    mission_id: str,
+    mission_file: str = "",
+) -> Optional[dict]:
     """
     Extract the weather description from a campaign mission's .eng briefing file.
 
@@ -201,28 +325,18 @@ def read_eng_weather(game_dir: str, campaign_name: str, mission_id: str) -> Opti
     Returns a dict with 'conditions' and 'summary' set to the raw briefing
     text, or None when the file is absent or contains no Weather line.
     """
-    if not game_dir:
-        return None
-    eng_path = Path(game_dir) / "data" / "Campaigns" / campaign_name / f"{mission_id}.eng"
-    if not eng_path.exists():
-        return None
-
-    for enc in ("utf-16", "utf-8", "latin-1"):
-        try:
-            text = eng_path.read_text(encoding=enc)
-            m = _ENG_WEATHER_RE.search(text)
-            if m:
-                weather_str = m.group(1).strip()
-                if weather_str:
-                    LOGGER.debug("Eng weather %s/%s: %r", campaign_name, mission_id, weather_str)
-                    return {
-                        "conditions": weather_str,
-                        "summary": weather_str,
-                        "source": "mission_briefing",
-                    }
-            break
-        except (UnicodeDecodeError, OSError):
-            continue
+    text = _read_eng_briefing_text(game_dir, campaign_name, mission_id, mission_file=mission_file)
+    if text:
+        m = _ENG_WEATHER_RE.search(text)
+        if m:
+            weather_str = _normalize_briefing_value(m.group(1))
+            if weather_str:
+                LOGGER.debug("Eng weather %s/%s: %r", campaign_name, mission_id, weather_str)
+                return {
+                    "conditions": weather_str,
+                    "summary": weather_str,
+                    "source": "mission_briefing",
+                }
     return None
 
 
