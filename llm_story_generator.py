@@ -35,6 +35,63 @@ BASE_DIR = Path(__file__).resolve().parent
 HISTORICAL_CONTEXT_DIR = BASE_DIR / "historical_context"
 SQUADRON_CONTEXT_FILE = HISTORICAL_CONTEXT_DIR / "squadrons.json"
 SQUADRON_ALIASES_FILE = HISTORICAL_CONTEXT_DIR / "squadron_aliases.json"
+_MISSION_TYPES_FILE = BASE_DIR / "campaign_service_record" / "career" / "mission_types.json"
+
+_mission_types_cache: Optional[Dict[str, Any]] = None
+
+
+def _load_mission_types() -> Dict[str, Any]:
+    global _mission_types_cache
+    if _mission_types_cache is not None:
+        return _mission_types_cache
+    try:
+        data = json.loads(_MISSION_TYPES_FILE.read_text(encoding="utf-8"))
+        _mission_types_cache = data if isinstance(data, dict) else {}
+    except (OSError, json.JSONDecodeError):
+        _mission_types_cache = {}
+    return _mission_types_cache
+
+
+def resolve_mission_type_labels(
+    mission_type_code: Any,
+    m_template: Any,
+) -> tuple[str, str]:
+    """
+    Return (type_label, objective_label) from mission.type and mission.mTemplate.
+
+    type_label   — e.g. "Frontline Patrol", "Escort Bombers", "Bomb Bridge"
+    objective_label — sub-type detail when it adds context, e.g. "Enemy Territory",
+                      "V-1 Launch Site", "Supply Depot Cover".  Empty string when
+                      the type label is already self-contained.
+
+    Subtypes that duplicate the type label meaning are suppressed
+    (e.g. "Airfield Transfer" for "Fighter Transfer").
+    """
+    data = _load_mission_types()
+    mission_types: Dict[str, str] = data.get("mission_types", {}) if isinstance(data, dict) else {}
+    template_subtypes: Dict[str, str] = data.get("template_subtypes", {}) if isinstance(data, dict) else {}
+
+    type_label = _normalize_text(mission_types.get(str(mission_type_code) if mission_type_code is not None else ""))
+
+    raw_template = _normalize_text(m_template)
+    prefix = ""
+    if "@" in raw_template:
+        prefix = raw_template.split("@")[0]
+    elif "_p00" in raw_template:
+        prefix = raw_template.split("_p00")[0].rstrip("_")
+
+    sub_label = _normalize_text(template_subtypes.get(prefix)) if prefix else ""
+
+    # Suppress sub-labels that carry no new information vs the type label.
+    _REDUNDANT_PAIRS = {
+        ("Fighter Transfer", "Airfield Transfer"),
+        ("Bomber Transfer", "Airfield Transfer"),
+        ("Escort Bombers", "Bomber Escort"),
+    }
+    if (type_label, sub_label) in _REDUNDANT_PAIRS:
+        sub_label = ""
+
+    return type_label, sub_label
 
 
 def _resolve_story_data_dir() -> Path:
@@ -915,6 +972,8 @@ def build_story_input(
     missions_completed: Optional[int] = None,
     narrative_memory: Optional[Dict[str, Any]] = None,
     llm_config: Optional[Dict[str, Any]] = None,
+    mission_type_code: Any = None,
+    m_template: Any = None,
 ) -> Dict[str, Any]:
     """
     Build the structured input payload sent to the LLM for one mission chapter.
@@ -924,6 +983,7 @@ def build_story_input(
     historical_context = resolve_historical_context(squadron, mission_date, country=country, llm_config=llm_config)
 
     _start_time = _normalize_text(summary.get("mission_start_time"))
+    _type_label, _objective_label = resolve_mission_type_labels(mission_type_code, m_template)
     mission = {
         "id": str(mission_id),
         "date": mission_date,
@@ -941,6 +1001,10 @@ def build_story_input(
         "naval_kills": int(summary.get("naval_kills", 0) or 0),
         "notable_events": _extract_notable_events(mission_json),
     }
+    if _type_label:
+        mission["mission_type"] = _type_label
+    if _objective_label:
+        mission["mission_objective"] = _objective_label
 
     return {
         "career_id": str(career_id),
@@ -1469,6 +1533,8 @@ def generate_mission_story(
         "- If mission.weather is present, it contains real historical meteorological data for the mission location and date. Use it for environmental accuracy — temperature, precipitation, cloud cover, wind. Do not describe weather as colder, snowier, or more dramatic than the data supports. For example, if the temperature is above zero and conditions are 'partly cloudy', do not write frozen ground or blizzards.\n"
         "- If mission.theatre or mission.location is present, treat those fields as the authoritative operational setting for this mission.\n"
         "- Do not infer or substitute a different theatre/location from squadron history when mission.theatre or mission.location is provided.\n"
+        "- If mission.mission_type is present, it is the official mission category assigned by the air force (e.g., 'Frontline Patrol', 'Escort Bombers', 'Bomb Bridge'). Reflect this in the narrative — a patrol mission reads differently from a bombing raid or an escort. Use mission_type to colour the pilot's role and purpose, not as a label to quote verbatim.\n"
+        "- If mission.mission_objective is also present, it refines mission_type with the specific target or area (e.g., 'Enemy Territory' for a patrol, 'V-1 Launch Site' for an escort, 'Supply Depot Cover' for an anti-bomber patrol). Weave this detail into the scene naturally.\n"
         "- If historical_context.summary or historical_context.facts are present, integrate them naturally.\n"
         "- pilot.rank is the rank held DURING the mission. Use it throughout the narrative.\n"
         "- If mission_progression.promotion is non-empty, it is a rank awarded AFTER the pilot landed/returned. Mention it only as a post-mission event (e.g., 'upon return he was promoted to...'). Never use the promoted rank to describe the pilot during the sortie.\n"

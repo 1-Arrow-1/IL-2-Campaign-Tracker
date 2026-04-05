@@ -1210,6 +1210,8 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
 
         mission_row = db.get_mission_by_id(result.mission_id)
         mission_date_iso = _resolve_career_mission_date(result, mission_row)
+        _mission_type_code = dict(mission_row).get("type") if mission_row else None
+        _m_template = dict(mission_row).get("mTemplate") if mission_row else None
 
         mission_segment_index = next(
             (idx for idx, row in enumerate(career.chain) if int(row["id"]) == result.career_id),
@@ -1449,6 +1451,8 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 squadron_context=squadron_context,
                 missions_completed=mission_index,
                 narrative_memory=_narrative_memory,
+                mission_type_code=_mission_type_code,
+                m_template=_m_template,
             )
             mission_story_input["career_progress"]["aerial_victories"] = _accumulated_air_kills
             if pre_service_awards:
@@ -1549,6 +1553,8 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 },
                 missions_completed=mission_index,
                 narrative_memory={},
+                mission_type_code=_mission_type_code,
+                m_template=_m_template,
             )
             fallback_input["career_segment_index"] = segment_index
             fallback_input["career_mission_order"] = mission_index
