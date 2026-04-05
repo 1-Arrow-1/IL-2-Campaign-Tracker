@@ -17,6 +17,7 @@ base_path = Path(SPECPATH)
 datas = [
     (str(base_path / 'static'), 'static'),
     (str(base_path / 'utils'), 'utils'),
+    (str(base_path / 'career' / 'mission_types.json'), 'campaign_service_record/career'),
     (str(base_path.parent / 'locales'), 'locales'),
     (str(base_path.parent / 'IBMPlexSans-Light.ttf'), '.'),
     (str(base_path.parent / 'IL-2_Tracker_award_coordinates.json'), '.'),

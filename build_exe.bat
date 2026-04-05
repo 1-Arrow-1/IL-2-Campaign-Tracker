@@ -110,6 +110,11 @@ if not exist "campaign_service_record\career_service_record.spec" (
     pause
     exit /b 1
 )
+if not exist "campaign_service_record\career\mission_types.json" (
+    echo ERROR: campaign_service_record\career\mission_types.json not found!
+    pause
+    exit /b 1
+)
 if not exist "mlg2txt.spec" (
     echo ERROR: mlg2txt.spec not found!
     pause

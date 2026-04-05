@@ -28,6 +28,7 @@ datas = [
     (str(base_path / "stock_campaigns.yaml"), "."),
     (str(base_path / "locales"), "locales"),
     (str(base_path / "historical_context"), "historical_context"),
+    (str(base_path / "campaign_service_record" / "career" / "mission_types.json"), "campaign_service_record/career"),
 ]
 
 a = Analysis(
