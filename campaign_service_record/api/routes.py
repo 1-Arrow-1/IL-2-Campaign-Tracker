@@ -1634,7 +1634,21 @@ def _build_squadron_context_for_mission(
     if not members:
         return empty
 
+    _CAREER_COUNTRY_INT = {"germany": 201, "britain": 102, "usa": 103, "ussr": 101}
+    country_int = _CAREER_COUNTRY_INT.get((career.country or "").lower(), 0)
+
+    def _resolve_rank(rank_id) -> str:
+        try:
+            rid = int(rank_id or -1)
+        except (TypeError, ValueError):
+            return ""
+        if rid < 0:
+            return ""
+        rank_name = aggregator._rank_resolver.resolve(country_int, rid)
+        return rank_name.display if rank_name else ""
+
     member_by_id = {}
+    member_rank_by_id = {}
     member_ids = []
     for row in members:
         pid = int(row["id"])
@@ -1642,6 +1656,7 @@ def _build_squadron_context_for_mission(
             continue
         member_ids.append(pid)
         member_by_id[pid] = _pilot_display_name(row)
+        member_rank_by_id[pid] = _resolve_rank(row["rankId"])
     if not member_ids:
         return empty
 
@@ -1653,6 +1668,7 @@ def _build_squadron_context_for_mission(
             continue
         pid = int(ev["pilotId"])
         who = member_by_id.get(pid, f"Pilot {pid}")
+        pilot_rank = member_rank_by_id.get(pid, "")
         mapped = aggregator._map_event(ev, career.country)
         if not mapped:
             continue
@@ -1660,13 +1676,19 @@ def _build_squadron_context_for_mission(
         if ev_type == "promotion":
             rank_name = str(mapped.get("rank") or "").strip()
             if rank_name:
-                empty["promotions"].append({"pilot": who, "rank": rank_name})
+                entry = {"pilot": who, "rank": rank_name}
+                if pilot_rank:
+                    entry["rank_before"] = pilot_rank
+                empty["promotions"].append(entry)
         elif ev_type == "award":
             award_name = _resolve_award_display_name(
                 str(mapped.get("name") or ""), story_language
             )
             if award_name:
-                empty["awards"].append({"pilot": who, "award": award_name})
+                entry = {"pilot": who, "award": award_name}
+                if pilot_rank:
+                    entry["rank"] = pilot_rank
+                empty["awards"].append(entry)
         elif ev_type == "transfer":
             to_cfg = int(ev["squadronId"] or 0) if "squadronId" in ev.keys() else 0
             to_name = ""
@@ -1674,10 +1696,10 @@ def _build_squadron_context_for_mission(
                 to_name = aggregator._resolve_squadron_name_by_config(segment_career_id, to_cfg) or ""
             if not to_name and to_cfg:
                 to_name = f"Squadron {to_cfg}"
-            empty["transfers"].append({
-                "pilot": who,
-                "to_squadron": to_name,
-            })
+            entry = {"pilot": who, "to_squadron": to_name}
+            if pilot_rank:
+                entry["rank"] = pilot_rank
+            empty["transfers"].append(entry)
 
     # Sortie status updates (this exact mission)
     # Known mapping in this codebase:
@@ -1686,13 +1708,14 @@ def _build_squadron_context_for_mission(
     for sortie in mission_sorties:
         pid = int(sortie["pilotId"])
         who = member_by_id.get(pid, f"Pilot {pid}")
+        pilot_rank = member_rank_by_id.get(pid, "")
         status = int(sortie["status"] or 0)
         if status == 2:
-            empty["kia"].append(who)
+            empty["kia"].append({"pilot": who, "rank": pilot_rank} if pilot_rank else who)
         elif status == 3:
-            empty["mia"].append(who)
+            empty["mia"].append({"pilot": who, "rank": pilot_rank} if pilot_rank else who)
         elif status == 4:
-            empty["wia"].append(who)
+            empty["wia"].append({"pilot": who, "rank": pilot_rank} if pilot_rank else who)
 
     return empty
 

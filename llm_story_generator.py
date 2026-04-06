@@ -237,20 +237,31 @@ def _iter_squadron_event_items(squadron_context: Any, output_language: str = "en
             elif pilot:
                 lines.append(_squadron_phrase(lang, "transferred", pilot=pilot))
 
+    def _pilot_name_from_entry(entry: Any) -> str:
+        if isinstance(entry, dict):
+            return _normalize_text(entry.get("pilot"))
+        return _normalize_text(entry)
+
     kia = squadron_context.get("kia", [])
     if isinstance(kia, list):
-        for pilot in [(_normalize_text(v)) for v in kia[:6] if _normalize_text(v)]:
-            lines.append(_squadron_phrase(lang, "kia", pilot=pilot))
+        for entry in kia[:6]:
+            pilot = _pilot_name_from_entry(entry)
+            if pilot:
+                lines.append(_squadron_phrase(lang, "kia", pilot=pilot))
 
     mia = squadron_context.get("mia", [])
     if isinstance(mia, list):
-        for pilot in [(_normalize_text(v)) for v in mia[:6] if _normalize_text(v)]:
-            lines.append(_squadron_phrase(lang, "mia", pilot=pilot))
+        for entry in mia[:6]:
+            pilot = _pilot_name_from_entry(entry)
+            if pilot:
+                lines.append(_squadron_phrase(lang, "mia", pilot=pilot))
 
     wia = squadron_context.get("wia", [])
     if isinstance(wia, list):
-        for pilot in [(_normalize_text(v)) for v in wia[:6] if _normalize_text(v)]:
-            lines.append(_squadron_phrase(lang, "wounded", pilot=pilot))
+        for entry in wia[:6]:
+            pilot = _pilot_name_from_entry(entry)
+            if pilot:
+                lines.append(_squadron_phrase(lang, "wounded", pilot=pilot))
 
     return lines
 
@@ -282,8 +293,8 @@ def _story_mentions_squadron_events(story_text: str, squadron_context: Any) -> b
         entries = squadron_context.get(key, [])
         if not isinstance(entries, list):
             continue
-        for pilot in entries:
-            p = _normalize_text(pilot).lower()
+        for entry in entries:
+            p = (_normalize_text(entry.get("pilot")) if isinstance(entry, dict) else _normalize_text(entry)).lower()
             if p and p in text:
                 return True
     return False
@@ -1559,6 +1570,8 @@ def generate_mission_story(
         "- Treat squadron_context as factual.\n"
         "- Mention at least one squadron_context item when any are present.\n"
         "- Do not invent squadron-member outcomes not present in squadron_context.\n"
+        "- Do not name any person (pilot, commander, wingman, Staffelkapitän, etc.) who does not appear explicitly in squadron_context. Inventing named individuals is strictly forbidden — this is the most common and most damaging hallucination in this task.\n"
+        "- When referencing a pilot listed in squadron_context, use their name exactly as supplied. If a rank field is present for that pilot entry, you may use it — e.g. 'Unteroffizier Müller was awarded...'. Never invent or assume a rank that is not in the supplied entry.\n"
         "- If mission.other_incidences is non-empty, mention those facts explicitly in the chapter.\n"
         "- Treat mission.other_incidences as mandatory factual aftermath/context, not optional flavor.\n"
         "- If mission.other_incidences includes 'Recovery from injury', mention that the pilot entered a recovery period after this mission; do not present that recovery as occurring before the sortie ended.\n"
