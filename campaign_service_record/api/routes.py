@@ -1223,12 +1223,22 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
         mission_date_iso = _resolve_career_mission_date(result, mission_row)
         _mission_type_code = dict(mission_row).get("type") if mission_row else None
         _m_template = dict(mission_row).get("mTemplate") if mission_row else None
+        _pilots_count = int(dict(mission_row).get("pilotsCount") or 0) if mission_row else 0
 
         mission_segment_index = next(
             (idx for idx, row in enumerate(career.chain) if int(row["id"]) == result.career_id),
             0,
         )
         mission_segment = segment_rows.get(result.career_id)
+
+        _player_pilot_id = int(mission_segment["playerId"]) if mission_segment else None
+        _formation_role = None
+        if mission_row and _player_pilot_id is not None and _pilots_count > 0:
+            _mr = dict(mission_row)
+            if _mr.get("pilot0") == _player_pilot_id:
+                _formation_role = "leader"
+            elif any(_mr.get(f"pilot{i}") == _player_pilot_id for i in range(1, 9)):
+                _formation_role = "wingman"
         squadron_name = ""
         if mission_segment is not None:
             try:
@@ -1256,6 +1266,8 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             "sortie_stats": sortie_stats,
             "mission_type_code": _mission_type_code,
             "m_template": _m_template,
+            "pilots_count": _pilots_count,
+            "formation_role": _formation_role,
             "sort_key": _career_story_sort_key(
                 mission_segment_index,
                 mission_date_iso,
@@ -1267,6 +1279,14 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
         return []
 
     mission_rows.sort(key=lambda row: row["sort_key"])
+
+    # Pre-compute the last mission date for each segment (needed for gap-event detection).
+    _last_date_by_segment: dict[int, str] = {}
+    for _mr in mission_rows:
+        _si = int(_mr["segment_index"])
+        _d = _mr["mission_date"] or ""
+        if _si not in _last_date_by_segment or _d > _last_date_by_segment[_si]:
+            _last_date_by_segment[_si] = _d
 
     contexts: list[dict] = []
 
@@ -1301,6 +1321,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
 
     _accumulated_air_kills: int = 0
     _narrative_memory: dict = {}
+    _prev_segment_index: int = -1
     other_incidences = aggregator._load_other_incidences(career)
 
     # Build a list of (transfer_date, old_squadron, new_squadron) sorted ascending.
@@ -1333,6 +1354,95 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
         mission_date = row["mission_date"]
         mission_id = int(row["mission_id"])
         segment_index = int(row["segment_index"])
+
+        # ── Theatre transition detection ────────────────────────────────────────
+        # Build a theatre_transition block for the first mission of each new segment.
+        _theatre_transition: dict | None = None
+        _is_first_of_new_segment = _prev_segment_index >= 0 and segment_index > _prev_segment_index
+        if _is_first_of_new_segment and 0 < segment_index < len(career.chain):
+            try:
+                _pc = dict(career.chain[segment_index - 1])
+                _cc = dict(career.chain[segment_index])
+                _prev_info = str(_pc.get("infoId") or "")
+                _curr_info = str(_cc.get("infoId") or "")
+                _prev_theatre_label = THEATRE_LABELS.get(_prev_info, _prev_info)
+                _curr_theatre_label = THEATRE_LABELS.get(_curr_info, _curr_info)
+                try:
+                    _prev_sq = aggregator._resolve_squadron_name(int(_pc.get("squadronId") or 0)) or ""
+                    _curr_sq = aggregator._resolve_squadron_name(int(_cc.get("squadronId") or 0)) or ""
+                except Exception:
+                    _prev_sq = _curr_sq = ""
+                # Gather "gap" events: awards/promotions/commander-appoint between segments.
+                # Use ALL career pilot IDs (not just adjacent pair) to catch awards that
+                # IL-2 may have stored under any of the player's pilot rows.
+                _gap_pilot_ids: set[int] = set(career.all_pilot_ids)
+                _last_prev_date = _last_date_by_segment.get(segment_index - 1, "")
+                _gap_awards: list[str] = []
+                _gap_promotions: list[str] = []
+                _is_commander = False
+                for _ev in raw_events:
+                    try:
+                        _ev_pid = int(_ev["pilotId"])
+                    except (TypeError, ValueError):
+                        continue
+                    if _ev_pid not in _gap_pilot_ids:
+                        continue
+                    _ev_date = aggregator._format_date(_ev["date"]) or ""
+                    if _last_prev_date and _ev_date and _ev_date <= _last_prev_date:
+                        continue
+                    if _ev_date and mission_date and _ev_date > mission_date:
+                        continue
+                    _ev_type_int = int(_ev["type"] or -1)
+                    if _ev_type_int == 8:
+                        _m = aggregator._map_event(_ev, career.country)
+                        if _m and _m.get("type") == "award":
+                            _aw = _resolve_award_display_name(str(_m.get("name") or ""), story_language)
+                            if _aw and _aw not in _gap_awards:
+                                _gap_awards.append(_aw)
+                    elif _ev_type_int == 6:
+                        _m = aggregator._map_event(_ev, career.country)
+                        if _m and _m.get("type") == "promotion":
+                            _rk = _normalize_story_text(_m.get("rank") or "")
+                            if _rk and _rk not in _gap_promotions:
+                                _gap_promotions.append(_rk)
+                    elif _ev_type_int == 7:
+                        _is_commander = True
+                # Fallback: check pilot.state on the new segment's pilot row
+                if not _is_commander:
+                    try:
+                        _cpid = int(_cc.get("playerId") or -1)
+                        if _cpid > 0:
+                            _cprow = db.get_pilot_by_id(_cpid)
+                            if _cprow and int(_cprow["state"] or 0) in (1, 8):
+                                _is_commander = True
+                    except Exception:
+                        pass
+                _theatre_transition = {
+                    "previous_theatre": _prev_theatre_label,
+                    "new_theatre": _curr_theatre_label,
+                }
+                if _prev_sq and _curr_sq and _prev_sq != _curr_sq:
+                    _theatre_transition["previous_squadron"] = _prev_sq
+                    _theatre_transition["new_squadron"] = _curr_sq
+                elif _curr_sq and _curr_sq != _prev_sq:
+                    _theatre_transition["new_squadron"] = _curr_sq
+                if _gap_awards:
+                    _theatre_transition["transition_awards"] = _gap_awards
+                if _gap_promotions:
+                    _theatre_transition["transition_promotions"] = _gap_promotions
+                if _is_commander:
+                    _theatre_transition["role"] = "commander"
+                logger.info(
+                    "Theatre transition for career %s seg %s→%s: awards=%s promotions=%s commander=%s",
+                    root_career_id, segment_index - 1, segment_index,
+                    _gap_awards, _gap_promotions, _is_commander,
+                )
+            except Exception as _exc:
+                logger.debug("Theatre transition build failed for segment %s: %s", segment_index, _exc)
+                _theatre_transition = None
+        _prev_segment_index = segment_index
+        # ───────────────────────────────────────────────────────────────────────
+
         squadron_name = _resolve_historical_squadron(
             mission_date, _normalize_story_text(row["squadron_name"])
         )
@@ -1473,6 +1583,12 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             mission_story_input["mission"]["notable_events"] = notables
             mission_story_input["mission"]["other_incidences"] = story_incidences
             mission_story_input["mission"]["result"] = mission_result
+            if row.get("pilots_count"):
+                mission_story_input["mission"]["formation_size"] = row["pilots_count"]
+            if row.get("formation_role"):
+                mission_story_input["mission"]["formation_role"] = row["formation_role"]
+            if _theatre_transition:
+                mission_story_input["theatre_transition"] = _theatre_transition
             mission_story_input["career_segment_index"] = segment_index
             mission_story_input["career_mission_order"] = mission_index
             if aircraft_label:

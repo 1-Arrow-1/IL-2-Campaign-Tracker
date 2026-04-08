@@ -267,18 +267,14 @@ def _iter_squadron_event_items(squadron_context: Any, output_language: str = "en
 
 
 def _story_mentions_squadron_events(story_text: str, squadron_context: Any) -> bool:
+    """Return True only when at least one specific pilot from squadron_context is named in the text."""
     text = _normalize_text(story_text).lower()
     if not text:
         return False
 
-    # Broad marker check.
-    if any(token in text for token in ("squadron", "staffel", "eskadr", "эскадр", "wingman")):
-        return True
-
     if not isinstance(squadron_context, dict):
         return False
 
-    # If any referenced pilot name appears, count it as covered.
     for key in ("promotions", "awards", "transfers"):
         entries = squadron_context.get(key, [])
         if not isinstance(entries, list):
@@ -1519,10 +1515,17 @@ def generate_mission_story(
         except (TypeError, ValueError):
             missions_in_chapter = 1
 
+    _has_theatre_transition = isinstance(story_input, dict) and bool(story_input.get("theatre_transition"))
+
     if missions_in_chapter <= 1:
-        paragraph_rule = "Write exactly 3 paragraphs."
-        word_target = "Target 180-280 words."
-        max_output_tokens = 700
+        if _has_theatre_transition:
+            paragraph_rule = "Write exactly 4 paragraphs."
+            word_target = "Target 250-380 words."
+            max_output_tokens = 1000
+        else:
+            paragraph_rule = "Write exactly 3 paragraphs."
+            word_target = "Target 180-280 words."
+            max_output_tokens = 700
     elif missions_in_chapter == 2:
         paragraph_rule = "Write exactly 3 paragraphs."
         word_target = "Target 240-360 words."
@@ -1557,6 +1560,8 @@ def generate_mission_story(
         "- Do not infer or substitute a different theatre/location from squadron history when mission.theatre or mission.location is provided.\n"
         "- If mission.mission_type is present, it is the official mission category assigned by the air force (e.g., 'Frontline Patrol', 'Escort Bombers', 'Bomb Bridge'). Reflect this in the narrative — a patrol mission reads differently from a bombing raid or an escort. Use mission_type to colour the pilot's role and purpose, not as a label to quote verbatim.\n"
         "- If mission.mission_objective is also present, it refines mission_type with the specific target or area (e.g., 'Enemy Territory' for a patrol, 'V-1 Launch Site' for an escort, 'Supply Depot Cover' for an anti-bomber patrol). Weave this detail into the scene naturally.\n"
+        "- If mission.formation_size is present, use it to describe the scale of the operation naturally: 1=solo; 2=pair; 3=three-ship; 4=four-ship flight; larger=formation. Use the terminology appropriate for the pilot's air force and era — e.g. Rotte/Schwarm for Luftwaffe, Para/Zveno for Soviet, Element/Flight for USAAF/RAF. Do not use German terms for non-German pilots.\n"
+        "- If mission.formation_role is present, it is either 'leader' (formation commander) or 'wingman'. Reflect this in how you describe the pilot's position — a leader directs the formation, a wingman supports.\n"
         "- If historical_context.summary or historical_context.facts are present, integrate them naturally.\n"
         "- pilot.rank is the rank held DURING the mission. Use it throughout the narrative.\n"
         "- If mission_progression.promotion is non-empty, it is a rank awarded AFTER the pilot landed/returned. Mention it only as a post-mission event (e.g., 'upon return he was promoted to...'). Never use the promoted rank to describe the pilot during the sortie.\n"
@@ -1576,6 +1581,11 @@ def generate_mission_story(
         "- Treat mission.other_incidences as mandatory factual aftermath/context, not optional flavor.\n"
         "- If mission.other_incidences includes 'Recovery from injury', mention that the pilot entered a recovery period after this mission; do not present that recovery as occurring before the sortie ended.\n"
         "- If mission.other_incidences includes 'Appointment as squadron commander ...' or 'Transfer from ... to ...', mention it as a post-mission development or administrative change.\n"
+        "- If theatre_transition is present, this is the pilot's first mission in a new theatre of operations. Structure the chapter across four phases: (1) the conclusion of the previous campaign (theatre_transition.previous_theatre) and the squadron being recalled or redeployed; (2) the interim period between postings, during which any transition_awards or transition_promotions were received — treat these as received during that transfer period, not after today's sortie; (3) arrival at the new posting and joining or assuming command of the new formation; (4) the opening sortie in the new theatre (theatre_transition.new_theatre). Give each phase meaningful weight — do not compress the transition into a single sentence.\n"
+        "- If theatre_transition.transition_awards is non-empty, you MUST name every decoration in that list by its full name, describing it as received during the transition period between the two campaigns. This is mandatory — a chapter that omits any item from transition_awards is factually incomplete. IMPORTANT: the general rule 'career_progress.awards must not be presented as awarded in this chapter' does NOT apply to decorations that also appear in theatre_transition.transition_awards. Those must be mentioned as received during the transit period.\n"
+        "- If theatre_transition.transition_promotions is non-empty, you MUST name each rank explicitly as received during the transition period between postings.\n"
+        "- If theatre_transition.new_squadron is present, describe the pilot joining (or taking command of) that specific unit. If theatre_transition.previous_squadron is also present, you may note the change of assignment.\n"
+        "- If theatre_transition.role is 'commander', the pilot assumed command of the new unit before or upon arrival. Reflect this as a leadership responsibility — the pilot enters the new theatre bearing command authority, not merely as a new arrival.\n"
         "- Never output internal mission IDs (e.g., M3010, M3011) in the final text.\n"
         "- Mention sortie count naturally (e.g., 'two sorties that day') without technical labels.\n"
         "- Show progression across the day: setup, action, aftermath.\n"
