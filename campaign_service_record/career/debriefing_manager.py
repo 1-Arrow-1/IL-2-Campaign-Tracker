@@ -338,14 +338,16 @@ class CareerDebriefingManager:
                         cached_mlg_ts = cached.get("mlg_timestamp")
                         if cached_mlg_ts and ins_date is not None:
                             newest_ts = self._linker.get_newest_candidate_timestamp(ins_date)
-                            newer_report = None
+                            should_relink = False
                             if newest_ts and newest_ts > cached_mlg_ts:
+                                # A newer .mlg exists within the insDate window —
+                                # invalidate the cache and fall through to re-link.
                                 logger.debug(
                                     "Newer .mlg detected for mission %d "
                                     "(%s > %s); invalidating cache",
                                     mission_id, newest_ts, cached_mlg_ts,
                                 )
-                                # Fall through to re-link below
+                                should_relink = True
                             else:
                                 newer_report = self._linker.find_newer_career_report(
                                     mission_row, cached_mlg_ts, self._mlg2txt_path
@@ -356,7 +358,8 @@ class CareerDebriefingManager:
                                         "outside insDate window: %s",
                                         mission_id, newer_report.name,
                                     )
-                            if newer_report is not None:
+                                    should_relink = True
+                            if should_relink:
                                 pass  # Fall through to re-link below
                             else:
                                 return _MissionResult(
@@ -487,7 +490,7 @@ class CareerDebriefingManager:
     # ------------------------------------------------------------------
 
     # Increment when the HTML rendering format changes to force cache rebuild.
-    _CACHE_VERSION = 17
+    _CACHE_VERSION = 18
 
     def _load_cache(self) -> Dict:
         if not self._cache_path.exists():

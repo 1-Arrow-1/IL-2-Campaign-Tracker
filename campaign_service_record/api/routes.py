@@ -1322,6 +1322,9 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
     _accumulated_air_kills: int = 0
     _narrative_memory: dict = {}
     _prev_segment_index: int = -1
+    # Track the pilot's rank at the end of each chapter so we can detect
+    # promotions that happened on no-fly days between two missions.
+    _last_rank_after_chapter: str = initial_career_rank
     other_incidences = aggregator._load_other_incidences(career)
 
     # Build a list of (transfer_date, old_squadron, new_squadron) sorted ascending.
@@ -1500,6 +1503,17 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
 
             awards = list(dict.fromkeys([name for name in awards if name]))
 
+            # Detect promotions that happened on no-fly days between this mission
+            # and the previous one.  rank_before_mission reflects those events but
+            # they never appeared in any chapter's promotions_this_mission list.
+            _inter_mission_promotion: str = ""
+            if (
+                rank_before_mission
+                and rank_before_mission != _last_rank_after_chapter
+                and not _theatre_transition  # gap already handled by transition_promotions
+            ):
+                _inter_mission_promotion = rank_before_mission
+
             summary = mission_json.get("summary", {}) if isinstance(mission_json, dict) else {}
             aircraft_label = _normalize_story_text(
                 (mission_json.get("player", {}) if isinstance(mission_json, dict) else {}).get("aircraft")
@@ -1614,6 +1628,10 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             ).strip()
             if pilot_name:
                 mission_story_input["pilot"]["name"] = pilot_name
+            if _inter_mission_promotion:
+                mission_story_input["inter_mission_promotion"] = _inter_mission_promotion
+            # Update rank tracking for next iteration — include any same-day promotion.
+            _last_rank_after_chapter = rank if rank else rank_before_mission
             _narrative_memory = update_narrative_memory_local(mission_story_input, _narrative_memory)
             # Weather: try airfield-level precision from spawn position + map origin.
             # Fall back to theatre-level lookup from infoId / squadron name.
