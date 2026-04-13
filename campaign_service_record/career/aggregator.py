@@ -873,12 +873,66 @@ class CareerAggregator:
         if not plane_key:
             return "Unknown"
         special = {
+            # Bf 109 family
+            "bf109e4": "Bf 109 E-4",
+            "bf109e7": "Bf 109 E-7",
             "bf109f2": "Bf 109 F-2",
             "bf109f4": "Bf 109 F-4",
+            "bf109g2": "Bf 109 G-2",
             "bf109g4": "Bf 109 G-4",
             "bf109g6": "Bf 109 G-6",
             "bf109g6late": "Bf 109 G-6 Late",
             "bf109g6as": "Bf 109 G-6AS",
+            "bf109g14": "Bf 109 G-14",
+            "bf109k4": "Bf 109 K-4",
+            # Fw 190 family
+            "fw190a3": "Fw 190 A-3",
+            "fw190a5": "Fw 190 A-5",
+            "fw190a6": "Fw 190 A-6",
+            "fw190a8": "Fw 190 A-8",
+            "fw190d9": "Fw 190 D-9",
+            # Bf 110
+            "bf110e2": "Bf 110 E-2",
+            "bf110g2": "Bf 110 G-2",
+            # He 111
+            "he111h6": "He 111 H-6",
+            "he111h16": "He 111 H-16",
+            # Ju 88
+            "ju88a4": "Ju 88 A-4",
+            # Ju 52
+            "ju523mg4e": "Ju 52/3m g4e",
+            # Soviet fighters
+            "lagg3s29": "LaGG-3 ser.29",
+            "lagg3s35": "LaGG-3 ser.35",
+            "la5": "La-5",
+            "la5fn": "La-5FN",
+            "la7": "La-7",
+            "mig3s24": "MiG-3 ser.24",
+            "yak1s69": "Yak-1 ser.69",
+            "yak1bs127": "Yak-1b ser.127",
+            "yak7bs36": "Yak-7b ser.36",
+            "yak9": "Yak-9",
+            "yak9t": "Yak-9T",
+            "i16t24": "I-16 type 24",
+            "il2m41": "IL-2 mod.1941",
+            "il2m42": "IL-2 mod.1942",
+            "il2m43": "IL-2 mod.1943",
+            "pe2s35": "Pe-2 ser.35",
+            "pe2s87": "Pe-2 ser.87",
+            # USAAF / RAF
+            "p40e1": "P-40E-1",
+            "p47d22": "P-47D-22",
+            "p47d28": "P-47D-28",
+            "p51d15": "P-51D-15",
+            "p38j25": "P-38J-25",
+            "spitfiremkvb": "Spitfire Mk.Vb",
+            "spitfiremkix": "Spitfire Mk.IX",
+            "spitfiremkixe": "Spitfire Mk.IXe",
+            "tempestmkv": "Tempest Mk.V",
+            "typhoonmkib": "Typhoon Mk.Ib",
+            "mosquitofbmkvi": "Mosquito FB Mk.VI",
+            "a20b": "A-20B",
+            "b25mitchell": "B-25 Mitchell",
         }
         if plane_key in special:
             return special[plane_key]
