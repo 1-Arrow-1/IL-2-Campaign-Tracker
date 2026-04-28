@@ -837,11 +837,21 @@ class CareerAggregator:
             reverse=True,
         )
         for plane_key, data in sorted_usage:
-            label_counter = label_votes.get(plane_key)
-            if label_counter:
-                preferred_labels[plane_key] = label_counter.most_common(1)[0][0]
+            # If the plane_key has an explicit entry in the special dict, use it
+            # as the authoritative label — cp.db plane0 is the ground truth for
+            # the variant. This prevents E-7 missions being labelled "Bf 109 E-4"
+            # just because they share the same game script and the .mlg parser
+            # outputs the base variant name.
+            authoritative = self._format_plane_label(plane_key)
+            if authoritative != plane_key:
+                # Key is known in special dict — trust it over debrief votes.
+                preferred_labels[plane_key] = authoritative
             else:
-                preferred_labels[plane_key] = self._format_plane_label(plane_key)
+                label_counter = label_votes.get(plane_key)
+                if label_counter:
+                    preferred_labels[plane_key] = label_counter.most_common(1)[0][0]
+                else:
+                    preferred_labels[plane_key] = plane_key
 
         duplicate_labels = {
             label for label, count in Counter(preferred_labels.values()).items() if count > 1
