@@ -1,10 +1,10 @@
 # IL-2 Campaign Progress Tracker
 
-A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **WW2 campaigns**.  Automatically monitors your campaign progress, calculates promotions and awards based on historical criteria, generates detailed mission debriefings, and creates PDF reports of your pilot's career.
+A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **WW2 campaigns and career mode**.  Automatically monitors your campaign progress, calculates promotions and awards based on historical criteria, generates detailed mission debriefings, creates PDF reports of your pilot's career, and optionally produces AI-generated narrative story chapters for each mission.
 
-![Version](https://img.shields.io/badge/version-2.2-blue)
+![Version](https://img.shields.io/badge/version-2.2.4-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
-![Game](https://img.shields.io/badge/game-IL--2%20Battle%20of%20Stalingrad-orange)
+![Game](https://img.shields.io/badge/game-IL--2%20Great%20Battles-orange)
 ![Languages](https://img.shields.io/badge/languages-7-green)
 
 ---
@@ -23,7 +23,8 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **W
 - [Mission Debriefings](#mission-debriefings)
 - [Mission Cleanup](#mission-cleanup)
 - [Backup & Restore System](#backup--restore-system)
-- [Campaign Service Record](#camapign-service-record)
+- [AI Story Generation](#ai-story-generation)
+- [Campaign Service Record](#campaign-service-record)
 - [Career Service Record](#career-service-record)
 - [File Reference](#file-reference)
 - [Troubleshooting](#troubleshooting)
@@ -41,8 +42,10 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **W
 | **Real-time Popups** | Shows promotion and award notifications while playing |
 | **Mission Debriefings** | Parses mission logs to generate detailed flight reports |
 | **PDF Reports** | Creates printable career summaries with combat statistics |
+| **AI Story Generation** | Generates narrative war-diary chapters for each mission using your choice of LLM provider |
 | **Multi-Language Support** | Full support for 7 languages: English, German, French, Spanish, Polish, Russian, and Chinese |
 | **Settings Manager** | User-friendly GUI to configure all tracker settings without editing config files |
+| **Standard Campaign Import** | One-click extraction of IL-2 built-in campaigns from `Campaigns.gtp` via the Settings Manager |
 | **Mission Cleanup** | Removes incomplete missions that weren't properly finished |
 | **Backup System** | Creates backups when removing incomplete missions via cleanup tool |
 | **Restore Function** | Easy GUI to restore previous campaign states |
@@ -50,7 +53,8 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **W
 | **WW1 Detection & Exclusion** | Detects Flying Circus (WW1) campaigns and skips them by default |
 | **Control Center GUI** | Central hub to launch Tracker, Settings Manager, and Service Record |
 | **Per-Campaign Language** | Override detail page language for individual campaigns in Service Record |
-| **Career Service Record** | Dedicated web viewer for IL-2 Career Mode: reads directly from the game's `cp.db`, shows theatre chain progression, all career events, and mission debriefings |
+| **Campaign Service Record** | Web viewer for Campaign Mode: shows mission debriefings, promotions, awards, and AI stories |
+| **Career Service Record** | Dedicated web viewer for IL-2 Career Mode: reads from `cp.db`, shows theatre chain, all events, debriefings, statistics, and AI stories |
 | **German Award Style** | Choose between the 1957 Bundeswehr-era (default) and the original wartime style for German award images |
 
 ---
@@ -98,6 +102,7 @@ When you select a language, the following content is displayed in that language:
 - **PDF Reports** - Complete career reports including all statistics
 - **Campaign Service Record** - The web-based service record interface
 - **Settings Manager** - All UI labels, buttons, and messages
+- **AI Story Chapters** - Story chapters are generated in the configured story language
 
 ### Changing Language
 
@@ -132,29 +137,37 @@ When writing events to campaign files, the tracker updates **all** `info.locale=
 
 ### Step 1: Download and Install
 
-1. **Download** the latest release (`IL2_CampaignTracker_Setup_v2.2_ML.exe.zip`)
+1. **Download** the latest release (`IL2_CampaignTracker_Setup_v2.2.4_ML.exe.zip`)
 
 2. **Extract** the `zip` file
 
-3. **Run** the extracted `IL2_CampaignTracker_Setup_v2.2_ML.exe`
+3. **Run** the extracted `IL2_CampaignTracker_Setup_v2.2.4_ML.exe`
 
 4. **Follow** the installation instructions in the setup wizard
 
 The setup wizard will guide you through selecting the installation directory and configuring basic options.
 
-### Step 2: Extract Standard Campaigns (Optional but Recommended)
+### Step 2: Extract Standard Campaigns
 
-⚠️ **IMPORTANT:** The tracker can monitor **only** campaigns located in `<Path to IL-2 BoS>\data\campaigns`. Standard IL-2 campaigns are not stored directly in this folder; instead, they are run internally from `campaigns.gtp`. As a result, these campaigns must be extracted before they can be tracked.
+⚠️ **IMPORTANT:** The tracker can monitor **only** campaigns located in `<Path to IL-2 BoS>\data\campaigns`. Standard IL-2 campaigns are not stored directly in this folder — they run internally from `Campaigns.gtp`. These campaigns must be extracted before they can be tracked.
 
-🚨 **CAUTION:** If you have modified missions belonging to a standard official campaign, proceed with extreme caution when copying extracted files from `campaigns.gtp` into the `<Path to IL-2 BoS>\data\campaigns` folder. Existing files will be **overwritten**, and any custom mission modifications will be replaced by the original out-of-the-box versions.
+**Option A: Via Settings Manager (Recommended)**
 
-**To extract standard campaigns:**
+1. Open `IL2_Settings_Manager.exe`
+2. Go to the **General** tab
+3. Click **"Import Standard Campaigns"**
+4. The Settings Manager will extract campaigns from `Campaigns.gtp` (and `Missions.gtp` if present) automatically into your IL-2 `data\Campaigns` folder
+5. Only new or missing campaign files are added — no existing files are ever overwritten
+
+**Option B: Manual Extraction**
 
 1. **Download** unGTP-IL2 from: <https://www.mediafire.com/file/caxpalaudz1hd47/unGTP-IL2.zip>
 2. **Unzip & Move** the `unGTP-IL2.exe` to `<Path to IL-2 BoS>\data`
-3. **Drag** `Campaigns.gtp` onto `unGTP-IL2.exe` (ignore the error warning in the cmd-window at the end - everything has been extracted)
+3. **Drag** `Campaigns.gtp` onto `unGTP-IL2.exe` (ignore any error warning in the cmd-window at the end — everything has been extracted)
 4. **Navigate** to `<Path to IL-2 BoS>\data\(null)\campaigns`
 5. **Copy** all subfolders to `<Path to IL-2 BoS>\data\campaigns`
+
+🚨 **CAUTION:** If you have modified missions belonging to a standard official campaign, use Option A (Settings Manager) which never overwrites existing files. Manual copying will replace any files you have modified.
 
 > **Note:** The intention of extracting the standard official campaigns is ONLY to make them usable for the Campaign Tracker. Please do not modify the official campaigns.
 
@@ -179,7 +192,7 @@ The **Control Center** (`IL2_Control_Center.exe`) provides a central hub to laun
 │                                                         │
 │   [🚀 Start Tracker]     Launch the Campaign Tracker    │
 │                                                         │
-│   [❌ Stop Tracker]      Stop the Camapaign Tracker     │
+│   [❌ Stop Tracker]      Stop the Campaign Tracker      │
 │                                                         │
 │   [⚙️ Settings]          Open Settings Manager          │
 │                                                         │
@@ -202,14 +215,16 @@ The installer places the following files in your chosen installation directory:
 ```text
 IL2_Campaign_Tracker/
 ├── IL2_Control_Center.exe                # Control Center GUI (recommended entry point)
-├── IL2_Campaign_Tracker.exe              # Main executable
+├── IL2_Campaign_Tracker.exe              # Main tracker executable
 ├── IL2_Settings_Manager.exe              # Settings Manager GUI
 ├── mlg2txt.exe                           # Helper for decoding mission reports
-├── Campaign_Service_Record.exe           # Service Record web application
+├── Campaign_Service_Record.exe           # Campaign Service Record web application (port 5000)
+├── Career_Service_Record.exe             # Career Service Record web application (port 5001)
 ├── campaign_progress_config.yaml         # Ranks & awards configuration
-├── stock_campaigns.yaml                  # Campaign to Country allocation 
+├── stock_campaigns.yaml                  # Campaign to Country allocation
 ├── object_categories.yaml                # Mission debriefing data
 ├── locales/ (folder)                     # Language files (7 languages)
+├── historical_context/ (folder)          # Squadron historical context for AI stories
 ├── _internal/ (folder)                   # Service Record resources
 ├── unins000.exe                          # Uninstaller
 ├── unins000.dat                          # Uninstaller data
@@ -289,6 +304,7 @@ The **Settings Manager** (`IL2_Settings_Manager.exe`) provides a user-friendly G
 | **Language** | Select display language (English, German, French, Spanish, Polish, Russian, Chinese) |
 | **Enable Popups** | Toggle promotion/award popup notifications on/off |
 | **Rank Scaling Enabled** | Enable/disable rank scaling based on campaign length |
+| **Import Standard Campaigns** | One-click extraction of IL-2 built-in campaigns from `Campaigns.gtp` directly into `data\Campaigns` — only adds missing files, never overwrites |
 
 #### Rank Scaling Tab
 
@@ -333,6 +349,27 @@ The **Detail Page Language** setting allows you to lock a specific campaign's Se
 
 This is useful when you want to view a German campaign's debriefings in German while keeping the rest of the application in your preferred language. When you change this setting and save, the localized debriefings are automatically regenerated for the affected campaigns.
 
+#### Career Language Tab
+
+Configure language settings specific to the Career Service Record, including per-career language overrides independent of the global setting.
+
+#### German Awards Tab
+
+Switch between the 1957 Bundeswehr-era style (default) and the original wartime style for German award images.
+
+#### AI Stories Tab
+
+Configure the AI story generation feature (see [AI Story Generation](#ai-story-generation) for details):
+
+| Setting | Description |
+| ------- | ----------- |
+| **Enable AI Stories** | Toggle story generation on/off |
+| **Provider** | Select your LLM provider: OpenAI, OpenRouter, Anthropic, Google, Microsoft Azure, or Custom |
+| **API Key** | Enter your API key for the selected provider (stored per-provider) |
+| **Base URL** | API endpoint — pre-filled for known providers, editable for custom endpoints |
+| **Model** | Select or enter the model name (e.g., `gpt-4o-mini`, `claude-3-5-haiku-20241022`) |
+| **Auto-Generate** | When enabled, a story chapter is generated automatically whenever a mission debriefing is parsed |
+
 ### Auto-Regeneration
 
 When you change certain settings, the tracker automatically regenerates all affected data:
@@ -354,7 +391,7 @@ Flying Circus (WW1) campaigns are detected and excluded by default because the t
 
 - Mission dates in the 1914–1918 range
 - WW1 aircraft keywords in campaign data
-- “Flying Circus”/WW1 keywords in campaign descriptions
+- "Flying Circus"/WW1 keywords in campaign descriptions
 
 **How exclusion works:**
 
@@ -389,7 +426,9 @@ Flying Circus (WW1) campaigns are detected and excluded by default because the t
 │                          ↓                              │
 │   8. Generate PDF report                                │
 │                          ↓                              │
-│   9. Return to monitoring                               │
+│   9. Generate AI story chapter (if enabled)             │
+│                          ↓                              │
+│  10. Return to monitoring                               │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -418,7 +457,7 @@ Overall Score per Campaign = ∑ Mission Scores
 Promotion Score = Base Score × Rank Scaling Factor
 ```
 
-**Rank Scaling Factor** adjusts requirements based on campaign length (can be editited in `campaign_progress_config.yaml`):  
+**Rank Scaling Factor** adjusts requirements based on campaign length (can be edited in `campaign_progress_config.yaml`):  
 
 "1-10":    1.00   # Short campaigns (stock campaigns)  
 "11-20":   1.15   # Medium-short campaigns  
@@ -430,7 +469,7 @@ Promotion Score = Base Score × Rank Scaling Factor
 
 This prevents rapid promotions in long campaigns while ensuring fair progression in short ones.  
 
-ℹ️ **Example:** In a 24-mission campaign, the scaling factor is 1.3, so a rank requiring 1000 points would need  1300 actual points (1000 x 1.30) to achieve.  
+ℹ️ **Example:** In a 24-mission campaign, the scaling factor is 1.3, so a rank requiring 1000 points would need 1300 actual points (1000 x 1.30) to achieve.  
 When your accumulated score meets or exceeds the promotion threshold of 1300 points, you are promoted to the next rank.
 
 🚨 **IMPORTANT**: If you modify the `campaign_progress_config.yaml`, be careful to keep indentation correct (YAML format). Improper indentation can lead to parsing errors.
@@ -647,9 +686,124 @@ Later, if needed:
 
 ---
 
-## 📋 Campaign Service Record <a id="camapign-service-record"></a>
+## 📖 AI Story Generation <a id="ai-story-generation"></a>
 
-The **Campaign Service Record** is a web-based application that provides an elegant, read-only view of your pilot’s career across all ongoing and completed campaigns. It presents your service history in a clean, professional format—ideal for reviewing achievements or sharing your combat record.
+The **AI Story Generation** feature uses a Large Language Model (LLM) to write narrative war-diary chapters for each mission in your career or campaign. Stories are written in third-person historical prose — not mission-report style — and maintain continuity across sessions through a rolling narrative memory.
+
+This feature works for **both Career Mode** (Career Service Record) and **Campaign Mode** (Campaign Service Record). Chapters are displayed in the Service Record detail pages alongside your debriefings.
+
+### Supported Providers
+
+You can use any of the following LLM providers. Each requires its own API key and has its own supported models:
+
+| Provider | Notes |
+| -------- | ----- |
+| **OpenAI** | GPT-4o, GPT-4o Mini, GPT-5, etc. Default and simplest setup. |
+| **OpenRouter** | Aggregates many providers under one API key. Great for model variety. |
+| **Anthropic** | Claude 3.5 Haiku, Claude 3.5 Sonnet, etc. |
+| **Google** | Gemini 2.0 Flash, Gemini 1.5 Pro, etc. |
+| **Microsoft Azure** | GPT-4o and other Azure-deployed OpenAI models. |
+| **Custom** | Any OpenAI-compatible endpoint (LM Studio, Ollama, etc.). |
+
+### Setting Up AI Stories
+
+1. Open `IL2_Settings_Manager.exe`
+2. Go to the **AI Stories** tab
+3. **Enable AI Stories** → set to Yes
+4. Select your **Provider** from the dropdown
+5. Enter your **API Key** for that provider
+6. The **Base URL** is filled in automatically for known providers
+7. Select or enter the **Model** name
+8. Optionally enable **Auto-Generate** to create a chapter each time a mission is debriefed
+9. Click "Apply" or "OK"
+
+### How Stories Are Generated
+
+**For Career Mode:**
+
+Stories are built from data pulled directly from the game's `cp.db` and the parsed mission report:
+
+- **Pilot facts**: rank, squadron, aircraft flown during the sortie
+- **Mission facts**: date, time of day (derived), season (derived), result, flight duration, kills
+- **Mission type**: tactical role (e.g., Frontline Patrol, Escort Bombers, Bomb Bridge) derived from the mission file
+- **Formation**: size and role (leader or wingman) — Luftwaffe terminology (Rotte/Schwarm) for German pilots
+- **Career progression**: all awards held, cumulative aerial victories, current rank
+- **Mission-specific events**: awards or promotion received after this specific sortie
+- **Squadron events**: promotions, awards, KIA/MIA/WIA, and transfers of other pilots in your squadron
+- **Historical context**: period-appropriate background for your squadron, auto-enriched via LLM on first encounter
+- **Other career incidences**: recovery periods, squadron transfers, commander appointments mentioned as narrative
+- **Inter-mission promotions**: promotions that occurred on non-flying days are woven in as background context
+- **Theatre transitions**: when the pilot moves to a new theatre, the chapter uses a 4-paragraph structure covering the conclusion of the previous campaign, the transfer period (including any gap awards/promotions), arrival at the new unit, and the opening sortie
+
+**For Campaign Mode:**
+
+Stories use campaign and debriefing data:
+
+- Campaign name and background text (from campaign info file)
+- Mission date, time of day, season, result, kills, flight duration
+- Tracker-calculated rank and awards
+- Mission type derived from campaign structure
+
+### Narrative Continuity
+
+Each story session maintains a **rolling narrative memory** that carries forward between chapters:
+
+- Current rank and squadron
+- Recent mission outcomes
+- Key career milestones (promotions, significant awards)
+- Recurring themes (survival under pressure, combat leadership, etc.)
+- Total confirmed aerial victories (authoritative count from the game database)
+- Previously used chapter titles (to avoid repetition in structure and weather imagery)
+
+The narrative memory is stored locally and is used as context for each new chapter, so references to past events, established operational context, and character development remain consistent throughout the career.
+
+### Auto-Generate vs Manual
+
+| Mode | Behaviour |
+| ---- | --------- |
+| **Auto-Generate ON** | A chapter is generated automatically each time a mission is debriefed (Campaign Mode) or when you open the career detail page (Career Mode, background generation for missing chapters) |
+| **Auto-Generate OFF** | Stories are only generated when you click "Generate" in the Service Record UI |
+
+### Managing Chapters
+
+In the Service Record detail page:
+
+- **View chapters**: Story chapters appear in chronological order alongside your mission debriefings
+- **Delete a chapter**: Click the delete button on any chapter to remove it and its memory entries. The chapter count is renumbered automatically
+- **Regenerate**: After deleting, click "Generate" to create a new chapter for that mission
+- **Context preview**: An API endpoint lets you inspect the story input for any mission before generating (`/api/stories/<source>/<id>/context_preview`)
+
+> **Same-day chapter grouping**: When a pilot flew multiple sorties on the same calendar day, they are automatically combined into one chapter rather than written as separate entries. The word and paragraph targets scale accordingly (two missions → 3 paragraphs; three or more → 4 paragraphs).
+
+### Story Data Storage
+
+Story chapters and narrative memory are stored outside the application install directory so they survive reinstalls:
+
+```text
+%LOCALAPPDATA%\.il2_campaign_service_record\story_data\
+    careers\
+        <career_id>\
+            memory.json          # Rolling narrative state
+            chapters\
+                0001_1941-06-22.json
+                0002_1941-06-23.json
+                ...
+    campaigns\
+        <campaign_name>\
+            memory.json
+            chapters\
+                ...
+```
+
+### Historical Context Enrichment
+
+If no historical data exists for your squadron in the local `historical_context/squadrons.json` file, the application calls the LLM to generate a period-accurate background summary and caches it for future use. This happens transparently on first story generation for an unknown squadron.
+
+---
+
+## 📋 Campaign Service Record <a id="campaign-service-record"></a>
+
+The **Campaign Service Record** is a web-based application that provides an elegant, read-only view of your pilot's career across all ongoing and completed campaigns. It presents your service history in a clean, professional format—ideal for reviewing achievements or sharing your combat record.
 
 ⚠️ **IMPORTANT**: The Campaign Service Record is not a standalone system. It operates exclusively in conjunction with the tracker and its associated files, which supply the required campaign data.
 
@@ -661,6 +815,7 @@ The **Campaign Service Record** is a web-based application that provides an eleg
   - Chronological timeline of promotions and awards
   - Career statistics (air kills, ground kills, mission success rates)
   - Aircraft usage and performance breakdown
+- **AI Story Chapters**: If AI stories are configured, each mission entry shows its generated narrative chapter alongside the debriefing
 - **Pilot Profile**: Display and customize pilot name, photo, and personal information per campaign
 - **Responsive Design**: Clean, modern interface that works on any screen size
 - **Auto-Generated**: Automatically reads data from your Campaign Tracker files - no manual input required
@@ -692,7 +847,7 @@ The **Campaign Service Record** is a web-based application that provides an eleg
   - Mission outcomes
   - Aircraft usage breakdown
   - and more
-- **Right Column**: Mission debriefings with detailed combat results
+- **Right Column**: Mission debriefings with detailed combat results, and AI story chapters (if generated)
 - **Back Button**: Return to campaign overview
 
 **Per-Campaign Language**: The detail page can display in a different language than the global setting. This is configured in the Settings Manager under the Campaigns tab. When a campaign has a specific language override, the detail page (including debriefings) will display in that language, while the landing page remains in your global language.
@@ -774,7 +929,7 @@ To comply with legal regulations in multiple countries and to respect community 
 Users who require historically accurate imagery may replace the images locally:
 
 - Replace award images in  
-  `<path to IL-2 BoS>\data\swf\CampaignRanksAwards\Germany`  
+  `<path to IL-2 BoS>\data\swf\CampaignRanksAwards\Germany`
  
 - Replace the German background and flag images in  
   `<tracker installation folder>\_internal\static\images\background_Germany.png`  
@@ -794,7 +949,7 @@ Users who require historically accurate imagery may replace the images locally:
 
 ## 🪖 Career Service Record <a id="career-service-record"></a>
 
-The **Career Service Record** is a separate web-based application for IL-2's built-in **Career Mode** (not Campaign Mode). It reads your career data directly from the game's own `cp.db` SQLite database—no separate tracker or data files required. It presents your pilot's full service history across all theatres, including promotions, awards, missions, and more.
+The **Career Service Record** is a separate web-based application for IL-2's built-in **Career Mode** (not Campaign Mode). It reads your career data directly from the game's own `cp.db` SQLite database—no separate tracker or data files required. It presents your pilot's full service history across all theatres, including promotions, awards, missions, debriefings, combat statistics, and AI-generated story chapters.
 
 ⚠️ **IMPORTANT**: The Career Service Record requires IL-2 Sturmovik: Great Battles to be installed and at least one Career to have been started in-game. It reads the game's data files directly and does not depend on the Campaign Tracker files.
 
@@ -814,11 +969,15 @@ The **Career Service Record** is a separate web-based application for IL-2's bui
   - PCP Score (Pilot Combat Points)
   - Air kills, ground kills, vehicle kills
   - Missions flown and mission outcomes
-- **Mission Debriefings**: Parses linked `missionReport` files and displays detailed debriefings per sortie. Debriefings are cached and built in the background on first load.
-- **Pilot Profile**: Customisable pilot photo, birth date, place of birth, and country of birth per career—persisted across sessions
-- **German Award Style Selection**: Choose between the default 1957 Bundeswehr-era style and the original wartime style for German award images (configured at installation time)
+  - Aircraft usage with correctly resolved display names
+- **Mission Debriefings**: Parses linked `missionReport` files and displays detailed debriefings per sortie — including mission type (e.g., Frontline Patrol, Escort Bombers), formation size and role, kills by category, and pilot outcome. Debriefings are cached and built in the background on first load.
+- **AI Story Chapters**: When AI stories are configured, a narrative war-diary chapter is displayed alongside each mission debriefing (see [AI Story Generation](#ai-story-generation))
+- **Career PDF Report**: Generate a printable PDF of your full career — includes per-mission kill tables, mission statistics, awards and promotions with full-size medal images, AI story chapters, and career-wide summary statistics. Triggered via the "Download PDF" button in the career detail page
+- **Pilot Profile**: Customisable pilot photo, birth date, place of birth, and country of birth per career — persisted across sessions
+- **German Award Style Selection**: Choose between the default 1957 Bundeswehr-era style and the original wartime style for German award images (configured in Settings Manager)
 - **Responsive Design**: Clean, modern interface that works on any screen size
 - **Fully Localised**: All UI text, event labels, and rank/award names respect your selected language. Each career can also display in a different language if configured
+- **Database Consistency Correction**: At startup, the Career Service Record automatically reconciles kill rollup counters (`killLightPlane`, `killMediumPlane`, `killHeavyPlane`) for AI squadron pilots in `cp.db`, correcting a known game bug where the parent totals go stale
 
 ### How to Use
 
@@ -843,8 +1002,8 @@ The **Career Service Record** is a separate web-based application for IL-2's bui
 #### Career Detail Page
 
 - **Left Column**: Pilot profile (customisable photo and personal data); chronological event timeline showing promotions, awards, appointments, transfers, and recovery periods
-- **Middle Column**: Career statistics — PCP Score, kill breakdown (air, ground, vehicles), mission outcomes, and aircraft usage
-- **Right Column**: Mission debriefings with per-sortie kill details, flight time, and outcomes
+- **Middle Column**: Career statistics — PCP Score, kill breakdown (air, ground, vehicles), mission outcomes, and aircraft usage with proper display names
+- **Right Column**: Mission debriefings with per-sortie kill details, flight time, mission type, formation details, and pilot outcome; AI story chapters displayed alongside each debriefing
 - **Back Button**: Return to career overview
 
 ### Customising Pilot Information
@@ -894,13 +1053,22 @@ Click the pilot photo or any editable field to customise:
 - Wait a moment after opening the career detail page — debriefings are parsed in the background on first load
 - Reload the page after a few seconds; a progress indicator will appear while parsing is in progress
 
+#### Problem: AI story chapters are not appearing
+
+**Cause**: AI Stories are not enabled or not configured
+**Solution**:
+
+- Open `IL2_Settings_Manager.exe` → AI Stories tab
+- Confirm AI Stories is set to "Yes" and a valid API key and model are entered
+- Click "Generate" in the Service Record UI, or enable Auto-Generate in Settings Manager
+
 ### Technical Information
 
 - **Server Address**: `http://127.0.0.1:5001` (local machine only)
 - **Auto-Shutdown**: Server automatically stops after 60 seconds of inactivity
 - **Data Source**: Reads directly from `<IL-2 installation>\data\Career\cp.db`
 - **Browser Compatibility**: Works with all modern browsers (Chrome, Firefox, Edge)
-- **Network**: Does not require internet connection; runs entirely on your local machine
+- **Network**: Does not require internet connection; runs entirely on your local machine (AI story generation requires an internet connection to reach the configured LLM provider)
 
 ---
 
@@ -912,7 +1080,7 @@ Click the pilot photo or any editable field to customise:
 |------|---------|---------------|
 |`campaign_progress_config.yaml`|Ranks, awards, criteria, and settings|✅ Yes (or use Settings Manager)|
 |`campaign_mission_dates.json`|Campaign metadata, mission dates, countries|⚠️ Careful (use Settings Manager for offsets)|
-|`settings.json`|User preferences (language, etc.)|✅ Via Settings Manager|
+|`settings.json`|User preferences (language, AI story settings, etc.)|✅ Via Settings Manager|
 |`locales/*.json`|Language translation files|⚠️ Advanced users only|
 
 ### Configuration Details
@@ -957,6 +1125,25 @@ settings:
 
 ```
 
+#### settings.json
+
+Auto-generated on first run, contains user preferences:
+
+```json
+{
+  "locale": "en",
+  "stories": {
+    "enabled": true,
+    "provider": "openai",
+    "api_keys": {
+      "openai": "sk-..."
+    },
+    "model": "gpt-4o-mini",
+    "auto_generate": false
+  }
+}
+```
+
 #### campaign_mission_dates.json
 
 Auto-generated during first run, contains:
@@ -966,7 +1153,7 @@ Auto-generated during first run, contains:
   "kerch": {
     "campaign_name": "kerch",
     "country": "Germany",
-    "is_stock": true, --> Standard IL-2 BoS campaign        
+    "is_stock": true,
     "starting_rank_offset": 0,
     "mission_count": 12,
     "missions": {
@@ -979,7 +1166,9 @@ Auto-generated during first run, contains:
         "raw_date": "6 November, 1943",
         "normalized_date": "1943-11-06",
         "mission_file": "02.eng"
-      }, ...
+      }
+    }
+  }
 }
 ```
 
@@ -991,7 +1180,16 @@ Auto-generated during first run, contains:
 | `campaign_popups_seen.json` | Tracks shown popups per campaign | Tracker folder |
 | `campaign_events.json` | Generated events (promotions/awards) | Tracker folder |
 | `campaign_completion_state.json` | Tracks mission completion between runs | Tracker folder |
-| `settings.json` | User preferences (language, popups, etc.) | Tracker folder |
+| `settings.json` | User preferences (language, AI stories, etc.) | Tracker folder |
+
+### Story Data Files (Auto-Generated)
+
+| Location | Purpose |
+| -------- | ------- |
+| `%LOCALAPPDATA%\.il2_campaign_service_record\story_data\careers\<id>\memory.json` | Rolling narrative memory for a career |
+| `%LOCALAPPDATA%\.il2_campaign_service_record\story_data\careers\<id>\chapters\*.json` | Story chapter files for a career |
+| `%LOCALAPPDATA%\.il2_campaign_service_record\story_data\campaigns\<name>\memory.json` | Rolling narrative memory for a campaign |
+| `%LOCALAPPDATA%\.il2_campaign_service_record\story_data\campaigns\<name>\chapters\*.json` | Story chapter files for a campaign |
 
 ### Backup Files
 
@@ -1049,6 +1247,15 @@ Auto-generated during first run, contains:
 | ------- | -------- |
 | IL-2 caches description | Restart IL-2 to see updated campaign description |
 | Events written to wrong file | Check campaign country assignment |
+
+### AI Story Generation Fails
+
+| Problem | Solution |
+| ------- | -------- |
+| No API key configured | Open Settings Manager → AI Stories tab and enter your API key |
+| Wrong model name | Check the provider's documentation for exact model IDs |
+| Rate limit hit | Wait and try again, or switch to a different model |
+| Custom endpoint unreachable | Verify the base URL is correct and the local server is running |
 
 ---
 
@@ -1184,11 +1391,23 @@ For advanced customization, `campaign_progress_config.yaml` can be edited manual
 
 ### Q: Can I use the tracker with Flying Circus (WWI)?
 
-**A:** Flying Circus campaigns are detected and excluded by default. The tracker is designed for WWII campaigns and does not include WWI-era ranks or awards. You can control exclusions during the country validation step (WW1 “ignore” checkbox), but WW1 campaigns won’t have historically accurate ranks or awards.
+**A:** Flying Circus campaigns are detected and excluded by default. The tracker is designed for WWII campaigns and does not include WWI-era ranks or awards. You can control exclusions during the country validation step (WW1 "ignore" checkbox), but WW1 campaigns won't have historically accurate ranks or awards.
 
-### Q: Can I use the tracker Pat Wilson's Campaing Generator (PWCG)?
+### Q: Can I use the tracker with Pat Wilson's Campaign Generator (PWCG)?
 
-**A:** No - this tracker does NOT work wit PWCG but also does NOT interfere with it
+**A:** No - this tracker does NOT work with PWCG but also does NOT interfere with it.
+
+### Q: Do I need an internet connection to use the tracker?
+
+**A:** No — the tracker and both Service Records work entirely offline. An internet connection is only required when generating AI story chapters (to reach your configured LLM provider). All other features — monitoring, debriefings, promotions, awards, PDF reports, and the Service Record UI — work without an internet connection.
+
+### Q: Which LLM model should I use for AI stories?
+
+**A:** For OpenAI, `gpt-4o-mini` offers the best balance of quality and cost. For OpenRouter, `openai/gpt-4o-mini` is a solid default. For Anthropic, `claude-3-5-haiku-20241022` is fast and capable. Any model that reliably returns JSON and generates coherent prose of 150–400 words per response will work well.
+
+### Q: How much does AI story generation cost?
+
+**A:** Cost depends entirely on your provider and model. A typical career story chapter (180–380 words of output) uses around 1,500–3,000 tokens per mission. At `gpt-4o-mini` pricing (as of 2025), this is less than $0.01 per chapter. A full career of 100 missions would cost roughly $0.50–1.00 with that model.
 
 ---
 
