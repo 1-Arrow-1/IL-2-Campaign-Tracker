@@ -1581,7 +1581,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 pilot_last_name=career.pilot_last_name or "",
                 rank=rank_before_mission or rank,
                 awards=[a for a in awards if a not in mission_awards_for_story] if mission_awards_for_story else [],
-                promotion=promotion_for_story,
+                promotion=None,
                 mission_awards=mission_awards_for_story,
                 mission_promotion=promotion_for_story,
                 honors_context=_build_honors_context(career.country, promotion_for_story, mission_awards_for_story),
