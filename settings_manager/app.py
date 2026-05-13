@@ -325,6 +325,12 @@ class SettingsManagerApp(tk.Tk):
         self._stock_import_thread: Optional[threading.Thread] = None
         self._stock_import_queue: "queue.Queue[Dict[str, Any]]" = queue.Queue()
         self._stock_import_poll_id: Optional[str] = None
+        self._force_regen_btn: Optional[ttk.Button] = None
+        self._force_regen_status_var = tk.StringVar(value="")
+        self._force_regen_thread: Optional[threading.Thread] = None
+        self._force_regen_queue: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+        self._force_regen_poll_id: Optional[str] = None
+        self._force_regen_start_time: float = 0.0
         self._story_test_thread: Optional[threading.Thread] = None
         self._story_test_queue: "queue.Queue[Dict[str, Any]]" = queue.Queue()
         self._story_test_poll_id: Optional[str] = None
@@ -924,6 +930,22 @@ class SettingsManagerApp(tk.Tk):
             foreground='gray',
         ).pack(side=tk.LEFT, padx=(12, 0))
 
+        rebuild_row = ttk.Frame(frame)
+        rebuild_row.pack(fill=tk.X, pady=(0, 12))
+
+        self._force_regen_btn = ttk.Button(
+            rebuild_row,
+            text=self.tr.t("btn_rebuild_campaign_data"),
+            command=self._on_force_regen_campaigns,
+        )
+        self._force_regen_btn.pack(side=tk.LEFT)
+
+        ttk.Label(
+            rebuild_row,
+            textvariable=self._force_regen_status_var,
+            foreground='gray',
+        ).pack(side=tk.LEFT, padx=(12, 0))
+
         # Treeview
         columns = ('campaign', 'country', 'language', 'offset')
         self.campaigns_tree = ttk.Treeview(
@@ -1180,6 +1202,69 @@ class SettingsManagerApp(tk.Tk):
             updated_line=updated_line,
             skipped_line=skipped_line,
         )
+
+    # === Force Regenerate Campaign Data ===
+
+    def _set_force_regen_running(self, running: bool, status_text: str = "") -> None:
+        self._force_regen_status_var.set(status_text)
+        if self._force_regen_btn is not None:
+            self._force_regen_btn.config(state='disabled' if running else 'normal')
+        if self._stock_import_btn is not None:
+            self._stock_import_btn.config(state='disabled' if running else 'normal')
+
+    def _on_force_regen_campaigns(self) -> None:
+        if self._force_regen_thread is not None and self._force_regen_thread.is_alive():
+            return
+        confirmed = messagebox.askyesno(
+            self.tr.t("msg_confirm_title"),
+            self.tr.t("msg_force_regen_confirm"),
+            parent=self,
+        )
+        if not confirmed:
+            return
+        self._set_force_regen_running(True, self.tr.t("msg_force_regen_running"))
+        self._force_regen_queue = queue.Queue()
+        if self._force_regen_poll_id:
+            self.after_cancel(self._force_regen_poll_id)
+            self._force_regen_poll_id = None
+        self._force_regen_start_time = time.monotonic()
+        self._force_regen_thread = threading.Thread(
+            target=self._run_force_regen_worker,
+            daemon=True,
+        )
+        self._force_regen_thread.start()
+        self._force_regen_poll_id = self.after(200, self._poll_force_regen_queue)
+
+    def _run_force_regen_worker(self) -> None:
+        locale = (self.settings_data or {}).get("locale") or "en"
+        error = self._refresh_localized_artifacts(locale)
+        self._force_regen_queue.put({"error": error})
+
+    def _poll_force_regen_queue(self) -> None:
+        try:
+            payload = self._force_regen_queue.get_nowait()
+        except queue.Empty:
+            elapsed_s = int(time.monotonic() - self._force_regen_start_time)
+            mm, ss = elapsed_s // 60, elapsed_s % 60
+            base = self.tr.t("msg_force_regen_running")
+            self._force_regen_status_var.set(f"{base} {mm:02d}:{ss:02d}")
+            self._force_regen_poll_id = self.after(200, self._poll_force_regen_queue)
+            return
+        self._force_regen_poll_id = None
+        error = payload.get("error")
+        self._set_force_regen_running(False, "")
+        if error:
+            messagebox.showerror(
+                self.tr.t("msg_error_title"),
+                self.tr.t("msg_force_regen_failed", error=error),
+                parent=self,
+            )
+        else:
+            messagebox.showinfo(
+                self.tr.t("msg_confirm_title"),
+                self.tr.t("msg_force_regen_success"),
+                parent=self,
+            )
 
     # === Career Language Settings Tab ===
 

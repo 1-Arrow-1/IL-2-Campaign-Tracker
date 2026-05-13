@@ -844,6 +844,7 @@
       "restore_defaults": "Standards wiederherstellen",
       "swap_award_style": "Auszeichnungsstil wechseln",
       "import_stock_campaigns": "Standard-IL-2-Kampagnen importieren",
+      "rebuild_campaign_data": "Alle Kampagnendaten neu erstellen",
       "refresh_models": "Verfügbare Modelle abrufen"
     },
     "dialog": {
@@ -931,6 +932,10 @@
       "stock_campaigns_summary_none": "keine",
       "stock_campaigns_summary_skipped": "Bereits vorhanden, uebersprungen ({count}): {campaigns}",
       "stock_campaigns_summary_updated": "Mit neuen Missionen aktualisiert ({count}): {campaigns}",
+      "force_regen_confirm": "Alle Missionsprotokolle werden erneut verarbeitet und die Einsatzbesprechungen für jede Kampagne neu erstellt.\n\nDies kann je nach Anzahl der Kampagnen und geflogenen Missionen mehrere Minuten dauern.\n\nFortfahren?",
+      "force_regen_running": "Kampagnendaten werden neu erstellt...",
+      "force_regen_success": "Alle Kampagnendaten wurden erfolgreich neu erstellt.\n\nEinsatzbesprechungen und Missionstexte sind jetzt aktuell.",
+      "force_regen_failed": "Fehler beim Neu-Erstellen der Kampagnendaten:\n{error}",
       "stock_campaigns_uac_cancelled": "Die Administratorrechte-Anfrage wurde abgebrochen. Es wurden keine Kampagnen importiert.",
       "story_refresh_provider_not_supported": "Das Abrufen verfügbarer Modelle wird für den benutzerdefinierten Anbieter nicht unterstützt. Gib die Modell-ID manuell ein.",
       "story_refresh_running": "Verfügbare Modelle von {provider} werden abgerufen...",

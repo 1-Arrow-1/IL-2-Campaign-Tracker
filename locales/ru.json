@@ -844,6 +844,7 @@
       "restore_defaults": "Восстановить По Умолчанию",
       "swap_award_style": "Сменить стиль наград",
       "import_stock_campaigns": "Импорт стандартных кампаний IL-2",
+      "rebuild_campaign_data": "Rebuild All Campaign Data",
       "refresh_models": "Получить доступные модели"
     },
     "dialog": {
@@ -931,6 +932,10 @@
       "stock_campaigns_summary_none": "нет",
       "stock_campaigns_summary_skipped": "Пропущено существующих ({count}): {campaigns}",
       "stock_campaigns_summary_updated": "Обновлено новыми миссиями ({count}): {campaigns}",
+      "force_regen_confirm": "This will reprocess all mission logs and rebuild debriefings for every campaign.\n\nIt may take several minutes depending on how many campaigns and missions you have flown.\n\nContinue?",
+      "force_regen_running": "Rebuilding campaign data...",
+      "force_regen_success": "All campaign data has been rebuilt successfully.\n\nDebriefings and mission texts are now up to date.",
+      "force_regen_failed": "Campaign data rebuild failed:\n{error}",
       "stock_campaigns_uac_cancelled": "Запрос прав администратора был отменён. Ни одна кампания не была импортирована.",
       "story_refresh_provider_not_supported": "Получение доступных моделей не поддерживается для пользовательского провайдера. Введите идентификатор модели вручную.",
       "story_refresh_running": "Получение доступных моделей от {provider}...",

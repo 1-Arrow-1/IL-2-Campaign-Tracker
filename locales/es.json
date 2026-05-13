@@ -844,6 +844,7 @@
       "restore_defaults": "Restaurar Predeterminados",
       "swap_award_style": "Cambiar estilo de condecoraciones",
       "import_stock_campaigns": "Importar campanas estandar de IL-2",
+      "rebuild_campaign_data": "Rebuild All Campaign Data",
       "refresh_models": "Obtener modelos disponibles"
     },
     "dialog": {
@@ -931,6 +932,10 @@
       "stock_campaigns_summary_none": "ninguna",
       "stock_campaigns_summary_skipped": "Omitidas por existir ya ({count}): {campaigns}",
       "stock_campaigns_summary_updated": "Actualizadas con nuevas misiones ({count}): {campaigns}",
+      "force_regen_confirm": "This will reprocess all mission logs and rebuild debriefings for every campaign.\n\nIt may take several minutes depending on how many campaigns and missions you have flown.\n\nContinue?",
+      "force_regen_running": "Rebuilding campaign data...",
+      "force_regen_success": "All campaign data has been rebuilt successfully.\n\nDebriefings and mission texts are now up to date.",
+      "force_regen_failed": "Campaign data rebuild failed:\n{error}",
       "stock_campaigns_uac_cancelled": "La elevacion de administrador fue cancelada. No se importo ninguna campana.",
       "story_refresh_provider_not_supported": "La obtención de modelos disponibles no es compatible con el proveedor personalizado. Introduce el ID del modelo manualmente.",
       "story_refresh_running": "Obteniendo modelos disponibles de {provider}...",

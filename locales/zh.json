@@ -844,6 +844,7 @@
       "restore_defaults": "恢复默认",
       "swap_award_style": "切换勋章样式",
       "import_stock_campaigns": "导入 IL-2 标准战役",
+      "rebuild_campaign_data": "Rebuild All Campaign Data",
       "refresh_models": "获取可用模型"
     },
     "dialog": {
@@ -931,6 +932,10 @@
       "stock_campaigns_summary_none": "无",
       "stock_campaigns_summary_skipped": "已跳过现有项 ({count})：{campaigns}",
       "stock_campaigns_summary_updated": "已更新新任务 ({count})：{campaigns}",
+      "force_regen_confirm": "This will reprocess all mission logs and rebuild debriefings for every campaign.\n\nIt may take several minutes depending on how many campaigns and missions you have flown.\n\nContinue?",
+      "force_regen_running": "Rebuilding campaign data...",
+      "force_regen_success": "All campaign data has been rebuilt successfully.\n\nDebriefings and mission texts are now up to date.",
+      "force_regen_failed": "Campaign data rebuild failed:\n{error}",
       "stock_campaigns_uac_cancelled": "已取消管理员权限提升。未导入任何战役。",
       "story_refresh_provider_not_supported": "自定义提供商不支持获取可用模型。请手动输入模型 ID。",
       "story_refresh_running": "正在从 {provider} 获取可用模型...",
