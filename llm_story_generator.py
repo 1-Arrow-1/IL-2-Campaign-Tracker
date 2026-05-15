@@ -1558,6 +1558,13 @@ def generate_mission_story(
         _sq_ctx.get("promotions") or _sq_ctx.get("awards")
         or _sq_ctx.get("kia") or _sq_ctx.get("mia") or _sq_ctx.get("wia")
         or any(
+            int(fr.get("air_kills") or 0) > 0
+            or int(fr.get("ground_kills") or 0) > 0
+            or (fr.get("outcome") or "") in ("killed", "bailed_survived", "shot_down")
+            for fr in (_sq_ctx.get("flight_results") or [])
+            if isinstance(fr, dict)
+        )
+        or any(
             (item.get("casualties") or item.get("awards") or item.get("promotions"))
             for item in (_inter_acts if isinstance(_inter_acts, list) else [])
             if isinstance(item, dict)
@@ -1575,8 +1582,8 @@ def generate_mission_story(
             max_output_tokens = 1300
         elif _has_squadron_honors:
             paragraph_rule = "Write exactly 4 paragraphs."
-            word_target = "Target 220-480 words."
-            max_output_tokens = 1250
+            word_target = "Target 250-600 words."
+            max_output_tokens = 1550
         else:
             paragraph_rule = "Write exactly 3 paragraphs."
             word_target = "Target 180-370 words."
@@ -1635,7 +1642,7 @@ def generate_mission_story(
         "- Do not invent squadron-member outcomes not present in squadron_context.\n"
         "- Do not name any person (pilot, commander, wingman, Staffelkapitän, adjutant, greeting officer, etc.) who does not appear explicitly in squadron_context. Inventing named individuals is strictly forbidden — do not do this even when it would make the prose feel more vivid or personal. Use 'his superior', 'the duty officer', or similar generic references instead.\n"
         "- When referencing a pilot listed in squadron_context, use their name exactly as supplied. If a rank field is present for that pilot entry, you may use it — e.g. 'Unteroffizier Müller was awarded...'. Never invent or assume a rank that is not in the supplied entry.\n"
-        "- If squadron_context.flight_results is present and non-empty, you may weave 1-2 significant entries naturally into the narrative — do not recite them as a list. "
+        "- If squadron_context.flight_results is present and non-empty, weave all significant entries naturally into the narrative — do not recite them as a list. "
         "An entry with outcome 'killed' is a significant loss and worth noting. "
         "An entry with outcome 'bailed_survived' means the pilot was shot down but parachuted to safety. "
         "An entry with outcome 'shot_down' means the aircraft was lost (fate of the pilot was uncertain in the field). "

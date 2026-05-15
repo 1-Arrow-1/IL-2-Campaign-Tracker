@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 #define MyAppName "IL-2 Great Battles SP Campaign Tracker Multi Language"
 #define MyAppExeName "IL2_Tracker_Control_GUI.exe"
-#define MyAppVersion "2.2.4"
+#define MyAppVersion "2.2.6"
 #define MyAppPublisher "Arrow_1"
 
 [Setup]
