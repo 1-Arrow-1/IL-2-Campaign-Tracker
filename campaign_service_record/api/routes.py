@@ -731,6 +731,44 @@ def _read_campaign_info_context(campaign_name: str, story_language: str) -> dict
     }
 
 
+def _read_pilot_bio(game_dir, bio_id: int, story_language: str, max_chars: int = 1200) -> str:
+    """
+    Read the character bio text for a given bio ID from the game's characterbio directory.
+
+    Tries the story language first, falls back to English, then returns "" if not found.
+    Truncates to max_chars to keep the LLM context lean.
+    """
+    if not game_dir or not bio_id:
+        logger.warning("_read_pilot_bio: skipped — game_dir=%r bio_id=%r", game_dir, bio_id)
+        return ""
+    try:
+        from pathlib import Path as _Path
+        bio_dir = _Path(game_dir) / "data" / "swf" / "il2" / "characterbio"
+        il2_locale = APP_TO_IL2_LOCALE.get(story_language, "eng")
+        candidates = [
+            bio_dir / f"bio.id={bio_id}.locale={il2_locale}.txt",
+            bio_dir / f"bio.id={bio_id}.locale=eng.txt",
+        ]
+        logger.info("_read_pilot_bio: checking candidates %s", [str(p) for p in candidates])
+        for path in candidates:
+            if path.exists():
+                try:
+                    text = path.read_text(encoding="utf-8", errors="ignore").strip()
+                    if text:
+                        if len(text) > max_chars:
+                            text = text[:max_chars].rstrip() + "..."
+                        logger.info("_read_pilot_bio: loaded %d chars from %s", len(text), path)
+                        return text
+                except OSError as exc:
+                    logger.warning("_read_pilot_bio: OSError reading %s: %s", path, exc)
+                    continue
+            else:
+                logger.info("_read_pilot_bio: not found — %s", path)
+    except Exception:
+        logger.exception("_read_pilot_bio: unexpected error for bio_id=%s game_dir=%s", bio_id, game_dir)
+    return ""
+
+
 def _parse_story_date(text: str) -> str:
     value = _normalize_story_text(text)
     if not value:
@@ -1605,6 +1643,26 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
     except Exception:
         initial_career_rank = ""
 
+    # Load pilot bio once — injected into every chapter context.
+    _pilot_bio: str = ""
+    try:
+        _bio_pilot_row = db.get_pilot_by_id(career.pilot_id)
+        if _bio_pilot_row:
+            from campaign_service_record.career.database import PilotDescriptionParser as _PDP
+            _bio_id = _PDP.parse_bio_id(_bio_pilot_row["description"] or "")
+            logger.info(
+                "Pilot bio lookup: pilot_id=%s bio_id=%s game_dir=%s story_language=%s",
+                career.pilot_id, _bio_id, db.game_dir, story_language,
+            )
+            if _bio_id:
+                _pilot_bio = _read_pilot_bio(db.game_dir, _bio_id, story_language)
+                logger.info("Pilot bio loaded: %d chars", len(_pilot_bio))
+        else:
+            logger.warning("Pilot bio: no pilot row found for pilot_id=%s", career.pilot_id)
+    except Exception:
+        logger.exception("Pilot bio load failed for pilot_id=%s", career.pilot_id)
+        _pilot_bio = ""
+
     _accumulated_air_kills: int = 0
     _narrative_memory: dict = {}
     _prev_segment_index: int = -1
@@ -2003,6 +2061,8 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             mission_story_input["career_progress"]["aerial_victories"] = _accumulated_air_kills
             if pre_service_awards:
                 mission_story_input["pre_service_awards"] = pre_service_awards
+            if _pilot_bio:
+                mission_story_input["pilot_bio"] = _pilot_bio
             mission_story_input["mission"]["notable_events"] = notables
             mission_story_input["mission"]["other_incidences"] = story_incidences
             mission_story_input["mission"]["result"] = mission_result
@@ -2447,12 +2507,23 @@ def career_debug():
         if game_dir else False
     )
 
+    characterbio_path = (
+        str(game_dir / 'data' / 'swf' / 'il2' / 'characterbio')
+        if game_dir else None
+    )
+    characterbio_exists = (
+        (game_dir / 'data' / 'swf' / 'il2' / 'characterbio').is_dir()
+        if game_dir else False
+    )
+
     return jsonify({
         'rank_mode': 'mod' if resolver._mod_dir else 'standard',
         'mod_dir': str(resolver._mod_dir) if resolver._mod_dir else None,
         'game_dir': str(game_dir) if game_dir else None,
         'charactersranks_path_checked': charactersranks_path,
         'charactersranks_exists_now': charactersranks_exists,
+        'characterbio_path_checked': characterbio_path,
+        'characterbio_exists_now': characterbio_exists,
         # Index sizes — 0 means CampaignRanksAwards was not found; detail page
         # events will render without images but should not crash.
         'award_index_entries': len(aggregator._award_index),

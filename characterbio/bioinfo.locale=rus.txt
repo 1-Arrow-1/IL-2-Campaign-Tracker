@@ -1,0 +1,115 @@
+﻿list=id,name|
+
+101001,Пилот "Аэрофлота"|
+101002,Футболист|
+101003,Музыкант|
+101004,Ветеран|
+101005,Инструктор|
+101006,Интеллигент|
+101007,Баламут|
+101008,Маэстро|
+101009,Рабочий|
+101010,Дагестанец|
+101011,Колхозник|
+101012,Танкист|
+
+102001,Канадец|
+102002,Лётчик из Чехословакии|
+102003,Ветеран ВВС Пустыни|
+102004,Малой из Ист-Сайда|
+102005,Сын фермера|
+102006,Механик|
+102007,Музыкант из Мерсисайда|
+102008,Малыш из Норфолка|
+102009,Военнопленный поляк|
+102010,Регбист|
+102011,Младший брат|
+102012,Шотландский летчик из Файфа|
+102013,Мечтатель|
+102014,Богатей|
+102015,Инструктор|
+
+103001,Курсант|
+103002,Самогонщик из Алабамы|
+103003,Парень из предгорий|
+103004,Ковбой из Монтаны|
+103005,Внук продавца автомобилей|
+103006,Пилот бомбардировщика|
+103007,Юноша из Айдахо|
+103008,Пилот биплана из Айовы|
+103009,Сын мясника из Нью-Йорка|
+103010,Ветеран Филиппин|
+103011,Рабочий из Вирджинии|
+103012,Ковбой из Западного Техаса|
+103013,Переживший "пыльный котёл"|
+103014,Рядовой пилот из Миннесоты|
+103015,Ветеран Северной Африки|
+103016,Сын авиатора Первой Мировой|
+
+201001,Пилот "Люфтганзы"|
+201002,Спортсмен|
+201003,Плейбой|
+201004,Почтальон|
+201005,Выскочка|
+201006,Ветеран ПМВ|
+201007,Альпинист|
+201008,Сын торговца|
+201009,Лыжник|
+201010,Рабочий|
+201011,Механик|
+201012,Стрелок и пилот|
+201013,Испанский доброволец|
+201014,Итальянский мечтатель|
+
+301001,French Laborer|
+301002,French Traveller|
+301003,French Nobleman from Normandy|
+301004,French Military Family from the South|
+301005,Italian Nobleman|
+301006,Belgian Nobelman|
+301007,Craftsman from French-Indochina|
+
+302001,British Commoner|
+302002,British Nobleman|
+302003,British Military Family|
+302004,British Scoundrel|
+302005,British Writer|
+302006,British Commonwealth Flier from New South Wales|
+302007,British Commonwealth Flier from Victoria|
+302008,British Infantryman|
+302009,British Commonwealth Fisherman from Newfoundland|
+302010,British Commonwealth Sheep Rancher from Perth|
+302011,British Commonwealth Reverend's Son|
+302012,Commonwealth Soldier from New Zealand|
+302013,Commonwealth Soldier from South Africa|
+
+303001,American Laborer|
+303002,American Wealthy Family|
+303003,American Military Family|
+303004,American Sports Star|
+303005,American Race Car Driver|
+303006,American Older Gentleman|
+303007,American Religious Family|
+
+201001,German Lufthansa Pilot|
+201002,German Athlete|
+201003,German Playboy|
+201004,The Transporter|
+201005,Wanna-be|
+201006,German WW I Veteran|
+201007,Mountaineer|
+201008,Son of a Merchant|
+201009,German Skier|
+201010,German Factory Laborer|
+201011,German Mechanic|
+201012,The Gunner and the Pilot|
+201013,Spanish Volunteer|
+201014,Italian Dreamer|
+
+401001,German Sportsman|
+401002,German Military Family|
+401003,German Colonial|
+401004,German Laborer|
+401005,German Nobleman from Frankfurt|
+401006,German Skilled Craftsman|
+401007,German Nobleman from Saxony|

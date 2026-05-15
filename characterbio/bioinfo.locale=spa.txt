@@ -1,0 +1,100 @@
+﻿list=id,name|
+
+101001,Piloto de Aeroflot|
+101002,Cazagoles|
+101003,Músico|
+101004,Veterano|
+101005,Instructor|
+101006,Piloto erudito|
+101007,Problemático del Volga|
+101008,Maestro|
+101009,Trabajador de fábrica|
+101010,Piloto de Daguestán|
+101011,Agricultor|
+101012,Amante de los tanques|
+
+102001,El canadiense|
+102002,Aviador checoslovaco|
+102003,Veterano de la DAF|
+102004,Muchacho del East End|
+102005,Hijo de granjero|
+102006,Mecánico|
+102007,Músico de Merseyside|
+102008,Chaval de Norfolk|
+102009,Prisionero polaco|
+102010,Jugador de rugby|
+102011,El segundo hijo|
+102012,Piloto escocés de Fife|
+102013,El soñador|
+102014,El ricachón|
+102015,El instructor|
+
+103001,Cadete de West Point|
+103002,Traficante de alcohol|
+103003,Chico de la montaña|
+103004,Ganadero de «Big Sky»|
+103005,Nieto de vendedor|
+103006,Expiloto de bombardero|
+103007,Hijo de ferretero|
+103008,Fumigador de cultivos|
+103009,Hijo de carnicero|
+103010,Veterano de Filipinas|
+103011,Aserrador de Virginia|
+103012,Vaquero de Texas|
+103013,Víctima del «Dust Bowl»|
+103014,Piloto de Minnesota|
+103015,Veterano de África|
+103016,Hijo de piloto de la I GM|
+
+301001,Trabajador francés|
+301002,Viajero francés|
+301003,Noble francés de Normandía|
+301004,Francés de familia militar del Sur|
+301005,Noble italiano|
+301006,Noble belga|
+301007,Artesano de Indochina francesa|
+
+302001,Plebeyo británico|
+302002,Noble británico|
+302003,Británico de familia militar|
+302004,Embaucador británico|
+302005,Escritor británico|
+302006,Aviador de Nueva Gales del Sur (Commonwealth)|
+302007,Aviador de Victoria (Commonwealth)|
+302008,Soldado de infantería británico|
+302009,Pescador de Terranova (Commonwealth)|
+302010,Ovejero de Perth (Commonwealth)|
+302011,Hijo de reverendo (Commonwealth)|
+302012,Soldado neozelandés (Commonwealth)|
+302013,Soldado sudafricano (Commonwealth)|
+
+303001,Trabajador americano|
+303002,Americano de familia rica|
+303003,Americano de familia militar|
+303004,Estrella americana del deporte|
+303005,Piloto de carreras americano|
+303006,Viejo caballero americano|
+303007,Americano de familia religiosa|
+
+201001,Piloto de Lufthansa|
+201002,Atleta alemán|
+201003,Playboy alemán|
+201004,Transportista|
+201005,Aspirante|
+201006,Veterano de la I GM|
+201007,Montañero|
+201008,Hijo de comerciante|
+201009,Esquiador alemán|
+201010,Trabajador de fábrica|
+201011,Mecánico alemán|
+201012,Artillero y piloto|
+201013,Voluntario español|
+201014,Italiano soñador|
+
+401001,Deportista alemán|
+401002,Familia militar alemana|
+401003,Alemán colonial|
+401004,Trabajador alemán|
+401005,Noble alemán de Frankfurt|
+401006,Artesano alemán experimentado|
+401007,Noble alemán de Sajonia|

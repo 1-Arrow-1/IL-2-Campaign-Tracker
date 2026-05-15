@@ -1,0 +1,100 @@
+list=id,name|
+
+101001,Far East Aeroflot Pilot|
+101002,The Poacher|
+101003,The Musician|
+101004,The Veteran|
+101005,The Instructor|
+101006,Soviet Educated Pilot|
+101007,Trouble from the Volga|
+101008,Maestro|
+101009,Soviet Factory Worker|
+101010,Soviet Pilot from Dagestan|
+101011,The Farmer|
+101012,The Tanker|
+
+102001,The Canadian|
+102002,Aviator from Czechoslovakia|
+102003,Desert Air Force Veteran|
+102004,East End Lad|
+102005,Farmer's Son|
+102006,Mechanic|
+102007,The Merseyside Musician|
+102008,Kid from Norfolk|
+102009,Polish POW|
+102010,Rugby Player|
+102011,The Second Son|
+102012,The Scottish Fife Flyer|
+102013,The Daydreamer|
+102014,The Toff|
+102015,The Instructor|
+
+103001,The Cadet|
+103002,Alabama Moonshine Runner|
+103003,Boy from the Foothills|
+103004,The “Big Sky” Cattle Rancher|
+103005,Car Salesman’s Grandson|
+103006,The Ex-Bomber Pilot|
+103007,Idaho Hardware Store Owner’s Son|
+103008,Iowa Crop Duster|
+103009,New York Butcher’s Son|
+103010,Veteran from the Philippines|
+103011,Virginia Mill Worker|
+103012,West Texas Cowboy|
+103013,Dust Bowl Survivor|
+103014,Enlisted pilot from Minnesota|
+103015,North Africa Veteran|
+103016,Son of a WWI Fighter Pilot|
+
+301001,French Laborer|
+301002,French Traveller|
+301003,French Nobleman from Normandy|
+301004,French Military Family from the South|
+301005,Italian Nobleman|
+301006,Belgian Nobelman|
+301007,Craftsman from French-Indochina|
+
+302001,British Commoner|
+302002,British Nobleman|
+302003,British Military Family|
+302004,British Scoundrel|
+302005,British Writer|
+302006,British Commonwealth Flier from New South Wales|
+302007,British Commonwealth Flier from Victoria|
+302008,British Infantryman|
+302009,British Commonwealth Fisherman from Newfoundland|
+302010,British Commonwealth Sheep Rancher from Perth|
+302011,British Commonwealth Reverend's Son|
+302012,Commonwealth Soldier from New Zealand|
+302013,Commonwealth Soldier from South Africa|
+
+303001,American Laborer|
+303002,American Wealthy Family|
+303003,American Military Family|
+303004,American Sports Star|
+303005,American Race Car Driver|
+303006,American Older Gentleman|
+303007,American Religious Family|
+
+201001,German Lufthansa Pilot|
+201002,German Athlete|
+201003,German Playboy|
+201004,The Transporter|
+201005,Wanna-be|
+201006,German WW I Veteran|
+201007,Mountaineer|
+201008,Son of a Merchant|
+201009,German Skier|
+201010,German Factory Laborer|
+201011,German Mechanic|
+201012,The Gunner and the Pilot|
+201013,Spanish Volunteer|
+201014,Italian Dreamer|
+
+401001,German Sportsman|
+401002,German Military Family|
+401003,German Colonial|
+401004,German Laborer|
+401005,German Nobleman from Frankfurt|
+401006,German Skilled Craftsman|
+401007,German Nobleman from Saxony|

@@ -295,6 +295,11 @@ if not exist "CampaignRanksAwards.zip" (
     pause
     exit /b 1
 )
+if not exist "characterbio" (
+    echo ERROR: characterbio folder not found!
+    pause
+    exit /b 1
+)
 if not exist "cleanup_tracker_content.py" (
     echo ERROR: cleanup_tracker_content.py not found!
     pause
@@ -607,6 +612,13 @@ set TARGET_DIR=%SCRIPT_DIR%IL2_Campaign_Tracker_v2.2_ML
 powershell -NoProfile -Command ^
   "Expand-Archive -Path '%SCRIPT_DIR%CampaignRanksAwards.zip' -DestinationPath '%TARGET_DIR%' -Force -ErrorAction Stop"
 
+REM Copy characterbio folder
+xcopy /E /I /Y "characterbio" "IL2_Campaign_Tracker_v2.2_ML\characterbio\" >NUL
+if errorlevel 2 (
+    echo ERROR: Could not copy characterbio folder!
+    pause
+    exit /b 1
+)
 
 REM Create quick start guide
 echo IL-2 CAMPAIGN PROGRESS TRACKER v2.0 > "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"

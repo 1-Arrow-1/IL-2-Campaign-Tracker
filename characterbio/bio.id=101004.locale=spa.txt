@@ -1,0 +1,22 @@
+﻿<p>Dicen que gritabas cuando el personal de tierra te sacó de la cabina destrozada.</p>
+<p>Tal vez sea cierto, pero tú no oías nada. El mundo estaba en completo silencio, salvo por el distante sonido de tus piernas y tobillos rotos. Retorcidos entre los pedales del timón y los restos del panel de instrumentos, emitían una sinfonía de intenso dolor. Tu nariz solo acertaba a captar el olor a gasolina que lo impregnaba todo y tu boca estaba ahogada por el sabor del óxido. La débil luz del sol, extrañamente roja, se filtraba a través de las nubes y golpeaba tu piel expuesta.</p>
+<p>Unas sombras pululaban en tu campo de visión. Sombras de hombres. Aparecían y desaparecían, solo para volver a aparecer de nuevo. Unas manos se movían a tientas por tu torso, buscando las hebillas de tu arnés. Retrocedían cuando sentían su calor, luego volvían con más determinación y se afanaban en soltarlas. Más manos te agarraron por debajo de los hombros y ,juntas, tiraron de ti. La sinfonía de dolor de tus piernas y tobillos subió <i>in crescendo</i>. Una nota de la más pura agonía. Más blanco que la nieve, te levantó como algo sagrado. Te sentiste como si flotaras sobre las nubes. Casi en el mismísimo cielo. Te giró y te tumbó como si estuvieses sobre la suave hierba. El dolor comenzó a disminuir. Y entonces, no era la primera vez, comenzabas a desfallecer...</p>
+<p>Las puertas de la ambulancia se cerraron de golpe y el vehículo aceleró bruscamente. Tenías algo pinchado en el brazo. Intentaste quitártelo, pero unas manos amables te contuvieron. La oscuridad comenzó a apoderase de ti. Luchaste contra ella una vez más. Por permanecer en la luz, pero la oscuridad venció y te fuiste.</p>
+<p>Durante un largo tiempo, viviste entre tinieblas. Instinto de supervivencia. El tormento de tus heridas y el sufrimiento por el ansia. A veces surgías y veías la luz. Una vez en un tren. Algunas en una cama confortable. Otra vez, te despertaste por un dolor insufrible mientras hombres con batas de médico trabajaban en reparar tus huesos rotos. Cada vez que la oscuridad se desvanecía te revelaba algo nuevo. Con todo, tu único acompañante era la insoportable sensación de hormigueo en la piel de tu cara, manos y cuello. Pero un día, incluso eso comenzó a disminuir cuando la oscuridad se marchó y los días tomaron forma de nuevo. Solo las noches parecían durar para siempre.</p>
+<p>El tiempo pasa. Otro tren. Eres trasladado a la zona de descanso, alejada del frente, a una villa junto a un lago, cuyas dependencias se han convertido en un hospital. Aquí aprendes de nuevo a caminar: primero con dos muletas, después solo con una. Junto al lago hay un pequeño embarcadero, con algunas mesas y sillas. Tienes una visión extraña sentado allí, mirando al cielo y con la muleta entre tus rodillas. Tus pies mueven unos imaginarios pedales de timón, algunas veces como si los controlases, otras como si luchases para liberarte de ellos.</p>
+<p>Muchos pacientes vienen y se van de estas instalaciones. Empiezas a impacientarte y preguntas a los doctores: «¿Por qué estoy todavía aquí?»</p>
+<p>Una mañana tras despertar descubres que tienes una visita. Su uniforme revela que es un oficial militar. Se sienta en una silla junto a tu cama. Piernas cruzadas, relajado. Golpeando ligeramente una carpeta contra su rodilla. Se presenta y pregunta por tu salud.<br>
+—¿Cómo te llamas? —me pregunta.<br>
+—$[name] —le contestas.<br>
+—¿Rango?<br>
+—<i>$[startRank]</i><br>
+—Nació en Odesa, ¿verdad?<br>
+Le afirmas con la cabeza que es así<br>
+—Dígame, camarada $[lastName], ¿Cuánta experiencia tiene en combate?<br> 
+Te levantas, apoyando tus piernas en un lado de la cama. El suelo está frío y quema. Le cuentas las veces que estuviste luchando contra los japoneses en Manchuria y las acciones después de junio de 1941. Cuando llegas a la parte de tu último vuelo, te detienes.</p>
+<p>El <i>leytenant</i> no parece darse cuenta. Está encantado porque ha encontrado a su hombre. Se levanta y consulta al fin su carpeta.<br>
+—Camarada $[lastName] —cita—, su periodo de descanso y relajación ha terminado. Se incorporará al $[startSquadronName] el $[startDate] como muy tarde para reanudar su servicio activo.<br>
+Escribe algo en un trozo de papel y te lo da.<br>
+—Muestre esto a la administración del hospital para recibir el alta y el permiso para viajar.</p>
+<p>Después, se dirige hacia la puerta, pero antes de salir, se detiene y se da la vuelta, como si se estuviese acordando de algo.<br>
+—¡Oh! ¡Buena suerte!</p>

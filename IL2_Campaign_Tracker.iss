@@ -215,6 +215,10 @@ Source: "cleanup_tracker_content.exe"; DestDir: "{app}"; Flags: ignoreversion
 ; It is NOT copied into IL-2 (IL-2 does not use it).
 Source: "CampaignRanksAwards\squadrons.json"; DestDir: "{app}"; Flags: ignoreversion
 
+; --- Copy characterbio into IL-2 ---
+; This places the career pilot biography texts into: <IL-2>\data\swf\il2\characterbio\*
+Source: "characterbio\*"; DestDir: "{code:GetIL2Dir}\data\swf\il2\characterbio"; Flags: recursesubdirs createallsubdirs ignoreversion
+
 ; --- Copy CampaignRanksAwards into IL-2 ---
 ; This places content into: <IL-2>\data\swf\CampaignRanksAwards\*
 ; Both Germany variants are always installed so the user can switch later.
@@ -1039,6 +1043,11 @@ begin
     
       { Step 3: Remove CampaignRanksAwards folder }
       AwardsDir := IL2Root + '\data\swf\CampaignRanksAwards';
+      if DirExists(AwardsDir) then
+        DelTree(AwardsDir, True, True, True);
+
+      { Step 3b: Remove characterbio folder }
+      AwardsDir := IL2Root + '\data\swf\il2\characterbio';
       if DirExists(AwardsDir) then
         DelTree(AwardsDir, True, True, True);
 

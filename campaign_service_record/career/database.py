@@ -52,6 +52,7 @@ class PilotDescriptionParser:
 
     _COUNTRY_RE = re.compile(r'birthCountryInfo=(\d+)')
     _BIRTHDATE_RE = re.compile(r'&birthDate=(\d{4}\.\d{2}\.\d{2})%')
+    _BIOID_RE = re.compile(r'bioInfo=id%3D(\d+)')
 
     @classmethod
     def parse_country(cls, description: str) -> Optional[str]:
@@ -87,6 +88,24 @@ class PilotDescriptionParser:
             return None
         # Convert "YYYY.MM.DD" → "YYYY-MM-DD"
         return match.group(1).replace('.', '-')
+
+    @classmethod
+    def parse_bio_id(cls, description: str) -> Optional[int]:
+        """
+        Extract character bio ID from pilot.description.
+
+        The game stores the chosen bio as bioInfo=id%3D<id>% in the description
+        string.  Returns the integer bio ID, or None if absent.
+        """
+        if not description:
+            return None
+        match = cls._BIOID_RE.search(description)
+        if not match:
+            return None
+        try:
+            return int(match.group(1))
+        except ValueError:
+            return None
 
 
 # ---------------------------------------------------------------------------
