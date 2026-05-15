@@ -277,6 +277,25 @@
     cursor: default;
 }
 
+.stories-cleanup-btn {
+    border: 1px solid rgba(120, 60, 40, 0.65);
+    background: linear-gradient(180deg, rgba(160, 80, 55, 0.9), rgba(130, 58, 38, 0.9));
+    color: #f4e6c9;
+    border-radius: 6px;
+    padding: 0.55rem 1rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.stories-cleanup-btn:hover:not(:disabled) {
+    filter: brightness(1.08);
+}
+
+.stories-cleanup-btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
 .stories-status {
     color: #5d4428;
     margin-bottom: 1rem;

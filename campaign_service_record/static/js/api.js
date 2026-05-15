@@ -175,6 +175,16 @@ const API = {
     },
 
     /**
+     * Delete all chapters with an empty/missing mission_id.
+     */
+    async cleanupOrphanedChapters(source, entryId) {
+        return this.post(
+            `/stories/${encodeURIComponent(source)}/${encodeURIComponent(entryId)}/cleanup_orphans`,
+            {}
+        );
+    },
+
+    /**
      * Generate missing AI story chapters for an entry.
      */
     async generateStories(source, entryId, data = {}) {

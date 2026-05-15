@@ -572,6 +572,39 @@ class CareerDatabase:
             )
             return cursor.fetchall()
 
+    def get_unflown_squadron_sorties(
+        self,
+        player_pilot_id: int,
+        squadron_pilot_ids: List[int],
+    ) -> List[sqlite3.Row]:
+        """
+        Return sortie rows for squadron members from missions the player did not fly.
+
+        A mission is considered "flown" by the player when a non-AI sortie row
+        (pilotAi=0, isDeleted=0) exists for player_pilot_id.  All non-deleted
+        sortie rows for squadron_pilot_ids that belong to other missions are
+        returned, ordered by date ASC.
+
+        Used for inter-mission activity extraction: what the squadron did on days
+        (or sorties within a day) the player sat out.
+        """
+        if not squadron_pilot_ids:
+            return []
+        conn = self._connect()
+        id_ph = ",".join("?" * len(squadron_pilot_ids))
+        cursor = conn.execute(
+            f"SELECT * FROM sortie"
+            f" WHERE pilotId IN ({id_ph})"
+            f"   AND isDeleted = 0"
+            f"   AND missionId NOT IN ("
+            f"       SELECT missionId FROM sortie"
+            f"       WHERE pilotId = ? AND pilotAi = 0 AND isDeleted = 0"
+            f"   )"
+            f" ORDER BY date ASC",
+            [*squadron_pilot_ids, player_pilot_id],
+        )
+        return cursor.fetchall()
+
     def get_mission_count_for_career(
         self, career_id: int, player_id: int
     ) -> int:

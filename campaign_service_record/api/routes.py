@@ -66,6 +66,7 @@ from llm_story_generator import (
     generate_and_store_chapter_for,
     load_or_create_story_state_for,
     load_story_chapters_for,
+    purge_orphaned_chapters_for,
     reindex_career_story_chapters_for,
     save_story_state_for,
     strip_memory_entries_for_date,
@@ -1159,6 +1160,271 @@ def _normalize_career_sortie_stats(row: dict) -> dict:
     }
 
 
+def _air_kills_from_sortie_row(s) -> int:
+    """Sum aerial kills from a cp.db sortie row using sub-categories.
+
+    The game sometimes leaves the rollup columns (killLightPlane / killMediumPlane /
+    killHeavyPlane) stale while updating the sub-category columns
+    (killLightFighter, killHeavyBomber, …).  Always computing from sub-categories
+    avoids that bug.  Falls back to rollup columns if the schema pre-dates
+    sub-category columns.
+    """
+    def _i(col: str) -> int:
+        try:
+            return int(s[col] or 0)
+        except (IndexError, KeyError):
+            return -1  # sentinel: column absent
+
+    light = (
+        _i("killLightFighter") + _i("killLightAttackPlane") + _i("killLightBomber")
+        + _i("killLightRecon") + _i("killLightTransport")
+    )
+    medium = (
+        _i("killMediumFighter") + _i("killMediumAttackPlane") + _i("killMediumBomber")
+        + _i("killMediumRecon") + _i("killMediumTransport")
+    )
+    heavy = (
+        _i("killHeavyFighter") + _i("killHeavyAttackPlane") + _i("killHeavyBomber")
+        + _i("killHeavyRecon") + _i("killHeavyTransport")
+    )
+    static = _i("killStaticPlane")
+
+    if light < 0 or medium < 0 or heavy < 0:
+        # Sub-categories absent — fall back to rollup columns
+        try:
+            return (
+                int(s["killLightPlane"] or 0)
+                + int(s["killMediumPlane"] or 0)
+                + int(s["killHeavyPlane"] or 0)
+                + int(s["killStaticPlane"] or 0)
+            )
+        except (IndexError, KeyError):
+            return 0
+
+    return light + medium + heavy + max(static, 0)
+
+
+def _build_inter_mission_activities(
+    unflown_sorties: list,
+    member_events: list,
+    member_by_id: dict,
+    member_rank_by_id: dict,
+    aggregator,
+    career,
+    date_from: str,
+    date_to: str,
+    same_day: bool,
+    story_language: str = "en",
+    include_events: Optional[bool] = None,
+) -> list[dict]:
+    """
+    Build inter_mission_activities entries from unflown squadron sorties and events.
+
+    Args:
+        date_from:      ISO date (exclusive lower bound). Empty = no lower bound.
+        date_to:        ISO date. For same_day=True: exact match. For same_day=False:
+                        exclusive upper bound.
+        same_day:       True  → include only date == date_to (same-day unflown missions).
+                        False → include only date_from < date < date_to (between-day gap).
+        include_events: Override whether promotions/awards events are collected.
+                        Defaults to True when same_day=False, False when same_day=True.
+                        Pass True explicitly for gap-day standalone chapters that need
+                        events even though they target a single exact date.
+    """
+    from collections import defaultdict
+
+    _collect_events = include_events if include_events is not None else (not same_day)
+
+    def _in_range(d: str) -> bool:
+        if same_day:
+            return d == date_to
+        lo_ok = (not date_from) or d > date_from
+        hi_ok = (not date_to) or d < date_to
+        return lo_ok and hi_ok
+
+    sorties_by_date: dict[str, list] = defaultdict(list)
+    for sortie in unflown_sorties:
+        d = aggregator._format_date(sortie["date"]) or ""
+        if d and _in_range(d):
+            sorties_by_date[d].append(sortie)
+
+    events_by_date: dict[str, list] = defaultdict(list)
+    if _collect_events:
+        for ev in member_events:
+            d = aggregator._format_date(ev["date"]) or ""
+            if d and _in_range(d):
+                events_by_date[d].append(ev)
+
+    all_dates = sorted(set(list(sorties_by_date.keys()) + list(events_by_date.keys())))
+    if not all_dates:
+        return []
+
+    activities: list[dict] = []
+    for date_str in all_dates:
+        day_sorties = sorties_by_date.get(date_str, [])
+        day_events = events_by_date.get(date_str, [])
+        missions_flown = len({s["missionId"] for s in day_sorties})
+
+        air_kills = sum(_air_kills_from_sortie_row(s) for s in day_sorties)
+        ground_kills = sum(
+            int(s["killTruck"] or 0)
+            + int(s["killCar"] or 0)
+            + int(s["killLightTank"] or 0)
+            + int(s["killMediumTank"] or 0)
+            + int(s["killHeavyTank"] or 0)
+            for s in day_sorties
+        )
+
+        casualties: list[dict] = []
+        for s in day_sorties:
+            pid = int(s["pilotId"])
+            who = member_by_id.get(pid, f"Pilot {pid}")
+            rank = member_rank_by_id.get(pid, "")
+            status = int(s["status"] or 0)
+            if status == 2:
+                outcome = "KIA"
+            elif status == 3:
+                outcome = "MIA"
+            elif status == 4:
+                outcome = "WIA"
+            else:
+                continue
+            entry: dict = {"pilot": who, "outcome": outcome}
+            if rank:
+                entry["rank"] = rank
+            casualties.append(entry)
+
+        awards: list[dict] = []
+        promotions: list[dict] = []
+        for ev in day_events:
+            pid = int(ev["pilotId"])
+            who = member_by_id.get(pid, f"Pilot {pid}")
+            rank = member_rank_by_id.get(pid, "")
+            mapped = aggregator._map_event(ev, career.country)
+            if not mapped:
+                continue
+            ev_type = mapped.get("type")
+            if ev_type == "promotion":
+                rn = str(mapped.get("rank") or "").strip()
+                if rn:
+                    promotions.append({"pilot": who, "promoted_to": rn})
+            elif ev_type == "award":
+                aw = _resolve_award_display_name(str(mapped.get("name") or ""), story_language)
+                if aw:
+                    entry = {"pilot": who, "award": aw}
+                    if rank:
+                        entry["rank"] = rank
+                    awards.append(entry)
+
+        if not (air_kills > 0 or ground_kills > 0 or casualties or awards or promotions):
+            continue
+
+        activity: dict = {"date": date_str, "same_day": same_day, "missions_flown": missions_flown}
+        if air_kills > 0:
+            activity["squadron_air_kills"] = air_kills
+        if ground_kills > 0:
+            activity["squadron_ground_kills"] = ground_kills
+        if casualties:
+            activity["casualties"] = casualties
+        if awards:
+            activity["awards"] = awards
+        if promotions:
+            activity["promotions"] = promotions
+        activities.append(activity)
+
+    return activities
+
+
+def _build_gap_day_chapter_context(
+    gap_date: str,
+    gap_activity: dict,
+    career,
+    root_career_id: int,
+    segment_index: int,
+    squadron_name: str,
+    mission_theatre: str,
+    mission_location: str,
+    rank: str,
+    awards: list,
+    total_chapter_order: int,
+    missions_completed: int,
+    accumulated_air_kills: int,
+    narrative_memory: dict,
+    llm_config: Optional[dict] = None,
+) -> dict:
+    """
+    Build a story-input dict for a day the player did not fly but the squadron did.
+
+    gap_activity is one entry from _build_inter_mission_activities (one date).
+    """
+    pilot_name = " ".join(
+        part for part in (career.pilot_first_name, career.pilot_last_name) if part
+    ).strip()
+
+    casualties = gap_activity.get("casualties", [])
+    sq_ctx: dict = {
+        "promotions": gap_activity.get("promotions", []),
+        "awards": gap_activity.get("awards", []),
+        "transfers": [],
+        "kia": [e for e in casualties if e.get("outcome") == "KIA"],
+        "mia": [e for e in casualties if e.get("outcome") == "MIA"],
+        "wia": [e for e in casualties if e.get("outcome") == "WIA"],
+        "flight_results": [],
+    }
+    air_kills = gap_activity.get("squadron_air_kills", 0)
+    if air_kills:
+        sq_ctx["squadron_air_kills"] = air_kills
+    ground_kills = gap_activity.get("squadron_ground_kills", 0)
+    if ground_kills:
+        sq_ctx["squadron_ground_kills"] = ground_kills
+    missions_flown = gap_activity.get("missions_flown", 0)
+    if missions_flown:
+        sq_ctx["missions_flown"] = missions_flown
+
+    gap_mission_id = f"gap-{segment_index}-{gap_date}"
+
+    ctx: dict = {
+        "career_id": root_career_id,
+        "mission_id": gap_mission_id,
+        "date": gap_date,
+        "pilot": {
+            "name": pilot_name,
+            "last_name": career.pilot_last_name or "",
+            "rank": rank,
+            "squadron": squadron_name,
+            "country": career.country or "",
+        },
+        "mission": {
+            "id": gap_mission_id,
+            "date": gap_date,
+            "theatre": mission_theatre,
+            "location": mission_location,
+            "result": "Did Not Fly",
+            "notable_events": [],
+            "other_incidences": [],
+        },
+        "squadron_context": sq_ctx,
+        "honors_context": {"promotion": {}, "awards": []},
+        "career_progress": {
+            "missions_completed": missions_completed,
+            "aerial_victories": accumulated_air_kills,
+            "awards": list(awards),
+        },
+        "narrative_memory": dict(narrative_memory),
+        "chapter_scope": {
+            "scope": "squadron_day",
+            "missions_in_chapter": 0,
+            "mission_ids": [],
+            "mission_results": ["Squadron Mission"],
+        },
+        "career_segment_index": segment_index,
+        "career_mission_order": total_chapter_order,
+    }
+    if llm_config:
+        ctx["llm_config"] = llm_config
+    return ctx
+
+
 def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict] = None, story_language: str = "en") -> list[dict]:
     if not _career_provider:
         raise RuntimeError("Career provider not initialized.")
@@ -1247,14 +1513,18 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 squadron_name = ""
 
         sortie_stats: dict = {}
+        sortie_status: int = 0
+        _player_flew: bool = True  # conservative — assume flew unless DB says otherwise
         if mission_segment is not None:
             try:
                 _pilot_id_for_sortie = int(mission_segment["playerId"])
                 _sortie_row = db.get_sortie_for_mission(int(result.mission_id), _pilot_id_for_sortie)
+                _player_flew = _sortie_row is not None
                 if _sortie_row:
                     sortie_stats = _normalize_career_sortie_stats(dict(_sortie_row))
+                    sortie_status = int(_sortie_row["status"] or 0)
             except Exception:
-                pass
+                pass  # _player_flew stays True on DB error
 
         mission_rows.append({
             "mission_id": int(result.mission_id),
@@ -1264,6 +1534,8 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             "squadron_name": squadron_name,
             "mission_json": mission_json,
             "sortie_stats": sortie_stats,
+            "sortie_status": sortie_status,
+            "player_flew": _player_flew,
             "mission_type_code": _mission_type_code,
             "m_template": _m_template,
             "pilots_count": _pilots_count,
@@ -1279,6 +1551,20 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
         return []
 
     mission_rows.sort(key=lambda row: row["sort_key"])
+
+    # Drop missions the player was listed in (pilot slot) but didn't actually fly.
+    # These have no pilotAi=0 sortie row in cp.db.  Their squadron activity is
+    # picked up automatically by get_unflown_squadron_sorties → inter_mission_activities.
+    _unflown_count = sum(1 for r in mission_rows if not r.get("player_flew", True))
+    if _unflown_count:
+        logger.info(
+            "Career %s: skipping %d mission(s) with no player sortie row (player did not fly)",
+            root_career_id, _unflown_count,
+        )
+    mission_rows = [r for r in mission_rows if r.get("player_flew", True)]
+
+    if not mission_rows:
+        return []
 
     # Pre-compute the last mission date for each segment (needed for gap-event detection).
     _last_date_by_segment: dict[int, str] = {}
@@ -1322,9 +1608,13 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
     _accumulated_air_kills: int = 0
     _narrative_memory: dict = {}
     _prev_segment_index: int = -1
-    # Track the pilot's rank at the end of each chapter so we can detect
-    # promotions that happened on no-fly days between two missions.
+    # Track the pilot's rank and awards at the end of each chapter so we can
+    # populate gap-day chapters with the correct career state at that point.
     _last_rank_after_chapter: str = initial_career_rank
+    _last_awards_after_chapter: list = []
+    # Global chapter counter — increments for every generated chapter
+    # (player + gap), so gap chapters sort correctly in the timeline.
+    _total_chapter_order: int = 0
     other_incidences = aggregator._load_other_incidences(career)
 
     # Build a list of (transfer_date, old_squadron, new_squadron) sorted ascending.
@@ -1353,10 +1643,57 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 return old_sq
         return segment_squadron
 
+    # Inter-mission activity cache — refreshed when the career segment changes.
+    _prev_chapter_date: str = ""
+    _ima_unflown_sorties: list = []
+    _ima_all_member_events: list = []
+    _ima_member_by_id: dict = {}
+    _ima_member_rank_by_id: dict = {}
+    _ima_segment_player_id: int = -1
+    _ima_squadron_id: int = -1
+
     for mission_index, row in enumerate(mission_rows, start=1):
         mission_date = row["mission_date"]
         mission_id = int(row["mission_id"])
         segment_index = int(row["segment_index"])
+
+        # ── Inter-mission cache refresh ─────────────────────────────────────────
+        _seg_player_id = int((row.get("segment") or {}).get("playerId") or -1)
+        _seg_squadron_id = int((row.get("segment") or {}).get("squadronId") or -1)
+        if _seg_player_id != _ima_segment_player_id or _seg_squadron_id != _ima_squadron_id:
+            _ima_segment_player_id = _seg_player_id
+            _ima_squadron_id = _seg_squadron_id
+            _prev_chapter_date = ""
+            _ima_unflown_sorties = []
+            _ima_all_member_events = []
+            _ima_member_by_id = {}
+            _ima_member_rank_by_id = {}
+            if _seg_player_id > 0 and _seg_squadron_id > 0:
+                try:
+                    _ima_country_int = _CAREER_COUNTRY_INT.get((career.country or "").lower(), 0)
+                    _ima_members = db.get_squadron_members(_seg_squadron_id)
+                    _ima_member_ids: list = []
+                    for _im in _ima_members:
+                        _impid = int(_im["id"])
+                        if _impid == _seg_player_id:
+                            continue
+                        _ima_member_ids.append(_impid)
+                        _ima_member_by_id[_impid] = _pilot_display_name(_im)
+                        try:
+                            _imrid = int(_im["rankId"] or -1)
+                            if _imrid >= 0:
+                                _imrn = aggregator._rank_resolver.resolve(_ima_country_int, _imrid)
+                                _ima_member_rank_by_id[_impid] = _imrn.display if _imrn else ""
+                            else:
+                                _ima_member_rank_by_id[_impid] = ""
+                        except Exception:
+                            _ima_member_rank_by_id[_impid] = ""
+                    if _ima_member_ids:
+                        _ima_unflown_sorties = db.get_unflown_squadron_sorties(_seg_player_id, _ima_member_ids)
+                        _ima_all_member_events = db.get_events_for_pilots(_ima_member_ids, types=_STORY_SQUADRON_EVENT_TYPES)
+                except Exception as _ima_exc:
+                    logger.debug("Inter-mission cache build failed: %s", _ima_exc)
+        # ───────────────────────────────────────────────────────────────────────
 
         # ── Theatre transition detection ────────────────────────────────────────
         # Build a theatre_transition block for the first mission of each new segment.
@@ -1453,6 +1790,71 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
         mission_json = row["mission_json"]
         next_row = mission_rows[mission_index] if mission_index < len(mission_rows) else None
         is_last_sortie_of_day = not next_row or _normalize_story_text(next_row.get("mission_date")) != mission_date
+        _is_first_of_new_day = bool(_prev_chapter_date) and mission_date != _prev_chapter_date
+
+        # ── Gap-day chapter generation + inter-mission activity computation ───────
+        _inter_mission_activities: list[dict] = []
+        try:
+            if _ima_unflown_sorties or _ima_all_member_events:
+                if _is_first_of_new_day and not _theatre_transition:
+                    # Find all gap dates (squadron flew, player didn't).
+                    _gap_dates: list[str] = sorted({
+                        aggregator._format_date(s["date"]) or ""
+                        for s in _ima_unflown_sorties
+                        if (aggregator._format_date(s["date"]) or "") > _prev_chapter_date
+                        and (aggregator._format_date(s["date"]) or "") < mission_date
+                    } - {""})
+                    for _gap_date in _gap_dates:
+                        _gap_acts = _build_inter_mission_activities(
+                            _ima_unflown_sorties, _ima_all_member_events,
+                            _ima_member_by_id, _ima_member_rank_by_id,
+                            aggregator, career,
+                            date_from=_gap_date,
+                            date_to=_gap_date,
+                            same_day=True,
+                            include_events=True,
+                            story_language=story_language,
+                        )
+                        if not _gap_acts:
+                            continue
+                        _total_chapter_order += 1
+                        _gap_ctx = _build_gap_day_chapter_context(
+                            gap_date=_gap_date,
+                            gap_activity=_gap_acts[0],
+                            career=career,
+                            root_career_id=root_career_id,
+                            segment_index=segment_index,
+                            squadron_name=_normalize_story_text(row["squadron_name"]),
+                            mission_theatre=mission_theatre,
+                            mission_location=mission_location,
+                            rank=_last_rank_after_chapter,
+                            awards=_last_awards_after_chapter,
+                            total_chapter_order=_total_chapter_order,
+                            missions_completed=mission_index - 1,
+                            accumulated_air_kills=_accumulated_air_kills,
+                            narrative_memory=_narrative_memory,
+                            llm_config=llm_config,
+                        )
+                        _narrative_memory = update_narrative_memory_local(_gap_ctx, _narrative_memory)
+                        contexts.append(_gap_ctx)
+                        logger.debug(
+                            "Gap chapter generated for career %s date %s (chapter order %d)",
+                            root_career_id, _gap_date, _total_chapter_order,
+                        )
+                if is_last_sortie_of_day:
+                    _same_acts = _build_inter_mission_activities(
+                        _ima_unflown_sorties, _ima_all_member_events,
+                        _ima_member_by_id, _ima_member_rank_by_id,
+                        aggregator, career,
+                        date_from=mission_date,
+                        date_to=mission_date,
+                        same_day=True,
+                        story_language=story_language,
+                    )
+                    _inter_mission_activities.extend(_same_acts)
+        except Exception as _ima_err:
+            logger.debug("Inter-mission activities failed for mission %s: %s", mission_id, _ima_err)
+        # ───────────────────────────────────────────────────────────────────────
 
         try:
             awards: list[str] = []
@@ -1519,6 +1921,12 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 (mission_json.get("player", {}) if isinstance(mission_json, dict) else {}).get("aircraft")
             ) or ""
             mission_result = _normalize_story_text(summary.get("final_state")) or "Unknown"
+            # cp.db sortie status is authoritative for KIA/MIA — overrides parser
+            _sortie_status = int(row.get("sortie_status") or 0)
+            if _sortie_status == 2:
+                mission_result = "KIA"
+            elif _sortie_status == 3 and not mission_result.startswith("MIA"):
+                mission_result = "MIA"
 
             # Accumulate career air kills (excludes ground/naval).
             _mission_air_kills = int(
@@ -1549,6 +1957,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 mission_id,
                 mission_date,
                 story_language=story_language,
+                mission_json=mission_json if isinstance(mission_json, dict) else None,
             )
             for key in ("promotions", "awards", "transfers"):
                 squadron_context[key] = squadron_context.get(key, [])[:8]
@@ -1604,7 +2013,8 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             if _theatre_transition:
                 mission_story_input["theatre_transition"] = _theatre_transition
             mission_story_input["career_segment_index"] = segment_index
-            mission_story_input["career_mission_order"] = mission_index
+            _total_chapter_order += 1
+            mission_story_input["career_mission_order"] = _total_chapter_order
             if aircraft_label:
                 mission_story_input["pilot"]["aircraft"] = aircraft_label
             mission_story_input["chapter_scope"] = {
@@ -1630,8 +2040,12 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 mission_story_input["pilot"]["name"] = pilot_name
             if _inter_mission_promotion:
                 mission_story_input["inter_mission_promotion"] = _inter_mission_promotion
-            # Update rank tracking for next iteration — include any same-day promotion.
+            if _inter_mission_activities:
+                mission_story_input["inter_mission_activities"] = _inter_mission_activities
+            # Update rank/award tracking for next iteration and gap chapters.
             _last_rank_after_chapter = rank if rank else rank_before_mission
+            _last_awards_after_chapter = list(awards)
+            _prev_chapter_date = mission_date
             _narrative_memory = update_narrative_memory_local(mission_story_input, _narrative_memory)
             # Weather: try airfield-level precision from spawn position + map origin.
             # Fall back to theatre-level lookup from infoId / squadron name.
@@ -1704,7 +2118,8 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 m_template=row.get("m_template"),
             )
             fallback_input["career_segment_index"] = segment_index
-            fallback_input["career_mission_order"] = mission_index
+            _total_chapter_order += 1
+            fallback_input["career_mission_order"] = _total_chapter_order
             fallback_input["chapter_scope"] = {
                 "scope": "mission",
                 "missions_in_chapter": 1,
@@ -1716,6 +2131,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             ).strip()
             if pilot_name:
                 fallback_input["pilot"]["name"] = pilot_name
+            _prev_chapter_date = mission_date
             contexts.append(fallback_input)
             continue
 
@@ -1738,13 +2154,13 @@ def _build_squadron_context_for_mission(
     mission_id: int,
     mission_date_iso: str,
     story_language: str = "en",
+    mission_json: Optional[dict] = None,
 ) -> dict:
     """
     Build reliable squadron-context facts for one mission.
 
-    Only uses cp.db-derived facts:
-      - member promotions/awards/transfers on mission date
-      - member WIA/MIA/KIA sortie states on this mission
+    Uses cp.db-derived facts (promotions/awards/transfers/WIA/MIA/KIA) and,
+    when mission_json is supplied, .mlg-derived flight results per pilot.
     """
     empty = {
         "promotions": [],
@@ -1753,6 +2169,7 @@ def _build_squadron_context_for_mission(
         "kia": [],
         "mia": [],
         "wia": [],
+        "flight_results": [],
     }
     if mission_segment is None:
         return empty
@@ -1810,10 +2227,7 @@ def _build_squadron_context_for_mission(
         if ev_type == "promotion":
             rank_name = str(mapped.get("rank") or "").strip()
             if rank_name:
-                entry = {"pilot": who, "rank": rank_name}
-                if pilot_rank:
-                    entry["rank_before"] = pilot_rank
-                empty["promotions"].append(entry)
+                empty["promotions"].append({"pilot": who, "promoted_to": rank_name})
         elif ev_type == "award":
             award_name = _resolve_award_display_name(
                 str(mapped.get("name") or ""), story_language
@@ -1850,6 +2264,30 @@ def _build_squadron_context_for_mission(
             empty["mia"].append({"pilot": who, "rank": pilot_rank} if pilot_rank else who)
         elif status == 4:
             empty["wia"].append({"pilot": who, "rank": pilot_rank} if pilot_rank else who)
+
+    # Flight results from .mlg parser (squadron_flights in mission_json)
+    if mission_json and isinstance(mission_json, dict):
+        squadron_flights = mission_json.get("squadron_flights") or []
+        # Index members by display name for fast cross-reference
+        member_name_to_pid = {name: pid for pid, name in member_by_id.items()}
+        for flight in squadron_flights:
+            pilot_name = flight.get("name") or ""
+            pid = member_name_to_pid.get(pilot_name)
+            if pid is None:
+                continue  # Not in this squadron per cp.db — skip
+            pilot_rank = member_rank_by_id.get(pid, "")
+            entry = {
+                "pilot": pilot_name,
+                "aircraft_type": flight.get("aircraft_type") or "",
+                "air_kills": int(flight.get("air_kills") or 0),
+                "ground_kills": int(flight.get("ground_kills") or 0),
+                "outcome": flight.get("outcome") or "survived",
+            }
+            if pilot_rank:
+                entry["rank"] = pilot_rank
+            if flight.get("shot_down_by_type"):
+                entry["shot_down_by_type"] = flight["shot_down_by_type"]
+            empty["flight_results"].append(entry)
 
     return empty
 
@@ -2852,6 +3290,27 @@ def delete_story_chapter(source: str, entry_id: str):
 
     strip_memory_entries_for_date(source, storage_entry_id, deleted_date)
     return jsonify(_build_story_status_payload(source, entry_id))
+
+
+@api_bp.route('/api/stories/<source>/<entry_id>/cleanup_orphans', methods=['POST'])
+def cleanup_orphaned_chapters(source: str, entry_id: str):
+    """Delete all story chapters with an empty mission_id (e.g. from a corrupt build)."""
+    _last_ping[0] = time.time()
+    source = str(source or "").strip().lower()
+
+    if source not in {'career', 'campaign'}:
+        return jsonify({'error': 'AI stories are not supported for this data source.'}), 400
+
+    if source == 'career':
+        try:
+            int(entry_id)
+        except (TypeError, ValueError):
+            return jsonify({'error': 'Invalid career id.'}), 400
+
+    deleted_count = purge_orphaned_chapters_for(source, entry_id)
+    payload = _build_story_status_payload(source, entry_id)
+    payload['deleted_count'] = deleted_count
+    return jsonify(payload)
 
 
 @api_bp.route('/api/stories/<source>/<entry_id>/context_preview')

@@ -239,6 +239,16 @@ class MissionDebriefParser:
         # Wingman-finish candidates: Air targets killed by a non-player attacker where the
         # player contributed damage.  Used by reconcile_plane_kills() for DB reconciliation.
         self._wingman_candidates: list = []  # [(tid, ts, player_fraction, pos_match)]
+        # Friendly (squadron) pilot tracking for squadron_flights output
+        self._pending_pilot_name: str = ""     # Pilot name from PID:-1 AType:12 entry
+        self._friendly_pilots: dict = {}       # aircraft_id → {name, botpilot_id}
+        self._botpilot_to_aircraft: dict = {}  # botpilot_id → aircraft_id
+        self._squadron_air_kills: dict = {}    # aircraft_id → [{type, is_static}]
+        self._squadron_ground_kills: dict = {} # aircraft_id → int
+        self._squadron_aircraft_destroyed: set = set()  # aircraft_ids destroyed
+        self._squadron_pilots_killed: set = set()       # botpilot_ids killed
+        self._squadron_pilots_landed: set = set()       # botpilot_ids that landed after bailout
+        self._squadron_shot_down_by: dict = {}          # aircraft_id → attacker type string
 
     @staticmethod
     def mission_time_to_hhmmss(t):
@@ -566,11 +576,27 @@ class MissionDebriefParser:
 
             elif "AType:12" in ln:
                 gid = self._i(ln, r"ID:(\d+)")
-                self.stats.add_object(GameObject(gid,
-                    self._s(ln, r"NAME:([^ ]+)"),
-                    self._s(ln, r"TYPE:([^\r\n]+?)\s+COUNTRY:") or self._s(ln, r"TYPE:([^ ]+)"),
-                    self._s(ln, r"COUNTRY:(\d+)")
-                ))
+                pid = self._i(ln, r"PID:(-?\d+)")
+                full_name = self._s(ln, r"NAME:(.*?) PID:")
+                type_ = self._s(ln, r"TYPE:([^\r\n]+?)\s+COUNTRY:") or self._s(ln, r"TYPE:([^ ]+)")
+                country = self._s(ln, r"COUNTRY:(\d+)")
+                obj_name = full_name if full_name else self._s(ln, r"NAME:([^ ]+)")
+                self.stats.add_object(GameObject(gid, obj_name, type_, country))
+                if pid == -1:
+                    # Pilot person record — save name to link with following BotPilot entry
+                    self._pending_pilot_name = full_name
+                else:
+                    if (self._pending_pilot_name
+                            and obj_name.lower().startswith("botpilot")):
+                        # BotPilot immediately follows pilot person: gid=botpilot_id, pid=aircraft_id
+                        self._botpilot_to_aircraft[gid] = pid
+                        self._friendly_pilots[pid] = {
+                            "name": self._pending_pilot_name,
+                            "botpilot_id": gid,
+                        }
+                        self._squadron_air_kills[pid] = []
+                        self._squadron_ground_kills[pid] = 0
+                    self._pending_pilot_name = ""
 
             # --- Parse influence polygons for territory classification (Section C) ---
             # AType:13: Influence area header - maps AID to COUNTRY
@@ -741,6 +767,27 @@ class MissionDebriefParser:
                                 (tgt, ts, player / total, pos_match)
                             )
 
+                # Track friendly squadron member kills and incidents
+                if self._friendly_pilots:
+                    attacker_obj = self.stats.objects.get(a) if a != -1 else None
+                    # Friendly aircraft scores a kill
+                    if a in self._friendly_pilots and obj:
+                        if obj.category == "Air":
+                            self._squadron_air_kills[a].append({
+                                "type": obj.type,
+                                "is_static": getattr(obj, "is_static", False),
+                            })
+                        elif obj.category in ("Ground", "Building", "Naval"):
+                            self._squadron_ground_kills[a] = self._squadron_ground_kills.get(a, 0) + 1
+                    # Friendly aircraft was destroyed (TID = aircraft_id)
+                    if tgt in self._friendly_pilots:
+                        self._squadron_aircraft_destroyed.add(tgt)
+                        if attacker_obj and tgt not in self._squadron_shot_down_by:
+                            self._squadron_shot_down_by[tgt] = attacker_obj.type
+                    # Friendly pilot was killed (TID = botpilot_id)
+                    if tgt in self._botpilot_to_aircraft:
+                        self._squadron_pilots_killed.add(tgt)
+
             elif "AType:5" in ln:  # ✅ Takeoff
                 pid = self._i(ln, r"PID:(-?\d+)")
                 pos_match = re.search(r"POS\((-?[\d.]+),(-?[\d.]+),(-?[\d.]+)\)", ln)
@@ -781,19 +828,21 @@ class MissionDebriefParser:
             # SECTION B.4: AType:16 is authoritative pilot-bot ground contact after bailout.
             # Use it to update/override touchdown position when it matches the player's pilot bot.
             elif "AType:16" in ln:
-                if self.stats.pilot_separation_time:
-                    botid = self._i(ln, r"BOTID:(-?\d+)")
-                    if botid == self.stats.player_pid:
-                        pos_match = re.search(r"POS\((-?[\d.]+),(-?[\d.]+),(-?[\d.]+)\)", ln)
-                        if pos_match:
-                            x = float(pos_match.group(1))
-                            y = float(pos_match.group(2))
-                            z = float(pos_match.group(3))
-                            # Override touchdown position with the authoritative landing coords
-                            self.stats._pilot_touchdown_time = self.stats._pilot_touchdown_time or t
-                            self.stats._pilot_touchdown_pos = (x, y, z)
-                            if self.verbose:
-                                log_message(logger, f"  [AType:16] Pilot bot landing confirmed at T:{t} pos=({x:.0f},{z:.0f})")
+                botid = self._i(ln, r"BOTID:(-?\d+)")
+                if self.stats.pilot_separation_time and botid == self.stats.player_pid:
+                    pos_match = re.search(r"POS\((-?[\d.]+),(-?[\d.]+),(-?[\d.]+)\)", ln)
+                    if pos_match:
+                        x = float(pos_match.group(1))
+                        y = float(pos_match.group(2))
+                        z = float(pos_match.group(3))
+                        # Override touchdown position with the authoritative landing coords
+                        self.stats._pilot_touchdown_time = self.stats._pilot_touchdown_time or t
+                        self.stats._pilot_touchdown_pos = (x, y, z)
+                        if self.verbose:
+                            log_message(logger, f"  [AType:16] Pilot bot landing confirmed at T:{t} pos=({x:.0f},{z:.0f})")
+                # Friendly pilot landed after bailout
+                if botid in self._botpilot_to_aircraft:
+                    self._squadron_pilots_landed.add(botid)
 
             # SECTION B.3: AType:7 MUST NOT be used as landing/crash/bailout trigger.
             # It may be recognized as a delimiter/segment boundary, but must not drive status.
@@ -1325,6 +1374,11 @@ class MissionDebriefParser:
             elif hit["target"] in (self.stats.player_pid, self.stats.player_id):
                 pilot_damage += hit["damage"]
         
+        # 100% pilot damage = pilot died, regardless of how the aircraft ended up
+        if pilot_damage >= 0.99:
+            self.stats.final_state = "KIA"
+            self.stats.wounded = False
+
         # Count air kills separately (flying vs parked)
         air_kills_all = [k for k in kills if k.category == "Air"]
         air_kills_flying = sum(1 for k in air_kills_all if not getattr(k, 'is_static', False))
@@ -1477,6 +1531,42 @@ class MissionDebriefParser:
                     continue
                 filtered_events.append(evt)
             non_damage_events = filtered_events
+
+        # Build squadron_flights from friendly pilot tracking
+        if self._friendly_pilots:
+            squadron_flights = []
+            for aircraft_id, pilot_info in self._friendly_pilots.items():
+                if aircraft_id == self.stats.player_plid:
+                    continue
+                botpilot_id = pilot_info["botpilot_id"]
+                aircraft_obj = self.stats.objects.get(aircraft_id)
+                aircraft_type = aircraft_obj.type if aircraft_obj else None
+                air_kills_data = self._squadron_air_kills.get(aircraft_id, [])
+                pilot_killed = botpilot_id in self._squadron_pilots_killed
+                aircraft_destroyed = aircraft_id in self._squadron_aircraft_destroyed
+                pilot_landed = botpilot_id in self._squadron_pilots_landed
+                if pilot_killed:
+                    outcome = "killed"
+                elif aircraft_destroyed and pilot_landed:
+                    outcome = "bailed_survived"
+                elif aircraft_destroyed:
+                    outcome = "shot_down"
+                else:
+                    outcome = "survived"
+                entry = {
+                    "name": pilot_info["name"],
+                    "aircraft_type": aircraft_type,
+                    "air_kills": sum(1 for k in air_kills_data if not k.get("is_static")),
+                    "air_kills_parked": sum(1 for k in air_kills_data if k.get("is_static")),
+                    "ground_kills": self._squadron_ground_kills.get(aircraft_id, 0),
+                    "outcome": outcome,
+                }
+                shot_down_by = self._squadron_shot_down_by.get(aircraft_id)
+                if shot_down_by:
+                    entry["shot_down_by_type"] = shot_down_by
+                squadron_flights.append(entry)
+            if squadron_flights:
+                data["squadron_flights"] = squadron_flights
 
         # Sort all events by time
         def _time_key(evt):

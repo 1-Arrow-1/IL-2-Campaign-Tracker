@@ -675,6 +675,7 @@ const DetailPage = {
         storiesStatus: null,
         storiesContent: null,
         storiesGenerateBtn: null,
+        storiesCleanupBtn: null,
         careerPdfBtn: null
     },
 
@@ -774,6 +775,7 @@ const DetailPage = {
         this.elements.storiesStatus = document.getElementById('stories-status');
         this.elements.storiesContent = document.getElementById('stories-content');
         this.elements.storiesGenerateBtn = document.getElementById('stories-generate-btn');
+        this.elements.storiesCleanupBtn = document.getElementById('stories-cleanup-btn');
         this.elements.careerPdfBtn = document.getElementById('career-pdf-btn');
     },
 
@@ -821,6 +823,9 @@ const DetailPage = {
     setupStoryHandlers() {
         if (this.elements.storiesGenerateBtn) {
             this.elements.storiesGenerateBtn.addEventListener('click', () => this.generateStories());
+        }
+        if (this.elements.storiesCleanupBtn) {
+            this.elements.storiesCleanupBtn.addEventListener('click', () => this._cleanupOrphanedChapters());
         }
         if (this.elements.careerPdfBtn) {
             this.elements.careerPdfBtn.addEventListener('click', () => this._generateCareerPdf());
@@ -1210,6 +1215,9 @@ const DetailPage = {
         if (this.elements.storiesGenerateBtn) {
             this.elements.storiesGenerateBtn.disabled = !!isBusy;
         }
+        if (this.elements.storiesCleanupBtn) {
+            this.elements.storiesCleanupBtn.disabled = !!isBusy;
+        }
     },
 
     renderStoriesSection(payload) {
@@ -1242,6 +1250,13 @@ const DetailPage = {
             button.textContent = chapters.length > 0
                 ? translateOrFallback('web.button.generate_missing_stories', 'Generate Missing Stories')
                 : translateOrFallback('web.button.generate_stories', 'Generate Stories');
+        }
+
+        // Cleanup button: only when there are chapters missing a mission_id
+        if (this.elements.storiesCleanupBtn) {
+            const hasOrphans = chapters.some(c => !c.mission_id);
+            this.elements.storiesCleanupBtn.style.display = hasOrphans ? '' : 'none';
+            this.elements.storiesCleanupBtn.disabled = this.storiesLoading;
         }
 
         // PDF button: only for career entries
@@ -1402,6 +1417,25 @@ const DetailPage = {
         } catch (error) {
             console.error('Failed to delete story chapter:', error);
             this.setStoriesStatus(error.message || translateOrFallback('web.message.delete_story_chapter_failed', 'Failed to delete chapter.'), 'error');
+        } finally {
+            this.setStoriesBusy(false);
+        }
+    },
+
+    async _cleanupOrphanedChapters() {
+        if (!this.currentStoriesEntryId || !this._source) return;
+        const confirmMsg = translateOrFallback(
+            'web.message.confirm_cleanup_orphaned_chapters',
+            'Delete all story chapters with missing IDs? These cannot be regenerated automatically.'
+        );
+        if (!confirm(confirmMsg)) return;
+        this.setStoriesBusy(true);
+        try {
+            const payload = await API.cleanupOrphanedChapters(this._source, this.currentStoriesEntryId);
+            this.renderStoriesSection(payload);
+        } catch (error) {
+            console.error('Failed to clean up orphaned chapters:', error);
+            this.setStoriesStatus(error.message || 'Failed to clean up chapters.', 'error');
         } finally {
             this.setStoriesBusy(false);
         }

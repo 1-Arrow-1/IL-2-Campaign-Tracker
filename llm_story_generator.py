@@ -543,6 +543,38 @@ def load_story_chapters_for(source: str, entry_id: str | int) -> list[Dict[str, 
     return chapters
 
 
+def purge_orphaned_chapters_for(source: str, entry_id: str | int) -> int:
+    """Delete all chapters with an empty/missing mission_id and renumber the rest.
+
+    Returns the number of chapters deleted.
+    """
+    chapters_dir = _story_entry_dir(source, entry_id) / "chapters"
+    if not chapters_dir.exists():
+        return 0
+
+    deleted_count = 0
+    for path in sorted(chapters_dir.glob("*.json")):
+        payload = _load_json_file(path, None)
+        if isinstance(payload, dict) and not _normalize_text(payload.get("mission_id")):
+            path.unlink()
+            deleted_count += 1
+
+    if deleted_count > 0:
+        for new_index, path in enumerate(sorted(chapters_dir.glob("*.json")), start=1):
+            payload = _load_json_file(path, None)
+            if not isinstance(payload, dict):
+                continue
+            payload["chapter_index"] = new_index
+            date_part = _normalize_text(payload.get("date")) or "unknown-date"
+            new_name = f"{new_index:04d}_{date_part}.json"
+            new_path = chapters_dir / new_name
+            _save_json_file(new_path, payload)
+            if new_path != path:
+                path.unlink()
+
+    return deleted_count
+
+
 def delete_story_chapter_for(source: str, entry_id: str | int, mission_id: str) -> Optional[str]:
     """Delete a chapter by mission_id and renumber the remaining ones.
 
@@ -1516,24 +1548,47 @@ def generate_mission_story(
             missions_in_chapter = 1
 
     _has_theatre_transition = isinstance(story_input, dict) and bool(story_input.get("theatre_transition"))
+    _sq_ctx = (story_input or {}).get("squadron_context", {}) if isinstance(story_input, dict) else {}
+    _inter_acts = (story_input or {}).get("inter_mission_activities", []) if isinstance(story_input, dict) else []
+    _is_squadron_day = (
+        isinstance(story_input, dict)
+        and (story_input.get("chapter_scope") or {}).get("scope") == "squadron_day"
+    )
+    _has_squadron_honors = bool(
+        _sq_ctx.get("promotions") or _sq_ctx.get("awards")
+        or _sq_ctx.get("kia") or _sq_ctx.get("mia") or _sq_ctx.get("wia")
+        or any(
+            (item.get("casualties") or item.get("awards") or item.get("promotions"))
+            for item in (_inter_acts if isinstance(_inter_acts, list) else [])
+            if isinstance(item, dict)
+        )
+    )
 
-    if missions_in_chapter <= 1:
+    if _is_squadron_day:
+        paragraph_rule = "Write exactly 3 paragraphs."
+        word_target = "Target 160-320 words."
+        max_output_tokens = 850
+    elif missions_in_chapter <= 1:
         if _has_theatre_transition:
             paragraph_rule = "Write exactly 4 paragraphs."
-            word_target = "Target 250-380 words."
-            max_output_tokens = 1000
+            word_target = "Target 250-500 words."
+            max_output_tokens = 1300
+        elif _has_squadron_honors:
+            paragraph_rule = "Write exactly 4 paragraphs."
+            word_target = "Target 220-480 words."
+            max_output_tokens = 1250
         else:
             paragraph_rule = "Write exactly 3 paragraphs."
-            word_target = "Target 180-280 words."
-            max_output_tokens = 700
+            word_target = "Target 180-370 words."
+            max_output_tokens = 950
     elif missions_in_chapter == 2:
         paragraph_rule = "Write exactly 3 paragraphs."
-        word_target = "Target 240-360 words."
-        max_output_tokens = 950
+        word_target = "Target 240-470 words."
+        max_output_tokens = 1200
     else:
         paragraph_rule = "Write exactly 4 paragraphs."
-        word_target = "Target 320-500 words."
-        max_output_tokens = 1300
+        word_target = "Target 320-650 words."
+        max_output_tokens = 1650
 
     prompt = (
         "Write the next chapter of a continuous wartime storybook.\n\n"
@@ -1573,10 +1628,30 @@ def generate_mission_story(
         "- Do not claim a promotion or award for this mission when mission_progression says none occurred.\n"
         "- If pre_service_awards is present, those are training-era decorations the pilot earned before his first operational deployment — they were pinned on during training, not after this mission. You may mention them briefly as established background (e.g. 'already wearing his pilot's badge') but never as newly awarded in this chapter.\n"
         "- Treat squadron_context as factual.\n"
-        "- Mention at least one squadron_context item when any are present.\n"
+        "- If squadron_context.promotions is non-empty, you MUST mention every entry in the narrative. Each entry has 'pilot' (name) and 'promoted_to' (the new rank). Write it as 'X was promoted to [promoted_to]' — do NOT use promoted_to as a name prefix before the pilot's name. A chapter that omits any promotion is factually incomplete.\n"
+        "- If squadron_context.awards is non-empty, you MUST mention every award by its full name and the pilot's name — do not omit any. A chapter that omits any award from this list is factually incomplete.\n"
+        "- If squadron_context.kia is non-empty, you MUST mention every KIA as a loss in the narrative.\n"
+        "- If squadron_context.transfers is non-empty, mention transfers naturally where they fit the narrative.\n"
         "- Do not invent squadron-member outcomes not present in squadron_context.\n"
         "- Do not name any person (pilot, commander, wingman, Staffelkapitän, adjutant, greeting officer, etc.) who does not appear explicitly in squadron_context. Inventing named individuals is strictly forbidden — do not do this even when it would make the prose feel more vivid or personal. Use 'his superior', 'the duty officer', or similar generic references instead.\n"
         "- When referencing a pilot listed in squadron_context, use their name exactly as supplied. If a rank field is present for that pilot entry, you may use it — e.g. 'Unteroffizier Müller was awarded...'. Never invent or assume a rank that is not in the supplied entry.\n"
+        "- If squadron_context.flight_results is present and non-empty, you may weave 1-2 significant entries naturally into the narrative — do not recite them as a list. "
+        "An entry with outcome 'killed' is a significant loss and worth noting. "
+        "An entry with outcome 'bailed_survived' means the pilot was shot down but parachuted to safety. "
+        "An entry with outcome 'shot_down' means the aircraft was lost (fate of the pilot was uncertain in the field). "
+        "If shot_down_by_type is present, you may name the enemy aircraft type (e.g. 'a Yak-1'). "
+        "If air_kills or ground_kills are non-zero, you may credit that pilot with those kills. "
+        "If a rank field is present for that entry, use it as with other squadron_context pilots. "
+        "Only mention entries that contribute meaningfully to the story — skip pilots who simply survived without incident unless they scored kills. "
+        "Do not name any flight_results pilot not listed in the supplied data.\n"
+        "- If inter_mission_activities is non-empty, weave the squadron's off-day or parallel sorties into the narrative. "
+        "Entries with same_day=false occurred between the previous chapter and this one — reference them as prior events "
+        "('During the intervening days ...', 'While the pilot was grounded, the squadron ...', etc.). "
+        "Entries with same_day=true occurred on the same date but in missions the player did not fly — mention them as "
+        "concurrent activity happening elsewhere ('That same afternoon, another element of the squadron ...'). "
+        "Acknowledge casualties (KIA/MIA/WIA) by name if present. Note squadron_air_kills if significant. "
+        "Integrate naturally in 1-3 sentences total — do not enumerate each entry as a list item. "
+        "Do not invent pilot names or details beyond what is supplied.\n"
         "- If mission.other_incidences is non-empty, mention those facts explicitly in the chapter.\n"
         "- Treat mission.other_incidences as mandatory factual aftermath/context, not optional flavor.\n"
         "- If mission.other_incidences includes 'Recovery from injury', mention that the pilot entered a recovery period after this mission; do not present that recovery as occurring before the sortie ended.\n"
@@ -1598,6 +1673,17 @@ def generate_mission_story(
         "- If campaign_context.background_excerpt is present, use it as atmosphere only.\n"
         "- Do not quote long chunks from campaign_context.background_excerpt verbatim.\n"
         "- If chapter_scope.scope is 'day', narrate one cohesive day arc across all listed missions in chapter_scope.mission_ids.\n"
+        "- If chapter_scope.scope is 'squadron_day', the player pilot did not fly this day. "
+        "Write 3 paragraphs from the pilot's perspective at base. "
+        "Paragraph 1: the pilot's situation — grounded for the day (be brief and understated about the reason; invent nothing specific). "
+        "Paragraph 2: what the squadron accomplished or suffered, drawn entirely from squadron_context. "
+        "You MUST state the number of missions the squadron flew (missions_flown) if present. "
+        "You MUST state the exact number of aerial kills as squadron_air_kills if > 0, "
+        "and ground kills as squadron_ground_kills if > 0 — use concrete numbers, not vague language. "
+        "Name any KIA/MIA/WIA casualties by name and rank. Mention promotions and awards. "
+        "If only missions_flown is available (no kills, no casualties), briefly note that the squadron flew without incident. "
+        "Paragraph 3: the pilot's reflection on the day — a quiet, grounded close. "
+        "Do not present this as a combat sortie. Do not invent mission objectives or enemy activity not in the data.\n"
         "- If mission duration is mentioned, use only hours and minutes (no seconds).\n"
         f"- Write the entire chapter in {language_label}.\n"
         f"- {paragraph_rule}\n"
