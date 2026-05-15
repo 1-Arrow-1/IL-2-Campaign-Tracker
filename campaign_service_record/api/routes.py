@@ -2063,6 +2063,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 mission_story_input["pre_service_awards"] = pre_service_awards
             if _pilot_bio:
                 mission_story_input["pilot_bio"] = _pilot_bio
+                mission_story_input["first_career_chapter"] = (_total_chapter_order == 0)
             mission_story_input["mission"]["notable_events"] = notables
             mission_story_input["mission"]["other_incidences"] = story_incidences
             mission_story_input["mission"]["result"] = mission_result
