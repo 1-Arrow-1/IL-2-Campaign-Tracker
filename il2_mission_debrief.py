@@ -249,6 +249,10 @@ class MissionDebriefParser:
         self._squadron_pilots_killed: set = set()       # botpilot_ids killed
         self._squadron_pilots_landed: set = set()       # botpilot_ids that landed after bailout
         self._squadron_shot_down_by: dict = {}          # aircraft_id → attacker type string
+        self._squadron_kill_attacker_id: dict = {}      # aircraft_id → attacker ID (-1 = AID:-1)
+        self._squadron_first_fire_tick: dict = {}       # aircraft_id → (tick, pos) first AID:-1 damage
+        self._squadron_any_combat_damage: set = set()  # aircraft_ids that received non-AID:-1 damage
+        self._all_destroyed_ticks: dict = {}            # aircraft_id → raw tick for all Air destructions
 
     @staticmethod
     def mission_time_to_hhmmss(t):
@@ -672,7 +676,17 @@ class MissionDebriefParser:
                 if _tgt_obj and _tgt_obj.category == "Air" and a != -1:
                     self._last_damager[tgt] = a
                     self._last_damage_tick[tgt] = t
-                
+
+                # Track friendly aircraft damage for kill-cause classification
+                if self._friendly_pilots and tgt in self._friendly_pilots:
+                    if a != -1:
+                        self._squadron_any_combat_damage.add(tgt)
+                    elif tgt not in self._squadron_first_fire_tick:
+                        _fft_pos = None
+                        if pos_match:
+                            _fft_pos = (float(pos_match.group(1)), float(pos_match.group(2)), float(pos_match.group(3)))
+                        self._squadron_first_fire_tick[tgt] = (t, _fft_pos)
+
                 # Track damage to player or player's aircraft
                 # Create SEPARATE events for aircraft and pilot damage
                 damage_target_type = None
@@ -743,6 +757,9 @@ class MissionDebriefParser:
                     })
                 
                 obj = self.stats.objects.get(tgt)
+                # Track all Air object destruction ticks for collision detection
+                if obj and obj.category == "Air":
+                    self._all_destroyed_ticks[tgt] = t
                 # 🚫 Skip excluded object types (from YAML)
                 if obj and obj.category == "Excluded":
                     continue
@@ -784,6 +801,8 @@ class MissionDebriefParser:
                         self._squadron_aircraft_destroyed.add(tgt)
                         if attacker_obj and tgt not in self._squadron_shot_down_by:
                             self._squadron_shot_down_by[tgt] = attacker_obj.type
+                        if tgt not in self._squadron_kill_attacker_id:
+                            self._squadron_kill_attacker_id[tgt] = a
                     # Friendly pilot was killed (TID = botpilot_id)
                     if tgt in self._botpilot_to_aircraft:
                         self._squadron_pilots_killed.add(tgt)
@@ -1035,6 +1054,67 @@ class MissionDebriefParser:
             pass  # Leave as "Alive" - no additional states introduced
 
         return self.stats
+
+    # ------------------------------------------------------
+    def _determine_squadron_kill_cause(self, aircraft_id: int) -> str:
+        """
+        Classify how a friendly aircraft was destroyed.
+
+        Returns one of: "shot_down", "collision_enemy", "collision_friendly",
+        "friendly_fire", "killed_by_aa", "crashed_combat", "crashed".
+        """
+        a = self._squadron_kill_attacker_id.get(aircraft_id, -1)
+        destroy_tick = self._all_destroyed_ticks.get(aircraft_id)
+
+        if a != -1:
+            attacker_obj = self.stats.objects.get(a)
+            victim_obj = self.stats.objects.get(aircraft_id)
+
+            if attacker_obj and attacker_obj.category in ("Ground", "Building", "Naval"):
+                return "killed_by_aa"
+
+            victim_country = victim_obj.country if victim_obj else None
+            attacker_country = attacker_obj.country if attacker_obj else None
+            is_friendly = bool(
+                victim_country and attacker_country and victim_country == attacker_country
+            )
+
+            # Pattern A collision: both aircraft destroyed at the same tick
+            attacker_destroy_tick = self._all_destroyed_ticks.get(a)
+            both_died_same_tick = (
+                destroy_tick is not None
+                and attacker_destroy_tick is not None
+                and attacker_destroy_tick == destroy_tick
+            )
+
+            if is_friendly:
+                return "collision_friendly" if both_died_same_tick else "friendly_fire"
+            else:
+                return "collision_enemy" if both_died_same_tick else "shot_down"
+
+        else:
+            # AID:-1 — check Pattern B: two friendlies get simultaneous first fire ticks
+            # at nearly the same position (mid-air collision, both burn without explicit kill)
+            own_fire = self._squadron_first_fire_tick.get(aircraft_id)
+            if own_fire:
+                own_tick, own_pos = own_fire
+                for other_id, (other_tick, other_pos) in self._squadron_first_fire_tick.items():
+                    if other_id == aircraft_id:
+                        continue
+                    if other_id not in self._friendly_pilots:
+                        continue
+                    if abs(other_tick - own_tick) <= 5:
+                        if own_pos is None or other_pos is None:
+                            return "collision_friendly"
+                        dx = own_pos[0] - other_pos[0]
+                        dy = own_pos[1] - other_pos[1]
+                        dz = own_pos[2] - other_pos[2]
+                        if (dx * dx + dy * dy + dz * dz) ** 0.5 <= 50.0:
+                            return "collision_friendly"
+
+            if aircraft_id in self._squadron_any_combat_damage:
+                return "crashed_combat"
+            return "crashed"
 
     # ------------------------------------------------------
     def _resolve_indirect_kill(self, tid, ts, destroy_tick=None, pos_match=None):
@@ -1553,6 +1633,10 @@ class MissionDebriefParser:
                     outcome = "shot_down"
                 else:
                     outcome = "survived"
+                kill_cause = (
+                    self._determine_squadron_kill_cause(aircraft_id)
+                    if aircraft_destroyed else None
+                )
                 entry = {
                     "name": pilot_info["name"],
                     "aircraft_type": aircraft_type,
@@ -1564,6 +1648,8 @@ class MissionDebriefParser:
                 shot_down_by = self._squadron_shot_down_by.get(aircraft_id)
                 if shot_down_by:
                     entry["shot_down_by_type"] = shot_down_by
+                if kill_cause:
+                    entry["kill_cause"] = kill_cause
                 squadron_flights.append(entry)
             if squadron_flights:
                 data["squadron_flights"] = squadron_flights

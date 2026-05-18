@@ -2348,6 +2348,8 @@ def _build_squadron_context_for_mission(
                 entry["rank"] = pilot_rank
             if flight.get("shot_down_by_type"):
                 entry["shot_down_by_type"] = flight["shot_down_by_type"]
+            if flight.get("kill_cause"):
+                entry["kill_cause"] = flight["kill_cause"]
             empty["flight_results"].append(entry)
 
     return empty
