@@ -1471,6 +1471,7 @@ class MissionDebriefParser:
                 "aircraft": self.stats.player_aircraft,
                 "spawn_x": self.stats.player_spawn_x,
                 "spawn_z": self.stats.player_spawn_z,
+                "country": self.stats.player_country,
             },
             "summary": {
                 "air_kills": len(air_kills_all),
@@ -1640,6 +1641,7 @@ class MissionDebriefParser:
                 entry = {
                     "name": pilot_info["name"],
                     "aircraft_type": aircraft_type,
+                    "country": aircraft_obj.country if aircraft_obj else None,
                     "air_kills": sum(1 for k in air_kills_data if not k.get("is_static")),
                     "air_kills_parked": sum(1 for k in air_kills_data if k.get("is_static")),
                     "ground_kills": self._squadron_ground_kills.get(aircraft_id, 0),

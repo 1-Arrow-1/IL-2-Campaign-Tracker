@@ -2016,6 +2016,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 mission_date,
                 story_language=story_language,
                 mission_json=mission_json if isinstance(mission_json, dict) else None,
+                mission_type_code=row.get("mission_type_code"),
             )
             for key in ("promotions", "awards", "transfers"):
                 squadron_context[key] = squadron_context.get(key, [])[:8]
@@ -2216,6 +2217,7 @@ def _build_squadron_context_for_mission(
     mission_date_iso: str,
     story_language: str = "en",
     mission_json: Optional[dict] = None,
+    mission_type_code: Optional[int] = None,
 ) -> dict:
     """
     Build reliable squadron-context facts for one mission.
@@ -2351,6 +2353,39 @@ def _build_squadron_context_for_mission(
             if flight.get("kill_cause"):
                 entry["kill_cause"] = flight["kill_cause"]
             empty["flight_results"].append(entry)
+
+        # Build escort_context for escort mission types (1151=bombers, 1152=attackers, 1153=transports)
+        _ESCORT_MISSION_TYPES = {1151, 1152, 1153}
+        if mission_type_code in _ESCORT_MISSION_TYPES:
+            player_country = (mission_json.get("player") or {}).get("country")
+            counts: dict = {}
+            for flight in squadron_flights:
+                pilot_name = flight.get("name") or ""
+                if pilot_name in member_name_to_pid:
+                    continue  # skip named squadron members
+                aircraft_country = flight.get("country")
+                if player_country and aircraft_country and aircraft_country != player_country:
+                    continue  # skip enemies
+                atype = flight.get("aircraft_type") or "Unknown"
+                outcome = flight.get("outcome") or "survived"
+                if atype not in counts:
+                    counts[atype] = {"total": 0, "lost": 0}
+                counts[atype]["total"] += 1
+                if outcome in ("shot_down", "killed"):
+                    counts[atype]["lost"] += 1
+            if counts:
+                formation = [
+                    {"aircraft_type": t, "count": v["total"], "lost": v["lost"]}
+                    for t, v in counts.items()
+                ]
+                total = sum(v["total"] for v in counts.values())
+                lost = sum(v["lost"] for v in counts.values())
+                empty["escort_context"] = {
+                    "formation": formation,
+                    "total": total,
+                    "lost": lost,
+                    "survived": total - lost,
+                }
 
     return empty
 
