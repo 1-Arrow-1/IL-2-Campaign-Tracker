@@ -192,6 +192,9 @@ _ENG_WEATHER_RE = re.compile(
     r'Weather:\s*(?:</?[^>]+>\s*)*([^<\n\r]+)',
     re.IGNORECASE,
 )
+# Matches the content of briefing key "1 : ..." up to the next numbered key or end of string.
+_ENG_KEY1_RE = re.compile(r'(?m)^\s*1\s*:(.+?)(?=\n\s*\d+\s*:|\Z)', re.DOTALL)
+_ENG_BRIEFING_MAX_CHARS = 700
 _ENG_MISSION_TYPE_RE = re.compile(
     r'Mission\s*type:\s*(?:</?[^>]+>\s*)*([^<\n\r]+)',
     re.IGNORECASE,
@@ -304,6 +307,20 @@ def read_eng_story_context(
         mission_start_time = _normalize_briefing_value(time_match.group(1))
         if mission_start_time:
             result["mission_start_time"] = mission_start_time
+
+    key1_match = _ENG_KEY1_RE.search(text)
+    if key1_match:
+        free_text = _normalize_briefing_value(key1_match.group(1))
+        if free_text:
+            if len(free_text) > _ENG_BRIEFING_MAX_CHARS:
+                truncated = free_text[:_ENG_BRIEFING_MAX_CHARS]
+                last_period = truncated.rfind(".")
+                if last_period > _ENG_BRIEFING_MAX_CHARS // 2:
+                    truncated = truncated[: last_period + 1]
+                else:
+                    truncated = truncated.rstrip() + "..."
+                free_text = truncated
+            result["briefing_free_text"] = free_text
 
     return result
 

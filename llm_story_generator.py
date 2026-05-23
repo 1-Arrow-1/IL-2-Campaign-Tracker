@@ -1106,6 +1106,7 @@ def build_campaign_story_input(
     honors_context: Optional[Dict[str, Any]] = None,
     missions_completed: Optional[int] = None,
     narrative_memory: Optional[Dict[str, Any]] = None,
+    mission_briefing: str = "",
 ) -> Dict[str, Any]:
     result = _normalize_text(mission_summary.get("result"))
     duration = _format_duration_for_story(mission_summary.get("duration"))
@@ -1189,6 +1190,9 @@ def build_campaign_story_input(
             mission_block["mission_type"] = resolved_mission_type
         if resolved_mission_objective:
             mission_block["mission_objective"] = resolved_mission_objective
+        resolved_briefing = _normalize_text(mission_briefing)
+        if resolved_briefing:
+            mission_block["briefing"] = resolved_briefing
     return payload
 
 
@@ -1698,6 +1702,9 @@ def generate_mission_story(
         "- When referring to the pilot's confirmed aerial victory total, use career_progress.aerial_victories. This is always authoritative — it overrides any figure in narrative_memory. Ground and naval kills are not part of this count.\n"
         "- If campaign_context.background_excerpt is present, use it as atmosphere only.\n"
         "- Do not quote long chunks from campaign_context.background_excerpt verbatim.\n"
+        "- If mission.briefing is present, it is the original briefing text written by the campaign creator for this specific mission. "
+        "Draw on it to convey the pilot's sense of purpose, the tactical situation, and the historical atmosphere. "
+        "Do not reproduce it verbatim — use it as source material to enrich the narrative.\n"
         "- If chapter_scope.scope is 'day', narrate one cohesive day arc across all listed missions in chapter_scope.mission_ids.\n"
         "- If chapter_scope.scope is 'squadron_day', the player pilot did not fly this day. "
         "Write 3 paragraphs from the pilot's perspective at base. "

@@ -1116,6 +1116,7 @@ def _build_campaign_story_contexts(campaign_name: str, story_language: str) -> l
             mission_start_time=_normalize_story_text(briefing_context.get("mission_start_time")),
             mission_type=_normalize_story_text(briefing_context.get("mission_type")),
             mission_objective=_normalize_story_text(briefing_context.get("mission_objective")),
+            mission_briefing=_normalize_story_text(briefing_context.get("briefing_free_text")),
             rank=rank_during_mission,
             pilot_last_name=pilot_last_name,
             aircraft=aircraft,
