@@ -849,7 +849,9 @@
       "refresh_models": "Get Available Models",
       "select_update_package": "Select Update Package…",
       "install_update": "Install Update",
-      "view_install_log": "View Install Log"
+      "view_install_log": "View Install Log",
+      "restart_and_apply": "Restart & Apply",
+      "restore_backup": "Restore Backup…"
     },
     "dialog": {
       "edit_bracket_label": "Bracket (e.g., '1-10' or '71+'):",
@@ -907,6 +909,9 @@
       "radio_use_ww2": "Use WW2 style",
       "german_awards_elevation_note": "Note: Modifying files in the IL-2 installation directory may require administrator rights. You will be prompted for elevation if needed.",
       "updates_helper": "Install a downloaded update package. Select the update ZIP file to review its contents before installing.",
+      "update_applied_notice": "Settings Manager updated successfully.",
+      "update_pending_notice": "A pending update has not been applied yet. Restart the Settings Manager to complete the update.",
+      "restore_backup_helper": "Roll back to a previous version",
       "current_version": "Current version:",
       "version_unknown": "Unknown",
       "update_version": "Package version:",
@@ -982,7 +987,15 @@
       "update_done_failed": "Installation failed.",
       "update_success": "{count} file(s) installed successfully.\n\nPlease restart the tracker to apply the update.",
       "update_partial": "{installed} file(s) installed, {failed} failed.\n\n{details}",
-      "update_failed": "Installation failed:\n{error}"
+      "update_failed": "Installation failed:\n{error}",
+      "update_pending_restart": "The Settings Manager itself was updated.\n\nThe application must restart to apply the new version.\n\nRestart now?",
+      "restore_confirm_title": "Restore Backup",
+      "restore_select_zip": "Select a backup file to restore",
+      "restore_confirm": "Restore {count} file(s) from '{name}'?\n\nThis will overwrite the current version with the backup.",
+      "restore_no_backups": "No backups found. Backups are created automatically each time you install an update.",
+      "restore_success": "{count} file(s) restored successfully.",
+      "restore_failed": "{count} file(s) could not be restored.\n\n{details}",
+      "restore_done": "Restore complete."
     },
     "tab": {
       "campaigns": "Campaigns",

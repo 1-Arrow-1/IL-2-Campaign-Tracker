@@ -848,7 +848,9 @@
       "refresh_models": "获取可用模型",
       "select_update_package": "选择更新包…",
       "install_update": "安装更新",
-      "view_install_log": "查看安装日志"
+      "view_install_log": "查看安装日志",
+      "restart_and_apply": "重启并应用",
+      "restore_backup": "恢复备份…"
     },
     "dialog": {
       "edit_bracket_label": "区间（例如 '1-10' 或 '71+'）：",
@@ -899,6 +901,9 @@
       "german_awards_elevation_note": "注意：修改IL-2安装目录中的文件可能需要管理员权限。如有需要，将提示您进行权限提升。",
       "import_stock_campaigns_helper": "从 Campaigns.gtp 和 Missions.gtp 将 IL-2 标准战役导入到你的 data\\Campaigns 文件夹。新的战役文件夹将完整复制。对于已存在的战役文件夹，仅添加缺少的任务文件——不会覆盖任何已有文件。",
       "updates_helper": "安装已下载的更新包。选择更新ZIP文件，安装前可检查其内容。",
+      "update_applied_notice": "Settings Manager 已成功更新。",
+      "update_pending_notice": "待处理的更新尚未应用。请重启 Settings Manager 以完成更新。",
+      "restore_backup_helper": "回滚到之前的版本",
       "current_version": "当前版本：",
       "version_unknown": "未知",
       "update_version": "包版本：",
@@ -966,7 +971,15 @@
       "update_done_failed": "安装失败。",
       "update_success": "{count} 个文件安装成功。\n\n请重启追踪器以应用更新。",
       "update_partial": "已安装 {installed} 个文件，{failed} 个失败。\n\n{details}",
-      "update_failed": "安装失败：\n{error}"
+      "update_failed": "安装失败：\n{error}",
+      "update_pending_restart": "Settings Manager 本身已更新。\n\n应用程序需要重新启动以应用新版本。\n\n立即重新启动？",
+      "restore_confirm_title": "恢复备份",
+      "restore_select_zip": "选择要恢复的备份文件",
+      "restore_confirm": "从 '{name}' 恢复 {count} 个文件？\n\n当前版本将被备份替换。",
+      "restore_no_backups": "未找到备份。每次安装更新时会自动创建备份。",
+      "restore_success": "已成功恢复 {count} 个文件。",
+      "restore_failed": "{count} 个文件恢复失败。\n\n{details}",
+      "restore_done": "恢复完成。"
     },
     "tab": {
       "campaigns": "战役",

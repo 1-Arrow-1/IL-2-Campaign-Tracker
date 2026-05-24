@@ -848,7 +848,9 @@
       "refresh_models": "Pobierz dostępne modele",
       "select_update_package": "Wybierz pakiet aktualizacji…",
       "install_update": "Zainstaluj aktualizację",
-      "view_install_log": "Wyświetl dziennik instalacji"
+      "view_install_log": "Wyświetl dziennik instalacji",
+      "restart_and_apply": "Uruchom ponownie i zastosuj",
+      "restore_backup": "Przywróć kopię zapasową…"
     },
     "dialog": {
       "edit_bracket_label": "Zakres (np. '1-10' lub '71+'):",
@@ -899,6 +901,9 @@
       "german_awards_elevation_note": "Uwaga: Modyfikowanie plików w katalogu instalacyjnym IL-2 może wymagać uprawnień administratora. W razie potrzeby zostaniesz poproszony o podwyższenie uprawnień.",
       "import_stock_campaigns_helper": "Importuje standardowe kampanie IL-2 z plikow Campaigns.gtp i Missions.gtp do folderu data\\Campaigns. Nowe foldery kampanii sa kopiowane w calosci. Dla istniejacych folderow kopiowane sa tylko brakujace pliki misji — zadne istniejace pliki nie sa nadpisywane.",
       "updates_helper": "Zainstaluj pobrany pakiet aktualizacji. Wybierz plik ZIP, aby sprawdzić jego zawartość przed instalacją.",
+      "update_applied_notice": "Settings Manager zaktualizowany pomyślnie.",
+      "update_pending_notice": "Oczekująca aktualizacja nie została jeszcze zastosowana. Uruchom ponownie Settings Manager, aby dokończyć aktualizację.",
+      "restore_backup_helper": "Przywróć poprzednią wersję",
       "current_version": "Aktualna wersja:",
       "version_unknown": "Nieznana",
       "update_version": "Wersja pakietu:",
@@ -966,7 +971,15 @@
       "update_done_failed": "Instalacja nie powiodła się.",
       "update_success": "{count} plik(i/ów) zainstalowanych pomyślnie.\n\nUruchom ponownie tracker, aby zastosować aktualizację.",
       "update_partial": "{installed} plik(i/ów) zainstalowanych, {failed} nieudanych.\n\n{details}",
-      "update_failed": "Instalacja nie powiodła się:\n{error}"
+      "update_failed": "Instalacja nie powiodła się:\n{error}",
+      "update_pending_restart": "Sam Settings Manager został zaktualizowany.\n\nAplikacja musi zostać ponownie uruchomiona, aby zastosować nową wersję.\n\nUruchomić teraz?",
+      "restore_confirm_title": "Przywróć kopię zapasową",
+      "restore_select_zip": "Wybierz plik kopii zapasowej do przywrócenia",
+      "restore_confirm": "Przywrócić {count} plik(i/ów) z '{name}'?\n\nSpowoduje to zastąpienie bieżącej wersji kopią zapasową.",
+      "restore_no_backups": "Nie znaleziono kopii zapasowych. Są tworzone automatycznie przy każdej instalacji aktualizacji.",
+      "restore_success": "{count} plik(i/ów) przywrócono pomyślnie.",
+      "restore_failed": "{count} plik(i/ów) nie udało się przywrócić.\n\n{details}",
+      "restore_done": "Przywracanie zakończone."
     },
     "tab": {
       "campaigns": "Kampanie",

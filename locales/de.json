@@ -848,7 +848,9 @@
       "refresh_models": "Verfügbare Modelle abrufen",
       "select_update_package": "Update-Paket auswählen…",
       "install_update": "Update installieren",
-      "view_install_log": "Installationsprotokoll anzeigen"
+      "view_install_log": "Installationsprotokoll anzeigen",
+      "restart_and_apply": "Neu starten & Anwenden",
+      "restore_backup": "Backup wiederherstellen…"
     },
     "dialog": {
       "edit_bracket_label": "Bereich (z.B. '1-10' oder '71+'):",
@@ -899,6 +901,9 @@
       "german_awards_elevation_note": "Hinweis: Das Ändern von Dateien im IL-2-Installationsverzeichnis erfordert möglicherweise Administratorrechte. Bei Bedarf wird eine UAC-Aufforderung angezeigt.",
       "import_stock_campaigns_helper": "Importiert die standardmaessigen IL-2-Kampagnen aus Campaigns.gtp und Missions.gtp in deinen Ordner data\\Campaigns. Neue Kampagnenordner werden vollstaendig kopiert. Bei bereits vorhandenen Kampagnenordnern werden nur fehlende Missionsdateien hinzugefuegt – vorhandene Dateien werden nie ueberschrieben.",
       "updates_helper": "Installiere ein heruntergeladenes Update-Paket. Wähle die ZIP-Datei aus, um den Inhalt vor der Installation zu prüfen.",
+      "update_applied_notice": "Settings Manager erfolgreich aktualisiert.",
+      "update_pending_notice": "Ein ausstehendes Update wurde noch nicht angewendet. Starte den Settings Manager neu, um die Aktualisierung abzuschließen.",
+      "restore_backup_helper": "Auf eine frühere Version zurücksetzen",
       "current_version": "Aktuelle Version:",
       "version_unknown": "Unbekannt",
       "update_version": "Paket-Version:",
@@ -966,7 +971,15 @@
       "update_done_failed": "Installation fehlgeschlagen.",
       "update_success": "{count} Datei(en) erfolgreich installiert.\n\nBitte starte den Tracker neu, um das Update anzuwenden.",
       "update_partial": "{installed} Datei(en) installiert, {failed} fehlgeschlagen.\n\n{details}",
-      "update_failed": "Installation fehlgeschlagen:\n{error}"
+      "update_failed": "Installation fehlgeschlagen:\n{error}",
+      "update_pending_restart": "Der Settings Manager selbst wurde aktualisiert.\n\nDie Anwendung muss neu gestartet werden, um die neue Version anzuwenden.\n\nJetzt neu starten?",
+      "restore_confirm_title": "Backup wiederherstellen",
+      "restore_select_zip": "Backup-Datei zur Wiederherstellung auswählen",
+      "restore_confirm": "{count} Datei(en) aus '{name}' wiederherstellen?\n\nDies überschreibt die aktuelle Version mit dem Backup.",
+      "restore_no_backups": "Keine Backups gefunden. Backups werden automatisch bei jedem Update erstellt.",
+      "restore_success": "{count} Datei(en) erfolgreich wiederhergestellt.",
+      "restore_failed": "{count} Datei(en) konnten nicht wiederhergestellt werden.\n\n{details}",
+      "restore_done": "Wiederherstellung abgeschlossen."
     },
     "tab": {
       "campaigns": "Kampagnen",

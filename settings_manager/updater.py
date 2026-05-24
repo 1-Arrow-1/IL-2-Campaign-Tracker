@@ -50,6 +50,8 @@ TRACKER_EXES: tuple[str, ...] = (
     "IL2_CampaignTracker_v2.2_ML.exe",
     "Career_Service_Record.exe",
     "Campaign_Service_Record.exe",
+    # IL2_Settings_Manager.exe is intentionally absent — it can update itself
+    # by deferring its own exe to a .pending file (applied on restart).
 )
 
 # Manifest filename inside the update zip (optional but recommended).
@@ -57,6 +59,9 @@ _MANIFEST_FILENAME = "update_manifest.json"
 
 # Version file in the install directory.
 _VERSION_FILENAME = "version.txt"
+
+# Sentinel written when a .pending restart is needed; deleted after apply.
+RESTART_PENDING_FILENAME = "_restart_pending.json"
 
 
 # ---------------------------------------------------------------------------
@@ -85,6 +90,7 @@ class InstallResult:
     installed: List[str] = field(default_factory=list)
     skipped_protected: List[str] = field(default_factory=list)
     failed: List[Tuple[str, str]] = field(default_factory=list)  # (path, error)
+    pending_restart: List[str] = field(default_factory=list)     # written as .pending; need restart
     backup_path: Optional[str] = None
     error: str = ""
 
@@ -264,11 +270,12 @@ def install_update(
     Copy installable files from *zip_path* into *base_dir*.
 
     *progress_callback(current, total, filename)* is called before each file
-    so the UI can update a progress bar.
+    so the UI can update a progress bar.  Progress is reported only when the
+    integer percentage changes (≤ 100 callbacks total) to keep the UI snappy.
 
     Protected files are silently skipped and reported in result.skipped_protected.
-    File writes are atomic: data is written to a .update_tmp file first, then
-    renamed over the destination so a crash mid-write never leaves a partial file.
+    Files are extracted directly via ZipFile.extract(); locked executables (e.g.
+    the running Settings Manager) are saved as .pending and applied on restart.
     """
     result = InstallResult()
 
@@ -286,18 +293,27 @@ def install_update(
 
     try:
         with zipfile.ZipFile(zip_path, "r") as zf:
+            last_pct = -1
             for idx, entry in enumerate(installable, 1):
                 if progress_callback:
-                    progress_callback(idx, total, entry.dest_path)
+                    pct = int(idx / total * 100)
+                    if pct != last_pct:
+                        progress_callback(idx, total, entry.dest_path)
+                        last_pct = pct
 
                 dest = base_dir / entry.dest_path
                 try:
                     dest.parent.mkdir(parents=True, exist_ok=True)
-                    data = zf.read(entry.zip_path)
-                    tmp = dest.with_suffix(dest.suffix + ".update_tmp")
-                    tmp.write_bytes(data)
-                    tmp.replace(dest)
-                    result.installed.append(entry.dest_path)
+                    try:
+                        zf.extract(entry.zip_path, base_dir)
+                        result.installed.append(entry.dest_path)
+                    except PermissionError:
+                        # File is locked by a running process — write as .pending.
+                        # A restart script will move it into place after the app closes.
+                        pending = dest.with_suffix(dest.suffix + ".pending")
+                        pending.write_bytes(zf.read(entry.zip_path))
+                        result.pending_restart.append(entry.dest_path)
+                        logger.info("Deferred (locked): %s → %s", entry.dest_path, pending.name)
                 except Exception as exc:
                     result.failed.append((entry.dest_path, str(exc)))
                     logger.warning("Failed to install %s: %s", entry.dest_path, exc)
@@ -309,6 +325,88 @@ def install_update(
 
     result.skipped_protected = [e.dest_path for e in entries if e.is_protected]
     result.success = len(result.failed) == 0
+
+    if result.pending_restart:
+        try:
+            sentinel = base_dir / RESTART_PENDING_FILENAME
+            sentinel.write_text(
+                json.dumps(result.pending_restart, indent=2), encoding="utf-8"
+            )
+        except Exception as exc:
+            logger.warning("Could not write restart sentinel: %s", exc)
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Restore
+# ---------------------------------------------------------------------------
+
+def restore_backup(
+    backup_zip: Path,
+    base_dir: Path,
+    progress_callback: Optional[Callable[[int, int, str], None]] = None,
+) -> InstallResult:
+    """
+    Restore files from a backup zip, undoing a previous update.
+
+    Same PermissionError → .pending deferral as install_update so a locked
+    running exe (e.g. the Settings Manager itself) is handled gracefully.
+    """
+    result = InstallResult()
+
+    try:
+        with zipfile.ZipFile(backup_zip, "r") as zf:
+            names = [
+                n for n in zf.namelist()
+                if not n.endswith("/") and not n.endswith("\\")
+            ]
+            total = len(names)
+            if total == 0:
+                result.success = True
+                return result
+
+            last_pct = -1
+            for idx, name in enumerate(names, 1):
+                if progress_callback:
+                    pct = int(idx / total * 100)
+                    if pct != last_pct:
+                        progress_callback(idx, total, name)
+                        last_pct = pct
+
+                dest = base_dir / name.replace("/", os.sep)
+                try:
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                    try:
+                        zf.extract(name, base_dir)
+                        result.installed.append(name)
+                    except PermissionError:
+                        pending = dest.with_suffix(dest.suffix + ".pending")
+                        pending.write_bytes(zf.read(name))
+                        result.pending_restart.append(name)
+                        logger.info("Deferred restore (locked): %s", name)
+                except Exception as exc:
+                    result.failed.append((name, str(exc)))
+                    logger.warning("Failed to restore %s: %s", name, exc)
+
+    except zipfile.BadZipFile:
+        result.error = "Not a valid zip file."
+        return result
+    except Exception as exc:
+        result.error = str(exc)
+        return result
+
+    result.success = len(result.failed) == 0
+
+    if result.pending_restart:
+        try:
+            sentinel = base_dir / RESTART_PENDING_FILENAME
+            sentinel.write_text(
+                json.dumps(result.pending_restart, indent=2), encoding="utf-8"
+            )
+        except Exception as exc:
+            logger.warning("Could not write restart sentinel: %s", exc)
+
     return result
 
 
@@ -349,6 +447,12 @@ def write_install_log(
         lines.append(f"Skipped – protected user files ({len(result.skipped_protected)}):")
         for f in result.skipped_protected:
             lines.append(f"  ~ {f}")
+
+    if result.pending_restart:
+        lines.append("")
+        lines.append(f"Pending restart ({len(result.pending_restart)} files — applied on next launch):")
+        for f in result.pending_restart:
+            lines.append(f"  > {f}")
 
     if result.failed:
         lines.append("")

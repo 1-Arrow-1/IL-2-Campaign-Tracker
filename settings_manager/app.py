@@ -7,6 +7,7 @@ The main application window with tabbed interface.
 import os
 import json
 import queue
+import zipfile
 import re
 import sqlite3
 import subprocess
@@ -361,6 +362,10 @@ class SettingsManagerApp(tk.Tk):
         self._update_progress_frame: Optional[ttk.Frame] = None
         self._update_log_btn: Optional[ttk.Button] = None
         self._update_log_path: Optional[Path] = None
+        self._update_restart_btn: Optional[ttk.Button] = None
+        self._update_pending_files: List[str] = []
+        self._update_post_install_row: Optional[ttk.Frame] = None
+        self._restore_zip_path: Optional[Path] = None
         self._update_thread: Optional[threading.Thread] = None
         self._update_queue: "queue.Queue[Dict[str, Any]]" = queue.Queue()
         self._update_poll_id: Optional[str] = None
@@ -1742,6 +1747,63 @@ class SettingsManagerApp(tk.Tk):
         outer = ttk.Frame(self.notebook, padding=20)
         self.notebook.add(outer, text=self.tr.t("tab_updates"))
 
+        # --- startup notice (applied / pending) ---------------------------
+        from settings_manager.updater import RESTART_PENDING_FILENAME
+        base_dir = get_base_dir()
+        applied_marker = base_dir / "_update_applied"
+        restart_sentinel = base_dir / RESTART_PENDING_FILENAME
+
+        if applied_marker.exists():
+            tk.Label(
+                outer,
+                text=self.tr.t("lbl_update_applied_notice"),
+                background="#d4edda",
+                foreground="#155724",
+                font=("TkDefaultFont", 9, "bold"),
+                padx=10,
+                pady=6,
+                anchor=tk.W,
+                justify=tk.LEFT,
+            ).pack(fill=tk.X, pady=(0, 12))
+            try:
+                applied_marker.unlink()
+            except Exception:
+                pass
+        elif restart_sentinel.exists():
+            try:
+                pending_rel = json.loads(restart_sentinel.read_text(encoding="utf-8"))
+            except Exception:
+                pending_rel = []
+            if pending_rel:
+                pending_frame = tk.Frame(outer, background="#fff3cd")
+                pending_frame.pack(fill=tk.X, pady=(0, 12))
+                tk.Label(
+                    pending_frame,
+                    text=self.tr.t("lbl_update_pending_notice"),
+                    background="#fff3cd",
+                    foreground="#856404",
+                    font=("TkDefaultFont", 9, "bold"),
+                    padx=10,
+                    pady=6,
+                    anchor=tk.W,
+                    justify=tk.LEFT,
+                    wraplength=420,
+                ).pack(side=tk.LEFT, fill=tk.X, expand=True)
+                tk.Button(
+                    pending_frame,
+                    text=self.tr.t("btn_restart_and_apply"),
+                    command=lambda pr=pending_rel: self._apply_pending_update_and_restart(pr),
+                    background="#e07b00",
+                    foreground="white",
+                    activebackground="#c06800",
+                    activeforeground="white",
+                    font=("TkDefaultFont", 9, "bold"),
+                    relief=tk.RAISED,
+                    padx=10,
+                    pady=4,
+                    cursor="hand2",
+                ).pack(side=tk.RIGHT, padx=10, pady=6)
+
         # --- helper text --------------------------------------------------
         ttk.Label(
             outer,
@@ -1788,6 +1850,20 @@ class SettingsManagerApp(tk.Tk):
             foreground="gray",
         ).pack(side=tk.LEFT, padx=(10, 0))
 
+        # --- restore backup button ----------------------------------------
+        restore_row = ttk.Frame(outer)
+        restore_row.pack(anchor=tk.W, pady=(0, 10))
+        ttk.Button(
+            restore_row,
+            text=self.tr.t("btn_restore_backup"),
+            command=self._on_restore_backup,
+        ).pack(side=tk.LEFT)
+        ttk.Label(
+            restore_row,
+            text=self.tr.t("lbl_restore_backup_helper"),
+            foreground="gray",
+        ).pack(side=tk.LEFT, padx=(10, 0))
+
         # --- manifest / file list (hidden until zip loaded) ---------------
         self._update_manifest_frame = ttk.Frame(outer)
         # (packed later when a valid zip is loaded)
@@ -1814,8 +1890,8 @@ class SettingsManagerApp(tk.Tk):
             height=10,
             selectmode="none",
         )
-        self._update_tree.heading("file",   text=self.tr.t("col_update_file"))
-        self._update_tree.heading("status", text=self.tr.t("col_update_status"))
+        self._update_tree.heading("file",   text=self.tr.t("lbl_col_update_file"))
+        self._update_tree.heading("status", text=self.tr.t("lbl_col_update_status"))
         self._update_tree.column("file",   width=420, stretch=True)
         self._update_tree.column("status", width=100, stretch=False, anchor=tk.CENTER)
 
@@ -1852,14 +1928,30 @@ class SettingsManagerApp(tk.Tk):
             foreground="gray",
         ).pack(anchor=tk.W)
 
-        # --- view log button (hidden until install complete) --------------
+        # --- post-install buttons (not packed until install completes) ------
+        self._update_post_install_row = ttk.Frame(outer)
+        # children packed into this row by _poll_update_queue after install
+
         self._update_log_btn = ttk.Button(
-            outer,
+            self._update_post_install_row,
             text=self.tr.t("btn_view_install_log"),
             command=self._on_view_install_log,
-            state="disabled",
         )
-        # (packed after successful install)
+
+        self._update_restart_btn = tk.Button(
+            self._update_post_install_row,
+            text=self.tr.t("btn_restart_and_apply"),
+            command=self._on_restart_and_apply,
+            background="#e07b00",
+            foreground="white",
+            activebackground="#c06800",
+            activeforeground="white",
+            font=("TkDefaultFont", 9, "bold"),
+            relief=tk.RAISED,
+            padx=10,
+            pady=4,
+            cursor="hand2",
+        )
 
     # -- Update tab helpers ------------------------------------------------
 
@@ -2055,14 +2147,38 @@ class SettingsManagerApp(tk.Tk):
         # Terminal states: done or error
         if kind == "done":
             result = payload["result"]
+            mode = payload.get("mode", "install")
             log_path = payload.get("log_path")
             self._update_progress_var.set(100)
 
-            if log_path:
-                self._update_log_path = Path(log_path)
-                self._update_log_btn.config(state="normal")
-                self._update_log_btn.pack(anchor=tk.W, pady=(10, 0))
+            if mode == "restore":
+                if result.success:
+                    self._update_status_var.set(self.tr.t("msg_restore_done"))
+                    messagebox.showinfo(
+                        self.tr.t("msg_restore_confirm_title"),
+                        self.tr.t("msg_restore_success", count=len(result.installed)),
+                        parent=self,
+                    )
+                    if result.pending_restart:
+                        self._update_pending_files = result.pending_restart
+                        self._update_post_install_row.pack(anchor=tk.W, pady=(10, 0))
+                        self._update_restart_btn.pack(side=tk.LEFT, padx=(8, 0))
+                else:
+                    failed_lines = "\n".join(
+                        f"  • {f}: {err}" for f, err in result.failed[:8]
+                    )
+                    self._update_status_var.set(self.tr.t("msg_update_done_failed"))
+                    messagebox.showerror(
+                        self.tr.t("msg_error_title"),
+                        self.tr.t("msg_restore_failed",
+                            count=len(result.failed),
+                            details=failed_lines,
+                        ),
+                        parent=self,
+                    )
+                return
 
+            # --- install mode ---
             if result.success:
                 backup_note = ""
                 if result.backup_path:
@@ -2078,6 +2194,14 @@ class SettingsManagerApp(tk.Tk):
                     ) + backup_note,
                     parent=self,
                 )
+                # Show post-install button row below the progress area
+                self._update_post_install_row.pack(anchor=tk.W, pady=(10, 0))
+                if log_path:
+                    self._update_log_path = Path(log_path)
+                    self._update_log_btn.pack(side=tk.LEFT)
+                if result.pending_restart:
+                    self._update_pending_files = result.pending_restart
+                    self._update_restart_btn.pack(side=tk.LEFT, padx=(8, 0))
             else:
                 failed_lines = "\n".join(
                     f"  • {f}: {err}" for f, err in result.failed[:8]
@@ -2116,6 +2240,157 @@ class SettingsManagerApp(tk.Tk):
                 str(exc),
                 parent=self,
             )
+
+    def _on_restore_backup(self) -> None:
+        """Open a backup zip and restore its files, undoing a previous update."""
+        from settings_manager.config.paths import get_base_dir
+
+        base_dir = get_base_dir()
+        backups_dir = base_dir / "backups"
+
+        if not backups_dir.exists() or not any(backups_dir.glob("*.zip")):
+            messagebox.showinfo(
+                self.tr.t("msg_restore_confirm_title"),
+                self.tr.t("msg_restore_no_backups"),
+                parent=self,
+            )
+            return
+
+        zip_path_str = filedialog.askopenfilename(
+            parent=self,
+            title=self.tr.t("msg_restore_select_zip"),
+            initialdir=str(backups_dir),
+            filetypes=[("Zip files", "*.zip"), ("All files", "*.*")],
+        )
+        if not zip_path_str:
+            return
+
+        zip_path = Path(zip_path_str)
+        try:
+            with zipfile.ZipFile(zip_path, "r") as zf:
+                count = sum(1 for n in zf.namelist() if not n.endswith("/"))
+        except Exception as exc:
+            messagebox.showerror(self.tr.t("msg_error_title"), str(exc), parent=self)
+            return
+
+        if not messagebox.askyesno(
+            self.tr.t("msg_restore_confirm_title"),
+            self.tr.t("msg_restore_confirm", count=count, name=zip_path.name),
+            parent=self,
+        ):
+            return
+
+        self._restore_zip_path = zip_path
+        self._update_status_var.set(self.tr.t("msg_update_preparing"))
+        self._update_progress_var.set(0)
+        self._update_progress_frame.pack(fill=tk.X, pady=(10, 0))
+
+        self._update_thread = threading.Thread(
+            target=self._run_restore_worker,
+            daemon=True,
+        )
+        self._update_thread.start()
+        self._poll_update_queue()
+
+    def _run_restore_worker(self) -> None:
+        """Background thread: runs restore_backup and posts result to queue."""
+        from settings_manager.updater import restore_backup
+        from settings_manager.config.paths import get_base_dir
+
+        base_dir = get_base_dir()
+
+        def _progress(current: int, total: int, filename: str) -> None:
+            pct = int(current / total * 100) if total else 100
+            self._update_queue.put({
+                "type": "progress",
+                "pct": pct,
+                "label": self.tr.t(
+                    "msg_update_installing_file",
+                    current=current,
+                    total=total,
+                    file=os.path.basename(filename),
+                ),
+            })
+
+        try:
+            result = restore_backup(
+                self._restore_zip_path,
+                base_dir,
+                progress_callback=_progress,
+            )
+            self._update_queue.put({
+                "type": "done",
+                "mode": "restore",
+                "result": result,
+            })
+        except Exception as exc:
+            self._update_queue.put({"type": "error", "error": str(exc)})
+
+    def _on_restart_and_apply(self) -> None:
+        """Called by the post-install Restart & Apply button."""
+        self._apply_pending_update_and_restart(self._update_pending_files)
+
+    def _apply_pending_update_and_restart(self, pending_files: List[str]) -> None:
+        """
+        Launch a cmd.exe batch script that waits a few seconds for this process
+        to exit, moves each .pending file over the real destination, then relaunches.
+        """
+        from settings_manager.config.paths import get_base_dir
+        import tempfile
+
+        if not getattr(sys, "frozen", False):
+            messagebox.showinfo(
+                self.tr.t("msg_update_confirm_title"),
+                "Restart & Apply is only available when running the installed version.",
+                parent=self,
+            )
+            return
+
+        from settings_manager.updater import RESTART_PENDING_FILENAME
+        exe_path = Path(sys.executable)
+        base_dir = get_base_dir()
+        marker_path = base_dir / "_update_applied"
+        sentinel_path = base_dir / RESTART_PENDING_FILENAME
+
+        move_lines: list[str] = []
+        for rel_path in pending_files:
+            dest = base_dir / rel_path
+            pending = dest.with_suffix(dest.suffix + ".pending")
+            move_lines.append(f'move /Y "{pending}" "{dest}"')
+
+        moves_bat = "\r\n".join(move_lines)
+
+        bat_script = (
+            f"@echo off\r\n"
+            f"ping -n 4 127.0.0.1 > nul\r\n"   # ~3 s delay — enough for the app to close
+            f"{moves_bat}\r\n"
+            f'del "{sentinel_path}"\r\n'
+            f'echo.> "{marker_path}"\r\n'
+            f'start "" "{exe_path}"\r\n'
+            f'del "%~f0"\r\n'
+        )
+
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".bat", delete=False, encoding="utf-8"
+            ) as f:
+                f.write(bat_script)
+                script_path = f.name
+
+            subprocess.Popen(
+                ["cmd.exe", "/C", script_path],
+                creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, "CREATE_NO_WINDOW") else 0,
+            )
+        except Exception as exc:
+            logger.error("Could not launch restart script: %s", exc)
+            messagebox.showerror(
+                self.tr.t("msg_error_title"),
+                f"Could not launch restart script:\n{exc}",
+                parent=self,
+            )
+            return
+
+        self.destroy()
 
     def _create_button_bar(self, parent) -> None:
         """Create bottom button bar."""

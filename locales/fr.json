@@ -849,7 +849,9 @@
       "refresh_models": "Obtenir les modèles disponibles",
       "select_update_package": "Sélectionner le paquet de mise à jour…",
       "install_update": "Installer la mise à jour",
-      "view_install_log": "Voir le journal d'installation"
+      "view_install_log": "Voir le journal d'installation",
+      "restart_and_apply": "Redémarrer & Appliquer",
+      "restore_backup": "Restaurer une sauvegarde…"
     },
     "dialog": {
       "edit_bracket_label": "Plage (ex., '1-10' ou '71+'):",
@@ -900,6 +902,9 @@
       "german_awards_elevation_note": "Remarque : La modification des fichiers dans le répertoire d'installation IL-2 peut nécessiter des droits d'administrateur. Une invite de contrôle d'accès s'affichera si nécessaire.",
       "import_stock_campaigns_helper": "Importe les campagnes IL-2 standard depuis Campaigns.gtp et Missions.gtp vers votre dossier data\\Campaigns. Les nouveaux dossiers de campagne sont copies integralement. Pour les dossiers existants, seuls les fichiers de mission absents sont ajoutes — aucun fichier existant n'est ecrase.",
       "updates_helper": "Installez un paquet de mise à jour téléchargé. Sélectionnez le fichier ZIP pour vérifier son contenu avant installation.",
+      "update_applied_notice": "Settings Manager mis à jour avec succès.",
+      "update_pending_notice": "Une mise à jour en attente n'a pas encore été appliquée. Redémarrez le Settings Manager pour terminer la mise à jour.",
+      "restore_backup_helper": "Revenir à une version précédente",
       "current_version": "Version actuelle :",
       "version_unknown": "Inconnue",
       "update_version": "Version du paquet :",
@@ -967,7 +972,15 @@
       "update_done_failed": "Échec de l'installation.",
       "update_success": "{count} fichier(s) installé(s) avec succès.\n\nVeuillez redémarrer le tracker pour appliquer la mise à jour.",
       "update_partial": "{installed} fichier(s) installé(s), {failed} échoué(s).\n\n{details}",
-      "update_failed": "Échec de l'installation :\n{error}"
+      "update_failed": "Échec de l'installation :\n{error}",
+      "update_pending_restart": "Le Settings Manager lui-même a été mis à jour.\n\nL'application doit redémarrer pour appliquer la nouvelle version.\n\nRedémarrer maintenant ?",
+      "restore_confirm_title": "Restaurer une sauvegarde",
+      "restore_select_zip": "Sélectionner un fichier de sauvegarde à restaurer",
+      "restore_confirm": "Restaurer {count} fichier(s) depuis '{name}' ?\n\nCela remplacera la version actuelle par la sauvegarde.",
+      "restore_no_backups": "Aucune sauvegarde trouvée. Les sauvegardes sont créées automatiquement à chaque installation de mise à jour.",
+      "restore_success": "{count} fichier(s) restauré(s) avec succès.",
+      "restore_failed": "{count} fichier(s) n'ont pas pu être restaurés.\n\n{details}",
+      "restore_done": "Restauration terminée."
     },
     "tab": {
       "campaigns": "Campagnes",

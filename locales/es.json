@@ -848,7 +848,9 @@
       "refresh_models": "Obtener modelos disponibles",
       "select_update_package": "Seleccionar paquete de actualización…",
       "install_update": "Instalar actualización",
-      "view_install_log": "Ver registro de instalación"
+      "view_install_log": "Ver registro de instalación",
+      "restart_and_apply": "Reiniciar y Aplicar",
+      "restore_backup": "Restaurar copia de seguridad…"
     },
     "dialog": {
       "edit_bracket_label": "Rango (ej., '1-10' o '71+'):",
@@ -899,6 +901,9 @@
       "german_awards_elevation_note": "Nota: Modificar archivos en el directorio de instalación de IL-2 puede requerir derechos de administrador. Se te solicitará elevación si es necesario.",
       "import_stock_campaigns_helper": "Importa las campanas estandar de IL-2 desde Campaigns.gtp y Missions.gtp a tu carpeta data\\Campaigns. Las nuevas carpetas de campana se copian completas. Para las carpetas existentes, solo se anaden los archivos de mision que faltan — no se sobreescribe ningun archivo existente.",
       "updates_helper": "Instala un paquete de actualización descargado. Selecciona el archivo ZIP para revisar su contenido antes de instalar.",
+      "update_applied_notice": "Settings Manager actualizado correctamente.",
+      "update_pending_notice": "Una actualización pendiente aún no ha sido aplicada. Reinicia el Settings Manager para completar la actualización.",
+      "restore_backup_helper": "Volver a una versión anterior",
       "current_version": "Versión actual:",
       "version_unknown": "Desconocida",
       "update_version": "Versión del paquete:",
@@ -966,7 +971,15 @@
       "update_done_failed": "Error en la instalación.",
       "update_success": "{count} archivo(s) instalado(s) correctamente.\n\nReinicia el tracker para aplicar la actualización.",
       "update_partial": "{installed} archivo(s) instalado(s), {failed} fallido(s).\n\n{details}",
-      "update_failed": "Error en la instalación:\n{error}"
+      "update_failed": "Error en la instalación:\n{error}",
+      "update_pending_restart": "El propio Settings Manager ha sido actualizado.\n\nLa aplicación debe reiniciarse para aplicar la nueva versión.\n\n¿Reiniciar ahora?",
+      "restore_confirm_title": "Restaurar copia de seguridad",
+      "restore_select_zip": "Seleccionar un archivo de copia de seguridad para restaurar",
+      "restore_confirm": "¿Restaurar {count} archivo(s) desde '{name}'?\n\nEsto reemplazará la versión actual con la copia de seguridad.",
+      "restore_no_backups": "No se encontraron copias de seguridad. Se crean automáticamente cada vez que se instala una actualización.",
+      "restore_success": "{count} archivo(s) restaurado(s) correctamente.",
+      "restore_failed": "{count} archivo(s) no se pudieron restaurar.\n\n{details}",
+      "restore_done": "Restauración completada."
     },
     "tab": {
       "campaigns": "Campañas",
