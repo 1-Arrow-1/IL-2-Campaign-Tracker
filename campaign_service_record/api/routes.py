@@ -53,6 +53,7 @@ from campaign_service_record.core.job_store import job_store, CAREER_DEBRIEF_PAR
 from campaign_service_record.career.debriefing_manager import CareerDebriefingManager
 from campaign_service_record.weather_lookup import (
     game_coords_to_latlon,
+    init_weather_disk_cache,
     lookup_historical_weather,
     lookup_historical_weather_by_coords,
     read_eng_story_context,
@@ -2359,6 +2360,11 @@ def _build_squadron_context_for_mission(
         _ESCORT_MISSION_TYPES = {1151, 1152, 1153}
         if mission_type_code in _ESCORT_MISSION_TYPES:
             player_country = (mission_json.get("player") or {}).get("country")
+            # Escort target formation spawns at mission start (pre-positioned, already airborne).
+            # Dynamic AI spawns that appear later (reinforcements, intercepts) have a large
+            # spawn_tick and should NOT be counted as the escorted formation.
+            # Threshold: 3000 ticks = 60 seconds.  Pre-positioned aircraft spawn at T:~30.
+            _ESCORT_SPAWN_TICK_LIMIT = 3000
             counts: dict = {}
             for flight in squadron_flights:
                 pilot_name = flight.get("name") or ""
@@ -2367,6 +2373,9 @@ def _build_squadron_context_for_mission(
                 aircraft_country = flight.get("country")
                 if player_country and aircraft_country and aircraft_country != player_country:
                     continue  # skip enemies
+                spawn_tick = flight.get("spawn_tick")
+                if spawn_tick is not None and spawn_tick > _ESCORT_SPAWN_TICK_LIMIT:
+                    continue  # skip mid-mission dynamic spawns
                 atype = flight.get("aircraft_type") or "Unknown"
                 outcome = flight.get("outcome") or "survived"
                 if atype not in counts:
@@ -2404,7 +2413,7 @@ def init_api(data_dir: Path, reports_dir: Optional[Path] = None):
     _data_loader = DataLoader(data_dir, enable_cache=True)
     _aggregator = CampaignAggregator(_data_loader)
     _reports_dir = reports_dir or (data_dir / 'reports')
-    
+    init_weather_disk_cache(data_dir / "weather_cache.json")
     logger.info(f"API initialized with data_dir={data_dir}")
 
 
@@ -3630,20 +3639,20 @@ def generate_stories(source: str, entry_id: str):
             # If we just generated the previous chapter, feed its fresh memory forward.
             if running_memory:
                 context["narrative_memory"] = running_memory
+            pool = ThreadPoolExecutor(max_workers=1)
             try:
-                with ThreadPoolExecutor(max_workers=1) as pool:
-                    future = pool.submit(
-                        generate_and_store_chapter_for,
-                        source,
-                        storage_entry_id,
-                        context,
-                        model=settings["model"],
-                        api_key=settings["api_key"],
-                        provider=settings["provider"],
-                        base_url=settings["base_url"],
-                        output_language=settings["story_language"],
-                    )
-                    result = future.result(timeout=120)
+                future = pool.submit(
+                    generate_and_store_chapter_for,
+                    source,
+                    storage_entry_id,
+                    context,
+                    model=settings["model"],
+                    api_key=settings["api_key"],
+                    provider=settings["provider"],
+                    base_url=settings["base_url"],
+                    output_language=settings["story_language"],
+                )
+                result = future.result(timeout=120)
                 running_memory = result.get("memory") or running_memory
                 save_story_state_for(source, storage_entry_id, running_memory)
                 generated_count += 1
@@ -3671,6 +3680,10 @@ def generate_stories(source: str, entry_id: str):
                 )
                 # Preserve strict chronology: never skip a failed mission and jump ahead.
                 break
+            finally:
+                # shutdown(wait=False) so a timed-out or failed thread is abandoned
+                # immediately instead of blocking the HTTP response indefinitely.
+                pool.shutdown(wait=False)
 
         if generated_count == 0 and generation_errors:
             raise RuntimeError(generation_errors[0])

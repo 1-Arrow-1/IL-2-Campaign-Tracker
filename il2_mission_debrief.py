@@ -590,16 +590,28 @@ class MissionDebriefParser:
                     # Pilot person record — save name to link with following BotPilot entry
                     self._pending_pilot_name = full_name
                 else:
-                    if (self._pending_pilot_name
-                            and obj_name.lower().startswith("botpilot")):
-                        # BotPilot immediately follows pilot person: gid=botpilot_id, pid=aircraft_id
-                        self._botpilot_to_aircraft[gid] = pid
-                        self._friendly_pilots[pid] = {
-                            "name": self._pending_pilot_name,
-                            "botpilot_id": gid,
-                        }
-                        self._squadron_air_kills[pid] = []
-                        self._squadron_ground_kills[pid] = 0
+                    if obj_name.lower().startswith("botpilot"):
+                        # BotPilot entry: pid = the aircraft this pilot belongs to.
+                        # Prefer the aircraft's already-registered name over _pending_pilot_name,
+                        # because late-spawning BotPilots (spawned mid-combat rather than at
+                        # mission start) would otherwise inherit a stale _pending_pilot_name
+                        # from the last unrelated PID:-1 ground-object AType:12.
+                        aircraft_obj = self.stats.objects.get(pid)
+                        pilot_name = (aircraft_obj.name if aircraft_obj else None) or self._pending_pilot_name
+                        _bad = ("botpilot", "turret", "botgunner")
+                        if pilot_name and not pilot_name.lower().startswith(_bad):
+                            self._botpilot_to_aircraft[gid] = pid
+                            if pid not in self._friendly_pilots:
+                                self._friendly_pilots[pid] = {
+                                    "name": pilot_name,
+                                    "botpilot_id": gid,
+                                }
+                                self._squadron_air_kills[pid] = []
+                                self._squadron_ground_kills[pid] = 0
+                            else:
+                                # Aircraft already registered via AType:5 (took off before
+                                # BotPilot spawned); update botpilot_id so kill/death tracking works.
+                                self._friendly_pilots[pid]["botpilot_id"] = gid
                     self._pending_pilot_name = ""
 
             # --- Parse influence polygons for territory classification (Section C) ---
@@ -627,6 +639,30 @@ class MissionDebriefParser:
                         if points:
                             # Append polygon to list (supports multiple polygons per country)
                             self.stats.influence_polygons[country].append(points)
+
+            # AType:5: Aircraft takeoff — catch AI aircraft that spawn without a BotPilot
+            # entry (e.g. a pre-positioned escort target flight). These get AType:12 PID:-1
+            # followed immediately by AType:5, but no BotPilot AType:12 ever appears, so
+            # the BotPilot path above never fires and they stay invisible to squadron tracking.
+            elif "AType:5" in ln:
+                pid = self._i(ln, r"PID:(-?\d+)")
+                if pid != -1 and pid not in self._friendly_pilots:
+                    aircraft_obj = self.stats.objects.get(pid)
+                    if aircraft_obj and aircraft_obj.category == "Air":
+                        name = aircraft_obj.name or ""
+                        _bad = {"faricon", "noname", ""}
+                        _bad_prefix = ("botpilot", "turret", "botgunner")
+                        if (name
+                                and name.lower() not in _bad
+                                and not name.lower().startswith(_bad_prefix)):
+                            spawn_tick = self._i(ln, r"T:(\d+)")
+                            self._friendly_pilots[pid] = {
+                                "name": name,
+                                "botpilot_id": -1,
+                                "spawn_tick": spawn_tick,
+                            }
+                            self._squadron_air_kills[pid] = []
+                            self._squadron_ground_kills[pid] = 0
 
         # --- collect events ---
         destroyed = {}  # {tid: (timestamp, altitude)}
@@ -1652,6 +1688,9 @@ class MissionDebriefParser:
                     entry["shot_down_by_type"] = shot_down_by
                 if kill_cause:
                     entry["kill_cause"] = kill_cause
+                spawn_tick = pilot_info.get("spawn_tick")
+                if spawn_tick is not None:
+                    entry["spawn_tick"] = spawn_tick
                 squadron_flights.append(entry)
             if squadron_flights:
                 data["squadron_flights"] = squadron_flights

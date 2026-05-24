@@ -1543,6 +1543,16 @@ def generate_mission_story(
 ) -> Dict[str, str]:
     client = _get_client(api_key=api_key, base_url=base_url)
     language_label = _LANGUAGE_LABELS.get(_normalize_text(output_language).lower(), "English")
+
+    # Strip PDF-only fields before serialising story_input for the LLM.
+    # chapter_scope.mission_jsons embeds the full parsed events.json (squadron_flights, kills, etc.)
+    # and is only used by the PDF generator — sending it to the LLM inflates the prompt by
+    # tens of thousands of tokens for missions with large formations.
+    if isinstance(story_input, dict) and isinstance(story_input.get("chapter_scope"), dict):
+        _cs = dict(story_input["chapter_scope"])
+        _cs.pop("mission_jsons", None)
+        story_input = {**story_input, "chapter_scope": _cs}
+
     chapter_scope = story_input.get("chapter_scope", {}) if isinstance(story_input, dict) else {}
     missions_in_chapter = 1
     if isinstance(chapter_scope, dict):
@@ -1644,12 +1654,14 @@ def generate_mission_story(
         "- Treat squadron_context as factual.\n"
         "- If squadron_context.promotions is non-empty, you MUST mention every entry in the narrative. Each entry has 'pilot' (name) and 'promoted_to' (the new rank). Write it as 'X was promoted to [promoted_to]' — do NOT use promoted_to as a name prefix before the pilot's name. A chapter that omits any promotion is factually incomplete.\n"
         "- If squadron_context.awards is non-empty, you MUST mention every award by its full name and the pilot's name — do not omit any. A chapter that omits any award from this list is factually incomplete.\n"
-        "- If squadron_context.kia is non-empty, you MUST mention every KIA as a loss in the narrative.\n"
+        "- If squadron_context.kia is non-empty, you MUST mention every KIA as a loss in the narrative. "
+        "IMPORTANT: squadron_context.kia/mia/wia are casualties that occurred during the player's own mission — narrate them as losses within the player's sortie, NOT as casualties from a separate concurrent flight.\n"
         "- If squadron_context.transfers is non-empty, mention transfers naturally where they fit the narrative.\n"
         "- Do not invent squadron-member outcomes not present in squadron_context.\n"
         "- Do not name any person (pilot, commander, wingman, Staffelkapitän, adjutant, greeting officer, etc.) who does not appear explicitly in squadron_context. Inventing named individuals is strictly forbidden — do not do this even when it would make the prose feel more vivid or personal. Use 'his superior', 'the duty officer', or similar generic references instead.\n"
         "- When referencing a pilot listed in squadron_context, use their name exactly as supplied. If a rank field is present for that pilot entry, you may use it — e.g. 'Unteroffizier Müller was awarded...'. Never invent or assume a rank that is not in the supplied entry.\n"
         "- If squadron_context.flight_results is present and non-empty, weave all significant entries naturally into the narrative — do not recite them as a list. "
+        "These entries are from the player's own sortie — do NOT attribute them to a separate concurrent mission. "
         "An entry with outcome 'killed' is a significant loss and worth noting. "
         "An entry with outcome 'bailed_survived' means the pilot was shot down but parachuted to safety. "
         "An entry with outcome 'shot_down' means the aircraft was lost (fate of the pilot was uncertain in the field). "
@@ -1678,6 +1690,8 @@ def generate_mission_story(
         "('During the intervening days ...', 'While the pilot was grounded, the squadron ...', etc.). "
         "Entries with same_day=true occurred on the same date but in missions the player did not fly — mention them as "
         "concurrent activity happening elsewhere ('That same afternoon, another element of the squadron ...'). "
+        "IMPORTANT: casualties listed in inter_mission_activities entries are from those separate concurrent sorties only — "
+        "do NOT conflate them with squadron_context.kia/mia/wia/flight_results, which belong to the player's own mission. "
         "Acknowledge casualties (KIA/MIA/WIA) by name if present. Note squadron_air_kills if significant. "
         "Integrate naturally in 1-3 sentences total — do not enumerate each entry as a list item. "
         "Do not invent pilot names or details beyond what is supplied.\n"

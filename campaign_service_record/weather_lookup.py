@@ -183,6 +183,45 @@ _WMO_CODES: Dict[int, str] = {
 _weather_cache: Dict[str, Optional[dict]] = {}          # "{lat:.4f},{lon:.4f}|{date}" → result
 _campaign_coords_cache: Dict[str, Optional[Tuple[float, float, str]]] = {}  # campaign_name → coords
 _eng_briefing_cache: Dict[str, Optional[str]] = {}
+_weather_disk_cache_path: Optional[Path] = None
+# Circuit breaker: set to True after the first API failure this session.
+# Prevents hammering a down API across hundreds of missions.
+_weather_api_unavailable: bool = False
+
+
+def init_weather_disk_cache(path: Path) -> None:
+    """Load a persisted weather cache from disk and register the path for write-back.
+
+    Call once at app startup.  Non-fatal on any error.
+    Only successful lookups (non-None values) are persisted so transient network
+    failures are retried on the next server start.
+    """
+    global _weather_disk_cache_path, _weather_cache
+    _weather_disk_cache_path = path
+    if not path.exists():
+        return
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(data, dict):
+            # Merge disk entries; only import non-None values
+            loaded = {k: v for k, v in data.items() if v is not None}
+            _weather_cache.update(loaded)
+            LOGGER.info("Weather disk cache loaded: %d entries from %s", len(loaded), path)
+    except Exception as exc:
+        LOGGER.warning("Weather disk cache load failed: %s", exc)
+
+
+def _persist_weather_cache() -> None:
+    if _weather_disk_cache_path is None:
+        return
+    try:
+        # Persist only successful lookups to avoid caching transient failures
+        to_save = {k: v for k, v in _weather_cache.items() if v is not None}
+        tmp = _weather_disk_cache_path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(to_save, ensure_ascii=False), encoding="utf-8")
+        tmp.replace(_weather_disk_cache_path)
+    except Exception as exc:
+        LOGGER.warning("Weather disk cache write failed: %s", exc)
 
 # ---------------------------------------------------------------------------
 # Campaign .eng briefing weather
@@ -518,11 +557,16 @@ def _geocode(name: str) -> Optional[Tuple[float, float, str]]:
 
 
 def _fetch_json(url: str, timeout: int = 8) -> Optional[dict]:
+    global _weather_api_unavailable
+    if _weather_api_unavailable:
+        return None
     try:
         with urllib.request.urlopen(url, timeout=timeout) as resp:
             return json.loads(resp.read())
     except urllib.error.URLError as exc:
         LOGGER.warning("HTTP request failed: %s — %s", url, exc)
+        _weather_api_unavailable = True
+        LOGGER.warning("Weather API marked unavailable for this session — skipping all further lookups")
     except Exception as exc:  # noqa: BLE001
         LOGGER.warning("Unexpected error fetching %s: %s", url, exc)
     return None
@@ -619,6 +663,7 @@ def lookup_historical_weather_by_coords(
     result = _build_summary(raw, place_name)
     LOGGER.info("Weather result: %s", result["summary"])
     _weather_cache[cache_key] = result
+    _persist_weather_cache()
     return result
 
 
