@@ -2993,6 +2993,34 @@ class EventGenerator:
         else:
             html.append(f'<p>{t("pdf.message.combat_data_not_available")}</p>')
                 
+        # Air Kills by Aircraft Type
+        air_kills_by_type = self._aggregate_air_kills_by_type(debriefings)
+        if air_kills_by_type:
+            html.append(f'<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">{t("pdf.section.air_kills_by_type")}</h2>')
+            html.append('<table style="width: 100%; margin: 10px 0; border-collapse: collapse;">')
+            html.append(
+                f'<tr style="background-color: #333; color: white;">'
+                f'<th style="padding: 6px 8px; text-align: left;">{t("pdf.label.aircraft")}</th>'
+                f'<th style="padding: 6px 8px; text-align: right;">{t("pdf.label.kills")}</th>'
+                f'</tr>'
+            )
+            total_air_kills = 0
+            for ac_type, count in air_kills_by_type.items():
+                total_air_kills += int(count or 0)
+                html.append(
+                    f'<tr>'
+                    f'<td style="padding: 5px 8px; border-bottom: 1px solid #ddd;">{ac_type}</td>'
+                    f'<td style="padding: 5px 8px; border-bottom: 1px solid #ddd; text-align: right;">{count}</td>'
+                    f'</tr>'
+                )
+            html.append(
+                f'<tr style="font-weight: bold; border-top: 2px solid #333;">'
+                f'<td style="padding: 6px 8px;">{t("pdf.label.total_kills")}</td>'
+                f'<td style="padding: 6px 8px; text-align: right;">{total_air_kills}</td>'
+                f'</tr>'
+            )
+            html.append('</table>')
+
         # Missions Flown
         html.append(f'<h2 style="border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 30px;">{t("pdf.section.missions_flown")}</h2>')
         html.append(f'<table style="width: 100%; margin: 10px 0;">')
