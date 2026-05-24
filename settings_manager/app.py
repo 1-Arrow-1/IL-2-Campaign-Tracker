@@ -350,6 +350,27 @@ class SettingsManagerApp(tk.Tk):
         self._german_awards_radio_1957: Optional[ttk.Radiobutton] = None
         self._german_awards_radio_ww2: Optional[ttk.Radiobutton] = None
 
+        # Update tab state
+        self._update_zip_path: Optional[Path] = None
+        self._update_manifest = None          # UpdateManifest | None
+        self._update_entries: list = []       # list[FileEntry]
+        self._update_install_btn: Optional[ttk.Button] = None
+        self._update_status_var = tk.StringVar(value="")
+        self._update_progress_var = tk.IntVar(value=0)
+        self._update_progress_bar: Optional[ttk.Progressbar] = None
+        self._update_progress_frame: Optional[ttk.Frame] = None
+        self._update_log_btn: Optional[ttk.Button] = None
+        self._update_log_path: Optional[Path] = None
+        self._update_thread: Optional[threading.Thread] = None
+        self._update_queue: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+        self._update_poll_id: Optional[str] = None
+        self._update_zip_label_var = tk.StringVar(value="")
+        self._update_new_version_var = tk.StringVar(value="")
+        self._update_tree: Optional[ttk.Treeview] = None
+        self._update_proc_warn_var = tk.StringVar(value="")
+        self._update_proc_warn_label: Optional[ttk.Label] = None
+        self._update_manifest_frame: Optional[ttk.Frame] = None
+
         # Load all data
         self._load_all_data()
         
@@ -454,6 +475,9 @@ class SettingsManagerApp(tk.Tk):
 
         # Tab 6: German Awards style switcher
         self._create_german_awards_tab()
+
+        # Tab 7: Update installer
+        self._create_updates_tab()
 
         # Button frame
         self._create_button_bar(main_frame)
@@ -1705,6 +1729,393 @@ class SettingsManagerApp(tk.Tk):
             self.tr.t("msg_german_awards_swap_success", style=style_label),
             parent=self,
         )
+
+    # ------------------------------------------------------------------
+    # Tab 7: Updates
+    # ------------------------------------------------------------------
+
+    def _create_updates_tab(self) -> None:
+        """Create the Update Installer tab."""
+        from settings_manager.updater import read_current_version
+        from settings_manager.config.paths import get_base_dir
+
+        outer = ttk.Frame(self.notebook, padding=20)
+        self.notebook.add(outer, text=self.tr.t("tab_updates"))
+
+        # --- helper text --------------------------------------------------
+        ttk.Label(
+            outer,
+            text=self.tr.t("lbl_updates_helper"),
+            foreground="gray",
+            wraplength=520,
+            justify=tk.LEFT,
+        ).pack(anchor=tk.W, pady=(0, 14))
+
+        # --- current version row ------------------------------------------
+        ver_frame = ttk.Frame(outer)
+        ver_frame.pack(anchor=tk.W, pady=(0, 4))
+        ttk.Label(ver_frame, text=self.tr.t("lbl_current_version")).pack(side=tk.LEFT)
+        cur_ver = read_current_version(get_base_dir()) or self.tr.t("lbl_version_unknown")
+        ttk.Label(ver_frame, text=cur_ver, font=("TkDefaultFont", 9, "bold")).pack(
+            side=tk.LEFT, padx=(6, 0)
+        )
+
+        # --- update-version row (hidden until zip selected) ---------------
+        new_ver_frame = ttk.Frame(outer)
+        new_ver_frame.pack(anchor=tk.W, pady=(0, 12))
+        ttk.Label(new_ver_frame, text=self.tr.t("lbl_update_version")).pack(side=tk.LEFT)
+        ttk.Label(
+            new_ver_frame,
+            textvariable=self._update_new_version_var,
+            font=("TkDefaultFont", 9, "bold"),
+        ).pack(side=tk.LEFT, padx=(6, 0))
+
+        ttk.Separator(outer, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=(0, 14))
+
+        # --- select package button ----------------------------------------
+        btn_row = ttk.Frame(outer)
+        btn_row.pack(anchor=tk.W, pady=(0, 10))
+        ttk.Button(
+            btn_row,
+            text=self.tr.t("btn_select_update_package"),
+            command=self._on_select_update_package,
+        ).pack(side=tk.LEFT)
+
+        # selected zip filename label
+        ttk.Label(
+            btn_row,
+            textvariable=self._update_zip_label_var,
+            foreground="gray",
+        ).pack(side=tk.LEFT, padx=(10, 0))
+
+        # --- manifest / file list (hidden until zip loaded) ---------------
+        self._update_manifest_frame = ttk.Frame(outer)
+        # (packed later when a valid zip is loaded)
+
+        # Running-process warning
+        self._update_proc_warn_label = ttk.Label(
+            self._update_manifest_frame,
+            textvariable=self._update_proc_warn_var,
+            foreground="#cc0000",
+            wraplength=520,
+            justify=tk.LEFT,
+        )
+        self._update_proc_warn_label.pack(anchor=tk.W, pady=(0, 8))
+
+        # File list tree
+        tree_frame = ttk.Frame(self._update_manifest_frame)
+        tree_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+
+        cols = ("file", "status")
+        self._update_tree = ttk.Treeview(
+            tree_frame,
+            columns=cols,
+            show="headings",
+            height=10,
+            selectmode="none",
+        )
+        self._update_tree.heading("file",   text=self.tr.t("col_update_file"))
+        self._update_tree.heading("status", text=self.tr.t("col_update_status"))
+        self._update_tree.column("file",   width=420, stretch=True)
+        self._update_tree.column("status", width=100, stretch=False, anchor=tk.CENTER)
+
+        vsb = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=self._update_tree.yview)
+        self._update_tree.configure(yscrollcommand=vsb.set)
+        self._update_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        vsb.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Install button
+        install_row = ttk.Frame(self._update_manifest_frame)
+        install_row.pack(anchor=tk.W, pady=(4, 0))
+        self._update_install_btn = ttk.Button(
+            install_row,
+            text=self.tr.t("btn_install_update"),
+            command=self._on_install_update,
+            state="disabled",
+        )
+        self._update_install_btn.pack(side=tk.LEFT)
+
+        # --- progress area (hidden until install starts) ------------------
+        self._update_progress_frame = ttk.Frame(outer)
+        # (packed later)
+
+        self._update_progress_bar = ttk.Progressbar(
+            self._update_progress_frame,
+            variable=self._update_progress_var,
+            maximum=100,
+            length=500,
+        )
+        self._update_progress_bar.pack(fill=tk.X, pady=(0, 4))
+        ttk.Label(
+            self._update_progress_frame,
+            textvariable=self._update_status_var,
+            foreground="gray",
+        ).pack(anchor=tk.W)
+
+        # --- view log button (hidden until install complete) --------------
+        self._update_log_btn = ttk.Button(
+            outer,
+            text=self.tr.t("btn_view_install_log"),
+            command=self._on_view_install_log,
+            state="disabled",
+        )
+        # (packed after successful install)
+
+    # -- Update tab helpers ------------------------------------------------
+
+    def _on_select_update_package(self) -> None:
+        """Open file dialog, parse the selected zip, populate the manifest UI."""
+        from settings_manager.updater import (
+            parse_zip, detect_running_trackers, UpdateManifest,
+        )
+        from settings_manager.config.paths import get_base_dir
+
+        zip_path = filedialog.askopenfilename(
+            parent=self,
+            title=self.tr.t("msg_update_select_zip"),
+            filetypes=[("Zip files", "*.zip"), ("All files", "*.*")],
+        )
+        if not zip_path:
+            return
+
+        zip_path = Path(zip_path)
+        self._update_zip_label_var.set(zip_path.name)
+
+        # Parse
+        manifest, entries, error = parse_zip(zip_path, get_base_dir())
+        if error or manifest is None:
+            messagebox.showerror(
+                self.tr.t("msg_error_title"),
+                self.tr.t("msg_update_invalid_zip", error=error or "Unknown error"),
+                parent=self,
+            )
+            self._update_zip_path = None
+            self._update_manifest_frame.pack_forget()
+            return
+
+        if not entries:
+            messagebox.showwarning(
+                self.tr.t("msg_warning_title"),
+                self.tr.t("msg_update_no_files"),
+                parent=self,
+            )
+            self._update_zip_path = None
+            self._update_manifest_frame.pack_forget()
+            return
+
+        self._update_zip_path = zip_path
+        self._update_manifest = manifest
+        self._update_entries = entries
+
+        # Version label
+        self._update_new_version_var.set(
+            manifest.version or self.tr.t("lbl_version_unknown")
+        )
+
+        # Running-process check
+        running = detect_running_trackers()
+        if running:
+            self._update_proc_warn_var.set(
+                self.tr.t("msg_update_running_procs", names=", ".join(running))
+            )
+            self._update_proc_warn_label.pack(anchor=tk.W, pady=(0, 8))
+        else:
+            self._update_proc_warn_var.set("")
+            self._update_proc_warn_label.pack_forget()
+
+        # Populate file tree
+        self._update_tree.delete(*self._update_tree.get_children())
+        installable = 0
+        for entry in entries:
+            if entry.is_protected:
+                status_text = self.tr.t("lbl_update_status_protected")
+                tag = "protected"
+            elif entry.is_new:
+                status_text = self.tr.t("lbl_update_status_new")
+                tag = "new"
+                installable += 1
+            else:
+                status_text = self.tr.t("lbl_update_status_updated")
+                tag = "update"
+                installable += 1
+            self._update_tree.insert(
+                "", tk.END, values=(entry.dest_path, status_text), tags=(tag,)
+            )
+
+        self._update_tree.tag_configure("new",       foreground="#006600")
+        self._update_tree.tag_configure("update",    foreground="#000000")
+        self._update_tree.tag_configure("protected", foreground="#999999")
+
+        # Enable install button only if there is something to install and
+        # no blocking running processes.
+        can_install = installable > 0 and not running
+        self._update_install_btn.config(state="normal" if can_install else "disabled")
+
+        # Show manifest frame
+        self._update_manifest_frame.pack(fill=tk.BOTH, expand=True, pady=(4, 0))
+
+    def _on_install_update(self) -> None:
+        """Confirm and kick off the background install worker."""
+        if not self._update_zip_path or not self._update_entries:
+            return
+
+        manifest = self._update_manifest
+        installable = [e for e in self._update_entries if not e.is_protected]
+        version_str = (manifest.version if manifest else "") or self.tr.t("lbl_version_unknown")
+
+        confirmed = messagebox.askyesno(
+            self.tr.t("msg_update_confirm_title"),
+            self.tr.t(
+                "msg_update_confirm",
+                version=version_str,
+                count=len(installable),
+            ),
+            parent=self,
+        )
+        if not confirmed:
+            return
+
+        # Disable the install button to prevent double-clicks.
+        if self._update_install_btn:
+            self._update_install_btn.config(state="disabled")
+
+        # Show progress area
+        self._update_progress_var.set(0)
+        self._update_status_var.set(self.tr.t("msg_update_preparing"))
+        self._update_progress_frame.pack(fill=tk.X, pady=(10, 0))
+
+        # Launch background thread
+        self._update_thread = threading.Thread(
+            target=self._run_install_worker,
+            daemon=True,
+        )
+        self._update_thread.start()
+        self._poll_update_queue()
+
+    def _run_install_worker(self) -> None:
+        """Background thread: runs install_update and posts result to queue."""
+        from settings_manager.updater import install_update, write_install_log
+        from settings_manager.config.paths import get_base_dir
+
+        base_dir = get_base_dir()
+        total_installable = len([e for e in self._update_entries if not e.is_protected])
+
+        def _progress(current: int, total: int, filename: str) -> None:
+            pct = int(current / total * 100) if total else 100
+            self._update_queue.put({
+                "type": "progress",
+                "pct": pct,
+                "label": self.tr.t(
+                    "msg_update_installing_file",
+                    current=current,
+                    total=total,
+                    file=os.path.basename(filename),
+                ),
+            })
+
+        try:
+            result = install_update(
+                self._update_zip_path,
+                base_dir,
+                self._update_entries,
+                progress_callback=_progress,
+            )
+            log_path = write_install_log(
+                base_dir,
+                self._update_zip_path,
+                self._update_manifest or __import__(
+                    "settings_manager.updater", fromlist=["UpdateManifest"]
+                ).UpdateManifest(),
+                result,
+            )
+            self._update_queue.put({
+                "type": "done",
+                "result": result,
+                "log_path": log_path,
+            })
+        except Exception as exc:
+            self._update_queue.put({"type": "error", "error": str(exc)})
+
+    def _poll_update_queue(self) -> None:
+        """Poll the install queue and update the UI."""
+        try:
+            payload = self._update_queue.get_nowait()
+        except queue.Empty:
+            self._update_poll_id = self.after(150, self._poll_update_queue)
+            return
+
+        kind = payload.get("type")
+
+        if kind == "progress":
+            self._update_progress_var.set(payload["pct"])
+            self._update_status_var.set(payload["label"])
+            self._update_poll_id = self.after(150, self._poll_update_queue)
+            return
+
+        # Terminal states: done or error
+        if kind == "done":
+            result = payload["result"]
+            log_path = payload.get("log_path")
+            self._update_progress_var.set(100)
+
+            if log_path:
+                self._update_log_path = Path(log_path)
+                self._update_log_btn.config(state="normal")
+                self._update_log_btn.pack(anchor=tk.W, pady=(10, 0))
+
+            if result.success:
+                backup_note = ""
+                if result.backup_path:
+                    backup_note = "\n\n" + self.tr.t(
+                        "msg_update_backup_created", path=result.backup_path
+                    )
+                self._update_status_var.set(self.tr.t("msg_update_done_success"))
+                messagebox.showinfo(
+                    self.tr.t("msg_update_confirm_title"),
+                    self.tr.t(
+                        "msg_update_success",
+                        count=len(result.installed),
+                    ) + backup_note,
+                    parent=self,
+                )
+            else:
+                failed_lines = "\n".join(
+                    f"  • {f}: {err}" for f, err in result.failed[:8]
+                )
+                if len(result.failed) > 8:
+                    failed_lines += f"\n  … and {len(result.failed) - 8} more"
+                self._update_status_var.set(self.tr.t("msg_update_done_failed"))
+                messagebox.showerror(
+                    self.tr.t("msg_error_title"),
+                    self.tr.t(
+                        "msg_update_partial",
+                        installed=len(result.installed),
+                        failed=len(result.failed),
+                        details=failed_lines,
+                    ),
+                    parent=self,
+                )
+
+        elif kind == "error":
+            self._update_status_var.set(self.tr.t("msg_update_done_failed"))
+            messagebox.showerror(
+                self.tr.t("msg_error_title"),
+                self.tr.t("msg_update_failed", error=payload.get("error", "")),
+                parent=self,
+            )
+
+    def _on_view_install_log(self) -> None:
+        """Open update_log.txt in the default text editor."""
+        if not self._update_log_path or not self._update_log_path.exists():
+            return
+        try:
+            os.startfile(str(self._update_log_path))
+        except Exception as exc:
+            messagebox.showerror(
+                self.tr.t("msg_error_title"),
+                str(exc),
+                parent=self,
+            )
 
     def _create_button_bar(self, parent) -> None:
         """Create bottom button bar."""

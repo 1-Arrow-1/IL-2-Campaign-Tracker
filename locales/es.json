@@ -845,7 +845,10 @@
       "swap_award_style": "Cambiar estilo de condecoraciones",
       "import_stock_campaigns": "Importar campanas estandar de IL-2",
       "rebuild_campaign_data": "Rebuild All Campaign Data",
-      "refresh_models": "Obtener modelos disponibles"
+      "refresh_models": "Obtener modelos disponibles",
+      "select_update_package": "Seleccionar paquete de actualización…",
+      "install_update": "Instalar actualización",
+      "view_install_log": "Ver registro de instalación"
     },
     "dialog": {
       "edit_bracket_label": "Rango (ej., '1-10' o '71+'):",
@@ -894,7 +897,16 @@
       "radio_use_1957": "Usar estilo 1957",
       "radio_use_ww2": "Usar estilo 2ª GM",
       "german_awards_elevation_note": "Nota: Modificar archivos en el directorio de instalación de IL-2 puede requerir derechos de administrador. Se te solicitará elevación si es necesario.",
-      "import_stock_campaigns_helper": "Importa las campanas estandar de IL-2 desde Campaigns.gtp y Missions.gtp a tu carpeta data\\Campaigns. Las nuevas carpetas de campana se copian completas. Para las carpetas existentes, solo se anaden los archivos de mision que faltan — no se sobreescribe ningun archivo existente."
+      "import_stock_campaigns_helper": "Importa las campanas estandar de IL-2 desde Campaigns.gtp y Missions.gtp a tu carpeta data\\Campaigns. Las nuevas carpetas de campana se copian completas. Para las carpetas existentes, solo se anaden los archivos de mision que faltan — no se sobreescribe ningun archivo existente.",
+      "updates_helper": "Instala un paquete de actualización descargado. Selecciona el archivo ZIP para revisar su contenido antes de instalar.",
+      "current_version": "Versión actual:",
+      "version_unknown": "Desconocida",
+      "update_version": "Versión del paquete:",
+      "update_status_new": "Nuevo",
+      "update_status_updated": "Actualización",
+      "update_status_protected": "Protegido (omitido)",
+      "col_update_file": "Archivo",
+      "col_update_status": "Estado"
     },
     "message": {
       "campaigns_tab_disabled": "La configuración de campañas requiere campaign_mission_dates.json.\nPor favor, ejecuta el Campaign Tracker al menos una vez.",
@@ -940,7 +952,21 @@
       "story_refresh_provider_not_supported": "La obtención de modelos disponibles no es compatible con el proveedor personalizado. Introduce el ID del modelo manualmente.",
       "story_refresh_running": "Obteniendo modelos disponibles de {provider}...",
       "story_refresh_success": "{count} modelos disponibles de {provider}. Selecciona uno de la lista.",
-      "story_refresh_failed": "No se pudieron obtener los modelos: {error}"
+      "story_refresh_failed": "No se pudieron obtener los modelos: {error}",
+      "update_select_zip": "Seleccionar ZIP de actualización",
+      "update_invalid_zip": "El archivo seleccionado no es un paquete de actualización válido:\n{error}",
+      "update_no_files": "El paquete seleccionado no contiene archivos instalables.",
+      "update_running_procs": "Los siguientes procesos del tracker están en ejecución y deben cerrarse antes de instalar:\n\n{names}\n\nCiérralos e inténtalo de nuevo.",
+      "update_preparing": "Preparando instalación…",
+      "update_confirm_title": "Instalar actualización",
+      "update_confirm": "¿Instalar la versión {version}?\n\n{count} archivo(s) se instalará(n) o actualizará(n).",
+      "update_installing_file": "Instalando ({current}/{total}): {file}",
+      "update_backup_created": "Se ha guardado una copia de seguridad de los archivos reemplazados en:\n{path}",
+      "update_done_success": "Instalación completada.",
+      "update_done_failed": "Error en la instalación.",
+      "update_success": "{count} archivo(s) instalado(s) correctamente.\n\nReinicia el tracker para aplicar la actualización.",
+      "update_partial": "{installed} archivo(s) instalado(s), {failed} fallido(s).\n\n{details}",
+      "update_failed": "Error en la instalación:\n{error}"
     },
     "tab": {
       "campaigns": "Campañas",
@@ -948,7 +974,8 @@
       "general": "General",
       "german_awards": "Condecoraciones alemanas",
       "rank_scaling": "Escalado de Rango",
-      "rank_values": "Valores de Rango"
+      "rank_values": "Valores de Rango",
+      "updates": "Actualizaciones"
     },
     "tooltip": {
       "bracket": "Rango de cantidad de misiones (ej., '1-10', '11-20', '71+')",

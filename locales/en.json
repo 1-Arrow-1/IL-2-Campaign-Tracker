@@ -846,7 +846,10 @@
       "restore_defaults": "Restore Defaults",
       "swap_award_style": "Swap Award Style",
       "test_connection": "Test Connection",
-      "refresh_models": "Get Available Models"
+      "refresh_models": "Get Available Models",
+      "select_update_package": "Select Update Package…",
+      "install_update": "Install Update",
+      "view_install_log": "View Install Log"
     },
     "dialog": {
       "edit_bracket_label": "Bracket (e.g., '1-10' or '71+'):",
@@ -902,7 +905,16 @@
       "german_awards_style_unknown": "Unknown",
       "radio_use_1957": "Use 1957 style",
       "radio_use_ww2": "Use WW2 style",
-      "german_awards_elevation_note": "Note: Modifying files in the IL-2 installation directory may require administrator rights. You will be prompted for elevation if needed."
+      "german_awards_elevation_note": "Note: Modifying files in the IL-2 installation directory may require administrator rights. You will be prompted for elevation if needed.",
+      "updates_helper": "Install a downloaded update package. Select the update ZIP file to review its contents before installing.",
+      "current_version": "Current version:",
+      "version_unknown": "Unknown",
+      "update_version": "Package version:",
+      "update_status_new": "New",
+      "update_status_updated": "Update",
+      "update_status_protected": "Protected (skipped)",
+      "col_update_file": "File",
+      "col_update_status": "Status"
     },
     "message": {
       "campaigns_tab_disabled": "Campaign settings require campaign_mission_dates.json.\nPlease run the Campaign Tracker at least once.",
@@ -956,7 +968,21 @@
       "german_awards_swap_success": "German awards successfully switched to {style} style.",
       "german_awards_swap_failed": "Failed to switch award style:\n{error}",
       "german_awards_uac_cancelled": "Administrator elevation was cancelled. No changes were made.",
-      "german_awards_elevation_failed": "Could not obtain administrator rights. Try running the Settings Manager as administrator."
+      "german_awards_elevation_failed": "Could not obtain administrator rights. Try running the Settings Manager as administrator.",
+      "update_select_zip": "Select Update ZIP",
+      "update_invalid_zip": "The selected file is not a valid update package:\n{error}",
+      "update_no_files": "The selected package contains no installable files.",
+      "update_running_procs": "The following tracker processes are currently running and must be closed before installing:\n\n{names}\n\nClose them and try again.",
+      "update_preparing": "Preparing installation…",
+      "update_confirm_title": "Install Update",
+      "update_confirm": "Install update version {version}?\n\n{count} file(s) will be installed or updated.",
+      "update_installing_file": "Installing ({current}/{total}): {file}",
+      "update_backup_created": "A backup of the replaced files has been saved to:\n{path}",
+      "update_done_success": "Installation complete.",
+      "update_done_failed": "Installation failed.",
+      "update_success": "{count} file(s) installed successfully.\n\nPlease restart the tracker to apply the update.",
+      "update_partial": "{installed} file(s) installed, {failed} failed.\n\n{details}",
+      "update_failed": "Installation failed:\n{error}"
     },
     "tab": {
       "campaigns": "Campaigns",
@@ -964,7 +990,8 @@
       "general": "General",
       "german_awards": "German Awards",
       "rank_scaling": "Rank Scaling",
-      "rank_values": "Rank Values"
+      "rank_values": "Rank Values",
+      "updates": "Updates"
     },
     "tooltip": {
       "bracket": "Mission count range (e.g., '1-10', '11-20', '71+')",

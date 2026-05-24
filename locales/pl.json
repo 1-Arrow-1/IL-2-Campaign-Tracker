@@ -845,7 +845,10 @@
       "swap_award_style": "Zmień styl odznaczeń",
       "import_stock_campaigns": "Importuj standardowe kampanie IL-2",
       "rebuild_campaign_data": "Rebuild All Campaign Data",
-      "refresh_models": "Pobierz dostępne modele"
+      "refresh_models": "Pobierz dostępne modele",
+      "select_update_package": "Wybierz pakiet aktualizacji…",
+      "install_update": "Zainstaluj aktualizację",
+      "view_install_log": "Wyświetl dziennik instalacji"
     },
     "dialog": {
       "edit_bracket_label": "Zakres (np. '1-10' lub '71+'):",
@@ -894,7 +897,16 @@
       "radio_use_1957": "Użyj stylu z 1957",
       "radio_use_ww2": "Użyj stylu II WŚ",
       "german_awards_elevation_note": "Uwaga: Modyfikowanie plików w katalogu instalacyjnym IL-2 może wymagać uprawnień administratora. W razie potrzeby zostaniesz poproszony o podwyższenie uprawnień.",
-      "import_stock_campaigns_helper": "Importuje standardowe kampanie IL-2 z plikow Campaigns.gtp i Missions.gtp do folderu data\\Campaigns. Nowe foldery kampanii sa kopiowane w calosci. Dla istniejacych folderow kopiowane sa tylko brakujace pliki misji — zadne istniejace pliki nie sa nadpisywane."
+      "import_stock_campaigns_helper": "Importuje standardowe kampanie IL-2 z plikow Campaigns.gtp i Missions.gtp do folderu data\\Campaigns. Nowe foldery kampanii sa kopiowane w calosci. Dla istniejacych folderow kopiowane sa tylko brakujace pliki misji — zadne istniejace pliki nie sa nadpisywane.",
+      "updates_helper": "Zainstaluj pobrany pakiet aktualizacji. Wybierz plik ZIP, aby sprawdzić jego zawartość przed instalacją.",
+      "current_version": "Aktualna wersja:",
+      "version_unknown": "Nieznana",
+      "update_version": "Wersja pakietu:",
+      "update_status_new": "Nowy",
+      "update_status_updated": "Aktualizacja",
+      "update_status_protected": "Chroniony (pominięty)",
+      "col_update_file": "Plik",
+      "col_update_status": "Status"
     },
     "message": {
       "campaigns_tab_disabled": "Ustawienia kampanii wymagają campaign_mission_dates.json.\nProszę uruchomić Campaign Tracker przynajmniej raz.",
@@ -940,7 +952,21 @@
       "story_refresh_provider_not_supported": "Pobieranie dostępnych modeli nie jest obsługiwane dla niestandardowego dostawcy. Wpisz identyfikator modelu ręcznie.",
       "story_refresh_running": "Pobieranie dostępnych modeli od {provider}...",
       "story_refresh_success": "{count} modeli dostępnych od {provider}. Wybierz jeden z listy.",
-      "story_refresh_failed": "Nie udało się pobrać modeli: {error}"
+      "story_refresh_failed": "Nie udało się pobrać modeli: {error}",
+      "update_select_zip": "Wybierz ZIP aktualizacji",
+      "update_invalid_zip": "Wybrany plik nie jest prawidłowym pakietem aktualizacji:\n{error}",
+      "update_no_files": "Wybrany pakiet nie zawiera plików do zainstalowania.",
+      "update_running_procs": "Następujące procesy trackera są uruchomione i muszą zostać zamknięte przed instalacją:\n\n{names}\n\nZamknij je i spróbuj ponownie.",
+      "update_preparing": "Przygotowywanie instalacji…",
+      "update_confirm_title": "Zainstaluj aktualizację",
+      "update_confirm": "Zainstalować aktualizację w wersji {version}?\n\n{count} plik(i/ów) zostanie zainstalowanych lub zaktualizowanych.",
+      "update_installing_file": "Instalowanie ({current}/{total}): {file}",
+      "update_backup_created": "Kopia zapasowa zastąpionych plików została zapisana w:\n{path}",
+      "update_done_success": "Instalacja zakończona.",
+      "update_done_failed": "Instalacja nie powiodła się.",
+      "update_success": "{count} plik(i/ów) zainstalowanych pomyślnie.\n\nUruchom ponownie tracker, aby zastosować aktualizację.",
+      "update_partial": "{installed} plik(i/ów) zainstalowanych, {failed} nieudanych.\n\n{details}",
+      "update_failed": "Instalacja nie powiodła się:\n{error}"
     },
     "tab": {
       "campaigns": "Kampanie",
@@ -948,7 +974,8 @@
       "general": "Ogólne",
       "german_awards": "Odznaczenia niemieckie",
       "rank_scaling": "Skalowanie Rang",
-      "rank_values": "Wartości Rang"
+      "rank_values": "Wartości Rang",
+      "updates": "Aktualizacje"
     },
     "tooltip": {
       "bracket": "Zakres liczby misji (np. '1-10', '11-20', '71+')",

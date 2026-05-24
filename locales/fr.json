@@ -846,7 +846,10 @@
       "swap_award_style": "Changer le style des décorations",
       "import_stock_campaigns": "Importer les campagnes IL-2 standard",
       "rebuild_campaign_data": "Rebuild All Campaign Data",
-      "refresh_models": "Obtenir les modèles disponibles"
+      "refresh_models": "Obtenir les modèles disponibles",
+      "select_update_package": "Sélectionner le paquet de mise à jour…",
+      "install_update": "Installer la mise à jour",
+      "view_install_log": "Voir le journal d'installation"
     },
     "dialog": {
       "edit_bracket_label": "Plage (ex., '1-10' ou '71+'):",
@@ -895,7 +898,16 @@
       "radio_use_1957": "Utiliser le style 1957",
       "radio_use_ww2": "Utiliser le style 2ème GM",
       "german_awards_elevation_note": "Remarque : La modification des fichiers dans le répertoire d'installation IL-2 peut nécessiter des droits d'administrateur. Une invite de contrôle d'accès s'affichera si nécessaire.",
-      "import_stock_campaigns_helper": "Importe les campagnes IL-2 standard depuis Campaigns.gtp et Missions.gtp vers votre dossier data\\Campaigns. Les nouveaux dossiers de campagne sont copies integralement. Pour les dossiers existants, seuls les fichiers de mission absents sont ajoutes — aucun fichier existant n'est ecrase."
+      "import_stock_campaigns_helper": "Importe les campagnes IL-2 standard depuis Campaigns.gtp et Missions.gtp vers votre dossier data\\Campaigns. Les nouveaux dossiers de campagne sont copies integralement. Pour les dossiers existants, seuls les fichiers de mission absents sont ajoutes — aucun fichier existant n'est ecrase.",
+      "updates_helper": "Installez un paquet de mise à jour téléchargé. Sélectionnez le fichier ZIP pour vérifier son contenu avant installation.",
+      "current_version": "Version actuelle :",
+      "version_unknown": "Inconnue",
+      "update_version": "Version du paquet :",
+      "update_status_new": "Nouveau",
+      "update_status_updated": "Mise à jour",
+      "update_status_protected": "Protégé (ignoré)",
+      "col_update_file": "Fichier",
+      "col_update_status": "Statut"
     },
     "message": {
       "campaigns_tab_disabled": "Les paramètres de campagne nécessitent campaign_mission_dates.json.\nVeuillez exécuter le Campaign Tracker au moins une fois.",
@@ -941,7 +953,21 @@
       "story_refresh_provider_not_supported": "L'obtention des modèles disponibles n'est pas prise en charge pour le fournisseur personnalisé. Saisissez l'ID du modèle manuellement.",
       "story_refresh_running": "Récupération des modèles disponibles depuis {provider}...",
       "story_refresh_success": "{count} modèles disponibles depuis {provider}. Sélectionnez-en un dans la liste.",
-      "story_refresh_failed": "Impossible de récupérer les modèles : {error}"
+      "story_refresh_failed": "Impossible de récupérer les modèles : {error}",
+      "update_select_zip": "Sélectionner le ZIP de mise à jour",
+      "update_invalid_zip": "Le fichier sélectionné n'est pas un paquet de mise à jour valide :\n{error}",
+      "update_no_files": "Le paquet sélectionné ne contient aucun fichier installable.",
+      "update_running_procs": "Les processus tracker suivants sont en cours d'exécution et doivent être fermés avant l'installation :\n\n{names}\n\nFermez-les et réessayez.",
+      "update_preparing": "Préparation de l'installation…",
+      "update_confirm_title": "Installer la mise à jour",
+      "update_confirm": "Installer la version {version} ?\n\n{count} fichier(s) sera/seront installé(s) ou mis à jour.",
+      "update_installing_file": "Installation ({current}/{total}) : {file}",
+      "update_backup_created": "Une sauvegarde des fichiers remplacés a été enregistrée dans :\n{path}",
+      "update_done_success": "Installation terminée.",
+      "update_done_failed": "Échec de l'installation.",
+      "update_success": "{count} fichier(s) installé(s) avec succès.\n\nVeuillez redémarrer le tracker pour appliquer la mise à jour.",
+      "update_partial": "{installed} fichier(s) installé(s), {failed} échoué(s).\n\n{details}",
+      "update_failed": "Échec de l'installation :\n{error}"
     },
     "tab": {
       "campaigns": "Campagnes",
@@ -949,7 +975,8 @@
       "general": "Général",
       "german_awards": "Décorations allemandes",
       "rank_scaling": "Échelle de Rang",
-      "rank_values": "Valeurs de Rang"
+      "rank_values": "Valeurs de Rang",
+      "updates": "Mises à jour"
     },
     "tooltip": {
       "bracket": "Plage de nombre de missions (ex., '1-10', '11-20', '71+')",

@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 #define MyAppName "IL-2 Great Battles SP Campaign Tracker Multi Language"
 #define MyAppExeName "IL2_Tracker_Control_GUI.exe"
-#define MyAppVersion "2.2.9"
+#define MyAppVersion "3.0.0"
 #define MyAppPublisher "Arrow_1"
 
 [Setup]
@@ -177,6 +177,7 @@ Source: "object_categories.yaml"; DestDir: "{app}"; Flags: onlyifdoesntexist uni
 Source: "stock_campaigns.yaml"; DestDir: "{app}"; Flags: onlyifdoesntexist uninsneveruninstall
 
 ; Program files: always overwrite
+Source: "version.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "IL2_CampaignTracker_v2.2_ML.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "IL2_Tracker_Control_GUI.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "mlg2txt.exe"; DestDir: "{app}"; Flags: ignoreversion

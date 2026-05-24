@@ -845,7 +845,10 @@
       "swap_award_style": "Auszeichnungsstil wechseln",
       "import_stock_campaigns": "Standard-IL-2-Kampagnen importieren",
       "rebuild_campaign_data": "Alle Kampagnendaten neu erstellen",
-      "refresh_models": "Verfügbare Modelle abrufen"
+      "refresh_models": "Verfügbare Modelle abrufen",
+      "select_update_package": "Update-Paket auswählen…",
+      "install_update": "Update installieren",
+      "view_install_log": "Installationsprotokoll anzeigen"
     },
     "dialog": {
       "edit_bracket_label": "Bereich (z.B. '1-10' oder '71+'):",
@@ -894,7 +897,16 @@
       "radio_use_1957": "1957-Stil verwenden",
       "radio_use_ww2": "2. Weltkrieg-Stil verwenden",
       "german_awards_elevation_note": "Hinweis: Das Ändern von Dateien im IL-2-Installationsverzeichnis erfordert möglicherweise Administratorrechte. Bei Bedarf wird eine UAC-Aufforderung angezeigt.",
-      "import_stock_campaigns_helper": "Importiert die standardmaessigen IL-2-Kampagnen aus Campaigns.gtp und Missions.gtp in deinen Ordner data\\Campaigns. Neue Kampagnenordner werden vollstaendig kopiert. Bei bereits vorhandenen Kampagnenordnern werden nur fehlende Missionsdateien hinzugefuegt – vorhandene Dateien werden nie ueberschrieben."
+      "import_stock_campaigns_helper": "Importiert die standardmaessigen IL-2-Kampagnen aus Campaigns.gtp und Missions.gtp in deinen Ordner data\\Campaigns. Neue Kampagnenordner werden vollstaendig kopiert. Bei bereits vorhandenen Kampagnenordnern werden nur fehlende Missionsdateien hinzugefuegt – vorhandene Dateien werden nie ueberschrieben.",
+      "updates_helper": "Installiere ein heruntergeladenes Update-Paket. Wähle die ZIP-Datei aus, um den Inhalt vor der Installation zu prüfen.",
+      "current_version": "Aktuelle Version:",
+      "version_unknown": "Unbekannt",
+      "update_version": "Paket-Version:",
+      "update_status_new": "Neu",
+      "update_status_updated": "Aktualisierung",
+      "update_status_protected": "Geschützt (übersprungen)",
+      "col_update_file": "Datei",
+      "col_update_status": "Status"
     },
     "message": {
       "campaigns_tab_disabled": "Kampagnen-Einstellungen erfordern campaign_mission_dates.json.\nBitte führe den Campaign Tracker mindestens einmal aus.",
@@ -940,7 +952,21 @@
       "story_refresh_provider_not_supported": "Das Abrufen verfügbarer Modelle wird für den benutzerdefinierten Anbieter nicht unterstützt. Gib die Modell-ID manuell ein.",
       "story_refresh_running": "Verfügbare Modelle von {provider} werden abgerufen...",
       "story_refresh_success": "{count} Modelle von {provider} verfügbar. Wähle eines aus der Liste.",
-      "story_refresh_failed": "Modelle konnten nicht abgerufen werden: {error}"
+      "story_refresh_failed": "Modelle konnten nicht abgerufen werden: {error}",
+      "update_select_zip": "Update-ZIP auswählen",
+      "update_invalid_zip": "Die ausgewählte Datei ist kein gültiges Update-Paket:\n{error}",
+      "update_no_files": "Das ausgewählte Paket enthält keine installierbaren Dateien.",
+      "update_running_procs": "Die folgenden Tracker-Prozesse laufen und müssen vor der Installation beendet werden:\n\n{names}\n\nBeende sie und versuche es erneut.",
+      "update_preparing": "Installation wird vorbereitet…",
+      "update_confirm_title": "Update installieren",
+      "update_confirm": "Update-Version {version} installieren?\n\n{count} Datei(en) wird/werden installiert oder aktualisiert.",
+      "update_installing_file": "Installiere ({current}/{total}): {file}",
+      "update_backup_created": "Ein Backup der ersetzten Dateien wurde gespeichert unter:\n{path}",
+      "update_done_success": "Installation abgeschlossen.",
+      "update_done_failed": "Installation fehlgeschlagen.",
+      "update_success": "{count} Datei(en) erfolgreich installiert.\n\nBitte starte den Tracker neu, um das Update anzuwenden.",
+      "update_partial": "{installed} Datei(en) installiert, {failed} fehlgeschlagen.\n\n{details}",
+      "update_failed": "Installation fehlgeschlagen:\n{error}"
     },
     "tab": {
       "campaigns": "Kampagnen",
@@ -948,7 +974,8 @@
       "general": "Allgemein",
       "german_awards": "Deutsche Auszeichnungen",
       "rank_scaling": "Rang-Skalierung",
-      "rank_values": "Rang-Werte"
+      "rank_values": "Rang-Werte",
+      "updates": "Updates"
     },
     "tooltip": {
       "bracket": "Missionsanzahl-Bereich (z.B. '1-10', '11-20', '71+')",

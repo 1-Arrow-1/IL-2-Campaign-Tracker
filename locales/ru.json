@@ -845,7 +845,10 @@
       "swap_award_style": "Сменить стиль наград",
       "import_stock_campaigns": "Импорт стандартных кампаний IL-2",
       "rebuild_campaign_data": "Rebuild All Campaign Data",
-      "refresh_models": "Получить доступные модели"
+      "refresh_models": "Получить доступные модели",
+      "select_update_package": "Выбрать пакет обновления…",
+      "install_update": "Установить обновление",
+      "view_install_log": "Просмотреть журнал установки"
     },
     "dialog": {
       "edit_bracket_label": "Диапазон (например, '1-10' или '71+'):",
@@ -894,7 +897,16 @@
       "radio_use_1957": "Стиль 1957",
       "radio_use_ww2": "Стиль ВМВ",
       "german_awards_elevation_note": "Примечание: Изменение файлов в каталоге установки IL-2 может потребовать прав администратора. При необходимости будет запрошено повышение привилегий.",
-      "import_stock_campaigns_helper": "Импортирует стандартные кампании IL-2 из Campaigns.gtp и Missions.gtp в папку data\\Campaigns. Новые папки кампаний копируются полностью. Для существующих папок добавляются только отсутствующие файлы миссий — существующие файлы никогда не перезаписываются."
+      "import_stock_campaigns_helper": "Импортирует стандартные кампании IL-2 из Campaigns.gtp и Missions.gtp в папку data\\Campaigns. Новые папки кампаний копируются полностью. Для существующих папок добавляются только отсутствующие файлы миссий — существующие файлы никогда не перезаписываются.",
+      "updates_helper": "Установите загруженный пакет обновления. Выберите ZIP-файл для просмотра содержимого перед установкой.",
+      "current_version": "Текущая версия:",
+      "version_unknown": "Неизвестна",
+      "update_version": "Версия пакета:",
+      "update_status_new": "Новый",
+      "update_status_updated": "Обновление",
+      "update_status_protected": "Защищён (пропущен)",
+      "col_update_file": "Файл",
+      "col_update_status": "Статус"
     },
     "message": {
       "campaigns_tab_disabled": "Настройки кампании требуют campaign_mission_dates.json.\nПожалуйста, запустите Campaign Tracker хотя бы один раз.",
@@ -940,7 +952,21 @@
       "story_refresh_provider_not_supported": "Получение доступных моделей не поддерживается для пользовательского провайдера. Введите идентификатор модели вручную.",
       "story_refresh_running": "Получение доступных моделей от {provider}...",
       "story_refresh_success": "{count} моделей доступно от {provider}. Выберите одну из списка.",
-      "story_refresh_failed": "Не удалось получить модели: {error}"
+      "story_refresh_failed": "Не удалось получить модели: {error}",
+      "update_select_zip": "Выбрать ZIP обновления",
+      "update_invalid_zip": "Выбранный файл не является корректным пакетом обновления:\n{error}",
+      "update_no_files": "Выбранный пакет не содержит устанавливаемых файлов.",
+      "update_running_procs": "Следующие процессы трекера запущены и должны быть закрыты перед установкой:\n\n{names}\n\nЗакройте их и повторите попытку.",
+      "update_preparing": "Подготовка к установке…",
+      "update_confirm_title": "Установить обновление",
+      "update_confirm": "Установить обновление версии {version}?\n\n{count} файл(ов) будет установлено или обновлено.",
+      "update_installing_file": "Установка ({current}/{total}): {file}",
+      "update_backup_created": "Резервная копия заменённых файлов сохранена в:\n{path}",
+      "update_done_success": "Установка завершена.",
+      "update_done_failed": "Установка не выполнена.",
+      "update_success": "{count} файл(ов) успешно установлено.\n\nПожалуйста, перезапустите трекер для применения обновления.",
+      "update_partial": "{installed} файл(ов) установлено, {failed} не удалось.\n\n{details}",
+      "update_failed": "Установка не выполнена:\n{error}"
     },
     "tab": {
       "campaigns": "Кампании",
@@ -948,7 +974,8 @@
       "general": "Общие",
       "german_awards": "Немецкие награды",
       "rank_scaling": "Масштаб Званий",
-      "rank_values": "Значения Званий"
+      "rank_values": "Значения Званий",
+      "updates": "Обновления"
     },
     "tooltip": {
       "bracket": "Диапазон количества миссий (например, '1-10', '11-20', '71+')",
