@@ -21,7 +21,7 @@ import sys
 import threading
 from datetime import date
 from pathlib import Path
-from typing import Any, Dict, Iterable, Optional
+from typing import Any, Dict, Iterable, Optional, Tuple
 
 import openai
 
@@ -2093,3 +2093,258 @@ def generate_and_store_chapter_for(
         "memory": memory,
         "chapter_path": str(chapter_path),
     }
+
+
+# ---------------------------------------------------------------------------
+# Award citations
+# ---------------------------------------------------------------------------
+
+# Maps award code → category key.  One code can appear in multiple nations
+# (e.g. "pilots_badge") but always resolves to the same category.
+_AWARD_CATEGORY_MAP: Dict[str, str] = {
+    # --- Germany ---
+    "pilots_badge":                     "qualification",
+    "iron_cross_2nd":                   "combat",
+    "iron_cross_1st":                   "combat",
+    "honor_goblet":                     "combat",
+    "honor_clasp":                      "combat",
+    "german_cross_gold":                "combat",
+    "knights_cross":                    "combat",
+    "knights_cross_oak_leaves":         "combat",
+    "knights_cross_swords":             "combat",
+    "knights_cross_diamonds":           "combat",
+    "knights_cross_gold_diamonds":      "combat",
+    "grand_cross":                      "combat",
+    "star_grand_cross":                 "combat",
+    "fighters_bronze":                  "flying_clasp",
+    "fighters_silver":                  "flying_clasp",
+    "fighters_gold":                    "flying_clasp",
+    "fighters_gold_clasp":              "flying_clasp",
+    "attack_bronze":                    "flying_clasp",
+    "attack_silver":                    "flying_clasp",
+    "attack_gold":                      "flying_clasp",
+    "attack_gold_clasp":                "flying_clasp",
+    "attack_heavy_fighters_bronze":     "flying_clasp",
+    "attack_heavy_fighters_silver":     "flying_clasp",
+    "attack_heavy_fighters_gold":       "flying_clasp",
+    "attack_heavy_fighters_gold_clasp": "flying_clasp",
+    "bombers_bronze":                   "flying_clasp",
+    "bombers_silver":                   "flying_clasp",
+    "bomber_gold":                      "flying_clasp",
+    "bombers_gold_clasp":               "flying_clasp",
+    "transport_bronze":                 "flying_clasp",
+    "transport_silver":                 "flying_clasp",
+    "transport_gold":                   "flying_clasp",
+    "transport_gold_clasp":             "flying_clasp",
+    "eastern_front_medal":              "theatre",
+    "kuban_shield":                     "theatre",
+    "wound_badge_black":                "wound",
+    "wound_badge_silver":               "wound",
+    "wound_badge_gold":                 "wound",
+    # --- Britain ---
+    "raf_pilots_badge":                 "qualification",
+    "victoria_cross":                   "combat",
+    "dso":                              "combat",
+    "dso_bar2":                         "combat",
+    "dso_bar3":                         "combat",
+    "dfc":                              "combat",
+    "dfm":                              "combat",
+    "AF_cross":                         "combat",
+    "AF_cross_2bars":                   "combat",
+    "AF_medal":                         "combat",
+    "AF_medal_2bars":                   "combat",
+    "France_Germany_star":              "theatre",
+    "mentioned_in_despatches":          "mention",
+    "wound_stripe":                     "wound",
+    "wound_stripe_2":                   "wound",
+    "wound_stripe_3":                   "wound",
+    # --- USA ---
+    "medal_of_honor":                   "combat",
+    "medal_of_honor_1_oak":             "combat",
+    "distinguished_service_cross":      "combat",
+    "dsc_1_oak":                        "combat",
+    "dsc_2_oak":                        "combat",
+    "dsc_3_oak":                        "combat",
+    "dsc_4_oak":                        "combat",
+    "silver_star":                      "combat",
+    "silver_star_1_oak":                "combat",
+    "silver_star_2_oak":                "combat",
+    "distinguished_flying_cross":       "combat",
+    "dfc_1_oak":                        "combat",
+    "dfc_2_oak":                        "combat",
+    "dfc_3_oak":                        "combat",
+    "dfc_4_oak":                        "combat",
+    "legion_of_merit":                  "combat",
+    "bronze_star":                      "combat",
+    "bronze_star_1_oak":                "combat",
+    "bronze_star_2_oak":                "combat",
+    "air_medal":                        "flying_clasp",
+    "air_medal_1_oak":                  "flying_clasp",
+    "air_medal_1silver_oak":            "flying_clasp",
+    "air_medal_2_oak":                  "flying_clasp",
+    "air_medal_3_oak":                  "flying_clasp",
+    "air_medal_4_oak":                  "flying_clasp",
+    "purple_heart":                     "wound",
+    "purple_heart_1_oak":               "wound",
+    "purple_heart_2_oak":               "wound",
+    "EU_AF_ME_medal":                   "theatre",
+    # --- USSR ---
+    "hero_soviet_union":                "combat",
+    "order_lenin":                      "combat",
+    "order_red_banner":                 "combat",
+    "order_red_banner_2":               "combat",
+    "order_red_banner_3":               "combat",
+    "order_red_star":                   "combat",
+    "order_patriotic_war_1st":          "combat",
+    "order_patriotic_war_2nd":          "combat",
+    "order_suvorov":                    "combat",
+    "order_nevsky":                     "combat",
+    "DSM":                              "combat",
+    "medal_battle_merit":               "combat",
+    "medal_courage":                    "combat",
+    "DFM_Moscow":                       "theatre",
+    "DFM_Stalingrad":                   "theatre",
+    "DFM_Caucasus":                     "theatre",
+    "red_wound_stripe":                 "wound",
+    "yellow_wound_stripe":              "wound",
+    "air_kill_bonus":                   "kill_bonus",
+    "fighter_kill_bonus":               "kill_bonus",
+    "bomber_kill_bonus":                "kill_bonus",
+    "bomber_kill_bonus1":               "kill_bonus",
+    "transport_kill_bonus":             "kill_bonus",
+    "transport_ship_kill_bonus":        "kill_bonus",
+    "small_ship_kill_bonus":            "kill_bonus",
+    "dest_sub_kill_bonus":              "kill_bonus",
+    "bonus_5_sorties":                  "sortie_bonus",
+    "bonus_15_sorties":                 "sortie_bonus",
+    "bonus_25_sorties":                 "sortie_bonus",
+    "bonus_40_sorties":                 "sortie_bonus",
+}
+
+# Per-category writing guidance injected into the citation prompt.
+# Tuple: (category label shown to LLM, specific writing instruction)
+_CITATION_GUIDANCE: Dict[str, Tuple[str, str]] = {
+    "qualification": (
+        "Qualification badge",
+        "Write about the pilot's certification as a military aviator and the beginning of active service. "
+        "Tone should be proud and ceremonial. You may mention early missions flown if any.",
+    ),
+    "combat": (
+        "Combat decoration",
+        "Focus on acts of gallantry, aerial skill, and specific combat achievements. "
+        "Aerial victories and missions flown provide factual context. "
+        "Vary your language — do not default to generic closings.",
+    ),
+    "flying_clasp": (
+        "Flying/mission clasp",
+        "This clasp is awarded for reaching a specific number of combat sorties. "
+        "Make sustained dedication and cumulative effort the heart of the citation — "
+        "not individual acts of bravery. Aerial victories are secondary context only.",
+    ),
+    "wound": (
+        "Wound badge",
+        "This badge is awarded because the pilot was wounded in combat. "
+        "The injury and the sacrifice it represents are the primary reason for this award. "
+        "Do NOT make aerial victories the main focus. "
+        "Acknowledge the wound, the courage shown despite injury, and resilience in service. "
+        "Missions and kills may appear briefly as background only.",
+    ),
+    "theatre": (
+        "Campaign/theatre medal",
+        "This medal recognises participation in a specific operational theatre or campaign period. "
+        "It is awarded for enduring the hardships of that campaign, not for a single act of bravery. "
+        "Focus on the pilot's sustained presence and contribution throughout the named campaign. "
+        "Do not make aerial victories the primary justification.",
+    ),
+    "kill_bonus": (
+        "Aerial kill milestone award",
+        "This award is given for reaching a specific aerial victory count. "
+        "Make the kill milestone the centrepiece; describe the combat skill and determination that led to it.",
+    ),
+    "sortie_bonus": (
+        "Sortie milestone award",
+        "This award is given for completing a set number of combat sorties. "
+        "Centre the citation on cumulative dedication — the sustained effort of repeated combat flying.",
+    ),
+    "mention": (
+        "Mention in Dispatches",
+        "Write a brief, measured commendation — one or two sentences only. "
+        "Tone should be understated and factual, not heroic.",
+    ),
+}
+
+_BANNED_PHRASES = (
+    "reflecting the highest traditions",
+    "significantly contributing to the success",
+    "exemplifying the highest ideals",
+    "unwavering dedication",
+    "unwavering commitment",
+    "unwavering courage",
+    "indomitable spirit",
+    "unyielding devotion",
+)
+
+
+def _get_citation_guidance(award_code: str) -> Tuple[str, str]:
+    """Return (category_label, writing_guidance) for a given award code."""
+    category = _AWARD_CATEGORY_MAP.get(award_code, "combat")
+    return _CITATION_GUIDANCE.get(category, _CITATION_GUIDANCE["combat"])
+
+
+def load_citations_for(source: str, entry_id: str) -> Dict[str, Any]:
+    path = _story_entry_dir(source, entry_id) / "citations.json"
+    return _load_json_file(path, {})
+
+
+def save_citation_for(source: str, entry_id: str, event_key: str, citation_text: str) -> None:
+    path = _story_entry_dir(source, entry_id) / "citations.json"
+    citations = _load_json_file(path, {})
+    citations[event_key] = citation_text
+    _save_json_file(path, citations)
+
+
+def generate_award_citation(
+    award_name: str,
+    pilot_name: str,
+    rank: str,
+    country: str,
+    date: str,
+    kills: int,
+    missions: int,
+    theatre: str,
+    language: str = "en",
+    *,
+    api_key: str,
+    model: str,
+    provider: str,
+    base_url: str = "",
+) -> str:
+    language_label = _LANGUAGE_LABELS.get(_normalize_text(language).lower(), "English")
+    category_label, category_guidance = _get_citation_guidance(award_name)
+    banned = ", ".join(f'"{p}"' for p in _BANNED_PHRASES)
+    prompt = (
+        f"You are writing a short official military award citation for a World War II pilot.\n\n"
+        f"Award category: {category_label}\n"
+        f"Writing guidance: {category_guidance}\n\n"
+        f"Award: {award_name}\n"
+        f"Pilot: {rank} {pilot_name}\n"
+        f"Country: {country}\n"
+        f"Date: {date}\n"
+        f"Combat theatre: {theatre}\n"
+        f"Air kills at time of award: {kills}\n"
+        f"Missions flown at time of award: {missions}\n\n"
+        f"Write a 2-3 sentence citation in {language_label}. "
+        f"Use an authentic, formal military style appropriate to the awarding country and era. "
+        f"Do not use any of these overused phrases: {banned}. "
+        f"Do not use quotation marks or headings. "
+        f"Output only the citation text, nothing else."
+    )
+    client = _get_client(api_key=api_key, base_url=base_url or None)
+    response = _create_story_response(
+        client,
+        provider=provider,
+        model=model,
+        prompt=prompt,
+        max_output_tokens=200,
+    )
+    return _extract_response_text(response)

@@ -383,7 +383,7 @@ echo.
 echo [3/5] Cleaning old build files...
 if exist "build" rmdir /s /q build
 if exist "dist" rmdir /s /q dist
-if exist "IL2_Campaign_Tracker_v2.2_ML" rmdir /s /q IL2_Campaign_Tracker_v2.2_ML
+if exist "IL2_Campaign_Tracker_v3_ML" rmdir /s /q IL2_Campaign_Tracker_v3_ML
 if exist "__pycache__" rmdir /s /q __pycache__
 echo OK
 echo.
@@ -485,10 +485,10 @@ echo OK
 echo.
 
 echo [5/5] Creating distribution package...
-if not exist "IL2_Campaign_Tracker_v2.2_ML" mkdir "IL2_Campaign_Tracker_v2.2_ML"
+if not exist "IL2_Campaign_Tracker_v3_ML" mkdir "IL2_Campaign_Tracker_v3_ML"
 
 REM Copy main tracker bundle (onedir)
-xcopy /E /I /Y "dist\IL2_CampaignTracker_v2.2_ML" "IL2_Campaign_Tracker_v2.2_ML\" >NUL
+xcopy /E /I /Y "dist\IL2_CampaignTracker_v3_ML" "IL2_Campaign_Tracker_v3_ML\" >NUL
 if errorlevel 2 (
     echo ERROR: Could not copy IL2_CampaignTracker bundle!
     pause
@@ -496,14 +496,14 @@ if errorlevel 2 (
 )
 
 REM Copy mlg2txt EXE
-copy "dist\mlg2txt.exe" "IL2_Campaign_Tracker_v2.2_ML\" >NUL
+copy "dist\mlg2txt.exe" "IL2_Campaign_Tracker_v3_ML\" >NUL
 if errorlevel 1 (
     echo ERROR: Could not copy mlg2txt.exe!
     pause
     exit /b 1
 )
 REM Copy cleanup_tracker_content EXE
-copy "dist\cleanup_tracker_content.exe" "IL2_Campaign_Tracker_v2.2_ML\" >NUL
+copy "dist\cleanup_tracker_content.exe" "IL2_Campaign_Tracker_v3_ML\" >NUL
 if errorlevel 1 (
     echo ERROR: Could not copy cleanup_tracker_content.exe!
     pause
@@ -512,7 +512,7 @@ if errorlevel 1 (
 
 REM Copy Campaign Service Record bundle
 if exist "dist\Campaign_Service_Record" (
-    xcopy /E /I /Y "dist\Campaign_Service_Record" "IL2_Campaign_Tracker_v2.2_ML\" >NUL
+    xcopy /E /I /Y "dist\Campaign_Service_Record" "IL2_Campaign_Tracker_v3_ML\" >NUL
     if errorlevel 2 (
         echo ERROR: Could not copy Campaign_Service_Record bundle!
         pause
@@ -522,7 +522,7 @@ if exist "dist\Campaign_Service_Record" (
 
 REM Copy Career Service Record bundle
 if exist "dist\Career_Service_Record" (
-    xcopy /E /I /Y "dist\Career_Service_Record" "IL2_Campaign_Tracker_v2.2_ML\" >NUL
+    xcopy /E /I /Y "dist\Career_Service_Record" "IL2_Campaign_Tracker_v3_ML\" >NUL
     if errorlevel 2 (
         echo ERROR: Could not copy Career_Service_Record bundle!
         pause
@@ -532,7 +532,7 @@ if exist "dist\Career_Service_Record" (
 
 REM Copy Settings Manager EXE
 if exist "dist\IL2_Settings_Manager.exe" (
-    copy "dist\IL2_Settings_Manager.exe" "IL2_Campaign_Tracker_v2.2_ML\" >NUL
+    copy "dist\IL2_Settings_Manager.exe" "IL2_Campaign_Tracker_v3_ML\" >NUL
     if errorlevel 1 (
         echo ERROR: Could not copy IL2_Settings_Manager.exe!
         pause
@@ -542,7 +542,7 @@ if exist "dist\IL2_Settings_Manager.exe" (
 
 REM Copy stock campaign extractor helper
 if exist "unGTP-IL2.exe" (
-    copy "unGTP-IL2.exe" "IL2_Campaign_Tracker_v2.2_ML\" >NUL
+    copy "unGTP-IL2.exe" "IL2_Campaign_Tracker_v3_ML\" >NUL
     if errorlevel 1 (
         echo ERROR: Could not copy unGTP-IL2.exe!
         pause
@@ -552,7 +552,7 @@ if exist "unGTP-IL2.exe" (
 
 REM Copy Control GUI EXE
 if exist "dist\IL2_Tracker_Control_GUI.exe" (
-    copy "dist\IL2_Tracker_Control_GUI.exe" "IL2_Campaign_Tracker_v2.2_ML\" >NUL
+    copy "dist\IL2_Tracker_Control_GUI.exe" "IL2_Campaign_Tracker_v3_ML\" >NUL
     if errorlevel 1 (
         echo ERROR: Could not copy IL2_Tracker_Control_GUI.exe!
         pause
@@ -562,7 +562,7 @@ if exist "dist\IL2_Tracker_Control_GUI.exe" (
 
 REM Copy locales
 if exist "dist\Campaign_Service_Record" (
-    xcopy /E /I /Y "locales" "IL2_Campaign_Tracker_v2.2_ML\locales\" >NUL
+    xcopy /E /I /Y "locales" "IL2_Campaign_Tracker_v3_ML\locales\" >NUL
     if errorlevel 2 (
         echo ERROR: Could not copy locales!
         pause
@@ -571,49 +571,52 @@ if exist "dist\Campaign_Service_Record" (
 )
 
 REM Copy README if exists
-if exist "README.html" copy "README.html" "IL2_Campaign_Tracker_v2.2_ML\README.html" >NUL
+if exist "README.html" copy "README.html" "IL2_Campaign_Tracker_v3_ML\README.html" >NUL
 REM Copy README de if exists
-if exist "README de.html" copy "README de.html" "IL2_Campaign_Tracker_v2.2_ML\README de.html" >NUL
+if exist "README de.html" copy "README de.html" "IL2_Campaign_Tracker_v3_ML\README de.html" >NUL
 REM Copy README zh_hans if exists
-if exist "README zh-Hans.html" copy "README zh-Hans.html" "IL2_Campaign_Tracker_v2.2_ML\README zh-Hans.html" >NUL
+if exist "README zh-Hans.html" copy "README zh-Hans.html" "IL2_Campaign_Tracker_v3_ML\README zh-Hans.html" >NUL
 REM Copy README ru if exists
-if exist "README ru.html" copy "README ru.html" "IL2_Campaign_Tracker_v2.2_ML\README ru.html" >NUL
+if exist "README ru.html" copy "README ru.html" "IL2_Campaign_Tracker_v3_ML\README ru.html" >NUL
 REM Copy README pl if exists
-if exist "README pl.html" copy "README pl.html" "IL2_Campaign_Tracker_v2.2_ML\README pl.html" >NUL
+if exist "README pl.html" copy "README pl.html" "IL2_Campaign_Tracker_v3_ML\README pl.html" >NUL
 REM Copy README fr if exists
-if exist "README fr.html" copy "README fr.html" "IL2_Campaign_Tracker_v2.2_ML\README fr.html" >NUL
+if exist "README fr.html" copy "README fr.html" "IL2_Campaign_Tracker_v3_ML\README fr.html" >NUL
 REM Copy README es if exists
-if exist "README es.html" copy "README es.html" "IL2_Campaign_Tracker_v2.2_ML\README es.html" >NUL
+if exist "README es.html" copy "README es.html" "IL2_Campaign_Tracker_v3_ML\README es.html" >NUL
+
+REM Copy version if exists
+if exist "version.txt" copy "version.txt" "IL2_Campaign_Tracker_v3_ML\version.txt" >NUL
 
 
 REM Copy font if exists
-if exist "IBMPlexSans-Light.ttf" copy "IBMPlexSans-Light.ttf" "IL2_Campaign_Tracker_v2.2_ML\IBMPlexSans-Light.ttf" >NUL
+if exist "IBMPlexSans-Light.ttf" copy "IBMPlexSans-Light.ttf" "IL2_Campaign_Tracker_v3_ML\IBMPlexSans-Light.ttf" >NUL
 
 REM Copy font if exists
-if exist "NotoSansSC-VF.ttf" copy "NotoSansSC-VF.ttf" "IL2_Campaign_Tracker_v2.2_ML\NotoSansSC-VF.ttf" >NUL
+if exist "NotoSansSC-VF.ttf" copy "NotoSansSC-VF.ttf" "IL2_Campaign_Tracker_v3_ML\NotoSansSC-VF.ttf" >NUL
 
 REM Copy iss file if exists
-if exist "IL2_Campaign_Tracker.iss" copy "IL2_Campaign_Tracker.iss" "IL2_Campaign_Tracker_v2.2_ML\IL2_Campaign_Tracker.iss" >NUL
+if exist "IL2_Campaign_Tracker.iss" copy "IL2_Campaign_Tracker.iss" "IL2_Campaign_Tracker_v3_ML\IL2_Campaign_Tracker.iss" >NUL
 
 REM Copy iss file if exists
-if exist "IL-2_Tracker_award_coordinates.json" copy "IL-2_Tracker_award_coordinates.json" "IL2_Campaign_Tracker_v2.2_ML\IL-2_Tracker_award_coordinates.json" >NUL
+if exist "IL-2_Tracker_award_coordinates.json" copy "IL-2_Tracker_award_coordinates.json" "IL2_Campaign_Tracker_v3_ML\IL-2_Tracker_award_coordinates.json" >NUL
 
 REM Copy career medal showcase coordinates
-if exist "IL-2_Tracker_career_award_coordinates.json" copy "IL-2_Tracker_career_award_coordinates.json" "IL2_Campaign_Tracker_v2.2_ML\IL-2_Tracker_career_award_coordinates.json" >NUL
+if exist "IL-2_Tracker_career_award_coordinates.json" copy "IL-2_Tracker_career_award_coordinates.json" "IL2_Campaign_Tracker_v3_ML\IL-2_Tracker_career_award_coordinates.json" >NUL
 
 REM Copy iss file if exists
-if exist "*.yaml" copy "*.yaml" "IL2_Campaign_Tracker_v2.2_ML\" >NUL
+if exist "*.yaml" copy "*.yaml" "IL2_Campaign_Tracker_v3_ML\" >NUL
 
 REM Unzip CampaignRanksAwards
 @echo off
 set SCRIPT_DIR=%~dp0
-set TARGET_DIR=%SCRIPT_DIR%IL2_Campaign_Tracker_v2.2_ML
+set TARGET_DIR=%SCRIPT_DIR%IL2_Campaign_Tracker_v3_ML
 
 powershell -NoProfile -Command ^
   "Expand-Archive -Path '%SCRIPT_DIR%CampaignRanksAwards.zip' -DestinationPath '%TARGET_DIR%' -Force -ErrorAction Stop"
 
 REM Copy characterbio folder
-xcopy /E /I /Y "characterbio" "IL2_Campaign_Tracker_v2.2_ML\characterbio\" >NUL
+xcopy /E /I /Y "characterbio" "IL2_Campaign_Tracker_v3_ML\characterbio\" >NUL
 if errorlevel 2 (
     echo ERROR: Could not copy characterbio folder!
     pause
@@ -621,52 +624,62 @@ if errorlevel 2 (
 )
 
 REM Create quick start guide
-echo IL-2 CAMPAIGN PROGRESS TRACKER v2.0 > "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo ================================================= >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo. >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo INSTALLATION >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo ------------ >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo. >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo 1. Download the latest release: IL2_Campaign_Tracker_v2.2_ML.zip >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo 2. Extract the archive to a folder of your choice >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo    (e.g. C:\IL2_Campaign_Tracker_v2.2_ML) >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo. >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo 3. Copy the CampaignRanksAwards folder to: >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo    ^<Path to IL-2 Great Battles^>\data\swf >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo. >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo 4. OPTIONAL: Extract Campaigns.gtp (standard IL-2 campaigns): >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo    - Download unGTP-IL2 from: >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo      https://www.mediafire.com/file/caxpalaudz1hd47/unGTP-IL2.zip >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo    - Place unGTP-IL2.exe into: >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo      ^<Path to IL-2^>\data >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo    - Drag Campaigns.gtp onto unGTP-IL2.exe >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo    - Ignore any error messages in the command window >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo. >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo    After extraction, go to: >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo    ^<Path to IL-2^>\data\(null)\campaigns >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo    Copy the campaigns folder to: >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo    ^<Path to IL-2^>\data\campaigns >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo. >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo    IMPORTANT: Only campaigns located in >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo    ^<Path to IL-2^>\data\campaigns >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo    can be monitored by the tracker. >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo. >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo 5. Run IL2_Campaign_Tracker_v2.2_ML.exe >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo. >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
-echo For detailed information, please refer to README.html >> "IL2_Campaign_Tracker_v2.2_ML\QUICK_START.txt"
+echo IL-2 CAMPAIGN PROGRESS TRACKER v2.0 > "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo ================================================= >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo. >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo INSTALLATION >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo ------------ >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo. >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo 1. Download the latest release: IL2_Campaign_Tracker_v3_ML.zip >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo 2. Extract the archive to a folder of your choice >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo    (e.g. C:\IL2_Campaign_Tracker_v3_ML) >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo. >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo 3. Copy the CampaignRanksAwards folder to: >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo    ^<Path to IL-2 Great Battles^>\data\swf >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo. >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo 4. OPTIONAL: Extract Campaigns.gtp (standard IL-2 campaigns): >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo    - Download unGTP-IL2 from: >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo      https://www.mediafire.com/file/caxpalaudz1hd47/unGTP-IL2.zip >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo    - Place unGTP-IL2.exe into: >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo      ^<Path to IL-2^>\data >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo    - Drag Campaigns.gtp onto unGTP-IL2.exe >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo    - Ignore any error messages in the command window >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo. >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo    After extraction, go to: >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo    ^<Path to IL-2^>\data\(null)\campaigns >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo    Copy the campaigns folder to: >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo    ^<Path to IL-2^>\data\campaigns >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo. >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo    IMPORTANT: Only campaigns located in >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo    ^<Path to IL-2^>\data\campaigns >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo    can be monitored by the tracker. >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo. >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo 5. Run IL2_Campaign_Tracker_v3_ML.exe >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo. >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
+echo For detailed information, please refer to README.html >> "IL2_Campaign_Tracker_v3_ML\QUICK_START.txt"
 
 echo.
 echo OK
+echo.
+
+echo [6/6] Creating update zip...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%create_update_zip.ps1" -SrcDir "%SCRIPT_DIR%IL2_Campaign_Tracker_v3_ML" -VersionFile "%SCRIPT_DIR%version.txt"
+if errorlevel 1 (
+    echo WARNING: Update zip creation failed - continuing...
+) else (
+    echo OK
+)
 echo.
 
 echo ====================================================================
 echo BUILD COMPLETE!
 echo ====================================================================
 echo.
-echo Distribution package created in: IL2_Campaign_Tracker_v2.2_ML\
+echo Distribution package created in: IL2_Campaign_Tracker_v3_ML\
+echo Update zip created:              IL2_CampaignTracker_update_v*.zip
 echo.
 echo Contents:
-echo   - IL2_CampaignTracker_v2.2\IL2_CampaignTracker_v2.2_ML.exe
+echo   - IL2_CampaignTracker_v3\IL2_CampaignTracker_v3_ML.exe
 echo   - mlg2txt.exe (helper exe for mission log conversion)
 echo   - Campaign_Service_Record\Campaign_Service_Record.exe
 echo   - IL2_Settings_Manager.exe
@@ -676,10 +689,10 @@ echo   - unins000.exe (main uninstaller executable)
 echo   - cleanup_tracker_content.exe (helper exe for uninstallation)
 echo   - i18n translation files (locales\*.json)
 echo   - Documentation (README.html, README_DE.html QUICK_START.txt)
-echo   - CampaignRanksAwards (folder ~37 MB) 
+echo   - CampaignRanksAwards (folder ~37 MB)
 
 REM Path to the ISS script
-set ISS_FILE=%SCRIPT_DIR%IL2_Campaign_Tracker_v2.2_ML\IL2_Campaign_Tracker.iss
+set ISS_FILE=%SCRIPT_DIR%IL2_Campaign_Tracker_v3_ML\IL2_Campaign_Tracker.iss
 
 REM Compile
 %ISCC% "%ISS_FILE%"

@@ -898,6 +898,7 @@
       "rank_score": "Score",
       "rank_values_helper": "Editing scores applies to all countries.",
       "story_auto_generate": "Generate stories automatically:",
+      "citations_enabled": "Generate AI award citations:",
       "story_model": "Story model:",
       "starting_rank_offset": "Starting Rank Offset",
       "german_awards_helper": "Switch the visual style of German awards between the 1957 Bundeswehr-era default and the original WW2-era style. This swaps the award image files inside your IL-2 installation directory.",

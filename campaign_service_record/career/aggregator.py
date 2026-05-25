@@ -378,6 +378,32 @@ class CareerAggregator:
             if current_squadron_record else {}
         )
 
+        # Theatre segments with start dates for per-award theatre resolution
+        theatre_segments = [
+            {
+                "start_date": self._format_date(row["startDate"]) or "",
+                "theatre": label,
+            }
+            for row, label in zip(career.chain, career.theatre_labels)
+        ]
+
+        # Compact per-sortie stats for citation generation (kills and missions at award time)
+        sortie_summaries = sorted(
+            [
+                {
+                    "date": self._format_date(s["date"]) or "",
+                    "air_kills": (
+                        int(s["killLightPlane"] or 0)
+                        + int(s["killMediumPlane"] or 0)
+                        + int(s["killHeavyPlane"] or 0)
+                        + int(s["killStaticPlane"] or 0)
+                    ),
+                }
+                for s in sorties
+            ],
+            key=lambda x: x["date"],
+        )
+
         return {
             # 'name' mirrors campaign convention so existing frontend code works
             "name": str(career.root_career_id),
@@ -395,6 +421,7 @@ class CareerAggregator:
             # Career-specific extras
             "source": "career",
             "theatre_chain": career.theatre_labels,
+            "theatre_segments": theatre_segments,
             "birth_date": career.birth_date,
             "pcp_score": pcp_score,
             "squadron_short_name": squadron_short_name or "",
@@ -403,6 +430,7 @@ class CareerAggregator:
             "squadron_members": squadron_members,
             "squadron_totals": squadron_totals,
             "squadron_records": squadron_records,
+            "sortie_summaries": sortie_summaries,
         }
 
     # ------------------------------------------------------------------

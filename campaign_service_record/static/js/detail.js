@@ -2068,10 +2068,36 @@ const DetailPage = {
         const mainText = event.type === 'promotion' ? translateRankName(event.rank, event.country) : translateAwardName(event.name);
         const dateText = this.localizeDebriefingDates(event.date || `Mission ${event.mission_number || '?'}`);
         const reasonText = event.reason || '';
+        const hasCitation = event.type === 'award' && event.citation;
 
         const header = document.createElement('div');
         header.className = 'event-header';
-        header.textContent = typeLabel;
+
+        if (hasCitation) {
+            header.classList.add('event-header--expandable');
+            const labelSpan = document.createElement('span');
+            labelSpan.textContent = typeLabel;
+            header.appendChild(labelSpan);
+
+            const chevron = document.createElement('button');
+            chevron.className = 'citation-toggle';
+            chevron.setAttribute('aria-label', 'Toggle citation');
+            chevron.setAttribute('aria-expanded', 'false');
+            chevron.textContent = '▶';
+            header.appendChild(chevron);
+
+            chevron.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const panel = item.querySelector('.citation-panel');
+                const expanded = chevron.getAttribute('aria-expanded') === 'true';
+                chevron.setAttribute('aria-expanded', String(!expanded));
+                chevron.textContent = expanded ? '▶' : '▼';
+                if (panel) panel.classList.toggle('citation-panel--open', !expanded);
+            });
+        } else {
+            header.textContent = typeLabel;
+        }
+
         item.appendChild(header);
 
         const content = document.createElement('div');
@@ -2114,6 +2140,17 @@ const DetailPage = {
 
         content.appendChild(textBlock);
         item.appendChild(content);
+
+        if (hasCitation) {
+            const panel = document.createElement('div');
+            panel.className = 'citation-panel';
+            const citationText = document.createElement('p');
+            citationText.className = 'citation-text';
+            citationText.textContent = event.citation;
+            panel.appendChild(citationText);
+            panel.addEventListener('click', (e) => e.stopPropagation());
+            item.appendChild(panel);
+        }
 
         this.bindPreviewModal(item, event, mainText);
 

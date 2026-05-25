@@ -682,6 +682,23 @@ class SettingsManagerApp(tk.Tk):
         self.story_auto_generate_combo.grid(row=row, column=1, sticky=tk.W, pady=10, padx=(10, 0))
         self.story_auto_generate_var.set('True' if story_settings.get('auto_generate', False) else 'False')
 
+        # Award citations enabled
+        row += 1
+        ttk.Label(frame, text=self.tr.t("lbl_citations_enabled")).grid(
+            row=row, column=0, sticky=tk.W, pady=10
+        )
+
+        self.citations_enabled_var = tk.StringVar()
+        self.citations_enabled_combo = ttk.Combobox(
+            frame,
+            textvariable=self.citations_enabled_var,
+            values=['True', 'False'],
+            state='readonly',
+            width=30
+        )
+        self.citations_enabled_combo.grid(row=row, column=1, sticky=tk.W, pady=10, padx=(10, 0))
+        self.citations_enabled_var.set('True' if story_settings.get('citations_enabled', False) else 'False')
+
         # Test connection controls
         row += 1
         self.story_test_button = ttk.Button(
@@ -2906,6 +2923,7 @@ class SettingsManagerApp(tk.Tk):
             self.story_model_var.set('')
             self.story_model_combo.configure(values=[], state='disabled')
             self.story_auto_generate_var.set('True' if story_settings.get('auto_generate', False) else 'False')
+            self.citations_enabled_var.set('True' if story_settings.get('citations_enabled', False) else 'False')
             self._update_story_model_hint()
             self.story_status_var.set("")
     
@@ -2946,6 +2964,7 @@ class SettingsManagerApp(tk.Tk):
         stories['base_url'] = self.story_base_url_var.get().strip() or self._story_default_base_url(provider_value)
         stories['model'] = self.story_model_var.get().strip() or getattr(self, '_story_saved_model', '') or 'gpt-4o-mini'
         stories['auto_generate'] = self.story_auto_generate_var.get() == 'True'
+        stories['citations_enabled'] = self.citations_enabled_var.get() == 'True'
         self.settings_data['stories'] = stories
 
     def _set_story_test_running(self, running: bool) -> None:

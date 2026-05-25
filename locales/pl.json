@@ -911,7 +911,8 @@
       "update_status_updated": "Aktualizacja",
       "update_status_protected": "Chroniony (pominięty)",
       "col_update_file": "Plik",
-      "col_update_status": "Status"
+      "col_update_status": "Status",
+      "citations_enabled": "Generuj cytaty nagród AI:"
     },
     "message": {
       "campaigns_tab_disabled": "Ustawienia kampanii wymagają campaign_mission_dates.json.\nProszę uruchomić Campaign Tracker przynajmniej raz.",

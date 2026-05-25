@@ -65,10 +65,13 @@ from llm_story_generator import (
     build_story_input,
     delete_story_chapter_for,
     generate_and_store_chapter_for,
+    generate_award_citation,
+    load_citations_for,
     load_or_create_story_state_for,
     load_story_chapters_for,
     purge_orphaned_chapters_for,
     reindex_career_story_chapters_for,
+    save_citation_for,
     save_story_state_for,
     strip_memory_entries_for_date,
     update_narrative_memory_local,
@@ -94,6 +97,10 @@ _career_data_dir: Optional[Path] = None   # <data_dir>/CampaignRanksAwards/...
 
 # Last activity timestamp (for idle shutdown)
 _last_ping = [time.time()]
+
+# Tracks careers currently generating citations in a background thread (dedup guard)
+_citations_generating: set[int] = set()
+_citations_lock = threading.Lock()
 
 _PILOT_DESC_DEFAULT = "campaign_pilot"
 _PERSONAL_DATA_FILENAME = "campaign_personal_data.json"
@@ -267,6 +274,7 @@ def _load_story_settings() -> dict:
     return {
         "enabled": _parse_bool(stories.get("enabled", False), default=False),
         "configured": bool(api_key and model and (base_url or provider == "openai")),
+        "citations_enabled": _parse_bool(stories.get("citations_enabled", False), default=False),
         "api_key": api_key,
         "provider": provider,
         "base_url": base_url,
@@ -274,6 +282,30 @@ def _load_story_settings() -> dict:
         "story_language": locale,
         "auto_generate": _parse_bool(stories.get("auto_generate", False), default=False),
     }
+
+
+def _inject_citations_into_events(events: list, source: str, entry_id: str) -> None:
+    """Attach stored citation text to award events in-place."""
+    if not events:
+        return
+    award_events = [e for e in events if e.get("type") == "award"]
+    if not award_events:
+        return
+    citations = load_citations_for(source, entry_id)
+    if not citations:
+        return
+    for event in award_events:
+        name = str(event.get("name") or event.get("award_code") or "")
+        date = str(event.get("date") or "")
+        mission = str(event.get("mission") or "")
+        # Try campaign key first (has mission), then career key (no mission)
+        key = (
+            f"award|{name}|{mission}|{date}" if mission
+            else f"award|{name}|{date}"
+        )
+        citation = citations.get(key)
+        if citation:
+            event["citation"] = citation
 
 
 def _humanize_story_label(value: Optional[str]) -> str:
@@ -2954,6 +2986,8 @@ def get_campaign_detail(campaign_name: str):
         for locale in ('en', 'de', 'ru'):
             campaign_data.pop(f'debriefings_html_{locale}', None)
 
+        # Inject stored citations into award events
+        _inject_citations_into_events(campaign_data.get("events") or [], "campaign", campaign_name)
         logger.info(f"Served campaign detail: {campaign_name}")
         return jsonify(campaign_data)
         
@@ -3311,6 +3345,102 @@ def get_careers():
 # ============================================================================
 # Background Job Endpoints
 # ============================================================================
+
+def _career_citation_worker(root_career_id: int, detail: dict, settings: dict) -> None:
+    """Background thread: generate LLM award citations for a career's award events."""
+    with _citations_lock:
+        if root_career_id in _citations_generating:
+            return
+        _citations_generating.add(root_career_id)
+    try:
+        events = detail.get("events") or []
+        award_events = [e for e in events if e.get("type") == "award"]
+        if not award_events:
+            return
+
+        entry_id = str(root_career_id)
+        existing = load_citations_for("career", entry_id)
+        missing = [
+            e for e in award_events
+            if f"award|{e.get('name') or e.get('award_code')}|{e.get('date') or ''}" not in existing
+        ]
+        if not missing:
+            return
+
+        pilot_first = str(detail.get("pilot_first_name") or "").strip()
+        pilot_last = str(detail.get("pilot_last_name") or "").strip()
+        pilot_name = f"{pilot_first} {pilot_last}".strip() or "Unknown Pilot"
+        country = str(detail.get("country") or "").strip()
+
+        sortie_summaries = detail.get("sortie_summaries") or []
+        starting_rank = str(
+            (detail.get("summary") or {})
+            .get("career_progression", {})
+            .get("starting_rank") or ""
+        )
+
+        # theatre_segments is sorted by start_date (chain order); pick the last
+        # segment whose start_date <= award_date for each award.
+        theatre_segments = detail.get("theatre_segments") or []
+        theatre_chain = detail.get("theatre_chain") or []
+        _default_theatre = str(theatre_chain[0] if theatre_chain else root_career_id)
+
+        def _theatre_at(award_date: str) -> str:
+            theatre = _default_theatre
+            for seg in theatre_segments:
+                if seg["start_date"] <= award_date:
+                    theatre = seg["theatre"]
+            return theatre
+
+        promotions_sorted = sorted(
+            [e for e in events if e.get("type") == "promotion"],
+            key=lambda e: str(e.get("date") or ""),
+        )
+
+        for event in missing:
+            award_name = str(event.get("name") or event.get("award_code") or "Unknown Award")
+            award_date = str(event.get("date") or "")
+            event_key = f"award|{award_name}|{award_date}"
+
+            # Count kills and missions flown up to and including the award date
+            kills_at_date = sum(
+                s["air_kills"] for s in sortie_summaries if s["date"] <= award_date
+            )
+            missions_at_date = sum(
+                1 for s in sortie_summaries if s["date"] <= award_date
+            )
+
+            rank = ""
+            for pev in reversed(promotions_sorted):
+                if str(pev.get("date") or "") <= award_date:
+                    rank = str(pev.get("rank") or "")
+                    break
+
+            try:
+                citation = generate_award_citation(
+                    award_name=award_name,
+                    pilot_name=pilot_name,
+                    rank=rank or starting_rank or "Pilot",
+                    country=country,
+                    date=award_date,
+                    kills=kills_at_date,
+                    missions=missions_at_date,
+                    theatre=_theatre_at(award_date),
+                    language=settings.get("story_language", "en"),
+                    api_key=settings["api_key"],
+                    model=settings["model"],
+                    provider=settings["provider"],
+                    base_url=settings.get("base_url", ""),
+                )
+                save_citation_for("career", entry_id, event_key, citation)
+                existing[event_key] = citation
+                logger.info("Generated career citation for %s (career %d)", award_name, root_career_id)
+            except Exception as exc:
+                logger.warning("Could not generate career citation for %s: %s", award_name, exc)
+    finally:
+        with _citations_lock:
+            _citations_generating.discard(root_career_id)
+
 
 def _career_parse_worker(job, career_id: int) -> None:
     """Background thread: run the full debrief parse for career_id and update job state."""
@@ -3757,6 +3887,18 @@ def get_career_detail(root_career_id: int):
             "Served career detail: root_id=%d cache_exists=%s debriefings_pending=%s",
             root_career_id, cache_exists, detail.get('debriefings_pending'),
         )
+        # Inject stored citations into award events before returning
+        _inject_citations_into_events(detail.get("events") or [], "career", str(root_career_id))
+        # Spawn background citation generation for any missing awards
+        _story_settings = _load_story_settings()
+        if _story_settings.get("citations_enabled") and _story_settings.get("configured"):
+            t = threading.Thread(
+                target=_career_citation_worker,
+                args=(root_career_id, detail, _story_settings),
+                daemon=True,
+                name=f'career-citations-{root_career_id}',
+            )
+            t.start()
         return jsonify(detail)
     except Exception as exc:
         logger.error(

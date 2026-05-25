@@ -2,7 +2,7 @@
 
 A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **WW2 campaigns and career mode**.  Automatically monitors your campaign progress, calculates promotions and awards based on historical criteria, generates detailed mission debriefings, creates PDF reports of your pilot's career, and optionally produces AI-generated narrative story chapters for each mission.
 
-![Version](https://img.shields.io/badge/version-2.2.4-blue)
+![Version](https://img.shields.io/badge/version-3.0.0-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 ![Game](https://img.shields.io/badge/game-IL--2%20Great%20Battles-orange)
 ![Languages](https://img.shields.io/badge/languages-7-green)
@@ -44,7 +44,7 @@ A comprehensive tracking tool for IL-2 Sturmovik Great Battles single-player **W
 | **PDF Reports** | Creates printable career summaries with combat statistics |
 | **AI Story Generation** | Generates narrative war-diary chapters for each mission using your choice of LLM provider |
 | **Multi-Language Support** | Full support for 7 languages: English, German, French, Spanish, Polish, Russian, and Chinese |
-| **Settings Manager** | User-friendly GUI to configure all tracker settings without editing config files |
+| **Settings Manager** | User-friendly GUI to configure all tracker settings without editing config files; includes a built-in updater to install new versions directly from a zip package |
 | **Standard Campaign Import** | One-click extraction of IL-2 built-in campaigns from `Campaigns.gtp` via the Settings Manager |
 | **Mission Cleanup** | Removes incomplete missions that weren't properly finished |
 | **Backup System** | Creates backups when removing incomplete missions via cleanup tool |
@@ -137,11 +137,11 @@ When writing events to campaign files, the tracker updates **all** `info.locale=
 
 ### Step 1: Download and Install
 
-1. **Download** the latest release (`IL2_CampaignTracker_Setup_v2.2.4_ML.exe.zip`)
+1. **Download** the latest release (`IL2_CampaignTracker_Setup_v3.0.0_ML.exe.zip`)
 
 2. **Extract** the `zip` file
 
-3. **Run** the extracted `IL2_CampaignTracker_Setup_v2.2.4_ML.exe`
+3. **Run** the extracted `IL2_CampaignTracker_Setup_v3.0.0_ML.exe`
 
 4. **Follow** the installation instructions in the setup wizard
 
@@ -223,6 +223,7 @@ IL2_Campaign_Tracker/
 ├── campaign_progress_config.yaml         # Ranks & awards configuration
 ├── stock_campaigns.yaml                  # Campaign to Country allocation
 ├── object_categories.yaml                # Mission debriefing data
+├── version.txt                           # Current version number (used by Settings Manager updater)
 ├── locales/ (folder)                     # Language files (7 languages)
 ├── historical_context/ (folder)          # Squadron historical context for AI stories
 ├── _internal/ (folder)                   # Service Record resources
@@ -356,6 +357,29 @@ Configure language settings specific to the Career Service Record, including per
 #### German Awards Tab
 
 Switch between the 1957 Bundeswehr-era style (default) and the original wartime style for German award images.
+
+#### Updates Tab
+
+The **Updates** tab lets you install tracker updates directly from within the Settings Manager — no need to run a new installer.
+
+| Action | Description |
+| ------ | ----------- |
+| **Select Package** | Browse for an update `.zip` file downloaded from the releases page |
+| **Install** | Installs the package contents into your tracker installation directory |
+| **Restore Backup…** | Open a previous update backup zip to roll back to an earlier version |
+
+**How installation works:**
+
+- Regular files (DLLs, resources, locales, configuration, etc.) are installed immediately
+- `IL2_Settings_Manager.exe` itself cannot be replaced while it is running — the new version is saved alongside as a `.pending` file and applied the next time you start the Settings Manager
+- A progress bar tracks installation status per file
+
+**Startup banners (shown at the top of the Updates tab):**
+
+- 🟢 **Green banner** — *"Updated successfully"* — shown once after a deferred self-update has been applied on startup
+- 🟠 **Orange banner with "Restart & Apply" button** — shown when a deferred exe update is still pending. Click the button to close the Settings Manager, apply the update automatically, and relaunch
+
+> **Note:** Backups of all replaced files are stored as timestamped `.zip` archives in the `backups/` subfolder of your tracker installation directory and can be restored via the **Restore Backup…** button.
 
 #### AI Stories Tab
 
@@ -543,7 +567,12 @@ These binary files are "translated" by `mlg2txt.exe` into a *.txt file and is th
 Each mission generates detailed output in two formats:
 
 1. **In-Game (Flight Log)** - Chronological list of events written to all campaign `info.locale=*.txt` files (each in its respective language)
-2. **PDF Report** - Detailed kill breakdown by category matching the in-game results screen (in your selected language)
+2. **PDF Report** - Full campaign report including:
+   - Per-mission kill breakdown by category (matching the in-game results screen)
+   - **Air Kills by Aircraft Type** — a summary table showing your aerial victories grouped by target aircraft type across all missions (e.g., Bf 109 G-6: 12, Il-2 mod.1943: 8, etc.)
+   - Campaign statistics (total score, missions flown, air kill count, wounds)
+   - Promotions and awards timeline
+   - Personal data cover page with pilot photo (if configured)
 
 > **Note:** The tracker writes localized content to each language file that exists in your campaign folder. For example, if your campaign has both `info.locale=eng.txt` and `info.locale=ger.txt`, the English file will contain English debriefings and the German file will contain German debriefings.
 
@@ -740,9 +769,12 @@ Stories are built from data pulled directly from the game's `cp.db` and the pars
 Stories use campaign and debriefing data:
 
 - Campaign name and background text (from campaign info file)
+- **Mission briefing text** — the actual briefing from the `.eng` mission file (date, time, and briefing body) is extracted and used as story context
 - Mission date, time of day, season, result, kills, flight duration
+- **Kill cause classification** — how each kill was achieved (e.g., guns, collision, unknown) enriches the narrative
 - Tracker-calculated rank and awards
-- Mission type derived from campaign structure
+- **Mission type** derived from campaign structure (e.g., escort, intercept, ground attack, offensive reconnaissance)
+- **Pilot biography** — if a pilot biography file exists for the campaign, it is used when generating the first chapter to establish the pilot's background, personality, and backstory
 
 ### Narrative Continuity
 

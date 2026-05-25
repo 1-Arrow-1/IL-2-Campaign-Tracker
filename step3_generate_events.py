@@ -64,7 +64,14 @@ from utils.sorting import smart_mission_sort_key
 from utils.logging import get_logger, log_message
 from utils.name_normalization import name_to_i18n_key, country_code_for_rank
 
-BASE_DIR = get_base_path(__file__)
+_data_dir_env = os.environ.get("DATA_DIR")
+if _data_dir_env:
+    _data_dir_path = Path(_data_dir_env)
+    if not _data_dir_path.is_dir():
+        raise SystemExit(f"ERROR: DATA_DIR does not exist: {_data_dir_path}")
+    BASE_DIR = _data_dir_path
+else:
+    BASE_DIR = get_base_path(__file__)
 POPUP_SEEN_FILE = BASE_DIR / "campaign_popups_seen.json"
 CAMPAIGN_EVENTS_FILE = BASE_DIR / "campaign_events.json"
 CAMPAIGN_MISSION_DATES_FILE = BASE_DIR / "campaign_mission_dates.json"
@@ -152,6 +159,56 @@ def _load_decoded_campaign(decoded_path: str) -> dict:
         return {}
 
 
+def _load_citation_settings() -> dict:
+    """Return story/citation settings from BASE_DIR/campaign_tracker_settings.json.
+
+    Returns a dict with 'enabled': False when citations are disabled or unconfigured.
+    """
+    _no_op: dict = {"enabled": False}
+    settings_path = BASE_DIR / "campaign_tracker_settings.json"
+    try:
+        if not settings_path.exists():
+            return _no_op
+        with open(settings_path, "r", encoding="utf-8") as fh:
+            settings = json.load(fh)
+    except (OSError, json.JSONDecodeError):
+        return _no_op
+
+    stories = settings.get("stories", {})
+    if not isinstance(stories, dict):
+        return _no_op
+
+    citations_enabled = str(stories.get("citations_enabled", False)).lower() in ("true", "1", "yes")
+    if not citations_enabled:
+        return _no_op
+
+    provider = str(stories.get("provider") or "openai").strip().lower() or "openai"
+    _provider_base_urls = {
+        "openai": "https://api.openai.com/v1",
+        "openrouter": "https://openrouter.ai/api/v1",
+        "anthropic": "https://api.anthropic.com/v1",
+        "google": "https://generativelanguage.googleapis.com/v1beta/openai",
+        "microsoft": "https://YOUR-RESOURCE-NAME.openai.azure.com/openai/v1",
+        "custom": "",
+    }
+    base_url = str(stories.get("base_url") or _provider_base_urls.get(provider, "")).strip()
+    provider_keys = stories.get("api_keys", {})
+    selected_key = str((provider_keys.get(provider) if isinstance(provider_keys, dict) else None) or "").strip()
+    api_key = str(selected_key or stories.get("api_key") or os.environ.get("OPENAI_API_KEY") or "").strip()
+    model = str(stories.get("model") or "gpt-5-mini").strip() or "gpt-5-mini"
+    locale = str(settings.get("locale") or "en")
+
+    if not (api_key and model and (base_url or provider == "openai")):
+        return _no_op
+
+    return {
+        "enabled": True,
+        "api_key": api_key,
+        "provider": provider,
+        "base_url": base_url,
+        "model": model,
+        "locale": locale,
+    }
 
 
 class EventGenerator:
@@ -913,7 +970,7 @@ class EventGenerator:
 
     def _resolve_pilot_photo_dir(self) -> Path:
         """Return the directory that contains pilot photos."""
-        if getattr(sys, 'frozen', False):
+        if getattr(sys, 'frozen', False) or os.environ.get('DATA_DIR'):
             base = os.environ.get('LOCALAPPDATA') or str(Path.home())
             return Path(base) / '.il2_campaign_service_record' / 'pilot_photos'
         return BASE_DIR / 'campaign_service_record' / 'static' / 'pilot_photos'
@@ -3763,7 +3820,103 @@ class EventGenerator:
         # except Exception as e:
             # log_message(LOGGER, f"  ⚠️  PDF export failed: {e}")
             # return False
-    
+
+    def _generate_citations_for_campaign(
+        self,
+        campaign_name: str,
+        events: List[Dict],
+        country: str,
+        citation_settings: dict,
+    ) -> None:
+        """Generate LLM award citations for award events that don't have one yet."""
+        if not events or not citation_settings.get("enabled"):
+            return
+
+        try:
+            from llm_story_generator import generate_award_citation, load_citations_for, save_citation_for
+        except ImportError:
+            log_message(LOGGER, "  [citations] llm_story_generator unavailable, skipping")
+            return
+
+        award_events = [
+            e for e in events
+            if e.get("type") == "award" and e.get("mission") != "Initial"
+        ]
+        if not award_events:
+            return
+
+        existing = load_citations_for("campaign", campaign_name)
+        missing = [e for e in award_events if make_event_key(e) not in existing]
+        if not missing:
+            return
+
+        log_message(LOGGER, f"  [citations] Generating {len(missing)} citation(s) for {campaign_name}...")
+
+        personal_data = self._load_campaign_personal_data(campaign_name)
+        first_name = personal_data.get("first_name", "").strip()
+        last_name = personal_data.get("name", "").strip()
+        pilot_name = f"{first_name} {last_name}".strip() or "Unknown Pilot"
+
+        per_mission_stats = self.save_data.get(campaign_name, {}).get("characterStatisticsByFileName", {})
+
+        promotions_sorted = sorted(
+            [e for e in events if e.get("type") == "promotion" and e.get("mission") != "Initial"],
+            key=lambda e: (str(e.get("date") or ""), str(e.get("mission") or "")),
+        )
+        initial_rank_event = next(
+            (e for e in events if e.get("type") == "promotion" and e.get("mission") == "Initial"), None
+        )
+
+        for event in missing:
+            event_key = make_event_key(event)
+            award_name = event.get("name", "Unknown Award")
+            award_date = str(event.get("date") or "")
+            award_mission = str(event.get("mission") or "")
+
+            rank = ""
+            for pev in reversed(promotions_sorted):
+                if str(pev.get("date") or "") <= award_date:
+                    rank = pev.get("rank", "")
+                    break
+            if not rank and initial_rank_event:
+                rank = initial_rank_event.get("rank", "")
+
+            kills_at_award = 0
+            missions_at_award = 0
+            try:
+                award_mission_int = int(award_mission)
+                for m, stats in per_mission_stats.items():
+                    if isinstance(stats, dict) and int(m) <= award_mission_int:
+                        kills_at_award += int(calculate_total_air_kills_weighted(stats))
+                        missions_at_award += 1
+            except (ValueError, TypeError):
+                missions_at_award = len(per_mission_stats)
+                kills_at_award = int(sum(
+                    calculate_total_air_kills_weighted(s)
+                    for s in per_mission_stats.values() if isinstance(s, dict)
+                ))
+
+            try:
+                citation = generate_award_citation(
+                    award_name=award_name,
+                    pilot_name=pilot_name,
+                    rank=rank or "Pilot",
+                    country=country or "",
+                    date=award_date,
+                    kills=kills_at_award,
+                    missions=missions_at_award,
+                    theatre=campaign_name,
+                    language=citation_settings.get("locale", "en"),
+                    api_key=citation_settings["api_key"],
+                    model=citation_settings["model"],
+                    provider=citation_settings["provider"],
+                    base_url=citation_settings.get("base_url", ""),
+                )
+                save_citation_for("campaign", campaign_name, event_key, citation)
+                log_message(LOGGER, f"  [citations] OK: {award_name}")
+            except Exception as exc:
+                log_message(LOGGER, f"  [citations] WARN: Could not generate citation for '{award_name}': {exc}")
+
     def process_all_campaigns(self):
         """Process all campaigns and generate events"""
         log_message(LOGGER, "="*70)
@@ -3815,7 +3968,8 @@ class EventGenerator:
         files_updated = 0
         campaigns_processed = 0
         campaigns_skipped = 0
-        
+        citation_settings = _load_citation_settings()
+
         for campaign_name in self.save_data.keys():
             # Skip if excluded (WW1) - case-insensitive lookup
             campaign_name_lower = campaign_name.lower()
@@ -3876,7 +4030,11 @@ class EventGenerator:
                             save_popup_seen(POPUP_SEEN_FILE, self.popup_seen)
             
             events = self.generate_events_for_campaign(campaign_name)
-            
+
+            # Generate award citations for missing entries (backwards + new)
+            if events and citation_settings.get("enabled"):
+                self._generate_citations_for_campaign(campaign_name, events, country, citation_settings)
+
             # ============================================================
             # Popups: detect, defer, or show
             # ============================================================
@@ -4226,14 +4384,50 @@ def main(args=None, dry_run: bool = None, campaign: str = None, show_popups:  bo
             country = generator.mission_dates[parsed_args.campaign].get('country')
             html = generator.generate_events_html(events, country)
             log_message(LOGGER, f"\n{'='*70}\nGenerated HTML:\n{'='*70}\n{html}")
-            
+
+            # Generate award citations
+            citation_settings = _load_citation_settings()
+            if citation_settings.get("enabled"):
+                generator._generate_citations_for_campaign(
+                    parsed_args.campaign, events, country, citation_settings
+                )
+
             if not parsed_args.dry_run:
+                campaign_name = parsed_args.campaign
                 completed_missions = list(
-                    generator.save_data.get(parsed_args.campaign, {})
+                    generator.save_data.get(campaign_name, {})
                     .get('completedMissionsByFileName', {})
                     .keys()
                 )
-                generator.update_campaign_info_file(parsed_args.campaign, events, completed_missions)
+                generator.update_campaign_info_file(campaign_name, events, completed_missions)
+
+                if completed_missions and generator.log_processor:
+                    # Full PDF pipeline (same as generate_all_campaign_events)
+                    cumulative_stats = None
+                    decoded_data = {}
+                    try:
+                        with open(CAMPAIGNS_DECODED_FILE, 'r', encoding='utf-8') as f:
+                            decoded_data = json.load(f)
+                            stats = decoded_data.get(campaign_name, {}).get('characterStatisticsByFileName', {})
+                            if stats:
+                                latest_mission = max(stats.keys(), key=lambda x: int(x) if x.isdigit() else 0)
+                                cumulative_stats = stats.get(latest_mission, {})
+                    except (FileNotFoundError, json.JSONDecodeError, KeyError):
+                        pass
+
+                    generator.set_mode("pdf")
+                    log_message(LOGGER, f"  Regenerating debriefings in PDF mode...")
+                    debriefings_html_pdf, debriefings_pdf = generator.generate_debriefings_html(campaign_name, completed_missions)
+                    events_html_pdf = generator.generate_events_html(events, country, for_pdf=True)
+                    combined_html_pdf = (debriefings_html_pdf + "\n" + events_html_pdf) if debriefings_html_pdf else events_html_pdf
+                    summary_html = generator.generate_campaign_summary_html(campaign_name, events, debriefings_pdf, country, cumulative_stats, decoded_data.get(campaign_name))
+                    if summary_html:
+                        combined_html_pdf += "\n" + summary_html
+                    personal_data_html = generator.generate_personal_data_html(campaign_name)
+                    if personal_data_html:
+                        combined_html_pdf = personal_data_html + "\n" + combined_html_pdf
+                    generator.export_campaign_to_pdf(campaign_name, combined_html_pdf)
+                    generator.set_mode("ingame")
         return True
     else:
         # Process all campaigns

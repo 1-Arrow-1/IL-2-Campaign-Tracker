@@ -911,7 +911,8 @@
       "update_status_updated": "Aktualisierung",
       "update_status_protected": "Geschützt (übersprungen)",
       "col_update_file": "Datei",
-      "col_update_status": "Status"
+      "col_update_status": "Status",
+      "citations_enabled": "KI-Auszeichnungszitate generieren:"
     },
     "message": {
       "campaigns_tab_disabled": "Kampagnen-Einstellungen erfordern campaign_mission_dates.json.\nBitte führe den Campaign Tracker mindestens einmal aus.",

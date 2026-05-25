@@ -912,7 +912,8 @@
       "update_status_updated": "Mise à jour",
       "update_status_protected": "Protégé (ignoré)",
       "col_update_file": "Fichier",
-      "col_update_status": "Statut"
+      "col_update_status": "Statut",
+      "citations_enabled": "Générer des citations de récompenses IA :"
     },
     "message": {
       "campaigns_tab_disabled": "Les paramètres de campagne nécessitent campaign_mission_dates.json.\nVeuillez exécuter le Campaign Tracker au moins une fois.",

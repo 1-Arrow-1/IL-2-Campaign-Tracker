@@ -73,7 +73,7 @@ except ImportError:
 
 
 # EXE names (relative to INSTALL_DIR)
-TRACKER_EXE = "IL2_CampaignTracker_v2.2_ML.exe"
+TRACKER_EXE = "IL2_CampaignTracker_v3_ML.exe"
 SERVICE_RECORD_EXE = "Campaign_Service_Record.exe"
 CAREER_SERVICE_RECORD_EXE = "Career_Service_Record.exe"
 SETTINGS_MANAGER_EXE = "IL2_Settings_Manager.exe"
