@@ -66,12 +66,14 @@ from llm_story_generator import (
     delete_story_chapter_for,
     generate_and_store_chapter_for,
     generate_award_citation,
+    load_citation_memory,
     load_citations_for,
     load_or_create_story_state_for,
     load_story_chapters_for,
     purge_orphaned_chapters_for,
     reindex_career_story_chapters_for,
     save_citation_for,
+    save_citation_memory,
     save_story_state_for,
     strip_memory_entries_for_date,
     update_narrative_memory_local,
@@ -3397,6 +3399,8 @@ def _career_citation_worker(root_career_id: int, detail: dict, settings: dict) -
             key=lambda e: str(e.get("date") or ""),
         )
 
+        citation_mem = load_citation_memory("career", entry_id)
+
         for event in missing:
             award_name = str(event.get("name") or event.get("award_code") or "Unknown Award")
             award_date = str(event.get("date") or "")
@@ -3431,8 +3435,11 @@ def _career_citation_worker(root_career_id: int, detail: dict, settings: dict) -
                     model=settings["model"],
                     provider=settings["provider"],
                     base_url=settings.get("base_url", ""),
+                    citation_memory=citation_mem,
                 )
                 save_citation_for("career", entry_id, event_key, citation)
+                save_citation_memory("career", entry_id, award_name, citation)
+                citation_mem = load_citation_memory("career", entry_id)
                 existing[event_key] = citation
                 logger.info("Generated career citation for %s (career %d)", award_name, root_career_id)
             except Exception as exc:

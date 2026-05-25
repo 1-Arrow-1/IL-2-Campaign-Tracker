@@ -2239,22 +2239,25 @@ _CITATION_GUIDANCE: Dict[str, Tuple[str, str]] = {
         "Flying/mission clasp",
         "This clasp is awarded for reaching a specific number of combat sorties. "
         "Make sustained dedication and cumulative effort the heart of the citation — "
-        "not individual acts of bravery. Aerial victories are secondary context only.",
+        "not individual acts of bravery. Aerial victories are secondary context only. "
+        "Do not begin the citation with 'For'.",
     ),
     "wound": (
         "Wound badge",
         "This badge is awarded because the pilot was wounded in combat. "
-        "The injury and the sacrifice it represents are the primary reason for this award. "
-        "Do NOT make aerial victories the main focus. "
-        "Acknowledge the wound, the courage shown despite injury, and resilience in service. "
-        "Missions and kills may appear briefly as background only.",
+        "The wound sustained is the sole reason for this decoration. "
+        "Do NOT mention aerial victory numbers at all — they are irrelevant to this award. "
+        "Focus entirely on the wound, the courage shown despite injury, and resilience in service. "
+        "Missions flown may appear as the briefest background only. "
+        "Do not begin the citation with 'For'.",
     ),
     "theatre": (
         "Campaign/theatre medal",
         "This medal recognises participation in a specific operational theatre or campaign period. "
         "It is awarded for enduring the hardships of that campaign, not for a single act of bravery. "
         "Focus on the pilot's sustained presence and contribution throughout the named campaign. "
-        "Do not make aerial victories the primary justification.",
+        "Do not make aerial victories the primary justification. "
+        "Do not begin the citation with 'For'.",
     ),
     "kill_bonus": (
         "Aerial kill milestone award",
@@ -2291,6 +2294,30 @@ def _get_citation_guidance(award_code: str) -> Tuple[str, str]:
     return _CITATION_GUIDANCE.get(category, _CITATION_GUIDANCE["combat"])
 
 
+def _format_award_name(code: str) -> str:
+    """Convert award code to readable display name (fighters_silver → Fighters Silver)."""
+    return _normalize_text(code).replace("_", " ").title()
+
+
+def load_citation_memory(source: str, entry_id: str) -> Dict[str, Any]:
+    """Load per-entry citation memory used to avoid repetitive LLM output."""
+    path = _story_entry_dir(source, entry_id) / "citation_memory.json"
+    return _load_json_file(path, {"recent_citations": []})
+
+
+def save_citation_memory(source: str, entry_id: str, award_name: str, citation_text: str) -> None:
+    """Append a generated citation to the rolling memory (keeps last 6)."""
+    path = _story_entry_dir(source, entry_id) / "citation_memory.json"
+    memory = _load_json_file(path, {"recent_citations": []})
+    if not isinstance(memory.get("recent_citations"), list):
+        memory["recent_citations"] = []
+    display = _format_award_name(award_name)
+    entry = f"[{display}]: \"{citation_text[:200].strip()}\""
+    memory["recent_citations"].append(entry)
+    memory["recent_citations"] = memory["recent_citations"][-6:]
+    _save_json_file(path, memory)
+
+
 def load_citations_for(source: str, entry_id: str) -> Dict[str, Any]:
     path = _story_entry_dir(source, entry_id) / "citations.json"
     return _load_json_file(path, {})
@@ -2318,21 +2345,34 @@ def generate_award_citation(
     model: str,
     provider: str,
     base_url: str = "",
+    citation_memory: Optional[Dict] = None,
 ) -> str:
     language_label = _LANGUAGE_LABELS.get(_normalize_text(language).lower(), "English")
     category_label, category_guidance = _get_citation_guidance(award_name)
+    award_display = _format_award_name(award_name)
     banned = ", ".join(f'"{p}"' for p in _BANNED_PHRASES)
+
+    memory_block = ""
+    recent = (citation_memory or {}).get("recent_citations") if citation_memory else None
+    if isinstance(recent, list) and recent:
+        recent_lines = "\n".join(f"  - {entry}" for entry in recent[-5:])
+        memory_block = (
+            f"\nPrevious citations written for this pilot (vary your structure, "
+            f"opening, and vocabulary to avoid repetition):\n{recent_lines}\n"
+        )
+
     prompt = (
         f"You are writing a short official military award citation for a World War II pilot.\n\n"
         f"Award category: {category_label}\n"
         f"Writing guidance: {category_guidance}\n\n"
-        f"Award: {award_name}\n"
+        f"Award: {award_display}\n"
         f"Pilot: {rank} {pilot_name}\n"
         f"Country: {country}\n"
         f"Date: {date}\n"
         f"Combat theatre: {theatre}\n"
         f"Air kills at time of award: {kills}\n"
-        f"Missions flown at time of award: {missions}\n\n"
+        f"Missions flown at time of award: {missions}\n"
+        f"{memory_block}\n"
         f"Write a 2-3 sentence citation in {language_label}. "
         f"Use an authentic, formal military style appropriate to the awarding country and era. "
         f"Do not use any of these overused phrases: {banned}. "
