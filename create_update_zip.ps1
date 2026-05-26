@@ -43,19 +43,17 @@ $zip = [System.IO.Compression.ZipFile]::Open(
     [System.IO.Compression.ZipArchiveMode]::Create
 )
 
-# EXEs that contain app code (rebuilt every version)
+# EXEs rebuilt for this version (only include what actually changed)
 $coreExes = @(
     "IL2_CampaignTracker_v3_ML.exe",
     "Campaign_Service_Record.exe",
-    "Career_Service_Record.exe",
-    "IL2_Settings_Manager.exe",
-    "IL2_Tracker_Control_GUI.exe",
-    "mlg2txt.exe",
-    "cleanup_tracker_content.exe"
+    "Career_Service_Record.exe"
 )
 
 # Live files that are read from disk at runtime (not compiled into EXEs)
 $liveFiles = @(
+    "_internal\static\index.html",
+    "_internal\static\js\api.js",
     "_internal\static\js\detail.js",
     "_internal\static\js\main.js",
     "_internal\static\js\landing.js",

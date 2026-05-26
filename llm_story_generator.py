@@ -2299,23 +2299,22 @@ def _format_award_name(code: str) -> str:
     return _normalize_text(code).replace("_", " ").title()
 
 
-def load_citation_memory(source: str, entry_id: str) -> Dict[str, Any]:
-    """Load per-entry citation memory used to avoid repetitive LLM output."""
-    path = _story_entry_dir(source, entry_id) / "citation_memory.json"
-    return _load_json_file(path, {"recent_citations": []})
+def build_citation_memory_from_citations(citations: Dict[str, Any]) -> Dict[str, Any]:
+    """Build a citation memory dict from all entries in a citations.json dict.
 
-
-def save_citation_memory(source: str, entry_id: str, award_name: str, citation_text: str) -> None:
-    """Append a generated citation to the rolling memory (keeps last 6)."""
-    path = _story_entry_dir(source, entry_id) / "citation_memory.json"
-    memory = _load_json_file(path, {"recent_citations": []})
-    if not isinstance(memory.get("recent_citations"), list):
-        memory["recent_citations"] = []
-    display = _format_award_name(award_name)
-    entry = f"[{display}]: \"{citation_text[:200].strip()}\""
-    memory["recent_citations"].append(entry)
-    memory["recent_citations"] = memory["recent_citations"][-6:]
-    _save_json_file(path, memory)
+    Entries are sorted by their key (which encodes the date) so the LLM sees
+    the full chronological sequence of prior citations.
+    """
+    entries: list[str] = []
+    for key, text in sorted(citations.items()):
+        if not key.startswith("award|"):
+            continue
+        parts = key.split("|")
+        award_code = parts[1] if len(parts) > 1 else key
+        display = _format_award_name(award_code)
+        snippet = _normalize_text(text)[:200]
+        entries.append(f"[{display}]: \"{snippet}\"")
+    return {"recent_citations": entries}
 
 
 def load_citations_for(source: str, entry_id: str) -> Dict[str, Any]:
@@ -2355,10 +2354,10 @@ def generate_award_citation(
     memory_block = ""
     recent = (citation_memory or {}).get("recent_citations") if citation_memory else None
     if isinstance(recent, list) and recent:
-        recent_lines = "\n".join(f"  - {entry}" for entry in recent[-5:])
+        recent_lines = "\n".join(f"  - {entry}" for entry in recent)
         memory_block = (
-            f"\nPrevious citations written for this pilot (vary your structure, "
-            f"opening, and vocabulary to avoid repetition):\n{recent_lines}\n"
+            f"\nAll citations written so far for this pilot (vary your structure, "
+            f"opening, and vocabulary — do not repeat any pattern already used):\n{recent_lines}\n"
         )
 
     prompt = (
@@ -2387,4 +2386,238 @@ def generate_award_citation(
         prompt=prompt,
         max_output_tokens=200,
     )
+    return _extract_response_text(response)
+
+
+# ---------------------------------------------------------------------------
+# Career book generation
+# ---------------------------------------------------------------------------
+
+def load_book_state_for(source: str, entry_id: str | int) -> Dict[str, Any]:
+    path = _story_entry_dir(source, entry_id) / "book.json"
+    return _load_json_file(path, {})
+
+
+def save_book_state_for(source: str, entry_id: str | int, book: Dict[str, Any]) -> None:
+    _save_json_file(_story_entry_dir(source, entry_id) / "book.json", book)
+
+
+def generate_book_prologue(
+    *,
+    pilot_name: str,
+    rank: str,
+    country: str,
+    pilot_bio: str,
+    first_theatre: str,
+    first_mission_date: str,
+    squadron_name: str,
+    squadron_digest: Dict[str, Any],
+    language: str = "en",
+    api_key: str,
+    model: str,
+    provider: str,
+    base_url: str = "",
+) -> str:
+    language_label = _LANGUAGE_LABELS.get(_normalize_text(language).lower(), "English")
+
+    sq_lines: list[str] = []
+    for name in list(squadron_digest.get("kia") or [])[:4]:
+        sq_lines.append(f"KIA: {name}")
+    for name in list(squadron_digest.get("mia") or [])[:3]:
+        sq_lines.append(f"MIA: {name}")
+    for entry in list(squadron_digest.get("promotions") or [])[:3]:
+        sq_lines.append(str(entry))
+    for entry in list(squadron_digest.get("awards") or [])[:3]:
+        sq_lines.append(str(entry))
+    sq_block = (
+        "\n\nEarly squadron events (use sparingly as background texture):\n"
+        + "\n".join(f"  - {l}" for l in sq_lines)
+    ) if sq_lines else ""
+
+    bio_block = f"\n\nPilot background:\n{pilot_bio}" if _normalize_text(pilot_bio) else ""
+
+    prompt = (
+        f"You are writing the opening chapter of a World War II memoir.\n\n"
+        f"This is the prologue — the literary introduction to the pilot's story. "
+        f"It should read like the opening of a serious historical novel: vivid, atmospheric, grounded in time and place.\n\n"
+        f"Pilot: {rank} {pilot_name}\n"
+        f"Country: {country}\n"
+        f"First theatre: {first_theatre}\n"
+        f"First mission date: {first_mission_date}\n"
+        f"Squadron: {squadron_name}\n"
+        f"{bio_block}"
+        f"{sq_block}\n\n"
+        f"Writing rules:\n"
+        f"- Write in third-person past tense.\n"
+        f"- Target 450–600 words across 3–4 paragraphs.\n"
+        f"- Introduce the pilot, his origins, what brought him to war, and the world he is entering.\n"
+        f"- Establish the atmosphere of the opening theatre — geography, season, the mood of the air war.\n"
+        f"- You may weave in early squadron events as background texture — fallen or decorated comrades — but do not make them the focus.\n"
+        f"- You may write with literary freedom: interior reflection, atmosphere, impressionistic detail. "
+        f"Do not invent named people, combat events, or decorations not in the supplied data.\n"
+        f"- Do not summarise the whole career — this is the opening, not the overview.\n"
+        f"- Style: write in the manner of Dan Brown — short punchy sentences, tight rhythmic prose, "
+        f"atmospheric tension, every paragraph pulling the reader forward. "
+        f"Use specific sensory detail to ground the scene. Short paragraphs. Forward momentum.\n"
+        f"- Write in {language_label}. Output only the text, no headings or labels."
+    )
+    client = _get_client(api_key=api_key, base_url=base_url or None)
+    response = _create_story_response(client, provider=provider, model=model, prompt=prompt, max_output_tokens=950)
+    return _extract_response_text(response)
+
+
+def generate_theatre_narrative(
+    *,
+    theatre_name: str,
+    date_from: str,
+    date_to: str,
+    missions_in_theatre: int,
+    kills_in_theatre: int,
+    awards_in_theatre: list[str],
+    squadron_digest: Dict[str, Any],
+    pilot_name: str,
+    rank: str,
+    mission_stories: list[Dict[str, str]],
+    language: str = "en",
+    api_key: str,
+    model: str,
+    provider: str,
+    base_url: str = "",
+) -> str:
+    """Generate a full theatre chapter narrative synthesized from mission story excerpts.
+
+    mission_stories: list of dicts with keys 'date', 'title', 'excerpt' (first ~300 chars of story text).
+    """
+    language_label = _LANGUAGE_LABELS.get(_normalize_text(language).lower(), "English")
+
+    sq_lines: list[str] = []
+    for name in list(squadron_digest.get("kia") or [])[:6]:
+        sq_lines.append(f"KIA: {name}")
+    for name in list(squadron_digest.get("mia") or [])[:4]:
+        sq_lines.append(f"MIA: {name}")
+    for entry in list(squadron_digest.get("promotions") or [])[:4]:
+        sq_lines.append(str(entry))
+    for entry in list(squadron_digest.get("awards") or [])[:4]:
+        sq_lines.append(str(entry))
+    sq_block = (
+        "\nSquadron events during this period:\n"
+        + "\n".join(f"  - {l}" for l in sq_lines)
+    ) if sq_lines else ""
+
+    awards_block = (
+        "\nDecorations received in this theatre: " + ", ".join(awards_in_theatre)
+    ) if awards_in_theatre else ""
+
+    # Build the mission stories block
+    stories_lines: list[str] = []
+    for ms in mission_stories[:25]:
+        date = ms.get("date") or ""
+        title = ms.get("title") or ""
+        excerpt = ms.get("excerpt") or ""
+        header = f"[{date}] {title}" if title else f"[{date}]"
+        stories_lines.append(f"{header}\n{excerpt}")
+    stories_block = (
+        "\n\nMission accounts from this period (use as raw material — do not reproduce verbatim):\n\n"
+        + "\n\n".join(stories_lines)
+    ) if stories_lines else ""
+
+    prompt = (
+        f"You are writing a chapter of a World War II memoir.\n\n"
+        f"This chapter covers {rank} {pilot_name}'s time in {theatre_name} "
+        f"({date_from} to {date_to or 'end of service'}).\n\n"
+        f"Missions flown: {missions_in_theatre}  |  Air victories: {kills_in_theatre}\n"
+        f"{awards_block}"
+        f"{sq_block}"
+        f"{stories_block}\n\n"
+        f"Your task:\n"
+        f"The mission accounts above are your source material. Read them and write a SYNTHESIZED "
+        f"literary chapter that captures the arc of this entire operational period — the battles fought, "
+        f"the losses endured, the tension and exhaustion and rare moments of clarity. "
+        f"Do not reproduce the accounts word for word. Distill them: find the dramatic thread, "
+        f"the moments that define this theatre, the human cost. Let the details from the missions "
+        f"ground the narrative — specific aircraft, specific days, the texture of combat — "
+        f"but weave them into a flowing story, not a list of sorties.\n\n"
+        f"Writing rules:\n"
+        f"- Write in third-person past tense.\n"
+        f"- Target 700–900 words across 5–7 paragraphs.\n"
+        f"- Open with atmosphere — the place, the season, the weight of the operational situation.\n"
+        f"- Let the narrative arc build: early missions, mounting pressure, key turning points, how the period resolved.\n"
+        f"- Weave in squadron losses and decorations as human texture — not as a list, but as the human cost of the campaign.\n"
+        f"- Do not invent named people, combat events, or decorations not in the supplied data.\n"
+        f"- Style: write in the manner of Dan Brown — short punchy sentences, tight rhythmic prose, "
+        f"atmospheric tension, every paragraph pulling the reader forward. "
+        f"Specific sensory detail. Short paragraphs. Forward momentum.\n"
+        f"- Write in {language_label}. Output only the text, no headings or labels."
+    )
+    client = _get_client(api_key=api_key, base_url=base_url or None)
+    response = _create_story_response(client, provider=provider, model=model, prompt=prompt, max_output_tokens=1500)
+    return _extract_response_text(response)
+
+
+def generate_career_epilogue(
+    *,
+    pilot_name: str,
+    final_rank: str,
+    country: str,
+    final_outcome: str,
+    total_missions: int,
+    total_kills: int,
+    theatres_served: list[str],
+    major_awards: list[str],
+    last_mission_date: str,
+    squadron_digest: Dict[str, Any],
+    language: str = "en",
+    api_key: str,
+    model: str,
+    provider: str,
+    base_url: str = "",
+) -> str:
+    language_label = _LANGUAGE_LABELS.get(_normalize_text(language).lower(), "English")
+
+    sq_lines: list[str] = []
+    for name in list(squadron_digest.get("kia") or [])[:10]:
+        sq_lines.append(f"KIA: {name}")
+    for name in list(squadron_digest.get("mia") or [])[:6]:
+        sq_lines.append(f"MIA: {name}")
+    sq_block = (
+        "\nCareer-wide squadron losses (for reflection and remembrance):\n"
+        + "\n".join(f"  - {l}" for l in sq_lines)
+    ) if sq_lines else ""
+
+    _OUTCOME_GUIDANCE = {
+        "KIA": "The pilot was killed in action. Write as a reflection on a life given, not a career concluded. The tone should be elegiac.",
+        "MIA": "The pilot went missing in action — his fate unknown. Carry that unresolved weight through the closing words.",
+        "WIA": "The pilot was wounded and removed from operations. Close on recovery, uncertainty, and what the war took.",
+    }
+    outcome_note = _OUTCOME_GUIDANCE.get(
+        _normalize_text(final_outcome).upper(),
+        "The pilot survived the war. Reflect on survival, loss, and what the years of combat cost — not triumphantly, but honestly.",
+    )
+
+    prompt = (
+        f"You are writing the closing chapter of a World War II memoir.\n\n"
+        f"This is the epilogue — the final literary reflection on a pilot's war.\n\n"
+        f"Pilot: {final_rank} {pilot_name}\n"
+        f"Country: {country}\n"
+        f"Outcome: {final_outcome} — {outcome_note}\n"
+        f"Total missions: {total_missions}\n"
+        f"Total air victories: {total_kills}\n"
+        f"Theatres served: {', '.join(theatres_served) if theatres_served else 'Eastern Front'}\n"
+        f"Major decorations: {', '.join(major_awards) if major_awards else 'none recorded'}\n"
+        f"Last mission: {last_mission_date}\n"
+        f"{sq_block}\n\n"
+        f"Writing rules:\n"
+        f"- Write in third-person past tense.\n"
+        f"- Target 450–600 words across 3–4 paragraphs.\n"
+        f"- Reflect on the full arc of the career: what was gained, what was lost, what the war cost.\n"
+        f"- Honour the fallen — the squadron names above are real; weave them in as human remembrance.\n"
+        f"- The tone should be elegiac, honest, and human — not triumphant, not melodramatic.\n"
+        f"- You may write with literary freedom: reflection, memory, atmosphere. "
+        f"Do not invent named people, combat events, or decorations not in the supplied data.\n"
+        f"- Style: write in the manner of Dan Brown — short declarative sentences, tight prose, "
+        f"atmospheric weight in every line. The tone here is elegiac but propulsive; grief with momentum.\n"
+        f"- Write in {language_label}. Output only the text, no headings or labels."
+    )
+    client = _get_client(api_key=api_key, base_url=base_url or None)
+    response = _create_story_response(client, provider=provider, model=model, prompt=prompt, max_output_tokens=950)
     return _extract_response_text(response)

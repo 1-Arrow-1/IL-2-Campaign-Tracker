@@ -210,6 +210,34 @@ const API = {
     },
 
     /**
+     * Get career book generation status.
+     */
+    async getCareerBookStatus(careerId) {
+        return this.get(`/career/${encodeURIComponent(careerId)}/book`);
+    },
+
+    /**
+     * Trigger background career book generation (prologue / theatre intros / epilogue).
+     */
+    async generateCareerBook(careerId) {
+        return this.post(`/career/${encodeURIComponent(careerId)}/book/generate`);
+    },
+
+    /**
+     * Generate the career book PDF (synchronous — waits for PDF to be written).
+     */
+    async generateCareerBookPdf(careerId) {
+        return this.post(`/career/${encodeURIComponent(careerId)}/book/pdf`, {}, { timeoutMs: 120000 });
+    },
+
+    /**
+     * Download URL for a generated career book PDF.
+     */
+    careerBookPdfDownloadUrl(careerId, filename) {
+        return `${this.baseURL}/career/${encodeURIComponent(careerId)}/book/pdf/${encodeURIComponent(filename)}`;
+    },
+
+    /**
      * Check if PDF report exists for campaign
      */
     async checkPDF(campaignName) {

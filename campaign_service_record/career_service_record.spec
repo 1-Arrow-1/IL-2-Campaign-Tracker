@@ -39,6 +39,7 @@ hiddenimports = [
     'PIL',
     'PIL.Image',
     'PIL.DdsImagePlugin',
+    'career_book_pdf',
 ]
 
 a = Analysis(

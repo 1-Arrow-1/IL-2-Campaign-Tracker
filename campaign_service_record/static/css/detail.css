@@ -296,6 +296,87 @@
     cursor: default;
 }
 
+.career-pdf-btn {
+    border: 1px solid rgba(50, 70, 110, 0.7);
+    background: linear-gradient(180deg, rgba(60, 90, 140, 0.92), rgba(40, 65, 110, 0.92));
+    color: #e8f0ff;
+    border-radius: 6px;
+    padding: 0.55rem 1rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.career-pdf-btn:hover:not(:disabled) {
+    filter: brightness(1.1);
+}
+
+.career-pdf-btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.career-book-btn {
+    border: 1px solid rgba(90, 60, 20, 0.7);
+    background: linear-gradient(180deg, rgba(130, 85, 30, 0.92), rgba(100, 62, 18, 0.92));
+    color: #fff3e0;
+    border-radius: 6px;
+    padding: 0.55rem 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 0.5rem;
+}
+
+.career-book-btn:hover:not(:disabled) {
+    filter: brightness(1.1);
+}
+
+.career-book-btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.career-book-pdf-btn {
+    border: 1px solid rgba(40, 100, 60, 0.72);
+    background: linear-gradient(180deg, rgba(55, 130, 80, 0.92), rgba(35, 100, 58, 0.92));
+    color: #e8ffe8;
+    border-radius: 6px;
+    padding: 0.55rem 1rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.career-book-pdf-btn:hover:not(:disabled) {
+    filter: brightness(1.1);
+}
+
+.career-book-pdf-btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.book-status {
+    font-size: 0.85rem;
+    color: #5d4428;
+    margin-top: 0.4rem;
+    margin-bottom: 0.4rem;
+    padding: 0.35rem 0.6rem;
+    background: rgba(248, 242, 224, 0.7);
+    border-radius: 4px;
+    border: 1px solid rgba(203, 185, 153, 0.5);
+}
+
+.book-status.is-generating {
+    color: #3a5080;
+}
+
+.book-status.is-complete {
+    color: #2a6040;
+}
+
+.book-status.is-error {
+    color: #8a3428;
+}
+
 .stories-status {
     color: #5d4428;
     margin-bottom: 1rem;

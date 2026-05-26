@@ -21,7 +21,7 @@ import time
 import traceback
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 from flask import Blueprint, jsonify, request, current_app, send_file, send_from_directory
 
@@ -62,18 +62,22 @@ from campaign_service_record.weather_lookup import (
 from utils.sorting import smart_mission_sort_key
 from llm_story_generator import (
     build_campaign_story_input,
+    build_citation_memory_from_citations,
     build_story_input,
     delete_story_chapter_for,
     generate_and_store_chapter_for,
     generate_award_citation,
-    load_citation_memory,
+    generate_book_prologue,
+    generate_career_epilogue,
+    generate_theatre_narrative,
+    load_book_state_for,
     load_citations_for,
     load_or_create_story_state_for,
     load_story_chapters_for,
     purge_orphaned_chapters_for,
     reindex_career_story_chapters_for,
+    save_book_state_for,
     save_citation_for,
-    save_citation_memory,
     save_story_state_for,
     strip_memory_entries_for_date,
     update_narrative_memory_local,
@@ -100,9 +104,11 @@ _career_data_dir: Optional[Path] = None   # <data_dir>/CampaignRanksAwards/...
 # Last activity timestamp (for idle shutdown)
 _last_ping = [time.time()]
 
-# Tracks careers currently generating citations in a background thread (dedup guard)
+# Tracks careers/campaigns currently generating citations in a background thread (dedup guard)
 _citations_generating: set[int] = set()
 _citations_lock = threading.Lock()
+_campaign_citations_generating: set[str] = set()
+_campaign_citations_lock = threading.Lock()
 
 _PILOT_DESC_DEFAULT = "campaign_pilot"
 _PERSONAL_DATA_FILENAME = "campaign_personal_data.json"
@@ -2990,6 +2996,19 @@ def get_campaign_detail(campaign_name: str):
 
         # Inject stored citations into award events
         _inject_citations_into_events(campaign_data.get("events") or [], "campaign", campaign_name)
+        # Spawn background citation generation for any missing awards
+        _story_settings = _load_story_settings()
+        if _story_settings.get("citations_enabled") and _story_settings.get("configured"):
+            _pd = _load_personal_data()
+            _cp = _pd.get(campaign_name, {}) if isinstance(_pd, dict) else {}
+            _pilot_name = f"{str(_cp.get('first_name') or '').strip()} {str(_cp.get('name') or '').strip()}".strip() or "Unknown Pilot"
+            t = threading.Thread(
+                target=_campaign_citation_worker,
+                args=(campaign_name, campaign_data, _story_settings, _pilot_name),
+                daemon=True,
+                name=f'campaign-citations-{campaign_name}',
+            )
+            t.start()
         logger.info(f"Served campaign detail: {campaign_name}")
         return jsonify(campaign_data)
         
@@ -3348,6 +3367,390 @@ def get_careers():
 # Background Job Endpoints
 # ============================================================================
 
+_book_generating: set[int] = set()
+_book_lock = threading.Lock()
+
+_CAREER_COUNTRY_INT_BOOK = {"germany": 201, "britain": 102, "usa": 103, "ussr": 101}
+
+
+def _build_book_squadron_digest(career, db, aggregator) -> Dict[str, list]:
+    """Career-wide squadron digest: casualties + notable events across all segments."""
+    seen_kia: set[str] = set()
+    seen_mia: set[str] = set()
+    seen_promo: set[str] = set()
+    seen_award: set[str] = set()
+    kia: list[str] = []
+    mia: list[str] = []
+    promotions: list[str] = []
+    awards: list[str] = []
+    country_int = _CAREER_COUNTRY_INT_BOOK.get((career.country or "").lower(), 0)
+
+    for row in career.chain:
+        try:
+            squad_id = int(row["squadronId"])
+            player_id = int(row["playerId"])
+            members = db.get_squadron_members(squad_id)
+            member_ids = [int(m["id"]) for m in members if int(m["id"]) != player_id]
+
+            for m in members:
+                if int(m["id"]) == player_id:
+                    continue
+                name = _pilot_display_name(m)
+                state = int(m.get("state") or 0)
+                if state == 2 and name not in seen_kia:
+                    seen_kia.add(name)
+                    kia.append(name)
+                elif state == 3 and name not in seen_mia:
+                    seen_mia.add(name)
+                    mia.append(name)
+
+            if not member_ids:
+                continue
+            for ev in db.get_events_for_pilots(member_ids, types=[6, 8]):
+                pid = int(ev["pilotId"])
+                m_row = next((m for m in members if int(m["id"]) == pid), None)
+                if not m_row:
+                    continue
+                who = _pilot_display_name(m_row)
+                if int(ev["type"]) == 6:
+                    rank_name = aggregator._rank_resolver.resolve(country_int, int(ev.get("rankId") or -1))
+                    rn = rank_name.display if rank_name else ""
+                    key = f"{who}|{ev.get('rankId')}"
+                    if key not in seen_promo:
+                        seen_promo.add(key)
+                        promotions.append(f"{who} promoted to {rn}" if rn else who)
+                elif int(ev["type"]) == 8:
+                    code = str(ev.get("tpar2") or "")
+                    disp = code.replace("_", " ").title() if code else ""
+                    key = f"{who}|{code}"
+                    if key not in seen_award:
+                        seen_award.add(key)
+                        awards.append(f"{who} received {disp}" if disp else who)
+        except Exception as exc:
+            logger.debug("Book squadron digest segment error: %s", exc)
+
+    return {"kia": kia, "mia": mia, "promotions": promotions, "awards": awards}
+
+
+def _career_book_worker(root_career_id: int, detail: dict, settings: dict, pilot_bio: str) -> None:
+    """Background thread: generate career book framing sections."""
+    with _book_lock:
+        if root_career_id in _book_generating:
+            return
+        _book_generating.add(root_career_id)
+    try:
+        if not _career_provider:
+            return
+        aggregator = _career_provider._aggregator
+        resolver = _career_provider._resolver
+        db = _career_provider._db
+        career = resolver.get_career(root_career_id)
+        if career is None:
+            return
+
+        entry_id = str(root_career_id)
+        book = load_book_state_for("career", entry_id)
+
+        language = settings.get("story_language", "en")
+        llm_kwargs = dict(
+            language=language,
+            api_key=settings["api_key"],
+            model=settings["model"],
+            provider=settings["provider"],
+            base_url=settings.get("base_url", ""),
+        )
+
+        # ── Build common data ──────────────────────────────────────────────
+        pilot_first = str(detail.get("pilot_first_name") or "").strip()
+        pilot_last = str(detail.get("pilot_last_name") or "").strip()
+        pilot_name = f"{pilot_first} {pilot_last}".strip() or "Unknown Pilot"
+
+        events = detail.get("events") or []
+        theatre_segments = detail.get("theatre_segments") or []
+        theatre_chain = detail.get("theatre_chain") or []
+        sortie_summaries = detail.get("sortie_summaries") or []
+
+        summary = detail.get("summary") or {}
+        career_prog = summary.get("career_progression") or {}
+        starting_rank = str(career_prog.get("starting_rank") or "")
+
+        promotions_sorted = sorted(
+            [e for e in events if e.get("type") == "promotion"],
+            key=lambda e: str(e.get("date") or ""),
+        )
+
+        def _rank_at(date: str) -> str:
+            for pev in reversed(promotions_sorted):
+                if str(pev.get("date") or "") <= date:
+                    return str(pev.get("rank") or "")
+            return starting_rank
+
+        total_kills = sum(s["air_kills"] for s in sortie_summaries)
+        total_missions = len(sortie_summaries)
+        last_mission_date = max((s["date"] for s in sortie_summaries if s["date"]), default="")
+
+        # Final outcome from pilot state
+        try:
+            pilot_row = db.get_pilot_by_id(career.last_pilot_id)
+            state = int((pilot_row["state"] if pilot_row else None) or 0)
+        except Exception:
+            state = 0
+        final_outcome = {2: "KIA", 3: "MIA", 4: "WIA"}.get(state, "Survived")
+
+        # Major awards (combat decorations only)
+        major_award_codes = {"knights_cross", "knights_cross_oak_leaves", "knights_cross_swords",
+                             "knights_cross_diamonds", "knights_cross_gold_diamonds", "grand_cross",
+                             "star_grand_cross", "german_cross_gold", "victoria_cross", "dso",
+                             "dfc", "medal_of_honor", "distinguished_service_cross",
+                             "hero_soviet_union", "order_lenin", "order_red_banner"}
+        major_awards = [
+            str(e.get("display_name") or e.get("name") or "").strip()
+            for e in events
+            if e.get("type") == "award" and str(e.get("name") or "") in major_award_codes
+        ]
+
+        # Squadron digest (career-wide)
+        sq_digest = _build_book_squadron_digest(career, db, aggregator)
+
+        # ── Prologue ───────────────────────────────────────────────────────
+        if not book.get("prologue"):
+            first_date = min((s["date"] for s in sortie_summaries if s["date"]), default="")
+            first_theatre = theatre_chain[0] if theatre_chain else ""
+            first_segment = career.chain[0] if career.chain else {}
+            try:
+                first_squad_name = aggregator._resolve_squadron_name(int(first_segment.get("squadronId") or 0)) or ""
+            except Exception:
+                first_squad_name = ""
+            # opening digest — filter to first theatre date range
+            first_end = theatre_segments[1]["start_date"] if len(theatre_segments) > 1 else ""
+            open_digest = {
+                k: [v for v in sq_digest[k] if True]  # pass full digest, LLM uses sparingly
+                for k in sq_digest
+            }
+            try:
+                book["prologue"] = generate_book_prologue(
+                    pilot_name=pilot_name,
+                    rank=_rank_at(first_date) or starting_rank or "Pilot",
+                    country=str(detail.get("country") or ""),
+                    pilot_bio=pilot_bio,
+                    first_theatre=first_theatre,
+                    first_mission_date=first_date,
+                    squadron_name=first_squad_name,
+                    squadron_digest=open_digest,
+                    **llm_kwargs,
+                )
+                save_book_state_for("career", entry_id, book)
+                logger.info("Book prologue generated for career %d", root_career_id)
+            except Exception as exc:
+                logger.warning("Book prologue failed for career %d: %s", root_career_id, exc)
+
+        # ── Theatre narratives ─────────────────────────────────────────────
+        # Load all story chapters once; filter per theatre inside the loop
+        all_story_chapters = load_story_chapters_for("career", entry_id)
+
+        theatre_narratives = book.setdefault("theatre_narratives", {})
+        for i, seg in enumerate(theatre_segments):
+            theatre = seg["theatre"]
+            if theatre_narratives.get(theatre):
+                continue
+            date_from = seg["start_date"]
+            date_to = theatre_segments[i + 1]["start_date"] if i + 1 < len(theatre_segments) else ""
+
+            missions_here = sum(
+                1 for s in sortie_summaries
+                if s["date"] >= date_from and (not date_to or s["date"] < date_to)
+            )
+            kills_here = sum(
+                s["air_kills"] for s in sortie_summaries
+                if s["date"] >= date_from and (not date_to or s["date"] < date_to)
+            )
+            awards_here = [
+                str(e.get("display_name") or e.get("name") or "").strip()
+                for e in events
+                if e.get("type") == "award"
+                and str(e.get("date") or "") >= date_from
+                and (not date_to or str(e.get("date") or "") < date_to)
+            ]
+            rank_here = _rank_at(date_from) or starting_rank or "Pilot"
+
+            # Build condensed mission story inputs: date + title + first 300 chars of text
+            theatre_chapters = sorted(
+                (ch for ch in all_story_chapters
+                 if str(ch.get("date") or "") >= date_from
+                 and (not date_to or str(ch.get("date") or "") < date_to)),
+                key=lambda c: (str(c.get("date") or ""), int(c.get("chapter_index") or 0)),
+            )
+            mission_stories = [
+                {
+                    "date": str(ch.get("date") or ""),
+                    "title": str(ch.get("title") or ""),
+                    "excerpt": str(ch.get("story_text") or "")[:300].strip(),
+                }
+                for ch in theatre_chapters
+            ]
+
+            try:
+                theatre_narratives[theatre] = generate_theatre_narrative(
+                    theatre_name=theatre,
+                    date_from=date_from,
+                    date_to=date_to,
+                    missions_in_theatre=missions_here,
+                    kills_in_theatre=kills_here,
+                    awards_in_theatre=awards_here,
+                    squadron_digest=sq_digest,
+                    pilot_name=pilot_name,
+                    rank=rank_here,
+                    mission_stories=mission_stories,
+                    **llm_kwargs,
+                )
+                save_book_state_for("career", entry_id, book)
+                logger.info("Book theatre narrative generated: %s (career %d)", theatre, root_career_id)
+            except Exception as exc:
+                logger.warning("Book theatre narrative failed for %s: %s", theatre, exc)
+
+        # ── Epilogue ───────────────────────────────────────────────────────
+        if not book.get("epilogue"):
+            final_rank = _rank_at(last_mission_date) or starting_rank or "Pilot"
+            try:
+                book["epilogue"] = generate_career_epilogue(
+                    pilot_name=pilot_name,
+                    final_rank=final_rank,
+                    country=str(detail.get("country") or ""),
+                    final_outcome=final_outcome,
+                    total_missions=total_missions,
+                    total_kills=total_kills,
+                    theatres_served=theatre_chain,
+                    major_awards=major_awards,
+                    last_mission_date=last_mission_date,
+                    squadron_digest=sq_digest,
+                    **llm_kwargs,
+                )
+                save_book_state_for("career", entry_id, book)
+                logger.info("Book epilogue generated for career %d", root_career_id)
+            except Exception as exc:
+                logger.warning("Book epilogue failed for career %d: %s", root_career_id, exc)
+
+        # Mark complete if all sections present
+        expected_theatres = {seg["theatre"] for seg in theatre_segments}
+        generated_theatres = set(theatre_narratives.keys())
+        if book.get("prologue") and book.get("epilogue") and expected_theatres <= generated_theatres:
+            book["status"] = "complete"
+        else:
+            book["status"] = "partial"
+        book["language"] = language
+        save_book_state_for("career", entry_id, book)
+
+    finally:
+        with _book_lock:
+            _book_generating.discard(root_career_id)
+
+
+def _campaign_citation_worker(campaign_name: str, campaign_data: dict, settings: dict, pilot_name: str) -> None:
+    """Background thread: generate LLM award citations for a campaign's award events."""
+    with _campaign_citations_lock:
+        if campaign_name in _campaign_citations_generating:
+            return
+        _campaign_citations_generating.add(campaign_name)
+    try:
+        events = campaign_data.get("events") or []
+        award_events = [
+            e for e in events
+            if e.get("type") == "award"
+            and str(e.get("mission") or "").lower() != "initial"
+        ]
+        if not award_events:
+            return
+
+        def _event_key(e: dict) -> str:
+            name = str(e.get("name") or e.get("award_code") or "")
+            mission = str(e.get("mission") or "")
+            date = str(e.get("date") or "")
+            return f"award|{name}|{mission}|{date}"
+
+        existing = load_citations_for("campaign", campaign_name)
+        missing = [e for e in award_events if _event_key(e) not in existing]
+        if not missing:
+            return
+
+        country = str(campaign_data.get("country") or "").strip()
+
+        per_mission_stats: dict = {}
+        if _data_loader:
+            decoded = _data_loader.get_campaigns_decoded().get(campaign_name, {})
+            per_mission_stats = decoded.get("characterStatisticsByFileName", {}) if isinstance(decoded, dict) else {}
+
+        promotions_sorted = sorted(
+            [e for e in events if e.get("type") == "promotion" and str(e.get("mission") or "").lower() != "initial"],
+            key=lambda e: (str(e.get("date") or ""), str(e.get("mission") or "")),
+        )
+        initial_rank_event = next(
+            (e for e in events if e.get("type") == "promotion" and str(e.get("mission") or "").lower() == "initial"),
+            None,
+        )
+
+        citation_mem = build_citation_memory_from_citations(existing)
+
+        for event in missing:
+            event_key = _event_key(event)
+            award_name = str(event.get("name") or event.get("award_code") or "Unknown Award")
+            award_date = str(event.get("date") or "")
+            award_mission = str(event.get("mission") or "")
+
+            rank = ""
+            for pev in reversed(promotions_sorted):
+                if str(pev.get("date") or "") <= award_date:
+                    rank = str(pev.get("rank") or "")
+                    break
+            if not rank and initial_rank_event:
+                rank = str(initial_rank_event.get("rank") or "")
+
+            kills_at_award = 0
+            missions_at_award = 0
+            try:
+                award_mission_int = int(award_mission)
+                for m, stats in per_mission_stats.items():
+                    if isinstance(stats, dict):
+                        try:
+                            if int(m) <= award_mission_int:
+                                kills_at_award += (
+                                    int(stats.get("killLightPlane", 0) or 0)
+                                    + int(stats.get("killMediumPlane", 0) or 0)
+                                    + int(stats.get("killHeavyPlane", 0) or 0)
+                                )
+                                missions_at_award += 1
+                        except (ValueError, TypeError):
+                            pass
+            except (ValueError, TypeError):
+                missions_at_award = len(per_mission_stats)
+
+            try:
+                citation = generate_award_citation(
+                    award_name=award_name,
+                    pilot_name=pilot_name,
+                    rank=rank or "Pilot",
+                    country=country,
+                    date=award_date,
+                    kills=kills_at_award,
+                    missions=missions_at_award,
+                    theatre=campaign_name,
+                    language=settings.get("story_language", "en"),
+                    api_key=settings["api_key"],
+                    model=settings["model"],
+                    provider=settings["provider"],
+                    base_url=settings.get("base_url", ""),
+                    citation_memory=citation_mem,
+                )
+                save_citation_for("campaign", campaign_name, event_key, citation)
+                existing[event_key] = citation
+                citation_mem = build_citation_memory_from_citations(existing)
+                logger.info("Generated campaign citation for %s (%s)", award_name, campaign_name)
+            except Exception as exc:
+                logger.warning("Could not generate campaign citation for %s: %s", award_name, exc)
+    finally:
+        with _campaign_citations_lock:
+            _campaign_citations_generating.discard(campaign_name)
+
+
 def _career_citation_worker(root_career_id: int, detail: dict, settings: dict) -> None:
     """Background thread: generate LLM award citations for a career's award events."""
     with _citations_lock:
@@ -3399,7 +3802,7 @@ def _career_citation_worker(root_career_id: int, detail: dict, settings: dict) -
             key=lambda e: str(e.get("date") or ""),
         )
 
-        citation_mem = load_citation_memory("career", entry_id)
+        citation_mem = build_citation_memory_from_citations(existing)
 
         for event in missing:
             award_name = str(event.get("name") or event.get("award_code") or "Unknown Award")
@@ -3438,9 +3841,8 @@ def _career_citation_worker(root_career_id: int, detail: dict, settings: dict) -
                     citation_memory=citation_mem,
                 )
                 save_citation_for("career", entry_id, event_key, citation)
-                save_citation_memory("career", entry_id, award_name, citation)
-                citation_mem = load_citation_memory("career", entry_id)
                 existing[event_key] = citation
+                citation_mem = build_citation_memory_from_citations(existing)
                 logger.info("Generated career citation for %s (career %d)", award_name, root_career_id)
             except Exception as exc:
                 logger.warning("Could not generate career citation for %s: %s", award_name, exc)
@@ -4218,6 +4620,217 @@ def get_career_showcase(root_career_id: int):
         overlay_filenames=CAREER_OVERLAY_FILENAME,
         asset_context='career_detail_showcase',
     ))
+
+
+# ============================================================================
+# Career Book Endpoints
+# ============================================================================
+
+@api_bp.route('/api/career/<int:root_career_id>/book', methods=['GET'])
+def get_career_book_status(root_career_id: int):
+    """
+    Return the current generation status of the career book framing sections.
+
+    Response shape:
+        {
+            "prologue_present": bool,
+            "theatre_narratives": [list of theatre keys with generated narratives],
+            "epilogue_present": bool,
+            "status": "not_started" | "partial" | "complete",
+            "generating": bool,
+            "language": str | null
+        }
+    """
+    _last_ping[0] = time.time()
+
+    if not _career_provider:
+        return jsonify({'error': 'Career mode not available'}), 503
+
+    try:
+        entry_id = str(root_career_id)
+        book = load_book_state_for("career", entry_id)
+        with _book_lock:
+            generating = root_career_id in _book_generating
+
+        return jsonify({
+            "prologue_present": bool(book.get("prologue")),
+            "theatre_narratives": list((book.get("theatre_narratives") or {}).keys()),
+            "epilogue_present": bool(book.get("epilogue")),
+            "status": book.get("status", "not_started"),
+            "generating": generating,
+            "language": book.get("language"),
+        })
+    except Exception as exc:
+        logger.error("Error getting book status for career %d: %s", root_career_id, exc, exc_info=True)
+        return jsonify({'error': 'Failed to load book status', 'detail': str(exc)}), 500
+
+
+@api_bp.route('/api/career/<int:root_career_id>/book/pdf', methods=['POST'])
+def generate_career_book_pdf_report(root_career_id: int):
+    """
+    Generate the career book PDF on demand.
+
+    Assembles: prologue, per-theatre synthesized narratives + citations, epilogue,
+    then stats appendix.  Saves under:
+        <cwd>/career/<id>/pdf_reports/career_<id>_book_<timestamp>.pdf
+
+    Returns:
+        JSON: { "filename": str, "path": str (relative), "abs_path": str }
+    """
+    _last_ping[0] = time.time()
+
+    if not _career_provider:
+        return jsonify({'error': 'Career mode not available'}), 503
+
+    try:
+        from career_book_pdf import generate_career_book_pdf
+    except ImportError:
+        return jsonify({'error': 'reportlab is not installed. Run: pip install reportlab'}), 500
+
+    try:
+        aggregator = _career_provider._aggregator
+        detail = aggregator.get_career_detail(root_career_id, skip_debriefs=False)
+        if detail is None:
+            return jsonify({'error': 'Career not found', 'id': root_career_id}), 404
+
+        entry_id = str(root_career_id)
+        book_state = load_book_state_for("career", entry_id)
+        citations = load_citations_for("career", entry_id)
+
+        base_data_dir = Path.cwd()
+        out_dir = base_data_dir / "career" / entry_id / "pdf_reports"
+
+        # Pilot photo (best-effort)
+        _pilot_photo_bytes: Optional[bytes] = None
+        try:
+            _photo_dir = current_app.config.get('PILOT_PHOTO_DIR')
+            if _photo_dir:
+                from campaign_service_record.utils.pilot_photo import pilot_photo_path as _ppp
+                _photo_path = _ppp(Path(_photo_dir), f"campaign:{root_career_id}")
+                if _photo_path.exists():
+                    _pilot_photo_bytes = _photo_path.read_bytes()
+        except Exception:
+            pass
+
+        out_path = generate_career_book_pdf(
+            career_id=root_career_id,
+            career_detail=detail,
+            book_state=book_state,
+            citations=citations,
+            output_dir=out_dir,
+            data_dir=_career_data_dir,
+            game_dir=_career_game_dir,
+            pilot_photo_bytes=_pilot_photo_bytes,
+        )
+
+        try:
+            rel = out_path.relative_to(base_data_dir)
+            rel_str = str(rel).replace("\\", "/")
+        except ValueError:
+            rel_str = out_path.name
+
+        return jsonify({'filename': out_path.name, 'path': rel_str, 'abs_path': str(out_path)})
+
+    except Exception as exc:
+        logger.error("Error generating career book PDF for id=%d: %s", root_career_id, exc, exc_info=True)
+        return jsonify({'error': 'Book PDF generation failed', 'detail': str(exc)}), 500
+
+
+@api_bp.route('/api/career/<int:root_career_id>/book/pdf/<path:filename>', methods=['GET'])
+def download_career_book_pdf(root_career_id: int, filename: str):
+    """Serve a previously generated career book PDF for download."""
+    _last_ping[0] = time.time()
+    try:
+        base_data_dir = Path.cwd()
+        pdf_dir = (base_data_dir / "career" / str(root_career_id) / "pdf_reports").resolve()
+        pdf_dir.mkdir(parents=True, exist_ok=True)
+        safe_name = Path(filename).name
+        pdf_path = pdf_dir / safe_name
+        try:
+            pdf_path.resolve().relative_to(pdf_dir)
+        except ValueError:
+            return jsonify({'error': 'Invalid filename'}), 400
+        if not pdf_path.exists():
+            return jsonify({'error': 'PDF not found'}), 404
+        return send_file(pdf_path, mimetype='application/pdf', as_attachment=True, download_name=safe_name)
+    except Exception as exc:
+        logger.error("Error serving career book PDF: %s", exc, exc_info=True)
+        return jsonify({'error': 'Failed to serve PDF'}), 500
+
+
+@api_bp.route('/api/career/<int:root_career_id>/book/generate', methods=['POST'])
+def generate_career_book(root_career_id: int):
+    """
+    Trigger background generation of the career book framing sections
+    (prologue, theatre intros, epilogue).
+
+    Only generates sections that are not yet present in book.json.
+    Safe to call repeatedly — already-generated sections are skipped.
+
+    Returns:
+        { "status": "generating" }         — worker just spawned
+        { "status": "already_generating" } — worker already running
+        { "status": "not_configured" }     — LLM not set up
+    """
+    _last_ping[0] = time.time()
+
+    if not _career_provider:
+        return jsonify({'error': 'Career mode not available'}), 503
+
+    _story_settings = _load_story_settings()
+    if not (_story_settings.get("stories_enabled") or _story_settings.get("citations_enabled")):
+        return jsonify({'status': 'not_configured'})
+    if not _story_settings.get("configured"):
+        return jsonify({'status': 'not_configured'})
+
+    with _book_lock:
+        if root_career_id in _book_generating:
+            return jsonify({'status': 'already_generating'})
+
+    try:
+        aggregator = _career_provider._aggregator
+        cache_exists = aggregator.has_debrief_cache(root_career_id)
+        detail = aggregator.get_career_detail(root_career_id, skip_debriefs=not cache_exists)
+        if detail is None:
+            return jsonify({'error': 'Career not found', 'id': root_career_id}), 404
+    except Exception as exc:
+        logger.error("Book generate: failed to load career %d: %s", root_career_id, exc, exc_info=True)
+        return jsonify({'error': 'Failed to load career', 'detail': str(exc)}), 500
+
+    # Extract pilot bio from personal data (app-context call before thread spawn)
+    pilot_bio = ""
+    try:
+        _pd = _load_personal_data()
+        if isinstance(_pd, dict):
+            # Personal data keyed by career id or pilot name — try int key first
+            _cp = _pd.get(root_career_id) or _pd.get(str(root_career_id)) or {}
+            if not _cp:
+                # Fallback: try pilot name key
+                _first = str(detail.get("pilot_first_name") or "").strip()
+                _last = str(detail.get("pilot_last_name") or "").strip()
+                _name_key = f"{_first} {_last}".strip()
+                _cp = _pd.get(_name_key) or {}
+            pilot_bio = str(_cp.get("bio") or _cp.get("background") or "").strip()
+    except Exception:
+        pass
+
+    # Clear any existing book state so every generation is a full rebuild
+    entry_id = str(root_career_id)
+    save_book_state_for("career", entry_id, {
+        "status": "generating",
+        "prologue": None,
+        "theatre_narratives": {},
+        "epilogue": None,
+    })
+
+    t = threading.Thread(
+        target=_career_book_worker,
+        args=(root_career_id, detail, _story_settings, pilot_bio),
+        daemon=True,
+        name=f'career-book-{root_career_id}',
+    )
+    t.start()
+    return jsonify({'status': 'generating'})
 
 
 # ============================================================================

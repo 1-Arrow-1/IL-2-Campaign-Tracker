@@ -3834,11 +3834,10 @@ class EventGenerator:
 
         try:
             from llm_story_generator import (
+                build_citation_memory_from_citations,
                 generate_award_citation,
-                load_citation_memory,
                 load_citations_for,
                 save_citation_for,
-                save_citation_memory,
             )
         except ImportError:
             log_message(LOGGER, "  [citations] llm_story_generator unavailable, skipping")
@@ -3858,7 +3857,7 @@ class EventGenerator:
 
         log_message(LOGGER, f"  [citations] Generating {len(missing)} citation(s) for {campaign_name}...")
 
-        citation_mem = load_citation_memory("campaign", campaign_name)
+        citation_mem = build_citation_memory_from_citations(existing)
         personal_data = self._load_campaign_personal_data(campaign_name)
         first_name = personal_data.get("first_name", "").strip()
         last_name = personal_data.get("name", "").strip()
@@ -3921,8 +3920,8 @@ class EventGenerator:
                     citation_memory=citation_mem,
                 )
                 save_citation_for("campaign", campaign_name, event_key, citation)
-                save_citation_memory("campaign", campaign_name, award_name, citation)
-                citation_mem = load_citation_memory("campaign", campaign_name)
+                existing[event_key] = citation
+                citation_mem = build_citation_memory_from_citations(existing)
                 log_message(LOGGER, f"  [citations] OK: {award_name}")
             except Exception as exc:
                 log_message(LOGGER, f"  [citations] WARN: Could not generate citation for '{award_name}': {exc}")

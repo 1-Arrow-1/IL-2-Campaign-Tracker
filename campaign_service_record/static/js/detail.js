@@ -676,7 +676,10 @@ const DetailPage = {
         storiesContent: null,
         storiesGenerateBtn: null,
         storiesCleanupBtn: null,
-        careerPdfBtn: null
+        careerPdfBtn: null,
+        careerBookBtn: null,
+        careerBookPdfBtn: null,
+        bookStatus: null
     },
 
     eventImageScale: 0.35,
@@ -777,6 +780,9 @@ const DetailPage = {
         this.elements.storiesGenerateBtn = document.getElementById('stories-generate-btn');
         this.elements.storiesCleanupBtn = document.getElementById('stories-cleanup-btn');
         this.elements.careerPdfBtn = document.getElementById('career-pdf-btn');
+        this.elements.careerBookBtn = document.getElementById('career-book-btn');
+        this.elements.careerBookPdfBtn = document.getElementById('career-book-pdf-btn');
+        this.elements.bookStatus = document.getElementById('book-status');
     },
 
     setupPhotoHandlers() {
@@ -829,6 +835,12 @@ const DetailPage = {
         }
         if (this.elements.careerPdfBtn) {
             this.elements.careerPdfBtn.addEventListener('click', () => this._generateCareerPdf());
+        }
+        if (this.elements.careerBookBtn) {
+            this.elements.careerBookBtn.addEventListener('click', () => this._generateCareerBook());
+        }
+        if (this.elements.careerBookPdfBtn) {
+            this.elements.careerBookPdfBtn.addEventListener('click', () => this._downloadCareerBookPdf());
         }
     },
 
@@ -1265,6 +1277,19 @@ const DetailPage = {
             this.elements.careerPdfBtn.disabled = this._pdfGenerating || false;
         }
 
+        // Book buttons: only for career entries; check status on first load
+        if (source === 'career' && this.currentStoriesEntryId) {
+            if (this.elements.careerBookBtn) {
+                this.elements.careerBookBtn.style.display = '';
+                this.elements.careerBookBtn.disabled = this._bookGenerating || false;
+            }
+            this._refreshBookStatus(this.currentStoriesEntryId);
+        } else {
+            if (this.elements.careerBookBtn) this.elements.careerBookBtn.style.display = 'none';
+            if (this.elements.careerBookPdfBtn) this.elements.careerBookPdfBtn.style.display = 'none';
+            if (this.elements.bookStatus) this.elements.bookStatus.style.display = 'none';
+        }
+
         const tone = status === 'auth_error' || status === 'quota_error' || status === 'api_error' || status === 'not_configured' || status === 'disabled'
             ? 'error'
             : (status === 'generated' ? 'success' : '');
@@ -1493,6 +1518,186 @@ const DetailPage = {
                 this.elements.careerPdfBtn.setAttribute('data-i18n', 'web.button.generate_pdf_report');
                 this.elements.careerPdfBtn.textContent =
                     translateOrFallback('web.button.generate_pdf_report', 'Generate PDF Report');
+            }
+        }
+    },
+
+    /**
+     * Refresh book generation status and update UI accordingly.
+     * Called on detail load and after triggering generation.
+     */
+    async _refreshBookStatus(careerId) {
+        if (!careerId || this._source !== 'career') return;
+        try {
+            const status = await API.getCareerBookStatus(careerId);
+            this._applyBookStatus(status);
+        } catch (e) {
+            // Non-fatal: book feature simply stays hidden
+        }
+    },
+
+    _applyBookStatus(status) {
+        if (!status) return;
+        const el = this.elements;
+        const generating = status.generating || this._bookGenerating;
+        const bookStatus = status.status || 'not_started';
+        const isComplete = bookStatus === 'complete';
+        const isPartial = bookStatus === 'partial';
+        const hasContent = isComplete || isPartial || status.prologue_present || status.epilogue_present;
+
+        if (el.careerBookBtn) {
+            el.careerBookBtn.disabled = generating;
+            el.careerBookBtn.textContent = generating
+                ? translateOrFallback('web.message.book_generating', 'Generating Book…')
+                : (hasContent
+                    ? translateOrFallback('web.button.regenerate_book', 'Regenerate Book')
+                    : translateOrFallback('web.button.generate_book', 'Generate Book'));
+        }
+
+        if (el.careerBookPdfBtn) {
+            el.careerBookPdfBtn.style.display = isComplete ? '' : 'none';
+        }
+
+        if (el.bookStatus) {
+            if (generating) {
+                el.bookStatus.style.display = '';
+                el.bookStatus.className = 'book-status is-generating';
+                const theatresDone = Array.isArray(status.theatre_narratives) ? status.theatre_narratives.length : 0;
+                el.bookStatus.textContent = translateOrFallback(
+                    'web.message.book_generating_detail',
+                    `Generating… prologue: ${status.prologue_present ? '✓' : '…'}  theatres: ${theatresDone}  epilogue: ${status.epilogue_present ? '✓' : '…'}`
+                );
+            } else if (isComplete) {
+                el.bookStatus.style.display = '';
+                el.bookStatus.className = 'book-status is-complete';
+                el.bookStatus.textContent = translateOrFallback('web.message.book_complete', 'Book generation complete.');
+            } else if (isPartial) {
+                el.bookStatus.style.display = '';
+                el.bookStatus.className = 'book-status is-generating';
+                const theatresDone = Array.isArray(status.theatre_narratives) ? status.theatre_narratives.length : 0;
+                el.bookStatus.textContent = translateOrFallback(
+                    'web.message.book_partial',
+                    `Partial: prologue: ${status.prologue_present ? '✓' : '—'}  theatres: ${theatresDone}  epilogue: ${status.epilogue_present ? '✓' : '—'}`
+                );
+            } else {
+                el.bookStatus.style.display = 'none';
+            }
+        }
+    },
+
+    /**
+     * Start career book generation.
+     * Polls until complete, updating status each cycle.
+     */
+    async _generateCareerBook() {
+        if (!this.currentStoriesEntryId || this._source !== 'career') return;
+        if (this._bookGenerating) return;
+
+        this._bookGenerating = true;
+        const careerId = this.currentStoriesEntryId;
+
+        if (this.elements.careerBookBtn) {
+            this.elements.careerBookBtn.disabled = true;
+            this.elements.careerBookBtn.textContent =
+                translateOrFallback('web.message.book_generating', 'Generating Book…');
+        }
+        if (this.elements.bookStatus) {
+            this.elements.bookStatus.style.display = '';
+            this.elements.bookStatus.className = 'book-status is-generating';
+            this.elements.bookStatus.textContent =
+                translateOrFallback('web.message.book_starting', 'Starting book generation…');
+        }
+
+        try {
+            await API.generateCareerBook(careerId);
+        } catch (e) {
+            this._bookGenerating = false;
+            if (this.elements.careerBookBtn) this.elements.careerBookBtn.disabled = false;
+            if (this.elements.bookStatus) {
+                this.elements.bookStatus.className = 'book-status is-error';
+                this.elements.bookStatus.textContent =
+                    translateOrFallback('web.message.book_failed', 'Book generation failed: ')
+                    + (e.message || '');
+            }
+            return;
+        }
+
+        // Poll until the server reports it is no longer generating
+        const poll = async () => {
+            if (careerId !== this.currentStoriesEntryId) return; // navigated away
+            try {
+                const status = await API.getCareerBookStatus(careerId);
+                this._applyBookStatus(status);
+                if (status.generating) {
+                    setTimeout(poll, 4000);
+                } else {
+                    this._bookGenerating = false;
+                    if (this.elements.careerBookBtn) {
+                        this.elements.careerBookBtn.disabled = false;
+                    }
+                    this._applyBookStatus(status);
+                }
+            } catch (e) {
+                this._bookGenerating = false;
+                if (this.elements.careerBookBtn) this.elements.careerBookBtn.disabled = false;
+            }
+        };
+        setTimeout(poll, 3000);
+    },
+
+    /**
+     * Generate and download the career book PDF.
+     */
+    async _downloadCareerBookPdf() {
+        if (!this.currentStoriesEntryId || this._source !== 'career') return;
+        if (this._bookPdfGenerating) return;
+
+        this._bookPdfGenerating = true;
+        if (this.elements.careerBookPdfBtn) {
+            this.elements.careerBookPdfBtn.disabled = true;
+            this.elements.careerBookPdfBtn.textContent =
+                translateOrFallback('web.message.pdf_generating', 'Generating PDF…');
+        }
+        if (this.elements.bookStatus) {
+            this.elements.bookStatus.style.display = '';
+            this.elements.bookStatus.className = 'book-status is-generating';
+            this.elements.bookStatus.textContent =
+                translateOrFallback('web.message.pdf_generating', 'Generating book PDF…');
+        }
+
+        try {
+            const result = await API.generateCareerBookPdf(this.currentStoriesEntryId);
+            const downloadUrl = API.careerBookPdfDownloadUrl(
+                this.currentStoriesEntryId, result.filename
+            );
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = result.filename;
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            if (this.elements.bookStatus) {
+                this.elements.bookStatus.className = 'book-status is-complete';
+                this.elements.bookStatus.textContent =
+                    translateOrFallback('web.message.pdf_generated', 'PDF saved.')
+                    + ' ' + (result.abs_path || result.filename);
+            }
+        } catch (e) {
+            console.error('Career book PDF generation failed:', e);
+            if (this.elements.bookStatus) {
+                this.elements.bookStatus.className = 'book-status is-error';
+                this.elements.bookStatus.textContent =
+                    translateOrFallback('web.message.pdf_failed', 'PDF generation failed: ')
+                    + (e.message || '');
+            }
+        } finally {
+            this._bookPdfGenerating = false;
+            if (this.elements.careerBookPdfBtn) {
+                this.elements.careerBookPdfBtn.disabled = false;
+                this.elements.careerBookPdfBtn.textContent =
+                    translateOrFallback('web.button.download_book_pdf', 'Download Book PDF');
             }
         }
     },
