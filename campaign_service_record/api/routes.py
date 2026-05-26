@@ -3488,7 +3488,10 @@ def _career_book_worker(root_career_id: int, detail: dict, settings: dict, pilot
         total_kills = sum(s["air_kills"] for s in sortie_summaries)
         total_kills_static = sum(int(s.get("air_kills_static") or 0) for s in sortie_summaries)
         total_kills_flying = total_kills - total_kills_static
-        total_missions = len(sortie_summaries)
+        total_missions = (
+            (detail.get("summary") or {}).get("missions_stats", {}).get("total_missions")
+            or len(sortie_summaries)
+        )
         last_mission_date = max((s["date"] for s in sortie_summaries if s["date"]), default="")
 
         # Final outcome from pilot state
