@@ -1656,13 +1656,13 @@ const DetailPage = {
         if (this.elements.careerBookPdfBtn) {
             this.elements.careerBookPdfBtn.disabled = true;
             this.elements.careerBookPdfBtn.textContent =
-                translateOrFallback('web.message.pdf_generating', 'Generating PDF…');
+                translateOrFallback('web.message.book_pdf_generating', 'Generating book PDF…');
         }
         if (this.elements.bookStatus) {
             this.elements.bookStatus.style.display = '';
             this.elements.bookStatus.className = 'book-status is-generating';
             this.elements.bookStatus.textContent =
-                translateOrFallback('web.message.pdf_generating', 'Generating book PDF…');
+                translateOrFallback('web.message.book_pdf_generating', 'Generating book PDF…');
         }
 
         try {
@@ -1681,7 +1681,7 @@ const DetailPage = {
             if (this.elements.bookStatus) {
                 this.elements.bookStatus.className = 'book-status is-complete';
                 this.elements.bookStatus.textContent =
-                    translateOrFallback('web.message.pdf_generated', 'PDF saved.')
+                    translateOrFallback('web.message.book_pdf_generated', 'Book saved:')
                     + ' ' + (result.abs_path || result.filename);
             }
         } catch (e) {

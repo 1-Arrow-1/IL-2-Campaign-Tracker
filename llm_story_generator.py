@@ -2295,7 +2295,14 @@ def _get_citation_guidance(award_code: str) -> Tuple[str, str]:
 
 
 def _format_award_name(code: str) -> str:
-    """Convert award code to readable display name (fighters_silver → Fighters Silver)."""
+    """Convert award code to readable display name using i18n lookup with title-case fallback."""
+    try:
+        from utils.i18n import t as _t
+        result = _t(f"progression.awards.{code}")
+        if result and not result.startswith("["):
+            return result
+    except Exception:
+        pass
     return _normalize_text(code).replace("_", " ").title()
 
 
@@ -2374,6 +2381,7 @@ def generate_award_citation(
         f"{memory_block}\n"
         f"Write a 2-3 sentence citation in {language_label}. "
         f"Use an authentic, formal military style appropriate to the awarding country and era. "
+        f"The award name is \"{award_display}\" — use this exact name, never abbreviate or shorten it. "
         f"Do not use any of these overused phrases: {banned}. "
         f"Do not use quotation marks or headings. "
         f"Output only the citation text, nothing else."
@@ -2434,7 +2442,10 @@ def generate_book_prologue(
         + "\n".join(f"  - {l}" for l in sq_lines)
     ) if sq_lines else ""
 
-    bio_block = f"\n\nPilot background:\n{pilot_bio}" if _normalize_text(pilot_bio) else ""
+    bio_block = (
+        f"\n\nPilot background (AUTHORITATIVE — this is the pilot's actual character history; "
+        f"you MUST use it as the foundation of the prologue):\n{pilot_bio}"
+    ) if _normalize_text(pilot_bio) else ""
 
     prompt = (
         f"You are writing the opening chapter of a World War II memoir.\n\n"
@@ -2450,15 +2461,22 @@ def generate_book_prologue(
         f"Writing rules:\n"
         f"- Write in third-person past tense.\n"
         f"- Target 450–600 words across 3–4 paragraphs.\n"
-        f"- Introduce the pilot, his origins, what brought him to war, and the world he is entering.\n"
+        f"- CRITICAL: If a pilot background is supplied above, you MUST build the prologue around it. "
+        f"Draw the pilot's character, origins, and path to war DIRECTLY from that background — "
+        f"do not invent a different history. Every key trait, personality detail, and circumstance "
+        f"described in the background must be reflected in the narrative.\n"
         f"- Establish the atmosphere of the opening theatre — geography, season, the mood of the air war.\n"
         f"- You may weave in early squadron events as background texture — fallen or decorated comrades — but do not make them the focus.\n"
         f"- You may write with literary freedom: interior reflection, atmosphere, impressionistic detail. "
         f"Do not invent named people, combat events, or decorations not in the supplied data.\n"
         f"- Do not summarise the whole career — this is the opening, not the overview.\n"
-        f"- Style: write in the manner of Dan Brown — short punchy sentences, tight rhythmic prose, "
-        f"atmospheric tension, every paragraph pulling the reader forward. "
-        f"Use specific sensory detail to ground the scene. Short paragraphs. Forward momentum.\n"
+        f"- STYLE — THIS IS NON-NEGOTIABLE: write exactly like Dan Brown. "
+        f"Short declarative sentences. Never more than 15 words in a sentence. "
+        f"No subordinate clauses stacked on top of each other. "
+        f"Each sentence lands its punch and stops. Each paragraph is 2-4 sentences maximum. "
+        f"Sensory details are precise and physical: smells, sounds, temperatures. "
+        f"Tension is built through brevity, not elaboration. "
+        f"Read the output back — if any sentence is longer than 20 words, cut it.\n"
         f"- Write in {language_label}. Output only the text, no headings or labels."
     )
     client = _get_client(api_key=api_key, base_url=base_url or None)
@@ -2473,10 +2491,13 @@ def generate_theatre_narrative(
     date_to: str,
     missions_in_theatre: int,
     kills_in_theatre: int,
+    kills_static_in_theatre: int = 0,
     awards_in_theatre: list[str],
+    promotions_in_theatre: list[Dict[str, str]] = None,
     squadron_digest: Dict[str, Any],
     pilot_name: str,
     rank: str,
+    squadron_name: str = "",
     mission_stories: list[Dict[str, str]],
     language: str = "en",
     api_key: str,
@@ -2508,6 +2529,12 @@ def generate_theatre_narrative(
         "\nDecorations received in this theatre: " + ", ".join(awards_in_theatre)
     ) if awards_in_theatre else ""
 
+    promotions_block = ""
+    if promotions_in_theatre:
+        promo_parts = [f"{p['date']}: promoted to {p['rank']}" for p in promotions_in_theatre if p.get("rank")]
+        if promo_parts:
+            promotions_block = "\nPromotions during this period: " + "; ".join(promo_parts)
+
     # Build the mission stories block
     stories_lines: list[str] = []
     for ms in mission_stories[:25]:
@@ -2521,12 +2548,36 @@ def generate_theatre_narrative(
         + "\n\n".join(stories_lines)
     ) if stories_lines else ""
 
+    sq_name_line = f"Unit: {squadron_name}\n" if squadron_name else ""
+
+    kills_line = f"Aerial victories (air-to-air): {kills_in_theatre}"
+    if kills_static_in_theatre > 0:
+        kills_line += f"  |  Aircraft destroyed on the ground: {kills_static_in_theatre}"
+    kills_line += "\n"
+
+    static_number_rule = (
+        f"- CRITICAL — numbers: this theatre account covers EXACTLY {missions_in_theatre} missions, "
+        f"EXACTLY {kills_in_theatre} aerial victories (aircraft destroyed in the air), "
+        f"and EXACTLY {kills_static_in_theatre} aircraft destroyed on the ground. "
+        f"'Aerial victories' means air-to-air kills only — do not add ground kills to this figure. "
+        f"Do not round, approximate, or substitute any other number. "
+        f"If you write the figures in words, they must equal exactly these values.\n"
+    ) if kills_static_in_theatre > 0 else (
+        f"- CRITICAL — numbers: this theatre account covers EXACTLY {missions_in_theatre} missions "
+        f"and EXACTLY {kills_in_theatre} confirmed aerial victories. These figures come directly from "
+        f"the pilot's service record and must not be changed. Do not round, approximate, or substitute "
+        f"any other number. If you write the figures in words, they must equal exactly {missions_in_theatre} "
+        f"and {kills_in_theatre} respectively.\n"
+    )
+
     prompt = (
         f"You are writing a chapter of a World War II memoir.\n\n"
         f"This chapter covers {rank} {pilot_name}'s time in {theatre_name} "
         f"({date_from} to {date_to or 'end of service'}).\n\n"
-        f"Missions flown: {missions_in_theatre}  |  Air victories: {kills_in_theatre}\n"
+        f"Missions flown: {missions_in_theatre}  |  {kills_line}"
+        f"{sq_name_line}"
         f"{awards_block}"
+        f"{promotions_block}"
         f"{sq_block}"
         f"{stories_block}\n\n"
         f"Your task:\n"
@@ -2543,7 +2594,12 @@ def generate_theatre_narrative(
         f"- Open with atmosphere — the place, the season, the weight of the operational situation.\n"
         f"- Let the narrative arc build: early missions, mounting pressure, key turning points, how the period resolved.\n"
         f"- Weave in squadron losses and decorations as human texture — not as a list, but as the human cost of the campaign.\n"
-        f"- Do not invent named people, combat events, or decorations not in the supplied data.\n"
+        + (f"- Unit identity: the pilot flew with {squadron_name} during this period. Use the unit name naturally when it fits — on first mention, by name; thereafter by pronoun or 'the unit'. Do not invent a different unit name.\n" if squadron_name else "")
+        + (f"- Rank progression: the pilot entered this period as {rank}. " + ("Promotions occurred: " + "; ".join(f"{p['date']} → {p['rank']}" for p in promotions_in_theatre if p.get("rank")) + ". Address the pilot by their current rank as each promotion occurs — do not use only the opening rank for the entire chapter.\n") if promotions_in_theatre else "")
+        + f"- Do not invent named people, combat events, or decorations not in the supplied data.\n"
+        + static_number_rule
+        + f"- Date constraint: do not describe events outside the period {date_from} to "
+        f"{date_to or 'end of service'}. Do not invent dates beyond this range.\n"
         f"- Style: write in the manner of Dan Brown — short punchy sentences, tight rhythmic prose, "
         f"atmospheric tension, every paragraph pulling the reader forward. "
         f"Specific sensory detail. Short paragraphs. Forward momentum.\n"
@@ -2562,7 +2618,10 @@ def generate_career_epilogue(
     final_outcome: str,
     total_missions: int,
     total_kills: int,
+    total_kills_static: int = 0,
     theatres_served: list[str],
+    theatre_breakdown: list[Dict[str, Any]] = None,
+    squadrons_served: list[str] = None,
     major_awards: list[str],
     last_mission_date: str,
     squadron_digest: Dict[str, Any],
@@ -2594,6 +2653,27 @@ def generate_career_epilogue(
         "The pilot survived the war. Reflect on survival, loss, and what the years of combat cost — not triumphantly, but honestly.",
     )
 
+    sq_served_line = (
+        f"Units served: {', '.join(squadrons_served)}\n"
+    ) if squadrons_served else ""
+
+    breakdown_lines = ""
+    if theatre_breakdown:
+        parts = []
+        for tb in theatre_breakdown:
+            t = tb.get("theatre", "")
+            m = tb.get("missions", 0)
+            k = tb.get("kills_flying", 0)
+            s = tb.get("kills_static", 0)
+            entry = f"  {t}: {m} missions, {k} aerial victories"
+            if s > 0:
+                entry += f", {s} ground kills"
+            parts.append(entry)
+        breakdown_lines = (
+            f"Per-theatre breakdown (AUTHORITATIVE — these figures are exact):\n"
+            + "\n".join(parts) + "\n"
+        )
+
     prompt = (
         f"You are writing the closing chapter of a World War II memoir.\n\n"
         f"This is the epilogue — the final literary reflection on a pilot's war.\n\n"
@@ -2601,8 +2681,11 @@ def generate_career_epilogue(
         f"Country: {country}\n"
         f"Outcome: {final_outcome} — {outcome_note}\n"
         f"Total missions: {total_missions}\n"
-        f"Total air victories: {total_kills}\n"
-        f"Theatres served: {', '.join(theatres_served) if theatres_served else 'Eastern Front'}\n"
+        f"Aerial victories (air-to-air): {total_kills}\n"
+        + (f"Aircraft destroyed on the ground: {total_kills_static}\n" if total_kills_static > 0 else "")
+        + f"Theatres served: {', '.join(theatres_served) if theatres_served else 'Eastern Front'}\n"
+        f"{breakdown_lines}"
+        f"{sq_served_line}"
         f"Major decorations: {', '.join(major_awards) if major_awards else 'none recorded'}\n"
         f"Last mission: {last_mission_date}\n"
         f"{sq_block}\n\n"
@@ -2611,10 +2694,24 @@ def generate_career_epilogue(
         f"- Target 450–600 words across 3–4 paragraphs.\n"
         f"- Reflect on the full arc of the career: what was gained, what was lost, what the war cost.\n"
         f"- Honour the fallen — the squadron names above are real; weave them in as human remembrance.\n"
-        f"- The tone should be elegiac, honest, and human — not triumphant, not melodramatic.\n"
+        + (f"- Units served: the pilot flew with {', '.join(squadrons_served)}. Use these unit names when reflecting on the career — they ground the memoir in real history. Do not invent different unit names.\n" if squadrons_served else "")
+        + f"- The tone should be elegiac, honest, and human — not triumphant, not melodramatic.\n"
         f"- You may write with literary freedom: reflection, memory, atmosphere. "
         f"Do not invent named people, combat events, or decorations not in the supplied data.\n"
-        f"- Style: write in the manner of Dan Brown — short declarative sentences, tight prose, "
+        + (
+            f"- CRITICAL — numbers: the pilot flew EXACTLY {total_missions} combat missions, scored "
+            f"EXACTLY {total_kills} aerial victories (air-to-air), and destroyed EXACTLY {total_kills_static} "
+            f"aircraft on the ground. These figures are taken directly from the service record. "
+            f"Do not derive totals by adding up any other numbers — use what is stated here. "
+            f"'Aerial victories' means air-to-air kills only. Do not round or approximate.\n"
+            if total_kills_static > 0 else
+            f"- CRITICAL — numbers: the pilot flew EXACTLY {total_missions} combat missions and scored "
+            f"EXACTLY {total_kills} confirmed aerial victories. These figures are taken directly from "
+            f"the service record — do not derive totals by adding up any other numbers, do not round "
+            f"or approximate. Any figure other than {total_missions} missions and {total_kills} victories "
+            f"is factually wrong.\n"
+        )
+        + f"- Style: write in the manner of Dan Brown — short declarative sentences, tight prose, "
         f"atmospheric weight in every line. The tone here is elegiac but propulsive; grief with momentum.\n"
         f"- Write in {language_label}. Output only the text, no headings or labels."
     )

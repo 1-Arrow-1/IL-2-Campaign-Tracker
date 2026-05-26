@@ -3486,6 +3486,8 @@ def _career_book_worker(root_career_id: int, detail: dict, settings: dict, pilot
             return starting_rank
 
         total_kills = sum(s["air_kills"] for s in sortie_summaries)
+        total_kills_static = sum(int(s.get("air_kills_static") or 0) for s in sortie_summaries)
+        total_kills_flying = total_kills - total_kills_static
         total_missions = len(sortie_summaries)
         last_mission_date = max((s["date"] for s in sortie_summaries if s["date"]), default="")
 
@@ -3549,10 +3551,9 @@ def _career_book_worker(root_career_id: int, detail: dict, settings: dict, pilot
         all_story_chapters = load_story_chapters_for("career", entry_id)
 
         theatre_narratives = book.setdefault("theatre_narratives", {})
+        theatre_breakdown: list[dict] = []  # collected for epilogue
         for i, seg in enumerate(theatre_segments):
             theatre = seg["theatre"]
-            if theatre_narratives.get(theatre):
-                continue
             date_from = seg["start_date"]
             date_to = theatre_segments[i + 1]["start_date"] if i + 1 < len(theatre_segments) else ""
 
@@ -3564,10 +3565,32 @@ def _career_book_worker(root_career_id: int, detail: dict, settings: dict, pilot
                 s["air_kills"] for s in sortie_summaries
                 if s["date"] >= date_from and (not date_to or s["date"] < date_to)
             )
+            kills_here_static = sum(
+                int(s.get("air_kills_static") or 0) for s in sortie_summaries
+                if s["date"] >= date_from and (not date_to or s["date"] < date_to)
+            )
+            kills_here_flying = kills_here - kills_here_static
+            theatre_breakdown.append({
+                "theatre": theatre,
+                "missions": missions_here,
+                "kills_flying": kills_here_flying,
+                "kills_static": kills_here_static,
+            })
+
+            if theatre_narratives.get(theatre):
+                continue
+
             awards_here = [
                 str(e.get("display_name") or e.get("name") or "").strip()
                 for e in events
                 if e.get("type") == "award"
+                and str(e.get("date") or "") >= date_from
+                and (not date_to or str(e.get("date") or "") < date_to)
+            ]
+            promotions_here = [
+                {"date": str(e.get("date") or ""), "rank": str(e.get("rank") or e.get("rank_code") or "")}
+                for e in events
+                if e.get("type") == "promotion"
                 and str(e.get("date") or "") >= date_from
                 and (not date_to or str(e.get("date") or "") < date_to)
             ]
@@ -3595,11 +3618,14 @@ def _career_book_worker(root_career_id: int, detail: dict, settings: dict, pilot
                     date_from=date_from,
                     date_to=date_to,
                     missions_in_theatre=missions_here,
-                    kills_in_theatre=kills_here,
+                    kills_in_theatre=kills_here_flying,
+                    kills_static_in_theatre=kills_here_static,
                     awards_in_theatre=awards_here,
+                    promotions_in_theatre=promotions_here,
                     squadron_digest=sq_digest,
                     pilot_name=pilot_name,
                     rank=rank_here,
+                    squadron_name=str(seg.get("squadron_name") or ""),
                     mission_stories=mission_stories,
                     **llm_kwargs,
                 )
@@ -3608,9 +3634,23 @@ def _career_book_worker(root_career_id: int, detail: dict, settings: dict, pilot
             except Exception as exc:
                 logger.warning("Book theatre narrative failed for %s: %s", theatre, exc)
 
+        # Reconcile breakdown total with actual mission count (absorbs null-date sorties into last theatre)
+        if theatre_breakdown:
+            assigned = sum(t["missions"] for t in theatre_breakdown)
+            if assigned != total_missions:
+                theatre_breakdown[-1]["missions"] += total_missions - assigned
+
         # ── Epilogue ───────────────────────────────────────────────────────
         if not book.get("epilogue"):
             final_rank = _rank_at(last_mission_date) or starting_rank or "Pilot"
+            # Collect unique squadron names in chronological order
+            seen_sq: set[str] = set()
+            squadrons_served: list[str] = []
+            for seg in theatre_segments:
+                sq = str(seg.get("squadron_name") or "").strip()
+                if sq and sq not in seen_sq:
+                    seen_sq.add(sq)
+                    squadrons_served.append(sq)
             try:
                 book["epilogue"] = generate_career_epilogue(
                     pilot_name=pilot_name,
@@ -3618,8 +3658,11 @@ def _career_book_worker(root_career_id: int, detail: dict, settings: dict, pilot
                     country=str(detail.get("country") or ""),
                     final_outcome=final_outcome,
                     total_missions=total_missions,
-                    total_kills=total_kills,
+                    total_kills=total_kills_flying,
+                    total_kills_static=total_kills_static,
                     theatres_served=theatre_chain,
+                    theatre_breakdown=theatre_breakdown,
+                    squadrons_served=squadrons_served,
                     major_awards=major_awards,
                     last_mission_date=last_mission_date,
                     squadron_digest=sq_digest,
@@ -4797,15 +4840,13 @@ def generate_career_book(root_career_id: int):
         logger.error("Book generate: failed to load career %d: %s", root_career_id, exc, exc_info=True)
         return jsonify({'error': 'Failed to load career', 'detail': str(exc)}), 500
 
-    # Extract pilot bio from personal data (app-context call before thread spawn)
+    # Extract pilot bio — prefer personal data, fall back to game character bio file
     pilot_bio = ""
     try:
         _pd = _load_personal_data()
         if isinstance(_pd, dict):
-            # Personal data keyed by career id or pilot name — try int key first
             _cp = _pd.get(root_career_id) or _pd.get(str(root_career_id)) or {}
             if not _cp:
-                # Fallback: try pilot name key
                 _first = str(detail.get("pilot_first_name") or "").strip()
                 _last = str(detail.get("pilot_last_name") or "").strip()
                 _name_key = f"{_first} {_last}".strip()
@@ -4813,6 +4854,50 @@ def generate_career_book(root_career_id: int):
             pilot_bio = str(_cp.get("bio") or _cp.get("background") or "").strip()
     except Exception:
         pass
+    if not pilot_bio:
+        # Load the game's character bio file (same path as per-mission story generation)
+        try:
+            _db = _career_provider._db
+            _resolver = _career_provider._resolver
+            _career_obj = _resolver.get_career(root_career_id)
+            if _career_obj:
+                _bio_pilot_row = _db.get_pilot_by_id(_career_obj.pilot_id)
+                if _bio_pilot_row:
+                    from campaign_service_record.career.database import PilotDescriptionParser as _PDP2
+                    _bio_id2 = _PDP2.parse_bio_id(_bio_pilot_row["description"] or "")
+                    if _bio_id2:
+                        _raw_bio = _read_pilot_bio(_db.game_dir, _bio_id2,
+                                                   _story_settings.get("story_language", "en"))
+                        if _raw_bio:
+                            import re as _re
+                            # Strip HTML paragraph tags
+                            _raw_bio = _re.sub(r"</?p[^>]*>", " ", _raw_bio).strip()
+                            _raw_bio = _re.sub(r"\s{2,}", " ", _raw_bio)
+                            # Substitute known placeholders with actual pilot data
+                            _bfirst = str(detail.get("pilot_first_name") or "").strip()
+                            _blast = str(detail.get("pilot_last_name") or "").strip()
+                            _bname = f"{_bfirst} {_blast}".strip()
+                            _bsummary = detail.get("summary") or {}
+                            _bprog = _bsummary.get("career_progression") or {}
+                            _bstart_rank = str(_bprog.get("starting_rank") or "")
+                            _bsorties = detail.get("sortie_summaries") or []
+                            _bstart_date = min(
+                                (s["date"] for s in _bsorties if s.get("date")),
+                                default=""
+                            )
+                            _bsegs = detail.get("theatre_segments") or []
+                            _bsquadron = str(
+                                (_bsegs[0].get("squadron_name") or "") if _bsegs else ""
+                            ).strip()
+                            _raw_bio = _raw_bio.replace("$[name]", _bname)
+                            _raw_bio = _raw_bio.replace("$[firstName]", _bfirst)
+                            _raw_bio = _raw_bio.replace("$[startRank]", _bstart_rank)
+                            _raw_bio = _raw_bio.replace("$[startSquadronName]", _bsquadron)
+                            _raw_bio = _raw_bio.replace("$[startDate]", _bstart_date)
+                            # $[age] — leave as-is; LLM will treat it as approximate
+                            pilot_bio = _raw_bio
+        except Exception:
+            logger.exception("Book generate: failed to load game pilot bio")
 
     # Clear any existing book state so every generation is a full rebuild
     entry_id = str(root_career_id)

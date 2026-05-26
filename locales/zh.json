@@ -1251,6 +1251,8 @@
       "pdf_generated": "PDF 报告已保存：",
       "pdf_failed": "PDF 生成失败：",
       "pdf_generating": "正在生成 PDF 报告…",
+      "book_pdf_generating": "正在生成书籍 PDF…",
+      "book_pdf_generated": "书籍已保存：",
       "pdf_ready": "PDF 已准备好下载",
       "personal_data": "个人信息",
       "update_pilot_photo_data": "更新飞行员照片与个人数据"

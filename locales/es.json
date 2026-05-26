@@ -1251,6 +1251,8 @@
       "pdf_generated": "Informe PDF guardado:",
       "pdf_failed": "Error al generar el PDF:",
       "pdf_generating": "Generando informe PDF…",
+      "book_pdf_generating": "Generando PDF del libro…",
+      "book_pdf_generated": "Libro guardado:",
       "pdf_ready": "PDF listo para descargar",
       "personal_data": "Datos personales",
       "update_pilot_photo_data": "Actualizar foto del piloto y datos personales"

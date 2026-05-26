@@ -151,10 +151,11 @@ def _citations_for_theatre(
     citations: dict,
     start_date: str,
     end_date: str,
-) -> list[tuple[str, str]]:
-    """Return [(award_name_key, citation_text)] for citations in this theatre's date range."""
+) -> list[tuple[str, str, str]]:
+    """Return [(award_name_key, citation_text, date)] for citations in this theatre's date range,
+    sorted chronologically."""
     result = []
-    for key, text in sorted(citations.items()):
+    for key, text in citations.items():
         if not key.startswith("award|"):
             continue
         parts = key.split("|")
@@ -167,7 +168,8 @@ def _citations_for_theatre(
             continue
         if end_date and date_part >= end_date:
             continue
-        result.append((award_name, _safe(text)))
+        result.append((award_name, _safe(text), date_part))
+    result.sort(key=lambda x: (x[2], x[0]))  # sort by date, then name as tiebreaker
     return result
 
 
@@ -383,8 +385,9 @@ def _build_book_flowables(
             flowables.append(Spacer(1, 8 * mm))
             flowables.append(hr())
             flowables.append(Paragraph("Decorations & Citations", sty["appendix_hdr"]))
-            for award_name, citation_text in theatre_citations:
-                display = _safe(_award_display_name(award_name) or award_name)
+            for award_name, citation_text, award_date in theatre_citations:
+                name_display = _safe(_award_display_name(award_name) or award_name)
+                display = f"{name_display}  —  {award_date}" if award_date else name_display
                 cit_block: list = [
                     Paragraph(display, sty["citation_hdr"]),
                 ]

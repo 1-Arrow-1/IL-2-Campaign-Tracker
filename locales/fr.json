@@ -1252,6 +1252,8 @@
       "pdf_generated": "Rapport PDF enregistré :",
       "pdf_failed": "Échec de la génération du PDF :",
       "pdf_generating": "Génération du rapport PDF…",
+      "book_pdf_generating": "Génération du PDF du livre…",
+      "book_pdf_generated": "Livre enregistré :",
       "pdf_ready": "PDF prêt au téléchargement",
       "personal_data": "Données personnelles",
       "update_pilot_photo_data": "Mettre à jour la photo & les données personnelles du pilote"

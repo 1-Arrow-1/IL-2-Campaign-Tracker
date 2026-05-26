@@ -383,6 +383,7 @@ class CareerAggregator:
             {
                 "start_date": self._format_date(row["startDate"]) or "",
                 "theatre": label,
+                "squadron_name": self._resolve_squadron_name(int(row["squadronId"] or 0)) or "",
             }
             for row, label in zip(career.chain, career.theatre_labels)
         ]
@@ -398,6 +399,7 @@ class CareerAggregator:
                         + int(s["killHeavyPlane"] or 0)
                         + int(s["killStaticPlane"] or 0)
                     ),
+                    "air_kills_static": int(s["killStaticPlane"] or 0),
                 }
                 for s in sorties
             ],

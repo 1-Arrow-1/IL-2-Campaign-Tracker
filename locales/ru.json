@@ -1251,6 +1251,8 @@
       "pdf_generated": "PDF-отчёт сохранён:",
       "pdf_failed": "Ошибка создания PDF:",
       "pdf_generating": "Создание PDF-отчёта…",
+      "book_pdf_generating": "Создание PDF книги…",
+      "book_pdf_generated": "Книга сохранена:",
       "pdf_ready": "PDF готов к скачиванию",
       "personal_data": "Личные данные",
       "update_pilot_photo_data": "Обновить фото и личные данные пилота"

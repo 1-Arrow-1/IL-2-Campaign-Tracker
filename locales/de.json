@@ -1251,6 +1251,8 @@
       "pdf_generated": "PDF-Bericht gespeichert:",
       "pdf_failed": "PDF-Erstellung fehlgeschlagen:",
       "pdf_generating": "PDF-Bericht wird erstellt…",
+      "book_pdf_generating": "Buch-PDF wird erstellt…",
+      "book_pdf_generated": "Buch gespeichert:",
       "pdf_ready": "PDF bereit zum Download",
       "personal_data": "Personendaten",
       "update_pilot_photo_data": "Pilotenfoto & Personendaten aktualisieren"

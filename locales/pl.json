@@ -1251,6 +1251,8 @@
       "pdf_generated": "Raport PDF zapisany:",
       "pdf_failed": "Nie udało się wygenerować PDF:",
       "pdf_generating": "Generowanie raportu PDF…",
+      "book_pdf_generating": "Generowanie PDF książki…",
+      "book_pdf_generated": "Książka zapisana:",
       "pdf_ready": "PDF gotowy do pobrania",
       "personal_data": "Dane osobowe",
       "update_pilot_photo_data": "Zaktualizuj zdjęcie i dane osobowe pilota"

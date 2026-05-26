@@ -1271,6 +1271,8 @@
       "pdf_generated": "PDF report saved:",
       "pdf_failed": "PDF generation failed:",
       "pdf_generating": "Generating PDF report…",
+      "book_pdf_generating": "Generating book PDF…",
+      "book_pdf_generated": "Book saved:",
       "pdf_ready": "PDF ready for download",
       "personal_data": "Personal Data",
       "story_generation_up_to_date": "Stories are already up to date.",
