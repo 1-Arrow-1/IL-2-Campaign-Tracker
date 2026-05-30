@@ -2239,6 +2239,59 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             contexts.append(fallback_input)
             continue
 
+    # ── Trailing gap-day chapters (after the last flying day) ────────────────
+    # The in-loop gap handler only fires when a *new* flying day is detected,
+    # so non-flying days that fall AFTER the last sortie are never processed.
+    # This handles that tail: e.g. the player stopped flying at the end of a
+    # theatre but squadron mates kept flying for days afterward.
+    try:
+        if _prev_chapter_date and (_ima_unflown_sorties or _ima_all_member_events):
+            _trailing_gap_dates: list[str] = sorted({
+                aggregator._format_date(s["date"]) or ""
+                for s in _ima_unflown_sorties
+                if (aggregator._format_date(s["date"]) or "") > _prev_chapter_date
+            } - {""})
+            for _gap_date in _trailing_gap_dates:
+                _gap_acts = _build_inter_mission_activities(
+                    _ima_unflown_sorties, _ima_all_member_events,
+                    _ima_member_by_id, _ima_member_rank_by_id,
+                    aggregator, career,
+                    date_from=_gap_date,
+                    date_to=_gap_date,
+                    same_day=True,
+                    include_events=True,
+                    story_language=story_language,
+                )
+                if not _gap_acts:
+                    continue
+                _total_chapter_order += 1
+                _gap_ctx = _build_gap_day_chapter_context(
+                    gap_date=_gap_date,
+                    gap_activity=_gap_acts[0],
+                    career=career,
+                    root_career_id=root_career_id,
+                    segment_index=_prev_segment_index,
+                    squadron_name=squadron_name if mission_rows else "",
+                    mission_theatre=mission_theatre if mission_rows else "",
+                    mission_location=mission_location if mission_rows else "",
+                    rank=_last_rank_after_chapter,
+                    awards=_last_awards_after_chapter,
+                    total_chapter_order=_total_chapter_order,
+                    missions_completed=len(mission_rows),
+                    accumulated_air_kills=_accumulated_air_kills,
+                    narrative_memory=_narrative_memory,
+                    llm_config=llm_config,
+                )
+                _narrative_memory = update_narrative_memory_local(_gap_ctx, _narrative_memory)
+                contexts.append(_gap_ctx)
+                logger.debug(
+                    "Trailing gap chapter generated for career %s date %s (chapter order %d)",
+                    root_career_id, _gap_date, _total_chapter_order,
+                )
+    except Exception as _trailing_err:
+        logger.debug("Trailing gap-day chapter generation failed: %s", _trailing_err)
+    # ───────────────────────────────────────────────────────────────────────
+
     return contexts
 
 
