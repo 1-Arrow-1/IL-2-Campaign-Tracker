@@ -1415,6 +1415,128 @@ def _build_inter_mission_activities(
     return activities
 
 
+def _build_pilot_entries_from_sorties(
+    sorties: list,
+    member_by_id: dict,
+    member_rank_by_id: dict,
+) -> list[dict]:
+    """Build a per-pilot list from raw sortie rows for an unflown mission chapter."""
+    entries: list[dict] = []
+    seen: set = set()
+    for sortie in sorties:
+        pid = int(sortie["pilotId"])
+        if pid in seen:
+            continue
+        seen.add(pid)
+        name = member_by_id.get(pid, "")
+        if not name:
+            continue
+        rank = member_rank_by_id.get(pid, "")
+        status = int(sortie["status"] or 0)
+        if status == 2:
+            outcome = "KIA"
+        elif status == 3:
+            outcome = "MIA"
+        elif status == 4:
+            outcome = "WIA"
+        else:
+            outcome = "survived"
+        air_kills = (
+            int(sortie["killLightPlane"] or 0)
+            + int(sortie["killMediumPlane"] or 0)
+            + int(sortie["killHeavyPlane"] or 0)
+            + int(sortie["killStaticPlane"] or 0)
+        )
+        ground_kills = (
+            int(sortie["killTruck"] or 0)
+            + int(sortie["killCar"] or 0)
+            + int(sortie["killLightTank"] or 0)
+            + int(sortie["killMediumTank"] or 0)
+            + int(sortie["killHeavyTank"] or 0)
+        )
+        entry: dict = {"name": name, "outcome": outcome}
+        if rank:
+            entry["rank"] = rank
+        if air_kills > 0:
+            entry["air_kills"] = air_kills
+        if ground_kills > 0:
+            entry["ground_kills"] = ground_kills
+        entries.append(entry)
+    # Casualties first, then highest scorers
+    entries.sort(key=lambda e: (
+        0 if e["outcome"] in ("KIA", "MIA", "WIA") else 1,
+        -(int(e.get("air_kills", 0)) + int(e.get("ground_kills", 0))),
+    ))
+    return entries
+
+
+def _build_unflown_mission_chapter_context(
+    mission_id_int: int,
+    mission_date: str,
+    pilot_entries: list[dict],
+    career,
+    root_career_id: int,
+    segment_index: int,
+    squadron_name: str,
+    mission_theatre: str,
+    mission_location: str,
+    rank: str,
+    awards: list,
+    total_chapter_order: int,
+    missions_completed: int,
+    accumulated_air_kills: int,
+    narrative_memory: dict,
+    llm_config: Optional[dict] = None,
+) -> dict:
+    """Build a story-input dict for a sortie the player was not assigned to."""
+    pilot_name = " ".join(
+        part for part in (career.pilot_first_name, career.pilot_last_name) if part
+    ).strip()
+    chapter_mission_id = f"unflown-{mission_id_int}"
+    ctx: dict = {
+        "career_id": root_career_id,
+        "mission_id": chapter_mission_id,
+        "date": mission_date,
+        "pilot": {
+            "name": pilot_name,
+            "last_name": career.pilot_last_name or "",
+            "rank": rank,
+            "squadron": squadron_name,
+            "country": career.country or "",
+        },
+        "mission": {
+            "id": chapter_mission_id,
+            "date": mission_date,
+            "theatre": mission_theatre,
+            "location": mission_location,
+            "result": "Did Not Fly",
+            "notable_events": [],
+            "other_incidences": [],
+        },
+        "unflown_mission": {
+            "pilot_entries": pilot_entries,
+        },
+        "honors_context": {"promotion": {}, "awards": []},
+        "career_progress": {
+            "missions_completed": missions_completed,
+            "aerial_victories": accumulated_air_kills,
+            "awards": list(awards),
+        },
+        "narrative_memory": dict(narrative_memory),
+        "chapter_scope": {
+            "scope": "unflown_mission",
+            "missions_in_chapter": 0,
+            "mission_ids": [str(mission_id_int)],
+            "mission_results": ["Unflown"],
+        },
+        "career_segment_index": segment_index,
+        "career_mission_order": total_chapter_order,
+    }
+    if llm_config:
+        ctx["llm_config"] = llm_config
+    return ctx
+
+
 def _build_gap_day_chapter_context(
     gap_date: str,
     gap_activity: dict,
@@ -1766,31 +1888,25 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             # segment but BEFORE the new segment's first mission are invisible to
             # the in-loop gap handler (it fires on the next flying day, but by
             # then the cache has already been reset to the new squadron's data).
-            if _prev_chapter_date and (_ima_unflown_sorties or _ima_all_member_events):
-                _seg_trail_dates: list[str] = sorted({
-                    aggregator._format_date(s["date"]) or ""
-                    for s in _ima_unflown_sorties
-                    if (aggregator._format_date(s["date"]) or "") > _prev_chapter_date
-                    and (not mission_date or (aggregator._format_date(s["date"]) or "") < mission_date)
-                } - {""})
-                for _seg_gap_date in _seg_trail_dates:
+            if _prev_chapter_date and _ima_unflown_sorties:
+                _seg_trail_missions: dict[int, list] = {}
+                for _s in _ima_unflown_sorties:
+                    _sd = aggregator._format_date(_s["date"]) or ""
+                    if _sd > _prev_chapter_date and (not mission_date or _sd < mission_date):
+                        _seg_trail_missions.setdefault(int(_s["missionId"]), []).append(_s)
+                for _seg_trail_mid, _seg_trail_sorties in sorted(_seg_trail_missions.items()):
                     try:
-                        _gap_acts = _build_inter_mission_activities(
-                            _ima_unflown_sorties, _ima_all_member_events,
-                            _ima_member_by_id, _ima_member_rank_by_id,
-                            aggregator, career,
-                            date_from=_seg_gap_date,
-                            date_to=_seg_gap_date,
-                            same_day=True,
-                            include_events=True,
-                            story_language=story_language,
+                        _seg_trail_date = aggregator._format_date(_seg_trail_sorties[0]["date"]) or ""
+                        _pilot_entries = _build_pilot_entries_from_sorties(
+                            _seg_trail_sorties, _ima_member_by_id, _ima_member_rank_by_id
                         )
-                        if not _gap_acts:
+                        if not _pilot_entries:
                             continue
                         _total_chapter_order += 1
-                        _gap_ctx = _build_gap_day_chapter_context(
-                            gap_date=_seg_gap_date,
-                            gap_activity=_gap_acts[0],
+                        _gap_ctx = _build_unflown_mission_chapter_context(
+                            mission_id_int=_seg_trail_mid,
+                            mission_date=_seg_trail_date,
+                            pilot_entries=_pilot_entries,
                             career=career,
                             root_career_id=root_career_id,
                             segment_index=_prev_segment_index,
@@ -1808,11 +1924,11 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                         _narrative_memory = update_narrative_memory_local(_gap_ctx, _narrative_memory)
                         contexts.append(_gap_ctx)
                         logger.debug(
-                            "Segment-trailing gap chapter for career %s date %s (chapter order %d)",
-                            root_career_id, _seg_gap_date, _total_chapter_order,
+                            "Segment-trailing unflown mission chapter for career %s mission %d (order %d)",
+                            root_career_id, _seg_trail_mid, _total_chapter_order,
                         )
                     except Exception as _st_err:
-                        logger.debug("Segment-trailing gap chapter failed for %s: %s", _seg_gap_date, _st_err)
+                        logger.debug("Segment-trailing unflown chapter failed for mission %d: %s", _seg_trail_mid, _st_err)
             # ─────────────────────────────────────────────────────────────────────
             _ima_segment_player_id = _seg_player_id
             _ima_squadron_id = _seg_squadron_id
@@ -1945,35 +2061,32 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
         is_last_sortie_of_day = not next_row or _normalize_story_text(next_row.get("mission_date")) != mission_date
         _is_first_of_new_day = bool(_prev_chapter_date) and mission_date != _prev_chapter_date
 
-        # ── Gap-day chapter generation + inter-mission activity computation ───────
+        # ── Unflown mission chapters (gap days + same-day) ───────────────────────
+        # Each squadron sortie the player didn't fly gets its own chapter, keyed by
+        # missionId, with per-pilot kill/casualty data instead of aggregate totals.
         _inter_mission_activities: list[dict] = []
+        _same_day_unflown_missions: dict[int, list] = {}
         try:
-            if _ima_unflown_sorties or _ima_all_member_events:
+            if _ima_unflown_sorties:
                 if _is_first_of_new_day and not _theatre_transition:
-                    # Find all gap dates (squadron flew, player didn't).
-                    _gap_dates: list[str] = sorted({
-                        aggregator._format_date(s["date"]) or ""
-                        for s in _ima_unflown_sorties
-                        if (aggregator._format_date(s["date"]) or "") > _prev_chapter_date
-                        and (aggregator._format_date(s["date"]) or "") < mission_date
-                    } - {""})
-                    for _gap_date in _gap_dates:
-                        _gap_acts = _build_inter_mission_activities(
-                            _ima_unflown_sorties, _ima_all_member_events,
-                            _ima_member_by_id, _ima_member_rank_by_id,
-                            aggregator, career,
-                            date_from=_gap_date,
-                            date_to=_gap_date,
-                            same_day=True,
-                            include_events=True,
-                            story_language=story_language,
+                    # Gap missions: between _prev_chapter_date and today (exclusive).
+                    _gap_missions: dict[int, list] = {}
+                    for _s in _ima_unflown_sorties:
+                        _sd = aggregator._format_date(_s["date"]) or ""
+                        if _sd > _prev_chapter_date and _sd < mission_date:
+                            _gap_missions.setdefault(int(_s["missionId"]), []).append(_s)
+                    for _gap_mid, _gap_sorties in sorted(_gap_missions.items()):
+                        _gap_date = aggregator._format_date(_gap_sorties[0]["date"]) or ""
+                        _pilot_entries = _build_pilot_entries_from_sorties(
+                            _gap_sorties, _ima_member_by_id, _ima_member_rank_by_id
                         )
-                        if not _gap_acts:
+                        if not _pilot_entries:
                             continue
                         _total_chapter_order += 1
-                        _gap_ctx = _build_gap_day_chapter_context(
-                            gap_date=_gap_date,
-                            gap_activity=_gap_acts[0],
+                        _gap_ctx = _build_unflown_mission_chapter_context(
+                            mission_id_int=_gap_mid,
+                            mission_date=_gap_date,
+                            pilot_entries=_pilot_entries,
                             career=career,
                             root_career_id=root_career_id,
                             segment_index=segment_index,
@@ -1991,22 +2104,17 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                         _narrative_memory = update_narrative_memory_local(_gap_ctx, _narrative_memory)
                         contexts.append(_gap_ctx)
                         logger.debug(
-                            "Gap chapter generated for career %s date %s (chapter order %d)",
-                            root_career_id, _gap_date, _total_chapter_order,
+                            "Unflown mission chapter for career %s mission %d date %s (order %d)",
+                            root_career_id, _gap_mid, _gap_date, _total_chapter_order,
                         )
                 if is_last_sortie_of_day:
-                    _same_acts = _build_inter_mission_activities(
-                        _ima_unflown_sorties, _ima_all_member_events,
-                        _ima_member_by_id, _ima_member_rank_by_id,
-                        aggregator, career,
-                        date_from=mission_date,
-                        date_to=mission_date,
-                        same_day=True,
-                        story_language=story_language,
-                    )
-                    _inter_mission_activities.extend(_same_acts)
+                    # Collect same-day unflown missions; chapters appended after player chapter.
+                    for _s in _ima_unflown_sorties:
+                        _sd = aggregator._format_date(_s["date"]) or ""
+                        if _sd == mission_date:
+                            _same_day_unflown_missions.setdefault(int(_s["missionId"]), []).append(_s)
         except Exception as _ima_err:
-            logger.debug("Inter-mission activities failed for mission %s: %s", mission_id, _ima_err)
+            logger.debug("Unflown mission chapters failed for mission %s: %s", mission_id, _ima_err)
         # ───────────────────────────────────────────────────────────────────────
 
         try:
@@ -2290,43 +2398,76 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 fallback_input["pilot"]["name"] = pilot_name
             _prev_chapter_date = mission_date
             contexts.append(fallback_input)
-            continue
+            # Fall through to same-day unflown chapter generation below.
 
-    # ── Trailing gap-day chapters (after the last flying day) ────────────────
-    # The in-loop gap handler only fires when a *new* flying day is detected,
-    # so non-flying days that fall AFTER the last sortie are never processed.
-    # This handles that tail: e.g. the player stopped flying at the end of a
-    # theatre but squadron mates kept flying for days afterward.
-    try:
-        if _prev_chapter_date and (_ima_unflown_sorties or _ima_all_member_events):
-            _trailing_gap_dates: list[str] = sorted({
-                aggregator._format_date(s["date"]) or ""
-                for s in _ima_unflown_sorties
-                if (aggregator._format_date(s["date"]) or "") > _prev_chapter_date
-            } - {""})
-            for _gap_date in _trailing_gap_dates:
-                _gap_acts = _build_inter_mission_activities(
-                    _ima_unflown_sorties, _ima_all_member_events,
-                    _ima_member_by_id, _ima_member_rank_by_id,
-                    aggregator, career,
-                    date_from=_gap_date,
-                    date_to=_gap_date,
-                    same_day=True,
-                    include_events=True,
-                    story_language=story_language,
+        # ── Same-day unflown mission chapters (sequential, after player's chapter) ──
+        try:
+            for _sd_mid, _sd_sorties in sorted(_same_day_unflown_missions.items()):
+                _pilot_entries = _build_pilot_entries_from_sorties(
+                    _sd_sorties, _ima_member_by_id, _ima_member_rank_by_id
                 )
-                if not _gap_acts:
+                if not _pilot_entries:
                     continue
                 _total_chapter_order += 1
-                _gap_ctx = _build_gap_day_chapter_context(
-                    gap_date=_gap_date,
-                    gap_activity=_gap_acts[0],
+                _sd_ctx = _build_unflown_mission_chapter_context(
+                    mission_id_int=_sd_mid,
+                    mission_date=mission_date,
+                    pilot_entries=_pilot_entries,
+                    career=career,
+                    root_career_id=root_career_id,
+                    segment_index=segment_index,
+                    squadron_name=_normalize_story_text(row["squadron_name"]),
+                    mission_theatre=mission_theatre,
+                    mission_location=mission_location,
+                    rank=_last_rank_after_chapter,
+                    awards=_last_awards_after_chapter,
+                    total_chapter_order=_total_chapter_order,
+                    missions_completed=mission_index,
+                    accumulated_air_kills=_accumulated_air_kills,
+                    narrative_memory=_narrative_memory,
+                    llm_config=llm_config,
+                )
+                _narrative_memory = update_narrative_memory_local(_sd_ctx, _narrative_memory)
+                contexts.append(_sd_ctx)
+                logger.debug(
+                    "Same-day unflown mission chapter for career %s mission %d (order %d)",
+                    root_career_id, _sd_mid, _total_chapter_order,
+                )
+        except Exception as _sd_err:
+            logger.debug("Same-day unflown chapters failed: %s", _sd_err)
+        # ───────────────────────────────────────────────────────────────────────
+
+    # ── Trailing unflown mission chapters (after the last flying day) ────────
+    # Sorties the squadron flew after the player's last mission — career end or
+    # theatre end — never get picked up by the in-loop handler.
+    try:
+        if _prev_chapter_date and _ima_unflown_sorties:
+            _trailing_missions: dict[int, list] = {}
+            for _s in _ima_unflown_sorties:
+                _sd = aggregator._format_date(_s["date"]) or ""
+                if _sd > _prev_chapter_date:
+                    _trailing_missions.setdefault(int(_s["missionId"]), []).append(_s)
+            _trail_sq_name = squadron_name if mission_rows else ""
+            _trail_theatre = mission_theatre if mission_rows else ""
+            _trail_location = mission_location if mission_rows else ""
+            for _trail_mid, _trail_sorties in sorted(_trailing_missions.items()):
+                _trail_date = aggregator._format_date(_trail_sorties[0]["date"]) or ""
+                _pilot_entries = _build_pilot_entries_from_sorties(
+                    _trail_sorties, _ima_member_by_id, _ima_member_rank_by_id
+                )
+                if not _pilot_entries:
+                    continue
+                _total_chapter_order += 1
+                _trail_ctx = _build_unflown_mission_chapter_context(
+                    mission_id_int=_trail_mid,
+                    mission_date=_trail_date,
+                    pilot_entries=_pilot_entries,
                     career=career,
                     root_career_id=root_career_id,
                     segment_index=_prev_segment_index,
-                    squadron_name=squadron_name if mission_rows else "",
-                    mission_theatre=mission_theatre if mission_rows else "",
-                    mission_location=mission_location if mission_rows else "",
+                    squadron_name=_trail_sq_name,
+                    mission_theatre=_trail_theatre,
+                    mission_location=_trail_location,
                     rank=_last_rank_after_chapter,
                     awards=_last_awards_after_chapter,
                     total_chapter_order=_total_chapter_order,
@@ -2335,14 +2476,14 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                     narrative_memory=_narrative_memory,
                     llm_config=llm_config,
                 )
-                _narrative_memory = update_narrative_memory_local(_gap_ctx, _narrative_memory)
-                contexts.append(_gap_ctx)
+                _narrative_memory = update_narrative_memory_local(_trail_ctx, _narrative_memory)
+                contexts.append(_trail_ctx)
                 logger.debug(
-                    "Trailing gap chapter generated for career %s date %s (chapter order %d)",
-                    root_career_id, _gap_date, _total_chapter_order,
+                    "Trailing unflown mission chapter for career %s mission %d (order %d)",
+                    root_career_id, _trail_mid, _total_chapter_order,
                 )
     except Exception as _trailing_err:
-        logger.debug("Trailing gap-day chapter generation failed: %s", _trailing_err)
+        logger.debug("Trailing unflown mission chapter generation failed: %s", _trailing_err)
     # ───────────────────────────────────────────────────────────────────────
 
     return contexts
@@ -4220,10 +4361,53 @@ def generate_stories(source: str, entry_id: str):
         if not contexts:
             return jsonify({'error': 'No mission data is available for story generation yet.'}), 400
 
+        payload = request.get_json(silent=True) if request.is_json else {}
+        if not isinstance(payload, dict):
+            payload = {}
+        try:
+            max_chapters = int(payload.get("max_chapters", 1) or 1)
+        except (TypeError, ValueError):
+            max_chapters = 1
+        max_chapters = max(1, min(max_chapters, 10))
+
+        # Unflown mission chapters are strictly opt-in (include_unflown=true).
+        # They are never auto-generated and do not count towards "remaining".
+        include_unflown = bool(payload.get("include_unflown", False))
+        _generate_unflown = include_unflown
+
         if source == "career":
+            # Load existing chapters before reindexing so we can clean up any
+            # unflown chapters that were retroactively auto-generated by v3.1.2.
+            existing_chapters = load_story_chapters_for(source, storage_entry_id)
+
+            if not _generate_unflown:
+                # Remove any unflown-* chapters that were incorrectly auto-generated
+                # (they displace legacy gap-day chapters from their correct positions).
+                _retro_ids = [
+                    str(ch.get("mission_id") or "")
+                    for ch in existing_chapters
+                    if str(ch.get("mission_id") or "").startswith("unflown-")
+                    and _is_valid_story_text(ch.get("story_text"))
+                ]
+                for _rid in _retro_ids:
+                    delete_story_chapter_for(source, storage_entry_id, _rid)
+                if _retro_ids:
+                    logger.info(
+                        "Removed %d retroactively auto-generated unflown chapters for career %s",
+                        len(_retro_ids), storage_entry_id,
+                    )
+                    existing_chapters = load_story_chapters_for(source, storage_entry_id)
+
+            # Build the reindex order map from only the contexts relevant to the
+            # current mode. Excluding unflown contexts when not opted-in preserves
+            # the ordering of legacy gap-day chapters relative to player chapters.
+            _order_contexts = contexts if _generate_unflown else [
+                c for c in contexts
+                if (c.get("chapter_scope") or {}).get("scope") != "unflown_mission"
+            ]
             mission_order_map: dict[str, int] = {}
             mission_segment_map: dict[str, int] = {}
-            for order_idx, context in enumerate(contexts, start=1):
+            for order_idx, context in enumerate(_order_contexts, start=1):
                 mission_key = _normalize_story_text(context.get("mission_id"))
                 if not mission_key:
                     continue
@@ -4238,17 +4422,11 @@ def generate_stories(source: str, entry_id: str):
                     mission_order_map,
                     mission_segment_map,
                 )
+            # Reload after reindex (filenames changed).
+            existing_chapters = load_story_chapters_for(source, storage_entry_id)
+        else:
+            existing_chapters = load_story_chapters_for(source, storage_entry_id)
 
-        payload = request.get_json(silent=True) if request.is_json else {}
-        if not isinstance(payload, dict):
-            payload = {}
-        try:
-            max_chapters = int(payload.get("max_chapters", 1) or 1)
-        except (TypeError, ValueError):
-            max_chapters = 1
-        max_chapters = max(1, min(max_chapters, 10))
-
-        existing_chapters = load_story_chapters_for(source, storage_entry_id)
         existing_story_keys: set[str] = set()
         existing_story_canonical_keys: set[str] = set()
         for chapter in existing_chapters:
@@ -4267,8 +4445,14 @@ def generate_stories(source: str, entry_id: str):
                     day_key = _normalize_story_text(mission_key.split(":", 1)[1])
                     if re.fullmatch(r"\d{4}-\d{2}-\d{2}", day_key):
                         existing_story_keys.add(f"date:{day_key}")
+
         missing_contexts: list[dict] = []
         for context in contexts:
+            # Skip unflown mission chapters unless opted-in.
+            if not _generate_unflown:
+                if (context.get("chapter_scope") or {}).get("scope") == "unflown_mission":
+                    continue
+
             mission_key = str(context.get("mission_id"))
             mission_canonical = _canonical_mission_id(mission_key)
             if mission_key in existing_story_keys or (mission_canonical and mission_canonical in existing_story_canonical_keys):

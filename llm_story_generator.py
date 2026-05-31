@@ -1568,6 +1568,10 @@ def generate_mission_story(
         isinstance(story_input, dict)
         and (story_input.get("chapter_scope") or {}).get("scope") == "squadron_day"
     )
+    _is_unflown_mission = (
+        isinstance(story_input, dict)
+        and (story_input.get("chapter_scope") or {}).get("scope") == "unflown_mission"
+    )
     _has_squadron_honors = bool(
         _sq_ctx.get("promotions") or _sq_ctx.get("awards")
         or _sq_ctx.get("kia") or _sq_ctx.get("mia") or _sq_ctx.get("wia")
@@ -1589,6 +1593,10 @@ def generate_mission_story(
         paragraph_rule = "Write exactly 3 paragraphs."
         word_target = "Target 160-320 words."
         max_output_tokens = 850
+    elif _is_unflown_mission:
+        paragraph_rule = "Write exactly 2 paragraphs."
+        word_target = "Target 100-200 words."
+        max_output_tokens = 550
     elif missions_in_chapter <= 1:
         if _has_theatre_transition:
             paragraph_rule = "Write exactly 4 paragraphs."
@@ -1688,12 +1696,13 @@ def generate_mission_story(
         "If lost > 0, treat it as a mission setback even if the pilot himself scored kills. "
         "If lost == 0, the escort was a success and can be described as such. "
         "Do not invent specifics beyond what escort_context provides.\n"
-        "- If inter_mission_activities is non-empty, weave the squadron's off-day or concurrent sorties into the narrative. "
+        "- If inter_mission_activities is non-empty, weave the squadron's off-day or additional sorties into the narrative. "
         "Entries with same_day=false occurred between the previous chapter and this one — reference them as prior events "
         "('During the intervening days ...', 'While the pilot was grounded, the squadron ...', etc.). "
-        "Entries with same_day=true occurred on the same date as the player's mission — these are sorties that other squadron members "
-        "flew that day. Frame them as part of the same day's operations, not as a wholly separate event: "
-        "('Later that same day ...', 'Elsewhere over the front that day ...', 'While the formation was returning ...', etc.). "
+        "Entries with same_day=true are sorties that other squadron members flew on the same calendar day — "
+        "these are SEQUENTIAL, not simultaneous: they took place either earlier or later that day, in a separate sortie the player was not assigned to. "
+        "Frame them as another sortie that day, not as something happening at the same moment as the player's mission: "
+        "('Later that day, the squadron flew another sortie ...', 'Earlier that morning, before the pilot's mission ...', 'That same day, a second sortie was mounted ...', etc.). "
         "Acknowledge casualties (KIA/MIA/WIA) by name if present; treat them with the same weight as squadron_context casualties. "
         "Note squadron_air_kills if significant. "
         "IMPORTANT: do NOT duplicate any pilot already named in squadron_context.kia/mia/wia/flight_results. "
@@ -1735,6 +1744,16 @@ def generate_mission_story(
         "If only missions_flown is available (no kills, no casualties), briefly note that the squadron flew without incident. "
         "Paragraph 3: the pilot's reflection on the day — a quiet, grounded close. "
         "Do not present this as a combat sortie. Do not invent mission objectives or enemy activity not in the data.\n"
+        "- If chapter_scope.scope is 'unflown_mission', the pilot was not assigned to this specific sortie. "
+        "Write exactly 2 short paragraphs from the pilot's perspective at the airfield. "
+        "Paragraph 1: the pilot's situation — not on this sortie (be very brief, do not invent a specific reason). "
+        "Paragraph 2: what happened on this sortie, drawn from unflown_mission.pilot_entries. "
+        "CRITICAL RULE: you MUST name individual pilots by name (and rank if present) when attributing kills or casualties. "
+        "Never write 'the squadron destroyed X aircraft' — always say who did it: 'Feldwebel Schmidt shot down two Soviet fighters'. "
+        "For each pilot_entry with air_kills > 0 or ground_kills > 0, name them and their score. "
+        "For each pilot_entry with outcome KIA/MIA/WIA, name them and state their fate explicitly. "
+        "Pilots with outcome 'survived' and no kills need not be mentioned individually. "
+        "Do not invent mission objectives, targets, or enemy details not present in the data.\n"
         "- If mission duration is mentioned, use only hours and minutes (no seconds).\n"
         f"- Write the entire chapter in {language_label}.\n"
         f"- {paragraph_rule}\n"
