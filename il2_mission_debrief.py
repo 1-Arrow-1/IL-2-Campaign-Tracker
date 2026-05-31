@@ -1115,18 +1115,20 @@ class MissionDebriefParser:
                 victim_country and attacker_country and victim_country == attacker_country
             )
 
-            # Pattern A collision: both aircraft destroyed at the same tick
+            # Pattern A collision: both aircraft destroyed within ~1 s of each other.
+            # IL-2 logs collision AType:3 events for each aircraft separately, so
+            # they rarely share the exact same tick — allow ±50 ticks (1 s at 50 Hz).
             attacker_destroy_tick = self._all_destroyed_ticks.get(a)
-            both_died_same_tick = (
+            both_died_near_same_tick = (
                 destroy_tick is not None
                 and attacker_destroy_tick is not None
-                and attacker_destroy_tick == destroy_tick
+                and abs(attacker_destroy_tick - destroy_tick) <= 50
             )
 
             if is_friendly:
-                return "collision_friendly" if both_died_same_tick else "friendly_fire"
+                return "collision_friendly" if both_died_near_same_tick else "friendly_fire"
             else:
-                return "collision_enemy" if both_died_same_tick else "shot_down"
+                return "collision_enemy" if both_died_near_same_tick else "shot_down"
 
         else:
             # AID:-1 — check Pattern B: two friendlies get simultaneous first fire ticks
