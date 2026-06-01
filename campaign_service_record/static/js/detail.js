@@ -1516,12 +1516,21 @@ const DetailPage = {
                 { max_chapters: this.storyBatchSize }
             );
             if (payload && payload.generated_count > 0 && !options.silentReadyMessage) {
-                payload.status = 'generated';
                 const remaining = Number(payload.remaining_count || 0);
+                const warnings = Array.isArray(payload.generation_warnings) ? payload.generation_warnings : [];
                 const generatedText = `${payload.generated_count} stor${payload.generated_count === 1 ? 'y chapter was' : 'y chapters were'} generated.`;
-                payload.message = remaining > 0
-                    ? `${generatedText} ${remaining} remaining.`
-                    : generatedText;
+                if (warnings.length > 0) {
+                    payload.status = 'generated';
+                    const failText = `${warnings.length} chapter${warnings.length === 1 ? '' : 's'} failed — click Generate to retry.`;
+                    payload.message = remaining > 0
+                        ? `${generatedText} ${failText}`
+                        : `${generatedText} ${failText}`;
+                } else {
+                    payload.status = 'generated';
+                    payload.message = remaining > 0
+                        ? `${generatedText} ${remaining} remaining.`
+                        : generatedText;
+                }
             } else if (payload && !payload.message) {
                 payload.message = translateOrFallback('web.message.story_generation_up_to_date', 'Stories are already up to date.');
             }

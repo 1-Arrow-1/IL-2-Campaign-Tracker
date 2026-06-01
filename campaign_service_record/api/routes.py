@@ -4649,6 +4649,10 @@ def generate_stories(source: str, entry_id: str):
                     if re.fullmatch(r"\d{4}-\d{2}-\d{2}", day_key):
                         existing_story_keys.add(f"date:{day_key}")
 
+        logger.info(
+            "Story generate: %d total contexts built; %d existing chapter keys on disk",
+            len(contexts), len(existing_story_keys),
+        )
         missing_contexts: list[dict] = []
         for context in contexts:
             # Skip unflown mission chapters unless opted-in OR the date is pending
@@ -4662,6 +4666,10 @@ def generate_stories(source: str, entry_id: str):
             mission_key = str(context.get("mission_id"))
             mission_canonical = _canonical_mission_id(mission_key)
             if mission_key in existing_story_keys or (mission_canonical and mission_canonical in existing_story_canonical_keys):
+                logger.info(
+                    "Story generate: skipping context mission_id=%s date=%s — already on disk",
+                    mission_key, context.get("date"),
+                )
                 continue
 
             # Only day-scoped chapters (career aggregation) should dedupe by date.
@@ -4676,6 +4684,11 @@ def generate_stories(source: str, entry_id: str):
                     continue
 
             missing_contexts.append(context)
+        logger.info(
+            "Story generate: %d missing contexts; existing_story_keys sample=%s",
+            len(missing_contexts),
+            sorted(existing_story_keys)[:20],
+        )
         if not missing_contexts:
             status_payload = _build_story_status_payload(source, str(storage_entry_id))
             status_payload["generated_count"] = 0
@@ -4693,6 +4706,10 @@ def generate_stories(source: str, entry_id: str):
                     if str(c.get("date") or "") == first_date
                 )
                 max_chapters = max(max_chapters, min(day_count, 10))
+            logger.info(
+                "Story generate: first_date=%r day_count=%d max_chapters=%d",
+                first_date, day_count if first_date else 0, max_chapters,
+            )
 
         # Each context already carries the correct narrative_memory computed by
         # _build_career_story_contexts (replayed from scratch across all missions).
@@ -4795,6 +4812,8 @@ def generate_stories(source: str, entry_id: str):
         status_payload = _build_story_status_payload(source, str(storage_entry_id))
         status_payload["generated_count"] = generated_count
         status_payload["remaining_count"] = max(0, len(missing_contexts) - generated_count)
+        if generation_errors:
+            status_payload["generation_warnings"] = generation_errors
         return jsonify(status_payload)
     except Exception as exc:
         logger.error("Story generation failed for %s/%s: %s", source, entry_id, exc, exc_info=True)
