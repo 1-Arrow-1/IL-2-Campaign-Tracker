@@ -1306,106 +1306,158 @@ const DetailPage = {
             return;
         }
 
-        // Group chapters by calendar day (chapters are already sorted by date).
-        const dayMap = new Map();
-        chapters.forEach(ch => {
-            const d = ch.date || 'unknown';
-            if (!dayMap.has(d)) dayMap.set(d, []);
-            dayMap.get(d).push(ch);
-        });
-
         const chapterLabel = translateOrFallback('web.label.chapter', 'Chapter');
-        const dates = [...dayMap.keys()];
 
-        dates.forEach((date, dayIdx) => {
-            const dayChapters = dayMap.get(date);
-            const isLastDay = dayIdx === dates.length - 1;
+        // For career entries with theatre segments, render Theatre → Day → Chapter.
+        const theatreSegments = source === 'career' && Array.isArray(this.currentCampaign?.theatre_segments)
+            ? this.currentCampaign.theatre_segments
+            : [];
 
-            // Day group container — collapsible; last day starts open.
-            const dayDetails = document.createElement('details');
-            dayDetails.className = 'story-day';
-            if (isLastDay) dayDetails.open = true;
+        if (theatreSegments.length > 0) {
+            // Build segIdx → label map
+            const segLabelMap = {};
+            theatreSegments.forEach((seg, i) => { segLabelMap[i] = seg.theatre || `Theatre ${i + 1}`; });
 
-            // Day header summary line.
-            const daySummary = document.createElement('summary');
-            daySummary.className = 'story-day__summary';
-
-            const dateSpan = document.createElement('span');
-            dateSpan.className = 'story-day__date';
-            dateSpan.textContent = date;
-            daySummary.appendChild(dateSpan);
-
-            const countSpan = document.createElement('span');
-            countSpan.className = 'story-day__count';
-            countSpan.textContent = dayChapters.length === 1
-                ? `1 chapter`
-                : `${dayChapters.length} chapters`;
-            daySummary.appendChild(countSpan);
-
-            dayDetails.appendChild(daySummary);
-
-            // Chapters container nested inside the day.
-            const chaptersWrap = document.createElement('div');
-            chaptersWrap.className = 'story-day__chapters';
-
-            dayChapters.forEach((chapter, localIdx) => {
-                const localChapterNum = localIdx + 1;
-
-                const details = document.createElement('details');
-                details.className = 'story-chapter';
-                // Open the last chapter of the last day.
-                if (isLastDay && localIdx === dayChapters.length - 1) {
-                    details.open = true;
-                }
-
-                const summary = document.createElement('summary');
-                summary.className = 'story-chapter__summary';
-
-                const summaryText = document.createElement('span');
-                summaryText.className = 'story-chapter__summary-text';
-                // Day-local chapter number; date omitted (shown in day header).
-                summaryText.textContent = `${chapterLabel} ${localChapterNum} | ${chapter.aircraft || '—'} | ${chapter.result || '—'}`;
-                summary.appendChild(summaryText);
-
-                if (chapter.mission_id) {
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'story-chapter__delete-btn';
-                    deleteBtn.title = translateOrFallback('web.button.delete_story_chapter', 'Delete chapter');
-                    deleteBtn.textContent = '✕';
-                    deleteBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        const confirmMsg = translateOrFallback('web.message.confirm_delete_story_chapter', 'Delete this story chapter? It can be regenerated afterwards.');
-                        if (!confirm(confirmMsg)) return;
-                        this._deleteStoryChapter(chapter.mission_id);
-                    });
-                    summary.appendChild(deleteBtn);
-                }
-
-                details.appendChild(summary);
-
-                const bodyWrap = document.createElement('div');
-                bodyWrap.className = 'story-chapter__content';
-
-                if (chapter.title) {
-                    const title = document.createElement('div');
-                    title.className = 'story-chapter__title';
-                    title.textContent = chapter.title;
-                    bodyWrap.appendChild(title);
-                }
-
-                const body = document.createElement('div');
-                body.className = 'story-chapter__body';
-                body.textContent = chapter.story_text || '';
-                bodyWrap.appendChild(body);
-
-                details.appendChild(bodyWrap);
-                chaptersWrap.appendChild(details);
+            // Group chapters by career_segment_index (preserving sorted order)
+            const theatreMap = new Map();
+            chapters.forEach(ch => {
+                const segIdx = ch.career_segment_index != null ? Number(ch.career_segment_index) : 0;
+                if (!theatreMap.has(segIdx)) theatreMap.set(segIdx, []);
+                theatreMap.get(segIdx).push(ch);
             });
 
-            dayDetails.appendChild(chaptersWrap);
-            content.appendChild(dayDetails);
+            const segIndices = [...theatreMap.keys()].sort((a, b) => a - b);
+
+            segIndices.forEach((segIdx, theatreIdx) => {
+                const theatreChapters = theatreMap.get(segIdx);
+                const isLastTheatre = theatreIdx === segIndices.length - 1;
+                const theatreLabel = segLabelMap[segIdx] || `Theatre ${segIdx + 1}`;
+
+                const theatreDetails = document.createElement('details');
+                theatreDetails.className = 'story-theatre-section';
+                if (isLastTheatre) theatreDetails.open = true;
+
+                const theatreSummary = document.createElement('summary');
+                theatreSummary.className = 'story-theatre__header';
+                theatreSummary.textContent = theatreLabel;
+                theatreDetails.appendChild(theatreSummary);
+
+                const theatreDays = document.createElement('div');
+                theatreDays.className = 'story-theatre__days';
+
+                // Group this theatre's chapters by date
+                const dayMap = new Map();
+                theatreChapters.forEach(ch => {
+                    const d = ch.date || 'unknown';
+                    if (!dayMap.has(d)) dayMap.set(d, []);
+                    dayMap.get(d).push(ch);
+                });
+
+                const dates = [...dayMap.keys()];
+                dates.forEach((date, dayIdx) => {
+                    const isLastDay = isLastTheatre && dayIdx === dates.length - 1;
+                    theatreDays.appendChild(
+                        this._buildStoryDayElement(date, dayMap.get(date), isLastDay, chapterLabel)
+                    );
+                });
+
+                theatreDetails.appendChild(theatreDays);
+                content.appendChild(theatreDetails);
+            });
+
+        } else {
+            // Campaign or career with no theatre data: flat Day → Chapter grouping.
+            const dayMap = new Map();
+            chapters.forEach(ch => {
+                const d = ch.date || 'unknown';
+                if (!dayMap.has(d)) dayMap.set(d, []);
+                dayMap.get(d).push(ch);
+            });
+
+            const dates = [...dayMap.keys()];
+            dates.forEach((date, dayIdx) => {
+                const isLastDay = dayIdx === dates.length - 1;
+                content.appendChild(
+                    this._buildStoryDayElement(date, dayMap.get(date), isLastDay, chapterLabel)
+                );
+            });
+        }
+    },
+
+    _buildStoryDayElement(date, dayChapters, isLastDay, chapterLabel) {
+        const dayDetails = document.createElement('details');
+        dayDetails.className = 'story-day';
+        if (isLastDay) dayDetails.open = true;
+
+        const daySummary = document.createElement('summary');
+        daySummary.className = 'story-day__summary';
+
+        const dateSpan = document.createElement('span');
+        dateSpan.className = 'story-day__date';
+        dateSpan.textContent = date;
+        daySummary.appendChild(dateSpan);
+
+        const countSpan = document.createElement('span');
+        countSpan.className = 'story-day__count';
+        countSpan.textContent = dayChapters.length === 1 ? '1 chapter' : `${dayChapters.length} chapters`;
+        daySummary.appendChild(countSpan);
+
+        dayDetails.appendChild(daySummary);
+
+        const chaptersWrap = document.createElement('div');
+        chaptersWrap.className = 'story-day__chapters';
+
+        dayChapters.forEach((chapter, localIdx) => {
+            const details = document.createElement('details');
+            details.className = 'story-chapter';
+            if (isLastDay && localIdx === dayChapters.length - 1) details.open = true;
+
+            const summary = document.createElement('summary');
+            summary.className = 'story-chapter__summary';
+
+            const summaryText = document.createElement('span');
+            summaryText.className = 'story-chapter__summary-text';
+            summaryText.textContent = `${chapterLabel} ${localIdx + 1} | ${chapter.aircraft || '—'} | ${chapter.result || '—'}`;
+            summary.appendChild(summaryText);
+
+            if (chapter.mission_id) {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'story-chapter__delete-btn';
+                deleteBtn.title = translateOrFallback('web.button.delete_story_chapter', 'Delete chapter');
+                deleteBtn.textContent = '✕';
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const confirmMsg = translateOrFallback('web.message.confirm_delete_story_chapter', 'Delete this story chapter? It can be regenerated afterwards.');
+                    if (!confirm(confirmMsg)) return;
+                    this._deleteStoryChapter(chapter.mission_id);
+                });
+                summary.appendChild(deleteBtn);
+            }
+
+            details.appendChild(summary);
+
+            const bodyWrap = document.createElement('div');
+            bodyWrap.className = 'story-chapter__content';
+
+            if (chapter.title) {
+                const title = document.createElement('div');
+                title.className = 'story-chapter__title';
+                title.textContent = chapter.title;
+                bodyWrap.appendChild(title);
+            }
+
+            const body = document.createElement('div');
+            body.className = 'story-chapter__body';
+            body.textContent = chapter.story_text || '';
+            bodyWrap.appendChild(body);
+
+            details.appendChild(bodyWrap);
+            chaptersWrap.appendChild(details);
         });
+
+        dayDetails.appendChild(chaptersWrap);
+        return dayDetails;
     },
 
     async loadStories(entryId, source) {
