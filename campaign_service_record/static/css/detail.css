@@ -395,6 +395,55 @@
     gap: 1rem;
 }
 
+/* ── Day group container ────────────────────────────────────────────────── */
+.story-day {
+    margin-bottom: 0.6rem;
+}
+
+.story-day__summary {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.55rem 0.9rem;
+    background: rgba(180, 158, 118, 0.22);
+    border: 1px solid rgba(180, 158, 118, 0.55);
+    border-radius: 6px;
+    font-size: 0.97rem;
+    font-weight: 700;
+    color: #5a3f1e;
+    outline: none;
+    user-select: none;
+}
+
+.story-day[open] > .story-day__summary {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.story-day__date {
+    flex: 1;
+}
+
+.story-day__count {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: #7a6040;
+}
+
+.story-day__chapters {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0.55rem 0.6rem;
+    border: 1px solid rgba(180, 158, 118, 0.55);
+    border-top: none;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    background: rgba(252, 248, 238, 0.5);
+}
+
+/* ── Individual chapter entry ────────────────────────────────────────────── */
 .story-chapter {
     background: rgba(250, 244, 232, 0.78);
     border: 1px solid rgba(203, 185, 153, 0.78);

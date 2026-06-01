@@ -81,6 +81,9 @@ from llm_story_generator import (
     save_story_state_for,
     strip_memory_entries_for_date,
     update_narrative_memory_local,
+    mark_date_pending_unflown,
+    get_pending_unflown_dates,
+    clear_pending_unflown_dates,
 )
 from utils.locale_config import load_settings
 from utils.supported_locales import APP_TO_IL2_LOCALE, normalize_locale
@@ -570,21 +573,26 @@ def _build_story_status_payload(source: str, entry_id: str) -> dict:
         chapters = [chapter for chapter in chapters if _is_valid_story_text(chapter.get("story_text"))]
         def _chapter_sort_key(chapter: dict) -> tuple:
             if source == "career":
+                # Sort by date first — robust against career_mission_order values
+                # that became incoherent across different chapter format generations.
+                date_str = _normalize_story_text(chapter.get("date"))
                 try:
                     mission_order = int(chapter.get("career_mission_order") or 0)
                 except (TypeError, ValueError):
                     mission_order = 0
-                if mission_order > 0:
-                    try:
-                        segment_index = int(chapter.get("career_segment_index") or 0)
-                    except (TypeError, ValueError):
-                        segment_index = 0
-                    return (0, mission_order, segment_index, _normalize_story_text(chapter.get("mission_id")))
+                try:
+                    segment_index = int(chapter.get("career_segment_index") or 0)
+                except (TypeError, ValueError):
+                    segment_index = 0
+                mission_id = _normalize_story_text(chapter.get("mission_id"))
+                if date_str:
+                    return (date_str, mission_order, segment_index, mission_id)
+                # No date: fall back to mission_order, then chapter_index
                 try:
                     chapter_idx = int(chapter.get("chapter_index") or 0)
                 except (TypeError, ValueError):
                     chapter_idx = 0
-                return (1, chapter_idx, _normalize_story_text(chapter.get("mission_id")))
+                return ("9999-99-99", mission_order or chapter_idx, segment_index, mission_id)
 
             date_value = _parse_story_date(_normalize_story_text(chapter.get("date")))
             if not date_value:
@@ -1627,7 +1635,7 @@ def _build_gap_day_chapter_context(
     return ctx
 
 
-def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict] = None, story_language: str = "en") -> list[dict]:
+def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict] = None, story_language: str = "en", use_legacy_gap_days: bool = True, force_new_format_dates: Optional[set] = None) -> list[dict]:
     if not _career_provider:
         raise RuntimeError("Career provider not initialized.")
 
@@ -1888,47 +1896,95 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             # segment but BEFORE the new segment's first mission are invisible to
             # the in-loop gap handler (it fires on the next flying day, but by
             # then the cache has already been reset to the new squadron's data).
-            if _prev_chapter_date and _ima_unflown_sorties:
-                _seg_trail_missions: dict[int, list] = {}
-                for _s in _ima_unflown_sorties:
-                    _sd = aggregator._format_date(_s["date"]) or ""
-                    if _sd > _prev_chapter_date and (not mission_date or _sd < mission_date):
-                        _seg_trail_missions.setdefault(int(_s["missionId"]), []).append(_s)
-                for _seg_trail_mid, _seg_trail_sorties in sorted(_seg_trail_missions.items()):
-                    try:
-                        _seg_trail_date = aggregator._format_date(_seg_trail_sorties[0]["date"]) or ""
-                        _pilot_entries = _build_pilot_entries_from_sorties(
-                            _seg_trail_sorties, _ima_member_by_id, _ima_member_rank_by_id
-                        )
-                        if not _pilot_entries:
-                            continue
-                        _total_chapter_order += 1
-                        _gap_ctx = _build_unflown_mission_chapter_context(
-                            mission_id_int=_seg_trail_mid,
-                            mission_date=_seg_trail_date,
-                            pilot_entries=_pilot_entries,
-                            career=career,
-                            root_career_id=root_career_id,
-                            segment_index=_prev_segment_index,
-                            squadron_name=squadron_name,
-                            mission_theatre=mission_theatre,
-                            mission_location=mission_location,
-                            rank=_last_rank_after_chapter,
-                            awards=_last_awards_after_chapter,
-                            total_chapter_order=_total_chapter_order,
-                            missions_completed=mission_index - 1,
-                            accumulated_air_kills=_accumulated_air_kills,
-                            narrative_memory=_narrative_memory,
-                            llm_config=llm_config,
-                        )
-                        _narrative_memory = update_narrative_memory_local(_gap_ctx, _narrative_memory)
-                        contexts.append(_gap_ctx)
-                        logger.debug(
-                            "Segment-trailing unflown mission chapter for career %s mission %d (order %d)",
-                            root_career_id, _seg_trail_mid, _total_chapter_order,
-                        )
-                    except Exception as _st_err:
-                        logger.debug("Segment-trailing unflown chapter failed for mission %d: %s", _seg_trail_mid, _st_err)
+            if _prev_chapter_date and (_ima_unflown_sorties or _ima_all_member_events):
+                if use_legacy_gap_days:
+                    _seg_trail_dates: list[str] = sorted({
+                        aggregator._format_date(s["date"]) or ""
+                        for s in _ima_unflown_sorties
+                        if (aggregator._format_date(s["date"]) or "") > _prev_chapter_date
+                        and (not mission_date or (aggregator._format_date(s["date"]) or "") < mission_date)
+                    } - {""})
+                    for _seg_gap_date in _seg_trail_dates:
+                        try:
+                            _gap_acts = _build_inter_mission_activities(
+                                _ima_unflown_sorties, _ima_all_member_events,
+                                _ima_member_by_id, _ima_member_rank_by_id,
+                                aggregator, career,
+                                date_from=_seg_gap_date,
+                                date_to=_seg_gap_date,
+                                same_day=True,
+                                include_events=True,
+                                story_language=story_language,
+                            )
+                            if not _gap_acts:
+                                continue
+                            _total_chapter_order += 1
+                            _gap_ctx = _build_gap_day_chapter_context(
+                                gap_date=_seg_gap_date,
+                                gap_activity=_gap_acts[0],
+                                career=career,
+                                root_career_id=root_career_id,
+                                segment_index=_prev_segment_index,
+                                squadron_name=squadron_name,
+                                mission_theatre=mission_theatre,
+                                mission_location=mission_location,
+                                rank=_last_rank_after_chapter,
+                                awards=_last_awards_after_chapter,
+                                total_chapter_order=_total_chapter_order,
+                                missions_completed=mission_index - 1,
+                                accumulated_air_kills=_accumulated_air_kills,
+                                narrative_memory=_narrative_memory,
+                                llm_config=llm_config,
+                            )
+                            _narrative_memory = update_narrative_memory_local(_gap_ctx, _narrative_memory)
+                            contexts.append(_gap_ctx)
+                            logger.debug(
+                                "Segment-trailing gap chapter for career %s date %s (order %d)",
+                                root_career_id, _seg_gap_date, _total_chapter_order,
+                            )
+                        except Exception as _st_err:
+                            logger.debug("Segment-trailing gap chapter failed for %s: %s", _seg_gap_date, _st_err)
+                else:
+                    _seg_trail_missions: dict[int, list] = {}
+                    for _s in _ima_unflown_sorties:
+                        _sd = aggregator._format_date(_s["date"]) or ""
+                        if _sd > _prev_chapter_date and (not mission_date or _sd < mission_date):
+                            _seg_trail_missions.setdefault(int(_s["missionId"]), []).append(_s)
+                    for _seg_trail_mid, _seg_trail_sorties in sorted(_seg_trail_missions.items()):
+                        try:
+                            _seg_trail_date = aggregator._format_date(_seg_trail_sorties[0]["date"]) or ""
+                            _pilot_entries = _build_pilot_entries_from_sorties(
+                                _seg_trail_sorties, _ima_member_by_id, _ima_member_rank_by_id
+                            )
+                            if not _pilot_entries:
+                                continue
+                            _total_chapter_order += 1
+                            _gap_ctx = _build_unflown_mission_chapter_context(
+                                mission_id_int=_seg_trail_mid,
+                                mission_date=_seg_trail_date,
+                                pilot_entries=_pilot_entries,
+                                career=career,
+                                root_career_id=root_career_id,
+                                segment_index=_prev_segment_index,
+                                squadron_name=squadron_name,
+                                mission_theatre=mission_theatre,
+                                mission_location=mission_location,
+                                rank=_last_rank_after_chapter,
+                                awards=_last_awards_after_chapter,
+                                total_chapter_order=_total_chapter_order,
+                                missions_completed=mission_index - 1,
+                                accumulated_air_kills=_accumulated_air_kills,
+                                narrative_memory=_narrative_memory,
+                                llm_config=llm_config,
+                            )
+                            _narrative_memory = update_narrative_memory_local(_gap_ctx, _narrative_memory)
+                            contexts.append(_gap_ctx)
+                            logger.debug(
+                                "Segment-trailing unflown mission chapter for career %s mission %d (order %d)",
+                                root_career_id, _seg_trail_mid, _total_chapter_order,
+                            )
+                        except Exception as _st_err:
+                            logger.debug("Segment-trailing unflown chapter failed for mission %d: %s", _seg_trail_mid, _st_err)
             # ─────────────────────────────────────────────────────────────────────
             _ima_segment_player_id = _seg_player_id
             _ima_squadron_id = _seg_squadron_id
@@ -2061,60 +2117,157 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
         is_last_sortie_of_day = not next_row or _normalize_story_text(next_row.get("mission_date")) != mission_date
         _is_first_of_new_day = bool(_prev_chapter_date) and mission_date != _prev_chapter_date
 
-        # ── Unflown mission chapters (gap days + same-day) ───────────────────────
-        # Each squadron sortie the player didn't fly gets its own chapter, keyed by
-        # missionId, with per-pilot kill/casualty data instead of aggregate totals.
+        # ── Gap-day / unflown mission chapter generation ─────────────────────────
         _inter_mission_activities: list[dict] = []
         _same_day_unflown_missions: dict[int, list] = {}
         try:
-            if _ima_unflown_sorties:
+            if _ima_unflown_sorties or _ima_all_member_events:
                 if _is_first_of_new_day and not _theatre_transition:
-                    # Gap missions: between _prev_chapter_date and today (exclusive).
-                    _gap_missions: dict[int, list] = {}
-                    for _s in _ima_unflown_sorties:
-                        _sd = aggregator._format_date(_s["date"]) or ""
-                        if _sd > _prev_chapter_date and _sd < mission_date:
-                            _gap_missions.setdefault(int(_s["missionId"]), []).append(_s)
-                    for _gap_mid, _gap_sorties in sorted(_gap_missions.items()):
-                        _gap_date = aggregator._format_date(_gap_sorties[0]["date"]) or ""
-                        _pilot_entries = _build_pilot_entries_from_sorties(
-                            _gap_sorties, _ima_member_by_id, _ima_member_rank_by_id
-                        )
-                        if not _pilot_entries:
-                            continue
-                        _total_chapter_order += 1
-                        _gap_ctx = _build_unflown_mission_chapter_context(
-                            mission_id_int=_gap_mid,
-                            mission_date=_gap_date,
-                            pilot_entries=_pilot_entries,
-                            career=career,
-                            root_career_id=root_career_id,
-                            segment_index=segment_index,
-                            squadron_name=_normalize_story_text(row["squadron_name"]),
-                            mission_theatre=mission_theatre,
-                            mission_location=mission_location,
-                            rank=_last_rank_after_chapter,
-                            awards=_last_awards_after_chapter,
-                            total_chapter_order=_total_chapter_order,
-                            missions_completed=mission_index - 1,
-                            accumulated_air_kills=_accumulated_air_kills,
-                            narrative_memory=_narrative_memory,
-                            llm_config=llm_config,
-                        )
-                        _narrative_memory = update_narrative_memory_local(_gap_ctx, _narrative_memory)
-                        contexts.append(_gap_ctx)
-                        logger.debug(
-                            "Unflown mission chapter for career %s mission %d date %s (order %d)",
-                            root_career_id, _gap_mid, _gap_date, _total_chapter_order,
-                        )
+                    if use_legacy_gap_days:
+                        # Legacy format: one chapter per DATE (gap-{segment}-{date}).
+                        # Dates in force_new_format_dates use per-mission format instead
+                        # (triggered when the user deletes a gap chapter and regenerates).
+                        _gap_dates: list[str] = sorted({
+                            aggregator._format_date(s["date"]) or ""
+                            for s in _ima_unflown_sorties
+                            if (aggregator._format_date(s["date"]) or "") > _prev_chapter_date
+                            and (aggregator._format_date(s["date"]) or "") < mission_date
+                        } - {""})
+                        _force_dates = force_new_format_dates or set()
+                        for _gap_date in _gap_dates:
+                            if _gap_date in _force_dates:
+                                # Per-mission format for this specific date.
+                                _force_missions: dict[int, list] = {}
+                                for _s in _ima_unflown_sorties:
+                                    if (aggregator._format_date(_s["date"]) or "") == _gap_date:
+                                        _force_missions.setdefault(int(_s["missionId"]), []).append(_s)
+                                for _fmid, _fsorties in sorted(_force_missions.items()):
+                                    _pilot_entries = _build_pilot_entries_from_sorties(
+                                        _fsorties, _ima_member_by_id, _ima_member_rank_by_id
+                                    )
+                                    if not _pilot_entries:
+                                        continue
+                                    _total_chapter_order += 1
+                                    _gap_ctx = _build_unflown_mission_chapter_context(
+                                        mission_id_int=_fmid,
+                                        mission_date=_gap_date,
+                                        pilot_entries=_pilot_entries,
+                                        career=career,
+                                        root_career_id=root_career_id,
+                                        segment_index=segment_index,
+                                        squadron_name=_normalize_story_text(row["squadron_name"]),
+                                        mission_theatre=mission_theatre,
+                                        mission_location=mission_location,
+                                        rank=_last_rank_after_chapter,
+                                        awards=_last_awards_after_chapter,
+                                        total_chapter_order=_total_chapter_order,
+                                        missions_completed=mission_index - 1,
+                                        accumulated_air_kills=_accumulated_air_kills,
+                                        narrative_memory=_narrative_memory,
+                                        llm_config=llm_config,
+                                    )
+                                    _narrative_memory = update_narrative_memory_local(_gap_ctx, _narrative_memory)
+                                    contexts.append(_gap_ctx)
+                                    logger.debug(
+                                        "Per-mission chapter (pending regen) for career %s mission %d date %s",
+                                        root_career_id, _fmid, _gap_date,
+                                    )
+                            else:
+                                # Legacy: one aggregate chapter per date.
+                                _gap_acts = _build_inter_mission_activities(
+                                    _ima_unflown_sorties, _ima_all_member_events,
+                                    _ima_member_by_id, _ima_member_rank_by_id,
+                                    aggregator, career,
+                                    date_from=_gap_date,
+                                    date_to=_gap_date,
+                                    same_day=True,
+                                    include_events=True,
+                                    story_language=story_language,
+                                )
+                                if not _gap_acts:
+                                    continue
+                                _total_chapter_order += 1
+                                _gap_ctx = _build_gap_day_chapter_context(
+                                    gap_date=_gap_date,
+                                    gap_activity=_gap_acts[0],
+                                    career=career,
+                                    root_career_id=root_career_id,
+                                    segment_index=segment_index,
+                                    squadron_name=_normalize_story_text(row["squadron_name"]),
+                                    mission_theatre=mission_theatre,
+                                    mission_location=mission_location,
+                                    rank=_last_rank_after_chapter,
+                                    awards=_last_awards_after_chapter,
+                                    total_chapter_order=_total_chapter_order,
+                                    missions_completed=mission_index - 1,
+                                    accumulated_air_kills=_accumulated_air_kills,
+                                    narrative_memory=_narrative_memory,
+                                    llm_config=llm_config,
+                                )
+                                _narrative_memory = update_narrative_memory_local(_gap_ctx, _narrative_memory)
+                                contexts.append(_gap_ctx)
+                                logger.debug(
+                                    "Gap chapter for career %s date %s (order %d)",
+                                    root_career_id, _gap_date, _total_chapter_order,
+                                )
+                    else:
+                        # New format: one chapter per missionId (unflown-{missionId}).
+                        _gap_missions: dict[int, list] = {}
+                        for _s in _ima_unflown_sorties:
+                            _sd = aggregator._format_date(_s["date"]) or ""
+                            if _sd > _prev_chapter_date and _sd < mission_date:
+                                _gap_missions.setdefault(int(_s["missionId"]), []).append(_s)
+                        for _gap_mid, _gap_sorties in sorted(_gap_missions.items()):
+                            _gap_date = aggregator._format_date(_gap_sorties[0]["date"]) or ""
+                            _pilot_entries = _build_pilot_entries_from_sorties(
+                                _gap_sorties, _ima_member_by_id, _ima_member_rank_by_id
+                            )
+                            if not _pilot_entries:
+                                continue
+                            _total_chapter_order += 1
+                            _gap_ctx = _build_unflown_mission_chapter_context(
+                                mission_id_int=_gap_mid,
+                                mission_date=_gap_date,
+                                pilot_entries=_pilot_entries,
+                                career=career,
+                                root_career_id=root_career_id,
+                                segment_index=segment_index,
+                                squadron_name=_normalize_story_text(row["squadron_name"]),
+                                mission_theatre=mission_theatre,
+                                mission_location=mission_location,
+                                rank=_last_rank_after_chapter,
+                                awards=_last_awards_after_chapter,
+                                total_chapter_order=_total_chapter_order,
+                                missions_completed=mission_index - 1,
+                                accumulated_air_kills=_accumulated_air_kills,
+                                narrative_memory=_narrative_memory,
+                                llm_config=llm_config,
+                            )
+                            _narrative_memory = update_narrative_memory_local(_gap_ctx, _narrative_memory)
+                            contexts.append(_gap_ctx)
+                            logger.debug(
+                                "Unflown mission chapter for career %s mission %d date %s (order %d)",
+                                root_career_id, _gap_mid, _gap_date, _total_chapter_order,
+                            )
                 if is_last_sortie_of_day:
-                    # Collect same-day unflown missions; chapters appended after player chapter.
-                    for _s in _ima_unflown_sorties:
-                        _sd = aggregator._format_date(_s["date"]) or ""
-                        if _sd == mission_date:
-                            _same_day_unflown_missions.setdefault(int(_s["missionId"]), []).append(_s)
+                    if use_legacy_gap_days:
+                        _same_acts = _build_inter_mission_activities(
+                            _ima_unflown_sorties, _ima_all_member_events,
+                            _ima_member_by_id, _ima_member_rank_by_id,
+                            aggregator, career,
+                            date_from=mission_date,
+                            date_to=mission_date,
+                            same_day=True,
+                            story_language=story_language,
+                        )
+                        _inter_mission_activities.extend(_same_acts)
+                    else:
+                        for _s in _ima_unflown_sorties:
+                            _sd = aggregator._format_date(_s["date"]) or ""
+                            if _sd == mission_date:
+                                _same_day_unflown_missions.setdefault(int(_s["missionId"]), []).append(_s)
         except Exception as _ima_err:
-            logger.debug("Unflown mission chapters failed for mission %s: %s", mission_id, _ima_err)
+            logger.debug("Gap/unflown chapter generation failed for mission %s: %s", mission_id, _ima_err)
         # ───────────────────────────────────────────────────────────────────────
 
         try:
@@ -4240,6 +4393,12 @@ def delete_story_chapter(source: str, entry_id: str):
         return jsonify({'error': f'Chapter for mission {mission_id} not found.'}), 404
 
     strip_memory_entries_for_date(source, storage_entry_id, deleted_date)
+
+    # When a legacy gap-day chapter is deleted, record the date so the next
+    # generate call produces per-mission chapters instead of another aggregate.
+    if source == "career" and deleted_date and str(mission_id).startswith("gap-"):
+        mark_date_pending_unflown(source, storage_entry_id, deleted_date)
+
     return jsonify(_build_story_status_payload(source, entry_id))
 
 
@@ -4336,31 +4495,6 @@ def generate_stories(source: str, entry_id: str):
         return jsonify({'error': 'No OpenAI API key is configured.'}), 400
 
     try:
-        if source == "career":
-            try:
-                root_career_id = int(entry_id)
-            except (TypeError, ValueError):
-                return jsonify({'error': 'Invalid career id.'}), 400
-            storage_entry_id: str | int = root_career_id
-            contexts = _build_career_story_contexts(
-                root_career_id,
-                llm_config={
-                    "api_key": settings["api_key"],
-                    "provider": settings["provider"],
-                    "base_url": settings["base_url"],
-                    "model": settings["model"],
-                },
-                story_language=settings["story_language"],
-            )
-            if not contexts:
-                return jsonify({'error': 'No career mission context could be built yet. Run/update debrief parsing first and retry.'}), 400
-        else:
-            storage_entry_id = entry_id
-            contexts = _build_campaign_story_contexts(entry_id, settings["story_language"])
-
-        if not contexts:
-            return jsonify({'error': 'No mission data is available for story generation yet.'}), 400
-
         payload = request.get_json(silent=True) if request.is_json else {}
         if not isinstance(payload, dict):
             payload = {}
@@ -4374,6 +4508,36 @@ def generate_stories(source: str, entry_id: str):
         # They are never auto-generated and do not count towards "remaining".
         include_unflown = bool(payload.get("include_unflown", False))
         _generate_unflown = include_unflown
+
+        if source == "career":
+            try:
+                root_career_id = int(entry_id)
+            except (TypeError, ValueError):
+                return jsonify({'error': 'Invalid career id.'}), 400
+            storage_entry_id: str | int = root_career_id
+            # Dates where a gap chapter was deleted → regenerate as per-mission chapters.
+            _pending_dates: set[str] = set(get_pending_unflown_dates("career", storage_entry_id))
+            contexts = _build_career_story_contexts(
+                root_career_id,
+                llm_config={
+                    "api_key": settings["api_key"],
+                    "provider": settings["provider"],
+                    "base_url": settings["base_url"],
+                    "model": settings["model"],
+                },
+                story_language=settings["story_language"],
+                use_legacy_gap_days=not include_unflown,
+                force_new_format_dates=_pending_dates if not include_unflown else None,
+            )
+            if not contexts:
+                return jsonify({'error': 'No career mission context could be built yet. Run/update debrief parsing first and retry.'}), 400
+        else:
+            _pending_dates = set()
+            storage_entry_id = entry_id
+            contexts = _build_campaign_story_contexts(entry_id, settings["story_language"])
+
+        if not contexts:
+            return jsonify({'error': 'No mission data is available for story generation yet.'}), 400
 
         if source == "career":
             # Load existing chapters before reindexing so we can clean up any
@@ -4448,10 +4612,13 @@ def generate_stories(source: str, entry_id: str):
 
         missing_contexts: list[dict] = []
         for context in contexts:
-            # Skip unflown mission chapters unless opted-in.
+            # Skip unflown mission chapters unless opted-in OR the date is pending
+            # (gap chapter was deleted → regenerate as per-mission chapters).
             if not _generate_unflown:
                 if (context.get("chapter_scope") or {}).get("scope") == "unflown_mission":
-                    continue
+                    ctx_date = str(context.get("date") or "")
+                    if not (ctx_date and ctx_date in _pending_dates):
+                        continue
 
             mission_key = str(context.get("mission_id"))
             mission_canonical = _canonical_mission_id(mission_key)
@@ -4476,6 +4643,17 @@ def generate_stories(source: str, entry_id: str):
             status_payload["remaining_count"] = 0
             status_payload["message"] = "Stories are already up to date."
             return jsonify(status_payload)
+
+        # For career source: auto-expand max_chapters to cover the entire oldest
+        # missing day so one click always completes a full calendar day.
+        if source == "career":
+            first_date = str(missing_contexts[0].get("date") or "")
+            if first_date:
+                day_count = sum(
+                    1 for c in missing_contexts
+                    if str(c.get("date") or "") == first_date
+                )
+                max_chapters = max(max_chapters, min(day_count, 10))
 
         # Each context already carries the correct narrative_memory computed by
         # _build_career_story_contexts (replayed from scratch across all missions).
@@ -4562,6 +4740,18 @@ def generate_stories(source: str, entry_id: str):
 
         if generated_count == 0 and generation_errors:
             raise RuntimeError(generation_errors[0])
+
+        # Clear pending dates whose unflown chapters were successfully generated.
+        if source == "career" and _pending_dates and generated_count > 0:
+            generated_dates = {
+                str(c.get("date") or "")
+                for c in missing_contexts[:generated_count]
+                if (c.get("chapter_scope") or {}).get("scope") == "unflown_mission"
+                and str(c.get("date") or "")
+            }
+            dates_to_clear = _pending_dates & generated_dates
+            if dates_to_clear:
+                clear_pending_unflown_dates("career", storage_entry_id, list(dates_to_clear))
 
         status_payload = _build_story_status_payload(source, str(storage_entry_id))
         status_payload["generated_count"] = generated_count

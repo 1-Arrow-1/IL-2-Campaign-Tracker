@@ -1306,56 +1306,105 @@ const DetailPage = {
             return;
         }
 
-        chapters.forEach((chapter, index) => {
-            const details = document.createElement('details');
-            details.className = 'story-chapter';
-            if (index === chapters.length - 1) {
-                details.open = true;
-            }
+        // Group chapters by calendar day (chapters are already sorted by date).
+        const dayMap = new Map();
+        chapters.forEach(ch => {
+            const d = ch.date || 'unknown';
+            if (!dayMap.has(d)) dayMap.set(d, []);
+            dayMap.get(d).push(ch);
+        });
 
-            const summary = document.createElement('summary');
-            summary.className = 'story-chapter__summary';
-            const chapterLabel = translateOrFallback('web.label.chapter', 'Chapter');
+        const chapterLabel = translateOrFallback('web.label.chapter', 'Chapter');
+        const dates = [...dayMap.keys()];
 
-            const summaryText = document.createElement('span');
-            summaryText.className = 'story-chapter__summary-text';
-            summaryText.textContent = `${chapterLabel} ${chapter.chapter_index || '—'} | ${chapter.date || '—'} | ${chapter.aircraft || '—'} | ${chapter.result || '—'}`;
-            summary.appendChild(summaryText);
+        dates.forEach((date, dayIdx) => {
+            const dayChapters = dayMap.get(date);
+            const isLastDay = dayIdx === dates.length - 1;
 
-            if (chapter.mission_id) {
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'story-chapter__delete-btn';
-                deleteBtn.title = translateOrFallback('web.button.delete_story_chapter', 'Delete chapter');
-                deleteBtn.textContent = '✕';
-                deleteBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    const confirmMsg = translateOrFallback('web.message.confirm_delete_story_chapter', 'Delete this story chapter? It can be regenerated afterwards.');
-                    if (!confirm(confirmMsg)) return;
-                    this._deleteStoryChapter(chapter.mission_id);
-                });
-                summary.appendChild(deleteBtn);
-            }
+            // Day group container — collapsible; last day starts open.
+            const dayDetails = document.createElement('details');
+            dayDetails.className = 'story-day';
+            if (isLastDay) dayDetails.open = true;
 
-            details.appendChild(summary);
+            // Day header summary line.
+            const daySummary = document.createElement('summary');
+            daySummary.className = 'story-day__summary';
 
-            const bodyWrap = document.createElement('div');
-            bodyWrap.className = 'story-chapter__content';
+            const dateSpan = document.createElement('span');
+            dateSpan.className = 'story-day__date';
+            dateSpan.textContent = date;
+            daySummary.appendChild(dateSpan);
 
-            if (chapter.title) {
-                const title = document.createElement('div');
-                title.className = 'story-chapter__title';
-                title.textContent = chapter.title;
-                bodyWrap.appendChild(title);
-            }
+            const countSpan = document.createElement('span');
+            countSpan.className = 'story-day__count';
+            countSpan.textContent = dayChapters.length === 1
+                ? `1 chapter`
+                : `${dayChapters.length} chapters`;
+            daySummary.appendChild(countSpan);
 
-            const body = document.createElement('div');
-            body.className = 'story-chapter__body';
-            body.textContent = chapter.story_text || '';
-            bodyWrap.appendChild(body);
+            dayDetails.appendChild(daySummary);
 
-            details.appendChild(bodyWrap);
-            content.appendChild(details);
+            // Chapters container nested inside the day.
+            const chaptersWrap = document.createElement('div');
+            chaptersWrap.className = 'story-day__chapters';
+
+            dayChapters.forEach((chapter, localIdx) => {
+                const localChapterNum = localIdx + 1;
+
+                const details = document.createElement('details');
+                details.className = 'story-chapter';
+                // Open the last chapter of the last day.
+                if (isLastDay && localIdx === dayChapters.length - 1) {
+                    details.open = true;
+                }
+
+                const summary = document.createElement('summary');
+                summary.className = 'story-chapter__summary';
+
+                const summaryText = document.createElement('span');
+                summaryText.className = 'story-chapter__summary-text';
+                // Day-local chapter number; date omitted (shown in day header).
+                summaryText.textContent = `${chapterLabel} ${localChapterNum} | ${chapter.aircraft || '—'} | ${chapter.result || '—'}`;
+                summary.appendChild(summaryText);
+
+                if (chapter.mission_id) {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'story-chapter__delete-btn';
+                    deleteBtn.title = translateOrFallback('web.button.delete_story_chapter', 'Delete chapter');
+                    deleteBtn.textContent = '✕';
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        const confirmMsg = translateOrFallback('web.message.confirm_delete_story_chapter', 'Delete this story chapter? It can be regenerated afterwards.');
+                        if (!confirm(confirmMsg)) return;
+                        this._deleteStoryChapter(chapter.mission_id);
+                    });
+                    summary.appendChild(deleteBtn);
+                }
+
+                details.appendChild(summary);
+
+                const bodyWrap = document.createElement('div');
+                bodyWrap.className = 'story-chapter__content';
+
+                if (chapter.title) {
+                    const title = document.createElement('div');
+                    title.className = 'story-chapter__title';
+                    title.textContent = chapter.title;
+                    bodyWrap.appendChild(title);
+                }
+
+                const body = document.createElement('div');
+                body.className = 'story-chapter__body';
+                body.textContent = chapter.story_text || '';
+                bodyWrap.appendChild(body);
+
+                details.appendChild(bodyWrap);
+                chaptersWrap.appendChild(details);
+            });
+
+            dayDetails.appendChild(chaptersWrap);
+            content.appendChild(dayDetails);
         });
     },
 

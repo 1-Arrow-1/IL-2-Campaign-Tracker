@@ -438,22 +438,18 @@ def _chapter_sort_key_for_source(
 ) -> tuple:
     normalized_source = _normalize_text(source).lower()
     if normalized_source == "career":
-        mission_order = _coerce_int(payload.get("career_mission_order"))
-        if mission_order is not None and mission_order > 0:
-            segment_index = _coerce_int(payload.get("career_segment_index"))
-            if segment_index is None:
-                segment_index = 0
-            mission_id_text = _normalize_text(payload.get("mission_id"))
-            mission_id_int = _coerce_int(mission_id_text)
-            if mission_id_int is None:
-                mission_id_int = 0
-            return (0, mission_order, segment_index, mission_id_int, mission_id_text)
-
+        # Sort by date as primary key to keep chapters in chronological order
+        # regardless of how career_mission_order values were assigned.
+        date_str = _normalize_text(payload.get("date"))
+        mission_order = _coerce_int(payload.get("career_mission_order")) or 0
+        segment_index = _coerce_int(payload.get("career_segment_index")) or 0
+        mission_id_text = _normalize_text(payload.get("mission_id"))
+        if date_str:
+            return (date_str, mission_order, segment_index, mission_id_text)
         chapter_idx = _coerce_int(payload.get("chapter_index"))
         if chapter_idx is None or chapter_idx <= 0:
             chapter_idx = fallback_index
-        mission_id_text = _normalize_text(payload.get("mission_id"))
-        return (1, chapter_idx, fallback_index, mission_id_text)
+        return ("9999-99-99", mission_order or chapter_idx, segment_index, mission_id_text)
 
     # Campaigns keep chronological date ordering.
     date_key = _normalize_text(payload.get("date")) or ""
@@ -614,6 +610,57 @@ def delete_story_chapter_for(source: str, entry_id: str | int, mission_id: str) 
             path.unlink()
 
     return deleted_date
+
+
+def _pending_unflown_path(source: str, entry_id: str | int) -> Path:
+    return _story_entry_dir(source, entry_id) / "pending_unflown_dates.json"
+
+
+def mark_date_pending_unflown(source: str, entry_id: str | int, date: str) -> None:
+    """Record that a gap-day chapter was deleted for *date*.
+
+    The next generate call will produce per-mission chapters for that date
+    instead of regenerating the old single-day aggregate chapter.
+    """
+    if not date:
+        return
+    path = _pending_unflown_path(source, entry_id)
+    try:
+        existing = _load_json_file(path, [])
+        if not isinstance(existing, list):
+            existing = []
+        if date not in existing:
+            existing.append(date)
+        _save_json_file(path, existing)
+    except Exception:
+        pass
+
+
+def get_pending_unflown_dates(source: str, entry_id: str | int) -> list[str]:
+    """Return dates that had gap chapters deleted and are awaiting per-mission generation."""
+    path = _pending_unflown_path(source, entry_id)
+    try:
+        data = _load_json_file(path, [])
+        return [str(d) for d in (data if isinstance(data, list) else []) if d]
+    except Exception:
+        return []
+
+
+def clear_pending_unflown_dates(source: str, entry_id: str | int, dates: list[str]) -> None:
+    """Remove *dates* from the pending list after successful generation."""
+    if not dates:
+        return
+    path = _pending_unflown_path(source, entry_id)
+    try:
+        existing = _load_json_file(path, [])
+        if isinstance(existing, list):
+            remaining = [d for d in existing if d not in dates]
+            if remaining:
+                _save_json_file(path, remaining)
+            elif path.exists():
+                path.unlink()
+    except Exception:
+        pass
 
 
 def strip_memory_entries_for_date(source: str, entry_id: str | int, mission_date: str) -> None:
