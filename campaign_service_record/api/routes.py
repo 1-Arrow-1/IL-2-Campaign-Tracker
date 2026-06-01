@@ -1449,12 +1449,9 @@ def _build_pilot_entries_from_sorties(
             outcome = "WIA"
         else:
             outcome = "survived"
-        air_kills = (
-            int(sortie["killLightPlane"] or 0)
-            + int(sortie["killMediumPlane"] or 0)
-            + int(sortie["killHeavyPlane"] or 0)
-            + int(sortie["killStaticPlane"] or 0)
-        )
+        # Use _air_kills_from_sortie_row so sub-category columns take precedence
+        # over the stale rollup columns that cp.db sometimes leaves incorrect.
+        air_kills = _air_kills_from_sortie_row(sortie)
         ground_kills = (
             int(sortie["killTruck"] or 0)
             + int(sortie["killCar"] or 0)
@@ -1904,46 +1901,88 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                         if (aggregator._format_date(s["date"]) or "") > _prev_chapter_date
                         and (not mission_date or (aggregator._format_date(s["date"]) or "") < mission_date)
                     } - {""})
+                    _force_dates_seg = force_new_format_dates or set()
                     for _seg_gap_date in _seg_trail_dates:
-                        try:
-                            _gap_acts = _build_inter_mission_activities(
-                                _ima_unflown_sorties, _ima_all_member_events,
-                                _ima_member_by_id, _ima_member_rank_by_id,
-                                aggregator, career,
-                                date_from=_seg_gap_date,
-                                date_to=_seg_gap_date,
-                                same_day=True,
-                                include_events=True,
-                                story_language=story_language,
-                            )
-                            if not _gap_acts:
-                                continue
-                            _total_chapter_order += 1
-                            _gap_ctx = _build_gap_day_chapter_context(
-                                gap_date=_seg_gap_date,
-                                gap_activity=_gap_acts[0],
-                                career=career,
-                                root_career_id=root_career_id,
-                                segment_index=_prev_segment_index,
-                                squadron_name=squadron_name,
-                                mission_theatre=mission_theatre,
-                                mission_location=mission_location,
-                                rank=_last_rank_after_chapter,
-                                awards=_last_awards_after_chapter,
-                                total_chapter_order=_total_chapter_order,
-                                missions_completed=mission_index - 1,
-                                accumulated_air_kills=_accumulated_air_kills,
-                                narrative_memory=_narrative_memory,
-                                llm_config=llm_config,
-                            )
-                            _narrative_memory = update_narrative_memory_local(_gap_ctx, _narrative_memory)
-                            contexts.append(_gap_ctx)
-                            logger.debug(
-                                "Segment-trailing gap chapter for career %s date %s (order %d)",
-                                root_career_id, _seg_gap_date, _total_chapter_order,
-                            )
-                        except Exception as _st_err:
-                            logger.debug("Segment-trailing gap chapter failed for %s: %s", _seg_gap_date, _st_err)
+                        if _seg_gap_date in _force_dates_seg:
+                            # Pending regen: per-mission format for this specific date.
+                            try:
+                                _force_missions_seg: dict[int, list] = {}
+                                for _s in _ima_unflown_sorties:
+                                    if (aggregator._format_date(_s["date"]) or "") == _seg_gap_date:
+                                        _force_missions_seg.setdefault(int(_s["missionId"]), []).append(_s)
+                                for _fmid_s, _fsorties_s in sorted(_force_missions_seg.items()):
+                                    _pe_s = _build_pilot_entries_from_sorties(
+                                        _fsorties_s, _ima_member_by_id, _ima_member_rank_by_id
+                                    )
+                                    if not _pe_s:
+                                        continue
+                                    _total_chapter_order += 1
+                                    _gap_ctx = _build_unflown_mission_chapter_context(
+                                        mission_id_int=_fmid_s,
+                                        mission_date=_seg_gap_date,
+                                        pilot_entries=_pe_s,
+                                        career=career,
+                                        root_career_id=root_career_id,
+                                        segment_index=_prev_segment_index,
+                                        squadron_name=squadron_name,
+                                        mission_theatre=mission_theatre,
+                                        mission_location=mission_location,
+                                        rank=_last_rank_after_chapter,
+                                        awards=_last_awards_after_chapter,
+                                        total_chapter_order=_total_chapter_order,
+                                        missions_completed=mission_index - 1,
+                                        accumulated_air_kills=_accumulated_air_kills,
+                                        narrative_memory=_narrative_memory,
+                                        llm_config=llm_config,
+                                    )
+                                    _narrative_memory = update_narrative_memory_local(_gap_ctx, _narrative_memory)
+                                    contexts.append(_gap_ctx)
+                                    logger.debug(
+                                        "Seg-trailing per-mission chapter for career %s mission %d date %s",
+                                        root_career_id, _fmid_s, _seg_gap_date,
+                                    )
+                            except Exception as _st_err:
+                                logger.debug("Seg-trailing per-mission failed for %s: %s", _seg_gap_date, _st_err)
+                        else:
+                            try:
+                                _gap_acts = _build_inter_mission_activities(
+                                    _ima_unflown_sorties, _ima_all_member_events,
+                                    _ima_member_by_id, _ima_member_rank_by_id,
+                                    aggregator, career,
+                                    date_from=_seg_gap_date,
+                                    date_to=_seg_gap_date,
+                                    same_day=True,
+                                    include_events=True,
+                                    story_language=story_language,
+                                )
+                                if not _gap_acts:
+                                    continue
+                                _total_chapter_order += 1
+                                _gap_ctx = _build_gap_day_chapter_context(
+                                    gap_date=_seg_gap_date,
+                                    gap_activity=_gap_acts[0],
+                                    career=career,
+                                    root_career_id=root_career_id,
+                                    segment_index=_prev_segment_index,
+                                    squadron_name=squadron_name,
+                                    mission_theatre=mission_theatre,
+                                    mission_location=mission_location,
+                                    rank=_last_rank_after_chapter,
+                                    awards=_last_awards_after_chapter,
+                                    total_chapter_order=_total_chapter_order,
+                                    missions_completed=mission_index - 1,
+                                    accumulated_air_kills=_accumulated_air_kills,
+                                    narrative_memory=_narrative_memory,
+                                    llm_config=llm_config,
+                                )
+                                _narrative_memory = update_narrative_memory_local(_gap_ctx, _narrative_memory)
+                                contexts.append(_gap_ctx)
+                                logger.debug(
+                                    "Segment-trailing gap chapter for career %s date %s (order %d)",
+                                    root_career_id, _seg_gap_date, _total_chapter_order,
+                                )
+                            except Exception as _st_err:
+                                logger.debug("Segment-trailing gap chapter failed for %s: %s", _seg_gap_date, _st_err)
                 else:
                     _seg_trail_missions: dict[int, list] = {}
                     for _s in _ima_unflown_sorties:
