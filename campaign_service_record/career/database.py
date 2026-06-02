@@ -591,6 +591,22 @@ class CareerDatabase:
             )
             return cursor.fetchall()
 
+    def get_all_missions_for_career(self, career_id: int) -> List[sqlite3.Row]:
+        """Return ALL mission rows for a career segment, regardless of pilot slot.
+
+        Unlike get_missions_for_career, this includes AI-only missions where the
+        player is not listed in any pilot slot.  Used by the story context builder
+        so every game mission gets its own chapter.
+
+        Returns rows ordered by startTime ASC.
+        """
+        conn = self._connect()
+        cursor = conn.execute(
+            "SELECT * FROM mission WHERE careerId = :career_id ORDER BY startTime ASC",
+            {"career_id": career_id},
+        )
+        return cursor.fetchall()
+
     def get_unflown_squadron_sorties(
         self,
         player_pilot_id: int,

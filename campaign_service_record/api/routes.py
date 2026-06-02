@@ -84,6 +84,9 @@ from llm_story_generator import (
     mark_date_pending_unflown,
     get_pending_unflown_dates,
     clear_pending_unflown_dates,
+    mark_ai_mission_pending,
+    get_pending_ai_missions,
+    clear_pending_ai_missions,
 )
 from utils.locale_config import load_settings
 from utils.supported_locales import APP_TO_IL2_LOCALE, normalize_locale
@@ -1759,16 +1762,60 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
 
     mission_rows.sort(key=lambda row: row["sort_key"])
 
-    # Drop missions the player was listed in (pilot slot) but didn't actually fly.
-    # These have no pilotAi=0 sortie row in cp.db.  Their squadron activity is
-    # picked up automatically by get_unflown_squadron_sorties → inter_mission_activities.
-    _unflown_count = sum(1 for r in mission_rows if not r.get("player_flew", True))
-    if _unflown_count:
+    # Also include AI-only missions not covered by the pilot-slot query in
+    # get_missions_for_career.  Every game mission gets its own story chapter;
+    # AI-only ones are generated with minimal sortie data and kept shorter.
+    _debrief_mission_ids: set[int] = {int(r["mission_id"]) for r in mission_rows}
+    for _seg_i, _seg_row in enumerate(career.chain):
+        _seg_career_id = int(_seg_row["id"])
+        _seg_dict = dict(_seg_row)
+        _seg_sq_name = ""
+        try:
+            _seg_sq_name = aggregator._resolve_squadron_name(int(_seg_row["squadronId"])) or ""
+        except Exception:
+            pass
+        for _am in db.get_all_missions_for_career(_seg_career_id):
+            _amid = int(_am["id"])
+            if _amid in _debrief_mission_ids:
+                continue
+            _am_date = _normalize_story_text(aggregator._format_date(_am["startTime"])) or f"mission-{_amid:08d}"
+            _am_fallback = _build_fallback_career_mission_json(
+                type("AIResult", (), {"duration_seconds": 0, "kills": 0, "final_state": "Unknown", "aircraft": ""})()
+            )
+            mission_rows.append({
+                "mission_id": _amid,
+                "mission_date": _am_date,
+                "segment_index": _seg_i,
+                "segment": _seg_dict,
+                "squadron_name": _seg_sq_name,
+                "mission_json": _am_fallback,
+                "sortie_stats": {},
+                "sortie_status": 0,
+                "player_flew": False,
+                "mission_type_code": dict(_am).get("type"),
+                "m_template": dict(_am).get("mTemplate"),
+                "pilots_count": int(dict(_am).get("pilotsCount") or 0),
+                "formation_role": None,
+                "sort_key": _career_story_sort_key(_seg_i, _am_date, _amid),
+            })
+            _debrief_mission_ids.add(_amid)
+    # Re-sort if AI-only missions were appended (they may interleave with player missions).
+    _ai_only_rows = [r for r in mission_rows if not r.get("player_flew", True)]
+    if _ai_only_rows:
+        mission_rows.sort(key=lambda row: row["sort_key"])
+    if _ai_only_rows:
         logger.info(
-            "Career %s: skipping %d mission(s) with no player sortie row (player did not fly)",
-            root_career_id, _unflown_count,
+            "Career %s: %d AI-only mission(s) (no player sortie row) — "
+            "each gets its own shorter chapter: %s",
+            root_career_id,
+            len(_ai_only_rows),
+            [(int(r["mission_id"]), r["mission_date"]) for r in _ai_only_rows],
         )
-    mission_rows = [r for r in mission_rows if r.get("player_flew", True)]
+    logger.info(
+        "Career %s: %d mission rows total (%d player-flew, %d AI-only)",
+        root_career_id, len(mission_rows),
+        len(mission_rows) - len(_ai_only_rows), len(_ai_only_rows),
+    )
 
     if not mission_rows:
         return []
@@ -1780,6 +1827,11 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
         _d = _mr["mission_date"] or ""
         if _si not in _last_date_by_segment or _d > _last_date_by_segment[_si]:
             _last_date_by_segment[_si] = _d
+
+    # Mission IDs that now have their own full context (player-flew or AI-only).
+    # Used to prevent gap/unflown handlers from generating duplicate chapters for
+    # the same missions.
+    _all_career_mission_ids: set[int] = {int(r["mission_id"]) for r in mission_rows}
 
     contexts: list[dict] = []
 
@@ -1900,6 +1952,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                         for s in _ima_unflown_sorties
                         if (aggregator._format_date(s["date"]) or "") > _prev_chapter_date
                         and (not mission_date or (aggregator._format_date(s["date"]) or "") < mission_date)
+                        and int(s["missionId"]) not in _all_career_mission_ids
                     } - {""})
                     _force_dates_seg = force_new_format_dates or set()
                     for _seg_gap_date in _seg_trail_dates:
@@ -1908,7 +1961,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                             try:
                                 _force_missions_seg: dict[int, list] = {}
                                 for _s in _ima_unflown_sorties:
-                                    if (aggregator._format_date(_s["date"]) or "") == _seg_gap_date:
+                                    if (aggregator._format_date(_s["date"]) or "") == _seg_gap_date and int(_s["missionId"]) not in _all_career_mission_ids:
                                         _force_missions_seg.setdefault(int(_s["missionId"]), []).append(_s)
                                 for _fmid_s, _fsorties_s in sorted(_force_missions_seg.items()):
                                     _pe_s = _build_pilot_entries_from_sorties(
@@ -1987,7 +2040,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                     _seg_trail_missions: dict[int, list] = {}
                     for _s in _ima_unflown_sorties:
                         _sd = aggregator._format_date(_s["date"]) or ""
-                        if _sd > _prev_chapter_date and (not mission_date or _sd < mission_date):
+                        if _sd > _prev_chapter_date and (not mission_date or _sd < mission_date) and int(_s["missionId"]) not in _all_career_mission_ids:
                             _seg_trail_missions.setdefault(int(_s["missionId"]), []).append(_s)
                     for _seg_trail_mid, _seg_trail_sorties in sorted(_seg_trail_missions.items()):
                         try:
@@ -2171,6 +2224,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                             for s in _ima_unflown_sorties
                             if (aggregator._format_date(s["date"]) or "") > _prev_chapter_date
                             and (aggregator._format_date(s["date"]) or "") < mission_date
+                            and int(s["missionId"]) not in _all_career_mission_ids
                         } - {""})
                         _force_dates = force_new_format_dates or set()
                         for _gap_date in _gap_dates:
@@ -2178,7 +2232,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                                 # Per-mission format for this specific date.
                                 _force_missions: dict[int, list] = {}
                                 for _s in _ima_unflown_sorties:
-                                    if (aggregator._format_date(_s["date"]) or "") == _gap_date:
+                                    if (aggregator._format_date(_s["date"]) or "") == _gap_date and int(_s["missionId"]) not in _all_career_mission_ids:
                                         _force_missions.setdefault(int(_s["missionId"]), []).append(_s)
                                 for _fmid, _fsorties in sorted(_force_missions.items()):
                                     _pilot_entries = _build_pilot_entries_from_sorties(
@@ -2254,7 +2308,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                         _gap_missions: dict[int, list] = {}
                         for _s in _ima_unflown_sorties:
                             _sd = aggregator._format_date(_s["date"]) or ""
-                            if _sd > _prev_chapter_date and _sd < mission_date:
+                            if _sd > _prev_chapter_date and _sd < mission_date and int(_s["missionId"]) not in _all_career_mission_ids:
                                 _gap_missions.setdefault(int(_s["missionId"]), []).append(_s)
                         for _gap_mid, _gap_sorties in sorted(_gap_missions.items()):
                             _gap_date = aggregator._format_date(_gap_sorties[0]["date"]) or ""
@@ -2303,13 +2357,50 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                     else:
                         for _s in _ima_unflown_sorties:
                             _sd = aggregator._format_date(_s["date"]) or ""
-                            if _sd == mission_date:
+                            if _sd == mission_date and int(_s["missionId"]) not in _all_career_mission_ids:
                                 _same_day_unflown_missions.setdefault(int(_s["missionId"]), []).append(_s)
         except Exception as _ima_err:
             logger.debug("Gap/unflown chapter generation failed for mission %s: %s", mission_id, _ima_err)
         # ───────────────────────────────────────────────────────────────────────
 
         try:
+            # Fast path for AI-only missions: skip award/event processing and weather.
+            # These chapters are kept shorter since the player's pilot didn't fly the mission.
+            if not row.get("player_flew", True):
+                _total_chapter_order += 1
+                _ai_input = build_story_input(
+                    row["mission_json"],
+                    career_id=root_career_id,
+                    mission_id=mission_id,
+                    mission_date=mission_date,
+                    squadron=squadron_name,
+                    mission_theatre=mission_theatre,
+                    mission_location=mission_location,
+                    pilot_last_name=career.pilot_last_name or "",
+                    rank=_last_rank_after_chapter,
+                    awards=_last_awards_after_chapter,
+                    missions_completed=mission_index,
+                    narrative_memory=_narrative_memory,
+                    mission_type_code=row.get("mission_type_code"),
+                    m_template=row.get("m_template"),
+                )
+                _ai_input["career_segment_index"] = segment_index
+                _ai_input["career_mission_order"] = _total_chapter_order
+                if row.get("pilots_count"):
+                    _ai_input["mission"]["formation_size"] = row["pilots_count"]
+                _ai_input["mission"]["result"] = "Did Not Fly"
+                _ai_input["ai_only_mission"] = True
+                _ai_input["chapter_scope"] = {
+                    "scope": "ai_mission",
+                    "missions_in_chapter": 1,
+                    "mission_ids": [str(mission_id)],
+                    "mission_results": ["Did Not Fly"],
+                }
+                _prev_chapter_date = mission_date
+                _narrative_memory = update_narrative_memory_local(_ai_input, _narrative_memory)
+                contexts.append(_ai_input)
+                continue  # skip award/event loop, weather lookup, and same-day unflown section
+
             awards: list[str] = []
             mission_awards: list[str] = []
             pre_service_awards: list[str] = []
@@ -2637,7 +2728,7 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             _trailing_missions: dict[int, list] = {}
             for _s in _ima_unflown_sorties:
                 _sd = aggregator._format_date(_s["date"]) or ""
-                if _sd > _prev_chapter_date:
+                if _sd > _prev_chapter_date and int(_s["missionId"]) not in _all_career_mission_ids:
                     _trailing_missions.setdefault(int(_s["missionId"]), []).append(_s)
             _trail_sq_name = squadron_name if mission_rows else ""
             _trail_theatre = mission_theatre if mission_rows else ""
@@ -4427,16 +4518,20 @@ def delete_story_chapter(source: str, entry_id: str):
         except (TypeError, ValueError):
             return jsonify({'error': 'Invalid career id.'}), 400
 
-    deleted_date = delete_story_chapter_for(source, storage_entry_id, mission_id)
-    if deleted_date is None:
+    delete_result = delete_story_chapter_for(source, storage_entry_id, mission_id)
+    if delete_result is None:
         return jsonify({'error': f'Chapter for mission {mission_id} not found.'}), 404
 
+    deleted_date, is_ai_only = delete_result
     strip_memory_entries_for_date(source, storage_entry_id, deleted_date)
 
-    # When a legacy gap-day chapter is deleted, record the date so the next
-    # generate call produces per-mission chapters instead of another aggregate.
-    if source == "career" and deleted_date and str(mission_id).startswith("gap-"):
-        mark_date_pending_unflown(source, storage_entry_id, deleted_date)
+    if source == "career" and deleted_date:
+        # Gap-day chapter deleted → next generate produces per-mission chapters.
+        if str(mission_id).startswith("gap-"):
+            mark_date_pending_unflown(source, storage_entry_id, deleted_date)
+        # AI-only mission chapter deleted → pending so it can be regenerated.
+        if is_ai_only:
+            mark_ai_mission_pending(source, storage_entry_id, mission_id)
 
     return jsonify(_build_story_status_payload(source, entry_id))
 
@@ -4556,6 +4651,8 @@ def generate_stories(source: str, entry_id: str):
             storage_entry_id: str | int = root_career_id
             # Dates where a gap chapter was deleted → regenerate as per-mission chapters.
             _pending_dates: set[str] = set(get_pending_unflown_dates("career", storage_entry_id))
+            # AI-only mission IDs whose chapters were deleted → pending regeneration.
+            _pending_ai_missions: set[str] = set(get_pending_ai_missions("career", storage_entry_id))
             contexts = _build_career_story_contexts(
                 root_career_id,
                 llm_config={
@@ -4572,6 +4669,7 @@ def generate_stories(source: str, entry_id: str):
                 return jsonify({'error': 'No career mission context could be built yet. Run/update debrief parsing first and retry.'}), 400
         else:
             _pending_dates = set()
+            _pending_ai_missions = set()
             storage_entry_id = entry_id
             contexts = _build_campaign_story_contexts(entry_id, settings["story_language"])
 
@@ -4653,8 +4751,47 @@ def generate_stories(source: str, entry_id: str):
             "Story generate: %d total contexts built; %d existing chapter keys on disk",
             len(contexts), len(existing_story_keys),
         )
+        # Pass 1: collect dates where player-flew chapters are missing (used to decide
+        # whether to auto-include AI-only contexts for the same day).
+        missing_player_dates: set[str] = set()
+        for _ctx in contexts:
+            if _ctx.get("ai_only_mission"):
+                continue
+            if not _generate_unflown:
+                if (_ctx.get("chapter_scope") or {}).get("scope") == "unflown_mission":
+                    _cd = str(_ctx.get("date") or "")
+                    if not (_cd and _cd in _pending_dates):
+                        continue
+            _mk = str(_ctx.get("mission_id"))
+            _mc = _canonical_mission_id(_mk)
+            if _mk not in existing_story_keys and not (_mc and _mc in existing_story_canonical_keys):
+                missing_player_dates.add(str(_ctx.get("date") or ""))
+
+        # Pass 2: build the full missing_contexts list.
         missing_contexts: list[dict] = []
         for context in contexts:
+            # AI-only missions are included only when:
+            #   (a) their chapter was previously deleted → pending list, or
+            #   (b) a player chapter on the same date is also missing (first-time generation).
+            if context.get("ai_only_mission"):
+                mission_key = str(context.get("mission_id"))
+                ctx_date = str(context.get("date") or "")
+                in_pending = mission_key in _pending_ai_missions
+                same_date_missing = bool(ctx_date and ctx_date in missing_player_dates)
+                # A gap chapter for this date was deleted → regenerate its AI-only missions too.
+                date_gap_pending = bool(ctx_date and ctx_date in _pending_dates)
+                if not (in_pending or same_date_missing or date_gap_pending):
+                    continue
+                mission_canonical = _canonical_mission_id(mission_key)
+                if mission_key in existing_story_keys or (mission_canonical and mission_canonical in existing_story_canonical_keys):
+                    logger.info(
+                        "Story generate: skipping context mission_id=%s date=%s — already on disk",
+                        mission_key, context.get("date"),
+                    )
+                    continue
+                missing_contexts.append(context)
+                continue
+
             # Skip unflown mission chapters unless opted-in OR the date is pending
             # (gap chapter was deleted → regenerate as per-mission chapters).
             if not _generate_unflown:
@@ -4797,17 +4934,31 @@ def generate_stories(source: str, entry_id: str):
         if generated_count == 0 and generation_errors:
             raise RuntimeError(generation_errors[0])
 
-        # Clear pending dates whose unflown chapters were successfully generated.
+        # Clear pending dates whose unflown or AI-only chapters were successfully generated.
         if source == "career" and _pending_dates and generated_count > 0:
             generated_dates = {
                 str(c.get("date") or "")
                 for c in missing_contexts[:generated_count]
-                if (c.get("chapter_scope") or {}).get("scope") == "unflown_mission"
+                if (
+                    (c.get("chapter_scope") or {}).get("scope") == "unflown_mission"
+                    or c.get("ai_only_mission")
+                )
                 and str(c.get("date") or "")
             }
             dates_to_clear = _pending_dates & generated_dates
             if dates_to_clear:
                 clear_pending_unflown_dates("career", storage_entry_id, list(dates_to_clear))
+
+        # Clear pending AI mission IDs that were successfully generated.
+        if source == "career" and _pending_ai_missions and generated_count > 0:
+            generated_ai_ids = {
+                str(c.get("mission_id") or "")
+                for c in missing_contexts[:generated_count]
+                if c.get("ai_only_mission") and str(c.get("mission_id") or "")
+            }
+            ai_ids_to_clear = _pending_ai_missions & generated_ai_ids
+            if ai_ids_to_clear:
+                clear_pending_ai_missions("career", storage_entry_id, list(ai_ids_to_clear))
 
         status_payload = _build_story_status_payload(source, str(storage_entry_id))
         status_payload["generated_count"] = generated_count

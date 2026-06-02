@@ -571,10 +571,14 @@ def purge_orphaned_chapters_for(source: str, entry_id: str | int) -> int:
     return deleted_count
 
 
-def delete_story_chapter_for(source: str, entry_id: str | int, mission_id: str) -> Optional[str]:
+def delete_story_chapter_for(
+    source: str, entry_id: str | int, mission_id: str
+) -> Optional[tuple[str, bool]]:
     """Delete a chapter by mission_id and renumber the remaining ones.
 
-    Returns the deleted chapter's date string (for memory cleanup), or None if not found.
+    Returns ``(deleted_date, is_ai_only_mission)`` on success, or None if not found.
+    ``is_ai_only_mission`` is True when the chapter was generated for an AI-only
+    mission (player did not fly it personally).
     """
     chapters_dir = _story_entry_dir(source, entry_id) / "chapters"
     if not chapters_dir.exists():
@@ -583,12 +587,14 @@ def delete_story_chapter_for(source: str, entry_id: str | int, mission_id: str) 
     target_mission_id = _normalize_text(mission_id)
     target_path: Optional[Path] = None
     deleted_date: str = ""
+    is_ai_only: bool = False
 
     for path in sorted(chapters_dir.glob("*.json")):
         payload = _load_json_file(path, None)
         if isinstance(payload, dict) and _normalize_text(payload.get("mission_id")) == target_mission_id:
             target_path = path
             deleted_date = _normalize_text(payload.get("date"))
+            is_ai_only = bool(payload.get("ai_only_mission"))
             break
 
     if target_path is None:
@@ -609,7 +615,7 @@ def delete_story_chapter_for(source: str, entry_id: str | int, mission_id: str) 
         if new_path != path:
             path.unlink()
 
-    return deleted_date
+    return (deleted_date, is_ai_only)
 
 
 def _pending_unflown_path(source: str, entry_id: str | int) -> Path:
@@ -655,6 +661,53 @@ def clear_pending_unflown_dates(source: str, entry_id: str | int, dates: list[st
         existing = _load_json_file(path, [])
         if isinstance(existing, list):
             remaining = [d for d in existing if d not in dates]
+            if remaining:
+                _save_json_file(path, remaining)
+            elif path.exists():
+                path.unlink()
+    except Exception:
+        pass
+
+
+def _pending_ai_missions_path(source: str, entry_id: str | int) -> Path:
+    return _story_entry_dir(source, entry_id) / "pending_ai_missions.json"
+
+
+def mark_ai_mission_pending(source: str, entry_id: str | int, mission_id: str) -> None:
+    """Record that an AI-only mission chapter was deleted and should be regenerated."""
+    if not mission_id:
+        return
+    path = _pending_ai_missions_path(source, entry_id)
+    try:
+        existing = _load_json_file(path, [])
+        if not isinstance(existing, list):
+            existing = []
+        if mission_id not in existing:
+            existing.append(mission_id)
+        _save_json_file(path, existing)
+    except Exception:
+        pass
+
+
+def get_pending_ai_missions(source: str, entry_id: str | int) -> list[str]:
+    """Return mission IDs of AI-only chapters that were deleted and await regeneration."""
+    path = _pending_ai_missions_path(source, entry_id)
+    try:
+        data = _load_json_file(path, [])
+        return [str(m) for m in (data if isinstance(data, list) else []) if m]
+    except Exception:
+        return []
+
+
+def clear_pending_ai_missions(source: str, entry_id: str | int, mission_ids: list[str]) -> None:
+    """Remove *mission_ids* from the pending list after successful regeneration."""
+    if not mission_ids:
+        return
+    path = _pending_ai_missions_path(source, entry_id)
+    try:
+        existing = _load_json_file(path, [])
+        if isinstance(existing, list):
+            remaining = [m for m in existing if m not in mission_ids]
             if remaining:
                 _save_json_file(path, remaining)
             elif path.exists():
@@ -731,6 +784,8 @@ def save_story_chapter_for(
         segment_index = _coerce_int(mission_context.get("career_segment_index"))
         if segment_index is not None:
             new_payload["career_segment_index"] = segment_index
+        if mission_context.get("ai_only_mission"):
+            new_payload["ai_only_mission"] = True
 
     # Load all existing chapters and include the new one (no file yet, marked with None).
     all_chapters: list[tuple[Optional[Path], Dict[str, Any], int]] = []
@@ -1619,6 +1674,10 @@ def generate_mission_story(
         isinstance(story_input, dict)
         and (story_input.get("chapter_scope") or {}).get("scope") == "unflown_mission"
     )
+    _is_ai_mission = (
+        isinstance(story_input, dict)
+        and (story_input.get("chapter_scope") or {}).get("scope") == "ai_mission"
+    )
     _has_squadron_honors = bool(
         _sq_ctx.get("promotions") or _sq_ctx.get("awards")
         or _sq_ctx.get("kia") or _sq_ctx.get("mia") or _sq_ctx.get("wia")
@@ -1644,6 +1703,10 @@ def generate_mission_story(
         paragraph_rule = "Write exactly 2 paragraphs."
         word_target = "Target 100-200 words."
         max_output_tokens = 550
+    elif _is_ai_mission:
+        paragraph_rule = "Write exactly 2 paragraphs."
+        word_target = "Target 80-160 words."
+        max_output_tokens = 450
     elif missions_in_chapter <= 1:
         if _has_theatre_transition:
             paragraph_rule = "Write exactly 4 paragraphs."
@@ -1791,6 +1854,15 @@ def generate_mission_story(
         "If only missions_flown is available (no kills, no casualties), briefly note that the squadron flew without incident. "
         "Paragraph 3: the pilot's reflection on the day — a quiet, grounded close. "
         "Do not present this as a combat sortie. Do not invent mission objectives or enemy activity not in the data.\n"
+        "- If chapter_scope.scope is 'ai_mission', this sortie was flown entirely by other squadron members — "
+        "the player pilot did NOT fly it. Write exactly 2 short paragraphs as a brief log entry or report. "
+        "Do NOT write from the perspective of someone in the cockpit or in the air. "
+        "Paragraph 1: one or two sentences acknowledging a squadron sortie took place without the pilot "
+        "(he was resting, on other duties, or simply not rostered — do not invent a specific reason). "
+        "Paragraph 2: a brief, factual account of the mission drawn from the available data "
+        "(mission type, area, formation size if known). Keep it terse and professional — "
+        "the tone of a log entry, not an action narrative. "
+        "Do not invent kills, outcomes, or enemy contact not present in the data.\n"
         "- If chapter_scope.scope is 'unflown_mission', the pilot was not assigned to this specific sortie. "
         "Write exactly 2 short paragraphs from the pilot's perspective at the airfield. "
         "Paragraph 1: the pilot's situation — not on this sortie (be very brief, do not invent a specific reason). "
