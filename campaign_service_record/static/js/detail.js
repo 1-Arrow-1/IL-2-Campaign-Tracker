@@ -1384,6 +1384,44 @@ const DetailPage = {
         }
     },
 
+    _captureStoriesOpenState() {
+        const state = { theatres: {}, days: {} };
+        const content = this.elements.storiesContent;
+        if (!content) return state;
+        content.querySelectorAll('.story-theatre-section').forEach(theatre => {
+            const label = theatre.querySelector('.story-theatre__header')?.textContent?.trim() || '';
+            if (label) state.theatres[label] = theatre.open;
+            theatre.querySelectorAll('.story-day').forEach(day => {
+                const date = day.querySelector('.story-day__date')?.textContent?.trim() || '';
+                if (date) state.days[`${label}::${date}`] = day.open;
+            });
+        });
+        content.querySelectorAll(':scope > .story-day').forEach(day => {
+            const date = day.querySelector('.story-day__date')?.textContent?.trim() || '';
+            if (date) state.days[date] = day.open;
+        });
+        return state;
+    },
+
+    _restoreStoriesOpenState(state) {
+        if (!state) return;
+        const content = this.elements.storiesContent;
+        if (!content) return;
+        content.querySelectorAll('.story-theatre-section').forEach(theatre => {
+            const label = theatre.querySelector('.story-theatre__header')?.textContent?.trim() || '';
+            if (label && state.theatres[label] !== undefined) theatre.open = state.theatres[label];
+            theatre.querySelectorAll('.story-day').forEach(day => {
+                const date = day.querySelector('.story-day__date')?.textContent?.trim() || '';
+                const key = `${label}::${date}`;
+                if (date && state.days[key] !== undefined) day.open = state.days[key];
+            });
+        });
+        content.querySelectorAll(':scope > .story-day').forEach(day => {
+            const date = day.querySelector('.story-day__date')?.textContent?.trim() || '';
+            if (date && state.days[date] !== undefined) day.open = state.days[date];
+        });
+    },
+
     _buildStoryDayElement(date, dayChapters, isLastDay, chapterLabel) {
         const dayDetails = document.createElement('details');
         dayDetails.className = 'story-day';
@@ -1509,6 +1547,7 @@ const DetailPage = {
             ''
         );
 
+        const _openStateBefore = this._captureStoriesOpenState();
         try {
             const payload = await API.generateStories(
                 this._source,
@@ -1535,6 +1574,7 @@ const DetailPage = {
                 payload.message = translateOrFallback('web.message.story_generation_up_to_date', 'Stories are already up to date.');
             }
             this.renderStoriesSection(payload);
+            this._restoreStoriesOpenState(_openStateBefore);
         } catch (error) {
             console.error('Failed to generate stories:', error);
             this.setStoriesStatus(error.message || 'Story generation failed.', 'error');
@@ -1542,13 +1582,15 @@ const DetailPage = {
             this.setStoriesBusy(false);
         }
     },
-    
+
     async _deleteStoryChapter(missionId) {
         if (!this.currentStoriesEntryId || !this._source) return;
         this.setStoriesBusy(true);
+        const _openStateBefore = this._captureStoriesOpenState();
         try {
             const payload = await API.deleteStoryChapter(this._source, this.currentStoriesEntryId, missionId);
             this.renderStoriesSection(payload);
+            this._restoreStoriesOpenState(_openStateBefore);
         } catch (error) {
             console.error('Failed to delete story chapter:', error);
             this.setStoriesStatus(error.message || translateOrFallback('web.message.delete_story_chapter_failed', 'Failed to delete chapter.'), 'error');

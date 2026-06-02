@@ -2396,6 +2396,21 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                     "mission_ids": [str(mission_id)],
                     "mission_results": ["Did Not Fly"],
                 }
+                # Attach per-pilot kill / outcome data from the IMA sortie cache
+                # so the LLM can name pilots and their results.
+                try:
+                    _ai_sorties = [
+                        s for s in _ima_unflown_sorties
+                        if int(s["missionId"]) == mission_id
+                    ]
+                    if _ai_sorties:
+                        _ai_pilot_entries = _build_pilot_entries_from_sorties(
+                            _ai_sorties, _ima_member_by_id, _ima_member_rank_by_id
+                        )
+                        if _ai_pilot_entries:
+                            _ai_input["unflown_mission"] = {"pilot_entries": _ai_pilot_entries}
+                except Exception:
+                    pass
                 _prev_chapter_date = mission_date
                 _narrative_memory = update_narrative_memory_local(_ai_input, _narrative_memory)
                 contexts.append(_ai_input)
