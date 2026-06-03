@@ -442,6 +442,7 @@ def _filter_story_honors_for_sortie(
     if not is_last_sortie_of_day:
         filtered_squadron["promotions"] = []
         filtered_squadron["awards"] = []
+        filtered_squadron["transfers"] = []
         return [], "", filtered_squadron
 
     awards = [
@@ -1295,6 +1296,39 @@ def _air_kills_from_sortie_row(s) -> int:
     return light + medium + heavy + max(static, 0)
 
 
+def _build_transfer_entries_for_date(
+    member_events: list,
+    member_by_id: dict,
+    member_rank_by_id: dict,
+    date_iso: str,
+    squadron_config_id: int,
+    segment_career_id: int,
+    aggregator,
+) -> list[dict]:
+    """Return transfer entries (with direction) for squadron members on a given date."""
+    transfers: list[dict] = []
+    for ev in member_events:
+        if int(ev.get("type") or -1) != 10:
+            continue
+        if (aggregator._format_date(ev["date"]) or "") != date_iso:
+            continue
+        pid = int(ev["pilotId"])
+        who = member_by_id.get(pid, f"Pilot {pid}")
+        rank = member_rank_by_id.get(pid, "")
+        to_cfg = int(ev["squadronId"] or 0) if "squadronId" in ev.keys() else 0
+        to_name = ""
+        if to_cfg and segment_career_id:
+            to_name = aggregator._resolve_squadron_name_by_config(segment_career_id, to_cfg) or ""
+        if not to_name and to_cfg:
+            to_name = f"Squadron {to_cfg}"
+        direction = "in" if to_cfg == squadron_config_id else "out"
+        entry: dict = {"pilot": who, "to_squadron": to_name, "direction": direction}
+        if rank:
+            entry["rank"] = rank
+        transfers.append(entry)
+    return transfers
+
+
 def _build_inter_mission_activities(
     unflown_sorties: list,
     member_events: list,
@@ -1307,6 +1341,8 @@ def _build_inter_mission_activities(
     same_day: bool,
     story_language: str = "en",
     include_events: Optional[bool] = None,
+    squadron_config_id: int = 0,
+    segment_career_id: int = 0,
 ) -> list[dict]:
     """
     Build inter_mission_activities entries from unflown squadron sorties and events.
@@ -1387,6 +1423,7 @@ def _build_inter_mission_activities(
 
         awards: list[dict] = []
         promotions: list[dict] = []
+        transfers: list[dict] = []
         for ev in day_events:
             pid = int(ev["pilotId"])
             who = member_by_id.get(pid, f"Pilot {pid}")
@@ -1406,8 +1443,20 @@ def _build_inter_mission_activities(
                     if rank:
                         entry["rank"] = rank
                     awards.append(entry)
+            elif ev_type == "transfer":
+                to_cfg = int(ev["squadronId"] or 0) if "squadronId" in ev.keys() else 0
+                to_name = ""
+                if to_cfg and segment_career_id:
+                    to_name = aggregator._resolve_squadron_name_by_config(segment_career_id, to_cfg) or ""
+                if not to_name and to_cfg:
+                    to_name = f"Squadron {to_cfg}"
+                direction = "in" if to_cfg == squadron_config_id else "out"
+                t_entry: dict = {"pilot": who, "to_squadron": to_name, "direction": direction}
+                if rank:
+                    t_entry["rank"] = rank
+                transfers.append(t_entry)
 
-        if not (air_kills > 0 or ground_kills > 0 or casualties or awards or promotions):
+        if not (air_kills > 0 or ground_kills > 0 or casualties or awards or promotions or transfers):
             continue
 
         activity: dict = {"date": date_str, "same_day": same_day, "missions_flown": missions_flown}
@@ -1421,6 +1470,8 @@ def _build_inter_mission_activities(
             activity["awards"] = awards
         if promotions:
             activity["promotions"] = promotions
+        if transfers:
+            activity["transfers"] = transfers
         activities.append(activity)
 
     return activities
@@ -1495,6 +1546,7 @@ def _build_unflown_mission_chapter_context(
     accumulated_air_kills: int,
     narrative_memory: dict,
     llm_config: Optional[dict] = None,
+    transfers: Optional[list] = None,
 ) -> dict:
     """Build a story-input dict for a sortie the player was not assigned to."""
     pilot_name = " ".join(
@@ -1523,6 +1575,15 @@ def _build_unflown_mission_chapter_context(
         },
         "unflown_mission": {
             "pilot_entries": pilot_entries,
+        },
+        "squadron_context": {
+            "promotions": [],
+            "awards": [],
+            "transfers": list(transfers or []),
+            "kia": [],
+            "mia": [],
+            "wia": [],
+            "flight_results": [],
         },
         "honors_context": {"promotion": {}, "awards": []},
         "career_progress": {
@@ -1575,7 +1636,7 @@ def _build_gap_day_chapter_context(
     sq_ctx: dict = {
         "promotions": gap_activity.get("promotions", []),
         "awards": gap_activity.get("awards", []),
-        "transfers": [],
+        "transfers": gap_activity.get("transfers", []),
         "kia": [e for e in casualties if e.get("outcome") == "KIA"],
         "mia": [e for e in casualties if e.get("outcome") == "MIA"],
         "wia": [e for e in casualties if e.get("outcome") == "WIA"],
@@ -1930,6 +1991,8 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
     _ima_member_rank_by_id: dict = {}
     _ima_segment_player_id: int = -1
     _ima_squadron_id: int = -1
+    _ima_sq_config_id: int = 0   # configId of current squadron (for transfer direction)
+    _ima_segment_career_id: int = 0  # career segment id (for squadron name resolution)
 
     for mission_index, row in enumerate(mission_rows, start=1):
         mission_date = row["mission_date"]
@@ -1987,6 +2050,10 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                                         accumulated_air_kills=_accumulated_air_kills,
                                         narrative_memory=_narrative_memory,
                                         llm_config=llm_config,
+                                        transfers=_build_transfer_entries_for_date(
+                                            _ima_all_member_events, _ima_member_by_id, _ima_member_rank_by_id,
+                                            _seg_gap_date, _ima_sq_config_id, _ima_segment_career_id, aggregator,
+                                        ),
                                     )
                                     _narrative_memory = update_narrative_memory_local(_gap_ctx, _narrative_memory)
                                     contexts.append(_gap_ctx)
@@ -2007,6 +2074,8 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                                     same_day=True,
                                     include_events=True,
                                     story_language=story_language,
+                                    squadron_config_id=_ima_sq_config_id,
+                                    segment_career_id=_ima_segment_career_id,
                                 )
                                 if not _gap_acts:
                                     continue
@@ -2068,6 +2137,10 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                                 accumulated_air_kills=_accumulated_air_kills,
                                 narrative_memory=_narrative_memory,
                                 llm_config=llm_config,
+                                transfers=_build_transfer_entries_for_date(
+                                    _ima_all_member_events, _ima_member_by_id, _ima_member_rank_by_id,
+                                    _seg_trail_date, _ima_sq_config_id, _ima_segment_career_id, aggregator,
+                                ),
                             )
                             _narrative_memory = update_narrative_memory_local(_gap_ctx, _narrative_memory)
                             contexts.append(_gap_ctx)
@@ -2080,6 +2153,14 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
             # ─────────────────────────────────────────────────────────────────────
             _ima_segment_player_id = _seg_player_id
             _ima_squadron_id = _seg_squadron_id
+            _ima_segment_career_id = int((row.get("segment") or {}).get("id") or 0)
+            _ima_sq_config_id = 0
+            try:
+                _sq_row = db.get_squadron_by_id(_seg_squadron_id) if _seg_squadron_id > 0 else None
+                if _sq_row:
+                    _ima_sq_config_id = int(_sq_row["configId"] or 0)
+            except Exception:
+                pass
             _prev_chapter_date = ""
             _ima_unflown_sorties = []
             _ima_all_member_events = []
@@ -2258,6 +2339,10 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                                         accumulated_air_kills=_accumulated_air_kills,
                                         narrative_memory=_narrative_memory,
                                         llm_config=llm_config,
+                                        transfers=_build_transfer_entries_for_date(
+                                            _ima_all_member_events, _ima_member_by_id, _ima_member_rank_by_id,
+                                            _gap_date, _ima_sq_config_id, _ima_segment_career_id, aggregator,
+                                        ),
                                     )
                                     _narrative_memory = update_narrative_memory_local(_gap_ctx, _narrative_memory)
                                     contexts.append(_gap_ctx)
@@ -2276,6 +2361,8 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                                     same_day=True,
                                     include_events=True,
                                     story_language=story_language,
+                                    squadron_config_id=_ima_sq_config_id,
+                                    segment_career_id=_ima_segment_career_id,
                                 )
                                 if not _gap_acts:
                                     continue
@@ -2335,6 +2422,10 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                                 accumulated_air_kills=_accumulated_air_kills,
                                 narrative_memory=_narrative_memory,
                                 llm_config=llm_config,
+                                transfers=_build_transfer_entries_for_date(
+                                    _ima_all_member_events, _ima_member_by_id, _ima_member_rank_by_id,
+                                    _gap_date, _ima_sq_config_id, _ima_segment_career_id, aggregator,
+                                ),
                             )
                             _narrative_memory = update_narrative_memory_local(_gap_ctx, _narrative_memory)
                             contexts.append(_gap_ctx)
@@ -2345,13 +2436,16 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                 if is_last_sortie_of_day:
                     if use_legacy_gap_days:
                         _same_acts = _build_inter_mission_activities(
-                            _ima_unflown_sorties, _ima_all_member_events,
+                            [s for s in _ima_unflown_sorties if int(s["missionId"]) not in _all_career_mission_ids],
+                            _ima_all_member_events,
                             _ima_member_by_id, _ima_member_rank_by_id,
                             aggregator, career,
                             date_from=mission_date,
                             date_to=mission_date,
                             same_day=True,
                             story_language=story_language,
+                            squadron_config_id=_ima_sq_config_id,
+                            segment_career_id=_ima_segment_career_id,
                         )
                         _inter_mission_activities.extend(_same_acts)
                     else:
@@ -2409,6 +2503,16 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                         )
                         if _ai_pilot_entries:
                             _ai_input["unflown_mission"] = {"pilot_entries": _ai_pilot_entries}
+                except Exception:
+                    pass
+                # Attach transfer events for this mission's date.
+                try:
+                    _ai_transfers = _build_transfer_entries_for_date(
+                        _ima_all_member_events, _ima_member_by_id, _ima_member_rank_by_id,
+                        mission_date, _ima_sq_config_id, _ima_segment_career_id, aggregator,
+                    )
+                    if _ai_transfers:
+                        _ai_input.setdefault("squadron_context", {})["transfers"] = _ai_transfers
                 except Exception:
                     pass
                 _prev_chapter_date = mission_date
@@ -2724,6 +2828,10 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                     accumulated_air_kills=_accumulated_air_kills,
                     narrative_memory=_narrative_memory,
                     llm_config=llm_config,
+                    transfers=_build_transfer_entries_for_date(
+                        _ima_all_member_events, _ima_member_by_id, _ima_member_rank_by_id,
+                        mission_date, _ima_sq_config_id, _ima_segment_career_id, aggregator,
+                    ),
                 )
                 _narrative_memory = update_narrative_memory_local(_sd_ctx, _narrative_memory)
                 contexts.append(_sd_ctx)
@@ -2773,6 +2881,10 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
                     accumulated_air_kills=_accumulated_air_kills,
                     narrative_memory=_narrative_memory,
                     llm_config=llm_config,
+                    transfers=_build_transfer_entries_for_date(
+                        _ima_all_member_events, _ima_member_by_id, _ima_member_rank_by_id,
+                        _trail_date, _ima_sq_config_id, _ima_segment_career_id, aggregator,
+                    ),
                 )
                 _narrative_memory = update_narrative_memory_local(_trail_ctx, _narrative_memory)
                 contexts.append(_trail_ctx)
@@ -2861,6 +2973,15 @@ def _build_squadron_context_for_mission(
     if not member_ids:
         return empty
 
+    # Resolve current squadron configId once — used to determine transfer direction.
+    _sq_config_id = 0
+    try:
+        _sq_row = db.get_squadron_by_id(squadron_id)
+        if _sq_row:
+            _sq_config_id = int(_sq_row["configId"] or 0)
+    except Exception:
+        pass
+
     # Event-driven updates (same mission date only)
     member_events = db.get_events_for_pilots(member_ids, types=_STORY_SQUADRON_EVENT_TYPES)
     for ev in member_events:
@@ -2894,7 +3015,8 @@ def _build_squadron_context_for_mission(
                 to_name = aggregator._resolve_squadron_name_by_config(segment_career_id, to_cfg) or ""
             if not to_name and to_cfg:
                 to_name = f"Squadron {to_cfg}"
-            entry = {"pilot": who, "to_squadron": to_name}
+            direction = "in" if to_cfg == _sq_config_id else "out"
+            entry = {"pilot": who, "to_squadron": to_name, "direction": direction}
             if pilot_rank:
                 entry["rank"] = pilot_rank
             empty["transfers"].append(entry)
@@ -4894,12 +5016,28 @@ def generate_stories(source: str, entry_id: str):
         generated_count = 0
         generation_errors: list[str] = []
         running_memory: dict = {}
+        _prev_generated_date: str = ""
         for context in missing_contexts:
             if generated_count >= max_chapters:
                 break
-            # If we just generated the previous chapter, feed its fresh memory forward.
+            # Carry running_memory forward across chapters, but handle same-day chapters
+            # carefully: only pass used_titles (to prevent title repetition) — NOT
+            # recent_events.  Passing recent_events between same-day chapters causes the
+            # LLM for chapter 2 to re-mention events it just read about in chapter 1.
             if running_memory:
-                context["narrative_memory"] = running_memory
+                ctx_date = str(context.get("date") or "")
+                if ctx_date and ctx_date == _prev_generated_date:
+                    # Same day: merge only used_titles into the context's own memory.
+                    nm = dict(context.get("narrative_memory") or {})
+                    merged_titles = list(nm.get("used_titles") or [])
+                    for t in (running_memory.get("used_titles") or []):
+                        if t not in merged_titles:
+                            merged_titles.append(t)
+                    nm["used_titles"] = merged_titles[-20:]
+                    context["narrative_memory"] = nm
+                else:
+                    # Different day (or first chapter): full memory handoff.
+                    context["narrative_memory"] = running_memory
             pool = ThreadPoolExecutor(max_workers=1)
             try:
                 future = pool.submit(
@@ -4916,6 +5054,7 @@ def generate_stories(source: str, entry_id: str):
                 result = future.result(timeout=120)
                 running_memory = result.get("memory") or running_memory
                 save_story_state_for(source, storage_entry_id, running_memory)
+                _prev_generated_date = str(context.get("date") or "")
                 generated_count += 1
             except FuturesTimeoutError:
                 mission_ref = _normalize_story_text(context.get("mission_id")) or _normalize_story_text(context.get("date")) or "unknown"
