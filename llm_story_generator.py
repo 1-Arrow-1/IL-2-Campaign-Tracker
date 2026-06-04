@@ -1704,9 +1704,14 @@ def generate_mission_story(
         word_target = "Target 100-200 words."
         max_output_tokens = 550
     elif _is_ai_mission:
-        paragraph_rule = "Write exactly 2 paragraphs."
-        word_target = "Target 80-160 words."
-        max_output_tokens = 450
+        if _has_squadron_honors:
+            paragraph_rule = "Write exactly 4 paragraphs."
+            word_target = "Target 220-400 words."
+            max_output_tokens = 1050
+        else:
+            paragraph_rule = "Write exactly 2 paragraphs."
+            word_target = "Target 80-160 words."
+            max_output_tokens = 450
     elif missions_in_chapter <= 1:
         if _has_theatre_transition:
             paragraph_rule = "Write exactly 4 paragraphs."
@@ -1772,6 +1777,7 @@ def generate_mission_story(
         "- Treat squadron_context as factual.\n"
         "- If squadron_context.promotions is non-empty, you MUST mention every entry in the narrative. Each entry has 'pilot' (name) and 'promoted_to' (the new rank). Write it as 'X was promoted to [promoted_to]' — do NOT use promoted_to as a name prefix before the pilot's name. A chapter that omits any promotion is factually incomplete.\n"
         "- If squadron_context.awards is non-empty, you MUST mention every award by its full name and the pilot's name — do not omit any. A chapter that omits any award from this list is factually incomplete.\n"
+        "- CRITICAL: Awards and promotions from squadron_context MUST be woven into the prose of a narrative paragraph — never appended as a postscript, list, or 'Squadron update:' line after the final paragraph. There must be no text outside the required paragraphs. If the chapter includes both combat events and honors, dedicate the final paragraph to the post-mission moment: the gathering of pilots, the formal presentation, the weight of the recognition.\n"
         "- If squadron_context.kia is non-empty, you MUST mention every KIA as a loss in the narrative. "
         "IMPORTANT: squadron_context.kia/mia/wia are casualties that occurred during the player's own mission — narrate them as losses within the player's sortie, NOT as casualties from a separate concurrent flight.\n"
         "- If squadron_context.transfers is non-empty, each entry has a 'direction' field: "
