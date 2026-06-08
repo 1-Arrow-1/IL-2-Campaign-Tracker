@@ -280,7 +280,37 @@ class SettingsManagerApp(tk.Tk):
         "de": "lbl_language_german",
         "ru": "lbl_language_russian",
     }
-    
+
+    # Squadron Roster: pilot state integer → display name
+    PILOT_STATES: Dict[int, str] = {
+        0: "Active",
+        1: "Squadron Commander",
+        2: "KIA",
+        3: "MIA",
+        4: "WIA",
+        5: "Transferred",
+        8: "Deputy Commander",
+    }
+    _PILOT_STATE_FROM_NAME: Dict[str, int] = {
+        "Active":             0,
+        "Squadron Commander": 1,
+        "KIA":                2,
+        "MIA":                3,
+        "WIA":                4,
+        "Transferred":        5,
+        "Deputy Commander":   8,
+    }
+    # (tree_col_id, db_col_name, pixel_width, is_numeric)
+    _ROSTER_TREE_COLS: List[Tuple[str, str, int, bool]] = [
+        ("first_name",   "name",        120, False),
+        ("last_name",    "lastName",    120, False),
+        ("ai_level",     "AILevel",      70, True),
+        ("pcp",          "pcp",          70, True),
+        ("sorties",      "sorties",      70, True),
+        ("good_sorties", "goodSorties",  90, True),
+        ("state",        "state",       150, False),
+    ]
+
     def __init__(self):
         super().__init__()
         
@@ -375,6 +405,17 @@ class SettingsManagerApp(tk.Tk):
         self._update_proc_warn_var = tk.StringVar(value="")
         self._update_proc_warn_label: Optional[ttk.Label] = None
         self._update_manifest_frame: Optional[ttk.Frame] = None
+
+        # Squadron Roster tab state
+        self._roster_tree: Optional[ttk.Treeview] = None
+        self._roster_career_combo: Optional[ttk.Combobox] = None
+        self._roster_career_ids: List[int] = []
+        self._roster_pilot_data: Dict[str, Dict] = {}
+        self._roster_pending_changes: Dict[str, Dict] = {}
+        self._roster_editor: Optional[tk.Widget] = None
+        self._roster_editor_item: Optional[str] = None
+        self._roster_editor_col: Optional[str] = None
+        self._roster_status_var = tk.StringVar(value="")
 
         # Load all data
         self._load_all_data()
@@ -483,6 +524,9 @@ class SettingsManagerApp(tk.Tk):
 
         # Tab 7: Update installer
         self._create_updates_tab()
+
+        # Tab 8: Squadron Roster
+        self._create_squadron_roster_tab()
 
         # Button frame
         self._create_button_bar(main_frame)
@@ -4467,6 +4511,425 @@ class SettingsManagerApp(tk.Tk):
     def _on_close(self) -> None:
         """Window close handler."""
         self._on_cancel()
+
+    # ------------------------------------------------------------------
+    # Tab 8: Squadron Roster
+    # ------------------------------------------------------------------
+
+    def _create_squadron_roster_tab(self) -> None:
+        """Create Squadron Roster tab for editing pilot data in cp.db."""
+        frame = ttk.Frame(self.notebook, padding=20)
+        self.notebook.add(frame, text=self.tr.t("tab_squadron_roster"))
+
+        careers = self._load_careers_from_db()
+        if careers is None:
+            ttk.Label(
+                frame,
+                text=self.tr.t("msg_career_db_not_found"),
+                foreground="gray",
+            ).pack(pady=50)
+            return
+        if not careers:
+            ttk.Label(
+                frame,
+                text=self.tr.t("msg_no_careers"),
+                foreground="gray",
+            ).pack(pady=50)
+            return
+
+        # Helper text
+        ttk.Label(
+            frame,
+            text=self.tr.t("lbl_squadron_roster_helper"),
+            foreground="gray",
+            wraplength=520,
+            justify=tk.LEFT,
+        ).pack(anchor=tk.W, pady=(0, 10))
+
+        # Career selection dropdown — one entry per distinct career chain.
+        # The roster always shows the latest theatre segment for the chosen career.
+        sel_row = ttk.Frame(frame)
+        sel_row.pack(fill=tk.X, pady=(0, 10))
+        ttk.Label(sel_row, text=self.tr.t("lbl_select_career")).pack(side=tk.LEFT)
+
+        self._roster_career_ids = [cid for cid, _ in careers]
+        self._roster_career_combo = ttk.Combobox(
+            sel_row,
+            values=[name for _, name in careers],
+            state="readonly",
+            width=40,
+        )
+        self._roster_career_combo.pack(side=tk.LEFT, padx=(10, 0))
+        self._roster_career_combo.current(0)
+        self._roster_career_combo.bind("<<ComboboxSelected>>", self._on_roster_career_selected)
+
+        # Treeview in a sub-frame
+        tree_frame = ttk.Frame(frame)
+        tree_frame.pack(fill=tk.BOTH, expand=True)
+
+        cols = [col_id for col_id, *_ in self._ROSTER_TREE_COLS]
+        self._roster_tree = ttk.Treeview(tree_frame, columns=cols, show="headings", height=14)
+
+        col_labels = {
+            "first_name":   self.tr.t("lbl_first_name"),
+            "last_name":    self.tr.t("lbl_last_name"),
+            "ai_level":     self.tr.t("lbl_ai_level"),
+            "pcp":          self.tr.t("lbl_pcp"),
+            "sorties":      self.tr.t("lbl_sorties"),
+            "good_sorties": self.tr.t("lbl_good_sorties"),
+            "state":        self.tr.t("lbl_state"),
+        }
+        for col_id, _db_col, width, is_num in self._ROSTER_TREE_COLS:
+            self._roster_tree.heading(col_id, text=col_labels[col_id])
+            self._roster_tree.column(col_id, width=width, anchor=tk.CENTER if is_num else tk.W)
+
+        vsb = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=self._roster_tree.yview)
+        self._roster_tree.configure(yscrollcommand=vsb.set)
+        self._roster_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        vsb.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self._roster_tree.bind("<Double-1>", self._on_roster_cell_double_click)
+
+        # Bottom bar
+        bar = ttk.Frame(frame)
+        bar.pack(fill=tk.X, pady=(8, 0))
+        ttk.Button(bar, text=self.tr.t("btn_save_changes"), command=self._on_roster_save).pack(side=tk.LEFT)
+        ttk.Button(bar, text=self.tr.t("btn_discard_changes"), command=self._on_roster_discard).pack(
+            side=tk.LEFT, padx=(8, 0)
+        )
+        ttk.Label(bar, textvariable=self._roster_status_var, foreground="gray").pack(
+            side=tk.LEFT, padx=(12, 0)
+        )
+
+        # Load roster for the first (most recently started) career
+        self._load_roster_for_career(self._roster_career_ids[0])
+
+    def _on_roster_career_selected(self, event: tk.Event) -> None:
+        """Reload the roster when the user picks a different career."""
+        if self._roster_career_combo is None:
+            return
+        idx = self._roster_career_combo.current()
+        if 0 <= idx < len(self._roster_career_ids):
+            self._load_roster_for_career(self._roster_career_ids[idx])
+
+    def _load_roster_for_career(self, career_id: int) -> None:
+        """Query cp.db for all pilots in the squadron of the given root career."""
+        game_dir = (self.mission_dates_data or {}).get("game_directory")
+        if not game_dir:
+            return
+        db_path = os.path.join(str(game_dir), "data", "Career", "cp.db")
+        if not os.path.isfile(db_path):
+            return
+
+        self._roster_pilot_data = {}
+        self._roster_pending_changes = {}
+        if self._roster_status_var:
+            self._roster_status_var.set("")
+
+        try:
+            uri = f"file:{db_path}?mode=ro"
+            con = sqlite3.connect(uri, uri=True, timeout=5)
+            con.row_factory = sqlite3.Row
+
+            # Traverse the career chain to find the latest segment's squadronId
+            cur = con.execute(
+                """
+                WITH RECURSIVE chain(id, playerId) AS (
+                    SELECT id, playerId FROM career WHERE id = ?
+                    UNION ALL
+                    SELECT c.id, c.playerId FROM career c JOIN chain ON c.extends = chain.id
+                )
+                SELECT p.squadronId
+                FROM chain
+                JOIN pilot p ON p.id = chain.playerId
+                ORDER BY chain.id DESC
+                LIMIT 1
+                """,
+                [career_id],
+            )
+            row = cur.fetchone()
+            if row is None:
+                con.close()
+                return
+            squadron_id = row[0]
+
+            # Fetch all non-deleted pilots in that squadron
+            cur = con.execute(
+                """
+                SELECT id, name, lastName, AILevel, pcp, sorties, goodSorties, state
+                FROM pilot
+                WHERE squadronId = ? AND isDeleted = 0
+                ORDER BY rankId DESC,
+                         (COALESCE(killLightPlane,0) + COALESCE(killMediumPlane,0)
+                          + COALESCE(killHeavyPlane,0) + COALESCE(killStaticPlane,0)) DESC
+                """,
+                [squadron_id],
+            )
+            rows = cur.fetchall()
+            con.close()
+
+            for r in rows:
+                iid = str(r["id"])
+                self._roster_pilot_data[iid] = {
+                    "id":          r["id"],
+                    "name":        r["name"] or "",
+                    "lastName":    r["lastName"] or "",
+                    "AILevel":     r["AILevel"] if r["AILevel"] is not None else 1,
+                    "pcp":         float(r["pcp"]) if r["pcp"] is not None else 0.0,
+                    "sorties":     int(r["sorties"]) if r["sorties"] is not None else 0,
+                    "goodSorties": int(r["goodSorties"]) if r["goodSorties"] is not None else 0,
+                    "state":       int(r["state"]) if r["state"] is not None else 0,
+                }
+
+            self._populate_roster_tree()
+
+        except Exception as exc:
+            logger.warning("_load_roster_for_career failed: %s", exc, exc_info=True)
+
+    def _populate_roster_tree(self) -> None:
+        """Rebuild the roster treeview from _roster_pilot_data (with pending changes overlaid)."""
+        if self._roster_tree is None:
+            return
+        self._destroy_roster_editor()
+        self._roster_tree.delete(*self._roster_tree.get_children())
+
+        for iid, data in self._roster_pilot_data.items():
+            changes = self._roster_pending_changes.get(iid, {})
+            merged = dict(data)
+            merged.update(changes)
+
+            state_int = int(merged.get("state", 0))
+            state_text = self.PILOT_STATES.get(state_int, str(state_int))
+
+            values = (
+                merged.get("name", ""),
+                merged.get("lastName", ""),
+                merged.get("AILevel", 1),
+                f"{float(merged.get('pcp', 0.0)):.1f}",
+                merged.get("sorties", 0),
+                merged.get("goodSorties", 0),
+                state_text,
+            )
+            tag = "pending" if iid in self._roster_pending_changes else ""
+            self._roster_tree.insert(
+                "", tk.END, iid=iid, values=values, tags=(tag,) if tag else ()
+            )
+
+        self._roster_tree.tag_configure("pending", foreground="#cc6600")
+
+    def _on_roster_cell_double_click(self, event: tk.Event) -> None:
+        """Start inline editing on double-click of a roster cell."""
+        if self._roster_tree is None:
+            return
+        region = self._roster_tree.identify("region", event.x, event.y)
+        if region != "cell":
+            return
+        col = self._roster_tree.identify_column(event.x)
+        item = self._roster_tree.identify_row(event.y)
+        if not item or not col:
+            return
+        col_idx = int(col[1:]) - 1
+        if col_idx < 0 or col_idx >= len(self._ROSTER_TREE_COLS):
+            return
+        col_id = self._ROSTER_TREE_COLS[col_idx][0]
+        self._start_roster_cell_edit(item, col_id, col_idx)
+
+    def _start_roster_cell_edit(self, item: str, col_id: str, col_idx: int) -> None:
+        """Place an inline editor widget over the given treeview cell."""
+        self._destroy_roster_editor()
+        if self._roster_tree is None:
+            return
+        bbox = self._roster_tree.bbox(item, f"#{col_idx + 1}")
+        if not bbox:
+            return
+        x, y, width, height = bbox
+
+        values = self._roster_tree.item(item, "values")
+        if not values or col_idx >= len(values):
+            return
+        current_display = values[col_idx]
+
+        if col_id == "state":
+            options = list(self.PILOT_STATES.values())
+            editor = ttk.Combobox(self._roster_tree, values=options, state="readonly")
+            if current_display in options:
+                editor.set(current_display)
+            else:
+                editor.current(0)
+            editor.place(x=x, y=y, width=width, height=height)
+            editor.focus_set()
+            editor.bind(
+                "<<ComboboxSelected>>",
+                lambda e: self._commit_roster_edit(item, col_id, editor.get()),
+            )
+            editor.bind("<FocusOut>", lambda e: self._destroy_roster_editor())
+            editor.bind("<Escape>", lambda e: self._destroy_roster_editor())
+        else:
+            var = tk.StringVar(value=current_display)
+            editor = ttk.Entry(self._roster_tree, textvariable=var)
+            editor.place(x=x, y=y, width=width, height=height)
+            editor.focus_set()
+            editor.select_range(0, tk.END)
+            editor.bind("<Return>", lambda e: self._commit_roster_edit(item, col_id, var.get()))
+            editor.bind("<FocusOut>", lambda e: self._commit_roster_edit(item, col_id, var.get()))
+            editor.bind("<Escape>", lambda e: self._destroy_roster_editor())
+
+        self._roster_editor = editor
+        self._roster_editor_item = item
+        self._roster_editor_col = col_id
+
+    def _commit_roster_edit(self, item: str, col_id: str, raw_value: str) -> None:
+        """Validate and record a cell edit, then refresh the tree row."""
+        if self._roster_editor_item != item:
+            return
+        self._destroy_roster_editor()
+        if item not in self._roster_pilot_data:
+            return
+
+        original = self._roster_pilot_data[item]
+        pending = self._roster_pending_changes.get(item, {})
+
+        try:
+            if col_id == "state":
+                new_val = self._PILOT_STATE_FROM_NAME.get(raw_value)
+                if new_val is None:
+                    return
+            elif col_id == "ai_level":
+                new_val = int(raw_value)
+            elif col_id == "pcp":
+                new_val = float(raw_value)
+            elif col_id in ("sorties", "good_sorties"):
+                new_val = int(raw_value)
+            else:
+                new_val = raw_value.strip()
+        except (ValueError, TypeError):
+            return
+
+        # Map tree column id to DB column name
+        db_col = next(
+            (db for cid, db, *_ in self._ROSTER_TREE_COLS if cid == col_id), None
+        )
+        if not db_col:
+            return
+
+        # Compare against current effective value (pending overrides original)
+        current_val = pending.get(db_col, original.get(db_col))
+        if new_val == current_val:
+            return
+
+        if item not in self._roster_pending_changes:
+            self._roster_pending_changes[item] = {}
+        self._roster_pending_changes[item][db_col] = new_val
+
+        self._populate_roster_tree()
+        if self._roster_status_var:
+            count = len(self._roster_pending_changes)
+            self._roster_status_var.set(f"{count} pending change(s)")
+
+    def _destroy_roster_editor(self) -> None:
+        """Destroy any active inline editor in the roster treeview."""
+        if self._roster_editor is not None:
+            try:
+                self._roster_editor.destroy()
+            except Exception:
+                pass
+        self._roster_editor = None
+        self._roster_editor_item = None
+        self._roster_editor_col = None
+
+    def _on_roster_save(self) -> None:
+        """Write all pending roster changes to cp.db."""
+        if not self._roster_pending_changes:
+            if self._roster_status_var:
+                self._roster_status_var.set(self.tr.t("msg_roster_no_changes"))
+            return
+
+        count = len(self._roster_pending_changes)
+        game_dir = (self.mission_dates_data or {}).get("game_directory")
+        if not game_dir:
+            messagebox.showerror(
+                self.tr.t("msg_error_title"),
+                "Game directory not set.",
+                parent=self,
+            )
+            return
+        db_path = os.path.join(str(game_dir), "data", "Career", "cp.db")
+        if not os.path.isfile(db_path):
+            messagebox.showerror(
+                self.tr.t("msg_error_title"),
+                "cp.db not found.",
+                parent=self,
+            )
+            return
+
+        try:
+            con = sqlite3.connect(str(db_path), timeout=5)
+            con.row_factory = sqlite3.Row
+
+            for iid, changes in self._roster_pending_changes.items():
+                pilot_id = int(iid)
+                original = self._roster_pilot_data.get(iid, {})
+
+                set_parts = []
+                values: List = []
+                for db_col, new_val in changes.items():
+                    set_parts.append(f"{db_col} = ?")
+                    values.append(new_val)
+                values.append(pilot_id)
+                con.execute(
+                    f"UPDATE pilot SET {', '.join(set_parts)} WHERE id = ?",
+                    values,
+                )
+
+                # If state changed, also update the most recent matching sortie
+                if "state" in changes:
+                    new_state = int(changes["state"])
+                    old_state = int(original.get("state", 0))
+                    if new_state != old_state:
+                        row = con.execute(
+                            "SELECT id FROM sortie WHERE pilotId = ? AND status = ?"
+                            " AND isDeleted = 0 ORDER BY id DESC LIMIT 1",
+                            [pilot_id, old_state],
+                        ).fetchone()
+                        if row:
+                            con.execute(
+                                "UPDATE sortie SET status = ? WHERE id = ?",
+                                [new_state, row[0]],
+                            )
+
+            con.commit()
+            con.close()
+
+            # Merge changes into authoritative data and clear pending
+            for iid, changes in self._roster_pending_changes.items():
+                if iid in self._roster_pilot_data:
+                    self._roster_pilot_data[iid].update(changes)
+            self._roster_pending_changes.clear()
+            self._populate_roster_tree()
+
+            if self._roster_status_var:
+                self._roster_status_var.set(
+                    self.tr.t("msg_roster_save_success", count=count)
+                )
+
+        except Exception as exc:
+            logger.warning("_on_roster_save failed: %s", exc, exc_info=True)
+            messagebox.showerror(
+                self.tr.t("msg_error_title"),
+                self.tr.t("msg_roster_save_error", error=str(exc)),
+                parent=self,
+            )
+
+    def _on_roster_discard(self) -> None:
+        """Discard all pending roster changes."""
+        if not self._roster_pending_changes:
+            if self._roster_status_var:
+                self._roster_status_var.set(self.tr.t("msg_roster_no_changes"))
+            return
+        self._roster_pending_changes.clear()
+        self._populate_roster_tree()
+        if self._roster_status_var:
+            self._roster_status_var.set("")
 
 
 # === Dialogs ===

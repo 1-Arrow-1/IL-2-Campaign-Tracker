@@ -851,7 +851,9 @@
       "install_update": "Install Update",
       "view_install_log": "View Install Log",
       "restart_and_apply": "Restart & Apply",
-      "restore_backup": "Restore Backup…"
+      "restore_backup": "Restore Backup…",
+      "save_changes": "Save Changes",
+      "discard_changes": "Discard"
     },
     "dialog": {
       "edit_bracket_label": "Bracket (e.g., '1-10' or '71+'):",
@@ -920,7 +922,16 @@
       "update_status_updated": "Update",
       "update_status_protected": "Protected (skipped)",
       "col_update_file": "File",
-      "col_update_status": "Status"
+      "col_update_status": "Status",
+      "squadron_roster_helper": "View and edit pilot data for the active squadron of a career. Changes are written directly to cp.db. Double-click a cell to edit.",
+      "select_career": "Select Career:",
+      "first_name": "First Name",
+      "last_name": "Last Name",
+      "ai_level": "AI Level",
+      "pcp": "PCP",
+      "sorties": "Sorties",
+      "good_sorties": "Good Sorties",
+      "state": "State"
     },
     "message": {
       "campaigns_tab_disabled": "Campaign settings require campaign_mission_dates.json.\nPlease run the Campaign Tracker at least once.",
@@ -996,7 +1007,10 @@
       "restore_no_backups": "No backups found. Backups are created automatically each time you install an update.",
       "restore_success": "{count} file(s) restored successfully.",
       "restore_failed": "{count} file(s) could not be restored.\n\n{details}",
-      "restore_done": "Restore complete."
+      "restore_done": "Restore complete.",
+      "roster_save_success": "{count} pilot(s) updated successfully.",
+      "roster_save_error": "Could not save changes: {error}",
+      "roster_no_changes": "No changes to save."
     },
     "tab": {
       "campaigns": "Campaigns",
@@ -1005,7 +1019,8 @@
       "german_awards": "German Awards",
       "rank_scaling": "Rank Scaling",
       "rank_values": "Rank Values",
-      "updates": "Updates"
+      "updates": "Updates",
+      "squadron_roster": "Squadron Roster"
     },
     "tooltip": {
       "bracket": "Mission count range (e.g., '1-10', '11-20', '71+')",

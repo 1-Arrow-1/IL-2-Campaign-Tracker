@@ -25,7 +25,8 @@
       "Bash(find c:/Users/bleih/source/repos/IL-2-Campaign-Tracker/campaign_service_record -name *.html)",
       "Bash(python -c \":*)",
       "Bash(grep \"AType:3\" \"C:\\\\Program Files \\(x86\\)\\\\Steam\\\\steamapps\\\\common\\\\IL-2 Sturmovik Battle of Stalingrad\\\\data\\\\FlightLogs\\\\missionReport\\(2026-02-01_09-26-26\\)[0].txt\" | head -20)",
-      "Read(//c/Program Files \\(x86\\)/Steam/steamapps/common/IL-2 Sturmovik Battle of Stalingrad/data/FlightLogs/**)"
+      "Read(//c/Program Files \\(x86\\)/Steam/steamapps/common/IL-2 Sturmovik Battle of Stalingrad/data/FlightLogs/**)",
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\bleih\\\\source\\\\repos\\\\IL-2-Campaign-Tracker\" -Recurse -File | Where-Object {$_.Extension -in '.py', '.js', '.html'} | Select-Object -First 50 | Sort-Object FullName)"
     ]
   }
 }

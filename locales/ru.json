@@ -850,7 +850,9 @@
       "install_update": "Установить обновление",
       "view_install_log": "Просмотреть журнал установки",
       "restart_and_apply": "Перезапустить и применить",
-      "restore_backup": "Восстановить резервную копию…"
+      "restore_backup": "Восстановить резервную копию…",
+      "save_changes": "Save Changes",
+      "discard_changes": "Discard"
     },
     "dialog": {
       "edit_bracket_label": "Диапазон (например, '1-10' или '71+'):",
@@ -912,7 +914,16 @@
       "update_status_protected": "Защищён (пропущен)",
       "col_update_file": "Файл",
       "col_update_status": "Статус",
-      "citations_enabled": "Создавать цитаты наград ИИ:"
+      "citations_enabled": "Создавать цитаты наград ИИ:",
+      "squadron_roster_helper": "View and edit pilot data for the active squadron of a career. Changes are written directly to cp.db. Double-click a cell to edit.",
+      "select_career": "Select Career:",
+      "first_name": "First Name",
+      "last_name": "Last Name",
+      "ai_level": "AI Level",
+      "pcp": "PCP",
+      "sorties": "Sorties",
+      "good_sorties": "Good Sorties",
+      "state": "State"
     },
     "message": {
       "campaigns_tab_disabled": "Настройки кампании требуют campaign_mission_dates.json.\nПожалуйста, запустите Campaign Tracker хотя бы один раз.",
@@ -980,7 +991,10 @@
       "restore_no_backups": "Резервные копии не найдены. Они создаются автоматически при каждой установке обновления.",
       "restore_success": "{count} файл(ов) успешно восстановлено.",
       "restore_failed": "{count} файл(ов) не удалось восстановить.\n\n{details}",
-      "restore_done": "Восстановление завершено."
+      "restore_done": "Восстановление завершено.",
+      "roster_save_success": "{count} pilot(s) updated successfully.",
+      "roster_save_error": "Could not save changes: {error}",
+      "roster_no_changes": "No changes to save."
     },
     "tab": {
       "campaigns": "Кампании",
@@ -989,7 +1003,8 @@
       "german_awards": "Немецкие награды",
       "rank_scaling": "Масштаб Званий",
       "rank_values": "Значения Званий",
-      "updates": "Обновления"
+      "updates": "Обновления",
+      "squadron_roster": "Squadron Roster"
     },
     "tooltip": {
       "bracket": "Диапазон количества миссий (например, '1-10', '11-20', '71+')",

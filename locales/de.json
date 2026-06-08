@@ -850,7 +850,9 @@
       "install_update": "Update installieren",
       "view_install_log": "Installationsprotokoll anzeigen",
       "restart_and_apply": "Neu starten & Anwenden",
-      "restore_backup": "Backup wiederherstellen…"
+      "restore_backup": "Backup wiederherstellen…",
+      "save_changes": "Save Changes",
+      "discard_changes": "Discard"
     },
     "dialog": {
       "edit_bracket_label": "Bereich (z.B. '1-10' oder '71+'):",
@@ -912,7 +914,16 @@
       "update_status_protected": "Geschützt (übersprungen)",
       "col_update_file": "Datei",
       "col_update_status": "Status",
-      "citations_enabled": "KI-Auszeichnungszitate generieren:"
+      "citations_enabled": "KI-Auszeichnungszitate generieren:",
+      "squadron_roster_helper": "View and edit pilot data for the active squadron of a career. Changes are written directly to cp.db. Double-click a cell to edit.",
+      "select_career": "Select Career:",
+      "first_name": "First Name",
+      "last_name": "Last Name",
+      "ai_level": "AI Level",
+      "pcp": "PCP",
+      "sorties": "Sorties",
+      "good_sorties": "Good Sorties",
+      "state": "State"
     },
     "message": {
       "campaigns_tab_disabled": "Kampagnen-Einstellungen erfordern campaign_mission_dates.json.\nBitte führe den Campaign Tracker mindestens einmal aus.",
@@ -980,7 +991,10 @@
       "restore_no_backups": "Keine Backups gefunden. Backups werden automatisch bei jedem Update erstellt.",
       "restore_success": "{count} Datei(en) erfolgreich wiederhergestellt.",
       "restore_failed": "{count} Datei(en) konnten nicht wiederhergestellt werden.\n\n{details}",
-      "restore_done": "Wiederherstellung abgeschlossen."
+      "restore_done": "Wiederherstellung abgeschlossen.",
+      "roster_save_success": "{count} pilot(s) updated successfully.",
+      "roster_save_error": "Could not save changes: {error}",
+      "roster_no_changes": "No changes to save."
     },
     "tab": {
       "campaigns": "Kampagnen",
@@ -989,7 +1003,8 @@
       "german_awards": "Deutsche Auszeichnungen",
       "rank_scaling": "Rang-Skalierung",
       "rank_values": "Rang-Werte",
-      "updates": "Updates"
+      "updates": "Updates",
+      "squadron_roster": "Squadron Roster"
     },
     "tooltip": {
       "bracket": "Missionsanzahl-Bereich (z.B. '1-10', '11-20', '71+')",

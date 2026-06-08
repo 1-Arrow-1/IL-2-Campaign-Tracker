@@ -850,7 +850,9 @@
       "install_update": "安装更新",
       "view_install_log": "查看安装日志",
       "restart_and_apply": "重启并应用",
-      "restore_backup": "恢复备份…"
+      "restore_backup": "恢复备份…",
+      "save_changes": "Save Changes",
+      "discard_changes": "Discard"
     },
     "dialog": {
       "edit_bracket_label": "区间（例如 '1-10' 或 '71+'）：",
@@ -912,7 +914,16 @@
       "update_status_protected": "受保护（已跳过）",
       "col_update_file": "文件",
       "col_update_status": "状态",
-      "citations_enabled": "生成AI奖励引文："
+      "citations_enabled": "生成AI奖励引文：",
+      "squadron_roster_helper": "View and edit pilot data for the active squadron of a career. Changes are written directly to cp.db. Double-click a cell to edit.",
+      "select_career": "Select Career:",
+      "first_name": "First Name",
+      "last_name": "Last Name",
+      "ai_level": "AI Level",
+      "pcp": "PCP",
+      "sorties": "Sorties",
+      "good_sorties": "Good Sorties",
+      "state": "State"
     },
     "message": {
       "campaigns_tab_disabled": "战役设置需要 campaign_mission_dates.json。\n请至少运行一次 Campaign Tracker。",
@@ -980,7 +991,10 @@
       "restore_no_backups": "未找到备份。每次安装更新时会自动创建备份。",
       "restore_success": "已成功恢复 {count} 个文件。",
       "restore_failed": "{count} 个文件恢复失败。\n\n{details}",
-      "restore_done": "恢复完成。"
+      "restore_done": "恢复完成。",
+      "roster_save_success": "{count} pilot(s) updated successfully.",
+      "roster_save_error": "Could not save changes: {error}",
+      "roster_no_changes": "No changes to save."
     },
     "tab": {
       "campaigns": "战役",
@@ -989,7 +1003,8 @@
       "german_awards": "德国勋章",
       "rank_scaling": "军衔缩放",
       "rank_values": "军衔数值",
-      "updates": "更新"
+      "updates": "更新",
+      "squadron_roster": "Squadron Roster"
     },
     "tooltip": {
       "bracket": "任务数量范围（例如 '1-10', '11-20', '71+'）",

@@ -850,7 +850,9 @@
       "install_update": "Instalar actualización",
       "view_install_log": "Ver registro de instalación",
       "restart_and_apply": "Reiniciar y Aplicar",
-      "restore_backup": "Restaurar copia de seguridad…"
+      "restore_backup": "Restaurar copia de seguridad…",
+      "save_changes": "Save Changes",
+      "discard_changes": "Discard"
     },
     "dialog": {
       "edit_bracket_label": "Rango (ej., '1-10' o '71+'):",
@@ -912,7 +914,16 @@
       "update_status_protected": "Protegido (omitido)",
       "col_update_file": "Archivo",
       "col_update_status": "Estado",
-      "citations_enabled": "Generar citas de premios de IA:"
+      "citations_enabled": "Generar citas de premios de IA:",
+      "squadron_roster_helper": "View and edit pilot data for the active squadron of a career. Changes are written directly to cp.db. Double-click a cell to edit.",
+      "select_career": "Select Career:",
+      "first_name": "First Name",
+      "last_name": "Last Name",
+      "ai_level": "AI Level",
+      "pcp": "PCP",
+      "sorties": "Sorties",
+      "good_sorties": "Good Sorties",
+      "state": "State"
     },
     "message": {
       "campaigns_tab_disabled": "La configuración de campañas requiere campaign_mission_dates.json.\nPor favor, ejecuta el Campaign Tracker al menos una vez.",
@@ -980,7 +991,10 @@
       "restore_no_backups": "No se encontraron copias de seguridad. Se crean automáticamente cada vez que se instala una actualización.",
       "restore_success": "{count} archivo(s) restaurado(s) correctamente.",
       "restore_failed": "{count} archivo(s) no se pudieron restaurar.\n\n{details}",
-      "restore_done": "Restauración completada."
+      "restore_done": "Restauración completada.",
+      "roster_save_success": "{count} pilot(s) updated successfully.",
+      "roster_save_error": "Could not save changes: {error}",
+      "roster_no_changes": "No changes to save."
     },
     "tab": {
       "campaigns": "Campañas",
@@ -989,7 +1003,8 @@
       "german_awards": "Condecoraciones alemanas",
       "rank_scaling": "Escalado de Rango",
       "rank_values": "Valores de Rango",
-      "updates": "Actualizaciones"
+      "updates": "Actualizaciones",
+      "squadron_roster": "Squadron Roster"
     },
     "tooltip": {
       "bracket": "Rango de cantidad de misiones (ej., '1-10', '11-20', '71+')",

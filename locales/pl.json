@@ -850,7 +850,9 @@
       "install_update": "Zainstaluj aktualizację",
       "view_install_log": "Wyświetl dziennik instalacji",
       "restart_and_apply": "Uruchom ponownie i zastosuj",
-      "restore_backup": "Przywróć kopię zapasową…"
+      "restore_backup": "Przywróć kopię zapasową…",
+      "save_changes": "Save Changes",
+      "discard_changes": "Discard"
     },
     "dialog": {
       "edit_bracket_label": "Zakres (np. '1-10' lub '71+'):",
@@ -912,7 +914,16 @@
       "update_status_protected": "Chroniony (pominięty)",
       "col_update_file": "Plik",
       "col_update_status": "Status",
-      "citations_enabled": "Generuj cytaty nagród AI:"
+      "citations_enabled": "Generuj cytaty nagród AI:",
+      "squadron_roster_helper": "View and edit pilot data for the active squadron of a career. Changes are written directly to cp.db. Double-click a cell to edit.",
+      "select_career": "Select Career:",
+      "first_name": "First Name",
+      "last_name": "Last Name",
+      "ai_level": "AI Level",
+      "pcp": "PCP",
+      "sorties": "Sorties",
+      "good_sorties": "Good Sorties",
+      "state": "State"
     },
     "message": {
       "campaigns_tab_disabled": "Ustawienia kampanii wymagają campaign_mission_dates.json.\nProszę uruchomić Campaign Tracker przynajmniej raz.",
@@ -980,7 +991,10 @@
       "restore_no_backups": "Nie znaleziono kopii zapasowych. Są tworzone automatycznie przy każdej instalacji aktualizacji.",
       "restore_success": "{count} plik(i/ów) przywrócono pomyślnie.",
       "restore_failed": "{count} plik(i/ów) nie udało się przywrócić.\n\n{details}",
-      "restore_done": "Przywracanie zakończone."
+      "restore_done": "Przywracanie zakończone.",
+      "roster_save_success": "{count} pilot(s) updated successfully.",
+      "roster_save_error": "Could not save changes: {error}",
+      "roster_no_changes": "No changes to save."
     },
     "tab": {
       "campaigns": "Kampanie",
@@ -989,7 +1003,8 @@
       "german_awards": "Odznaczenia niemieckie",
       "rank_scaling": "Skalowanie Rang",
       "rank_values": "Wartości Rang",
-      "updates": "Aktualizacje"
+      "updates": "Aktualizacje",
+      "squadron_roster": "Squadron Roster"
     },
     "tooltip": {
       "bracket": "Zakres liczby misji (np. '1-10', '11-20', '71+')",
