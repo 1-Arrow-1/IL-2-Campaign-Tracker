@@ -852,7 +852,8 @@
       "restart_and_apply": "Reiniciar y Aplicar",
       "restore_backup": "Restaurar copia de seguridad…",
       "save_changes": "Save Changes",
-      "discard_changes": "Discard"
+      "discard_changes": "Discard",
+      "save": "Guardar"
     },
     "dialog": {
       "edit_bracket_label": "Rango (ej., '1-10' o '71+'):",

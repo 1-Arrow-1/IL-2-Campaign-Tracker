@@ -852,7 +852,8 @@
       "restart_and_apply": "Перезапустить и применить",
       "restore_backup": "Восстановить резервную копию…",
       "save_changes": "Save Changes",
-      "discard_changes": "Discard"
+      "discard_changes": "Discard",
+      "save": "Сохранить"
     },
     "dialog": {
       "edit_bracket_label": "Диапазон (например, '1-10' или '71+'):",

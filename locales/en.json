@@ -853,7 +853,8 @@
       "restart_and_apply": "Restart & Apply",
       "restore_backup": "Restore Backup…",
       "save_changes": "Save Changes",
-      "discard_changes": "Discard"
+      "discard_changes": "Discard",
+      "save": "Save"
     },
     "dialog": {
       "edit_bracket_label": "Bracket (e.g., '1-10' or '71+'):",

@@ -852,7 +852,8 @@
       "restart_and_apply": "Neu starten & Anwenden",
       "restore_backup": "Backup wiederherstellen…",
       "save_changes": "Save Changes",
-      "discard_changes": "Discard"
+      "discard_changes": "Discard",
+      "save": "Speichern"
     },
     "dialog": {
       "edit_bracket_label": "Bereich (z.B. '1-10' oder '71+'):",

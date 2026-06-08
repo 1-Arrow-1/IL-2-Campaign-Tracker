@@ -853,7 +853,8 @@
       "restart_and_apply": "Redémarrer & Appliquer",
       "restore_backup": "Restaurer une sauvegarde…",
       "save_changes": "Save Changes",
-      "discard_changes": "Discard"
+      "discard_changes": "Discard",
+      "save": "Enregistrer"
     },
     "dialog": {
       "edit_bracket_label": "Plage (ex., '1-10' ou '71+'):",

@@ -852,7 +852,8 @@
       "restart_and_apply": "重启并应用",
       "restore_backup": "恢复备份…",
       "save_changes": "Save Changes",
-      "discard_changes": "Discard"
+      "discard_changes": "Discard",
+      "save": "保存"
     },
     "dialog": {
       "edit_bracket_label": "区间（例如 '1-10' 或 '71+'）：",

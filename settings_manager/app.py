@@ -2478,17 +2478,10 @@ class SettingsManagerApp(tk.Tk):
             command=self._on_cancel
         )
         self.cancel_button.pack(side=tk.RIGHT, padx=(5, 0))
-        
-        self.apply_button = ttk.Button(
-            btn_frame,
-            text=self.tr.t("btn_apply"),
-            command=self._on_apply
-        )
-        self.apply_button.pack(side=tk.RIGHT, padx=(5, 0))
-        
+
         self.ok_button = ttk.Button(
             btn_frame,
-            text=self.tr.t("btn_ok"),
+            text=self.tr.t("btn_save"),
             command=self._on_ok
         )
         self.ok_button.pack(side=tk.RIGHT)
@@ -3986,7 +3979,6 @@ class SettingsManagerApp(tk.Tk):
     def _set_refresh_controls(self, running: bool) -> None:
         """Enable/disable controls during locale refresh."""
         state = tk.DISABLED if running else tk.NORMAL
-        self.apply_button.configure(state=state)
         self.ok_button.configure(state=state)
         print(f"[Settings Manager] Refresh controls {'disabled' if running else 'enabled'}")
 
