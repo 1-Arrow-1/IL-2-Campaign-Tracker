@@ -5049,10 +5049,18 @@ class SettingsManagerApp(tk.Tk):
 
     def _load_copy_pilots_for_career(self, career_id: int) -> None:
         """
-        Determine the n and n-1 theatre segments for a root career.
+        Find the most appropriate previous squadron for the given root career.
 
-        Shows the pilot list only when n-1 exists and its squadron.configId
-        differs from n's squadron.configId.
+        Priority 1 — n-1 career segment: if the immediately preceding career
+        segment has a different squadron.configId from n, use it.  This covers
+        both cross-theatre and intra-theatre transfers that IL-2 records as a
+        new career row.
+
+        Priority 2 — intra-career transfer: if n-1 is absent or has the same
+        configId, check the squadron table for any squadron whose careerId
+        equals n's career id but whose configId differs from the current one.
+        This handles in-place squadron changes within a single career segment.
+        In this case awards are sourced from career n (not n-1).
         """
         if self._copy_pilot_no_prev_label:
             self._copy_pilot_no_prev_label.pack_forget()
@@ -5086,36 +5094,69 @@ class SettingsManagerApp(tk.Tk):
             con = sqlite3.connect(uri, uri=True, timeout=5)
             con.row_factory = sqlite3.Row
 
-            # Traverse chain from root forward; take latest two segments
-            rows = con.execute(
+            # Fetch only the two most recent career segments (n and n-1).
+            chain_rows = con.execute(
                 """
                 WITH RECURSIVE chain(id, squadronId) AS (
                     SELECT id, squadronId FROM career WHERE id = ?
                     UNION ALL
                     SELECT c.id, c.squadronId FROM career c JOIN chain ON c.extends = chain.id
                 )
-                SELECT chain.id, chain.squadronId, s.configId AS squadConfigId
-                FROM chain
-                JOIN squadron s ON s.id = chain.squadronId
-                ORDER BY chain.id DESC
-                LIMIT 2
+                SELECT id, squadronId FROM chain ORDER BY id DESC LIMIT 2
                 """,
                 [career_id],
             ).fetchall()
 
-            if len(rows) < 2:
+            if not chain_rows:
                 con.close()
                 _show_no_prev()
                 return
 
-            n_career_id    = int(rows[0]["id"])
-            n_squadron_id  = int(rows[0]["squadronId"])
-            n_config_id    = int(rows[0]["squadConfigId"])
-            n1_career_id   = int(rows[1]["id"])
-            n1_squadron_id = int(rows[1]["squadronId"])
-            n1_config_id   = int(rows[1]["squadConfigId"])
+            n_career_id   = int(chain_rows[0]["id"])
+            n_squadron_id = int(chain_rows[0]["squadronId"])
 
-            if n_config_id == n1_config_id:
+            sq = con.execute(
+                "SELECT configId FROM squadron WHERE id = ?", [n_squadron_id]
+            ).fetchone()
+            if sq is None:
+                con.close()
+                _show_no_prev()
+                return
+            n_config_id = int(sq["configId"])
+
+            # ------------------------------------------------------------------
+            # Priority 1: n-1 career segment with a different squadron
+            # ------------------------------------------------------------------
+            source_career_id   = None
+            source_squadron_id = None
+
+            if len(chain_rows) >= 2:
+                n1_squadron_id = int(chain_rows[1]["squadronId"])
+                n1_sq = con.execute(
+                    "SELECT configId FROM squadron WHERE id = ?", [n1_squadron_id]
+                ).fetchone()
+                if n1_sq and int(n1_sq["configId"]) != n_config_id:
+                    source_career_id   = int(chain_rows[1]["id"])
+                    source_squadron_id = n1_squadron_id
+
+            # ------------------------------------------------------------------
+            # Priority 2: intra-career squadron transfer (squadron.careerId)
+            # ------------------------------------------------------------------
+            if source_career_id is None:
+                prev_sq = con.execute(
+                    """
+                    SELECT id FROM squadron
+                    WHERE careerId = ? AND configId != ?
+                    ORDER BY id DESC
+                    LIMIT 1
+                    """,
+                    [n_career_id, n_config_id],
+                ).fetchone()
+                if prev_sq:
+                    source_career_id   = n_career_id        # awards live in career n
+                    source_squadron_id = int(prev_sq["id"])
+
+            if source_career_id is None:
                 con.close()
                 _show_no_prev()
                 return
@@ -5127,14 +5168,14 @@ class SettingsManagerApp(tk.Tk):
                 WHERE squadronId = ? AND isDeleted = 0 AND AILevel > 0
                 ORDER BY lastName, name
                 """,
-                [n1_squadron_id],
+                [source_squadron_id],
             ).fetchall()
             con.close()
 
             self._copy_pilot_n_career_id   = n_career_id
             self._copy_pilot_n_squadron_id = n_squadron_id
             self._copy_pilot_n_config_id   = n_config_id
-            self._copy_pilot_n1_career_id  = n1_career_id
+            self._copy_pilot_n1_career_id  = source_career_id
 
             for r in pilots:
                 pid = int(r["id"])
