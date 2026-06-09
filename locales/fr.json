@@ -854,7 +854,10 @@
       "restore_backup": "Restaurer une sauvegarde…",
       "save_changes": "Save Changes",
       "discard_changes": "Discard",
-      "save": "Enregistrer"
+      "save": "Enregistrer",
+      "select_all": "Tout sélectionner",
+      "deselect_all": "Tout désélectionner",
+      "copy_pilots": "Copier la sélection"
     },
     "dialog": {
       "edit_bracket_label": "Plage (ex., '1-10' ou '71+'):",
@@ -918,6 +921,8 @@
       "col_update_status": "Statut",
       "citations_enabled": "Générer des citations de récompenses IA :",
       "squadron_roster_helper": "View and edit pilot data for the active squadron of a career. Changes are written directly to cp.db. Double-click a cell to edit.",
+      "copy_pilot_helper": "Copiez des pilotes IA de votre précédent théâtre d'opérations dans votre escadrille actuelle. Disponible uniquement si les escadrilles précédente et actuelle sont différentes.",
+      "no_prev_squadron": "Aucun théâtre précédent trouvé, ou l'escadrille actuelle et la précédente sont identiques. Rien à copier.",
       "select_career": "Select Career:",
       "first_name": "First Name",
       "last_name": "Last Name",
@@ -996,7 +1001,10 @@
       "restore_done": "Restauration terminée.",
       "roster_save_success": "{count} pilot(s) updated successfully.",
       "roster_save_error": "Could not save changes: {error}",
-      "roster_no_changes": "No changes to save."
+      "roster_no_changes": "No changes to save.",
+      "copy_pilot_no_selection": "Aucun pilote sélectionné. Veuillez cocher au moins un pilote.",
+      "copy_pilot_success": "{count} pilote(s) copié(s) avec succès dans l'escadrille actuelle.",
+      "copy_pilot_error": "Erreur lors de la copie des pilotes : {error}"
     },
     "tab": {
       "campaigns": "Campagnes",
@@ -1006,7 +1014,8 @@
       "rank_scaling": "Échelle de Rang",
       "rank_values": "Valeurs de Rang",
       "updates": "Mises à jour",
-      "squadron_roster": "Squadron Roster"
+      "squadron_roster": "Squadron Roster",
+      "copy_squadron_pilot": "Copier des pilotes de l'escadrille"
     },
     "tooltip": {
       "bracket": "Plage de nombre de missions (ex., '1-10', '11-20', '71+')",

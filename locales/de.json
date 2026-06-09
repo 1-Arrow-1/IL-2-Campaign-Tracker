@@ -853,7 +853,10 @@
       "restore_backup": "Backup wiederherstellen…",
       "save_changes": "Save Changes",
       "discard_changes": "Discard",
-      "save": "Speichern"
+      "save": "Speichern",
+      "select_all": "Alle auswählen",
+      "deselect_all": "Alle abwählen",
+      "copy_pilots": "Ausgewählte kopieren"
     },
     "dialog": {
       "edit_bracket_label": "Bereich (z.B. '1-10' oder '71+'):",
@@ -917,6 +920,8 @@
       "col_update_status": "Status",
       "citations_enabled": "KI-Auszeichnungszitate generieren:",
       "squadron_roster_helper": "View and edit pilot data for the active squadron of a career. Changes are written directly to cp.db. Double-click a cell to edit.",
+      "copy_pilot_helper": "KI-Piloten aus dem vorherigen Kriegsschauplatz in die aktuelle Staffel kopieren. Nur verfügbar, wenn die vorherige und aktuelle Staffel unterschiedlich sind.",
+      "no_prev_squadron": "Kein vorheriger Kriegsschauplatz gefunden oder aktuelle und vorherige Staffel sind identisch. Nichts zu kopieren.",
       "select_career": "Select Career:",
       "first_name": "First Name",
       "last_name": "Last Name",
@@ -995,7 +1000,10 @@
       "restore_done": "Wiederherstellung abgeschlossen.",
       "roster_save_success": "{count} pilot(s) updated successfully.",
       "roster_save_error": "Could not save changes: {error}",
-      "roster_no_changes": "No changes to save."
+      "roster_no_changes": "No changes to save.",
+      "copy_pilot_no_selection": "Keine Piloten ausgewählt. Bitte mindestens einen Piloten auswählen.",
+      "copy_pilot_success": "{count} Pilot(en) erfolgreich in die aktuelle Staffel kopiert.",
+      "copy_pilot_error": "Fehler beim Kopieren der Piloten: {error}"
     },
     "tab": {
       "campaigns": "Kampagnen",
@@ -1005,7 +1013,8 @@
       "rank_scaling": "Rang-Skalierung",
       "rank_values": "Rang-Werte",
       "updates": "Updates",
-      "squadron_roster": "Squadron Roster"
+      "squadron_roster": "Squadron Roster",
+      "copy_squadron_pilot": "Staffelpiloten kopieren"
     },
     "tooltip": {
       "bracket": "Missionsanzahl-Bereich (z.B. '1-10', '11-20', '71+')",

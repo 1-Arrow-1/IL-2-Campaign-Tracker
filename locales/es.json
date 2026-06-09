@@ -853,7 +853,10 @@
       "restore_backup": "Restaurar copia de seguridad…",
       "save_changes": "Save Changes",
       "discard_changes": "Discard",
-      "save": "Guardar"
+      "save": "Guardar",
+      "select_all": "Seleccionar todo",
+      "deselect_all": "Deseleccionar todo",
+      "copy_pilots": "Copiar seleccionados"
     },
     "dialog": {
       "edit_bracket_label": "Rango (ej., '1-10' o '71+'):",
@@ -917,6 +920,8 @@
       "col_update_status": "Estado",
       "citations_enabled": "Generar citas de premios de IA:",
       "squadron_roster_helper": "View and edit pilot data for the active squadron of a career. Changes are written directly to cp.db. Double-click a cell to edit.",
+      "copy_pilot_helper": "Copie pilotos de IA de su teatro de operaciones anterior a su escuadrón actual. Solo disponible cuando el escuadrón anterior y el actual son diferentes.",
+      "no_prev_squadron": "No se encontró ningún teatro anterior, o el escuadrón actual y el anterior son iguales. Nada que copiar.",
       "select_career": "Select Career:",
       "first_name": "First Name",
       "last_name": "Last Name",
@@ -995,7 +1000,10 @@
       "restore_done": "Restauración completada.",
       "roster_save_success": "{count} pilot(s) updated successfully.",
       "roster_save_error": "Could not save changes: {error}",
-      "roster_no_changes": "No changes to save."
+      "roster_no_changes": "No changes to save.",
+      "copy_pilot_no_selection": "No hay pilotos seleccionados. Por favor, marque al menos un piloto.",
+      "copy_pilot_success": "{count} piloto(s) copiado(s) correctamente al escuadrón actual.",
+      "copy_pilot_error": "Error al copiar pilotos: {error}"
     },
     "tab": {
       "campaigns": "Campañas",
@@ -1005,7 +1013,8 @@
       "rank_scaling": "Escalado de Rango",
       "rank_values": "Valores de Rango",
       "updates": "Actualizaciones",
-      "squadron_roster": "Squadron Roster"
+      "squadron_roster": "Squadron Roster",
+      "copy_squadron_pilot": "Copiar piloto de escuadrón"
     },
     "tooltip": {
       "bracket": "Rango de cantidad de misiones (ej., '1-10', '11-20', '71+')",

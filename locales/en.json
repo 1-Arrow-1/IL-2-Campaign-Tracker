@@ -854,7 +854,10 @@
       "restore_backup": "Restore Backup…",
       "save_changes": "Save Changes",
       "discard_changes": "Discard",
-      "save": "Save"
+      "save": "Save",
+      "select_all": "Select All",
+      "deselect_all": "Deselect All",
+      "copy_pilots": "Copy Selected"
     },
     "dialog": {
       "edit_bracket_label": "Bracket (e.g., '1-10' or '71+'):",
@@ -925,6 +928,8 @@
       "col_update_file": "File",
       "col_update_status": "Status",
       "squadron_roster_helper": "View and edit pilot data for the active squadron of a career. Changes are written directly to cp.db. Double-click a cell to edit.",
+      "copy_pilot_helper": "Copy AI pilots from your previous theatre of action to your current squadron. Only available when the previous and current squadrons are different.",
+      "no_prev_squadron": "No previous theatre found, or the current and previous squadron are the same. Nothing to copy.",
       "select_career": "Select Career:",
       "first_name": "First Name",
       "last_name": "Last Name",
@@ -1011,7 +1016,10 @@
       "restore_done": "Restore complete.",
       "roster_save_success": "{count} pilot(s) updated successfully.",
       "roster_save_error": "Could not save changes: {error}",
-      "roster_no_changes": "No changes to save."
+      "roster_no_changes": "No changes to save.",
+      "copy_pilot_no_selection": "No pilots selected. Please check at least one pilot.",
+      "copy_pilot_success": "Successfully copied {count} pilot(s) to the current squadron.",
+      "copy_pilot_error": "Error copying pilots: {error}"
     },
     "tab": {
       "campaigns": "Campaigns",
@@ -1021,7 +1029,8 @@
       "rank_scaling": "Rank Scaling",
       "rank_values": "Rank Values",
       "updates": "Updates",
-      "squadron_roster": "Squadron Roster"
+      "squadron_roster": "Squadron Roster",
+      "copy_squadron_pilot": "Copy Squadron Pilot"
     },
     "tooltip": {
       "bracket": "Mission count range (e.g., '1-10', '11-20', '71+')",

@@ -853,7 +853,10 @@
       "restore_backup": "Przywróć kopię zapasową…",
       "save_changes": "Save Changes",
       "discard_changes": "Discard",
-      "save": "Zapisz"
+      "save": "Zapisz",
+      "select_all": "Zaznacz wszystko",
+      "deselect_all": "Odznacz wszystko",
+      "copy_pilots": "Kopiuj zaznaczonych"
     },
     "dialog": {
       "edit_bracket_label": "Zakres (np. '1-10' lub '71+'):",
@@ -917,6 +920,8 @@
       "col_update_status": "Status",
       "citations_enabled": "Generuj cytaty nagród AI:",
       "squadron_roster_helper": "View and edit pilot data for the active squadron of a career. Changes are written directly to cp.db. Double-click a cell to edit.",
+      "copy_pilot_helper": "Skopiuj pilotów AI z poprzedniego teatru działań do obecnej eskadry. Dostępne tylko gdy poprzednia i aktualna eskadra są różne.",
+      "no_prev_squadron": "Nie znaleziono poprzedniego teatru lub aktualna i poprzednia eskadra są takie same. Nie ma nic do skopiowania.",
       "select_career": "Select Career:",
       "first_name": "First Name",
       "last_name": "Last Name",
@@ -995,7 +1000,10 @@
       "restore_done": "Przywracanie zakończone.",
       "roster_save_success": "{count} pilot(s) updated successfully.",
       "roster_save_error": "Could not save changes: {error}",
-      "roster_no_changes": "No changes to save."
+      "roster_no_changes": "No changes to save.",
+      "copy_pilot_no_selection": "Nie wybrano pilotów. Proszę zaznaczyć co najmniej jednego pilota.",
+      "copy_pilot_success": "Pomyślnie skopiowano {count} pilota(ów) do aktualnej eskadry.",
+      "copy_pilot_error": "Błąd podczas kopiowania pilotów: {error}"
     },
     "tab": {
       "campaigns": "Kampanie",
@@ -1005,7 +1013,8 @@
       "rank_scaling": "Skalowanie Rang",
       "rank_values": "Wartości Rang",
       "updates": "Aktualizacje",
-      "squadron_roster": "Squadron Roster"
+      "squadron_roster": "Squadron Roster",
+      "copy_squadron_pilot": "Kopiuj pilota eskadry"
     },
     "tooltip": {
       "bracket": "Zakres liczby misji (np. '1-10', '11-20', '71+')",

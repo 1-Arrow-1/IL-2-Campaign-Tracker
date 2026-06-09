@@ -853,7 +853,10 @@
       "restore_backup": "恢复备份…",
       "save_changes": "Save Changes",
       "discard_changes": "Discard",
-      "save": "保存"
+      "save": "保存",
+      "select_all": "全选",
+      "deselect_all": "取消全选",
+      "copy_pilots": "复制所选"
     },
     "dialog": {
       "edit_bracket_label": "区间（例如 '1-10' 或 '71+'）：",
@@ -917,6 +920,8 @@
       "col_update_status": "状态",
       "citations_enabled": "生成AI奖励引文：",
       "squadron_roster_helper": "View and edit pilot data for the active squadron of a career. Changes are written directly to cp.db. Double-click a cell to edit.",
+      "copy_pilot_helper": "将上一个战区的AI飞行员复制到当前中队。仅当上一个和当前中队不同时可用。",
+      "no_prev_squadron": "未找到上一个战区，或当前与上一个中队相同。没有可复制的内容。",
       "select_career": "Select Career:",
       "first_name": "First Name",
       "last_name": "Last Name",
@@ -995,7 +1000,10 @@
       "restore_done": "恢复完成。",
       "roster_save_success": "{count} pilot(s) updated successfully.",
       "roster_save_error": "Could not save changes: {error}",
-      "roster_no_changes": "No changes to save."
+      "roster_no_changes": "No changes to save.",
+      "copy_pilot_no_selection": "未选择飞行员。请至少勾选一名飞行员。",
+      "copy_pilot_success": "已成功复制 {count} 名飞行员到当前中队。",
+      "copy_pilot_error": "复制飞行员时出错：{error}"
     },
     "tab": {
       "campaigns": "战役",
@@ -1005,7 +1013,8 @@
       "rank_scaling": "军衔缩放",
       "rank_values": "军衔数值",
       "updates": "更新",
-      "squadron_roster": "Squadron Roster"
+      "squadron_roster": "Squadron Roster",
+      "copy_squadron_pilot": "复制中队飞行员"
     },
     "tooltip": {
       "bracket": "任务数量范围（例如 '1-10', '11-20', '71+'）",

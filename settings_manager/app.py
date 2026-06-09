@@ -417,6 +417,22 @@ class SettingsManagerApp(tk.Tk):
         self._roster_editor_col: Optional[str] = None
         self._roster_status_var = tk.StringVar(value="")
 
+        # Copy Squadron Pilot tab state
+        self._copy_pilot_career_ids: List[int] = []
+        self._copy_pilot_career_combo: Optional[ttk.Combobox] = None
+        self._copy_pilot_n_career_id: Optional[int] = None
+        self._copy_pilot_n_squadron_id: Optional[int] = None
+        self._copy_pilot_n_config_id: Optional[int] = None
+        self._copy_pilot_n1_career_id: Optional[int] = None
+        self._copy_pilot_rows: Dict[int, Dict] = {}
+        self._copy_pilot_check_vars: Dict[int, tk.BooleanVar] = {}
+        self._copy_pilot_status_var = tk.StringVar(value="")
+        self._copy_pilot_apply_btn: Optional[ttk.Button] = None
+        self._copy_pilot_no_prev_label: Optional[ttk.Label] = None
+        self._copy_pilot_pilot_frame: Optional[ttk.Frame] = None
+        self._copy_pilot_canvas: Optional[tk.Canvas] = None
+        self._copy_pilot_inner_frame: Optional[ttk.Frame] = None
+
         # Load all data
         self._load_all_data()
         
@@ -527,6 +543,9 @@ class SettingsManagerApp(tk.Tk):
 
         # Tab 8: Squadron Roster
         self._create_squadron_roster_tab()
+
+        # Tab 9: Copy Squadron Pilot
+        self._create_copy_pilot_tab()
 
         # Button frame
         self._create_button_bar(main_frame)
@@ -4922,6 +4941,405 @@ class SettingsManagerApp(tk.Tk):
         self._populate_roster_tree()
         if self._roster_status_var:
             self._roster_status_var.set("")
+
+    # ------------------------------------------------------------------
+    # Tab 9: Copy Squadron Pilot
+    # ------------------------------------------------------------------
+
+    def _create_copy_pilot_tab(self) -> None:
+        """Create 'Copy Squadron Pilot' tab."""
+        frame = ttk.Frame(self.notebook, padding=20)
+        self.notebook.add(frame, text=self.tr.t("tab_copy_squadron_pilot"))
+
+        careers = self._load_careers_from_db()
+        if careers is None:
+            ttk.Label(frame, text=self.tr.t("msg_career_db_not_found"), foreground="gray").pack(pady=50)
+            return
+        if not careers:
+            ttk.Label(frame, text=self.tr.t("msg_no_careers"), foreground="gray").pack(pady=50)
+            return
+
+        ttk.Label(
+            frame,
+            text=self.tr.t("lbl_copy_pilot_helper"),
+            foreground="gray",
+            wraplength=520,
+            justify=tk.LEFT,
+        ).pack(anchor=tk.W, pady=(0, 10))
+
+        sel_row = ttk.Frame(frame)
+        sel_row.pack(fill=tk.X, pady=(0, 10))
+        ttk.Label(sel_row, text=self.tr.t("lbl_select_career")).pack(side=tk.LEFT)
+
+        self._copy_pilot_career_ids = [cid for cid, _ in careers]
+        self._copy_pilot_career_combo = ttk.Combobox(
+            sel_row,
+            values=[name for _, name in careers],
+            state="readonly",
+            width=40,
+        )
+        self._copy_pilot_career_combo.pack(side=tk.LEFT, padx=(10, 0))
+        self._copy_pilot_career_combo.current(0)
+        self._copy_pilot_career_combo.bind("<<ComboboxSelected>>", self._on_copy_pilot_career_selected)
+
+        # Placeholder shown when the tab is not applicable for the selected career
+        self._copy_pilot_no_prev_label = ttk.Label(
+            frame,
+            text=self.tr.t("lbl_no_prev_squadron"),
+            foreground="gray",
+            wraplength=520,
+            justify=tk.LEFT,
+        )
+
+        # Main content frame (shown when previous theatre differs from current)
+        self._copy_pilot_pilot_frame = ttk.Frame(frame)
+
+        ctrl_row = ttk.Frame(self._copy_pilot_pilot_frame)
+        ctrl_row.pack(anchor=tk.W, pady=(0, 6))
+        ttk.Button(ctrl_row, text=self.tr.t("btn_select_all"), command=self._on_copy_pilot_select_all).pack(
+            side=tk.LEFT
+        )
+        ttk.Button(ctrl_row, text=self.tr.t("btn_deselect_all"), command=self._on_copy_pilot_deselect_all).pack(
+            side=tk.LEFT, padx=(6, 0)
+        )
+
+        cf = ttk.Frame(self._copy_pilot_pilot_frame)
+        cf.pack(fill=tk.BOTH, expand=True)
+
+        self._copy_pilot_canvas = tk.Canvas(cf, borderwidth=0, highlightthickness=0)
+        vsb = ttk.Scrollbar(cf, orient=tk.VERTICAL, command=self._copy_pilot_canvas.yview)
+        self._copy_pilot_canvas.configure(yscrollcommand=vsb.set)
+        self._copy_pilot_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        vsb.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self._copy_pilot_inner_frame = ttk.Frame(self._copy_pilot_canvas)
+        self._copy_pilot_canvas.create_window((0, 0), window=self._copy_pilot_inner_frame, anchor="nw")
+        self._copy_pilot_inner_frame.bind(
+            "<Configure>",
+            lambda e: self._copy_pilot_canvas.configure(
+                scrollregion=self._copy_pilot_canvas.bbox("all")
+            ),
+        )
+        self._copy_pilot_canvas.bind(
+            "<MouseWheel>",
+            lambda e: self._copy_pilot_canvas.yview_scroll(-1 * (e.delta // 120), "units"),
+        )
+
+        apply_bar = ttk.Frame(self._copy_pilot_pilot_frame)
+        apply_bar.pack(fill=tk.X, pady=(8, 0))
+        self._copy_pilot_apply_btn = ttk.Button(
+            apply_bar,
+            text=self.tr.t("btn_copy_pilots"),
+            command=self._on_copy_pilot_apply,
+        )
+        self._copy_pilot_apply_btn.pack(side=tk.LEFT)
+        ttk.Label(apply_bar, textvariable=self._copy_pilot_status_var, foreground="gray").pack(
+            side=tk.LEFT, padx=(12, 0)
+        )
+
+        self._load_copy_pilots_for_career(self._copy_pilot_career_ids[0])
+
+    def _on_copy_pilot_career_selected(self, event: tk.Event) -> None:
+        """Reload pilot list when user picks a different career."""
+        if self._copy_pilot_career_combo is None:
+            return
+        idx = self._copy_pilot_career_combo.current()
+        if 0 <= idx < len(self._copy_pilot_career_ids):
+            self._load_copy_pilots_for_career(self._copy_pilot_career_ids[idx])
+
+    def _load_copy_pilots_for_career(self, career_id: int) -> None:
+        """
+        Determine the n and n-1 theatre segments for a root career.
+
+        Shows the pilot list only when n-1 exists and its squadron.configId
+        differs from n's squadron.configId.
+        """
+        if self._copy_pilot_no_prev_label:
+            self._copy_pilot_no_prev_label.pack_forget()
+        if self._copy_pilot_pilot_frame:
+            self._copy_pilot_pilot_frame.pack_forget()
+
+        self._copy_pilot_n_career_id = None
+        self._copy_pilot_n_squadron_id = None
+        self._copy_pilot_n_config_id = None
+        self._copy_pilot_n1_career_id = None
+        self._copy_pilot_rows = {}
+        self._copy_pilot_check_vars = {}
+        if self._copy_pilot_status_var:
+            self._copy_pilot_status_var.set("")
+
+        def _show_no_prev() -> None:
+            if self._copy_pilot_no_prev_label:
+                self._copy_pilot_no_prev_label.pack(anchor=tk.W, pady=(20, 0))
+
+        game_dir = (self.mission_dates_data or {}).get("game_directory")
+        if not game_dir:
+            _show_no_prev()
+            return
+        db_path = os.path.join(str(game_dir), "data", "Career", "cp.db")
+        if not os.path.isfile(db_path):
+            _show_no_prev()
+            return
+
+        try:
+            uri = f"file:{db_path}?mode=ro"
+            con = sqlite3.connect(uri, uri=True, timeout=5)
+            con.row_factory = sqlite3.Row
+
+            # Traverse chain from root forward; take latest two segments
+            rows = con.execute(
+                """
+                WITH RECURSIVE chain(id, squadronId) AS (
+                    SELECT id, squadronId FROM career WHERE id = ?
+                    UNION ALL
+                    SELECT c.id, c.squadronId FROM career c JOIN chain ON c.extends = chain.id
+                )
+                SELECT chain.id, chain.squadronId, s.configId AS squadConfigId
+                FROM chain
+                JOIN squadron s ON s.id = chain.squadronId
+                ORDER BY chain.id DESC
+                LIMIT 2
+                """,
+                [career_id],
+            ).fetchall()
+
+            if len(rows) < 2:
+                con.close()
+                _show_no_prev()
+                return
+
+            n_career_id    = int(rows[0]["id"])
+            n_squadron_id  = int(rows[0]["squadronId"])
+            n_config_id    = int(rows[0]["squadConfigId"])
+            n1_career_id   = int(rows[1]["id"])
+            n1_squadron_id = int(rows[1]["squadronId"])
+            n1_config_id   = int(rows[1]["squadConfigId"])
+
+            if n_config_id == n1_config_id:
+                con.close()
+                _show_no_prev()
+                return
+
+            pilots = con.execute(
+                """
+                SELECT id, name, lastName, AILevel, state
+                FROM pilot
+                WHERE squadronId = ? AND isDeleted = 0 AND AILevel > 0
+                ORDER BY lastName, name
+                """,
+                [n1_squadron_id],
+            ).fetchall()
+            con.close()
+
+            self._copy_pilot_n_career_id   = n_career_id
+            self._copy_pilot_n_squadron_id = n_squadron_id
+            self._copy_pilot_n_config_id   = n_config_id
+            self._copy_pilot_n1_career_id  = n1_career_id
+
+            for r in pilots:
+                pid = int(r["id"])
+                self._copy_pilot_rows[pid] = {
+                    "name":     r["name"] or "",
+                    "lastName": r["lastName"] or "",
+                    "AILevel":  r["AILevel"] if r["AILevel"] is not None else 1,
+                    "state":    int(r["state"]) if r["state"] is not None else 0,
+                }
+
+            self._populate_copy_pilot_list()
+
+            if self._copy_pilot_pilot_frame:
+                self._copy_pilot_pilot_frame.pack(fill=tk.BOTH, expand=True)
+
+        except Exception as exc:
+            logger.warning("_load_copy_pilots_for_career failed: %s", exc, exc_info=True)
+            _show_no_prev()
+
+    def _populate_copy_pilot_list(self) -> None:
+        """Rebuild the scrollable checkbox list of copyable pilots."""
+        if self._copy_pilot_inner_frame is None:
+            return
+
+        for widget in self._copy_pilot_inner_frame.winfo_children():
+            widget.destroy()
+        self._copy_pilot_check_vars = {}
+
+        header = ttk.Frame(self._copy_pilot_inner_frame)
+        header.pack(fill=tk.X, pady=(0, 2))
+        ttk.Label(header, text="", width=3).pack(side=tk.LEFT)
+        for text, width in (
+            (self.tr.t("lbl_first_name"), 16),
+            (self.tr.t("lbl_last_name"), 16),
+            (self.tr.t("lbl_state"), 18),
+        ):
+            ttk.Label(header, text=text, width=width, anchor=tk.W,
+                      font=("TkDefaultFont", 9, "bold")).pack(side=tk.LEFT, padx=(4, 0))
+
+        ttk.Separator(self._copy_pilot_inner_frame, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=(0, 4))
+
+        for pid, data in self._copy_pilot_rows.items():
+            var = tk.BooleanVar(value=False)
+            self._copy_pilot_check_vars[pid] = var
+
+            row = ttk.Frame(self._copy_pilot_inner_frame)
+            row.pack(fill=tk.X, pady=2)
+            ttk.Checkbutton(row, variable=var).pack(side=tk.LEFT)
+            state_text = self.PILOT_STATES.get(data["state"], str(data["state"]))
+            for text, width in (
+                (data["name"],     16),
+                (data["lastName"], 16),
+                (state_text,       18),
+            ):
+                ttk.Label(row, text=text, width=width, anchor=tk.W).pack(side=tk.LEFT, padx=(4, 0))
+
+        if self._copy_pilot_canvas:
+            self._copy_pilot_inner_frame.update_idletasks()
+            self._copy_pilot_canvas.configure(scrollregion=self._copy_pilot_canvas.bbox("all"))
+
+    def _on_copy_pilot_select_all(self) -> None:
+        for var in self._copy_pilot_check_vars.values():
+            var.set(True)
+
+    def _on_copy_pilot_deselect_all(self) -> None:
+        for var in self._copy_pilot_check_vars.values():
+            var.set(False)
+
+    def _on_copy_pilot_apply(self) -> None:
+        """Copy selected n-1 pilots into the current (n) squadron, including awards."""
+        selected_ids = [pid for pid, var in self._copy_pilot_check_vars.items() if var.get()]
+        if not selected_ids:
+            self._copy_pilot_status_var.set(self.tr.t("msg_copy_pilot_no_selection"))
+            return
+
+        if (self._copy_pilot_n_career_id is None
+                or self._copy_pilot_n_squadron_id is None
+                or self._copy_pilot_n1_career_id is None):
+            return
+
+        game_dir = (self.mission_dates_data or {}).get("game_directory")
+        if not game_dir:
+            messagebox.showerror(self.tr.t("msg_error_title"), "Game directory not set.", parent=self)
+            return
+        db_path = os.path.join(str(game_dir), "data", "Career", "cp.db")
+        if not os.path.isfile(db_path):
+            messagebox.showerror(self.tr.t("msg_error_title"), "cp.db not found.", parent=self)
+            return
+
+        n_career_id   = self._copy_pilot_n_career_id
+        n_squadron_id = self._copy_pilot_n_squadron_id
+        n1_career_id  = self._copy_pilot_n1_career_id
+
+        try:
+            con = sqlite3.connect(str(db_path), timeout=5)
+            con.row_factory = sqlite3.Row
+
+            sq_row = con.execute(
+                "SELECT configId FROM squadron WHERE id = ?", [n_squadron_id]
+            ).fetchone()
+            if sq_row is None:
+                con.close()
+                raise RuntimeError(f"Squadron row not found for id={n_squadron_id}")
+            n_squad_config_id = int(sq_row["configId"])
+
+            columns = [col[1] for col in con.execute("PRAGMA table_info(pilot)").fetchall()]
+            insert_cols = [c for c in columns if c != "id"]
+            now_str = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
+            copied = 0
+
+            with con:
+                for source_pilot_id in selected_ids:
+                    source_row = con.execute(
+                        "SELECT * FROM pilot WHERE id = ? AND isDeleted = 0",
+                        [source_pilot_id],
+                    ).fetchone()
+                    if source_row is None:
+                        continue
+
+                    values = [source_row[c] for c in insert_cols]
+                    overrides = {
+                        "squadronId": n_squadron_id,
+                        "insDate":    now_str,
+                        "isDeleted":  0,
+                    }
+                    for key, val in overrides.items():
+                        if key in insert_cols:
+                            values[insert_cols.index(key)] = val
+
+                    placeholders = ", ".join("?" for _ in insert_cols)
+                    col_list = ", ".join(insert_cols)
+                    con.execute(
+                        f"INSERT INTO pilot ({col_list}) VALUES ({placeholders})",
+                        values,
+                    )
+                    new_pilot_id = con.execute("SELECT last_insert_rowid()").fetchone()[0]
+
+                    con.execute(
+                        "DELETE FROM award WHERE careerId = ? AND pilotId = ?",
+                        [n_career_id, new_pilot_id],
+                    )
+                    award_rows = con.execute(
+                        """
+                        SELECT type, date, pilotName, pilotRank, squadName, isDeleted,
+                               PersonageId, x, y, CausedByType, CausedById, Show,
+                               GameTime, PersonageAwardId
+                        FROM award
+                        WHERE careerId = ? AND pilotId = ?
+                        ORDER BY date, id
+                        """,
+                        [n1_career_id, source_pilot_id],
+                    ).fetchall()
+                    for award in award_rows:
+                        con.execute(
+                            """
+                            INSERT INTO award (
+                                careerId, type, date, pilotId, pilotName, pilotRank,
+                                squadName, insDate, isDeleted, PersonageId, x, y,
+                                CausedByType, CausedById, Show, SquadId, squadConfigId,
+                                GameTime, PersonageAwardId
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            """,
+                            (
+                                n_career_id,
+                                award["type"],
+                                award["date"],
+                                new_pilot_id,
+                                award["pilotName"],
+                                award["pilotRank"],
+                                award["squadName"],
+                                now_str,
+                                award["isDeleted"],
+                                award["PersonageId"],
+                                award["x"],
+                                award["y"],
+                                award["CausedByType"],
+                                award["CausedById"],
+                                award["Show"],
+                                n_squadron_id,
+                                n_squad_config_id,
+                                award["GameTime"],
+                                award["PersonageAwardId"],
+                            ),
+                        )
+                    copied += 1
+
+            con.close()
+
+            self._copy_pilot_status_var.set(self.tr.t("msg_copy_pilot_success", count=copied))
+            messagebox.showinfo(
+                self.tr.t("msg_confirm_title"),
+                self.tr.t("msg_copy_pilot_success", count=copied),
+                parent=self,
+            )
+
+            for var in self._copy_pilot_check_vars.values():
+                var.set(False)
+
+        except Exception as exc:
+            logger.warning("_on_copy_pilot_apply failed: %s", exc, exc_info=True)
+            messagebox.showerror(
+                self.tr.t("msg_error_title"),
+                self.tr.t("msg_copy_pilot_error", error=str(exc)),
+                parent=self,
+            )
 
 
 # === Dialogs ===
