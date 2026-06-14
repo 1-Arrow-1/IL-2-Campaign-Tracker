@@ -7,6 +7,7 @@ The main application window with tabbed interface.
 import os
 import json
 import queue
+import shutil
 import zipfile
 import re
 import sqlite3
@@ -291,15 +292,15 @@ class SettingsManagerApp(tk.Tk):
         5: "Transferred",
         8: "Deputy Commander",
     }
+    # States the user may SET in the roster — only non-invasive role changes.
+    # KIA/MIA/WIA/Transferred are set by the game; we never write them.
     _PILOT_STATE_FROM_NAME: Dict[str, int] = {
         "Active":             0,
         "Squadron Commander": 1,
-        "KIA":                2,
-        "MIA":                3,
-        "WIA":                4,
-        "Transferred":        5,
         "Deputy Commander":   8,
     }
+    # States that lock the row — double-clicking state cell does nothing.
+    _PILOT_STATE_READONLY = {4}   # WIA only — Transferred is editable
     # (tree_col_id, db_col_name, pixel_width, is_numeric)
     _ROSTER_TREE_COLS: List[Tuple[str, str, int, bool]] = [
         ("first_name",   "name",        120, False),
@@ -309,6 +310,19 @@ class SettingsManagerApp(tk.Tk):
         ("sorties",      "sorties",      70, True),
         ("good_sorties", "goodSorties",  90, True),
         ("state",        "state",       150, False),
+    ]
+
+    # One background colour per tab (index matches tab creation order).
+    _TAB_COLORS = [
+        "#455a64",  # 0 General              – blue-grey
+        "#1565c0",  # 1 Rank Scaling         – cobalt blue
+        "#6a1b9a",  # 2 Rank Values          – purple
+        "#2e7d32",  # 3 Campaigns            – forest green
+        "#00695c",  # 4 Career Languages     – teal
+        "#bf360c",  # 5 German Awards        – deep burnt orange
+        "#b71c1c",  # 6 Updates              – dark red
+        "#01579b",  # 7 Squadron Roster      – navy blue
+        "#4a148c",  # 8 Copy Squadron Pilot  – deep violet
     ]
 
     def __init__(self):
@@ -322,8 +336,8 @@ class SettingsManagerApp(tk.Tk):
         
         # Configure window
         self.title(self.tr.t("app_title"))
-        self.geometry("780x760")
-        self.minsize(700, 620)
+        self.geometry("1280x760")
+        self.minsize(1280, 620)
         
         # Data storage
         self.settings_data: Dict[str, Any] = {}
@@ -410,6 +424,7 @@ class SettingsManagerApp(tk.Tk):
         self._roster_tree: Optional[ttk.Treeview] = None
         self._roster_career_combo: Optional[ttk.Combobox] = None
         self._roster_career_ids: List[int] = []
+        self._roster_current_career_id: Optional[int] = None
         self._roster_pilot_data: Dict[str, Dict] = {}
         self._roster_pending_changes: Dict[str, Dict] = {}
         self._roster_editor: Optional[tk.Widget] = None
@@ -435,7 +450,10 @@ class SettingsManagerApp(tk.Tk):
 
         # Load all data
         self._load_all_data()
-        
+
+        # Apply custom styles (must come before widget creation)
+        self._setup_styles()
+
         # Create UI
         self._create_widgets()
         
@@ -510,6 +528,47 @@ class SettingsManagerApp(tk.Tk):
             logger.debug("Could not load button icon %s: %s", icon_path, exc)
             return None
     
+    def _setup_styles(self) -> None:
+        """Configure custom ttk styles: action buttons + coloured tab headers."""
+        style = ttk.Style()
+        # 'clam' lets us set arbitrary background colours on tabs and buttons
+        # on all platforms (the native 'vista' theme on Windows ignores bg).
+        style.theme_use("clam")
+
+        # Action button – steel blue, white text
+        _ACT_BG  = "#1976d2"
+        _ACT_HOV = "#1255a0"
+        style.configure(
+            "Action.TButton",
+            background=_ACT_BG,
+            foreground="white",
+            relief="raised",
+            padding=(8, 4),
+            font=("TkDefaultFont", 9),
+        )
+        style.map(
+            "Action.TButton",
+            background=[("active", _ACT_HOV), ("disabled", "#9e9e9e")],
+            foreground=[("disabled", "#e0e0e0")],
+            relief=[("pressed", "sunken")],
+        )
+
+        # Per-tab coloured header styles
+        for i, bg in enumerate(self._TAB_COLORS):
+            name = f"Tab{i}.TNotebook.Tab"
+            style.configure(
+                name,
+                background=bg,
+                foreground="white",
+                padding=(10, 5),
+                font=("TkDefaultFont", 9, "bold"),
+            )
+            style.map(
+                name,
+                background=[("selected", bg), ("active", bg)],
+                foreground=[("selected", "white"), ("active", "white")],
+            )
+
     def _create_widgets(self) -> None:
         """Create all UI widgets."""
         # Main frame with padding
@@ -546,6 +605,15 @@ class SettingsManagerApp(tk.Tk):
 
         # Tab 9: Copy Squadron Pilot
         self._create_copy_pilot_tab()
+
+        # Add a small coloured square icon to each tab header.
+        # PhotoImage.put() is reliable on all platforms; no Pillow needed.
+        for _i in range(self.notebook.index("end")):
+            if _i < len(self._TAB_COLORS):
+                _img = tk.PhotoImage(width=10, height=10)
+                _img.put(self._TAB_COLORS[_i], to=(0, 0, 10, 10))
+                self._button_icons[f"_tab_color_{_i}"] = _img  # prevent GC
+                self.notebook.tab(_i, image=_img, compound=tk.LEFT)
 
         # Button frame
         self._create_button_bar(main_frame)
@@ -768,12 +836,14 @@ class SettingsManagerApp(tk.Tk):
             frame,
             text=self.tr.t("btn_test_connection"),
             command=self._on_test_story_connection,
+            style="Action.TButton",
         )
         self.story_test_button.grid(row=row, column=1, sticky=tk.W, pady=(10, 0), padx=(10, 0))
         self.story_refresh_models_button = ttk.Button(
             frame,
             text=self.tr.t("btn_refresh_models"),
             command=self._on_refresh_story_models,
+            style="Action.TButton",
         )
         self.story_refresh_models_button.grid(row=row, column=1, sticky=tk.W, pady=(10, 0), padx=(140, 0))
 
@@ -826,19 +896,22 @@ class SettingsManagerApp(tk.Tk):
         ttk.Button(
             btn_frame,
             text=self.tr.t("btn_add_bracket"),
-            command=self._on_add_bracket
+            command=self._on_add_bracket,
+            style="Action.TButton",
         ).pack(side=tk.LEFT, padx=(0, 5))
-        
+
         ttk.Button(
             btn_frame,
             text=self.tr.t("btn_edit"),
-            command=self._on_edit_bracket
+            command=self._on_edit_bracket,
+            style="Action.TButton",
         ).pack(side=tk.LEFT, padx=(0, 5))
-        
+
         ttk.Button(
             btn_frame,
             text=self.tr.t("btn_remove_bracket"),
-            command=self._on_remove_bracket
+            command=self._on_remove_bracket,
+            style="Action.TButton",
         ).pack(side=tk.LEFT)
         
         # Double-click to edit
@@ -916,7 +989,8 @@ class SettingsManagerApp(tk.Tk):
         ttk.Button(
             frame,
             text=self.tr.t("btn_edit"),
-            command=self._on_edit_rank_score
+            command=self._on_edit_rank_score,
+            style="Action.TButton",
         ).grid(row=3, column=0, sticky=tk.W)
         
         # Double-click to edit
@@ -1030,6 +1104,7 @@ class SettingsManagerApp(tk.Tk):
             command=self._on_import_stock_campaigns,
             image=import_icon,
             compound=tk.LEFT,
+            style="Action.TButton",
         )
         self._stock_import_btn.pack(side=tk.LEFT)
 
@@ -1046,6 +1121,7 @@ class SettingsManagerApp(tk.Tk):
             rebuild_row,
             text=self.tr.t("btn_rebuild_campaign_data"),
             command=self._on_force_regen_campaigns,
+            style="Action.TButton",
         )
         self._force_regen_btn.pack(side=tk.LEFT)
 
@@ -1670,6 +1746,7 @@ class SettingsManagerApp(tk.Tk):
             frame,
             text=self.tr.t("btn_swap_award_style"),
             command=self._on_swap_german_awards,
+            style="Action.TButton",
         )
         self._german_awards_swap_btn.pack(anchor=tk.W)
 
@@ -1921,6 +1998,7 @@ class SettingsManagerApp(tk.Tk):
             btn_row,
             text=self.tr.t("btn_select_update_package"),
             command=self._on_select_update_package,
+            style="Action.TButton",
         ).pack(side=tk.LEFT)
 
         # selected zip filename label
@@ -1937,6 +2015,7 @@ class SettingsManagerApp(tk.Tk):
             restore_row,
             text=self.tr.t("btn_restore_backup"),
             command=self._on_restore_backup,
+            style="Action.TButton",
         ).pack(side=tk.LEFT)
         ttk.Label(
             restore_row,
@@ -1988,6 +2067,7 @@ class SettingsManagerApp(tk.Tk):
             text=self.tr.t("btn_install_update"),
             command=self._on_install_update,
             state="disabled",
+            style="Action.TButton",
         )
         self._update_install_btn.pack(side=tk.LEFT)
 
@@ -2016,6 +2096,7 @@ class SettingsManagerApp(tk.Tk):
             self._update_post_install_row,
             text=self.tr.t("btn_view_install_log"),
             command=self._on_view_install_log,
+            style="Action.TButton",
         )
 
         self._update_restart_btn = tk.Button(
@@ -4604,9 +4685,12 @@ class SettingsManagerApp(tk.Tk):
         # Bottom bar
         bar = ttk.Frame(frame)
         bar.pack(fill=tk.X, pady=(8, 0))
-        ttk.Button(bar, text=self.tr.t("btn_save_changes"), command=self._on_roster_save).pack(side=tk.LEFT)
+        ttk.Button(bar, text=self.tr.t("btn_save_changes"), command=self._on_roster_save, style="Action.TButton").pack(side=tk.LEFT)
         ttk.Button(bar, text=self.tr.t("btn_discard_changes"), command=self._on_roster_discard).pack(
             side=tk.LEFT, padx=(8, 0)
+        )
+        ttk.Button(bar, text="Restore Database", command=self._restore_database).pack(
+            side=tk.RIGHT, padx=(8, 0)
         )
         ttk.Label(bar, textvariable=self._roster_status_var, foreground="gray").pack(
             side=tk.LEFT, padx=(12, 0)
@@ -4625,6 +4709,7 @@ class SettingsManagerApp(tk.Tk):
 
     def _load_roster_for_career(self, career_id: int) -> None:
         """Query cp.db for all pilots in the squadron of the given root career."""
+        self._roster_current_career_id = career_id
         game_dir = (self.mission_dates_data or {}).get("game_directory")
         if not game_dir:
             return
@@ -4761,7 +4846,16 @@ class SettingsManagerApp(tk.Tk):
         current_display = values[col_idx]
 
         if col_id == "state":
-            options = list(self.PILOT_STATES.values())
+            # WIA and Transferred are set by the game — block manual editing.
+            _cur_state = int(
+                self._roster_pending_changes.get(item, {}).get(
+                    "state",
+                    self._roster_pilot_data.get(item, {}).get("state", 0),
+                )
+            )
+            if _cur_state in self._PILOT_STATE_READONLY:
+                return
+            options = list(self._PILOT_STATE_FROM_NAME.keys())
             editor = ttk.Combobox(self._roster_tree, values=options, state="readonly")
             if current_display in options:
                 editor.set(current_display)
@@ -4848,6 +4942,76 @@ class SettingsManagerApp(tk.Tk):
         self._roster_editor_item = None
         self._roster_editor_col = None
 
+    def _restore_database(self) -> None:
+        """Let the user pick a cp_backup_*.db file and restore it as cp.db."""
+        game_dir = (self.mission_dates_data or {}).get("game_directory")
+        if not game_dir:
+            messagebox.showerror("Error", "Game directory not set.", parent=self)
+            return
+        career_dir = os.path.join(str(game_dir), "data", "Career")
+        backups = sorted(
+            [
+                f for f in os.listdir(career_dir)
+                if f.startswith("cp_backup_") and f.endswith(".db")
+            ],
+            reverse=True,
+        )
+        if not backups:
+            messagebox.showinfo("Restore Database", "No backups found.", parent=self)
+            return
+
+        dlg = tk.Toplevel(self)
+        dlg.title("Restore Database")
+        dlg.resizable(False, False)
+        dlg.grab_set()
+
+        ttk.Label(dlg, text="Select a backup to restore:").pack(
+            padx=16, pady=(12, 4), anchor="w"
+        )
+
+        lb_var = tk.StringVar(value=backups)  # type: ignore[arg-type]
+        lb = tk.Listbox(dlg, listvariable=lb_var, selectmode=tk.SINGLE,
+                        width=38, height=min(len(backups), 12))
+        lb.pack(padx=16, pady=4)
+        lb.selection_set(0)
+
+        def _do_restore() -> None:
+            sel = lb.curselection()
+            if not sel:
+                return
+            chosen = backups[sel[0]]
+            if not messagebox.askokcancel(
+                "Restore Database",
+                f"This will replace the current cp.db with:\n\n{chosen}\n\n"
+                "The current cp.db will be saved as cp.db.bak.\n\nProceed?",
+                parent=dlg,
+            ):
+                return
+            db_path = os.path.join(career_dir, "cp.db")
+            bak_path = os.path.join(career_dir, "cp.db.bak")
+            src_path = os.path.join(career_dir, chosen)
+            try:
+                if os.path.isfile(db_path):
+                    shutil.move(db_path, bak_path)
+                shutil.move(src_path, db_path)
+            except OSError as e:
+                messagebox.showerror("Error", str(e), parent=dlg)
+                return
+            dlg.destroy()
+            messagebox.showinfo(
+                "Restore Database",
+                f"Restored successfully.\nPrevious cp.db saved as cp.db.bak.",
+                parent=self,
+            )
+
+        btn_frame = ttk.Frame(dlg)
+        btn_frame.pack(padx=16, pady=(4, 12), fill=tk.X)
+        ttk.Button(btn_frame, text="Restore", command=_do_restore,
+                   style="Action.TButton").pack(side=tk.LEFT)
+        ttk.Button(btn_frame, text="Cancel", command=dlg.destroy).pack(
+            side=tk.LEFT, padx=(8, 0)
+        )
+
     def _on_roster_save(self) -> None:
         """Write all pending roster changes to cp.db."""
         if not self._roster_pending_changes:
@@ -4873,6 +5037,56 @@ class SettingsManagerApp(tk.Tk):
             )
             return
 
+        # ── Auto-backup before every save ───────────────────────────────────────
+        _ts = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+        _backup_path = os.path.join(
+            os.path.dirname(db_path), f"cp_backup_{_ts}.db"
+        )
+        try:
+            shutil.copy2(db_path, _backup_path)
+        except OSError as _be:
+            messagebox.showerror(
+                self.tr.t("msg_error_title"),
+                f"Could not create backup:\n{_be}",
+                parent=self,
+            )
+            return
+
+        # ── Pre-save: warn if pending changes create duplicate Commander/Deputy ──
+        _role_holders: Dict[tuple, list] = {}
+        for _iid, _data in self._roster_pilot_data.items():
+            _st = int(
+                self._roster_pending_changes.get(_iid, {}).get(
+                    "state", _data.get("state", 0)
+                )
+            )
+            if _st in (1, 8):
+                _sq = int(_data.get("squadronId", 0))
+                _role_holders.setdefault((_sq, _st), []).append(
+                    f"{_data.get('name', '')} {_data.get('lastName', '')}".strip()
+                )
+        _conflict_lines = []
+        for (_sq, _st), _names in _role_holders.items():
+            if len(_names) > 1:
+                _role_lbl = (
+                    "Squadron Commander" if _st == 1 else "Deputy Commander"
+                )
+                _conflict_lines.append(
+                    f"{_role_lbl}: {', '.join(_names)}"
+                    " — one must be demoted to Active"
+                )
+        if _conflict_lines:
+            _msg = (
+                "Saving would result in duplicate command roles:\n\n"
+                + "\n".join(_conflict_lines)
+                + "\n\nThe existing holder will be automatically demoted to Active."
+                "\n\nProceed?"
+            )
+            if not messagebox.askokcancel(
+                "Command conflict", _msg, parent=self
+            ):
+                return
+
         try:
             con = sqlite3.connect(str(db_path), timeout=5)
             con.row_factory = sqlite3.Row
@@ -4881,7 +5095,36 @@ class SettingsManagerApp(tk.Tk):
                 pilot_id = int(iid)
                 original = self._roster_pilot_data.get(iid, {})
 
-                set_parts = []
+                # ── Pre-process state change ────────────────────────────────
+                _new_st = int(changes["state"]) if "state" in changes else None
+                _old_st = int(original.get("state", 0)) if "state" in changes else None
+                _is_res = (
+                    _old_st in (2, 3, 4) and _new_st in (0, 1, 8)
+                    if _new_st is not None else False
+                )
+
+                # For resurrections, also update stateDate to the in-game date.
+                if _is_res and "stateDate" not in changes:
+                    _dr = con.execute(
+                        "SELECT currentDate FROM career"
+                        " WHERE playerId = ? AND isDeleted = 0 ORDER BY id DESC LIMIT 1",
+                        [pilot_id],
+                    ).fetchone()
+                    if _dr:
+                        changes["stateDate"] = _dr["currentDate"]
+                    else:
+                        _er = con.execute(
+                            "SELECT MAX(date) AS d FROM event"
+                            " WHERE pilotId = ? AND isDeleted = 0",
+                            [pilot_id],
+                        ).fetchone()
+                        changes["stateDate"] = (
+                            _er["d"][:10] if _er and _er["d"]
+                            else datetime.now().strftime("%Y.%m.%d")
+                        )
+
+                # ── Main pilot UPDATE ────────────────────────────────────────
+                set_parts: List[str] = []
                 values: List = []
                 for db_col, new_val in changes.items():
                     set_parts.append(f"{db_col} = ?")
@@ -4892,21 +5135,164 @@ class SettingsManagerApp(tk.Tk):
                     values,
                 )
 
-                # If state changed, also update the most recent matching sortie
-                if "state" in changes:
-                    new_state = int(changes["state"])
-                    old_state = int(original.get("state", 0))
-                    if new_state != old_state:
-                        row = con.execute(
-                            "SELECT id FROM sortie WHERE pilotId = ? AND status = ?"
-                            " AND isDeleted = 0 ORDER BY id DESC LIMIT 1",
-                            [pilot_id, old_state],
-                        ).fetchone()
-                        if row:
+                if _new_st is not None and _new_st != _old_st:
+                    # ── Sortie update ────────────────────────────────────────
+                    sortie_row = con.execute(
+                        "SELECT id, missionId FROM sortie"
+                        " WHERE pilotId = ? AND status = ? AND isDeleted = 0"
+                        " ORDER BY id DESC LIMIT 1",
+                        [pilot_id, _old_st],
+                    ).fetchone()
+                    if sortie_row:
+                        if _is_res:
+                            con.execute(
+                                "UPDATE sortie SET status = ?, planeStatus = 1 WHERE id = ?",
+                                [_new_st, sortie_row["id"]],
+                            )
+                            # Hard-delete the linked death event (type 3/4/5)
+                            msn_id = sortie_row["missionId"]
+                            if msn_id and msn_id != -1:
+                                con.execute(
+                                    "DELETE FROM event"
+                                    " WHERE pilotId = ? AND missionId = ?"
+                                    " AND type IN (3, 4, 5)",
+                                    [pilot_id, msn_id],
+                                )
+                        else:
                             con.execute(
                                 "UPDATE sortie SET status = ? WHERE id = ?",
-                                [new_state, row[0]],
+                                [_new_st, sortie_row["id"]],
                             )
+
+                    # ── Career reset (player only, resurrection only) ─────────
+                    if _is_res:
+                        _cr = con.execute(
+                            "SELECT id FROM career"
+                            " WHERE playerId = ? AND isDeleted = 0 ORDER BY id DESC LIMIT 1",
+                            [pilot_id],
+                        ).fetchone()
+                        if _cr:
+                            con.execute(
+                                "UPDATE career SET state = 0 WHERE id = ?",
+                                [_cr["id"]],
+                            )
+
+                    # ── Commander / Deputy appointment ───────────────────────
+                    if _new_st in (1, 8):
+                        _ev_type = 7 if _new_st == 1 else 24
+                        _sq_id = int(original.get("squadronId", 0))
+
+                        # Enforce uniqueness: demote any existing holder
+                        for _ex in con.execute(
+                            "SELECT id FROM pilot WHERE squadronId = ? AND state = ?"
+                            " AND id != ? AND isDeleted = 0",
+                            [_sq_id, _new_st, pilot_id],
+                        ).fetchall():
+                            con.execute(
+                                "UPDATE pilot SET state = 0 WHERE id = ?", [_ex["id"]]
+                            )
+                            _ex_sortie = con.execute(
+                                "SELECT id FROM sortie WHERE pilotId = ? AND status = ?"
+                                " AND isDeleted = 0 ORDER BY id DESC LIMIT 1",
+                                [_ex["id"], _new_st],
+                            ).fetchone()
+                            if _ex_sortie:
+                                con.execute(
+                                    "UPDATE sortie SET status = 0 WHERE id = ?",
+                                    [_ex_sortie["id"]],
+                                )
+
+                        # Date for the appointment event
+                        _ev_date = changes.get(
+                            "stateDate", datetime.now().strftime("%Y.%m.%d")
+                        )
+                        if len(_ev_date) == 10:
+                            _ev_date += " 00:00:00"
+
+                        _pr = con.execute(
+                            "SELECT name, lastName, rankId FROM pilot WHERE id = ?",
+                            [pilot_id],
+                        ).fetchone()
+                        if _pr:
+                            _ca = con.execute(
+                                "SELECT id FROM career WHERE playerId = ? AND isDeleted = 0"
+                                " ORDER BY id DESC LIMIT 1",
+                                [pilot_id],
+                            ).fetchone()
+                            _care_id = (
+                                _ca["id"] if _ca
+                                else (self._roster_current_career_id or -1)
+                            )
+                            _sq_cfg = con.execute(
+                                "SELECT configId FROM squadron WHERE id = ?", [_sq_id]
+                            ).fetchone()
+                            _cfg_id = int(_sq_cfg["configId"]) if _sq_cfg else -1
+                            _pname = f"{_pr['name']} {_pr['lastName']}".strip()
+                            con.execute(
+                                """INSERT INTO event
+                                       (date, type, pilotId, rankId, missionId,
+                                        squadronId, careerId,
+                                        ipar1, ipar2, ipar3, ipar4,
+                                        tpar1, tpar2, tpar3, tpar4,
+                                        insdate, isDeleted)
+                                   VALUES (?, ?, ?, ?, -1, ?, ?,
+                                           -1, -1, -1, -1, ?, '', '', '',
+                                           ?, 0)""",
+                                [
+                                    _ev_date, _ev_type, pilot_id,
+                                    _pr["rankId"], _cfg_id, _care_id, _pname,
+                                    datetime.now().strftime("%Y.%m.%d %H:%M:%S"),
+                                ],
+                            )
+
+                    # ── Transfer arrival (5 → 0) ─────────────────────────────
+                    if _old_st == 5 and _new_st == 0 and self._roster_current_career_id:
+                        p_row = con.execute(
+                            "SELECT name, lastName, rankId, squadronId"
+                            " FROM pilot WHERE id = ?",
+                            [pilot_id],
+                        ).fetchone()
+                        if p_row:
+                            sq_row = con.execute(
+                                "SELECT configId FROM squadron WHERE id = ?",
+                                [p_row["squadronId"]],
+                            ).fetchone()
+                            if sq_row:
+                                cfg_id = int(sq_row["configId"])
+                                pilot_name = (
+                                    f"{p_row['name']} {p_row['lastName']}".strip()
+                                )
+                                date_row = con.execute(
+                                    "SELECT MAX(date) AS last_date FROM event"
+                                    " WHERE careerId = ? AND isDeleted = 0",
+                                    [self._roster_current_career_id],
+                                ).fetchone()
+                                event_date = (
+                                    date_row["last_date"]
+                                    if date_row and date_row["last_date"]
+                                    else datetime.now().strftime("%Y.%m.%d 00:00:00")
+                                )
+                                con.execute(
+                                    """INSERT INTO event
+                                           (date, type, pilotId, rankId, missionId,
+                                            squadronId, careerId,
+                                            ipar1, ipar2, ipar3, ipar4,
+                                            tpar1, tpar2, tpar3, tpar4,
+                                            insdate, isDeleted)
+                                       VALUES (?, 10, ?, ?, -1, ?, ?,
+                                               -1, -1, -1, -1, ?, ?, '', '',
+                                               ?, 0)""",
+                                    [
+                                        event_date,
+                                        pilot_id,
+                                        p_row["rankId"],
+                                        cfg_id,
+                                        self._roster_current_career_id,
+                                        pilot_name,
+                                        str(cfg_id),
+                                        datetime.now().strftime("%Y.%m.%d %H:%M:%S"),
+                                    ],
+                                )
 
             con.commit()
             con.close()
@@ -5031,6 +5417,7 @@ class SettingsManagerApp(tk.Tk):
             apply_bar,
             text=self.tr.t("btn_copy_pilots"),
             command=self._on_copy_pilot_apply,
+            style="Action.TButton",
         )
         self._copy_pilot_apply_btn.pack(side=tk.LEFT)
         ttk.Label(apply_bar, textvariable=self._copy_pilot_status_var, foreground="gray").pack(
@@ -5321,7 +5708,7 @@ class SettingsManagerApp(tk.Tk):
                         """
                         SELECT type, date, pilotName, pilotRank, squadName, isDeleted,
                                PersonageId, x, y, CausedByType, CausedById, Show,
-                               GameTime, PersonageAwardId
+                               GameTime, CAST(PersonageAwardId AS BLOB) AS PersonageAwardId
                         FROM award
                         WHERE careerId = ? AND pilotId = ?
                         ORDER BY date, id

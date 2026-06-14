@@ -1970,7 +1970,15 @@ def _build_career_story_contexts(root_career_id: int, llm_config: Optional[dict]
         _pilot_bio = ""
 
     _accumulated_air_kills: int = 0
-    _narrative_memory: dict = {}
+    # Seed narrative memory from disk so LLM-extracted fields (memorable_moments,
+    # used_titles) that were written by previous generation runs carry forward.
+    # The deterministic fields (fallen_comrades, theatres_served, recent_events, etc.)
+    # are rebuilt fresh in the loop below, so stale disk values are overwritten.
+    _saved_memory = load_or_create_story_state_for("career", root_career_id)
+    _narrative_memory: dict = {
+        "memorable_moments": list(_saved_memory.get("memorable_moments") or []),
+        "used_titles": list(_saved_memory.get("used_titles") or []),
+    }
     _prev_segment_index: int = -1
     # Track the pilot's rank and awards at the end of each chapter so we can
     # populate gap-day chapters with the correct career state at that point.
@@ -4958,6 +4966,24 @@ def generate_stories(source: str, entry_id: str):
             "Story generate: %d total contexts built; %d existing chapter keys on disk",
             len(contexts), len(existing_story_keys),
         )
+        # Pre-pass: identify which career segment indices have at least one
+        # non-AI-only context (i.e. the player flew at least one mission there,
+        # or gap chapters exist between player missions).  Segments absent from
+        # this set are "AI-only segments" — the player never flew there.  We
+        # treat all AI-only mission contexts in such segments as unconditionally
+        # eligible for generation so the user is not stuck with "up to date"
+        # when entering a new theatre before flying any missions.
+        _segments_with_player_contexts: set[int] = set()
+        for _ctx in contexts:
+            if _ctx.get("ai_only_mission"):
+                continue
+            try:
+                _seg_idx = int(_ctx.get("career_segment_index") or -1)
+                if _seg_idx >= 0:
+                    _segments_with_player_contexts.add(_seg_idx)
+            except (TypeError, ValueError):
+                pass
+
         # Pass 1: collect dates where player-flew chapters are missing (used to decide
         # whether to auto-include AI-only contexts for the same day).
         missing_player_dates: set[str] = set()
@@ -4979,7 +5005,8 @@ def generate_stories(source: str, entry_id: str):
         for context in contexts:
             # AI-only missions are included only when:
             #   (a) their chapter was previously deleted → pending list, or
-            #   (b) a player chapter on the same date is also missing (first-time generation).
+            #   (b) a player chapter on the same date is also missing (first-time generation), or
+            #   (c) the whole career segment has no player missions (AI-only segment).
             if context.get("ai_only_mission"):
                 mission_key = str(context.get("mission_id"))
                 ctx_date = str(context.get("date") or "")
@@ -4987,7 +5014,16 @@ def generate_stories(source: str, entry_id: str):
                 same_date_missing = bool(ctx_date and ctx_date in missing_player_dates)
                 # A gap chapter for this date was deleted → regenerate its AI-only missions too.
                 date_gap_pending = bool(ctx_date and ctx_date in _pending_dates)
-                if not (in_pending or same_date_missing or date_gap_pending):
+                # Entire segment has no player missions (e.g. new theatre, player hasn't flown yet).
+                try:
+                    _ctx_seg_idx = int(context.get("career_segment_index") or -1)
+                    _is_ai_only_segment = (
+                        _ctx_seg_idx >= 0
+                        and _ctx_seg_idx not in _segments_with_player_contexts
+                    )
+                except (TypeError, ValueError):
+                    _is_ai_only_segment = False
+                if not (in_pending or same_date_missing or date_gap_pending or _is_ai_only_segment):
                     continue
                 mission_canonical = _canonical_mission_id(mission_key)
                 if mission_key in existing_story_keys or (mission_canonical and mission_canonical in existing_story_canonical_keys):
@@ -5049,7 +5085,7 @@ def generate_stories(source: str, entry_id: str):
                     1 for c in missing_contexts
                     if str(c.get("date") or "") == first_date
                 )
-                max_chapters = max(max_chapters, min(day_count, 10))
+                max_chapters = max(max_chapters, min(day_count, 5))
             logger.info(
                 "Story generate: first_date=%r day_count=%d max_chapters=%d",
                 first_date, day_count if first_date else 0, max_chapters,
@@ -5121,7 +5157,7 @@ def generate_stories(source: str, entry_id: str):
                     base_url=settings["base_url"],
                     output_language=settings["story_language"],
                 )
-                result = future.result(timeout=120)
+                result = future.result(timeout=75)
                 running_memory = result.get("memory") or running_memory
                 save_story_state_for(source, storage_entry_id, running_memory)
                 _prev_generated_date = str(context.get("date") or "")

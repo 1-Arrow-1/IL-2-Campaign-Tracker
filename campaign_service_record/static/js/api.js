@@ -191,7 +191,7 @@ const API = {
         return this.post(
             `/stories/${encodeURIComponent(source)}/${encodeURIComponent(entryId)}/generate`,
             data,
-            { timeoutMs: 240000 }
+            { timeoutMs: 360000 }
         );
     },
     

@@ -717,26 +717,20 @@ def clear_pending_ai_missions(source: str, entry_id: str | int, mission_ids: lis
 
 
 def strip_memory_entries_for_date(source: str, entry_id: str | int, mission_date: str) -> None:
-    """Remove recent_events and key_milestones entries tied to *mission_date* and recompute arc_summary."""
+    """Remove memory entries tied to *mission_date* and recompute arc_summary."""
     date_prefix = _normalize_text(mission_date)
     if not date_prefix:
         return
 
     memory = load_or_create_story_state_for(source, entry_id)
 
-    recent_events = memory.get("recent_events", [])
-    if isinstance(recent_events, list):
-        memory["recent_events"] = [
-            e for e in recent_events
-            if not _normalize_text(e).startswith(date_prefix + ":")
-        ]
-
-    key_milestones = memory.get("key_milestones", [])
-    if isinstance(key_milestones, list):
-        memory["key_milestones"] = [
-            m for m in key_milestones
-            if not _normalize_text(m).startswith(date_prefix + ":")
-        ]
+    for field in ("recent_events", "key_milestones", "fallen_comrades", "theatres_served"):
+        lst = memory.get(field, [])
+        if isinstance(lst, list):
+            memory[field] = [
+                e for e in lst
+                if not _normalize_text(e).startswith(date_prefix + ":")
+            ]
 
     arc_bits: list[str] = []
     if memory.get("current_rank"):
@@ -1751,6 +1745,9 @@ def generate_mission_story(
         "- Use only the supplied facts.\n"
         "- Do not invent awards, promotions, injuries, victories, locations, or commanders.\n"
         "- If narrative_memory.total_aerial_victories is present and greater than zero, use it as the pilot's confirmed kill count at the START of this mission. The count after this mission is narrative_memory.total_aerial_victories plus mission.air_kills. Never invent or estimate the tally — use only these numbers.\n"
+        "- If narrative_memory.fallen_comrades is non-empty, you MAY reference one past loss by name and date when it fits naturally — e.g. 'since Obfw. Schmidt had not returned from the Kerch escort...' or 'the gap left by Brenner's death months ago'. Use this sparingly — at most once per chapter, only when the scene invites reflection on loss or attrition. Do not force it.\n"
+        "- If narrative_memory.theatres_served has two or more entries, you MAY briefly anchor the reader's sense of the pilot's journey — e.g. 'having come all the way from the Kuban' or 'since leaving the Leningrad front'. Use at most once per chapter, only when a geographic or temporal contrast is natural.\n"
+        "- If narrative_memory.memorable_moments is non-empty, you MAY echo one entry as a resonant callback when it is tonally relevant to the current chapter — a past event, loss, or moment that casts light on the present. Choose the most fitting entry. Do not quote it verbatim; weave it into the prose. Use at most once per chapter.\n"
         "- Keep the story historically grounded and atmospheric.\n"
         "- If mission.time_of_day is present, use it to set the scene (e.g., 'at dawn', 'under a midday sun'). Do not invent a time if the field is absent or empty.\n"
         "- If mission.season is present, weave it into the atmosphere naturally (e.g., autumn mud, winter frost, summer heat). Do not invent a season if the field is absent or empty.\n"
@@ -2096,6 +2093,12 @@ def update_narrative_memory_local(
         "recent_events": list(previous.get("recent_events") or []),
         "used_titles": list(previous.get("used_titles") or []),
         "total_aerial_victories": int(previous.get("total_aerial_victories") or 0),
+        # Long-term narrative continuity fields
+        "fallen_comrades": list(previous.get("fallen_comrades") or []),
+        "theatres_served": list(previous.get("theatres_served") or []),
+        "memorable_moments": list(previous.get("memorable_moments") or []),
+        # Private tracking key — not shown to LLM, used to detect theatre/squadron transitions
+        "_current_theatre_key": _normalize_text(previous.get("_current_theatre_key")),
     }
 
     pilot = story_input.get("pilot", {}) if isinstance(story_input, dict) else {}
@@ -2103,6 +2106,7 @@ def update_narrative_memory_local(
     campaign_context = story_input.get("campaign_context", {}) if isinstance(story_input, dict) else {}
     mission_progression = story_input.get("mission_progression", {}) if isinstance(story_input, dict) else {}
     career_progress = story_input.get("career_progress", {}) if isinstance(story_input, dict) else {}
+    squadron_context = story_input.get("squadron_context", {}) if isinstance(story_input, dict) else {}
 
     # Authoritative cumulative aerial kill count — overwrite from story_input every time.
     aerial_victories = career_progress.get("aerial_victories")
@@ -2158,6 +2162,40 @@ def update_narrative_memory_local(
             memory["recurring_themes"] = _append_unique_limited(memory["recurring_themes"], theme, limit=8)
             break
 
+    # ── Fallen comrades ────────────────────────────────────────────────────────
+    # Record KIA and MIA squadron members so the LLM can reference past losses.
+    if mission_date and isinstance(squadron_context, dict):
+        for casualty_key, label in (("kia", "KIA"), ("mia", "MIA")):
+            for entry in (squadron_context.get(casualty_key) or []):
+                if isinstance(entry, dict):
+                    pilot_name = _normalize_text(entry.get("pilot") or entry.get("name"))
+                    rank_label = _normalize_text(entry.get("rank") or entry.get("promoted_to"))
+                else:
+                    pilot_name = _normalize_text(entry)
+                    rank_label = ""
+                if not pilot_name:
+                    continue
+                line = f"{mission_date}: {pilot_name}"
+                if rank_label:
+                    line += f" ({rank_label})"
+                line += f" — {label}"
+                memory["fallen_comrades"] = _append_unique_limited(
+                    memory["fallen_comrades"], line, limit=30
+                )
+
+    # ── Theatres served ────────────────────────────────────────────────────────
+    # Record squadron + theatre transitions so the LLM can anchor geographic continuity.
+    theatre = _normalize_text(mission.get("theatre"))
+    if mission_date and (squadron or theatre):
+        theatre_key = f"{squadron}|{theatre}"
+        if theatre_key != memory.get("_current_theatre_key"):
+            parts = [p for p in [squadron, theatre] if p]
+            entry = f"{mission_date}: {', '.join(parts)}"
+            memory["theatres_served"] = _append_unique_limited(
+                memory["theatres_served"], entry, limit=15
+            )
+            memory["_current_theatre_key"] = theatre_key
+
     arc_bits: list[str] = []
     if memory.get("current_rank"):
         arc_bits.append(f"Rank: {memory['current_rank']}")
@@ -2166,6 +2204,46 @@ def update_narrative_memory_local(
     arc_bits.append(f"Latest mission ({mission_date}): {result}")
     memory["arc_summary"] = "; ".join(bit for bit in arc_bits if bit)[:280]
     return memory
+
+
+def _extract_memorable_moment(
+    story_text: str,
+    *,
+    model: str = DEFAULT_MODEL,
+    api_key: Optional[str] = None,
+    provider: str = "openai",
+    base_url: Optional[str] = None,
+) -> str:
+    """Extract one callback-worthy sentence from a generated story chapter.
+
+    Returns a single past-tense sentence (≤150 chars) suitable for use as a
+    resonant memory reference in a later chapter, or "" on failure.
+    """
+    if not story_text:
+        return ""
+    client = _get_client(api_key=api_key, base_url=base_url, timeout_seconds=15.0)
+    prompt = (
+        "From the story chapter below, extract exactly ONE memorable sentence that could "
+        "serve as a callback in a future chapter — a specific loss, location, turning point, "
+        "or vivid moment. Requirements:\n"
+        "- Past tense, max 150 characters.\n"
+        "- Must be grounded in the chapter's stated facts (no invented names or places).\n"
+        "- Prefer moments involving named pilots, specific places, or decisive events.\n"
+        "- Return only the sentence. No quotes, no preamble, no explanation.\n\n"
+        f"Chapter:\n{story_text[:3000]}"
+    )
+    try:
+        response = _create_story_response(
+            client,
+            provider=provider,
+            model=model,
+            prompt=prompt,
+            max_output_tokens=80,
+        )
+        raw = _normalize_text(_extract_response_text(response))
+        return raw[:150] if raw else ""
+    except Exception:
+        return ""
 
 
 def generate_and_store_chapter(
@@ -2231,6 +2309,21 @@ def generate_and_store_chapter_for(
     memory = update_narrative_memory_local(story_input, fallback_memory if isinstance(fallback_memory, dict) else None)
     if story_title:
         memory["used_titles"] = _append_unique_limited(memory.get("used_titles") or [], story_title, limit=20)
+
+    # Extract a memorable moment from this chapter for future callback use.
+    if story_text:
+        moment = _extract_memorable_moment(
+            story_text,
+            model=model,
+            api_key=api_key,
+            provider=provider,
+            base_url=base_url,
+        )
+        if moment:
+            memory["memorable_moments"] = _append_unique_limited(
+                memory.get("memorable_moments") or [], moment, limit=25
+            )
+
     chapters_dir = _story_entry_dir(source, entry_id) / "chapters"
     memory["chapters_written"] = len(list(chapters_dir.glob("*.json"))) if chapters_dir.exists() else 0
     save_story_state_for(source, entry_id, memory)
