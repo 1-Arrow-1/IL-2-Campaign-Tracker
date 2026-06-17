@@ -150,6 +150,13 @@ const App = {
         this.setupEventListeners();
         this.setupKeyboardShortcuts();
 
+        // Fetch UI settings once so page inits can use them synchronously
+        try {
+            this.uiSettings = await API.getSettings();
+        } catch (e) {
+            this.uiSettings = {};
+        }
+
         // Initialize pages
         LandingPage.init();
         DetailPage.init();

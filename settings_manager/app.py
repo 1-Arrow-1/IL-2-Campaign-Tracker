@@ -394,6 +394,7 @@ class SettingsManagerApp(tk.Tk):
         self._german_awards_swap_btn: Optional[ttk.Button] = None
         self._german_awards_radio_1957: Optional[ttk.Radiobutton] = None
         self._german_awards_radio_ww2: Optional[ttk.Radiobutton] = None
+        self._german_uncensored_var: Optional[tk.BooleanVar] = None
 
         # Update tab state
         self._update_zip_path: Optional[Path] = None
@@ -1667,6 +1668,37 @@ class SettingsManagerApp(tk.Tk):
             justify=tk.LEFT,
         ).pack(anchor=tk.W, pady=(0, 16))
 
+        # --- German imagery (flag + background): censored vs uncensored ---------
+        ttk.Separator(frame, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=(0, 12))
+
+        img_frame = ttk.LabelFrame(frame, text="German flag and background image", padding=12)
+        img_frame.pack(anchor=tk.W, pady=(0, 12))
+
+        _current_uncensored = bool((self.settings_data or {}).get("german_uncensored", False))
+        self._german_uncensored_var = tk.BooleanVar(value=_current_uncensored)
+
+        ttk.Radiobutton(
+            img_frame,
+            text="Censored (default — uses game-style Iron Cross flag)",
+            variable=self._german_uncensored_var,
+            value=False,
+        ).pack(anchor=tk.W, pady=2)
+        ttk.Radiobutton(
+            img_frame,
+            text="Uncensored (historical insignia — Swastika flag and background)",
+            variable=self._german_uncensored_var,
+            value=True,
+        ).pack(anchor=tk.W, pady=2)
+
+        ttk.Button(
+            frame,
+            text="Apply",
+            command=self._on_apply_german_uncensored,
+            style="Action.TButton",
+        ).pack(anchor=tk.W, pady=(0, 16))
+
+        ttk.Separator(frame, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=(0, 16))
+
         # --- unavailable states ------------------------------------------------
         if awards_dir is None:
             ttk.Label(
@@ -1785,6 +1817,21 @@ class SettingsManagerApp(tk.Tk):
                 self._german_awards_radio_ww2.config(state='disabled')
                 if self._german_awards_swap_btn:
                     self._german_awards_swap_btn.config(state='disabled')
+
+    def _on_apply_german_uncensored(self) -> None:
+        """Save the censored/uncensored German imagery preference."""
+        if self._german_uncensored_var is None:
+            return
+        val = bool(self._german_uncensored_var.get())
+        if self.settings_data is None:
+            self.settings_data = {}
+        self.settings_data["german_uncensored"] = val
+        save_json_atomic(SETTINGS_JSON_PATH, self.settings_data)
+        messagebox.showinfo(
+            "German imagery",
+            "Setting saved.\nRestart the Career / Campaign Service Record to apply.",
+            parent=self,
+        )
 
     def _on_swap_german_awards(self) -> None:
         """Handle the Swap Award Style button."""

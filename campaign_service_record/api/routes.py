@@ -312,12 +312,38 @@ def _inject_citations_into_events(events: list, source: str, entry_id: str) -> N
         name = str(event.get("name") or event.get("award_code") or "")
         date = str(event.get("date") or "")
         mission = str(event.get("mission") or "")
-        # Try campaign key first (has mission), then career key (no mission)
-        key = (
-            f"award|{name}|{mission}|{date}" if mission
-            else f"award|{name}|{date}"
-        )
-        citation = citations.get(key)
+        award_code = str(event.get("award_code") or "")
+
+        # Build candidate keys in priority order.
+        # Primary key uses event.name (= award index filename stem when assets are present,
+        # or "award_{code}" when they're not).  Fallbacks cover the case where assets were
+        # renamed by a game update or the index was absent when citations were first stored.
+        if mission:
+            candidates = [
+                f"award|{name}|{mission}|{date}",
+                *(
+                    [
+                        f"award|{award_code}|{mission}|{date}",
+                        f"award|award_{award_code}|{mission}|{date}",
+                    ]
+                    if award_code and award_code != name and f"award_{award_code}" != name
+                    else []
+                ),
+            ]
+        else:
+            candidates = [
+                f"award|{name}|{date}",
+                *(
+                    [
+                        f"award|{award_code}|{date}",
+                        f"award|award_{award_code}|{date}",
+                    ]
+                    if award_code and award_code != name and f"award_{award_code}" != name
+                    else []
+                ),
+            ]
+
+        citation = next((citations[k] for k in candidates if citations.get(k)), None)
         if citation:
             event["citation"] = citation
 
@@ -3385,6 +3411,15 @@ def get_locale():
     locale = resolve_locale()
     return jsonify({'locale': normalize_locale(locale, DEFAULT_LOCALE)})
 
+
+
+@api_bp.route('/api/settings')
+def get_ui_settings():
+    """Return general UI settings for the frontend."""
+    settings = load_settings()
+    return jsonify({
+        'german_uncensored': bool(settings.get('german_uncensored', False)),
+    })
 
 
 @api_bp.route('/api/locales')

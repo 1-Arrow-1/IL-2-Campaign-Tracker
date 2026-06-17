@@ -38,12 +38,21 @@ const LandingPage = {
         'static/images/background_US.png'
     ],
     selectedBackground: null,
-    
+    _germanUncensored: false,
+
     /**
      * Initialize landing page
      */
     init() {
         this.cacheElements();
+        if (typeof App !== 'undefined' && App.uiSettings && App.uiSettings.german_uncensored) {
+            this._germanUncensored = true;
+            this.backgroundImages = this.backgroundImages.map(img =>
+                img === 'static/images/background_Germany.png'
+                    ? 'static/images/background_Germany_uncensored.png'
+                    : img
+            );
+        }
         this.selectBackground();
         this.loadAll();
     },
@@ -276,7 +285,9 @@ const LandingPage = {
     getFlagForCountry(country) {
         const normalized = (country || '').trim().toLowerCase();
         const flagMap = {
-            germany: 'static/images/Germany_flag.png',
+            germany: this._germanUncensored
+                ? 'static/images/Germany_flag_uncensored.png'
+                : 'static/images/Germany_flag.png',
             britain: 'static/images/UK_flag.png',
             uk: 'static/images/UK_flag.png',
             'united kingdom': 'static/images/UK_flag.png',

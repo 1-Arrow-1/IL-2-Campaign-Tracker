@@ -303,6 +303,13 @@ const API = {
     },
     
     /**
+     * Get general UI settings (german_uncensored, etc.)
+     */
+    async getSettings() {
+        return this.get('/settings');
+    },
+
+    /**
      * Get current locale setting
      */
     async getLocale() {

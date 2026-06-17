@@ -725,6 +725,9 @@ const DetailPage = {
         this.setupAdditionalNotesHandlers();
         this.setupStoryHandlers();
         PreviewModal.init();
+        if (typeof App !== 'undefined' && App.uiSettings && App.uiSettings.german_uncensored) {
+            this.backgroundByCountry.germany = 'static/images/background_Germany_uncensored.png';
+        }
     },
 
     /**
