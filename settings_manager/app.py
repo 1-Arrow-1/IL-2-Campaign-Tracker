@@ -19,6 +19,7 @@ import time
 import logging
 import urllib.request
 import urllib.error
+import urllib.parse
 from datetime import datetime
 from pathlib import Path
 from tkinter import filedialog, ttk, messagebox
@@ -4989,6 +4990,88 @@ class SettingsManagerApp(tk.Tk):
         self._roster_editor_item = None
         self._roster_editor_col = None
 
+    def _read_career_pilot_names(
+        self, db_path: str
+    ) -> Dict[int, Dict[int, Tuple[str, str]]]:
+        """
+        Read pilot names for every career chain in the given cp.db.
+
+        Returns:
+            {root_career_id: {pilot_id: (first_name, last_name)}}
+
+        Covers the player pilot (all theatre IDs) plus every AI pilot that
+        served in any of the player's career squadrons.  Used to diff names
+        before/after a database restore so story files can be kept in sync.
+        """
+        result: Dict[int, Dict[int, Tuple[str, str]]] = {}
+        if not os.path.isfile(db_path):
+            return result
+        try:
+            uri = f"file:{db_path}?mode=ro"
+            con = sqlite3.connect(uri, uri=True, timeout=5)
+            con.row_factory = sqlite3.Row
+
+            roots = con.execute(
+                "SELECT id FROM career WHERE extends = -1 AND isDeleted = 0"
+            ).fetchall()
+
+            for root in roots:
+                root_id = int(root["id"])
+                pilot_names: Dict[int, Tuple[str, str]] = {}
+                all_sq_ids: List[int] = []
+
+                # Walk the extends chain to gather player pilot IDs + squad IDs
+                cur_id: Optional[int] = root_id
+                while cur_id is not None:
+                    cr = con.execute(
+                        "SELECT playerId, squadronId FROM career"
+                        " WHERE id = ? AND isDeleted = 0",
+                        [cur_id],
+                    ).fetchone()
+                    if cr:
+                        pid = int(cr["playerId"])
+                        p_row = con.execute(
+                            "SELECT name, lastName FROM pilot WHERE id = ?", [pid]
+                        ).fetchone()
+                        if p_row:
+                            pilot_names[pid] = (
+                                str(p_row["name"] or "").strip(),
+                                str(p_row["lastName"] or "").strip(),
+                            )
+                        if cr["squadronId"]:
+                            sq = int(cr["squadronId"])
+                            if sq not in all_sq_ids:
+                                all_sq_ids.append(sq)
+                    nxt = con.execute(
+                        "SELECT id FROM career"
+                        " WHERE extends = ? AND isDeleted = 0 ORDER BY id LIMIT 1",
+                        [cur_id],
+                    ).fetchone()
+                    cur_id = nxt["id"] if nxt else None
+
+                # Add AI pilots from career squadrons
+                if all_sq_ids:
+                    sq_ph = ",".join("?" for _ in all_sq_ids)
+                    ai_rows = con.execute(
+                        f"SELECT id, name, lastName FROM pilot"
+                        f" WHERE squadronId IN ({sq_ph}) AND isDeleted = 0",
+                        all_sq_ids,
+                    ).fetchall()
+                    for ai in ai_rows:
+                        pid = int(ai["id"])
+                        if pid not in pilot_names:
+                            pilot_names[pid] = (
+                                str(ai["name"] or "").strip(),
+                                str(ai["lastName"] or "").strip(),
+                            )
+
+                result[root_id] = pilot_names
+
+            con.close()
+        except Exception as exc:
+            logger.warning("_read_career_pilot_names(%s): %s", db_path, exc)
+        return result
+
     def _restore_database(self) -> None:
         """Let the user pick a cp_backup_*.db file and restore it as cp.db."""
         game_dir = (self.mission_dates_data or {}).get("game_directory")
@@ -5037,6 +5120,11 @@ class SettingsManagerApp(tk.Tk):
             db_path = os.path.join(career_dir, "cp.db")
             bak_path = os.path.join(career_dir, "cp.db.bak")
             src_path = os.path.join(career_dir, chosen)
+
+            # Snapshot pilot names from the CURRENT db before the swap so we
+            # know what names the story files were written with.
+            _pre_names = self._read_career_pilot_names(db_path)
+
             try:
                 if os.path.isfile(db_path):
                     shutil.move(db_path, bak_path)
@@ -5044,12 +5132,30 @@ class SettingsManagerApp(tk.Tk):
             except OSError as e:
                 messagebox.showerror("Error", str(e), parent=dlg)
                 return
+
+            # Snapshot pilot names from the RESTORED db, then diff and fix
+            # story files so they match the restored names.
+            _post_names = self._read_career_pilot_names(db_path)
+            _story_files_fixed = 0
+            for _root_id, _post_map in _post_names.items():
+                _pre_map = _pre_names.get(_root_id, {})
+                for _pid, (_new_f, _new_l) in _post_map.items():
+                    if _pid not in _pre_map:
+                        continue
+                    _old_f, _old_l = _pre_map[_pid]
+                    if (_old_f, _old_l) != (_new_f, _new_l):
+                        _story_files_fixed += self._rename_pilot_in_story_files(
+                            _root_id, _old_f, _old_l, _new_f, _new_l
+                        )
+
             dlg.destroy()
-            messagebox.showinfo(
-                "Restore Database",
-                f"Restored successfully.\nPrevious cp.db saved as cp.db.bak.",
-                parent=self,
-            )
+            _msg = "Restored successfully.\nPrevious cp.db saved as cp.db.bak."
+            if _story_files_fixed:
+                _msg += (
+                    f"\n\nSynchronised pilot names in {_story_files_fixed}"
+                    " AI story file(s) to match the restored database."
+                )
+            messagebox.showinfo("Restore Database", _msg, parent=self)
 
         btn_frame = ttk.Frame(dlg)
         btn_frame.pack(padx=16, pady=(4, 12), fill=tk.X)
@@ -5246,8 +5352,44 @@ class SettingsManagerApp(tk.Tk):
                                 ).fetchone()
                                 cur_id = nxt["id"] if nxt else None
                         else:
-                            # AI pilot: single pilot row, no theatre chain.
-                            chain_pilot_ids = [pilot_id]
+                            # AI pilot: find all theatre copies that served in
+                            # any of the player's career squadrons, so previous-
+                            # theatre versions of this pilot are also renamed.
+                            _career_sq_ids: List[int] = []
+                            if self._roster_current_career_id:
+                                _cur_cid: Optional[int] = self._roster_current_career_id
+                                while _cur_cid is not None:
+                                    _cr = con.execute(
+                                        "SELECT squadronId FROM career"
+                                        " WHERE id = ? AND isDeleted = 0",
+                                        [_cur_cid],
+                                    ).fetchone()
+                                    if _cr and _cr["squadronId"]:
+                                        _sq = int(_cr["squadronId"])
+                                        if _sq not in _career_sq_ids:
+                                            _career_sq_ids.append(_sq)
+                                    _nxt = con.execute(
+                                        "SELECT id FROM career"
+                                        " WHERE extends = ? AND isDeleted = 0"
+                                        " ORDER BY id LIMIT 1",
+                                        [_cur_cid],
+                                    ).fetchone()
+                                    _cur_cid = _nxt["id"] if _nxt else None
+
+                            if _career_sq_ids:
+                                _sq_ph = ",".join("?" for _ in _career_sq_ids)
+                                _ai_rows = con.execute(
+                                    f"SELECT id FROM pilot"
+                                    f" WHERE name = ? AND lastName = ?"
+                                    f" AND squadronId IN ({_sq_ph})"
+                                    f" AND isDeleted = 0",
+                                    [old_first, old_last] + _career_sq_ids,
+                                ).fetchall()
+                                chain_pilot_ids = list(
+                                    {pilot_id} | {int(r["id"]) for r in _ai_rows}
+                                )
+                            else:
+                                chain_pilot_ids = [pilot_id]
 
                         ph = ",".join("?" for _ in chain_pilot_ids)
 
@@ -5275,6 +5417,35 @@ class SettingsManagerApp(tk.Tk):
                             f" WHERE pilotId IN ({ph}) AND tpar1 = ?",
                             [new_full] + chain_pilot_ids + [old_full],
                         )
+
+                        # Update name fields in pilot.description (URL-encoded
+                        # query string with firstname=, lastname=, id=, fullname=).
+                        # Must be done per-row because each theatre copy may differ.
+                        for _pid in chain_pilot_ids:
+                            _dr = con.execute(
+                                "SELECT description FROM pilot WHERE id = ?", [_pid]
+                            ).fetchone()
+                            if not (_dr and _dr["description"]):
+                                continue
+                            _desc = _dr["description"]
+                            _desc_fields = {
+                                "firstname": new_first,
+                                "lastname":  new_last,
+                                "id":        new_full,
+                                "fullname":  new_full,
+                            }
+                            for _fld, _val in _desc_fields.items():
+                                _enc = urllib.parse.quote(_val, safe="")
+                                _desc = re.sub(
+                                    r"(^|&)(" + re.escape(_fld) + r")=[^&]*",
+                                    lambda m, v=_enc, f=_fld: m.group(1) + f + "=" + v,
+                                    _desc,
+                                )
+                            if _desc != _dr["description"]:
+                                con.execute(
+                                    "UPDATE pilot SET description = ? WHERE id = ?",
+                                    [_desc, _pid],
+                                )
 
                 if _new_st is not None and _new_st != _old_st:
                     # ── Sortie update ────────────────────────────────────────
