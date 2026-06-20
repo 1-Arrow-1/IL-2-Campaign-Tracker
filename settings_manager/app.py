@@ -5353,21 +5353,35 @@ class SettingsManagerApp(tk.Tk):
                                 cur_id = nxt["id"] if nxt else None
                         else:
                             # AI pilot: find all theatre copies that served in
-                            # any of the player's career squadrons, so previous-
-                            # theatre versions of this pilot are also renamed.
+                            # any of the player's career squadrons across ALL
+                            # career chains (not just the currently-selected one),
+                            # so pilots copied from a different career chain are
+                            # also renamed.
                             _career_sq_ids: List[int] = []
-                            if self._roster_current_career_id:
-                                _cur_cid: Optional[int] = self._roster_current_career_id
+                            for _root_cid in (self._roster_career_ids or []):
+                                _cur_cid: Optional[int] = _root_cid
                                 while _cur_cid is not None:
+                                    # Collect both career.squadronId (the starting
+                                    # squad for this theatre segment) and the player
+                                    # pilot's pilot.squadronId (their current squad
+                                    # after any mid-theatre transfers). The roster
+                                    # uses pilot.squadronId, so AI pilots visible
+                                    # there may be in a different squad than the one
+                                    # the career entry originally recorded.
                                     _cr = con.execute(
-                                        "SELECT squadronId FROM career"
-                                        " WHERE id = ? AND isDeleted = 0",
+                                        "SELECT c.squadronId AS career_sq,"
+                                        "       p.squadronId AS pilot_sq"
+                                        " FROM career c"
+                                        " LEFT JOIN pilot p ON p.id = c.playerId"
+                                        " WHERE c.id = ? AND c.isDeleted = 0",
                                         [_cur_cid],
                                     ).fetchone()
-                                    if _cr and _cr["squadronId"]:
-                                        _sq = int(_cr["squadronId"])
-                                        if _sq not in _career_sq_ids:
-                                            _career_sq_ids.append(_sq)
+                                    if _cr:
+                                        for _sq_val in (_cr["career_sq"], _cr["pilot_sq"]):
+                                            if _sq_val is not None:
+                                                _sq = int(_sq_val)
+                                                if _sq and _sq not in _career_sq_ids:
+                                                    _career_sq_ids.append(_sq)
                                     _nxt = con.execute(
                                         "SELECT id FROM career"
                                         " WHERE extends = ? AND isDeleted = 0"
@@ -5610,17 +5624,19 @@ class SettingsManagerApp(tk.Tk):
             con.close()
 
             # Rename pilot names in AI story files (chapters, memory, citations)
-            if _name_changes and self._roster_current_career_id:
+            # Sync ALL career chains so cross-theatre pilots are updated everywhere.
+            if _name_changes and self._roster_career_ids:
                 _story_files_updated = 0
-                for _nf, _nl, _nn_f, _nn_l in _name_changes:
-                    _story_files_updated += self._rename_pilot_in_story_files(
-                        self._roster_current_career_id, _nf, _nl, _nn_f, _nn_l
-                    )
+                for _career_id in self._roster_career_ids:
+                    for _nf, _nl, _nn_f, _nn_l in _name_changes:
+                        _story_files_updated += self._rename_pilot_in_story_files(
+                            _career_id, _nf, _nl, _nn_f, _nn_l
+                        )
                 if _story_files_updated:
                     logger.info(
-                        "Roster save: updated pilot name in %d story file(s) for career %d",
+                        "Roster save: updated pilot name in %d story file(s) across %d careers",
                         _story_files_updated,
-                        self._roster_current_career_id,
+                        len(self._roster_career_ids),
                     )
 
             # Merge changes into authoritative data and clear pending
