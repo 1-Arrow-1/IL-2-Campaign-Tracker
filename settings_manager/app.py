@@ -5134,6 +5134,10 @@ class SettingsManagerApp(tk.Tk):
             ):
                 return
 
+        # Collect (old_first, old_last, new_first, new_last) for each renamed pilot
+        # so we can update story files after the DB commit.
+        _name_changes: List[Tuple[str, str, str, str]] = []
+
         try:
             con = sqlite3.connect(str(db_path), timeout=5)
             con.row_factory = sqlite3.Row
@@ -5181,6 +5185,96 @@ class SettingsManagerApp(tk.Tk):
                     f"UPDATE pilot SET {', '.join(set_parts)} WHERE id = ?",
                     values,
                 )
+
+                # ── Cascade name change to all denormalized fields ────────────
+                # The game stores the full pilot name in sortie.name,
+                # award.pilotName, and event.tpar1. A player pilot also has
+                # one pilot row per theatre (all sharing the same name), so we
+                # must update ALL of them together or the game sees inconsistency
+                # and can crash when launching a mission.
+                if "name" in changes or "lastName" in changes:
+                    old_first = str(original.get("name") or "").strip()
+                    old_last  = str(original.get("lastName") or "").strip()
+                    new_first = str(changes.get("name",     old_first)).strip()
+                    new_last  = str(changes.get("lastName", old_last)).strip()
+
+                    if old_first != new_first or old_last != new_last:
+                        old_full = f"{old_first} {old_last}".strip()
+                        new_full = f"{new_first} {new_last}".strip()
+                        _name_changes.append((old_first, old_last, new_first, new_last))
+
+                        # Determine if this is a player pilot by checking whether
+                        # any career row references this pilot as playerId.
+                        career_entry = con.execute(
+                            "SELECT id, extends FROM career"
+                            " WHERE playerId = ? AND isDeleted = 0 LIMIT 1",
+                            [pilot_id],
+                        ).fetchone()
+
+                        if career_entry:
+                            # Player pilot: walk UP to the chain root, then DOWN
+                            # to collect every theatre's pilot ID.
+                            cur_id  = career_entry["id"]
+                            extends = career_entry["extends"]
+                            while extends != -1:
+                                parent = con.execute(
+                                    "SELECT id, extends FROM career WHERE id = ?",
+                                    [extends],
+                                ).fetchone()
+                                if not parent:
+                                    break
+                                cur_id  = parent["id"]
+                                extends = parent["extends"]
+                            root_id = cur_id
+
+                            chain_pilot_ids: List[int] = []
+                            cur_id = root_id
+                            while cur_id is not None:
+                                c = con.execute(
+                                    "SELECT playerId FROM career WHERE id = ?",
+                                    [cur_id],
+                                ).fetchone()
+                                if c:
+                                    pid = int(c["playerId"])
+                                    if pid not in chain_pilot_ids:
+                                        chain_pilot_ids.append(pid)
+                                nxt = con.execute(
+                                    "SELECT id FROM career"
+                                    " WHERE extends = ? AND isDeleted = 0"
+                                    " ORDER BY id LIMIT 1",
+                                    [cur_id],
+                                ).fetchone()
+                                cur_id = nxt["id"] if nxt else None
+                        else:
+                            # AI pilot: single pilot row, no theatre chain.
+                            chain_pilot_ids = [pilot_id]
+
+                        ph = ",".join("?" for _ in chain_pilot_ids)
+
+                        # Update name on every theatre copy in pilot table
+                        con.execute(
+                            f"UPDATE pilot SET name = ?, lastName = ? WHERE id IN ({ph})",
+                            [new_first, new_last] + chain_pilot_ids,
+                        )
+                        # Update denormalized full-name in sortie
+                        con.execute(
+                            f"UPDATE sortie SET name = ?"
+                            f" WHERE pilotId IN ({ph}) AND name = ?",
+                            [new_full] + chain_pilot_ids + [old_full],
+                        )
+                        # Update denormalized full-name in award
+                        con.execute(
+                            f"UPDATE award SET pilotName = ?"
+                            f" WHERE pilotId IN ({ph}) AND pilotName = ?",
+                            [new_full] + chain_pilot_ids + [old_full],
+                        )
+                        # Update tpar1 in event (stores pilot full name for
+                        # appointment / squadron-change event types)
+                        con.execute(
+                            f"UPDATE event SET tpar1 = ?"
+                            f" WHERE pilotId IN ({ph}) AND tpar1 = ?",
+                            [new_full] + chain_pilot_ids + [old_full],
+                        )
 
                 if _new_st is not None and _new_st != _old_st:
                     # ── Sortie update ────────────────────────────────────────
@@ -5344,6 +5438,20 @@ class SettingsManagerApp(tk.Tk):
             con.commit()
             con.close()
 
+            # Rename pilot names in AI story files (chapters, memory, citations)
+            if _name_changes and self._roster_current_career_id:
+                _story_files_updated = 0
+                for _nf, _nl, _nn_f, _nn_l in _name_changes:
+                    _story_files_updated += self._rename_pilot_in_story_files(
+                        self._roster_current_career_id, _nf, _nl, _nn_f, _nn_l
+                    )
+                if _story_files_updated:
+                    logger.info(
+                        "Roster save: updated pilot name in %d story file(s) for career %d",
+                        _story_files_updated,
+                        self._roster_current_career_id,
+                    )
+
             # Merge changes into authoritative data and clear pending
             for iid, changes in self._roster_pending_changes.items():
                 if iid in self._roster_pilot_data:
@@ -5374,6 +5482,75 @@ class SettingsManagerApp(tk.Tk):
         self._populate_roster_tree()
         if self._roster_status_var:
             self._roster_status_var.set("")
+
+    def _rename_pilot_in_story_files(
+        self,
+        root_career_id: int,
+        old_first: str,
+        old_last: str,
+        new_first: str,
+        new_last: str,
+    ) -> int:
+        """
+        Replace pilot name strings in every JSON file under the career's story
+        directory (chapters, memory, citations, etc.).  Returns the number of
+        files actually rewritten.
+
+        Replacement order:
+          1. Full name  "Hans Schmidt" → "Max Müller"  (exact, no boundary check needed)
+          2. Last name  "Schmidt"      → "Müller"      (word-boundary, handles solo rank usage)
+          3. First name "Hans"         → "Max"         (word-boundary, only when first name changed)
+        """
+        localappdata = os.environ.get("LOCALAPPDATA") or str(Path.home())
+        story_dir = (
+            Path(localappdata)
+            / ".il2_campaign_service_record"
+            / "story_data"
+            / "careers"
+            / str(root_career_id)
+        )
+        if not story_dir.is_dir():
+            return 0
+
+        old_full = f"{old_first} {old_last}".strip()
+        new_full = f"{new_first} {new_last}".strip()
+        first_changed = old_first != new_first
+        last_changed  = old_last  != new_last
+
+        def _fix_text(text: str) -> str:
+            if old_full and old_full != new_full:
+                text = text.replace(old_full, new_full)
+            if last_changed and old_last:
+                text = re.sub(r'\b' + re.escape(old_last) + r'\b', new_last, text)
+            if first_changed and old_first:
+                text = re.sub(r'\b' + re.escape(old_first) + r'\b', new_first, text)
+            return text
+
+        def _fix_value(obj: Any) -> Any:
+            if isinstance(obj, str):
+                return _fix_text(obj)
+            if isinstance(obj, dict):
+                return {k: _fix_value(v) for k, v in obj.items()}
+            if isinstance(obj, list):
+                return [_fix_value(item) for item in obj]
+            return obj
+
+        modified = 0
+        for json_path in story_dir.rglob("*.json"):
+            try:
+                raw  = json_path.read_text(encoding="utf-8")
+                data = json.loads(raw)
+                new_data = _fix_value(data)
+                new_raw  = json.dumps(new_data, ensure_ascii=False, indent=2)
+                orig_normalized = json.dumps(data, ensure_ascii=False, indent=2)
+                if new_raw != orig_normalized:
+                    json_path.write_text(new_raw, encoding="utf-8")
+                    modified += 1
+            except Exception as exc:
+                logger.warning(
+                    "Story rename: could not process %s: %s", json_path, exc
+                )
+        return modified
 
     # ------------------------------------------------------------------
     # Tab 9: Copy Squadron Pilot
