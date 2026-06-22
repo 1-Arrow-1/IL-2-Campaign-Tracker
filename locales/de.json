@@ -1014,7 +1014,8 @@
       "rank_values": "Rang-Werte",
       "updates": "Updates",
       "squadron_roster": "Squadron Roster",
-      "copy_squadron_pilot": "Staffelpiloten kopieren"
+      "copy_squadron_pilot": "Staffelpiloten kopieren",
+      "mod_manager": "Mod-Manager"
     },
     "tooltip": {
       "bracket": "Missionsanzahl-Bereich (z.B. '1-10', '11-20', '71+')",

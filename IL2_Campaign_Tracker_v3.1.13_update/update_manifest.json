@@ -1,0 +1,10 @@
+{
+  "version": "3.1.13",
+  "description": "IL-2 Campaign Tracker v3.1.13 update",
+  "protected": [
+    "data",
+    "story_data",
+    "config.yaml",
+    "settings.json"
+  ]
+}

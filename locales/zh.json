@@ -1014,7 +1014,8 @@
       "rank_values": "军衔数值",
       "updates": "更新",
       "squadron_roster": "Squadron Roster",
-      "copy_squadron_pilot": "复制中队飞行员"
+      "copy_squadron_pilot": "复制中队飞行员",
+      "mod_manager": "模组管理器"
     },
     "tooltip": {
       "bracket": "任务数量范围（例如 '1-10', '11-20', '71+'）",

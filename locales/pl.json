@@ -1014,7 +1014,8 @@
       "rank_values": "Wartości Rang",
       "updates": "Aktualizacje",
       "squadron_roster": "Squadron Roster",
-      "copy_squadron_pilot": "Kopiuj pilota eskadry"
+      "copy_squadron_pilot": "Kopiuj pilota eskadry",
+      "mod_manager": "Menedżer modów"
     },
     "tooltip": {
       "bracket": "Zakres liczby misji (np. '1-10', '11-20', '71+')",

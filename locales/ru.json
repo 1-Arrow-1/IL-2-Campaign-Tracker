@@ -1014,7 +1014,8 @@
       "rank_values": "Значения Званий",
       "updates": "Обновления",
       "squadron_roster": "Squadron Roster",
-      "copy_squadron_pilot": "Копировать пилота эскадрильи"
+      "copy_squadron_pilot": "Копировать пилота эскадрильи",
+      "mod_manager": "Менеджер модов"
     },
     "tooltip": {
       "bracket": "Диапазон количества миссий (например, '1-10', '11-20', '71+')",

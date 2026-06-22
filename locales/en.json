@@ -1030,7 +1030,8 @@
       "rank_values": "Rank Values",
       "updates": "Updates",
       "squadron_roster": "Squadron Roster",
-      "copy_squadron_pilot": "Copy Squadron Pilot"
+      "copy_squadron_pilot": "Copy Squadron Pilot",
+      "mod_manager": "Mod Manager"
     },
     "tooltip": {
       "bracket": "Mission count range (e.g., '1-10', '11-20', '71+')",

@@ -1014,7 +1014,8 @@
       "rank_values": "Valores de Rango",
       "updates": "Actualizaciones",
       "squadron_roster": "Squadron Roster",
-      "copy_squadron_pilot": "Copiar piloto de escuadrón"
+      "copy_squadron_pilot": "Copiar piloto de escuadrón",
+      "mod_manager": "Gestor de mods"
     },
     "tooltip": {
       "bracket": "Rango de cantidad de misiones (ej., '1-10', '11-20', '71+')",

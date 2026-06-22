@@ -27,7 +27,7 @@ import subprocess
 import tkinter as tk
 from tkinter import messagebox
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 import random
 
 # Detect frozen state and set paths
@@ -79,15 +79,27 @@ CAREER_SERVICE_RECORD_EXE = "Career_Service_Record.exe"
 SETTINGS_MANAGER_EXE = "IL2_Settings_Manager.exe"
 UNINSTALLER_EXE = "unins000.exe"
 
+# Rank mod EXE names (inside game's data/Career/)
+RANK_MOD_CHECKER_EXE       = "rank_promotion_checker.exe"
+RANK_MOD_LIGHT_CHECKER_EXE = "rank_promotion_checker_light.exe"
+
+# Mod manager state file (same path as settings_manager writes)
+import json as _json
+_MOD_STATE_DIR  = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / ".il2_campaign_service_record"
+_MOD_STATE_FILE = _MOD_STATE_DIR / "mod_manager_state.json"
+
 # Icon asset paths (relative to ASSETS_DIR - all PNG for Tkinter compatibility)
 # These are in tools/icons/ directory
-TRACKER_ICON_PNG = "tools/icons/tracker.png"
+TRACKER_ICON_PNG        = "tools/icons/tracker.png"
 SERVICE_RECORD_ICON_PNG = "tools/icons/service_record.png"
-CAREER_ICON_PNG = "tools/icons/career.png"
-SETTINGS_ICON_PNG = "tools/icons/settings.png"
-STOP_ICON_PNG = "tools/icons/stop.png"
-UNINSTALL_ICON_PNG = "tools/icons/uninstall.png"
-PDF_ICON_PNG = "tools/icons/pdf.png"
+CAREER_ICON_PNG         = "tools/icons/career.png"
+SETTINGS_ICON_PNG       = "tools/icons/settings.png"
+STOP_ICON_PNG           = "tools/icons/stop.png"
+UNINSTALL_ICON_PNG      = "tools/icons/uninstall.png"
+PDF_ICON_PNG            = "tools/icons/pdf.png"
+START_RANK_ICON_PNG     = "tools/icons/start_rank.png"
+STOP_RANK_ICON_PNG      = "tools/icons/Stop_rank.png"
+COCKPIT_ICON_PNG        = "tools/icons/Cockpit.png"
 
 # Window icon (ICO format for window decoration)
 WINDOW_ICON = "oak_leaves.ico"
@@ -221,6 +233,31 @@ def open_pdf(path: Path) -> None:
         )
 
 
+def _load_mod_state() -> Dict[str, Any]:
+    """Load mod manager state from disk."""
+    try:
+        if _MOD_STATE_FILE.exists():
+            raw = _json.loads(_MOD_STATE_FILE.read_text(encoding="utf-8"))
+            return raw if isinstance(raw, dict) else {}
+    except Exception:
+        pass
+    return {}
+
+
+def _read_game_dir() -> Optional[Path]:
+    """Read the IL-2 game directory from campaign_mission_dates.json."""
+    try:
+        dates_path = INSTALL_DIR / "campaign_mission_dates.json"
+        if dates_path.exists():
+            data = _json.loads(dates_path.read_text(encoding="utf-8"))
+            gd = data.get("game_directory")
+            if gd and Path(str(gd)).is_dir():
+                return Path(str(gd))
+    except Exception:
+        pass
+    return None
+
+
 class ControlGUI(tk.Tk):
     """Main Control GUI window."""
 
@@ -237,6 +274,14 @@ class ControlGUI(tk.Tk):
         self._check_timer_id = None
         self._bg_image = None
         self._bg_label = None
+
+        # Mod Manager state
+        self._mod_state: Dict[str, Any] = _load_mod_state()
+        self._game_dir: Optional[Path] = _read_game_dir()
+        self._rank_mod_status_label: Optional[tk.Label] = None
+        self.btn_start_rank: Optional[tk.Frame] = None
+        self.btn_stop_rank: Optional[tk.Frame] = None
+        self.btn_cockpit: Optional[tk.Frame] = None
 
         # Set window icon
         self._set_window_icon()
@@ -271,13 +316,16 @@ class ControlGUI(tk.Tk):
     def _load_icons(self):
         """Load button icons from PNG files."""
         icon_configs = [
-            ("tracker", TRACKER_ICON_PNG),
+            ("tracker",        TRACKER_ICON_PNG),
             ("service_record", SERVICE_RECORD_ICON_PNG),
-            ("career", CAREER_ICON_PNG),
-            ("settings", SETTINGS_ICON_PNG),
-            ("stop", STOP_ICON_PNG),
-            ("uninstall", UNINSTALL_ICON_PNG),
-            ("pdf", PDF_ICON_PNG),
+            ("career",         CAREER_ICON_PNG),
+            ("settings",       SETTINGS_ICON_PNG),
+            ("stop",           STOP_ICON_PNG),
+            ("uninstall",      UNINSTALL_ICON_PNG),
+            ("pdf",            PDF_ICON_PNG),
+            ("start_rank",     START_RANK_ICON_PNG),
+            ("stop_rank",      STOP_RANK_ICON_PNG),
+            ("cockpit",        COCKPIT_ICON_PNG),
         ]
 
         for name, rel_path in icon_configs:
@@ -465,6 +513,49 @@ class ControlGUI(tk.Tk):
             columnspan=2
         )
 
+        # --- Rank Mod section (always created, shown/hidden dynamically) ---
+        self._mod_sep_label = tk.Label(
+            main_frame,
+            text="─" * 40,
+            font=(FONT_FAMILY, 8),
+            bg=BG_COLOR,
+            fg=TEXT_COLOR,
+        )
+        # Do NOT pack yet — _refresh_mod_visibility() will show/hide
+
+        self._rank_mod_status_label = tk.Label(
+            main_frame,
+            text="○ Rank Mod: checking…",
+            font=(FONT_FAMILY, FONT_SIZE),
+            bg=BG_COLOR,
+            fg=TEXT_COLOR,
+        )
+
+        self._rank_btn_frame = tk.Frame(main_frame, bg=BG_COLOR)
+        self.btn_start_rank = self._create_button(
+            self._rank_btn_frame,
+            "Start Rank Mod",
+            self._icons.get("start_rank"),
+            self._on_start_rank_mod,
+            0, 0,
+        )
+        self.btn_stop_rank = self._create_button(
+            self._rank_btn_frame,
+            "Stop Rank Mod",
+            self._icons.get("stop_rank"),
+            self._on_stop_rank_mod,
+            0, 1,
+        )
+
+        self._cockpit_frame = tk.Frame(main_frame, bg=BG_COLOR)
+        self.btn_cockpit = self._create_button(
+            self._cockpit_frame,
+            "Open Cockpit Photo Editor",
+            self._icons.get("cockpit"),
+            self._on_open_cockpit,
+            0, 0,
+        )
+
     def _create_button(
         self,
         parent: tk.Frame,
@@ -614,7 +705,7 @@ class ControlGUI(tk.Tk):
         self._update_status()
 
     def _update_status(self):
-        """Update tracker running status."""
+        """Update tracker running status and rank mod status."""
         running = self._is_tracker_running()
 
         if running:
@@ -632,8 +723,84 @@ class ControlGUI(tk.Tk):
             self._set_button_enabled(self.btn_start, True)
             self._set_button_enabled(self.btn_stop, False)
 
+        # Reload mod state from disk so new installs are picked up without restart
+        self._mod_state = _load_mod_state()
+        self._game_dir = _read_game_dir()
+
+        # Show/hide mod sections and update rank mod running status
+        self._refresh_mod_visibility()
+
         # Schedule next check
         self._check_timer_id = self.after(2000, self._update_status)
+
+    def _write_debug_log(self, rank_installed: bool, cockpit_installed: bool) -> None:
+        """Write a one-shot debug log to help diagnose detection failures."""
+        try:
+            _MOD_STATE_DIR.mkdir(parents=True, exist_ok=True)
+            debug_path = _MOD_STATE_DIR / "control_gui_debug.txt"
+            dates_path = INSTALL_DIR / "campaign_mission_dates.json"
+            state_exists = _MOD_STATE_FILE.exists()
+            lines = [
+                f"INSTALL_DIR: {INSTALL_DIR}",
+                f"campaign_mission_dates.json exists: {dates_path.exists()}",
+                f"game_dir resolved: {self._game_dir}",
+                f"mod_state_file exists: {state_exists}",
+                f"mod_state: {self._mod_state}",
+                f"rank_installed: {rank_installed}",
+                f"cockpit_installed: {cockpit_installed}",
+            ]
+            debug_path.write_text("\n".join(lines), encoding="utf-8")
+        except Exception:
+            pass
+
+    def _refresh_mod_visibility(self) -> None:
+        """Show or hide the rank mod and cockpit sections based on installed state."""
+        rank_installed = self._is_rank_mod_installed()
+        cockpit_installed = self._is_cockpit_installed()
+        self._write_debug_log(rank_installed, cockpit_installed)
+        any_mod = rank_installed or cockpit_installed
+
+        # Separator
+        if any_mod:
+            if not self._mod_sep_label.winfo_ismapped():
+                self._mod_sep_label.pack(pady=(8, 2))
+        else:
+            if self._mod_sep_label.winfo_ismapped():
+                self._mod_sep_label.pack_forget()
+
+        # Rank mod status + buttons
+        if rank_installed:
+            if not self._rank_mod_status_label.winfo_ismapped():
+                self._rank_mod_status_label.pack(pady=(2, 6))
+            if not self._rank_btn_frame.winfo_ismapped():
+                self._rank_btn_frame.pack()
+            # Update running status
+            rank_running = self._is_rank_mod_running()
+            if rank_running:
+                self._rank_mod_status_label.configure(text="● Rank Mod: Running")
+                self._set_button_enabled(self.btn_start_rank, False)
+                self._set_button_enabled(self.btn_stop_rank, True)
+            else:
+                self._rank_mod_status_label.configure(text="○ Rank Mod: Not running")
+                self._set_button_enabled(self.btn_start_rank, True)
+                self._set_button_enabled(self.btn_stop_rank, False)
+        else:
+            if self._rank_mod_status_label.winfo_ismapped():
+                self._rank_mod_status_label.pack_forget()
+            if self._rank_btn_frame.winfo_ismapped():
+                self._rank_btn_frame.pack_forget()
+
+        # Cockpit button
+        if cockpit_installed:
+            if not self._cockpit_frame.winfo_ismapped():
+                self._cockpit_frame.pack(pady=(6, 0))
+        else:
+            if self._cockpit_frame.winfo_ismapped():
+                self._cockpit_frame.pack_forget()
+
+        # Resize window to fit new content
+        self.update_idletasks()
+        self._center_window()
 
     def _is_tracker_running(self) -> bool:
         """Check if the tracker process is running."""
@@ -669,6 +836,117 @@ class ControlGUI(tk.Tk):
                 except (psutil.NoSuchProcess, psutil.AccessDenied, KeyError):
                     pass
         return processes
+
+    def _is_rank_mod_installed(self) -> bool:
+        """Return True if Rank Mod or Rank Mod Light is installed."""
+        state = self._mod_state
+        # Primary: trust the installed flag synced by Settings Manager
+        if state.get("rank_mod", {}).get("installed"):
+            return True
+        if state.get("rank_mod_light", {}).get("installed"):
+            return True
+        # Fallback: direct file check when game dir is known
+        gd = self._game_dir
+        if gd:
+            if (gd / "data" / "Career" / RANK_MOD_CHECKER_EXE).exists():
+                return True
+            if (gd / "data" / "Career" / RANK_MOD_LIGHT_CHECKER_EXE).exists():
+                return True
+        return False
+
+    def _is_cockpit_installed(self) -> bool:
+        """Return True if Cockpit Photo Editor is installed."""
+        state = self._mod_state.get("cockpit_photo_editor", {})
+        # Primary: trust the installed flag synced by Settings Manager
+        if state.get("installed"):
+            return True
+        # Fallback: direct exe_path check
+        exe_path = state.get("exe_path", "")
+        if exe_path and Path(exe_path).exists():
+            return True
+        return False
+
+    def _get_rank_checker_exe(self) -> Optional[Path]:
+        """Return the path to whichever rank mod checker exe is installed, or None."""
+        gd = self._game_dir
+        if not gd:
+            return None
+        for name in (RANK_MOD_CHECKER_EXE, RANK_MOD_LIGHT_CHECKER_EXE):
+            p = gd / "data" / "Career" / name
+            if p.exists():
+                return p
+        return None
+
+    def _is_rank_mod_running(self) -> bool:
+        """Return True if rank_promotion_checker.exe or the light variant is running."""
+        checker_names = {RANK_MOD_CHECKER_EXE.lower(), RANK_MOD_LIGHT_CHECKER_EXE.lower()}
+        if HAS_PSUTIL:
+            for proc in psutil.process_iter(['name']):
+                try:
+                    if proc.info['name'] and proc.info['name'].lower() in checker_names:
+                        return True
+                except (psutil.NoSuchProcess, psutil.AccessDenied, KeyError):
+                    pass
+            return False
+        # Fallback: tasklist (no psutil)
+        try:
+            result = subprocess.run(
+                ["tasklist", "/fo", "csv", "/nh"],
+                capture_output=True, text=True, timeout=5,
+            )
+            output_lower = result.stdout.lower()
+            return any(name in output_lower for name in checker_names)
+        except Exception:
+            return False
+
+    def _on_start_rank_mod(self):
+        """Start the rank promotion checker with elevation."""
+        exe = self._get_rank_checker_exe()
+        if not exe:
+            messagebox.showerror(
+                t('settings_manager.message.error_title'),
+                "Rank Mod executable not found.\nPlease install the Rank Mod first via Settings Manager.",
+            )
+            return
+        run_elevated(str(exe), "", str(exe.parent))
+
+    def _on_stop_rank_mod(self):
+        """Kill the running rank mod checker process."""
+        if not HAS_PSUTIL:
+            messagebox.showinfo(
+                "Stop Rank Mod",
+                "Cannot stop Rank Mod automatically (psutil not available).\n"
+                "Please close it manually from the system tray or Task Manager.",
+            )
+            return
+        checker_names = {RANK_MOD_CHECKER_EXE.lower(), RANK_MOD_LIGHT_CHECKER_EXE.lower()}
+        found = False
+        for proc in psutil.process_iter(['name', 'pid']):
+            try:
+                if proc.info['name'] and proc.info['name'].lower() in checker_names:
+                    proc.kill()
+                    found = True
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                messagebox.showinfo(
+                    "Stop Rank Mod",
+                    "Could not stop Rank Mod automatically (Access Denied).\n"
+                    "Please close it manually from the system tray or Task Manager.",
+                )
+                return
+        if not found:
+            messagebox.showinfo("Stop Rank Mod", "Rank Mod is not currently running.")
+
+    def _on_open_cockpit(self):
+        """Open the Cockpit Photo Editor."""
+        exe_path = self._mod_state.get("cockpit_photo_editor", {}).get("exe_path", "")
+        if not exe_path or not Path(exe_path).exists():
+            messagebox.showerror(
+                t('settings_manager.message.error_title'),
+                "Cockpit Photo Editor executable not found.\n"
+                "Please reinstall via Settings Manager.",
+            )
+            return
+        run_normal(exe_path, "", str(Path(exe_path).parent))
 
     def _on_start_tracker(self):
         """Start the Campaign Tracker with elevation."""

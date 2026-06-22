@@ -27,6 +27,9 @@ a = Analysis(
         ('tools/icons/stop.png', 'tools/icons'),
         ('tools/icons/uninstall.png', 'tools/icons'),
         ('tools/icons/pdf.png', 'tools/icons'),
+        ('tools/icons/start_rank.png', 'tools/icons'),
+        ('tools/icons/Stop_rank.png', 'tools/icons'),
+        ('tools/icons/Cockpit.png', 'tools/icons'),
         # Include window icon (ICO format for window decoration)
         ('oak_leaves.ico', '.'),
     ],

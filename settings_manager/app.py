@@ -66,6 +66,64 @@ _ERROR_CANCELLED = 1223
 # Tracker EXE name for process detection
 _TRACKER_EXE_NAME = "IL2_CampaignTracker_v2.2_ML.exe"
 
+# ---------------------------------------------------------------------------
+# Mod Manager constants
+# ---------------------------------------------------------------------------
+_MOD_STATE_DIR  = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / ".il2_campaign_service_record"
+_MOD_STATE_FILE = _MOD_STATE_DIR / "mod_manager_state.json"
+_MOD_ZIPS_DIR   = _MOD_STATE_DIR / "mods"
+
+_MOD_DISPLAY_NAMES: Dict[str, str] = {
+    "rank_mod":             "IL-2 Rank Mod",
+    "rank_mod_light":       "IL-2 Rank Mod Light",
+    "cockpit_photo_editor": "IL-2 Cockpit Photo Editor",
+}
+
+_MOD_URLS: Dict[str, str] = {
+    "rank_mod":             "https://www.mediafire.com/file/xa2gpuwuwspyjwp/IL2_RankMod_Installer.zip/file",
+    "rank_mod_light":       "https://www.mediafire.com/file/4v1p4fwtkk9v5yv/IL-2_Rank_mod_light.zip/file",
+    "cockpit_photo_editor": "https://www.mediafire.com/file/7ph2ohjilbuxyws/IL2-Photo_Mod_v2.zip/file",
+}
+
+_MOD_ZIP_NAMES: Dict[str, str] = {
+    "rank_mod":             "IL2_RankMod_Installer.zip",
+    "rank_mod_light":       "IL-2_Rank_mod_light.zip",
+    "cockpit_photo_editor": "IL2-Photo_Mod_v2.zip",
+}
+
+# Relative path inside game_dir that signals the mod is installed
+_MOD_SIGNATURE_REL: Dict[str, str] = {
+    "rank_mod":             "data/Career/rank_promotion_checker.exe",
+    "rank_mod_light":       "data/Career/rank_promotion_checker_light.exe",
+    "cockpit_photo_editor": "",  # detected via stored exe_path in state
+}
+
+# Relative path to rank mod's own uninstaller inside game_dir
+_RANK_MOD_UNINSTALL_REL = "data/Career/unins000.exe"
+
+# Rank mod light zip strip prefix (2 folder levels before the in-game structure)
+_RANK_MOD_LIGHT_ZIP_PREFIX = "IL-2 Rank mod light/IL-2 Rank mod light/"
+
+
+def _scrape_mediafire_url(share_url: str) -> Optional[str]:
+    """GET the MediaFire share page and extract the direct download link."""
+    try:
+        req = urllib.request.Request(
+            share_url,
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            html = resp.read().decode("utf-8", errors="replace")
+        match = re.search(
+            r'https://download\d*\.mediafire\.com/[^\s"\'<>]+',
+            html,
+        )
+        if match:
+            return match.group(0)
+    except Exception:
+        pass
+    return None
+
 
 def _is_tracker_running() -> bool:
     """Check if the Tracker EXE is currently running."""
@@ -324,6 +382,7 @@ class SettingsManagerApp(tk.Tk):
         "#b71c1c",  # 6 Updates              – dark red
         "#01579b",  # 7 Squadron Roster      – navy blue
         "#4a148c",  # 8 Copy Squadron Pilot  – deep violet
+        "#33691e",  # 9 Mod Manager          – dark olive green
     ]
 
     def __init__(self):
@@ -450,6 +509,29 @@ class SettingsManagerApp(tk.Tk):
         self._copy_pilot_canvas: Optional[tk.Canvas] = None
         self._copy_pilot_inner_frame: Optional[ttk.Frame] = None
 
+        # Mod Manager tab state
+        self._mod_state: Dict[str, Any] = {}
+        self._mod_dl_threads: Dict[str, Optional[threading.Thread]] = {}
+        self._mod_dl_queues: Dict[str, "queue.Queue[Dict[str, Any]]"] = {}
+        self._mod_poll_ids: Dict[str, Optional[str]] = {}
+        self._mod_status_vars: Dict[str, tk.StringVar] = {}
+        self._mod_action_btns: Dict[str, Optional[ttk.Button]] = {}
+        self._mod_progress_vars: Dict[str, tk.IntVar] = {}
+        self._mod_progress_bars: Dict[str, Optional[ttk.Progressbar]] = {}
+        self._mod_progress_frames: Dict[str, Optional[ttk.Frame]] = {}
+        self._mod_keep_zip_vars: Dict[str, tk.BooleanVar] = {}
+        self._mod_verify_poll_id: Optional[str] = None
+        for _mid in _MOD_DISPLAY_NAMES:
+            self._mod_dl_threads[_mid] = None
+            self._mod_dl_queues[_mid] = queue.Queue()
+            self._mod_poll_ids[_mid] = None
+            self._mod_status_vars[_mid] = tk.StringVar(value="")
+            self._mod_action_btns[_mid] = None
+            self._mod_progress_vars[_mid] = tk.IntVar(value=0)
+            self._mod_progress_bars[_mid] = None
+            self._mod_progress_frames[_mid] = None
+            self._mod_keep_zip_vars[_mid] = tk.BooleanVar(value=False)
+
         # Load all data
         self._load_all_data()
 
@@ -511,6 +593,9 @@ class SettingsManagerApp(tk.Tk):
             'stock_campaigns': deepcopy(self.stock_campaigns_data) if self.stock_campaigns_data else None,
         }
         self._campaign_display_name_map = None
+
+        # Load mod manager state
+        self._load_mod_state()
 
     def _load_button_icon(self, relative_path: str, cache_key: str) -> Optional[tk.PhotoImage]:
         """Load a small PNG button icon from bundled resources."""
@@ -607,6 +692,9 @@ class SettingsManagerApp(tk.Tk):
 
         # Tab 9: Copy Squadron Pilot
         self._create_copy_pilot_tab()
+
+        # Tab 10: Mod Manager
+        self._create_mod_manager_tab()
 
         # Add a small coloured square icon to each tab header.
         # PhotoImage.put() is reliable on all platforms; no Pillow needed.
@@ -6179,6 +6267,656 @@ class SettingsManagerApp(tk.Tk):
                 self.tr.t("msg_copy_pilot_error", error=str(exc)),
                 parent=self,
             )
+
+
+# ---------------------------------------------------------------------------
+# Mod Manager methods
+# ---------------------------------------------------------------------------
+
+    def _load_mod_state(self) -> None:
+        """Load mod manager state from disk, then sync installed flags from actual disk state."""
+        try:
+            if _MOD_STATE_FILE.exists():
+                raw = json.loads(_MOD_STATE_FILE.read_text(encoding="utf-8"))
+                self._mod_state = raw if isinstance(raw, dict) else {}
+            else:
+                self._mod_state = {}
+        except Exception:
+            self._mod_state = {}
+        # Ensure each mod key exists
+        for mid in _MOD_DISPLAY_NAMES:
+            self._mod_state.setdefault(mid, {})
+
+        # Sync installed flags with actual file system state so the Control Center
+        # can rely on the state JSON even for mods installed before the Mod Manager.
+        gd = self._get_game_dir()
+        changed = False
+        for mid in _MOD_DISPLAY_NAMES:
+            sig = _MOD_SIGNATURE_REL.get(mid, "")
+            if sig and gd:
+                # Mods with a game-dir signature (rank_mod, rank_mod_light)
+                actually_installed = (gd / sig).exists()
+                if bool(self._mod_state[mid].get("installed")) != actually_installed:
+                    self._mod_state[mid]["installed"] = actually_installed
+                    changed = True
+            elif not sig:
+                # cockpit_photo_editor: prefer installed_files list; fall back to exe_path
+                installed_files = self._mod_state[mid].get("installed_files", [])
+                if installed_files:
+                    actually_installed = any(Path(f).exists() for f in installed_files)
+                else:
+                    exe = self._mod_state[mid].get("exe_path", "")
+                    actually_installed = bool(exe and Path(exe).exists())
+                if bool(self._mod_state[mid].get("installed")) != actually_installed:
+                    self._mod_state[mid]["installed"] = actually_installed
+                    changed = True
+        if changed:
+            self._save_mod_state()
+
+    def _save_mod_state(self) -> None:
+        """Persist mod manager state to disk."""
+        try:
+            _MOD_STATE_DIR.mkdir(parents=True, exist_ok=True)
+            _MOD_STATE_FILE.write_text(
+                json.dumps(self._mod_state, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+        except Exception as exc:
+            logger.warning("Could not save mod state: %s", exc)
+
+    def _get_game_dir(self) -> Optional[Path]:
+        """Return the configured IL-2 game directory, or None if not set."""
+        gd = (self.mission_dates_data or {}).get("game_directory")
+        if gd and os.path.isdir(str(gd)):
+            return Path(str(gd))
+        return None
+
+    def _detect_mod_installed(self, mod_id: str) -> bool:
+        """Return True if the given mod appears to be installed on disk."""
+        sig = _MOD_SIGNATURE_REL.get(mod_id, "")
+        if sig:
+            gd = self._get_game_dir()
+            if gd:
+                return (gd / sig).exists()
+            return False
+        # cockpit photo editor: check stored exe_path
+        exe_path = self._mod_state.get(mod_id, {}).get("exe_path", "")
+        if exe_path:
+            return Path(exe_path).exists()
+        return False
+
+    def _create_mod_manager_tab(self) -> None:
+        """Build the Mod Manager tab with one card per mod."""
+        outer = ttk.Frame(self.notebook, padding=20)
+        self.notebook.add(outer, text=self.tr.t("tab_mod_manager"))
+
+        # Header
+        ttk.Label(
+            outer,
+            text="Mod Manager",
+            font=("TkDefaultFont", 13, "bold"),
+        ).pack(anchor=tk.W, pady=(0, 4))
+        ttk.Label(
+            outer,
+            text=(
+                "Download, install, and uninstall optional IL-2 mods.\n"
+                "Rank Mod and Rank Mod Light are mutually exclusive."
+            ),
+            wraplength=700,
+        ).pack(anchor=tk.W, pady=(0, 16))
+
+        # Cards
+        cards_frame = ttk.Frame(outer)
+        cards_frame.pack(fill=tk.BOTH, expand=True)
+
+        for mid in _MOD_DISPLAY_NAMES:
+            self._create_mod_card(cards_frame, mid)
+
+    def _create_mod_card(self, parent: ttk.Frame, mod_id: str) -> None:
+        """Create a single mod card widget."""
+        card = ttk.LabelFrame(parent, text=_MOD_DISPLAY_NAMES[mod_id], padding=12)
+        card.pack(fill=tk.X, padx=0, pady=6)
+
+        # Description
+        desc_map = {
+            "rank_mod":             "Replaces the standard IL-2 rank system with a full rank progression mod. Uses an Inno Setup installer — you will be prompted for your game directory during setup.",
+            "rank_mod_light":       "Lightweight rank mod that copies files directly into your game directory. Mutually exclusive with Rank Mod.",
+            "cockpit_photo_editor": "Cockpit photo editor tool. Extracts to a folder of your choice on the filesystem.",
+        }
+        ttk.Label(card, text=desc_map[mod_id], wraplength=640).grid(
+            row=0, column=0, columnspan=3, sticky=tk.W, pady=(0, 8)
+        )
+
+        # Status label
+        self._mod_status_vars[mod_id].set(self._mod_status_text(mod_id))
+        status_lbl = ttk.Label(card, textvariable=self._mod_status_vars[mod_id])
+        status_lbl.grid(row=1, column=0, sticky=tk.W, padx=(0, 16))
+
+        # Keep zip checkbox
+        keep_chk = ttk.Checkbutton(
+            card,
+            text="Keep downloaded zip",
+            variable=self._mod_keep_zip_vars[mod_id],
+        )
+        keep_chk.grid(row=1, column=1, sticky=tk.W, padx=(0, 16))
+
+        # Action button
+        btn = ttk.Button(
+            card,
+            text=self._mod_action_label(mod_id),
+            command=lambda m=mod_id: self._on_mod_action(m),
+            style="Action.TButton",
+        )
+        btn.grid(row=1, column=2, sticky=tk.E)
+        self._mod_action_btns[mod_id] = btn
+
+        card.columnconfigure(0, weight=1)
+
+        # Progress frame (hidden until download starts)
+        prog_frame = ttk.Frame(card)
+        prog_frame.grid(row=2, column=0, columnspan=3, sticky=tk.EW, pady=(6, 0))
+        prog_frame.grid_remove()
+        self._mod_progress_frames[mod_id] = prog_frame
+
+        pbar = ttk.Progressbar(prog_frame, variable=self._mod_progress_vars[mod_id], maximum=100, length=400)
+        pbar.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        self._mod_progress_bars[mod_id] = pbar
+
+        self._update_mod_card_ui(mod_id)
+
+    def _mod_status_text(self, mod_id: str) -> str:
+        """Return a short status string for a mod."""
+        if self._detect_mod_installed(mod_id):
+            return "● Installed"
+        zip_path = _MOD_ZIPS_DIR / _MOD_ZIP_NAMES[mod_id]
+        if zip_path.exists():
+            return "○ Downloaded (not installed)"
+        return "○ Not installed"
+
+    def _mod_action_label(self, mod_id: str) -> str:
+        """Return the label for the action button."""
+        if self._detect_mod_installed(mod_id):
+            return "Uninstall"
+        zip_path = _MOD_ZIPS_DIR / _MOD_ZIP_NAMES[mod_id]
+        if zip_path.exists():
+            return "Install"
+        return "Download"
+
+    def _update_mod_card_ui(self, mod_id: str) -> None:
+        """Refresh status text and button label for a mod card."""
+        self._mod_status_vars[mod_id].set(self._mod_status_text(mod_id))
+        btn = self._mod_action_btns.get(mod_id)
+        if btn:
+            btn.configure(text=self._mod_action_label(mod_id))
+            # Disable if counterpart exclusive mod is installed
+            if mod_id in ("rank_mod", "rank_mod_light"):
+                other = "rank_mod_light" if mod_id == "rank_mod" else "rank_mod"
+                if self._detect_mod_installed(other) and not self._detect_mod_installed(mod_id):
+                    btn.state(["disabled"])
+                    return
+            if not self._detect_mod_installed(mod_id):
+                btn.state(["!disabled"])
+            else:
+                btn.state(["!disabled"])
+
+    def _on_mod_action(self, mod_id: str) -> None:
+        """Dispatch Download / Install / Uninstall depending on current state."""
+        if self._detect_mod_installed(mod_id):
+            self._uninstall_mod(mod_id)
+            return
+        zip_path = _MOD_ZIPS_DIR / _MOD_ZIP_NAMES[mod_id]
+        if zip_path.exists():
+            self._install_mod(mod_id, zip_path)
+            return
+        # Need to download first
+        self._start_mod_download(mod_id)
+
+    # ------------------------------------------------------------------
+    # Download
+    # ------------------------------------------------------------------
+
+    def _start_mod_download(self, mod_id: str) -> None:
+        """Begin background download for a mod."""
+        if self._mod_dl_threads.get(mod_id) and self._mod_dl_threads[mod_id].is_alive():
+            return  # already downloading
+
+        btn = self._mod_action_btns.get(mod_id)
+        if btn:
+            btn.configure(text="Downloading…")
+            btn.state(["disabled"])
+
+        pf = self._mod_progress_frames.get(mod_id)
+        if pf:
+            pf.grid()
+        self._mod_progress_vars[mod_id].set(0)
+        self._mod_status_vars[mod_id].set("Scraping download link…")
+
+        t = threading.Thread(
+            target=self._download_worker,
+            args=(mod_id,),
+            daemon=True,
+        )
+        self._mod_dl_threads[mod_id] = t
+        t.start()
+        self._poll_mod_download(mod_id)
+
+    def _download_worker(self, mod_id: str) -> None:
+        """Background thread: scrape URL → download zip."""
+        q = self._mod_dl_queues[mod_id]
+        try:
+            share_url = _MOD_URLS[mod_id]
+            q.put({"type": "status", "msg": "Resolving download link…"})
+            direct_url = _scrape_mediafire_url(share_url)
+            if not direct_url:
+                q.put({"type": "error", "msg": "Could not resolve download link. The mod page may have changed. Please download manually."})
+                return
+
+            _MOD_ZIPS_DIR.mkdir(parents=True, exist_ok=True)
+            dest = _MOD_ZIPS_DIR / _MOD_ZIP_NAMES[mod_id]
+            q.put({"type": "status", "msg": "Downloading…"})
+
+            req = urllib.request.Request(direct_url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                total = int(resp.headers.get("Content-Length", 0) or 0)
+                downloaded = 0
+                chunk_size = 65536
+                with open(str(dest), "wb") as f:
+                    while True:
+                        chunk = resp.read(chunk_size)
+                        if not chunk:
+                            break
+                        f.write(chunk)
+                        downloaded += len(chunk)
+                        if total > 0:
+                            pct = int(downloaded * 100 / total)
+                            q.put({"type": "progress", "pct": pct})
+
+            q.put({"type": "done", "zip_path": str(dest)})
+        except Exception as exc:
+            q.put({"type": "error", "msg": str(exc)})
+
+    def _poll_mod_download(self, mod_id: str) -> None:
+        """Poll download queue and update UI."""
+        q = self._mod_dl_queues[mod_id]
+        while not q.empty():
+            msg = q.get_nowait()
+            if msg["type"] == "status":
+                self._mod_status_vars[mod_id].set(msg["msg"])
+            elif msg["type"] == "progress":
+                self._mod_progress_vars[mod_id].set(msg["pct"])
+            elif msg["type"] == "done":
+                zip_path = Path(msg["zip_path"])
+                pf = self._mod_progress_frames.get(mod_id)
+                if pf:
+                    pf.grid_remove()
+                self._update_mod_card_ui(mod_id)
+                btn = self._mod_action_btns.get(mod_id)
+                if btn:
+                    btn.state(["!disabled"])
+                # Auto-proceed to install
+                self._install_mod(mod_id, zip_path)
+                return
+            elif msg["type"] == "error":
+                pf = self._mod_progress_frames.get(mod_id)
+                if pf:
+                    pf.grid_remove()
+                self._update_mod_card_ui(mod_id)
+                btn = self._mod_action_btns.get(mod_id)
+                if btn:
+                    btn.state(["!disabled"])
+                messagebox.showerror(
+                    "Download Error",
+                    f"Could not download {_MOD_DISPLAY_NAMES[mod_id]}:\n\n{msg['msg']}",
+                    parent=self,
+                )
+                return
+
+        if self._mod_dl_threads.get(mod_id) and self._mod_dl_threads[mod_id].is_alive():
+            self._mod_poll_ids[mod_id] = self.after(300, lambda m=mod_id: self._poll_mod_download(m))
+
+    # ------------------------------------------------------------------
+    # Install
+    # ------------------------------------------------------------------
+
+    def _install_mod(self, mod_id: str, zip_path: Path) -> None:
+        """Route to the correct install method."""
+        if mod_id == "rank_mod":
+            self._install_rank_mod(zip_path)
+        elif mod_id == "rank_mod_light":
+            self._install_rank_mod_light(zip_path)
+        elif mod_id == "cockpit_photo_editor":
+            self._install_cockpit_photo_editor(zip_path)
+
+    def _install_rank_mod(self, zip_path: Path) -> None:
+        """Extract Inno Setup exe from zip and launch it."""
+        try:
+            with zipfile.ZipFile(str(zip_path), "r") as zf:
+                names = zf.namelist()
+                exe_names = [n for n in names if n.lower().endswith(".exe")]
+                if not exe_names:
+                    messagebox.showerror("Install Error", "No .exe found inside the Rank Mod zip.", parent=self)
+                    return
+                exe_name = exe_names[0]
+                extract_dir = _MOD_ZIPS_DIR / "rank_mod_extracted"
+                extract_dir.mkdir(parents=True, exist_ok=True)
+                zf.extract(exe_name, str(extract_dir))
+                installer_path = extract_dir / exe_name
+
+            messagebox.showinfo(
+                "Rank Mod Installer",
+                "The Rank Mod installer will now open.\n\n"
+                "During setup, you will be asked for your IL-2 game directory.\n"
+                "The installer handles its own administrator prompt.",
+                parent=self,
+            )
+            import ctypes
+            ctypes.windll.shell32.ShellExecuteW(
+                None, "open", str(installer_path), None, str(installer_path.parent), 1
+            )
+            self._mod_status_vars["rank_mod"].set("Installer launched — waiting for completion…")
+            self._mod_action_btns["rank_mod"].configure(text="Verifying…")
+            self._mod_action_btns["rank_mod"].state(["disabled"])
+            self._poll_rank_mod_verify()
+        except Exception as exc:
+            messagebox.showerror("Install Error", f"Failed to launch Rank Mod installer:\n{exc}", parent=self)
+            self._update_mod_card_ui("rank_mod")
+        finally:
+            self._handle_zip_cleanup("rank_mod", zip_path)
+
+    def _poll_rank_mod_verify(self) -> None:
+        """Poll every 3 s until rank_promotion_checker.exe appears in game dir."""
+        if self._detect_mod_installed("rank_mod"):
+            self._mod_state["rank_mod"]["installed"] = True
+            self._save_mod_state()
+            self._update_mod_card_ui("rank_mod")
+            btn = self._mod_action_btns.get("rank_mod")
+            if btn:
+                btn.state(["!disabled"])
+            self._update_mod_card_ui("rank_mod_light")
+            return
+        self._mod_verify_poll_id = self.after(3000, self._poll_rank_mod_verify)
+
+    def _install_rank_mod_light(self, zip_path: Path) -> None:
+        """Extract rank mod light zip, strip prefix, copy to game dir."""
+        gd = self._get_game_dir()
+        if not gd:
+            messagebox.showerror(
+                "Game Directory Unknown",
+                "The IL-2 game directory is not configured.\n"
+                "Please set it in the General tab first.",
+                parent=self,
+            )
+            return
+
+        try:
+            copied_files: List[str] = []
+            prefix = _RANK_MOD_LIGHT_ZIP_PREFIX
+
+            with zipfile.ZipFile(str(zip_path), "r") as zf:
+                for member in zf.namelist():
+                    # Normalise separators
+                    member_norm = member.replace("\\", "/")
+                    # Strip the two-level prefix
+                    if member_norm.lower().startswith(prefix.lower()):
+                        rel = member_norm[len(prefix):]
+                    elif "/" in member_norm:
+                        # Try stripping first two path components regardless
+                        parts = member_norm.split("/", 2)
+                        if len(parts) >= 3:
+                            rel = parts[2]
+                        else:
+                            continue
+                    else:
+                        continue
+                    if not rel or rel.endswith("/"):
+                        continue  # directory entry
+                    dest_path = gd / rel.replace("/", os.sep)
+                    dest_path.parent.mkdir(parents=True, exist_ok=True)
+                    data = zf.read(member)
+                    dest_path.write_bytes(data)
+                    copied_files.append(str(dest_path))
+
+            if not copied_files:
+                messagebox.showerror("Install Error", "No files were copied. Check the zip structure.", parent=self)
+                return
+
+            self._mod_state["rank_mod_light"]["installed"] = True
+            self._mod_state["rank_mod_light"]["install_path"] = str(gd)
+            self._mod_state["rank_mod_light"]["installed_files"] = copied_files
+            self._save_mod_state()
+            self._update_mod_card_ui("rank_mod_light")
+            self._update_mod_card_ui("rank_mod")
+            messagebox.showinfo(
+                "Rank Mod Light Installed",
+                f"Rank Mod Light installed successfully.\n{len(copied_files)} file(s) copied to:\n{gd}",
+                parent=self,
+            )
+        except Exception as exc:
+            messagebox.showerror("Install Error", f"Failed to install Rank Mod Light:\n{exc}", parent=self)
+            self._update_mod_card_ui("rank_mod_light")
+        finally:
+            self._handle_zip_cleanup("rank_mod_light", zip_path)
+
+    def _install_cockpit_photo_editor(self, zip_path: Path) -> None:
+        """Ask user where to extract cockpit photo editor, then extract."""
+        extract_dir = filedialog.askdirectory(
+            title="Choose folder to extract Cockpit Photo Editor",
+            parent=self,
+        )
+        if not extract_dir:
+            return
+        extract_dir = Path(extract_dir)
+        try:
+            extracted_files: List[str] = []
+            with zipfile.ZipFile(str(zip_path), "r") as zf:
+                for member in zf.infolist():
+                    if not member.is_dir():
+                        zf.extract(member, str(extract_dir))
+                        extracted_files.append(str(extract_dir / member.filename))
+            # Find the main .exe
+            exe_path: Optional[Path] = None
+            for candidate in extract_dir.rglob("*.exe"):
+                if "photo" in candidate.name.lower() or "IL2" in candidate.name:
+                    exe_path = candidate
+                    break
+            if not exe_path:
+                exes = list(extract_dir.rglob("*.exe"))
+                if exes:
+                    exe_path = exes[0]
+
+            self._mod_state["cockpit_photo_editor"]["installed"] = True
+            self._mod_state["cockpit_photo_editor"]["install_path"] = str(extract_dir)
+            self._mod_state["cockpit_photo_editor"]["exe_path"] = str(exe_path) if exe_path else ""
+            self._mod_state["cockpit_photo_editor"]["installed_files"] = extracted_files
+            self._save_mod_state()
+            self._update_mod_card_ui("cockpit_photo_editor")
+            messagebox.showinfo(
+                "Cockpit Photo Editor Installed",
+                f"Extracted to:\n{extract_dir}",
+                parent=self,
+            )
+        except Exception as exc:
+            messagebox.showerror("Install Error", f"Failed to extract Cockpit Photo Editor:\n{exc}", parent=self)
+            self._update_mod_card_ui("cockpit_photo_editor")
+        finally:
+            self._handle_zip_cleanup("cockpit_photo_editor", zip_path)
+
+    # ------------------------------------------------------------------
+    # Uninstall
+    # ------------------------------------------------------------------
+
+    def _uninstall_mod(self, mod_id: str) -> None:
+        """Route to the correct uninstall method."""
+        if mod_id == "rank_mod":
+            self._uninstall_rank_mod()
+        elif mod_id == "rank_mod_light":
+            self._uninstall_rank_mod_light()
+        elif mod_id == "cockpit_photo_editor":
+            self._uninstall_cockpit_photo_editor()
+
+    def _uninstall_rank_mod(self) -> None:
+        """Launch the Rank Mod's own uninstaller (unins000.exe)."""
+        gd = self._get_game_dir()
+        if not gd:
+            messagebox.showerror("Game Directory Unknown", "Cannot find game directory.", parent=self)
+            return
+        unins = gd / _RANK_MOD_UNINSTALL_REL
+        if not unins.exists():
+            messagebox.showerror(
+                "Uninstaller Not Found",
+                f"Could not find uninstaller at:\n{unins}",
+                parent=self,
+            )
+            return
+        if not messagebox.askyesno(
+            "Uninstall Rank Mod",
+            "Launch the Rank Mod uninstaller?\nThe uninstaller will handle administrator privileges.",
+            parent=self,
+        ):
+            return
+        import ctypes
+        ctypes.windll.shell32.ShellExecuteW(None, "open", str(unins), None, str(unins.parent), 1)
+        self._mod_status_vars["rank_mod"].set("Uninstaller launched — waiting…")
+        self._mod_action_btns["rank_mod"].configure(text="Verifying…")
+        self._mod_action_btns["rank_mod"].state(["disabled"])
+        self._poll_rank_mod_uninstall_verify()
+
+    def _poll_rank_mod_uninstall_verify(self) -> None:
+        """Poll until rank_promotion_checker.exe is gone."""
+        if not self._detect_mod_installed("rank_mod"):
+            self._mod_state["rank_mod"]["installed"] = False
+            self._save_mod_state()
+            self._update_mod_card_ui("rank_mod")
+            self._update_mod_card_ui("rank_mod_light")
+            btn = self._mod_action_btns.get("rank_mod")
+            if btn:
+                btn.state(["!disabled"])
+            return
+        self.after(3000, self._poll_rank_mod_uninstall_verify)
+
+    def _uninstall_rank_mod_light(self) -> None:
+        """Delete the files tracked during Rank Mod Light installation."""
+        installed_files: List[str] = self._mod_state.get("rank_mod_light", {}).get("installed_files", [])
+        if not installed_files and not self._detect_mod_installed("rank_mod_light"):
+            messagebox.showerror("Uninstall Error", "No tracked install files found.", parent=self)
+            return
+        if not messagebox.askyesno(
+            "Uninstall Rank Mod Light",
+            f"Remove {len(installed_files)} file(s) installed by Rank Mod Light?",
+            parent=self,
+        ):
+            return
+        removed = 0
+        errors: List[str] = []
+        # Also fall back: remove the signature file if tracked list is empty
+        if not installed_files:
+            gd = self._get_game_dir()
+            sig = _MOD_SIGNATURE_REL.get("rank_mod_light", "")
+            if gd and sig:
+                installed_files = [str(gd / sig)]
+        for fp in installed_files:
+            try:
+                p = Path(fp)
+                if p.exists():
+                    p.unlink()
+                    removed += 1
+            except Exception as exc:
+                errors.append(f"{fp}: {exc}")
+        self._mod_state["rank_mod_light"]["installed"] = False
+        self._mod_state["rank_mod_light"]["installed_files"] = []
+        self._save_mod_state()
+        self._update_mod_card_ui("rank_mod_light")
+        self._update_mod_card_ui("rank_mod")
+        if errors:
+            messagebox.showwarning(
+                "Uninstall Partial",
+                f"Removed {removed} file(s).\nSome files could not be deleted:\n" + "\n".join(errors[:5]),
+                parent=self,
+            )
+        else:
+            messagebox.showinfo("Uninstalled", f"Rank Mod Light removed ({removed} file(s) deleted).", parent=self)
+
+    def _uninstall_cockpit_photo_editor(self) -> None:
+        """Delete only the files tracked during Cockpit Photo Editor installation."""
+        state = self._mod_state.get("cockpit_photo_editor", {})
+        installed_files: List[str] = state.get("installed_files", [])
+        install_path_str = state.get("install_path", "")
+
+        if not installed_files:
+            # Legacy install without file tracking — enumerate inside install_path now
+            if not install_path_str or not Path(install_path_str).exists():
+                messagebox.showerror("Uninstall Error", "No tracked installation found.", parent=self)
+                return
+            try:
+                installed_files = [str(p) for p in Path(install_path_str).rglob("*") if p.is_file()]
+            except Exception:
+                installed_files = []
+
+        if not messagebox.askyesno(
+            "Uninstall Cockpit Photo Editor",
+            f"Remove {len(installed_files)} file(s) installed by Cockpit Photo Editor?",
+            parent=self,
+        ):
+            return
+
+        removed = 0
+        errors: List[str] = []
+        dirs_touched: set = set()
+        for fp in installed_files:
+            try:
+                p = Path(fp)
+                if p.exists():
+                    dirs_touched.add(p.parent)
+                    p.unlink()
+                    removed += 1
+            except Exception as exc:
+                errors.append(f"{Path(fp).name}: {exc}")
+
+        # Remove now-empty directories bottom-up, then the install root if empty
+        for d in sorted(dirs_touched, key=lambda x: len(x.parts), reverse=True):
+            try:
+                if d.exists() and not any(d.iterdir()):
+                    d.rmdir()
+            except Exception:
+                pass
+        if install_path_str:
+            try:
+                ip = Path(install_path_str)
+                if ip.exists() and not any(ip.iterdir()):
+                    ip.rmdir()
+            except Exception:
+                pass
+
+        self._mod_state["cockpit_photo_editor"]["installed"] = False
+        self._mod_state["cockpit_photo_editor"]["install_path"] = ""
+        self._mod_state["cockpit_photo_editor"]["exe_path"] = ""
+        self._mod_state["cockpit_photo_editor"]["installed_files"] = []
+        self._save_mod_state()
+        self._update_mod_card_ui("cockpit_photo_editor")
+        if errors:
+            messagebox.showwarning(
+                "Uninstall Partial",
+                f"Removed {removed} file(s).\nSome could not be deleted:\n" + "\n".join(errors[:5]),
+                parent=self,
+            )
+        else:
+            messagebox.showinfo("Uninstalled", f"Cockpit Photo Editor removed ({removed} file(s) deleted).", parent=self)
+
+    # ------------------------------------------------------------------
+    # Zip cleanup
+    # ------------------------------------------------------------------
+
+    def _handle_zip_cleanup(self, mod_id: str, zip_path: Path) -> None:
+        """Delete the downloaded zip unless the user chose to keep it."""
+        if self._mod_keep_zip_vars[mod_id].get():
+            self._mod_state[mod_id]["zip_path"] = str(zip_path)
+            self._save_mod_state()
+        else:
+            try:
+                if zip_path.exists():
+                    zip_path.unlink()
+            except Exception as exc:
+                logger.warning("Could not delete zip %s: %s", zip_path, exc)
 
 
 # === Dialogs ===
