@@ -1190,6 +1190,7 @@
       "download_book_pdf": "Descargar libro PDF",
       "generate_book": "Generar libro",
       "generate_pdf_report": "Generar informe PDF",
+      "regenerate_all_stories": "Regenerar todas las historias",
       "regenerate_book": "Regenerar libro",
       "expand": "Expandir",
       "save": "Guardar",

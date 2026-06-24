@@ -49,7 +49,7 @@ from campaign_service_record.utils.image_utils import convert_dds_to_png_bytes, 
 from campaign_service_record.utils.pilot_photo import pilot_photo_path, pilot_photo_filename, pilot_name_path
 from utils.locale_config import resolve_locale
 from utils.supported_locales import DEFAULT_LOCALE, get_locales_dir, get_supported_locales, normalize_locale
-from campaign_service_record.core.job_store import job_store, CAREER_DEBRIEF_PARSE
+from campaign_service_record.core.job_store import job_store, CAREER_DEBRIEF_PARSE, STORY_BATCH_REGEN
 from campaign_service_record.career.debriefing_manager import CareerDebriefingManager
 from campaign_service_record.weather_lookup import (
     game_coords_to_latlon,
@@ -5265,6 +5265,254 @@ def generate_stories(source: str, entry_id: str):
         logger.error("Story generation failed for %s/%s: %s", source, entry_id, exc, exc_info=True)
         error_code, message = _classify_story_error(exc)
         return jsonify({'error': message, 'error_code': error_code}), 502
+
+
+def _batch_story_regen_worker(source: str, entry_id: str, job, settings: dict) -> None:
+    """Background worker that generates ALL missing story chapters for one career/campaign."""
+    try:
+        job.status = 'running'
+        job.message = 'Building story contexts…'
+        job.updated_at = time.time()
+
+        if source == 'career':
+            try:
+                root_career_id = int(entry_id)
+            except (TypeError, ValueError):
+                job.status = 'error'
+                job.error = 'Invalid career id.'
+                job.updated_at = time.time()
+                return
+            storage_entry_id: str | int = root_career_id
+            _pending_dates: set[str] = set(get_pending_unflown_dates('career', storage_entry_id))
+            _pending_ai: set[str] = set(get_pending_ai_missions('career', storage_entry_id))
+            contexts = _build_career_story_contexts(
+                root_career_id,
+                llm_config={
+                    'api_key': settings['api_key'],
+                    'provider': settings['provider'],
+                    'base_url': settings['base_url'],
+                    'model': settings['model'],
+                },
+                story_language=settings['story_language'],
+                force_new_format_dates=_pending_dates if _pending_dates else None,
+            )
+        else:
+            storage_entry_id = entry_id
+            _pending_dates = set()
+            _pending_ai = set()
+            contexts = _build_campaign_story_contexts(entry_id, settings['story_language'])
+
+        if not contexts:
+            job.status = 'done'
+            job.message = 'No mission data available for story generation yet.'
+            job.updated_at = time.time()
+            return
+
+        # Reindex chapter files so ordering stays consistent.
+        if source == 'career':
+            _order_map: dict[str, int] = {}
+            _seg_map: dict[str, int] = {}
+            for _oi, _ctx in enumerate(contexts, start=1):
+                _mk = _normalize_story_text(_ctx.get('mission_id'))
+                if not _mk:
+                    continue
+                _order_map[_mk] = _oi
+                try:
+                    _seg_map[_mk] = int(_ctx.get('career_segment_index') or 0)
+                except (TypeError, ValueError):
+                    _seg_map[_mk] = 0
+            if _order_map:
+                reindex_career_story_chapters_for(storage_entry_id, _order_map, _seg_map)
+
+        # Determine which chapters are missing.
+        existing_chapters = load_story_chapters_for(source, storage_entry_id)
+        existing_keys: set[str] = set()
+        existing_canonical_keys: set[str] = set()
+        for _ch in existing_chapters:
+            if not _is_valid_story_text(_ch.get('story_text')):
+                continue
+            _mid = _ch.get('mission_id')
+            if _mid is None:
+                continue
+            _k = str(_mid)
+            existing_keys.add(_k)
+            _ck = _canonical_mission_id(_k)
+            if _ck:
+                existing_canonical_keys.add(_ck)
+            if re.fullmatch(r'\d{4}-\d{2}-\d{2}', _k):
+                existing_keys.add(f'date:{_k}')
+            elif _k.startswith('day:'):
+                _dk = _normalize_story_text(_k.split(':', 1)[1])
+                if re.fullmatch(r'\d{4}-\d{2}-\d{2}', _dk):
+                    existing_keys.add(f'date:{_dk}')
+
+        missing_contexts = []
+        for _ctx in contexts:
+            _mk = str(_ctx.get('mission_id'))
+            _ck = _canonical_mission_id(_mk)
+            if _mk in existing_keys or (_ck and _ck in existing_canonical_keys):
+                continue
+            # Skip unflown chapters unless pending.
+            _scope = (_ctx.get('chapter_scope') or {}).get('scope')
+            if _scope == 'unflown_mission':
+                _ctx_date = str(_ctx.get('date') or '')
+                if not (_ctx_date and _ctx_date in _pending_dates):
+                    continue
+            missing_contexts.append(_ctx)
+
+        total = len(missing_contexts)
+        if total == 0:
+            job.status = 'done'
+            job.message = 'Stories are already up to date.'
+            job.progress_current = 0
+            job.progress_total = 0
+            job.updated_at = time.time()
+            return
+
+        job.progress_total = total
+        job.progress_current = 0
+        job.message = f'Generating story 1 of {total}…'
+        job.updated_at = time.time()
+
+        # Seed used_titles from existing chapters so titles are not reused.
+        if missing_contexts:
+            _existing_titles = [
+                _normalize_story_text(_ch.get('title'))
+                for _ch in existing_chapters
+                if _is_valid_story_text(_ch.get('story_text')) and _ch.get('title')
+            ]
+            _existing_titles = [t for t in _existing_titles if t]
+            if _existing_titles:
+                _nm0 = dict(missing_contexts[0].get('narrative_memory') or {})
+                _curr_titles = list(_nm0.get('used_titles') or [])
+                _merged = _existing_titles[:]
+                for t in _curr_titles:
+                    if t not in _merged:
+                        _merged.append(t)
+                _nm0['used_titles'] = _merged[-20:]
+                missing_contexts[0]['narrative_memory'] = _nm0
+
+        generated = 0
+        running_memory: dict = {}
+        prev_date = ''
+        for _ctx in missing_contexts:
+            if job.status == 'error':
+                break
+            # Memory handoff: same logic as in generate_stories().
+            if running_memory:
+                _ctx_date = str(_ctx.get('date') or '')
+                if _ctx_date and _ctx_date == prev_date:
+                    _nm = dict(_ctx.get('narrative_memory') or {})
+                    _merged_t = list(_nm.get('used_titles') or [])
+                    for t in (running_memory.get('used_titles') or []):
+                        if t not in _merged_t:
+                            _merged_t.append(t)
+                    _nm['used_titles'] = _merged_t[-20:]
+                    _ctx['narrative_memory'] = _nm
+                else:
+                    _ctx['narrative_memory'] = running_memory
+
+            pool = ThreadPoolExecutor(max_workers=1)
+            try:
+                future = pool.submit(
+                    generate_and_store_chapter_for,
+                    source,
+                    storage_entry_id,
+                    _ctx,
+                    model=settings['model'],
+                    api_key=settings['api_key'],
+                    provider=settings['provider'],
+                    base_url=settings['base_url'],
+                    output_language=settings['story_language'],
+                )
+                result = future.result(timeout=90)
+                running_memory = result.get('memory') or running_memory
+                save_story_state_for(source, storage_entry_id, running_memory)
+                prev_date = str(_ctx.get('date') or '')
+                generated += 1
+                job.progress_current = generated
+                remaining = total - generated
+                if remaining > 0:
+                    job.message = f'Generated {generated} of {total} story chapters — {remaining} remaining…'
+                else:
+                    job.message = f'Generated {generated} of {total} story chapters.'
+                job.updated_at = time.time()
+                # Keep the idle-shutdown timer alive so the server doesn't exit
+                # while the batch job is running, even if the browser is closed.
+                _last_ping[0] = time.time()
+                logger.info(
+                    'Batch story regen: %s/%s generated=%d total=%d',
+                    source, entry_id, generated, total,
+                )
+            except FuturesTimeoutError:
+                _mref = _normalize_story_text(_ctx.get('mission_id')) or str(_ctx.get('date') or 'unknown')
+                logger.warning('Batch story regen timed out for %s/%s mission_ref=%s', source, entry_id, _mref)
+                job.status = 'error'
+                job.error = f'Story generation timed out on chapter {_mref}. {generated} of {total} completed before the error.'
+                job.updated_at = time.time()
+                return
+            except Exception as _exc:
+                _mref = _normalize_story_text(_ctx.get('mission_id')) or str(_ctx.get('date') or 'unknown')
+                logger.warning(
+                    'Batch story regen failed for %s/%s mission_ref=%s: %s',
+                    source, entry_id, _mref, _exc, exc_info=True,
+                )
+                job.status = 'error'
+                job.error = f'Failed on chapter {_mref}: {_exc}. {generated} of {total} completed before the error.'
+                job.updated_at = time.time()
+                return
+            finally:
+                pool.shutdown(wait=False)
+
+        job.status = 'done'
+        job.progress_current = generated
+        job.updated_at = time.time()
+        logger.info('Batch story regen complete for %s/%s: %d chapters generated.', source, entry_id, generated)
+
+    except Exception as exc:
+        logger.error('Batch story regen worker error for %s/%s: %s', source, entry_id, exc, exc_info=True)
+        job.status = 'error'
+        job.error = str(exc)
+        job.updated_at = time.time()
+
+
+@api_bp.route('/api/stories/<source>/<entry_id>/regenerate-all', methods=['POST'])
+def start_story_batch_regen(source: str, entry_id: str):
+    """
+    Start a background job that generates ALL missing story chapters for one entry.
+
+    If a batch regen job is already running for this entry, returns the existing job_id.
+    Poll GET /api/jobs/status/<job_id> for progress.
+
+    Response: { "job_id": "abc12345" }
+    """
+    _last_ping[0] = time.time()
+    source = str(source or '').strip().lower()
+
+    if source not in {'career', 'campaign'}:
+        return jsonify({'error': 'AI stories are not supported for this data source.'}), 400
+
+    settings = _load_story_settings()
+    if not settings['enabled']:
+        return jsonify({'error': 'AI stories are disabled in Settings Manager.'}), 400
+    if not settings['configured']:
+        return jsonify({'error': 'No OpenAI API key is configured.'}), 400
+
+    extra_key = f'{source}:{entry_id}'
+    existing = job_store.find_running(STORY_BATCH_REGEN, extra_key)
+    if existing:
+        return jsonify({'job_id': existing.id})
+
+    job = job_store.create(STORY_BATCH_REGEN, extra_key=extra_key)
+    t = threading.Thread(
+        target=_batch_story_regen_worker,
+        args=(source, entry_id, job, settings),
+        daemon=True,
+        name=f'story-batch-regen-{source}-{entry_id}',
+    )
+    t.start()
+    logger.info('Started batch story regen job %s for %s/%s', job.id, source, entry_id)
+    return jsonify({'job_id': job.id})
 
 
 _JOB_CLEANUP_INTERVAL = 20   # clean up done jobs every 20th poll call

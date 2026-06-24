@@ -1190,6 +1190,7 @@
       "download_book_pdf": "下载书籍 PDF",
       "generate_book": "生成书籍",
       "generate_pdf_report": "生成 PDF 报告",
+      "regenerate_all_stories": "重新生成所有故事",
       "regenerate_book": "重新生成书籍",
       "expand": "展开",
       "save": "保存",

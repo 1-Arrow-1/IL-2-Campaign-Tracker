@@ -1191,6 +1191,7 @@
       "download_book_pdf": "Télécharger le livre PDF",
       "generate_book": "Générer le livre",
       "generate_pdf_report": "Générer un rapport PDF",
+      "regenerate_all_stories": "Régénérer toutes les histoires",
       "regenerate_book": "Régénérer le livre",
       "expand": "Développer",
       "save": "Enregistrer",

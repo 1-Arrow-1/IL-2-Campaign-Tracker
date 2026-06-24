@@ -675,6 +675,7 @@ const DetailPage = {
         storiesStatus: null,
         storiesContent: null,
         storiesGenerateBtn: null,
+        storiesRegenAllBtn: null,
         storiesCleanupBtn: null,
         careerPdfBtn: null,
         careerBookBtn: null,
@@ -709,6 +710,8 @@ const DetailPage = {
     currentStoriesPayload: null,
     storiesLoading: false,
     storyBatchSize: 1,
+    _batchRegenJobId: null,
+    _batchRegenPollInterval: null,
     
     /**
      * Current campaign data
@@ -781,6 +784,7 @@ const DetailPage = {
         this.elements.storiesStatus = document.getElementById('stories-status');
         this.elements.storiesContent = document.getElementById('stories-content');
         this.elements.storiesGenerateBtn = document.getElementById('stories-generate-btn');
+        this.elements.storiesRegenAllBtn = document.getElementById('stories-regen-all-btn');
         this.elements.storiesCleanupBtn = document.getElementById('stories-cleanup-btn');
         this.elements.careerPdfBtn = document.getElementById('career-pdf-btn');
         this.elements.careerBookBtn = document.getElementById('career-book-btn');
@@ -832,6 +836,9 @@ const DetailPage = {
     setupStoryHandlers() {
         if (this.elements.storiesGenerateBtn) {
             this.elements.storiesGenerateBtn.addEventListener('click', () => this.generateStories());
+        }
+        if (this.elements.storiesRegenAllBtn) {
+            this.elements.storiesRegenAllBtn.addEventListener('click', () => this.batchRegenStories());
         }
         if (this.elements.storiesCleanupBtn) {
             this.elements.storiesCleanupBtn.addEventListener('click', () => this._cleanupOrphanedChapters());
@@ -1230,6 +1237,9 @@ const DetailPage = {
         if (this.elements.storiesGenerateBtn) {
             this.elements.storiesGenerateBtn.disabled = !!isBusy;
         }
+        if (this.elements.storiesRegenAllBtn) {
+            this.elements.storiesRegenAllBtn.disabled = !!isBusy;
+        }
         if (this.elements.storiesCleanupBtn) {
             this.elements.storiesCleanupBtn.disabled = !!isBusy;
         }
@@ -1265,6 +1275,24 @@ const DetailPage = {
             button.textContent = chapters.length > 0
                 ? translateOrFallback('web.button.generate_missing_stories', 'Generate Missing Stories')
                 : translateOrFallback('web.button.generate_stories', 'Generate Stories');
+        }
+
+        // Regenerate All button: shown when there are no chapters OR when remaining_count > 0
+        if (this.elements.storiesRegenAllBtn) {
+            const canRegen = supported && payload?.enabled && payload?.configured;
+            const hasRemaining = Number(payload?.remaining_count || 0) > 0;
+            const showRegen = canRegen && (chapters.length === 0 || hasRemaining);
+            this.elements.storiesRegenAllBtn.style.display = showRegen ? '' : 'none';
+            this.elements.storiesRegenAllBtn.disabled = this.storiesLoading;
+            if (hasRemaining) {
+                const n = Number(payload.remaining_count);
+                this.elements.storiesRegenAllBtn.textContent =
+                    translateOrFallback('web.button.regenerate_all_stories', 'Regenerate All Stories') +
+                    ` (${n})`;
+            } else {
+                this.elements.storiesRegenAllBtn.textContent =
+                    translateOrFallback('web.button.regenerate_all_stories', 'Regenerate All Stories');
+            }
         }
 
         // Cleanup button: only when there are chapters missing a mission_id
@@ -1516,14 +1544,15 @@ const DetailPage = {
             const payload = await API.getStories(source, entryId);
             this.renderStoriesSection(payload);
 
+            const hasStories = Array.isArray(payload?.chapters) && payload.chapters.length > 0;
             if (
                 payload?.supported
                 && payload?.enabled
                 && payload?.configured
                 && payload?.auto_generate
-                && (!Array.isArray(payload?.chapters) || payload.chapters.length === 0)
+                && !hasStories
             ) {
-                await this.generateStories({ silentReadyMessage: true });
+                this.batchRegenStories();
             }
         } catch (error) {
             console.error('Failed to load stories:', error);
@@ -1533,6 +1562,61 @@ const DetailPage = {
                 message: error.message || 'Unable to load stories.',
                 chapters: []
             });
+        }
+    },
+
+    async batchRegenStories() {
+        if (!this.currentStoriesEntryId || !this._source) return;
+        if (this._batchRegenJobId) return; // already running
+
+        try {
+            const { job_id } = await API.startStoryBatchRegen(this._source, this.currentStoriesEntryId);
+            if (!job_id) return;
+            this._batchRegenJobId = job_id;
+
+            this.setStoriesBusy(true);
+            this.setStoriesStatus('Starting batch story generation…', '');
+
+            this._batchRegenPollInterval = setInterval(async () => {
+                try {
+                    const status = await API.getJobStatus(job_id);
+                    if (status.status === 'running' || status.status === 'pending') {
+                        const msg = status.message || 'Generating stories…';
+                        const prog = status.progress_total > 0
+                            ? ` (${status.progress_current}/${status.progress_total})`
+                            : '';
+                        this.setStoriesStatus(msg + prog, '');
+                    } else if (status.status === 'done') {
+                        clearInterval(this._batchRegenPollInterval);
+                        this._batchRegenPollInterval = null;
+                        this._batchRegenJobId = null;
+                        this.setStoriesBusy(false);
+                        // Reload stories to show newly generated chapters.
+                        try {
+                            const fresh = await API.getStories(this._source, this.currentStoriesEntryId);
+                            const total = status.progress_total || 0;
+                            if (total > 0) fresh.message = `Generated ${total} story chapter${total === 1 ? '' : 's'}.`;
+                            this.renderStoriesSection(fresh);
+                        } catch (_) {
+                            // ignore reload failure
+                        }
+                    } else if (status.status === 'error') {
+                        clearInterval(this._batchRegenPollInterval);
+                        this._batchRegenPollInterval = null;
+                        this._batchRegenJobId = null;
+                        this.setStoriesBusy(false);
+                        this.setStoriesStatus(status.error || 'Batch story generation failed.', 'error');
+                    }
+                } catch (_) {
+                    // transient network glitch — keep polling
+                }
+            }, 2000);
+        } catch (error) {
+            this._batchRegenJobId = null;
+            console.error('Failed to start batch story regen:', error);
+            this.setStoriesBusy(false);
+            // Fall back to single-chapter generation.
+            await this.generateStories({ silentReadyMessage: true });
         }
     },
 

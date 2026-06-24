@@ -1209,6 +1209,7 @@
       "generate_missing_stories": "Generate Missing Stories",
       "generate_pdf_report": "Generate PDF Report",
       "generate_stories": "Generate Stories",
+      "regenerate_all_stories": "Regenerate All Stories",
       "regenerate_book": "Regenerate Book",
       "save": "Save",
       "view_details": "View Details"

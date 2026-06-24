@@ -34,6 +34,7 @@ from typing import Dict, Optional
 
 CAREER_DEBRIEF_PARSE = 'CAREER_DEBRIEF_PARSE'
 LANGUAGE_APPLY       = 'LANGUAGE_APPLY'
+STORY_BATCH_REGEN    = 'STORY_BATCH_REGEN'
 
 
 # ---------------------------------------------------------------------------

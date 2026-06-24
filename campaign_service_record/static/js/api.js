@@ -196,6 +196,17 @@ const API = {
     },
     
     /**
+     * Start a background job to generate ALL missing story chapters.
+     * Returns { job_id } — poll via getJobStatus().
+     */
+    async startStoryBatchRegen(source, entryId) {
+        return this.post(
+            `/stories/${encodeURIComponent(source)}/${encodeURIComponent(entryId)}/regenerate-all`,
+            {}
+        );
+    },
+
+    /**
      * Generate a career PDF report (POST, triggers server-side PDF creation)
      */
     async generateCareerPdf(careerId) {
