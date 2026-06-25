@@ -1277,18 +1277,18 @@ const DetailPage = {
                 : translateOrFallback('web.button.generate_stories', 'Generate Stories');
         }
 
-        // Regenerate All button: shown when there are no chapters OR when remaining_count > 0
+        // Regenerate All button: shown when there are no chapters OR when remaining_count > 0.
+        // Label adapts: "Generate Missing Stories (N)" when some exist, "Generate All Stories" when none do.
         if (this.elements.storiesRegenAllBtn) {
             const canRegen = supported && payload?.enabled && payload?.configured;
             const hasRemaining = Number(payload?.remaining_count || 0) > 0;
             const showRegen = canRegen && (chapters.length === 0 || hasRemaining);
             this.elements.storiesRegenAllBtn.style.display = showRegen ? '' : 'none';
             this.elements.storiesRegenAllBtn.disabled = this.storiesLoading;
-            if (hasRemaining) {
-                const n = Number(payload.remaining_count);
+            if (chapters.length > 0) {
+                const n = hasRemaining ? ` (${Number(payload.remaining_count)})` : '';
                 this.elements.storiesRegenAllBtn.textContent =
-                    translateOrFallback('web.button.regenerate_all_stories', 'Regenerate All Stories') +
-                    ` (${n})`;
+                    translateOrFallback('web.button.generate_missing_stories', 'Generate Missing Stories') + n;
             } else {
                 this.elements.storiesRegenAllBtn.textContent =
                     translateOrFallback('web.button.regenerate_all_stories', 'Regenerate All Stories');
@@ -1586,6 +1586,13 @@ const DetailPage = {
                             ? ` (${status.progress_current}/${status.progress_total})`
                             : '';
                         this.setStoriesStatus(msg + prog, '');
+                        // Keep the batch button count in sync with the live job data.
+                        if (this.elements.storiesRegenAllBtn && status.progress_total > 0) {
+                            const jobRemaining = Math.max(0, status.progress_total - status.progress_current);
+                            this.elements.storiesRegenAllBtn.textContent =
+                                translateOrFallback('web.button.generate_missing_stories', 'Generate Missing Stories') +
+                                ` (${jobRemaining})`;
+                        }
                     } else if (status.status === 'done') {
                         clearInterval(this._batchRegenPollInterval);
                         this._batchRegenPollInterval = null;

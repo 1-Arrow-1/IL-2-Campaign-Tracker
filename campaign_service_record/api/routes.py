@@ -5361,6 +5361,7 @@ def _batch_story_regen_worker(source: str, entry_id: str, job, settings: dict) -
             missing_contexts.append(_ctx)
 
         total = len(missing_contexts)
+        already_done = len(existing_chapters)
         if total == 0:
             job.status = 'done'
             job.message = 'Stories are already up to date.'
@@ -5371,7 +5372,10 @@ def _batch_story_regen_worker(source: str, entry_id: str, job, settings: dict) -
 
         job.progress_total = total
         job.progress_current = 0
-        job.message = f'Generating story 1 of {total}…'
+        if already_done > 0:
+            job.message = f'Resuming — {already_done} already done, generating {total} remaining…'
+        else:
+            job.message = f'Generating story 1 of {total}…'
         job.updated_at = time.time()
 
         # Seed used_titles from existing chapters so titles are not reused.
@@ -5432,10 +5436,11 @@ def _batch_story_regen_worker(source: str, entry_id: str, job, settings: dict) -
                 generated += 1
                 job.progress_current = generated
                 remaining = total - generated
+                prefix = f'{already_done} existing + ' if already_done > 0 else ''
                 if remaining > 0:
-                    job.message = f'Generated {generated} of {total} story chapters — {remaining} remaining…'
+                    job.message = f'{prefix}Generated {generated} of {total} missing — {remaining} remaining…'
                 else:
-                    job.message = f'Generated {generated} of {total} story chapters.'
+                    job.message = f'{prefix}Generated all {total} missing chapters.'
                 job.updated_at = time.time()
                 # Keep the idle-shutdown timer alive so the server doesn't exit
                 # while the batch job is running, even if the browser is closed.
