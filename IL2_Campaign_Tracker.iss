@@ -19,6 +19,14 @@ OutputBaseFilename=IL2_CampaignTracker_Setup_v{#MyAppVersion}_ML
 Compression=lzma
 SolidCompression=yes
 
+; Release builds (tools\sign_release.ps1 -Installer) pass an Azure Artifact Signing
+; command as the "azureartifacts" Sign Tool and define AZURE_SIGNING; Inno then signs
+; Setup and the generated uninstaller. A plain compile stays unsigned.
+#ifdef AZURE_SIGNING
+SignTool=azureartifacts
+SignedUninstaller=yes
+#endif
+
 UsePreviousAppDir=yes
 
 UninstallDisplayName=IL-2 Great Battles SP Campaign Tracker Uninstaller
