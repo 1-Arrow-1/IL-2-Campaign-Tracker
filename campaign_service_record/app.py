@@ -11,10 +11,13 @@ Handles:
 
 import os
 import sys
+import json
 import time
+import socket
 import logging
 import threading
 import webbrowser
+import urllib.request
 from pathlib import Path
 from typing import Optional
 from flask import Flask, send_from_directory
@@ -64,6 +67,12 @@ def setup_logging(debug: bool = False, log_file: Optional[Path] = None):
 
 logger = logging.getLogger(__name__)
 
+# Returned by /api/identity so a new launch can recognise an already running server.
+APP_ID = 'il2-campaign-tracker-service-record'
+
+# Used when the default port (5000 campaign / 5001 career) belongs to another program.
+FALLBACK_PORTS = range(5050, 5100)
+
 
 # ============================================================================
 # Flask Application Factory
@@ -79,10 +88,10 @@ def create_app():
     # Get configuration
     config = get_config()
     
-    # Setup logging — write to file in career mode (no console window)
+    # Setup logging — write to file when frozen (no console window in either mode)
     log_file = (
-        config.base_dir / 'career_service_record.log'
-        if config.frozen and config.app_mode == 'career'
+        config.base_dir / f'{config.app_mode}_service_record.log'
+        if config.frozen
         else None
     )
     setup_logging(debug=config.debug, log_file=log_file)
@@ -207,6 +216,11 @@ def create_app():
             """Serve pilot photos from user data directory."""
             return send_from_directory(config.pilot_photo_dir, filename)
     
+    @app.route('/api/identity')
+    def identity():
+        """Identify this server, so a second launch can reuse it (see choose_port)."""
+        return {'app': APP_ID, 'mode': config.app_mode}
+
     @app.route('/favicon.ico')
     def favicon():
         """Serve favicon (if exists)."""
@@ -217,6 +231,50 @@ def create_app():
             return '', 204  # No content
     
     return app
+
+
+# ============================================================================
+# Port Selection
+# ============================================================================
+
+def _is_port_free(host: str, port: int) -> bool:
+    """True when nothing is listening on host:port (checked by binding, which is instant)."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        try:
+            sock.bind((host, port))
+        except OSError:
+            return False
+    return True
+
+
+def _is_own_server(host: str, port: int, app_mode: str) -> bool:
+    """True when host:port is an already running Service Record in the same mode."""
+    try:
+        with urllib.request.urlopen(f"http://{host}:{port}/api/identity", timeout=1.0) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except Exception:
+        return False
+    return isinstance(data, dict) and data.get("app") == APP_ID and data.get("mode") == app_mode
+
+
+def choose_port(host: str, preferred: int, app_mode: str) -> tuple[int, bool]:
+    """
+    Pick the port to serve on.
+
+    Another program may hold the default port (e.g. the Salad service on 5000),
+    and a second click in the Control Center starts a second instance. Tries the
+    default port, then FALLBACK_PORTS: a free port is used, a port held by our
+    own server is reused.
+
+    Returns:
+        (port, already_running)
+    """
+    for port in [preferred, *(p for p in FALLBACK_PORTS if p != preferred)]:
+        if _is_port_free(host, port):
+            return port, False
+        if _is_own_server(host, port, app_mode):
+            return port, True
+    return preferred, False
 
 
 # ============================================================================
@@ -274,10 +332,20 @@ def main():
     
     # Get config
     config = get_config()
-    
+
+    port, already_running = choose_port(config.host, config.port, config.app_mode)
+    if already_running:
+        url = f"http://{config.host}:{port}"
+        logger.info(f"Already running at {url}; opening browser instead of starting again")
+        webbrowser.open(url)
+        return
+    if port != config.port:
+        logger.warning(f"Port {config.port} is used by another program; using port {port} instead")
+    config.port = port
+
     # Construct URL
     url = f"http://{config.host}:{config.port}"
-    
+
     # Start browser opener thread
     if config.auto_open_browser:
         browser_thread = threading.Thread(
