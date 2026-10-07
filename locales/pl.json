@@ -182,6 +182,7 @@
       "damaged": "uszkodzony",
       "destroyed": "zniszczony",
       "hit_by": "Trafiony przez",
+      "collision_with": "Zderzenie z",
       "landing": "Lądowanie",
       "landing_damage": "Uszkodzenie przy lądowaniu",
       "pilot_touchdown": "Lądowanie (spadochron)",

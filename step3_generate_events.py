@@ -2417,6 +2417,10 @@ class EventGenerator:
                         html_lines.append(
                             f"{time}  {target} {t('flightlog.event.destroyed')}{details}<br>"
                         )
+                    elif event_type == "Collision":
+                        html_lines.append(
+                            f"{time}  {t('flightlog.event.collision_with')} {target}<br>"
+                        )
                     elif event_type == "Damage Taken":
                         # Check if attacker is unknown (AID=-1 case)
                         attacker_unknown = event.get('attacker_unknown', False)

@@ -182,6 +182,7 @@
       "damaged": "受损",
       "destroyed": "被摧毁",
       "hit_by": "被命中",
+      "collision_with": "相撞：",
       "landing": "着陆",
       "landing_damage": "着陆损伤",
       "pilot_touchdown": "跳伞着陆",

@@ -182,6 +182,7 @@
       "damaged": "damaged",
       "destroyed": "destroyed",
       "hit_by": "Hit by",
+      "collision_with": "Collision with",
       "landing": "Landing",
       "landing_damage": "Landing Damage",
       "pilot_touchdown": "Pilot Touchdown",

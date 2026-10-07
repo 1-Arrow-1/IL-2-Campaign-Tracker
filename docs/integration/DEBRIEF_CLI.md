@@ -75,7 +75,7 @@ Top level:
 ```json
 {
   "schema_version": 1,
-  "generator": { "name": "IL-2 Campaign Tracker debrief", "version": "3.1.13" },
+  "generator": { "name": "IL-2 Campaign Tracker debrief", "version": "3.1.13", "revision": 2 },
   "source_files": ["missionReport(2026-03-15_22-33-00)[0].txt"],
   "player": { ... },
   "summary": { ... },
@@ -111,7 +111,7 @@ Top level:
 
 | Field | Notes |
 |-------|-------|
-| `air_kills` | `air_kills_flying + air_kills_parked`. Use `air_kills_flying` as the aerial victory count. Parked aircraft destroyed on the ground count only toward `air_kills_parked`. |
+| `air_kills` | `air_kills_flying + air_kills_parked`. Use `air_kills_flying` as the aerial victory count. Parked aircraft destroyed on the ground count only toward `air_kills_parked`. Collisions (see `Collision` events) and the player's own aircraft are never counted. |
 | `ground_kills` | Ground vehicles and buildings. Balloon kills appear in `events` but in no summary count. |
 | `flight_duration` | `HH:MM:SS` from takeoff to landing, or to the last event. `"N/A"` if the player never took off. |
 | `wounded` | True once total pilot damage reaches 5%. |
@@ -157,6 +157,9 @@ The player's own timeline, sorted by `time`. `time` is `HH:MM:SS` of in-game tim
 | `Kill` | `target`, `category`, `is_static`, `altitude`, `delayed` | `target` is the object type, e.g. `"Yak-1 ser.69"`. `category` is `Air`, `Ground`, `Building`, `Naval`, `Balloon` or `Unknown`. `is_static: true` means a parked aircraft. `delayed: true` means credited by the rules in section 5 rather than by a direct game kill record. `altitude` is in metres and is left out for delayed air kills, because the crash-site altitude says nothing about the fight. |
 | `Damage Taken` | `target`, `attacker_unknown`, `damage`, `altitude` | One event per minute, with damage summed. **`target` is the attacker's type**, e.g. `"Yak-1 ser.69"`, despite the name. `target: null` with `attacker_unknown: true` means the game logged no attacker: fire, crash impact, collision or other environmental damage. `damage` is text such as `"12.0% aircraft"`, `"5.0% pilot"` or `"4.2% aircraft, 19.2% pilot"`. |
 | `Landing Damage` | as `Damage Taken`, plus `original_target` | Damage reclassified as caused by the landing. |
+| `Collision` | `target`, `category`, `friendly`, `altitude` | The player collided with `target`. **Not a victory**, and not counted in any kill total. `friendly: true` means it was on the player's side. See below. |
+
+**How `Collision` is detected.** The game logs a collision involving the player as the player destroying the other aircraft. It is a `Collision` when the player is logged as destroying an aircraft and the player's own aircraft is destroyed within 1 second, with no attacker logged or by itself. If the log names an enemy as destroying the player, as in a head-on gunfight where both die, it stays a `Kill`. Analysers before `generator.revision` 2 reported these collisions as `Kill` events, and could also report the player's own aircraft as a `Kill`.
 
 There is **no `Bailout` event**. A bailout shows up in `final_state` and as a `Pilot Touchdown` event when the parachute lands before the mission ends. There is also no `Crash` event.
 
@@ -215,13 +218,15 @@ How reliable the facts are:
 | Fact | Reliability |
 |------|-------------|
 | Direct kills, takeoff, landing, bailout, KIA, AI aircraft losses with an attacker | As reliable as the game log. |
-| Collision detection | Strong when both aircraft are destroyed. A collision where one aircraft survives looks like `shot_down` or `friendly_fire`. |
+| Collision detection | Strong when both aircraft are destroyed. A collision where one aircraft survives looks like `shot_down` or `friendly_fire` (AI aircraft), or is not detected at all (the player). Player collisions were checked against 22 real cases, all fatal to the player. |
 | Delayed kills | Heuristic. Generally correct, but shared kills may differ from what the game's own scoring credits. |
 | Territory (captured or MIA) | Depends on the mission's front-line data. |
 
 ## 6. Known limitations
 
-- **The player's own loss has no `kill_cause`.** `kill_cause` exists only for AI aircraft. For the player, use the `Damage Taken` events, their attacker types and timing, and `final_state`. If the player collides with another aircraft, the evidence is that aircraft's `kill_cause`, a large `Damage Taken` with `attacker_unknown: true` at the same time, or both.
+- **The player's own loss has no `kill_cause`.** `kill_cause` exists only for AI aircraft. For the player, use `final_state`, the `Damage Taken` events with their attacker types and timing, and any `Collision` event.
+- **Player collisions are only detected when the player's aircraft is destroyed.** No collision the player survived has been seen in real logs yet, so how one looks is unknown.
+- **Debris counts as a collision.** If the player shoots an aircraft down and dies in its debris or explosion within the same second, it is reported as a `Collision`. The log cannot tell the two apart. Either way it is not counted as a victory.
 - **The player's name is the login name**, as noted in section 4.1.
 - **No PWCG test yet.** The parser has been used with IL-2 career missions and single-player campaigns. PWCG builds its own missions, and how it names AI pilots and spawns flights may differ. Expect name matching in particular to need checking against real PWCG logs.
 - **Unlimited ammo** makes the ammunition numbers in `combat_metrics` unavailable (`status: "n/a_unlimited_ammo"`).
@@ -229,7 +234,12 @@ How reliable the facts are:
 
 ## 7. Versioning
 
-`schema_version` (currently `1`) increases whenever a field is renamed, removed or changes meaning. New fields may be added without a bump, so ignore fields you don't recognise. Refuse or warn on a `schema_version` higher than the one you were built for. `generator.version` is the tracker release the analyser was built from; use it in bug reports.
+`schema_version` (currently `1`) increases whenever a field is renamed, removed or changes meaning. New fields and new event types may be added without a bump, so ignore fields and event types you don't recognise. Refuse or warn on a `schema_version` higher than the one you were built for. `generator.version` is the tracker release the analyser was built from. `generator.revision` increases whenever the analyser's results change, even within one tracker release; quote both in bug reports.
+
+| Revision | Change |
+|----------|--------|
+| 1 | First release. |
+| 2 | Player collisions reported as `Collision` events instead of `Kill`s; the player's own aircraft never counted as a kill. |
 
 ## 8. Licence
 

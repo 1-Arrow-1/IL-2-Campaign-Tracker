@@ -490,7 +490,7 @@ class CareerDebriefingManager:
     # ------------------------------------------------------------------
 
     # Increment when the HTML rendering format changes to force cache rebuild.
-    _CACHE_VERSION = 23
+    _CACHE_VERSION = 24
 
     def _load_cache(self) -> Dict:
         if not self._cache_path.exists():
@@ -631,6 +631,8 @@ def _render_mission_html(data: Dict, mission_num: int, mission_date: str) -> str
         if event_type == "Kill":
             alt_str = f" (Alt: {altitude}m)" if altitude else ""
             lines.append(f"{time_str}&nbsp;&nbsp;{target} destroyed{alt_str}<br>")
+        elif event_type == "Collision":
+            lines.append(f"{time_str}&nbsp;&nbsp;Collision with {target}<br>")
         elif event_type == "Damage Taken":
             damage = event.get("damage", "")
             dmg_str = f" ({damage})" if damage else ""

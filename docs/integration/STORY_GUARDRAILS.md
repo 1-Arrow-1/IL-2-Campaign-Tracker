@@ -27,6 +27,7 @@ Pre-process it into a small payload:
 4. **Turn events into short factual lines** with clock times (`summary.mission_start_time` plus the event `time`):
    - `Kill` becomes "Destroyed a Yak-1 ser.69 (air, 1,250 m)". Add "(fell later)" when `delayed` is true, and leave altitude out in that case.
    - `Damage Taken` becomes "Hit by a Yak-1 ser.69: 12% aircraft damage". When `attacker_unknown` is true, write "unattributed damage" and don't name an attacker.
+   - `Collision` becomes "Mid-air collision with an enemy Yak-1 ser.69 (not a victory)", or "a friendly …" when `friendly` is true. Never add it to the victory count.
    - Leave out `combat_metrics`, `time_raw`, coordinates and IDs.
 5. **Use your names, not the log's.** Use PWCG's pilot name and rank for the player, not `player.name`, which is a login name.
 
@@ -89,6 +90,8 @@ How aircraft were lost (flight_results[].kill_cause is authoritative)
 The pilot's own mission
 - mission.result is the authoritative outcome. Do not contradict it.
 - Damage marked unattributed has no known attacker; do not invent one.
+- A mid-air collision is never a victory. Describe it as a collision, and never
+  as the pilot shooting the other aircraft down.
 - Kills marked "(fell later)" went down after the engagement; do not describe
   them exploding under the pilot's guns.
 - The pilot's victory total after this mission is

@@ -182,6 +182,7 @@
       "damaged": "dañado",
       "destroyed": "destruido",
       "hit_by": "impactado por",
+      "collision_with": "Colisión con",
       "landing": "Aterrizaje",
       "landing_damage": "Daños al aterrizar",
       "pilot_touchdown": "Aterrizaje (paracaídas)",

@@ -35,6 +35,8 @@ from utils.pathing import get_base_path
 # Bump when the output JSON changes in a way a consumer could notice
 # (renamed/removed fields, changed meaning). Adding new fields does not bump it.
 SCHEMA_VERSION = 1
+# Bump whenever the analyser's results change for the same log (docs/integration/DEBRIEF_CLI.md §7).
+ANALYSER_REVISION = 2
 
 EXIT_OK = 0
 EXIT_BAD_INPUT = 2
@@ -200,7 +202,11 @@ def run(argv: list[str] | None = None) -> int:
 
         output = {
             "schema_version": SCHEMA_VERSION,
-            "generator": {"name": "IL-2 Campaign Tracker debrief", "version": _tracker_version()},
+            "generator": {
+                "name": "IL-2 Campaign Tracker debrief",
+                "version": _tracker_version(),
+                "revision": ANALYSER_REVISION,
+            },
             "source_files": [p.name for p in inputs],
             **data,
         }

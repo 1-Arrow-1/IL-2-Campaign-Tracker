@@ -906,6 +906,9 @@ def _extract_career_notable_events(mission_json: dict) -> list[str]:
                 detail_parts.append("delayed kill")
             suffix = f" ({', '.join(detail_parts)})" if detail_parts else ""
             notable.append(f"Destroyed {target}{suffix}")
+        elif ev_type == "collision" and target:
+            side = "friendly" if event.get("friendly") else "enemy"
+            notable.append(f"Mid-air collision with a {side} {target} (not a victory)")
         elif ev_type == "damage taken":
             damage = _normalize_story_text(event.get("damage"))
             attacker = _normalize_story_text(event.get("target"))

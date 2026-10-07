@@ -2789,6 +2789,7 @@ const DetailPage = {
             { pattern: /\bDamage taken\b/gi, replacement: i18n.t('flightlog.event.damage_taken') },
             { pattern: /\bdamaged\b/gi, replacement: i18n.t('flightlog.event.damaged') },
             { pattern: /\bHit by\b/gi, replacement: i18n.t('flightlog.event.hit_by') },
+            { pattern: /\bCollision with\b/gi, replacement: i18n.t('flightlog.event.collision_with') },
             { pattern: /\(Alt:/gi, replacement: `(${i18n.t('flightlog.altitude')}:` },
             { pattern: /\bBefore First Mission\b/gi, replacement: i18n.t('flightlog.timeline.before_first_mission') },
             { pattern: /\bAwarded\b/gi, replacement: i18n.t('flightlog.timeline.awarded') },

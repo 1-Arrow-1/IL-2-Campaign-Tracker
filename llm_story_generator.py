@@ -1078,6 +1078,9 @@ def _extract_notable_events(mission_json: Dict[str, Any]) -> list[str]:
                     pass
             suffix = f" ({', '.join(detail_parts)})" if detail_parts else ""
             notable.append(f"Destroyed {target}{suffix}")
+        elif event_type == "Collision" and target:
+            side = "friendly" if event.get("friendly") else "enemy"
+            notable.append(f"Mid-air collision with a {side} {target} (not a victory)")
         elif event_type == "Damage Taken":
             damage = _normalize_text(event.get("damage"))
             notable.append(f"Aircraft took damage: {damage}" if damage else "Aircraft took damage")

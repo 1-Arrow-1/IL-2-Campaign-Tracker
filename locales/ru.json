@@ -182,6 +182,7 @@
       "damaged": "повреждён",
       "destroyed": "уничтожен",
       "hit_by": "Подбит",
+      "collision_with": "Столкновение с",
       "landing": "Посадка",
       "landing_damage": "Повреждение при посадке",
       "pilot_touchdown": "Приземление (парашют)",

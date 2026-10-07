@@ -117,6 +117,7 @@ class GameObject:
         self.time_of_kill = None
         self.altitude = None          # Altitude when destroyed
         self.is_delayed_kill = False  # True when kill was attributed via _resolve_indirect_kill
+        self.is_collision = False     # True when the player destroyed it by colliding (see _mark_player_collisions)
 
     @classmethod
     def _load_config(cls):
@@ -204,6 +205,7 @@ class MissionStats:
         self.player_spawn_x: Optional[float] = None   # game-world X (East) at takeoff
         self.player_spawn_z: Optional[float] = None   # game-world Z (North) at takeoff
         self.mission_start_time: Optional[str] = None  # GTime from AType:0 as "HH:MM"
+        self.player_self_kill_ts: Optional[str] = None  # "HH:MM:SS" when the player's own aircraft was credited as a kill (rejected)
         self.player_ammo_events = []    # {tick, ammo, target}
         self.player_damage_events = []  # {tick, target, damage}
         self.player_destroy_events = [] # {tick, target}
@@ -219,6 +221,12 @@ class MissionStats:
         obj = self.objects.get(tid)
         if obj and obj.category == "Excluded":
             return  # ignore silently
+        if tid is not None and tid in (self.player_plid, self.player_pid):
+            # The log, or an indirect-kill rule, can credit the player's own aircraft
+            # to the player. Never a kill; keep the time for the landing-damage check.
+            if self.player_self_kill_ts is None:
+                self.player_self_kill_ts = ts
+            return
         if tid in self.objects:
             obj = self.objects[tid]
             obj.state, obj.time_of_kill = "Destroyed", ts
@@ -253,6 +261,7 @@ class MissionDebriefParser:
         self._squadron_first_fire_tick: dict = {}       # aircraft_id → (tick, pos) first AID:-1 damage
         self._squadron_any_combat_damage: set = set()  # aircraft_ids that received non-AID:-1 damage
         self._all_destroyed_ticks: dict = {}            # aircraft_id → raw tick for all Air destructions
+        self._destroy_attacker: dict = {}               # object_id → AID logged on its AType:3 destruction
 
     @staticmethod
     def mission_time_to_hhmmss(t):
@@ -786,6 +795,7 @@ class MissionDebriefParser:
                 pos_match = re.search(r"POS\((-?[\d.]+),(-?[\d.]+),(-?[\d.]+)\)", ln)
                 altitude = int(float(pos_match.group(2))) if pos_match else None
                 destroyed[tgt] = (ts, altitude)  # Store with altitude
+                self._destroy_attacker[tgt] = a
                 if a in (self.stats.player_pid, self.stats.player_plid):
                     self.stats.player_destroy_events.append({
                         "tick": t,
@@ -1089,7 +1099,46 @@ class MissionDebriefParser:
             # ==============================================================
             pass  # Leave as "Alive" - no additional states introduced
 
+        self._mark_player_collisions()
         return self.stats
+
+    # ------------------------------------------------------
+    def _mark_player_collisions(self) -> None:
+        """
+        Flag aircraft the player "destroyed" by colliding with them.
+
+        IL-2 logs a collision involving the player as the player's aircraft
+        destroying the other one, so it would otherwise count as a victory
+        (even against a friendly). The signature, consistent across 22 real
+        player collisions: the player is the logged destroyer of an Air
+        object, and the player's own aircraft is destroyed within ±50 ticks
+        (1 s) with no attacker (AID:-1) or by itself — never by the other
+        aircraft. Requiring that excludes a head-on exchange where enemy fire
+        kills the player, which logs the enemy as the attacker.
+
+        Limitation: dying in the debris of an aircraft the player shot down,
+        within the same second, is indistinguishable and is flagged too.
+        """
+        player_ids = (self.stats.player_pid, self.stats.player_plid)
+        plid = self.stats.player_plid
+        player_tick = self._all_destroyed_ticks.get(plid)
+        if player_tick is None:
+            return
+        if self._destroy_attacker.get(plid) not in (-1, *player_ids):
+            return
+        for kill in self.stats.kills:
+            if kill.category != "Air" or kill.id == plid:
+                continue
+            if self._destroy_attacker.get(kill.id) not in player_ids:
+                continue
+            tick = self._all_destroyed_ticks.get(kill.id)
+            if tick is not None and abs(tick - player_tick) <= 50:
+                kill.is_collision = True
+                log_message(
+                    logger,
+                    f"[COLLISION] Player collided with TID={kill.id} ({kill.type}); "
+                    f"not counted as a kill",
+                )
 
     # ------------------------------------------------------
     def _determine_squadron_kill_cause(self, aircraft_id: int) -> str:
@@ -1380,12 +1429,18 @@ class MissionDebriefParser:
         if not landing_time:
             return events  # No landing, can't detect landing damage
 
-        # Find last kill time
+        # Find last kill time. Collisions and the player's own destruction are not
+        # kills, but they still mean the pilot was in combat, not landing.
         last_kill_time = None
         for evt in reversed(events):
-            if evt.get('type') == 'Kill':
+            if evt.get('type') in ('Kill', 'Collision'):
                 last_kill_time = evt.get('time')
                 break
+        self_kill_ts = self.stats.player_self_kill_ts
+        if self_kill_ts and (
+            last_kill_time is None or self._time_diff_seconds(last_kill_time, self_kill_ts) > 0
+        ):
+            last_kill_time = self_kill_ts
 
         # Check each damage event
         modified_events = []
@@ -1497,8 +1552,8 @@ class MissionDebriefParser:
             self.stats.final_state = "KIA"
             self.stats.wounded = False
 
-        # Count air kills separately (flying vs parked)
-        air_kills_all = [k for k in kills if k.category == "Air"]
+        # Count air kills separately (flying vs parked). Collisions are not victories.
+        air_kills_all = [k for k in kills if k.category == "Air" and not k.is_collision]
         air_kills_flying = sum(1 for k in air_kills_all if not getattr(k, 'is_static', False))
         air_kills_parked = sum(1 for k in air_kills_all if getattr(k, 'is_static', False))
         combat_metrics = self._calculate_combat_metrics()
@@ -1535,7 +1590,18 @@ class MissionDebriefParser:
         
         # Add kill events (filter out BotPilot/BotGunner)
         for k in kills:
-            if k.time_of_kill:
+            if k.time_of_kill and k.is_collision:
+                evt = {
+                    "time": k.time_of_kill,
+                    "type": "Collision",
+                    "target": k.type,
+                    "category": k.category,
+                    "friendly": bool(k.country and k.country == self.stats.player_country),
+                }
+                if k.altitude is not None:
+                    evt["altitude"] = k.altitude
+                events.append(evt)
+            elif k.time_of_kill:
                 is_delayed = bool(getattr(k, 'is_delayed_kill', False))
                 evt = {
                     "time": k.time_of_kill,

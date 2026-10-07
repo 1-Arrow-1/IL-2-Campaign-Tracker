@@ -932,7 +932,7 @@ def _build_story(
     # -----------------------------------------------------------------------
     # Flight log block — timestamped event list for a single mission
     # -----------------------------------------------------------------------
-    _FL_DISPLAY = {"Takeoff", "Landing", "Kill", "Bailout", "Pilot Touchdown", "Damage Taken"}
+    _FL_DISPLAY = {"Takeoff", "Landing", "Kill", "Collision", "Bailout", "Pilot Touchdown", "Damage Taken"}
     _FL_TIME_W  = 16 * mm
 
     def _flight_log_flowables(mis_json: dict) -> list:
@@ -952,6 +952,8 @@ def _build_story(
                 desc   = f"{target} destroyed"
                 if alt is not None:
                     desc += f" (Alt: {alt}m)"
+            elif ev_type == "Collision":
+                desc = f"Collision with {_safe(ev.get('target') or 'Unknown')}"
             elif ev_type == "Damage Taken":
                 dmg  = _safe(ev.get("damage") or "")
                 desc = f"Damage taken: {dmg}" if dmg else "Damage Taken"
