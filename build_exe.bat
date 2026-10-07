@@ -662,6 +662,27 @@ echo.
 echo OK
 echo.
 
+REM Sign before zipping: signing changes the bytes, so the update zip and the
+REM installer must be built from the signed files. Needs 'az login' first.
+echo [5b] Signing executables...
+set "SIGNED="
+REM Prefer PowerShell 7: Windows PowerShell 5.1 started from inside a pwsh 7
+REM session inherits its module path and cannot load Get-AuthenticodeSignature.
+set "SIGN_PS=powershell"
+where pwsh >NUL 2>&1 && set "SIGN_PS=pwsh"
+if exist "C:\CodeSigning\metadata.json" (
+    %SIGN_PS% -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%tools\sign_release.ps1" -Path "%SCRIPT_DIR%IL2_Campaign_Tracker_v3_ML"
+    if errorlevel 1 (
+        echo ERROR: Signing failed! Run 'az login' and build again.
+        pause
+        exit /b 1
+    )
+    set "SIGNED=1"
+) else (
+    echo WARNING: C:\CodeSigning\metadata.json not found - building UNSIGNED.
+)
+echo.
+
 echo [6/6] Creating update zip...
 powershell -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%create_update_zip.ps1" -SrcDir "%SCRIPT_DIR%IL2_Campaign_Tracker_v3_ML" -VersionFile "%SCRIPT_DIR%version.txt"
 if errorlevel 1 (
@@ -694,8 +715,12 @@ echo   - CampaignRanksAwards (folder ~37 MB)
 REM Path to the ISS script
 set ISS_FILE=%SCRIPT_DIR%IL2_Campaign_Tracker_v3_ML\IL2_Campaign_Tracker.iss
 
-REM Compile
-%ISCC% "%ISS_FILE%"
+REM Compile (signed Setup and uninstaller when the executables were signed)
+if defined SIGNED (
+    %SIGN_PS% -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%tools\sign_release.ps1" -Path "%SCRIPT_DIR%IL2_Campaign_Tracker_v3_ML" -Installer
+) else (
+    %ISCC% "%ISS_FILE%"
+)
 
 REM Exit handling
 if errorlevel 1 (

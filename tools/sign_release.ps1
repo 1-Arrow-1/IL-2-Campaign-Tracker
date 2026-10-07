@@ -98,7 +98,9 @@ if ($Installer) {
     if (-not (Test-Path -LiteralPath $iss -PathType Leaf)) {
         throw "Installer script not found: $iss"
     }
-    $iscc = (Get-Command ISCC.exe -ErrorAction SilentlyContinue).Source
+    $iscc = $null
+    $isccCommand = Get-Command ISCC.exe -ErrorAction SilentlyContinue
+    if ($isccCommand) { $iscc = $isccCommand.Source }
     if (-not $iscc) {
         foreach ($candidate in @(
                 (Join-Path ([Environment]::GetEnvironmentVariable("ProgramFiles(x86)")) "Inno Setup 6\ISCC.exe"),
